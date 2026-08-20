@@ -4215,6 +4215,18 @@ void ProcessManaShield()
 
 void ProcessMissiles()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (MyPlayer->_pmode == PM_STAND && authoritative::GetServerBackedRuntime().IsConnected()) {
+		auto &runtime = authoritative::GetServerBackedRuntime();
+		if (auto result = runtime.UsePortalAt(MyPlayer->position.tile.x, MyPlayer->position.tile.y, 0, SDL_GetTicks()); !result.has_value()) {
+			LogError("Server-backed portal collision check failed: {}", result.error());
+		} else if (*result) {
+			MyPlayer->clearPath();
+			MyPlayer->_pmode = PM_NEWLVL;
+		}
+	}
+#endif
+
 	for (auto &missile : Missiles) {
 		const auto &position = missile.position.tile;
 		if (InDungeonBounds(position)) {

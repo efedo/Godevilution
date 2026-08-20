@@ -527,6 +527,18 @@ tl::expected<void, std::string> ServerBackedRuntime::UsePortal(uint32_t portalId
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<bool, std::string> ServerBackedRuntime::UsePortalAt(int32_t positionX, int32_t positionY, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	const auto portalId = PortalEntityIdAt(positionX, positionY);
+	if (!portalId.has_value())
+		return false;
+	if (auto result = UsePortal(*portalId, requestedTick, nowMs); !result.has_value())
+		return tl::make_unexpected(result.error());
+	return true;
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::PickupWorldItem(uint32_t itemEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)

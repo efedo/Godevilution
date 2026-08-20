@@ -28,6 +28,8 @@ Status date: 2026-08-20
   for the local authoritative level and submits `UsePortal`; disconnected
   sessions retain legacy `CMD_WARP` compatibility behavior. Portal projection
   is sorted and duplicate-checked before entering the native session state.
+  Snapshot-driven collision also submits the same intent when the authoritative
+  portal has no locally-created legacy missile.
 
 - The standalone authoritative executable now exposes a local operator console
   with `status`, `reload`, `help`, and `quit`; `reload` re-reads validated

@@ -36,6 +36,15 @@ TEST(ServerBackedRuntime, DisabledStartPreservesLocalPath)
 	EXPECT_FALSE(runtime.IsConnected());
 }
 
+TEST(ServerBackedRuntime, SnapshotDrivenPortalUseRequiresConnection)
+{
+	ServerBackedRuntime runtime;
+
+	auto result = runtime.UsePortalAt(57, 40, 0, 0);
+	ASSERT_FALSE(result.has_value());
+	EXPECT_NE(result.error().find("not connected"), std::string::npos);
+}
+
 TEST(ServerBackedRuntime, MissingContentIdentityFailsBeforeConnecting)
 {
 	StoreManager store;

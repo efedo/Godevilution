@@ -13,7 +13,8 @@ cmake --build build-authoritative
 
 Connected Town Portal entry is server-authoritative: the client matches the
 collision cell against the latest projected portal route and submits
-`UsePortal`. The legacy `CMD_WARP` command remains available only outside a
+`UsePortal`, including when the server-created portal has no local legacy
+missile. The legacy `CMD_WARP` command remains available only outside a
 connected server-backed session.
 
 On Windows, initialize the matching Visual Studio developer environment first.

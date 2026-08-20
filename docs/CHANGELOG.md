@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Handle connected Town Portal entry directly from projected portal state when
+  no legacy native portal missile exists; disconnected sessions retain local
+  portal behavior.
+
 - Project authoritative portal snapshots into the native compatibility session
   and route connected Town Portal entry through `UsePortal`; disconnected
   sessions retain legacy `CMD_WARP` behavior.
