@@ -64,6 +64,11 @@ TEST(ServerBackedVendorCommand, RejectsInvalidQuestTurnInIdentifiers)
 	EXPECT_FALSE(MakeTurnInQuestCommand(3011, UINT8_MAX + 1U, 1).has_value());
 }
 
+TEST(ServerBackedVendorCommand, RejectsInvalidTrapIdentifiers)
+{
+	EXPECT_FALSE(MakeDisarmTrapCommand(0, 1).has_value());
+}
+
 TEST(ServerBackedVendorCommand, BuildsQuestDialogueIntent)
 {
 	const auto command = MakeTalkToQuestCommand(3021, 44, 17);
@@ -216,6 +221,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	const auto pickup = MakePickupWorldItemCommand(20, 24);
 	const auto drop = MakeDropHeldItemCommand(-2, 5, 25);
 	const auto object = MakeOperateObjectCommand(30, 25);
+	const auto disarm = MakeDisarmTrapCommand(31, 26);
 	const auto quest = MakeAdvanceQuestCommand(40, 26);
 	const auto talkToQuest = MakeTalkToQuestCommand(3021, 44, 27);
 	const auto turnIn = MakeTurnInQuestCommand(3011, 0, 27);
@@ -228,6 +234,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	ASSERT_TRUE(pickup.has_value());
 	ASSERT_TRUE(drop.has_value());
 	ASSERT_TRUE(object.has_value());
+	ASSERT_TRUE(disarm.has_value());
 	ASSERT_TRUE(quest.has_value());
 	ASSERT_TRUE(talkToQuest.has_value());
 	ASSERT_TRUE(turnIn.has_value());
@@ -243,6 +250,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	EXPECT_EQ(drop->drop_held_item_requested().target_x(), -2);
 	EXPECT_EQ(drop->drop_held_item_requested().target_y(), 5);
 	EXPECT_EQ(object->operate_object_requested().object_entity_id(), 30U);
+	EXPECT_EQ(disarm->disarm_trap_requested().object_entity_id(), 31U);
 	EXPECT_EQ(quest->advance_quest_requested().quest_id(), 40U);
 	EXPECT_EQ(talkToQuest->talk_to_quest_requested().quest_id(), 3021U);
 	EXPECT_EQ(talkToQuest->talk_to_quest_requested().target_entity_id(), 44U);

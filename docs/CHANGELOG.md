@@ -6,8 +6,9 @@ All notable changes to this fork are documented below.
 
 - Route connected native mouse entity-targeted monster/player attacks and
   ordinary object operations through authoritative entity references, including
-  repeated actions; location-only attacks and Trap Disarm retain their explicit
-  compatibility seams until matching server intents are exposed.
+  repeated actions. Trap Disarm now submits the existing authoritative
+  `DisarmTrapRequested` intent; location-only attacks remain an explicit
+  compatibility seam until a matching server intent is exposed.
 
 - Route connected native Telekinesis through the authoritative cast protocol for
   projected world items, objects, and monsters while retaining the legacy

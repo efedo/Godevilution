@@ -209,6 +209,11 @@ tl::expected<void, std::string> ServerBackedSession::OperateObject(uint32_t obje
 	return SubmitGameplayCommand(MakeOperateObjectCommand(objectEntityId, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::DisarmTrap(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeDisarmTrapCommand(objectEntityId, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeAdvanceQuestCommand(questId, requestedTick), nowMs);

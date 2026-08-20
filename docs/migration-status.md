@@ -88,9 +88,10 @@ Status date: 2026-08-20
 
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
-  cursor actions use the same server-owned intents. Location-only attacks and
-  Trap Disarm remain explicit compatibility seams until the native client has
-  matching authoritative intents for those behaviors.
+  cursor actions use the same server-owned intents. Connected native Trap
+  Disarm now submits the existing `DisarmTrapRequested` command; location-only
+  attacks remain an explicit compatibility seam until the native client has a
+  matching authoritative intent.
 
 - Native authoritative inventory use now submits spell-book consumption through
   `ReadBookRequested`; the legacy client keeps its local book path only outside

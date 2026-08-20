@@ -286,10 +286,13 @@ void LeftMouseCmd(bool bShift)
 		NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, cursPosition, pcursitem);
 	} else if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled() && (!bShift || (bNear && ObjectUnderCursor->_oBreak == 1))) {
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-		if (pcurs != CURSOR_DISARM && authoritative::GetServerBackedRuntime().IsConnected()) {
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed object target is not an authoritative entity.");
+			} else if (pcurs == CURSOR_DISARM) {
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed trap disarm failed: {}", result.error());
 			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
 				LogError("Server-backed object interaction failed: {}", result.error());
 			}
@@ -3249,6 +3252,21 @@ bool TryIconCurs()
 		}
 		NewCursor(CURSOR_HAND);
 		return true;
+	}
+
+	if (pcurs == CURSOR_DISARM && ObjectUnderCursor != nullptr) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed trap target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed trap disarm failed: {}", result.error());
+			}
+			NewCursor(CURSOR_HAND);
+			return true;
+		}
+#endif
 	}
 
 	if (pcurs == CURSOR_DISARM && ObjectUnderCursor == nullptr) {

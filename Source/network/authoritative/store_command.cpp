@@ -381,6 +381,16 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeOperateObject
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeDisarmTrapCommand(uint32_t objectEntityId, uint64_t requestedTick)
+{
+	if (objectEntityId == 0)
+		return tl::make_unexpected("Cannot disarm an invalid object.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_disarm_trap_requested()->set_object_entity_id(objectEntityId);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeAdvanceQuestCommand(uint32_t questId, uint64_t requestedTick)
 {
 	if (questId == 0)

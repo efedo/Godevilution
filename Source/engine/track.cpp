@@ -151,6 +151,9 @@ void RepeatPlayerAction()
 			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed repeated object target is not an authoritative entity.");
+			} else if (pcurs == CURSOR_DISARM) {
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed repeated trap disarm failed: {}", result.error());
 			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
 				LogError("Server-backed repeated object interaction failed: {}", result.error());
 			}

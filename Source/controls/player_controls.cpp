@@ -540,8 +540,12 @@ void Interact()
 			return;
 		}
 		if (const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); objectEntityId.has_value()) {
-			if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, SDL_GetTicks()); !result.has_value())
+			if (pcurs == CURSOR_DISARM) {
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*objectEntityId, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed trap disarm failed: {}", result.error());
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, SDL_GetTicks()); !result.has_value()) {
 				LogError("Server-backed object interaction failed: {}", result.error());
+			}
 			LastPlayerAction = PlayerActionType::OperateObject;
 			return;
 		}
@@ -587,8 +591,12 @@ void Interact()
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (entityId.has_value()) {
-				if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value())
+				if (pcurs == CURSOR_DISARM) {
+					if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+						LogError("Server-backed trap disarm failed: {}", result.error());
+				} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
 					LogError("Server-backed object interaction failed: {}", result.error());
+				}
 				LastPlayerAction = PlayerActionType::OperateObject;
 				return;
 			}

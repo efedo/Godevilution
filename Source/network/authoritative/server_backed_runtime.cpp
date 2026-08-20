@@ -538,6 +538,17 @@ tl::expected<void, std::string> ServerBackedRuntime::OperateObject(uint32_t obje
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::DisarmTrap(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->DisarmTrap(objectEntityId, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)
