@@ -100,6 +100,11 @@ Status date: 2026-08-20
   authoritative cast intent with the exact stable consumable source reference;
   legacy spell commands remain available outside server-backed sessions.
 
+- Connected native direct scroll and rune item use now submits the same
+  authoritative cast intent for non-keyboard and immediate-use paths, retaining
+  the exact stable source reference and the legacy fallback outside connected
+  server-backed mode.
+
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Adjacent primary native

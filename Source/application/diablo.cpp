@@ -3107,15 +3107,16 @@ std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceFor
 	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(itemSeed);
 }
 
-std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForSpellCursor(Player &player)
+std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForSpellCursor(Player &player, SpellID &spellId)
 {
 	const int itemLocation = player.spellFrom;
 	if (itemLocation < INVITEM_INV_FIRST || itemLocation > INVITEM_BELT_LAST)
 		return std::nullopt;
 
 	const Item &item = GetInventoryItem(player, itemLocation);
-	if (item.isEmpty())
+	if (item.isEmpty() || item._iSpell == SpellID::Null)
 		return std::nullopt;
+	spellId = item._iSpell;
 
 	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
 }
@@ -3310,7 +3311,7 @@ bool TryIconCurs()
 	}
 
 	if (pcurs == CURSOR_TELEPORT) {
-		const SpellID spellID = myPlayer.inventorySpell;
+		SpellID spellID = myPlayer.inventorySpell;
 		const SpellType spellType = SpellType::Scroll;
 		const int spellFrom = myPlayer.spellFrom;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -3324,7 +3325,7 @@ bool TryIconCurs()
 					targetEntityId = *entityId;
 			}
 
-			const auto sourceItem = ServerBackedReferenceForSpellCursor(myPlayer);
+			const auto sourceItem = ServerBackedReferenceForSpellCursor(myPlayer, spellID);
 			if (!sourceItem.has_value()) {
 				LogError("Server-backed spell cursor has no authoritative consumable source.");
 			} else if (auto result = authoritative::GetServerBackedRuntime().Cast(

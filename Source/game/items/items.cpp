@@ -94,6 +94,10 @@
 #include "utils/string/string_or_view.hpp"
 #include "utils/string/utf8.hpp"
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
+
 namespace devilution {
 
 // Item method implementations moved from items.h header
@@ -4368,6 +4372,51 @@ void PrintItemDur(const Item &item)
 	PrintItemInfo(item);
 }
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+bool TryServerBackedConsumableCast(Player &player, int spellFrom)
+{
+	if (spellFrom < INVITEM_INV_FIRST || spellFrom > INVITEM_BELT_LAST) {
+		LogError("Server-backed consumable cast has no valid inventory source location.");
+		return true;
+	}
+
+	const Item &sourceItem = GetInventoryItem(player, spellFrom);
+	if (sourceItem.isEmpty()) {
+		LogError("Server-backed consumable cast has no source item.");
+		return true;
+	}
+	const auto sourceReference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(sourceItem._iSeed);
+	if (!sourceReference.has_value()) {
+		LogError("Server-backed consumable cast has no authoritative item reference.");
+		return true;
+	}
+	if (sourceItem._iSpell == SpellID::Null) {
+		LogError("Server-backed consumable cast has no authoritative spell identity.");
+		return true;
+	}
+
+	Point target = cursPosition;
+	if (!InDungeonBounds(target))
+		target = player.position.future + Displacement(player.direction);
+	uint32_t targetEntityId = 0;
+	if (PlayerUnderCursor != nullptr) {
+		if (const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(target.x, target.y); entityId.has_value())
+			targetEntityId = *entityId;
+	} else if (pcursmonst != -1 && levelType() != DTYPE_TOWN) {
+		if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(target.x, target.y); entityId.has_value())
+			targetEntityId = *entityId;
+	}
+
+	if (auto result = authoritative::GetServerBackedRuntime().Cast(
+	        static_cast<uint32_t>(sourceItem._iSpell), targetEntityId, target.x, target.y,
+	        { authoritative::ServerBackedCastSourceKind::ConsumableItem, sourceReference },
+	        0, SDL_GetTicks()); !result.has_value())
+		LogError("Server-backed consumable cast failed: {}", result.error());
+	NewCursor(CURSOR_HAND);
+	return true;
+}
+#endif
+
 void UseItem(Player &player, item_misc_id mid, SpellID spellID, int spellFrom)
 {
 	std::optional<SpellID> prepareSpellID;
@@ -4440,6 +4489,12 @@ void UseItem(Player &player, item_misc_id mid, SpellID spellID, int spellFrom)
 		break;
 	case IMISC_SCROLL:
 	case IMISC_SCROLLT:
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+			TryServerBackedConsumableCast(player, spellFrom);
+			return;
+		}
+#endif
 		if (ControlMode == ControlTypes::KeyboardAndMouse && GetSpellData(spellID).isTargeted()) {
 			prepareSpellID = spellID;
 		} else {
@@ -4526,6 +4581,12 @@ void UseItem(Player &player, item_misc_id mid, SpellID spellID, int spellFrom)
 	}
 
 	if (prepareSpellID) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+			TryServerBackedConsumableCast(player, spellFrom);
+			return;
+		}
+#endif
 		assert(IsValidSpellFrom(spellFrom));
 		player.inventorySpell = *prepareSpellID;
 		player.spellFrom = spellFrom;

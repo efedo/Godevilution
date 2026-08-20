@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   authoritative cast protocol with their stable consumable source reference;
   legacy spell commands remain available outside server-backed sessions.
 
+- Route connected native direct scroll and rune item use through the same
+  authoritative cast path, including non-keyboard controls and exact source
+  references; legacy item spell commands remain available in compatibility mode.
+
 - Add an additive target-cell movement intent backed by the shared deterministic
   grid-navigation primitive. Connected native cursor walking and repeated
   dungeon walking now submit server-owned target cells; the legacy directional
