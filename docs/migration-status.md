@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,388, Server 412, and Godot protocol 145. These counts are a dated
+1,401, Server 412, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -532,8 +532,8 @@ future run.
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
-  blockers are destroyed before the ball is removed. The Release Diablo suite
-  passes all 1,388 tests and the Release server suite passes all 381 tests.
+  blockers are destroyed before the ball is removed. The current Release Diablo
+  suite passes all 1,401 tests and the Release server suite passes all 412 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
