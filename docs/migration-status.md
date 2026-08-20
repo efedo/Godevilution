@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,403, Server 412, and Godot protocol 145. These counts are a dated
+1,406, Server 412, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -389,6 +389,12 @@ future run.
   projectile atomically, covering the multi-effect shape needed by authored
   set-piece books.
 
+- Schema 1.373 allows a direct `WorldMutation` object to use the existing
+  follow-up metadata for one validated Phasing or Guardian projectile. The
+  server applies the cell overlay and projectile in one accepted operation,
+  extending the authored set-piece boundary without inventing native tile
+  data; exact map replacement and resynchronization remain separate work.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not
@@ -539,7 +545,7 @@ future run.
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The current Release Diablo
-  suite passes all 1,403 tests and the Release server suite passes all 412 tests.
+  suite passes all 1,406 tests and the Release server suite passes all 412 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;

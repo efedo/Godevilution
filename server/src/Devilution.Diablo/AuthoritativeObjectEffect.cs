@@ -20,7 +20,7 @@ public enum AuthoritativeObjectEffectKind
     GrantSpellLevelAndSpawnProjectile,
 }
 
-/** Optional server-owned effect applied after a valid quest-sequence step. */
+/** Optional server-owned effect applied after a valid quest step or world mutation. */
 public enum AuthoritativeQuestSequenceFollowUpKind
 {
     None,

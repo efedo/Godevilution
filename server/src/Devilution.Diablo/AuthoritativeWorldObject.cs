@@ -141,7 +141,7 @@ public sealed class AuthoritativeWorldObject
     public int ProjectileTargetOffsetX { get; set; }
 
     public int ProjectileTargetOffsetY { get; set; }
-    /** Optional effect applied only after a valid ordered quest-sequence step. */
+    /** Optional effect applied after a valid quest step or direct world mutation. */
     public AuthoritativeQuestSequenceFollowUpKind QuestSequenceFollowUpKind { get; set; }
 
     public uint QuestSequenceFollowUpAmount { get; set; }
@@ -265,9 +265,14 @@ public sealed class AuthoritativeWorldObject
         int offsetX,
         int offsetY)
     {
+        var allowsQuestSequenceFollowUp = effectKind == AuthoritativeObjectEffectKind.QuestSequence;
+        var allowsWorldMutationProjectileFollowUp = effectKind
+            == AuthoritativeObjectEffectKind.WorldMutation
+            && followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile;
         if (!Enum.IsDefined(followUpKind)
-            || effectKind != AuthoritativeObjectEffectKind.QuestSequence
-            && followUpKind != AuthoritativeQuestSequenceFollowUpKind.None
+            || (!allowsQuestSequenceFollowUp
+                && !allowsWorldMutationProjectileFollowUp
+                && followUpKind != AuthoritativeQuestSequenceFollowUpKind.None)
             || offsetX is < -32 or > 32
             || offsetY is < -32 or > 32) {
             return false;

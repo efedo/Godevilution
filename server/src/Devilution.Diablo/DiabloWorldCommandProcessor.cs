@@ -1078,6 +1078,7 @@ public sealed class DiabloWorldCommandProcessor
         ApplyQuestTransition(@object);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
             world.ApplyWorldMutation((uint)@object.EffectAmount);
+            ApplyAuthoredObjectFollowUp(@object, player);
         }
 
         SpawnObjectReward(@object, player);
@@ -1469,7 +1470,7 @@ public sealed class DiabloWorldCommandProcessor
                 nextQuest.Active = true;
             }
         }
-        ApplyQuestSequenceFollowUp(@object, player);
+        ApplyAuthoredObjectFollowUp(@object, player);
         return quest.MessageId == 0
             ? DiabloWorldIntentResult.Accepted
             : DiabloWorldIntentResult.AcceptedWith(
@@ -1483,7 +1484,8 @@ public sealed class DiabloWorldCommandProcessor
                 });
     }
 
-    private void ApplyQuestSequenceFollowUp(
+    /** Applies a validated follow-up after a quest step or direct world mutation. */
+    private void ApplyAuthoredObjectFollowUp(
         AuthoritativeWorldObject @object,
         AuthoritativePlayerState player)
     {
@@ -1493,14 +1495,14 @@ public sealed class DiabloWorldCommandProcessor
         case AuthoritativeQuestSequenceFollowUpKind.WorldMutation:
             if (!world.ApplyWorldMutation(@object.QuestSequenceFollowUpAmount))
                 throw new InvalidDataException(
-                    $"Object quest-sequence follow-up references unknown world mutation {@object.QuestSequenceFollowUpAmount}.");
+                    $"Object authored follow-up references unknown world mutation {@object.QuestSequenceFollowUpAmount}.");
             return;
         case AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile:
             SpawnObjectSpellProjectile(@object, player);
             return;
         default:
             throw new InvalidDataException(
-                $"Object quest-sequence follow-up kind '{@object.QuestSequenceFollowUpKind}' is unsupported.");
+                $"Object authored follow-up kind '{@object.QuestSequenceFollowUpKind}' is unsupported.");
         }
     }
 

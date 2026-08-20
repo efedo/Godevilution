@@ -9,6 +9,11 @@ All notable changes to this fork are documented below.
   Phasing or Guardian projectile atomically. Bump the Diablo content schema to
   1.372.
 
+- Allow a direct `WorldMutation` object to apply a validated cell overlay and
+  then spawn one authored Phasing or Guardian projectile through its existing
+  follow-up metadata. This covers the native set-piece interaction shape
+  without hard-coding map data. Bump the Diablo content schema to 1.373.
+
 - Allow `world_mutations.tsv` to target generated native set-level variants by
   stable set-level identity and active/pre-map selection; validate those cell
   overlays after set-level geometry materialization. Bump the Diablo content

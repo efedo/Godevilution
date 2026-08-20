@@ -256,6 +256,9 @@ only presents the updated player snapshot and does not mutate spell state. The
 `SpawnSpellProjectile` effect extends that boundary for authored Phasing and
 Guardian controller rows: the server validates the spell behavior, creates
 the resumable projectile, and the client only presents its projected state.
+A direct `WorldMutation` object may now apply its validated cell overlay and
+follow it with one authored Phasing or Guardian projectile, matching the native
+multi-effect set-piece shape without client-side gameplay logic.
 Optional target offsets are also server-owned metadata, so native book-relative
 coordinates can be authored without client-side gameplay. Set-level placement
 and map effects remain content seams still being filled from native data; the
@@ -284,7 +287,8 @@ explicit migration seams, not server-authority claims:
   now clone a validated `objects.tsv` behavior template, and the generic
   `GrantSpellLevel`, `SpawnSpellProjectile`, and
   `GrantSpellLevelAndSpawnProjectile` effects cover reusable spell-level and
-  Phasing/Guardian-controller transitions; exact native
+  Phasing/Guardian-controller transitions, and a direct `WorldMutation` can chain
+  one projectile follow-up; exact native
   placement, target offsets, and map effects remain. The existing Na-Krul
   `QuestSequence` row is not a substitute for those remaining semantics.
 - Quest-specific set-piece mutation and resynchronization remains native,
