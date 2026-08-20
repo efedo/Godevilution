@@ -253,7 +253,8 @@ public sealed class AuthoritativeWorldObject
     {
         if (offsetX is < -32 or > 32 || offsetY is < -32 or > 32)
             return false;
-        return effectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+        return effectKind is AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
             || offsetX == 0 && offsetY == 0;
     }
 
@@ -300,7 +301,8 @@ public static class AuthoritativeWorldObjectCatalog
             if (!world.ContainsPosition(@object.LevelId, @object.PositionX, @object.PositionY))
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} contains a position outside its level.");
-            if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            if (@object.EffectKind is AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                    or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
                 && !world.ContainsPosition(
                     @object.LevelId,
                     checked(@object.PositionX + @object.ProjectileTargetOffsetX),
@@ -403,7 +405,8 @@ public static class AuthoritativeWorldObjectCatalog
                 $"Object table '{sourcePath}' contains an invalid quest-item completion object.");
         if (definitions.Any(@object => @object.EffectKind is
                 (AuthoritativeObjectEffectKind.GrantSpellLevel
-                or AuthoritativeObjectEffectKind.SpawnSpellProjectile)
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
                 && @object.EffectAmount <= 0))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid spell effect object.");
@@ -496,18 +499,21 @@ public static class AuthoritativeWorldObjectCatalog
         foreach (var @object in objects.Where(@object => @object.EffectKind is
                      AuthoritativeObjectEffectKind.GrantSpellLevel
                      or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                     or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
                      || @object.QuestSequenceFollowUpKind
                          == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile)) {
             var spellId = @object.EffectKind is
                     AuthoritativeObjectEffectKind.GrantSpellLevel
                     or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                    or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
                 ? checked((uint)@object.EffectAmount)
                 : @object.QuestSequenceFollowUpAmount;
             if (!spells.TryGet(spellId, out var spell))
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unknown spell {spellId}.");
-            if ((@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
-                    || @object.QuestSequenceFollowUpKind
+            if ((@object.EffectKind is AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                    or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
+                || @object.QuestSequenceFollowUpKind
                         == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile)
                 && !IsSupportedSpellProjectile(spell)) {
                 throw new InvalidDataException(
@@ -614,11 +620,13 @@ public static class AuthoritativeWorldObjectCatalog
                 $"Object row {row.LineNumber} supplies effect_item_symbol for effect kind '{effectKind}'.");
         if (spellSymbol.Length > 0 && effectKind is not (
                 AuthoritativeObjectEffectKind.GrantSpellLevel
-                or AuthoritativeObjectEffectKind.SpawnSpellProjectile))
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile))
             throw new InvalidDataException(
                 $"Object row {row.LineNumber} supplies effect_spell_symbol for effect kind '{effectKind}'.");
         if (effectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
-                or AuthoritativeObjectEffectKind.SpawnSpellProjectile)
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
             return checked((int)AuthoritativeSpellIdentity.ResolveOptional(
                 row,
                 stableIds,

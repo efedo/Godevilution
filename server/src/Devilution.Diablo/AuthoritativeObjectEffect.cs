@@ -16,6 +16,8 @@ public enum AuthoritativeObjectEffectKind
     GrantSpellLevel,
     /** Spawns one validated server-owned spell projectile at the object position. */
     SpawnSpellProjectile,
+    /** Grants one spell level and spawns that spell's validated projectile. */
+    GrantSpellLevelAndSpawnProjectile,
 }
 
 /** Optional server-owned effect applied after a valid quest-sequence step. */

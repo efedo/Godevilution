@@ -1081,9 +1081,11 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         SpawnObjectReward(@object, player);
-        if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
+        if (@object.EffectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
             ApplyGrantedSpellLevel(player, checked((uint)@object.EffectAmount));
-        if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile)
+        if (@object.EffectKind is AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
             SpawnObjectSpellProjectile(@object, player);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
             || @object.EffectAmount <= 0)
@@ -1156,10 +1158,14 @@ public sealed class DiabloWorldCommandProcessor
 
     private bool CanApplyObjectSpellEffect(AuthoritativeWorldObject @object)
     {
-        if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
-            return @object.EffectAmount > 0
-                && spells?.TryGet(checked((uint)@object.EffectAmount), out _) == true;
-        if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile)
+        if ((@object.EffectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
+            && (spells?.TryGet(checked((uint)@object.EffectAmount), out _) != true
+                || @object.EffectAmount <= 0)) {
+            return false;
+        }
+        if (@object.EffectKind is AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
             return CanSpawnObjectSpellProjectile(
                 @object,
                 checked((uint)@object.EffectAmount),
@@ -1196,7 +1202,10 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeWorldObject @object,
         AuthoritativePlayerState player)
     {
-        var spellId = @object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+        var directProjectile = @object.EffectKind is
+            AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile;
+        var spellId = directProjectile
             ? checked((uint)@object.EffectAmount)
             : @object.QuestSequenceFollowUpAmount;
         if (spells is null || !spells.TryGet(spellId, out var spell)) {
@@ -1206,10 +1215,10 @@ public sealed class DiabloWorldCommandProcessor
 
         var projectileEntityId = AllocateAuthoredProjectileEntityId();
         var sourceEntityId = player.EntityId == 0 ? 1U : player.EntityId;
-        var offsetX = @object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+        var offsetX = directProjectile
             ? @object.ProjectileTargetOffsetX
             : @object.QuestSequenceFollowUpOffsetX;
-        var offsetY = @object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+        var offsetY = directProjectile
             ? @object.ProjectileTargetOffsetY
             : @object.QuestSequenceFollowUpOffsetY;
         var targetX = checked(@object.PositionX + offsetX);

@@ -182,6 +182,25 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectTableLoadsCompositeSpellGrantAndProjectileEffect()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "guardian", 7),
+        ]);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\n"
+                + "20\t4\t1\t1\t0\tGrantSpellLevelAndSpawnProjectile\t0\tguardian\t1\t0\n",
+            stableIds));
+
+        Assert.Equal(
+            AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile,
+            @object.EffectKind);
+        Assert.Equal(7, @object.EffectAmount);
+        Assert.Equal((1, 0), (@object.ProjectileTargetOffsetX, @object.ProjectileTargetOffsetY));
+    }
+
+    [Fact]
     public void ObjectTableLoadsQuestSequenceFollowUp()
     {
         var stableIds = new StableContentIdCatalog([
@@ -286,6 +305,49 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.Equal(2, projectile.PositionX);
         Assert.Equal(0, projectile.PositionY);
         Assert.Equal(2U, projectile.RemainingTicks);
+        Assert.True(@object.Activated);
+    }
+
+    [Fact]
+    public void CompositeObjectEffectGrantsSpellAndSpawnsProjectileAtomically()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            41,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile,
+            effectAmount: 7,
+            projectileTargetOffsetX: 1,
+            projectileTargetOffsetY: 0);
+        var world = new DiabloWorldState(geometry, objects: [@object]);
+        var player = CreatePlayer();
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+                ProjectileLifetime = 2,
+                PhasingMinimumAxisOffset = 1,
+                PhasingMaximumAxisOffset = 1,
+            },
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(world, spells: spells).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(new MemorizedSpellState(7, 1), Assert.Single(player.MemorizedSpells));
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Phasing, projectile.Behavior);
+        Assert.Equal(7U, projectile.SpellId);
+        Assert.Equal((2, 0), (projectile.PositionX, projectile.PositionY));
         Assert.True(@object.Activated);
     }
 

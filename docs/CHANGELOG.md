@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the validated `GrantSpellLevelAndSpawnProjectile` object effect so one
+  authored interaction can grant a spell level and spawn its server-owned
+  Phasing or Guardian projectile atomically. Bump the Diablo content schema to
+  1.372.
+
 - Allow `world_mutations.tsv` to target generated native set-level variants by
   stable set-level identity and active/pre-map selection; validate those cell
   overlays after set-level geometry materialization. Bump the Diablo content

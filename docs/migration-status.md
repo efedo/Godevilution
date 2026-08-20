@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,401, Server 412, and Godot protocol 145. These counts are a dated
+1,403, Server 412, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -383,6 +383,12 @@ future run.
   after set-level geometry materialization, enabling authored set-piece cell
   overlays while retaining ordinary level targets.
 
+- Schema 1.372 adds the composite
+  `GrantSpellLevelAndSpawnProjectile` object effect. One validated server-owned
+  interaction can now grant a spell level and create its Phasing or Guardian
+  projectile atomically, covering the multi-effect shape needed by authored
+  set-piece books.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not
@@ -533,7 +539,7 @@ future run.
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The current Release Diablo
-  suite passes all 1,401 tests and the Release server suite passes all 412 tests.
+  suite passes all 1,403 tests and the Release server suite passes all 412 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;

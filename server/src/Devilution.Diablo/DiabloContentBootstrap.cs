@@ -514,6 +514,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (objectDefinitions.Any(@object => @object.EffectKind is
                 AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
                 || @object.QuestSequenceFollowUpKind
                     == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) == true
             && spells is null) {

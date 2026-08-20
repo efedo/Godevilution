@@ -282,8 +282,9 @@ explicit migration seams, not server-authority claims:
   Betrayer, Halls of the Blind, and Blood-goal book branches. These require
   authored set-level placement plus projectile/map effects. Set-level rows can
   now clone a validated `objects.tsv` behavior template, and the generic
-  `GrantSpellLevel` and `SpawnSpellProjectile` effects cover reusable
-  spell-level and Phasing/Guardian-controller transitions; exact native
+  `GrantSpellLevel`, `SpawnSpellProjectile`, and
+  `GrantSpellLevelAndSpawnProjectile` effects cover reusable spell-level and
+  Phasing/Guardian-controller transitions; exact native
   placement, target offsets, and map effects remain. The existing Na-Krul
   `QuestSequence` row is not a substitute for those remaining semantics.
 - Quest-specific set-piece mutation and resynchronization remains native,
