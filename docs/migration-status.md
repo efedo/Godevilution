@@ -37,10 +37,12 @@ future run.
   without inserting those players into native simulation pools, and projects
   authoritative spell families plus weapon/shield/armor slots into native
   sprite variants, and positions action animations from authoritative snapshot
-  and action ticks. Same-level friendly remote projections also draw on the
-  native automap and party panel, with party-panel hover and right-click
-  inspection routed by authoritative entity ID; interpolation and remaining
-  legacy interaction parity remain follow-up seams.
+  and action ticks. One-tile authoritative walk destinations now populate the
+  native future position so the existing renderer can interpolate remote walks
+  without local movement simulation. Same-level friendly remote projections
+  also draw on the native automap and party panel, with party-panel hover and
+  right-click inspection routed by authoritative entity ID; correction buffering
+  and remaining legacy interaction parity remain follow-up seams.
 
 - Connected native Town Portal collision now resolves the projected portal ID
   for the local authoritative level and submits `UsePortal`; disconnected

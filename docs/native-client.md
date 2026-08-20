@@ -82,10 +82,13 @@ modes now select the matching native presentation family, authoritative spell
 actions select Fire, Lightning, or Magic families, and authoritative
 weapon/shield/armor slots select native sprite variants, and action animations
 are positioned from authoritative snapshot and action ticks. Same-level friendly
-remote projections also draw on the native automap and party panel. Party-panel
-hover and right-click inspection now resolve through authoritative entity IDs,
-and the inspected presentation player receives authoritative stats, spells, and
-item layout. Interpolation and remaining legacy interaction parity remain
+remote projections also draw on the native automap and party panel. Authoritative
+one-tile walk destinations now populate each remote presentation player's native
+future position, allowing the existing renderer to interpolate the walk without
+giving the compatibility client movement authority. Party-panel hover and
+right-click inspection now resolve through authoritative entity IDs, and the
+inspected presentation player receives authoritative stats, spells, and item
+layout. Correction buffering and remaining legacy interaction parity remain
 separate migrations.
 
 The server now projects the selected class's content-defined wallet, starting

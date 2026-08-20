@@ -301,6 +301,15 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 		static_cast<WorldTileCoord>(snapshot.positionY),
 	};
 	player.position.future = player.position.tile;
+	if (snapshot.currentAction.has_value() && snapshot.currentAction->kind == 1
+	    && snapshot.currentAction->directionX >= -1 && snapshot.currentAction->directionX <= 1
+	    && snapshot.currentAction->directionY >= -1 && snapshot.currentAction->directionY <= 1
+	    && (snapshot.currentAction->directionX != 0 || snapshot.currentAction->directionY != 0)) {
+		player.position.future += Displacement {
+		    static_cast<int8_t>(snapshot.currentAction->directionX),
+		    static_cast<int8_t>(snapshot.currentAction->directionY),
+		};
+	}
 	player.position.last = player.position.tile;
 	player.position.old = player.position.tile;
 	player.position.temp = player.position.tile;
@@ -803,6 +812,16 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		if (snapshot.entityId == 0 || snapshot.entityId == localEntityId
 		    || !IsValidPlayerClass(snapshot.characterClassId)) {
 			continue;
+		}
+		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
+			return tl::make_unexpected("Authoritative remote player position cannot be represented by the native world tile type.");
+		if (snapshot.currentAction.has_value() && snapshot.currentAction->kind == 1) {
+			const auto &action = *snapshot.currentAction;
+			if (action.directionX < -1 || action.directionX > 1
+			    || action.directionY < -1 || action.directionY > 1
+			    || (action.directionX == 0 && action.directionY == 0)
+			    || !IsValidWorldPosition(snapshot.positionX + action.directionX, snapshot.positionY + action.directionY))
+				return tl::make_unexpected("Authoritative remote player walk destination cannot be represented by the native world tile type.");
 		}
 		retainedRemotePlayers.insert(snapshot.entityId);
 		auto [it, inserted] = remotePlayers_.try_emplace(snapshot.entityId);

@@ -650,6 +650,61 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePosition)
+{
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.positionX = 12;
+	remote.positionY = 13;
+	remote.combatMode = PM_WALK_SOUTHWARDS;
+	remote.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.directionX = 1,
+		.directionY = -1,
+	};
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+
+	const Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_EQ(remotePlayer->position.tile, (WorldTilePosition { 12, 13 }));
+	EXPECT_EQ(remotePlayer->position.future, (WorldTilePosition { 13, 12 }));
+
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsRemoteWalkDestinationOutsideNativeDungeon)
+{
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.positionX = 0;
+	remote.positionY = 0;
+	remote.combatMode = PM_WALK_SOUTHWARDS;
+	remote.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.directionX = -1,
+	};
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	const auto result = presentation.Apply(projection, 1, { local, remote }, 1);
+
+	ASSERT_FALSE(result.has_value());
+	EXPECT_EQ(result.error(), "Authoritative remote player walk destination cannot be represented by the native world tile type.");
+
+	presentation.Clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, PlacesRemoteAnimationAtAuthoritativeActionTick)
 {
 	LoadPlayerDataFiles();

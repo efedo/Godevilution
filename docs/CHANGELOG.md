@@ -12,8 +12,11 @@ All notable changes to this fork are documented below.
   list, position action animations from authoritative snapshot ticks, draw
   same-level friendly remote projections on the native automap and remote
   party-panel portraits, route party-panel hover/right-click inspection by
-  authoritative entity ID, project inspection stats/spells/item layout, and add
-  coverage for retaining, removing, timing, and mapping the projected state.
+  authoritative entity ID, project inspection stats/spells/item layout, project
+  authoritative one-tile walk destinations into native future positions for
+  renderer interpolation without local movement simulation, reject invalid
+  remote walk destinations, and add coverage for retaining, removing, timing,
+  movement, and mapping the projected state.
 
 - Add an in-client Godot character setup form. When no resume token or complete
   class/name identity is supplied, the client now collects the identity and
