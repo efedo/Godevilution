@@ -617,6 +617,31 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerCombatModesToNativeGraphics)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.life = 640;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Stand);
+
+	snapshot.combatMode = PM_WALK_NORTHWARDS;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Walk);
+	snapshot.combatMode = PM_ATTACK;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Attack);
+	snapshot.combatMode = PM_RATTACK;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Attack);
+	snapshot.combatMode = PM_BLOCK;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Block);
+	snapshot.combatMode = PM_GOTHIT;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Hit);
+	snapshot.combatMode = PM_SPELL;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Magic);
+	snapshot.combatMode = PM_DEATH;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Death);
+	snapshot.combatMode = PM_STAND;
+	snapshot.life = 0;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Death);
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
 {
 	LoadMissileData();

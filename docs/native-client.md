@@ -77,8 +77,10 @@ The compatibility layer now retains presentation-only remote-player objects
 from participant snapshots and draws current-level sprites directly from the
 authoritative positions. These objects never enter the native `Players`
 simulation pool, so they cannot run local AI, movement, collision, or damage
-logic. Equipment-driven sprites, action animation parity, party-panel details,
-and automap parity remain separate presentation migrations.
+logic. Their authoritative walk, attack, ranged, block, hit, spell, and death
+modes now select the matching native presentation family; exact spell-specific
+frames, equipment-driven sprites, party-panel details, and automap parity
+remain separate presentation migrations.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,

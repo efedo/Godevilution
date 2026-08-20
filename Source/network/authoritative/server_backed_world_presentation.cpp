@@ -49,6 +49,33 @@ void InitializeRemotePlayer(Player &player, uint32_t characterClassId)
 	player.initGraphics();
 }
 
+player_graphic GetRemotePlayerGraphicInternal(const ProjectedPlayerSnapshot &snapshot)
+{
+	if (snapshot.life <= 0 || snapshot.combatMode == PM_DEATH)
+		return player_graphic::Death;
+
+	switch (snapshot.combatMode) {
+	case PM_WALK_NORTHWARDS:
+	case PM_WALK_SOUTHWARDS:
+	case PM_WALK_SIDEWAYS:
+		return player_graphic::Walk;
+	case PM_ATTACK:
+	case PM_RATTACK:
+		return player_graphic::Attack;
+	case PM_BLOCK:
+		return player_graphic::Block;
+	case PM_GOTHIT:
+		return player_graphic::Hit;
+	case PM_SPELL:
+		// The authoritative action identifies the spell and its effects. The
+		// native class-specific spell graphic is a later equipment/content seam;
+		// Magic is the safe presentation family for every current spell.
+		return player_graphic::Magic;
+	default:
+		return player_graphic::Stand;
+	}
+}
+
 void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
 {
 	player.position.tile = {
@@ -64,10 +91,10 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	    ? static_cast<Direction>(snapshot.facingDirection)
 	    : Direction::South;
 	player._pBlockFlag = snapshot.combatMode == 6;
-	player._pmode = snapshot.life <= 0 || snapshot.combatMode == 8
+	player._pmode = snapshot.life <= 0 || snapshot.combatMode == PM_DEATH
 	    ? PM_DEATH
-	    : PM_STAND;
-	player.setAnimation(player._pmode == PM_DEATH ? player_graphic::Death : player_graphic::Stand, player.direction);
+	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode) : PM_STAND;
+	player.setAnimation(GetRemotePlayerGraphicInternal(snapshot), player.direction);
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
@@ -401,6 +428,11 @@ void RemoveMappedObject(int objectSlot)
 }
 
 } // namespace
+
+player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot)
+{
+	return GetRemotePlayerGraphicInternal(snapshot);
+}
 
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const ServerBackedWorldProjection &projection,

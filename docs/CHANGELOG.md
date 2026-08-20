@@ -6,7 +6,9 @@ All notable changes to this fork are documented below.
 
 - Add presentation-only native remote-player sprites from authoritative
   snapshots without inserting remote players into the native simulation pool;
-  add coverage for retaining and removing the projected presentation state.
+  consume authoritative walk/attack/block/hit/spell/death modes for native
+  graphic selection; add coverage for retaining, removing, and mapping the
+  projected presentation state.
 
 - Add an in-client Godot character setup form. When no resume token or complete
   class/name identity is supplied, the client now collects the identity and
