@@ -86,6 +86,12 @@ Status date: 2026-08-20
   monster entity through the authoritative cast path; the legacy cursor helper
   remains active for disconnected and legacy sessions.
 
+- The shared protocol now carries an additive target-cell movement intent. The
+  Diablo module resolves one deterministic server-owned path step through the
+  Engine navigation primitive, and connected native cursor walking plus
+  repeated dungeon walking use it; legacy directional and auto-path commands
+  remain available for compatibility paths.
+
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Adjacent primary native

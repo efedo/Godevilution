@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an additive target-cell movement intent backed by the shared deterministic
+  grid-navigation primitive. Connected native cursor walking and repeated
+  dungeon walking now submit server-owned target cells; the legacy directional
+  and auto-path commands remain available for compatibility paths.
+
 - Route connected native mouse entity-targeted monster/player attacks and
   ordinary object operations through authoritative entity references, including
   repeated actions. Add an additive cell-targeted attack intent that preserves

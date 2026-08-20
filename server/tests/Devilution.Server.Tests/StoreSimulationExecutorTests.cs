@@ -1132,6 +1132,53 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void TargetedMovementUsesTheAuthoritativeDeterministicFirstStep()
+    {
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingPositionX: 1,
+            startingPositionY: 1,
+            startingLife: 40,
+            startingLifeMaximum: 60,
+            startingCharacterLevel: 3);
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 5,
+            MoveRequested = new MoveRequested {
+                TargetCell = true,
+                TargetX = 4,
+                TargetY = 1,
+            },
+        }, 5);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = Assert.Single(executor.CreateSnapshot("player-a", 7, 5).Players);
+        Assert.Equal((2, 1), (player.PositionX, player.PositionY));
+    }
+
+    [Fact]
+    public void TargetedMovementRejectsAnOutOfBoundsCell()
+    {
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingPositionX: 1,
+            startingPositionY: 1);
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 5,
+            MoveRequested = new MoveRequested {
+                TargetCell = true,
+                TargetX = -1,
+                TargetY = 1,
+            },
+        }, 5);
+
+        Assert.Equal(CommandRejectReason.InvalidTarget, result.RejectReason);
+    }
+
+    [Fact]
     public void HealingCastConsumesManaAndCannotExceedLifeMaximum()
     {
         var executor = new StoreSimulationExecutor(

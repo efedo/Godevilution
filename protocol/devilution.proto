@@ -137,6 +137,11 @@ message Command {
 message MoveRequested {
 	int32 direction_x = 1;
 	int32 direction_y = 2;
+	// Additive target-cell movement preserves native CMD_WALKXY auto-pathing;
+	// zero-valued direction fields remain the original one-step intent.
+	int32 target_x = 3;
+	int32 target_y = 4;
+	bool target_cell = 5;
 }
 
 message RestartTownRequested {}

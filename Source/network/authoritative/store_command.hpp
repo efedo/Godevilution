@@ -70,6 +70,7 @@ struct ServerBackedCastSource {
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAutoEquipItemCommand(ServerBackedItemReference item, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAutoEquipItemCommand(ServerBackedItemReference item, uint32_t equipmentSlot, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveCommand(int32_t directionX, int32_t directionY, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveToCommand(int32_t targetX, int32_t targetY, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAttackCommand(uint32_t targetEntityId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAttackAtCommand(int32_t targetX, int32_t targetY, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(uint32_t spellId, uint32_t targetEntityId, uint64_t requestedTick);

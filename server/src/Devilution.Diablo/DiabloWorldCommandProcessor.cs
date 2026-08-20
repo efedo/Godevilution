@@ -1,4 +1,5 @@
 using Devilution.Domain.Inventory;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -90,6 +91,7 @@ public sealed class DiabloWorldCommandProcessor
 
         return intent switch {
             DiabloMoveIntent move => Move(player, move, appliedTick, players),
+            DiabloMoveToIntent moveTo => MoveTo(player, moveTo, appliedTick, players),
             DiabloUsePortalIntent portal => UsePortal(
                 player,
                 portal.PortalId,
@@ -523,6 +525,56 @@ public sealed class DiabloWorldCommandProcessor
         if (levelTrigger.Succeeded)
             return levelTrigger;
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Applies one server-owned deterministic path step toward a native walk target. */
+    private DiabloWorldIntentResult MoveTo(
+        AuthoritativePlayerState player,
+        DiabloMoveToIntent intent,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players)
+    {
+        if (!world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (player.PositionX == intent.TargetX && player.PositionY == intent.TargetY)
+            return DiabloWorldIntentResult.Accepted;
+
+        var participants = players.ToArray();
+        var targetOccupied = world.IsOccupied(
+            player.LevelId,
+            intent.TargetX,
+            intent.TargetY,
+            participants,
+            player.EntityId);
+        var targetDistance = Math.Max(
+            Math.Abs(intent.TargetX - player.PositionX),
+            Math.Abs(intent.TargetY - player.PositionY));
+        if (targetOccupied && targetDistance <= 1)
+            return DiabloWorldIntentResult.Accepted;
+
+        var step = DeterministicGridNavigation.FindStep(
+            player.PositionX,
+            player.PositionY,
+            intent.TargetX,
+            intent.TargetY,
+            maximumDepth: 100,
+            isWalkable: (x, y) => world.IsWalkable(player.LevelId, x, y),
+            isOccupied: (x, y) => world.IsOccupied(
+                player.LevelId,
+                x,
+                y,
+                participants,
+                player.EntityId));
+        if (!step.HasValue)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        return Move(
+            player,
+            new DiabloMoveIntent(
+                step.Value.X - player.PositionX,
+                step.Value.Y - player.PositionY),
+            appliedTick,
+            participants);
     }
 
     private static DiabloPlayerCombatMode GetWalkMode(int directionX, int directionY)

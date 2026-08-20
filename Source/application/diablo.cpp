@@ -288,6 +288,13 @@ void LeftMouseCmd(bool bShift)
 			NetSendCmdLocParam1(true, CMD_TALKXY, cursPosition, pcursmonst);
 		if (pcursitem == -1 && pcursmonst == -1 && PlayerUnderCursor == nullptr) {
 			LastPlayerAction = PlayerActionType::Walk;
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed town walk-to-target failed: {}", result.error());
+				return;
+			}
+	#endif
 			NetSendCmdLoc(MyPlayerId, true, CMD_WALKXY, cursPosition);
 		}
 		return;
@@ -434,6 +441,13 @@ void LeftMouseCmd(bool bShift)
 	}
 	if (!bShift && pcursitem == -1 && ObjectUnderCursor == nullptr && pcursmonst == -1 && PlayerUnderCursor == nullptr) {
 		LastPlayerAction = PlayerActionType::Walk;
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+				LogError("Server-backed walk-to-target failed: {}", result.error());
+			return;
+		}
+	#endif
 		NetSendCmdLoc(MyPlayerId, true, CMD_WALKXY, cursPosition);
 	}
 }

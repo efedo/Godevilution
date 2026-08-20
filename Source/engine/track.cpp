@@ -39,6 +39,13 @@ void RepeatWalk(Player &player)
 	if (cursPosition == target)
 		return;
 
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+			LogError("Server-backed repeated walk-to-target failed: {}", result.error());
+		return;
+	}
+	#endif
 	NetSendCmdLoc(MyPlayerId, true, CMD_WALKXY, cursPosition);
 }
 

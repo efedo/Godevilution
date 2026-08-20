@@ -274,9 +274,13 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 Command.IntentOneofCase.MoveRequested => ExecuteWorldIntent(
                     player,
                     participants,
-                    new DiabloMoveIntent(
-                        command.MoveRequested.DirectionX,
-                        command.MoveRequested.DirectionY),
+                    command.MoveRequested.TargetCell
+                        ? new DiabloMoveToIntent(
+                            command.MoveRequested.TargetX,
+                            command.MoveRequested.TargetY)
+                        : new DiabloMoveIntent(
+                            command.MoveRequested.DirectionX,
+                            command.MoveRequested.DirectionY),
                     appliedTick),
                 Command.IntentOneofCase.CastRequested => ExecuteCastIntent(
                     player,

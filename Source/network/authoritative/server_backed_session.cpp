@@ -169,6 +169,11 @@ tl::expected<void, std::string> ServerBackedSession::Move(int32_t directionX, in
 	return SubmitGameplayCommand(MakeMoveCommand(directionX, directionY, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::MoveTo(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeMoveToCommand(targetX, targetY, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::Attack(uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeAttackCommand(targetEntityId, requestedTick), nowMs);

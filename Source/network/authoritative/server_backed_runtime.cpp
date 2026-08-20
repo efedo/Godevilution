@@ -462,6 +462,17 @@ tl::expected<void, std::string> ServerBackedRuntime::Move(int32_t directionX, in
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::MoveTo(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->MoveTo(targetX, targetY, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::Attack(uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)

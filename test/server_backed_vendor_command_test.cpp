@@ -227,6 +227,7 @@ TEST(ServerBackedVendorCommand, BuildsStableAutoEquipIntent)
 TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 {
 	const auto move = MakeMoveCommand(1, -1, 20);
+	const auto moveTo = MakeMoveToCommand(4, 5, 20);
 	const auto attack = MakeAttackCommand(9, 21);
 	const auto cast = MakeCastCommand(2, 7, 22);
 	const auto portal = MakeUsePortalCommand(4, 23);
@@ -240,6 +241,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	const auto friendlyMode = MakeSetFriendlyModeCommand(false, 27);
 	const auto restartTown = MakeRestartTownCommand(28);
 	ASSERT_TRUE(move.has_value());
+	ASSERT_TRUE(moveTo.has_value());
 	ASSERT_TRUE(attack.has_value());
 	ASSERT_TRUE(cast.has_value());
 	ASSERT_TRUE(portal.has_value());
@@ -254,6 +256,9 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	ASSERT_TRUE(restartTown.has_value());
 	EXPECT_EQ(move->move_requested().direction_x(), 1);
 	EXPECT_EQ(move->move_requested().direction_y(), -1);
+	EXPECT_TRUE(moveTo->move_requested().target_cell());
+	EXPECT_EQ(moveTo->move_requested().target_x(), 4);
+	EXPECT_EQ(moveTo->move_requested().target_y(), 5);
 	EXPECT_EQ(attack->attack_requested().target_entity_id(), 9U);
 	EXPECT_EQ(cast->cast_requested().spell_id(), 2U);
 	EXPECT_EQ(portal->use_portal_requested().portal_id(), 4U);
