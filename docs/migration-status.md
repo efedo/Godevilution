@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,406, Server 412, and Godot protocol 145. These counts are a dated
+1,409, Server 414, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -394,6 +394,11 @@ future run.
   server applies the cell overlay and projectile in one accepted operation,
   extending the authored set-piece boundary without inventing native tile
   data; exact map replacement and resynchronization remain separate work.
+
+- Schema 1.374 adds the optional authored `projectile_source` field. The
+  compatibility default preserves target-origin behavior, while Phasing rows
+  may start from the activating player's tile. Source identity is validated and
+  carried through snapshots, saves, protocol projection, and canonical hashes.
 
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and

@@ -757,6 +757,8 @@ message ObjectSnapshot {
 	uint32 quest_sequence_follow_up_amount = 29;
 	int32 quest_sequence_follow_up_offset_x = 30;
 	int32 quest_sequence_follow_up_offset_y = 31;
+	// Authored projectile origin; zero preserves object-origin compatibility.
+	int32 projectile_source_kind = 32;
 }
 
 enum ObjectPresentationKind {

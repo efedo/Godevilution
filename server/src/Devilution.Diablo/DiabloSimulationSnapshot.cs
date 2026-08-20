@@ -280,6 +280,8 @@ public sealed record DiabloObjectState(
     public int QuestSequenceFollowUpOffsetX { get; init; }
 
     public int QuestSequenceFollowUpOffsetY { get; init; }
+
+    public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -643,6 +645,7 @@ public sealed partial class DiabloSimulation
                     QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount,
                     QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
                     QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
+                    ProjectileSourceKind = @object.ProjectileSourceKind,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -1011,6 +1014,10 @@ public sealed partial class DiabloSimulation
                     @object.QuestSequenceFollowUpAmount,
                     @object.QuestSequenceFollowUpOffsetX,
                     @object.QuestSequenceFollowUpOffsetY)
+                || !AuthoritativeWorldObject.IsValidProjectileSource(
+                    @object.EffectKind,
+                    @object.QuestSequenceFollowUpKind,
+                    @object.ProjectileSourceKind)
                 || (@object.Breakable && @object.MissilePassable)
                 || (@object.Destroyed && !@object.Breakable)) {
                 throw new InvalidDataException(
@@ -2090,6 +2097,7 @@ public sealed partial class DiabloSimulation
                 target.QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount;
                 target.QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX;
                 target.QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY;
+                target.ProjectileSourceKind = @object.ProjectileSourceKind;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2121,7 +2129,8 @@ public sealed partial class DiabloSimulation
                     @object.QuestSequenceFollowUpKind,
                     @object.QuestSequenceFollowUpAmount,
                     @object.QuestSequenceFollowUpOffsetX,
-                    @object.QuestSequenceFollowUpOffsetY));
+                    @object.QuestSequenceFollowUpOffsetY,
+                    @object.ProjectileSourceKind));
             }
         }
     }

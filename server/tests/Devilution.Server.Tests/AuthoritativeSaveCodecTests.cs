@@ -150,6 +150,27 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsObjectProjectileSourceKind()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Objects = [baseline.Objects[0] with {
+                EffectKind = AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+                EffectAmount = 7,
+                ProjectileSourceKind = AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+        var @object = Assert.Single(restored.Objects);
+
+        Assert.Equal(
+            AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+            @object.ProjectileSourceKind);
+    }
+
+    [Fact]
     public void VersionOneRoundTripsObjectQuestSequenceFollowUp()
     {
         var baseline = CreateSnapshot();

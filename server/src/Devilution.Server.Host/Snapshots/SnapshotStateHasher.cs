@@ -549,6 +549,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(@object.ProjectileTargetOffsetX);
                     hasher.AppendInt32(@object.ProjectileTargetOffsetY);
                 }
+                if (@object.ProjectileSourceKind != 0) {
+                    hasher.AppendString("godevilution-object-projectile-source-v1");
+                    hasher.AppendInt32((int)@object.ProjectileSourceKind);
+                }
                 if (@object.QuestSequenceFollowUpKind != 0
                     || @object.QuestSequenceFollowUpAmount != 0
                     || @object.QuestSequenceFollowUpOffsetX != 0

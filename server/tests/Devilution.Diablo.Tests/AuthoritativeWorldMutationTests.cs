@@ -182,6 +182,23 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectTableLoadsActivatingPlayerProjectileSource()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "phasing", 7),
+        ]);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\teffect_spell_symbol\tprojectile_source\tprojectile_target_offset_x\tprojectile_target_offset_y\n"
+                + "20\t4\t1\t1\t0\tSpawnSpellProjectile\t0\tphasing\tActivatingPlayer\t1\t-2\n",
+            stableIds));
+
+        Assert.Equal(
+            AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+            @object.ProjectileSourceKind);
+    }
+
+    [Fact]
     public void ObjectTableLoadsCompositeSpellGrantAndProjectileEffect()
     {
         var stableIds = new StableContentIdCatalog([
@@ -342,6 +359,45 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.Equal(0, projectile.PositionY);
         Assert.Equal(2U, projectile.RemainingTicks);
         Assert.True(@object.Activated);
+    }
+
+    [Fact]
+    public void ObjectActivationCanSpawnPhasingProjectileFromActivatingPlayer()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+            effectAmount: 7,
+            projectileTargetOffsetX: 1,
+            projectileSourceKind: AuthoritativeObjectProjectileSourceKind.ActivatingPlayer);
+        var world = new DiabloWorldState(geometry, objects: [@object]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+                ProjectileLifetime = 2,
+                PhasingMinimumAxisOffset = 1,
+                PhasingMaximumAxisOffset = 1,
+            },
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(world, spells: spells).Execute(
+            CreatePlayer(),
+            new DiabloOperateObjectIntent(20),
+            1,
+            []);
+
+        Assert.True(result.Succeeded);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((0, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal((2, 0), (projectile.TargetX, projectile.TargetY));
     }
 
     [Fact]
@@ -584,6 +640,53 @@ public sealed class AuthoritativeWorldMutationTests
             AuthoritativeWorldObjectCatalog.ValidateSpellRequirements([@object], spells));
 
         Assert.Contains("unsupported authored projectile behavior", exception.Message);
+    }
+
+    [Fact]
+    public void ObjectCatalogRejectsActivatingPlayerSourceForGuardian()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+            effectAmount: 7,
+            projectileSourceKind: AuthoritativeObjectProjectileSourceKind.ActivatingPlayer);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.GuardianController,
+                RandomDamageRange = 10,
+                MagicDamageDivisor = 8,
+                SpellLevelDamage = 1,
+                DamageBonus = 1,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 1,
+                ManaAdjustment = 2,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 30,
+                ManaCostScale = 64,
+                GuardianDurationTickScale = 16,
+                GuardianMinimumDuration = 30,
+                GuardianMaximumDuration = 30,
+                GuardianCharacterLevelDurationDivisor = 2,
+                GuardianSpawnSearchRadius = 5,
+                GuardianTargetSearchRadius = 6,
+                GuardianFireInterval = 16,
+                GuardianProjectileSpeedLevelStep = 2,
+                GuardianProjectileSpeedMaximumBonus = 47,
+            },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.ValidateSpellRequirements([@object], spells));
+
+        Assert.Contains("only for Phasing", exception.Message);
     }
 
     [Fact]

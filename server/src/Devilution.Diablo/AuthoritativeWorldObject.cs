@@ -35,7 +35,9 @@ public sealed class AuthoritativeWorldObject
         AuthoritativeQuestSequenceFollowUpKind questSequenceFollowUpKind = AuthoritativeQuestSequenceFollowUpKind.None,
         uint questSequenceFollowUpAmount = 0,
         int questSequenceFollowUpOffsetX = 0,
-        int questSequenceFollowUpOffsetY = 0)
+        int questSequenceFollowUpOffsetY = 0,
+        AuthoritativeObjectProjectileSourceKind projectileSourceKind
+            = AuthoritativeObjectProjectileSourceKind.Object)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -106,10 +108,17 @@ public sealed class AuthoritativeWorldObject
                 questSequenceFollowUpOffsetY)) {
             throw new InvalidDataException("Object quest-sequence follow-up values are invalid.");
         }
+        if (!IsValidProjectileSource(
+                effectKind,
+                questSequenceFollowUpKind,
+                projectileSourceKind)) {
+            throw new InvalidDataException("Object projectile source values are invalid.");
+        }
         QuestSequenceFollowUpKind = questSequenceFollowUpKind;
         QuestSequenceFollowUpAmount = questSequenceFollowUpAmount;
         QuestSequenceFollowUpOffsetX = questSequenceFollowUpOffsetX;
         QuestSequenceFollowUpOffsetY = questSequenceFollowUpOffsetY;
+        ProjectileSourceKind = projectileSourceKind;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -149,6 +158,9 @@ public sealed class AuthoritativeWorldObject
     public int QuestSequenceFollowUpOffsetX { get; set; }
 
     public int QuestSequenceFollowUpOffsetY { get; set; }
+
+    /** Authored projectile origin; object-target remains the compatibility default. */
+    public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
     public bool MissilePassable { get; set; }
     public bool Breakable { get; set; }
     public bool Destroyed { get; set; }
@@ -196,7 +208,8 @@ public sealed class AuthoritativeWorldObject
             QuestSequenceFollowUpKind,
             QuestSequenceFollowUpAmount,
             QuestSequenceFollowUpOffsetX,
-            QuestSequenceFollowUpOffsetY);
+            QuestSequenceFollowUpOffsetY,
+            ProjectileSourceKind);
     }
 
     public static bool IsValidQuestTransition(
@@ -287,6 +300,22 @@ public sealed class AuthoritativeWorldObject
             _ => false,
         };
     }
+
+    public static bool IsValidProjectileSource(
+        AuthoritativeObjectEffectKind effectKind,
+        AuthoritativeQuestSequenceFollowUpKind followUpKind,
+        AuthoritativeObjectProjectileSourceKind sourceKind)
+    {
+        if (!Enum.IsDefined(sourceKind))
+            return false;
+        var producesProjectile = effectKind is
+                AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
+            || followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile;
+        return producesProjectile
+            ? true
+            : sourceKind == AuthoritativeObjectProjectileSourceKind.Object;
+    }
 }
 
 /** External object placement and identity definitions. */
@@ -355,6 +384,7 @@ public static class AuthoritativeWorldObjectCatalog
             var templateOnly = row.OptionalBoolean("template_only");
             var effectKind = ParseEffectKind(row);
             var followUpKind = ParseQuestSequenceFollowUpKind(row);
+            var projectileSourceKind = ParseProjectileSourceKind(row);
             return (
                 Object: new AuthoritativeWorldObject(
                     row.RequiredUInt32("entity_id"),
@@ -394,7 +424,8 @@ public static class AuthoritativeWorldObjectCatalog
                     followUpKind,
                     ParseQuestSequenceFollowUpAmount(row, followUpKind, stableIds),
                     row.OptionalInt32("quest_sequence_follow_up_offset_x"),
-                    row.OptionalInt32("quest_sequence_follow_up_offset_y")),
+                    row.OptionalInt32("quest_sequence_follow_up_offset_y"),
+                    projectileSourceKind),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();
@@ -524,6 +555,12 @@ public static class AuthoritativeWorldObjectCatalog
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unsupported authored projectile behavior '{spell.ProjectileBehavior}'.");
             }
+            if (@object.ProjectileSourceKind
+                    == AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
+                && spell.ProjectileBehavior != AuthoritativeProjectileBehavior.Phasing) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} requires ActivatingPlayer projectile source only for Phasing.");
+            }
         }
     }
 
@@ -571,6 +608,21 @@ public static class AuthoritativeWorldObjectCatalog
         }
         throw new InvalidDataException(
             $"Object row {row.LineNumber} contains an unknown quest-sequence follow-up kind '{value}'.");
+    }
+
+    private static AuthoritativeObjectProjectileSourceKind ParseProjectileSourceKind(TsvRow row)
+    {
+        if (!row.TryGet("projectile_source", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "object", StringComparison.OrdinalIgnoreCase)) {
+            return AuthoritativeObjectProjectileSourceKind.Object;
+        }
+        if (Enum.TryParse<AuthoritativeObjectProjectileSourceKind>(value, true, out var kind)
+            && Enum.IsDefined(kind)) {
+            return kind;
+        }
+        throw new InvalidDataException(
+            $"Object row {row.LineNumber} contains an unknown projectile source '{value}'.");
     }
 
     private static AuthoritativeObjectQuestTransitionKind ParseQuestTransitionKind(TsvRow row)

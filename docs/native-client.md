@@ -260,7 +260,9 @@ A direct `WorldMutation` object may now apply its validated cell overlay and
 follow it with one authored Phasing or Guardian projectile, matching the native
 multi-effect set-piece shape without client-side gameplay logic.
 Optional target offsets are also server-owned metadata, so native book-relative
-coordinates can be authored without client-side gameplay. Set-level placement
+coordinates can be authored without client-side gameplay. Authored Phasing rows
+may additionally select the activating player's tile as their projectile origin;
+the compatibility default retains the prior target-origin behavior. Set-level placement
 and map effects remain content seams still being filled from native data; the
 Diablo module now parses native `.dun` layers, native little-endian `.til`
 mega-tile records, and `.sol` tile-property bytes, then exposes an exact

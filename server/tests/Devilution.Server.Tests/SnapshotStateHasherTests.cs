@@ -1689,6 +1689,22 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectProjectileSourceKindChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = {
+                new ObjectSnapshot { EntityId = 20, ObjectId = 4 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Objects[0].ProjectileSourceKind = 1;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void ObjectQuestSequenceFollowUpChangesTheHash()
     {
         var baseline = new Snapshot {

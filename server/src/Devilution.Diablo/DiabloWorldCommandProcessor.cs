@@ -1194,6 +1194,11 @@ public sealed class DiabloWorldCommandProcessor
             || !AuthoritativeWorldObjectCatalog.IsSupportedSpellProjectile(spell)) {
             return false;
         }
+        if (@object.ProjectileSourceKind
+                == AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
+            && spell.ProjectileBehavior != AuthoritativeProjectileBehavior.Phasing) {
+            return false;
+        }
         var targetX = checked(@object.PositionX + offsetX);
         var targetY = checked(@object.PositionY + offsetY);
         return world.ContainsPosition(@object.LevelId, targetX, targetY);
@@ -1224,6 +1229,14 @@ public sealed class DiabloWorldCommandProcessor
             : @object.QuestSequenceFollowUpOffsetY;
         var targetX = checked(@object.PositionX + offsetX);
         var targetY = checked(@object.PositionY + offsetY);
+        var sourceX = @object.ProjectileSourceKind
+            == AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
+            ? player.PositionX
+            : targetX;
+        var sourceY = @object.ProjectileSourceKind
+            == AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
+            ? player.PositionY
+            : targetY;
         var effectiveSpellLevel = player.MemorizedSpells
             .FirstOrDefault(memorized => memorized.SpellId == spell.SpellId)
             ?.Level
@@ -1237,8 +1250,8 @@ public sealed class DiabloWorldCommandProcessor
                     0,
                     spell.SpellId,
                     player.LevelId,
-                    targetX,
-                    targetY,
+                    sourceX,
+                    sourceY,
                     targetX,
                     targetY,
                     0,
@@ -1266,8 +1279,8 @@ public sealed class DiabloWorldCommandProcessor
                 0,
                 spell.SpellId,
                 player.LevelId,
-                targetX,
-                targetY,
+                sourceX,
+                sourceY,
                 targetX,
                 targetY,
                 0,

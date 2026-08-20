@@ -20,6 +20,13 @@ public enum AuthoritativeObjectEffectKind
     GrantSpellLevelAndSpawnProjectile,
 }
 
+/** Origin used by an authored projectile; object-target preserves legacy rows. */
+public enum AuthoritativeObjectProjectileSourceKind
+{
+    Object,
+    ActivatingPlayer,
+}
+
 /** Optional server-owned effect applied after a valid quest step or world mutation. */
 public enum AuthoritativeQuestSequenceFollowUpKind
 {

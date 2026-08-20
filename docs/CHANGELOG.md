@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add optional authored projectile origins. `objects.tsv` rows can select
+  `ActivatingPlayer` for Phasing projectiles while retaining target-origin
+  compatibility by default; the source is validated and carried through
+  snapshots, saves, protocol projection, and canonical hashes. Bump the Diablo
+  content schema to 1.374.
+
 - Add the validated `GrantSpellLevelAndSpawnProjectile` object effect so one
   authored interaction can grant a spell level and spawn its server-owned
   Phasing or Guardian projectile atomically. Bump the Diablo content schema to

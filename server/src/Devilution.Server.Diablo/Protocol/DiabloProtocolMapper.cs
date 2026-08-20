@@ -176,6 +176,7 @@ internal static class DiabloProtocolMapper
                 QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount,
                 QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
                 QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
+                ProjectileSourceKind = (int)@object.ProjectileSourceKind,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -665,6 +666,7 @@ internal static class DiabloProtocolMapper
                 QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount,
                 QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
                 QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
+                ProjectileSourceKind = (AuthoritativeObjectProjectileSourceKind)@object.ProjectileSourceKind,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

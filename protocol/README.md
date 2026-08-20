@@ -392,6 +392,12 @@ Windows toolchain command.
   progress amount. Nondefault object collision state uses the tagged
   `godevilution-object-collision-v1` hash extension. Native projection removes
   activated or destroyed objects from interaction and presentation occupancy.
+- `ObjectSnapshot.projectile_source_kind` field 32 carries the authored
+  projectile origin. Zero preserves target-origin compatibility; the additive
+  activating-player value is currently valid for Phasing rows. Nonzero source
+  state uses the tagged `godevilution-object-projectile-source-v1` hash
+  extension, and clients treat it as projection metadata rather than gameplay
+  authority.
 - `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:
   movement state, the adjacent future tile, and petrification. Native
   projection marks the current tile as positive occupancy and the future tile

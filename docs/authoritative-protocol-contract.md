@@ -642,6 +642,10 @@ placement before activation, generates the item with the authoritative item
 catalog, and persists the resulting world item. Absent reward fields retain
 the legacy no-reward meaning; clients render the resulting `ItemStateSnapshot`
 and never generate rewards locally.
+`ObjectSnapshot.projectile_source_kind` field 32 carries the authored projectile
+origin. Zero preserves target-origin compatibility; the activating-player value
+is currently valid for Phasing rows. Nonzero source state uses the tagged
+`godevilution-object-projectile-source-v1` canonical-hash extension.
 Optional `ProjectileSnapshot` fields 54-55 carry a dynamic MonsterArrow
 physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The
