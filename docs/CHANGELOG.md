@@ -9,6 +9,10 @@ All notable changes to this fork are documented below.
   dungeon walking now submit server-owned target cells; the legacy directional
   and auto-path commands remain available for compatibility paths.
 
+- Extend the Godot presentation client's left-click flow to submit the same
+  target-cell movement intent when no authoritative cast or item interaction
+  applies.
+
 - Route connected native mouse entity-targeted monster/player attacks and
   ordinary object operations through authoritative entity references, including
   repeated actions. Add an additive cell-targeted attack intent that preserves

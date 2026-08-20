@@ -92,6 +92,10 @@ Status date: 2026-08-20
   repeated dungeon walking use it; legacy directional and auto-path commands
   remain available for compatibility paths.
 
+- Godot's left-click presentation flow now submits the same target-cell
+  movement intent when no authoritative cast or item interaction applies;
+  server-side path resolution remains authoritative.
+
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Adjacent primary native

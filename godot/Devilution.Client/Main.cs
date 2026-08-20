@@ -256,7 +256,13 @@ public partial class Main : Node2D
             if (cast is not null)
                 Queue(new Command { CastRequested = cast });
             else
-                hud?.SetStatus("No authoritative spell source is currently available.");
+                Queue(new Command {
+                    MoveRequested = new MoveRequested {
+                        TargetCell = true,
+                        TargetX = target.X,
+                        TargetY = target.Y,
+                    },
+                });
         }
     }
 

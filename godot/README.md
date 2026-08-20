@@ -201,7 +201,9 @@ melee and line-of-sight ranged attacks against a same-level remote player when
 friendly-mode rules allow it; it owns physical/elemental damage, target
 resistance, shield/class blocking, equipment knockback, death, and PvP-ear
 creation.
-Left-click remains the cast or item-interaction path.
+Left-click remains the cast or item-interaction path; when no cast source or
+item target is available, it submits the additive authoritative target-cell
+movement intent and the server resolves one deterministic path step.
 
 Targeted Firebolt, Charged Bolt, and Bone Spirit casts can also name a living
 same-level remote player. The client supplies any visible remote-player entity

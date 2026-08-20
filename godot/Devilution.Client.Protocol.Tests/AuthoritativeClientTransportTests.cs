@@ -12,6 +12,24 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class AuthoritativeClientTransportTests
 {
     [Fact]
+    public void PreservesTargetCellMovementFieldsAcrossProtocolSerialization()
+    {
+        var command = new Command {
+            MoveRequested = new MoveRequested {
+                TargetCell = true,
+                TargetX = 14,
+                TargetY = 9,
+            },
+        };
+
+        var roundTrip = Command.Parser.ParseFrom(command.ToByteArray());
+
+        Assert.True(roundTrip.MoveRequested.TargetCell);
+        Assert.Equal(14, roundTrip.MoveRequested.TargetX);
+        Assert.Equal(9, roundTrip.MoveRequested.TargetY);
+    }
+
+    [Fact]
     public async Task RequiresRulesetIdentityForProtocolV2()
     {
         await using var client = new AuthoritativeClient(new ClientConnectionOptions(
