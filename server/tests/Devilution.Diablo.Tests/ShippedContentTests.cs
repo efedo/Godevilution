@@ -390,12 +390,24 @@ public sealed class ShippedContentTests
             "set_level_maps.tsv",
             "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\tdungeon_type\tspawn_x\tspawn_y\n"
                 + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t5\n");
+        var objectTable = TsvTable.Parse(
+            "objects.tsv",
+            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\n"
+                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\n");
+        var placementTable = TsvTable.Parse(
+            "set_level_objects.tsv",
+            "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\ttemplate_entity_id\n"
+                + "9001\t1\tSL_SKELKING\t40\t4\t5\t0\t0\t1\t1\t9001\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
-            [mapTable],
+            [mapTable, objectTable, placementTable],
             dependencies: [basePack.Id],
-            overlays: [new ContentTableOverlay("set_level_maps.tsv", ["set_level_id"])],
+            overlays: [
+                new ContentTableOverlay("set_level_maps.tsv", ["set_level_id"]),
+                new ContentTableOverlay("objects.tsv", ["entity_id"]),
+                new ContentTableOverlay("set_level_objects.tsv", ["placement_id"]),
+            ],
             assets: [
                 new ContentAsset("fixture/pre.dun", CreateSyntheticDun()),
                 new ContentAsset("fixture/active.dun", CreateSyntheticDun()),
@@ -430,6 +442,16 @@ public sealed class ShippedContentTests
         Assert.Equal(active.LevelId, gate.LevelId);
         Assert.Equal(64, gate.PositionX);
         Assert.Equal(59, gate.PositionY);
+
+        var authored = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId
+                == AuthoritativeSetLevelObjectCatalog.RuntimeObjectEntityIdBase + 9001);
+        Assert.Equal(40U, authored.ObjectId);
+        Assert.Equal(AuthoritativeObjectEffectKind.GrantSpellLevel, authored.EffectKind);
+        Assert.Equal(7, authored.EffectAmount);
+        Assert.Equal(active.LevelId, authored.LevelId);
+        Assert.Equal((4, 5), (authored.PositionX, authored.PositionY));
     }
 
     [Fact]
