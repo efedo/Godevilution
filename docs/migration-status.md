@@ -378,6 +378,11 @@ future run.
   fields. Template definitions now carry behavior without a fake world
   coordinate, while ordinary object rows retain strict placement validation.
 
+- Schema 1.371 lets `world_mutations.tsv` target a native set-level variant by
+  stable set-level identity and active/pre-map selection. Validation now runs
+  after set-level geometry materialization, enabling authored set-piece cell
+  overlays while retaining ordinary level targets.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not

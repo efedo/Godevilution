@@ -102,12 +102,82 @@ public sealed class AuthoritativeWorldMutationCatalog
         return new AuthoritativeWorldMutationCatalog(table.Rows.Select(row =>
             new AuthoritativeWorldMutation(
                 row.RequiredUInt32("mutation_id"),
-                AuthoritativeLevelIdentity.Resolve(row, stableIds),
+                ResolveTargetLevelId(row, stableIds),
                 ParseCells(row, "blocked_cells_add"),
                 ParseCells(row, "blocked_cells_remove"),
                 ParseCells(row, "missile_blocked_cells_add"),
                 ParseCells(row, "missile_blocked_cells_remove"))));
     }
+
+    private static uint ResolveTargetLevelId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var levelTargetPresent = HasValue(row, "level_id") || HasValue(row, "level_symbol");
+        var setLevelTargetPresent = HasValue(row, "set_level_id") || HasValue(row, "set_level_symbol");
+        if (levelTargetPresent == setLevelTargetPresent) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} must specify exactly one level target.");
+        }
+
+        if (levelTargetPresent) {
+            if (HasValue(row, "active_map")) {
+                throw new InvalidDataException(
+                    $"World mutation row {row.LineNumber} uses active_map without a set-level target.");
+            }
+            return AuthoritativeLevelIdentity.Resolve(row, stableIds);
+        }
+
+        var setLevelId = ResolveSetLevelId(row, stableIds);
+        var activeMap = row.OptionalBoolean("active_map", true);
+        try {
+            return AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                checked((int)setLevelId),
+                activeMap);
+        } catch (Exception exception)
+            when (exception is ArgumentOutOfRangeException or OverflowException) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} contains an invalid set-level target.",
+                exception);
+        }
+    }
+
+    private static uint ResolveSetLevelId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericPresent = HasValue(row, "set_level_id");
+        var numericId = row.OptionalUInt32("set_level_id");
+        var symbol = row.TryGet("set_level_symbol", out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            ? value
+            : string.Empty;
+        if (symbol.Length == 0)
+            return numericId;
+        if (stableIds is null) {
+            if (!numericPresent)
+                throw new InvalidDataException(
+                    $"World mutation row {row.LineNumber} requires stable IDs to resolve set-level '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("set_level", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} references unknown set-level symbol '{symbol}'.",
+                exception);
+        }
+        if (numericPresent && numericId != resolvedId)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} maps set level {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        return resolvedId;
+    }
+
+    private static bool HasValue(TsvRow row, string column)
+        => row.TryGet(column, out var value) && !string.IsNullOrWhiteSpace(value);
 
     private static IReadOnlyList<int> ParseCells(TsvRow row, string column)
     {

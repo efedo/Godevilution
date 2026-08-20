@@ -23,6 +23,45 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ResolvesSetLevelMutationTargetsToRuntimeLevels()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("set_level", "SL_BONECHAMB", 2),
+        ]);
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tset_level_id\tset_level_symbol\tactive_map\tblocked_cells_add\n"
+                + "7\t2\tSL_BONECHAMB\t1\t4\n",
+            stableIds);
+
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true),
+            mutation.LevelId);
+        Assert.Equal([4], mutation.BlockedCellsAdd);
+    }
+
+    [Fact]
+    public void RejectsAmbiguousWorldMutationLevelTargets()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tset_level_id\tblocked_cells_add\n"
+                    + "7\t1\t2\t4\n"));
+    }
+
+    [Fact]
+    public void RejectsActiveMapOnOrdinaryWorldMutationTarget()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tactive_map\tblocked_cells_add\n"
+                    + "7\t1\t1\t4\n"));
+    }
+
+    [Fact]
     public void AppliesMutationToWalkAndMissileGeometry()
     {
         var worldGeometry = AuthoritativeWorld.LoadTsv(

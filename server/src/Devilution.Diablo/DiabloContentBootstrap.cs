@@ -520,8 +520,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "Spell-effect objects require an active spell catalog.");
         }
-        if (world is not null && worldMutations is not null)
-            worldMutations.ValidateWorld(world);
         if (objectDefinitions.Any(@object => @object.EffectKind
                 == AuthoritativeObjectEffectKind.WorldMutation
                 || @object.QuestSequenceFollowUpKind
@@ -609,6 +607,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
             }
         }
+        if (world is not null && worldMutations is not null)
+            worldMutations.ValidateWorld(world);
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,

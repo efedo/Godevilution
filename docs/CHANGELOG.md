@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Allow `world_mutations.tsv` to target generated native set-level variants by
+  stable set-level identity and active/pre-map selection; validate those cell
+  overlays after set-level geometry materialization. Bump the Diablo content
+  schema to 1.371.
+
 - Allow `template_only=1` object rows to omit fake level and placement fields;
   ordinary world-object rows remain strict. Bump the Diablo content schema to
   1.370.
