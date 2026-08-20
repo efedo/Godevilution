@@ -25,12 +25,15 @@ public sealed class StoreSimulationExecutorTests
             startingStatPoints: 3);
         var server = new AuthoritativeCommandServer(executor);
 
-        var result = server.Process("player-a", new Command {
+        var command = new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
             AllocateAttributeRequested = new AllocateAttributeRequested {
                 Attribute = PlayerAttribute.Vitality,
                 Amount = 2,
             },
-        }, currentTick: 1);
+        };
+        var result = server.Process("player-a", command, currentTick: 1);
         var state = executor.GetPlayerState("player-a");
 
         Assert.Equal(CommandStatus.Accepted, result.Status);
@@ -45,12 +48,15 @@ public sealed class StoreSimulationExecutorTests
         var executor = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0, startingStatPoints: 1);
         var server = new AuthoritativeCommandServer(executor);
 
-        var result = server.Process("player-a", new Command {
+        var command = new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
             AllocateAttributeRequested = new AllocateAttributeRequested {
                 Attribute = PlayerAttribute.Strength,
                 Amount = 2,
             },
-        }, currentTick: 1);
+        };
+        var result = server.Process("player-a", command, currentTick: 1);
         var state = executor.GetPlayerState("player-a");
 
         Assert.Equal(CommandStatus.Rejected, result.Status);

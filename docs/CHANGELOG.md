@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Correct the server-owned attribute-allocation regression fixtures to submit
+  valid client sequences and requested ticks; the full server suite now passes
+  all 381 tests.
+
 - Materialize the first supported authoritative projectile families in the
   native compatibility renderer. Their position and lifetime come from the
   server, and presentation-only missile objects skip local process, collision,
