@@ -33,8 +33,7 @@ public static class AuthoritativeTargetSelector
             candidate.EntityId != localPlayer.EntityId
             && candidate.Life > 0
             && IsVisible(candidate.LevelId, localPlayer.LevelId)
-            && candidate.PositionX == targetX
-            && candidate.PositionY == targetY);
+            && IsAtPresentationPosition(candidate, targetX, targetY));
         if (remotePlayer is not null)
             return remotePlayer.EntityId;
         return null;
@@ -61,8 +60,7 @@ public static class AuthoritativeTargetSelector
             .Where(candidate => candidate.EntityId != localPlayer.EntityId
                 && (includeDead || candidate.Life > 0)
                 && IsVisible(candidate.LevelId, localPlayer.LevelId)
-                && candidate.PositionX == targetX
-                && candidate.PositionY == targetY)
+                && IsAtPresentationPosition(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
             .FirstOrDefault();
@@ -70,4 +68,10 @@ public static class AuthoritativeTargetSelector
 
     private static bool IsVisible(uint levelId, uint localLevelId)
         => levelId == 0 || levelId == localLevelId;
+
+    private static bool IsAtPresentationPosition(PlayerSnapshot player, int targetX, int targetY)
+    {
+        var position = AuthoritativePlayerPositionProjection.Resolve(player);
+        return position.X == targetX && position.Y == targetY;
+    }
 }

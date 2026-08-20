@@ -659,6 +659,10 @@ future run.
   the latest authoritative snapshot and clears them on disconnect, preventing
   stale entity visuals or feedback anchors from surviving reconciliation.
 
+- Godot combat and player-target selection now uses the same authoritative
+  reserved-walk position as remote-player presentation, so a visible moving
+  participant remains targetable by stable entity ID before movement resolves.
+
 - Player, monster, world-item, object, projectile, and corpse IDs now share a
   validated server-owned namespace at the mapper and Godot boundaries. Entity
   allocators skip occupied portal/corpse/player IDs, while identity-neutral

@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
   the session disconnects, preventing stale world visuals from surviving
   snapshot reconciliation.
 
+- Resolve Godot combat and player-target clicks against a remote player's
+  authoritative reserved walk destination as well as its occupied tile, while
+  continuing to submit only the stable server entity ID.
+
 - Add an additive `NovaBall` native projectile visual identity so the native
   compatibility renderer can present server-owned Nova projectiles without
   inferring the visual from gameplay behavior numbers; cover the mapping in

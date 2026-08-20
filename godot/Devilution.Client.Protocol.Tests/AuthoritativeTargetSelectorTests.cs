@@ -45,6 +45,38 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void SelectsRemotePlayersAtTheirReservedWalkDestination()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2 },
+                new PlayerSnapshot {
+                    EntityId = 8,
+                    LevelId = 2,
+                    PositionX = 3,
+                    PositionY = 4,
+                    Life = 10,
+                    CombatMode = PlayerCombatMode.WalkSideways,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
+
+        Assert.Equal(8U, AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 4, 4));
+        Assert.Equal(
+            8U,
+            AuthoritativeTargetSelector.SelectRemotePlayerTarget(
+                snapshot,
+                7,
+                4,
+                4,
+                includeDead: false));
+    }
+
+    [Fact]
     public void SelectsRemotePlayerCastTargetsWithExplicitDeadTargetPolicy()
     {
         var snapshot = new Snapshot {
