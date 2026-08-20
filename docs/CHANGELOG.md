@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Match native level-up resource behavior in the authoritative progression
+  path: class life/mana growth, full refills, `NoMana` suppression, and stat
+  point awards now update server-owned state and snapshots.
+
 - Add server-owned character attribute allocation through the shared protocol.
   Connected native character-panel allocation now spends projected stat points
   through an authoritative intent; disconnected sessions retain legacy

@@ -9,7 +9,7 @@ internal static class DiabloPlayerProgression
         player.Experience = checked(player.Experience + amount);
         while (player.CharacterLevel < 50
             && player.Experience >= player.CharacterLevel * 1000U) {
-            player.CharacterLevel++;
+            player.AdvanceLevel();
             var available = CalculateAvailableAttributePoints(player);
             player.StatPoints = available < 5
                 ? (uint)available

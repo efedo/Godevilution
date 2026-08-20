@@ -462,6 +462,25 @@ public sealed class AuthoritativePlayerState(
         RecalculateEquipmentArmor();
     }
 
+    /** Applies one native level-up resource increase and refill. */
+    internal void AdvanceLevel()
+    {
+        CharacterLevel = checked(CharacterLevel + 1);
+
+        var lifePerLevel = PlayerClass?.LifePerLevelQ6 ?? 0;
+        BaseLifeMaximum = checked(BaseLifeMaximum + lifePerLevel);
+        LifeMaximum = checked(LifeMaximum + lifePerLevel);
+        Life = LifeMaximum;
+
+        var manaPerLevel = PlayerClass?.ManaPerLevelQ6 ?? 0;
+        BaseManaMaximum = checked(BaseManaMaximum + manaPerLevel);
+        ManaMaximum = checked(ManaMaximum + manaPerLevel);
+        if (!AuthoritativeEquipmentManaRules.HasNoManaItem(Equipment))
+            Mana = ManaMaximum;
+
+        RecalculateEquipmentResources();
+    }
+
     /** Applies one native elixir stat point and its resource side effect. */
     public bool ApplyElixir(DiabloItemActionKind action, bool restoreHellfireResource)
     {

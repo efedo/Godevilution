@@ -130,6 +130,11 @@ Status date: 2026-08-20
   `ReadBookRequested`; the legacy client keeps its local book path only outside
   the connected server-backed mode.
 
+- Authoritative experience level-ups now apply native class life/mana growth,
+  level-up refills, `NoMana` suppression, and server-owned stat-point awards;
+  the projected native character panel receives the resulting maxima and
+  resources from the snapshot.
+
 - The shared protocol now projects every validated item action, including
   attribute-all and all four oil actions. The Godot HUD submits targetless
   potion, rejuvenation, and elixir actions as stable-reference
