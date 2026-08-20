@@ -5,9 +5,11 @@
 #include <limits>
 #include <unordered_set>
 
+#include "engine/lighting_defs.hpp"
 #include "game/items/item_pool.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/missiles/missiles.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
@@ -28,6 +30,110 @@ bool IsValidWorldPosition(int32_t x, int32_t y)
 	    && x <= std::numeric_limits<WorldTileCoord>::max()
 	    && y <= std::numeric_limits<WorldTileCoord>::max()
 	    && InDungeonBounds({ x, y });
+}
+
+/** Returns the native sprite family that can be presented without simulation. */
+std::optional<MissileID> NativePresentationMissileId(int behavior)
+{
+	switch (behavior) {
+	case 1: // ChargedBolt
+		return MissileID::ChargedBolt;
+	case 2: // Firebolt
+		return MissileID::Firebolt;
+	case 3: // Lightning
+		return MissileID::Lightning;
+	case 15: // Phasing
+		return MissileID::Phasing;
+	case 16: // Fireball
+		return MissileID::Fireball;
+	case 19: // HolyBolt
+		return MissileID::HolyBolt;
+	case 20: // BloodStar
+		return MissileID::BloodStar;
+	case 21: // BoneSpirit
+		return MissileID::BoneSpirit;
+	case 23: // FireWallSegment
+		return MissileID::FireWall;
+	case 29: // ChainLightningBolt
+		return MissileID::ChainLightning;
+	case 36: // GuardianController
+		return MissileID::Guardian;
+	case 49: // Etherealize
+		return MissileID::Etherealize;
+	default:
+		return std::nullopt;
+	}
+}
+
+Missile *FindAuthoritativePresentationMissile(uint32_t entityId)
+{
+	const auto missile = std::find_if(Missiles.begin(), Missiles.end(), [entityId](const auto &candidate) {
+		return candidate._miAuthoritativeEntityId == entityId;
+	});
+	return missile == Missiles.end() ? nullptr : &*missile;
+}
+
+Missile *CreateAuthoritativePresentationMissile(
+	uint32_t entityId,
+	MissileID missileId,
+	const ProjectedProjectileSnapshot &snapshot)
+{
+	if (Missiles.size() >= Missiles.max_size())
+		return nullptr;
+
+	Missiles.emplace_back();
+	Missile &missile = Missiles.back();
+	const auto &missileData = GetMissileData(missileId);
+	const WorldTilePosition position { static_cast<WorldTileCoord>(snapshot.positionX), static_cast<WorldTileCoord>(snapshot.positionY) };
+	missile._mitype = missileId;
+	missile._misource = -1;
+	missile._micaster = TARGET_BOTH;
+	missile._miAnimAdd = 1;
+	missile._miAnimType = missileData.graphic;
+	missile._miDrawFlag = missileData.isDrawn();
+	missile._miLightFlag = false;
+	missile._mlid = NO_LIGHT;
+	missile._miAuthoritativeEntityId = entityId;
+	missile.position.tile = position;
+	missile.position.start = position;
+	missile.position.tileForRendering = position;
+	missile.position.offset = {};
+	missile.position.offsetForRendering = {};
+	missile.position.velocity = {};
+	missile.position.traveled = {};
+	missile.setDefaultFrameGroup();
+	return &missile;
+}
+
+void RemoveAuthoritativePresentationMissile(uint32_t entityId)
+{
+	Missiles.remove_if([entityId](const auto &missile) {
+		return missile._miAuthoritativeEntityId == entityId;
+	});
+}
+
+void ApplyAuthoritativePresentationMissile(
+	Missile &missile,
+	const ProjectedProjectileSnapshot &snapshot)
+{
+	const WorldTilePosition position { static_cast<WorldTileCoord>(snapshot.positionX), static_cast<WorldTileCoord>(snapshot.positionY) };
+	// The server already resolved movement. Do not reuse native velocity or
+	// collision interpolation, which would turn this presentation object into
+	// a second local simulation.
+	missile.position.tile = position;
+	missile.position.start = position;
+	missile.position.tileForRendering = position;
+	missile.position.offset = {};
+	missile.position.offsetForRendering = {};
+	missile.position.velocity = {};
+	missile.position.traveled = {};
+	missile.duration = static_cast<int>(std::min<uint32_t>(snapshot.remainingTicks, std::numeric_limits<int>::max()));
+	missile._miDelFlag = false;
+	if (missile._mitype == MissileID::Guardian) {
+		missile.setFrameGroup<GuardianFrame>(GuardianFrame::Idle);
+	} else if (snapshot.originalDirection >= 0 && snapshot.originalDirection <= 7) {
+		missile.setFrameGroupRaw(snapshot.originalDirection * 2);
+	}
 }
 
 int FindActiveItemListIndex(unsigned itemSlot)
@@ -168,6 +274,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	std::unordered_set<uint32_t> currentMonsterEntities;
 	std::unordered_set<uint32_t> currentItemEntities;
 	std::unordered_set<uint32_t> currentObjectEntities;
+	std::unordered_set<uint32_t> currentProjectileEntities;
 	std::unordered_set<unsigned> claimedMonsterSlots;
 	std::unordered_set<unsigned> claimedItemSlots;
 	std::unordered_set<int> claimedObjectSlots;
@@ -269,6 +376,29 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		ApplyObjectSnapshot(Objects[slot], slot, snapshot);
 	}
 
+	for (const auto &snapshot : projection.Projectiles()) {
+		if (!IsCurrentLevel(snapshot.levelId, levelId))
+			continue;
+		const auto missileId = NativePresentationMissileId(snapshot.behavior);
+		if (!missileId)
+			continue;
+		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
+			return tl::make_unexpected("Authoritative projectile position cannot be represented by the native world tile type.");
+
+		Missile *missile = FindAuthoritativePresentationMissile(snapshot.entityId);
+		if (missile != nullptr && missile->_mitype != *missileId) {
+			RemoveAuthoritativePresentationMissile(snapshot.entityId);
+			missile = nullptr;
+		}
+		if (missile == nullptr)
+			missile = CreateAuthoritativePresentationMissile(snapshot.entityId, *missileId, snapshot);
+		if (missile == nullptr)
+			continue;
+		ApplyAuthoritativePresentationMissile(*missile, snapshot);
+		currentProjectileEntities.insert(snapshot.entityId);
+		projectileEntities_.insert(snapshot.entityId);
+	}
+
 	for (auto it = itemSlots_.begin(); it != itemSlots_.end();) {
 		if (currentItemEntities.contains(it->first)) {
 			++it;
@@ -299,6 +429,14 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		}
 		it = objectSlots_.erase(it);
 	}
+	for (auto it = projectileEntities_.begin(); it != projectileEntities_.end();) {
+		if (currentProjectileEntities.contains(*it)) {
+			++it;
+			continue;
+		}
+		RemoveAuthoritativePresentationMissile(*it);
+		it = projectileEntities_.erase(it);
+	}
 
 	return { };
 }
@@ -311,9 +449,12 @@ void ServerBackedWorldPresentation::Clear() noexcept
 		RemoveMappedMonster(monsterSlot);
 	for (const auto &[entityId, objectSlot] : objectSlots_)
 		RemoveMappedObject(objectSlot);
+	for (const auto entityId : projectileEntities_)
+		RemoveAuthoritativePresentationMissile(entityId);
 	monsterSlots_.clear();
 	itemSlots_.clear();
 	objectSlots_.clear();
+	projectileEntities_.clear();
 }
 
 } // namespace devilution::authoritative

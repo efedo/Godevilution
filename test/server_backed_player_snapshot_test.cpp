@@ -2,6 +2,7 @@
 
 #include "devilution.pb.h"
 #include "engine/cursor.h"
+#include "game/missiles/missiles.hpp"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
@@ -535,6 +536,55 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProject
 	first.remainingTicks = 1;
 	ProjectedProjectileSnapshot duplicate = first;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { first, duplicate }, 1).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimulation)
+{
+	LoadMissileData();
+	Missiles.clear();
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 101;
+	projectile.sourceEntityId = 1;
+	projectile.spellId = 4;
+	projectile.levelId = 1;
+	projectile.positionX = 4;
+	projectile.positionY = 4;
+	projectile.remainingTicks = 5;
+	projectile.behavior = 2; // Firebolt
+	projectile.originalDirection = 3;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+
+	ASSERT_EQ(Missiles.size(), 1U);
+	const Missile &missile = Missiles.front();
+	EXPECT_EQ(missile._miAuthoritativeEntityId, 101U);
+	EXPECT_EQ(missile._mitype, MissileID::Firebolt);
+	const WorldTilePosition expectedPosition { 4, 4 };
+	EXPECT_EQ(missile.position.tile, expectedPosition);
+	EXPECT_EQ(missile.duration, 5);
+	EXPECT_EQ(missile.position.velocity, Displacement {});
+	EXPECT_EQ(missile.position.traveled, Displacement {});
+
+	projectile.positionX = 5;
+	projectile.positionY = 6;
+	projectile.remainingTicks = 3;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(Missiles.size(), 1U);
+	const WorldTilePosition updatedPosition { 5, 6 };
+	EXPECT_EQ(Missiles.front().position.tile, updatedPosition);
+	EXPECT_EQ(Missiles.front().duration, 3);
+
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_TRUE(Missiles.empty());
+
+	presentation.Clear();
+	Missiles.clear();
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups)

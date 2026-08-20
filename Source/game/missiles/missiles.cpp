@@ -4242,6 +4242,20 @@ void ProcessMissiles()
 
 	for (auto &missile : Missiles) {
 		const MissileData &missileData = GetMissileData(missile._mitype);
+		if (missile._miAuthoritativeEntityId != 0) {
+			if (missile._miAnimFlags != MissileGraphicsFlags::NotAnimated) {
+				missile._miAnimCnt++;
+				if (missile._miAnimCnt >= missile._miAnimDelay) {
+					missile._miAnimCnt = 0;
+					missile._miAnimFrame += missile._miAnimAdd;
+					if (missile._miAnimFrame > missile._miAnimLen)
+						missile._miAnimFrame = 1;
+					else if (missile._miAnimFrame < 1)
+						missile._miAnimFrame = missile._miAnimLen;
+				}
+			}
+			continue;
+		}
 		if (missileData.processFn != nullptr)
 			missileData.processFn(missile);
 		if (missile._miAnimFlags == MissileGraphicsFlags::NotAnimated)

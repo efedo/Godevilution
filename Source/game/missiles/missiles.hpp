@@ -17,6 +17,7 @@
 #include "game/players/players.hpp"
 #include "tables/misdat.h"
 #include "tables/spelldat.h"
+#include "utils/attributes.h"
 #include "utils/is_of.hpp"
 
 namespace devilution {
@@ -85,6 +86,8 @@ private:
 public:
 	int _mispllvl;
 	bool _miDelFlag; // Indicate whether the missile should be deleted
+	/** Nonzero for a server-owned presentation missile; it never simulates locally. */
+	uint32_t _miAuthoritativeEntityId = 0;
 	MissileGraphicID _miAnimType;
 	MissileGraphicsFlags _miAnimFlags;
 	OptionalClxSpriteList _miAnimData;
@@ -222,7 +225,7 @@ public:
 	}
 };
 
-extern std::list<Missile> Missiles;
+extern DVL_API_FOR_TEST std::list<Missile> Missiles;
 extern bool MissilePreFlag;
 
 DamageRange GetDamageAmt(SpellID spell, int spellLevel);

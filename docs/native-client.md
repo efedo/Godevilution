@@ -17,11 +17,15 @@ collision cell against the latest projected portal route and submits
 missile. The legacy `CMD_WARP` command remains available only outside a
 connected server-backed session.
 
-The native authoritative world projection also retains the sorted, validated
-server projectile snapshots alongside monsters, items, and objects. This keeps
-projectile identity and lifetime available to the presentation bridge without
-re-running server gameplay locally; native projectile rendering remains a
-separate presentation seam.
+The native authoritative world projection retains the sorted, validated server
+projectile snapshots alongside monsters, items, and objects. The presentation
+bridge now materializes the first supported families (Charged Bolt, Firebolt,
+Lightning, Phasing, Fireball, Holy Bolt, Blood Star, Bone Spirit, Fire Wall,
+Chain Lightning, Guardian, and Etherealize) into legacy missile sprites. These
+objects are marked presentation-only: authoritative positions and lifetimes are
+applied directly, while local process, collision, and damage logic is skipped.
+Unsupported families remain projection-only until their native presentation
+mapping is authored.
 
 On Windows, initialize the matching Visual Studio developer environment first.
 See [ai/msvc-build.md](ai/msvc-build.md) for the verified workspace commands.
