@@ -25,7 +25,7 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(50, 0, ProjectilePresentationKind.MonsterMagic)]
     [InlineData(57, 0, ProjectilePresentationKind.HorkSpawn)]
     [InlineData(21, 0, ProjectilePresentationKind.BoneSpirit)]
-    [InlineData(31, 0, ProjectilePresentationKind.Lightning)]
+    [InlineData(31, 0, ProjectilePresentationKind.NovaBall)]
     [InlineData(56, 0, ProjectilePresentationKind.Lightning)]
     [InlineData(51, 0, ProjectilePresentationKind.Acid)]
     [InlineData(59, 0, ProjectilePresentationKind.Arrow)]
@@ -126,6 +126,19 @@ public sealed class ProjectilePresentationStyleTests
 
         Assert.Equal(
             ProjectilePresentationKind.Hidden,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void ResolvesServerOwnedNovaBallPresentationMetadata()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 999,
+            PresentationKind = ProtocolProjectilePresentationKind.NovaBall,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.NovaBall,
             ProjectilePresentationStyle.Resolve(projectile));
     }
 

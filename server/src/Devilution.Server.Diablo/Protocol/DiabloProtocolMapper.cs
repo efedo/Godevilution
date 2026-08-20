@@ -1315,13 +1315,14 @@ internal static class DiabloProtocolMapper
             return ProjectilePresentationKind.FireImpact;
         if (behavior == AuthoritativeProjectileBehavior.GuardianController)
             return ProjectilePresentationKind.Guardian;
+        if (behavior == AuthoritativeProjectileBehavior.NovaBall)
+            return ProjectilePresentationKind.NovaBall;
         if (behavior is AuthoritativeProjectileBehavior.ChargedBolt
                 or AuthoritativeProjectileBehavior.Lightning
                 or AuthoritativeProjectileBehavior.LightningSegment
                 or AuthoritativeProjectileBehavior.ChainLightningController
                 or AuthoritativeProjectileBehavior.ChainLightningBolt
                 or AuthoritativeProjectileBehavior.NovaController
-                or AuthoritativeProjectileBehavior.NovaBall
                 or AuthoritativeProjectileBehavior.LightningWallController
                 or AuthoritativeProjectileBehavior.MonsterChargedBolt)
             return ProjectilePresentationKind.Lightning;

@@ -23,6 +23,7 @@ public enum ProjectilePresentationKind
     HorkSpawn,
     Flash,
     Hidden,
+    NovaBall,
 }
 
 /** Maps authoritative behavior identities to client-only visual families. */
@@ -94,6 +95,8 @@ public static class ProjectilePresentationStyle
                 => ProjectilePresentationKind.Flash,
             Devilution.Protocol.V1.ProjectilePresentationKind.Hidden
                 => ProjectilePresentationKind.Hidden,
+            Devilution.Protocol.V1.ProjectilePresentationKind.NovaBall
+                => ProjectilePresentationKind.NovaBall,
             Devilution.Protocol.V1.ProjectilePresentationKind.BoneSpirit
                 => ProjectilePresentationKind.BoneSpirit,
             Devilution.Protocol.V1.ProjectilePresentationKind.Acid
@@ -147,13 +150,14 @@ public static class ProjectilePresentationStyle
             return ProjectilePresentationKind.FireImpact;
         if (behavior == GuardianController)
             return ProjectilePresentationKind.Guardian;
+        if (behavior == NovaBall)
+            return ProjectilePresentationKind.NovaBall;
         if (behavior is ChargedBolt
                 or Lightning
                 or LightningSegment
                 or ChainLightningController
                 or ChainLightningBolt
                 or NovaController
-                or NovaBall
                 or LightningWallController
                 or MonsterChargedBolt)
             return ProjectilePresentationKind.Lightning;

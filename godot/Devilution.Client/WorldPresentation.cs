@@ -330,6 +330,7 @@ public partial class WorldPresentation : Node2D
         var guardian = kind == ProjectilePresentationKind.Guardian;
         var flash = kind == ProjectilePresentationKind.Flash;
         var fireImpact = kind == ProjectilePresentationKind.FireImpact;
+        var novaBall = kind == ProjectilePresentationKind.NovaBall;
         var movement = kind is ProjectilePresentationKind.Teleport
             or ProjectilePresentationKind.Phasing;
         var size = beam
@@ -342,11 +343,14 @@ public partial class WorldPresentation : Node2D
                     ? new Vector2(24, 24)
                 : fireImpact
                     ? new Vector2(30, 30)
+                : novaBall
+                    ? new Vector2(16, 16)
                     : movement ? new Vector2(20, 20) : new Vector2(12, 12);
         var color = kind switch {
             ProjectilePresentationKind.Fire
                 or ProjectilePresentationKind.FireImpact => new Color("ff7b32"),
             ProjectilePresentationKind.Lightning => new Color("f4d35e"),
+            ProjectilePresentationKind.NovaBall => new Color("b8f2ff"),
             ProjectilePresentationKind.Holy => new Color("f8d66d"),
             ProjectilePresentationKind.BloodStar => new Color("d86bff"),
             ProjectilePresentationKind.MonsterMagic => new Color("b78cff"),
@@ -371,6 +375,8 @@ public partial class WorldPresentation : Node2D
                     ? 11
                 : fireImpact
                     ? 14
+                : novaBall
+                    ? 8
                     : movement
                         ? 9
                         : kind == ProjectilePresentationKind.Lightning ? 6 : 5;

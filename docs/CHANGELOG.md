@@ -9,6 +9,10 @@ All notable changes to this fork are documented below.
   inferring the visual from gameplay behavior numbers; cover the mapping in
   C# protocol and native presentation tests.
 
+- Add an additive `NovaBall` projectile presentation family to the shared
+  protocol and Godot renderer. Godot now preserves the server-selected Nova
+  identity while older snapshots continue to use behavior-based fallback.
+
 - Make connected native controller interaction fail closed when a stale local
   object highlight has no matching authoritative entity; add routing coverage
   so the path cannot fall through to a legacy object command.
@@ -21,7 +25,7 @@ All notable changes to this fork are documented below.
   passes all 1,388 tests after rebuilding its current content/schema assembly.
 
 - Record the complete managed Release verification baseline: Domain 11, Data
-  26, Engine 43, Diablo 1,388, Server 412, and Godot protocol 140 tests pass.
+  26, Engine 43, Diablo 1,388, Server 412, and Godot protocol 141 tests pass.
 
 - Expand server-side native projectile visual parity coverage to every
   supported visual family and explicitly verify non-sprite behaviors remain

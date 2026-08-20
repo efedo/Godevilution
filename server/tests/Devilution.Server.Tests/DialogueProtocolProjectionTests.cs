@@ -125,6 +125,8 @@ public sealed class DialogueProtocolProjectionTests
         var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
 
         Assert.Equal(expectedVisual, Assert.Single(snapshot.Projectiles).NativeVisual);
+        if (behavior == AuthoritativeProjectileBehavior.NovaBall)
+            Assert.Equal(ProjectilePresentationKind.NovaBall, Assert.Single(snapshot.Projectiles).PresentationKind);
     }
 
     [Theory]

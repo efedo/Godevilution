@@ -933,6 +933,7 @@ enum ProjectilePresentationKind {
 	PROJECTILE_PRESENTATION_KIND_GUARDIAN = 16;
 	PROJECTILE_PRESENTATION_KIND_FLASH = 17;
 	PROJECTILE_PRESENTATION_KIND_HIDDEN = 18;
+	PROJECTILE_PRESENTATION_KIND_NOVA_BALL = 19;
 }
 
 // Server-selected native compatibility sprite identity. This is presentation
