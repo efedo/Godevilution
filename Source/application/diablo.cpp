@@ -563,8 +563,18 @@ void LeftMouseDown(uint16_t modState)
 					const Point currentPosition = MyPlayer->position.tile;
 					std::optional<Point> itemTile = FindAdjacentPositionForItem(currentPosition, GetDirection(currentPosition, cursPosition));
 					if (itemTile) {
-						NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, MyPlayer->HoldItem);
-						NewCursor(CURSOR_HAND);
+					#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+						if (authoritative::GetServerBackedRuntime().IsConnected()) {
+							if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, SDL_GetTicks()); !result.has_value())
+								LogError("Server-backed held-item drop failed: {}", result.error());
+							else
+								NewCursor(CURSOR_HAND);
+						} else
+					#endif
+						{
+							NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, MyPlayer->HoldItem);
+							NewCursor(CURSOR_HAND);
+						}
 					}
 				}
 			} else {

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route the remaining connected native mouse held-item drop path through the
+  authoritative drop intent; disconnected sessions retain `CMD_PUTITEM`.
+
 - Match native level-up resource behavior in the authoritative progression
   path: class life/mana growth, full refills, `NoMana` suppression, and stat
   point awards now update server-owned state and snapshots.

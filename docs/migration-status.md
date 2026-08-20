@@ -130,6 +130,9 @@ Status date: 2026-08-20
   `ReadBookRequested`; the legacy client keeps its local book path only outside
   the connected server-backed mode.
 
+- The connected native mouse held-item drop path now submits the authoritative
+  drop intent; `CMD_PUTITEM` remains the disconnected compatibility path.
+
 - Authoritative experience level-ups now apply native class life/mana growth,
   level-up refills, `NoMana` suppression, and server-owned stat-point awards;
   the projected native character panel receives the resulting maxima and
