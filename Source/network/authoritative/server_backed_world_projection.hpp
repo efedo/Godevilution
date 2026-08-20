@@ -25,6 +25,12 @@ public:
 		std::vector<ProjectedWorldItemSnapshot> worldItems,
 		std::vector<ProjectedObjectSnapshot> objects,
 		uint32_t levelId);
+	[[nodiscard]] tl::expected<void, std::string> Apply(
+		std::vector<ProjectedMonsterSnapshot> monsters,
+		std::vector<ProjectedWorldItemSnapshot> worldItems,
+		std::vector<ProjectedObjectSnapshot> objects,
+		std::vector<ProjectedProjectileSnapshot> projectiles,
+		uint32_t levelId);
 
 	void Clear() noexcept;
 
@@ -32,6 +38,7 @@ public:
 	[[nodiscard]] const std::vector<ProjectedMonsterSnapshot> &Monsters() const noexcept { return monsters_; }
 	[[nodiscard]] const std::vector<ProjectedWorldItemSnapshot> &WorldItems() const noexcept { return worldItems_; }
 	[[nodiscard]] const std::vector<ProjectedObjectSnapshot> &Objects() const noexcept { return objects_; }
+	[[nodiscard]] const std::vector<ProjectedProjectileSnapshot> &Projectiles() const noexcept { return projectiles_; }
 
 	[[nodiscard]] std::optional<uint32_t> WorldItemAt(int32_t positionX, int32_t positionY) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> MonsterAt(int32_t positionX, int32_t positionY) const noexcept;
@@ -43,6 +50,7 @@ private:
 	std::vector<ProjectedMonsterSnapshot> monsters_;
 	std::vector<ProjectedWorldItemSnapshot> worldItems_;
 	std::vector<ProjectedObjectSnapshot> objects_;
+	std::vector<ProjectedProjectileSnapshot> projectiles_;
 	uint32_t levelId_ = 0;
 };
 

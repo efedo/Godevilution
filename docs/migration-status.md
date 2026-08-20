@@ -28,6 +28,12 @@ Status date: 2026-08-20
   for the local authoritative level and submits `UsePortal`; disconnected
   sessions retain legacy `CMD_WARP` compatibility behavior. Portal projection
   is sorted and duplicate-checked before entering the native session state.
+
+- The native authoritative world projection now carries sorted, validated
+  server projectile snapshots through the same boundary as monsters, items,
+  and objects. Their identity and remaining lifetime are retained for the
+  presentation bridge without enabling local projectile simulation; native
+  projectile rendering remains a later presentation seam.
   Snapshot-driven collision also submits the same intent when the authoritative
   portal has no locally-created legacy missile.
 

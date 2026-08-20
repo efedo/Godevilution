@@ -498,6 +498,43 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
 	ASSERT_EQ(projection.Monsters().size(), 1U);
 	EXPECT_EQ(projection.Monsters()[0].levelId, 2U);
+	EXPECT_TRUE(projection.Projectiles().empty());
+}
+
+TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjectiles)
+{
+	ProjectedProjectileSnapshot second;
+	second.entityId = 12;
+	second.sourceEntityId = 1;
+	second.spellId = 4;
+	second.remainingTicks = 2;
+	ProjectedProjectileSnapshot first;
+	first.entityId = 11;
+	first.sourceEntityId = 1;
+	first.spellId = 4;
+	first.remainingTicks = 1;
+	first.behavior = 7;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { second, first }, 1).has_value());
+	ASSERT_EQ(projection.Projectiles().size(), 2U);
+	EXPECT_EQ(projection.Projectiles()[0].entityId, 11U);
+	EXPECT_EQ(projection.Projectiles()[0].behavior, 7);
+	EXPECT_EQ(projection.Projectiles()[1].entityId, 12U);
+}
+
+TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProjectiles)
+{
+	ProjectedProjectileSnapshot invalid;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalid }, 1).has_value());
+
+	ProjectedProjectileSnapshot first;
+	first.entityId = 11;
+	first.sourceEntityId = 1;
+	first.spellId = 4;
+	first.remainingTicks = 1;
+	ProjectedProjectileSnapshot duplicate = first;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { first, duplicate }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups)

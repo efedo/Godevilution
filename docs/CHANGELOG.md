@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Carry sorted, validated authoritative projectile snapshots through the
+  native world projection without re-running their gameplay locally; native
+  projectile rendering remains a later presentation seam.
+
 - Handle connected Town Portal entry directly from projected portal state when
   no legacy native portal missile exists; disconnected sessions retain local
   portal behavior.
