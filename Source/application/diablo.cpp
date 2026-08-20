@@ -269,8 +269,21 @@ void LeftMouseCmd(bool bShift)
 		CloseGoldWithdraw();
 		CloseStash();
 		CloseVisualStore();
-		if (pcursitem != -1 && pcurs == CURSOR_HAND)
+		if (pcursitem != -1 && pcurs == CURSOR_HAND) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()
+			    && MyPlayer->position.tile.WalkingDistance(cursPosition) < 2) {
+				const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
+				if (!entityId.has_value()) {
+					LogError("Server-backed town item target is not an authoritative entity.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+					LogError("Server-backed town item pickup failed: {}", result.error());
+				}
+				return;
+			}
+		#endif
 			NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, cursPosition, pcursitem);
+		}
 		if (pcursmonst != -1)
 			NetSendCmdLocParam1(true, CMD_TALKXY, cursPosition, pcursmonst);
 		if (pcursitem == -1 && pcursmonst == -1 && PlayerUnderCursor == nullptr) {
@@ -283,6 +296,17 @@ void LeftMouseCmd(bool bShift)
 	const Player &myPlayer = *MyPlayer;
 	bNear = myPlayer.position.tile.WalkingDistance(cursPosition) < 2;
 	if (pcursitem != -1 && pcurs == CURSOR_HAND && !bShift) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected() && bNear) {
+			const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed item target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed item pickup failed: {}", result.error());
+			}
+			return;
+		}
+	#endif
 		NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, cursPosition, pcursitem);
 	} else if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled() && (!bShift || (bNear && ObjectUnderCursor->_oBreak == 1))) {
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT

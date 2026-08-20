@@ -9,8 +9,11 @@ All notable changes to this fork are documented below.
   repeated actions. Add an additive cell-targeted attack intent that preserves
   native `CMD_SATTACKXY`/`CMD_RATTACKXY` direction and path semantics; connected
   native location-only and repeated attacks now use it, while legacy mode keeps
-  the original commands. Trap Disarm continues to submit the existing
-  authoritative `DisarmTrapRequested` intent.
+  the original commands. Adjacent primary native world-item clicks now submit
+  the projected world-item entity through the authoritative pickup intent in
+  both town and dungeon modes; distant clicks retain native auto-walk
+  compatibility. Trap Disarm continues to submit the existing authoritative
+  `DisarmTrapRequested` intent.
 
 - Route connected native Telekinesis through the authoritative cast protocol for
   projected world items, objects, and monsters while retaining the legacy
