@@ -16,6 +16,7 @@
 #include "game/objects/objects.hpp"
 #include "engine/render/world_renderer.h"
 #include "devilution.pb.h"
+#include "game/spells/spells.hpp"
 #include "tables/objdat.h"
 
 namespace devilution::authoritative {
@@ -128,9 +129,21 @@ player_graphic GetRemotePlayerGraphicInternal(const ProjectedPlayerSnapshot &sna
 	case PM_GOTHIT:
 		return player_graphic::Hit;
 	case PM_SPELL:
-		// The authoritative action identifies the spell and its effects. The
-		// native class-specific spell graphic is a later equipment/content seam;
-		// Magic is the safe presentation family for every current spell.
+		if (snapshot.currentAction.has_value()) {
+			const SpellID spellId = static_cast<SpellID>(snapshot.currentAction->spellId);
+			if (IsValidSpell(spellId)) {
+				switch (GetSpellData(spellId).type()) {
+				case MagicType::Fire:
+					return player_graphic::Fire;
+				case MagicType::Lightning:
+					return player_graphic::Lightning;
+				case MagicType::Magic:
+					return player_graphic::Magic;
+				}
+			}
+		}
+		// An absent or older-server spell identity falls back safely to the
+		// generic native magic family.
 		return player_graphic::Magic;
 	default:
 		return player_graphic::Stand;

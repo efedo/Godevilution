@@ -78,10 +78,11 @@ from participant snapshots and draws current-level sprites directly from the
 authoritative positions. These objects never enter the native `Players`
 simulation pool, so they cannot run local AI, movement, collision, or damage
 logic. Their authoritative walk, attack, ranged, block, hit, spell, and death
-modes now select the matching native presentation family, and authoritative
-weapon/shield/armor slots select the native sprite weapon and armor variants.
-Exact spell-specific frames, party-panel details, and automap parity remain
-separate presentation migrations.
+modes now select the matching native presentation family, authoritative spell
+actions select Fire, Lightning, or Magic families, and authoritative
+weapon/shield/armor slots select native sprite variants. Exact action timing,
+party-panel details, and automap parity remain separate presentation
+migrations.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,

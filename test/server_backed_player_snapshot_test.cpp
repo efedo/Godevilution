@@ -642,6 +642,24 @@ TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerCombatModesToNativeGraphics)
 	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Death);
 }
 
+TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerSpellActionsToNativeGraphics)
+{
+	LoadSpellData();
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.life = 640;
+	snapshot.combatMode = PM_SPELL;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {};
+
+	snapshot.currentAction->spellId = static_cast<uint32_t>(SpellID::Firebolt);
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Fire);
+	snapshot.currentAction->spellId = static_cast<uint32_t>(SpellID::Lightning);
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Lightning);
+	snapshot.currentAction->spellId = static_cast<uint32_t>(SpellID::Healing);
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Magic);
+	snapshot.currentAction->spellId = 999;
+	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Magic);
+}
+
 TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerEquipmentToNativeGraphicBits)
 {
 	ProjectedPlayerSnapshot snapshot;
