@@ -481,8 +481,8 @@ Status date: 2026-08-20
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
-  blockers are destroyed before the ball is removed. Focused Diablo and server
-  regression tests cover the behavior.
+  blockers are destroyed before the ball is removed. The Release Diablo suite
+  passes all 1,388 tests and the Release server suite passes all 381 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
