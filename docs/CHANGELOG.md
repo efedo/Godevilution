@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authored world mutations with validated `object_layer_rects`
+  assignments. Native object-layer values now persist in effective level
+  geometry for explicit mapping/rematerialization after set-piece changes. Bump
+  the Diablo content schema to 1.377.
+
 - Extend authored world mutations with validated `transparency_rects`
   assignments. Native transparency values now persist through active mutation
   state and project through level geometry, enabling effects such as the native

@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,414, Server 414, and Godot protocol 145. These counts are a dated
+1,416, Server 414, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -293,6 +293,11 @@ future run.
   `transparency_rects` assignments. Active values are applied to native
   transparency layers and projected through level geometry; overlapping
   assignments and levels without a transparency layer reject activation.
+
+- Schema 1.377 extends authored mutations with validated `object_layer_rects`
+  assignments. Effective native object-layer values now survive map mutation
+  projection and are available to the explicit native-DUN object mapping
+  catalog; dynamic object rematerialization remains a follow-up seam.
 
 - Authored object rows now also support validated quest transitions. An object
   may activate or complete its linked quest, set `_qvar1` or `_qvar2`, and gate

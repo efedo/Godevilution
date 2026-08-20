@@ -147,6 +147,70 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void LoadsAndProjectsNativeObjectLayerRectangles()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tobject_layer_rects\n"
+                + "7\t1\t1,1,2,1,14\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        var rectangle = Assert.Single(mutation.ObjectLayerRectangles);
+        Assert.Equal((1, 1, 2, 1, (ushort)14), (
+            rectangle.X,
+            rectangle.Y,
+            rectangle.Width,
+            rectangle.Height,
+            rectangle.ObjectId));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            nativeObjectLayer: Enumerable.Repeat<ushort>(0, 16)));
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)14, level.NativeObjectLayer[5]);
+        Assert.Equal((ushort)14, level.NativeObjectLayer[6]);
+        Assert.Equal((ushort)0, level.NativeObjectLayer[4]);
+    }
+
+    [Fact]
+    public void RejectsObjectLayerAssignmentsWithoutLayerOrWithOverlap()
+    {
+        var noLayer = new AuthoritativeWorld();
+        noLayer.AddLevel(new AuthoritativeLevel(1, 2, 2));
+        var mutation = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                objectLayerRectangles: [
+                    new AuthoritativeWorldMutationObjectRectangle(0, 0, 1, 1, 14),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => mutation.ValidateWorld(noLayer));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            nativeObjectLayer: Enumerable.Repeat<ushort>(0, 4)));
+        var overlapping = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                8,
+                1,
+                objectLayerRectangles: [
+                    new AuthoritativeWorldMutationObjectRectangle(0, 0, 2, 1, 14),
+                    new AuthoritativeWorldMutationObjectRectangle(1, 0, 1, 1, 15),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => overlapping.ValidateWorld(geometry));
+    }
+
+    [Fact]
     public void ResolvesSetLevelMutationTargetsToRuntimeLevels()
     {
         var stableIds = new StableContentIdCatalog([

@@ -264,8 +264,10 @@ coordinates can be authored without client-side gameplay. Authored Phasing rows
 may additionally select the activating player's tile as their projectile origin;
 the compatibility default retains the prior target-origin behavior. Set-level placement
 and map effects remain content seams still being filled from native data; authored
-world mutations can now also assign validated native transparency rectangles for
-set-piece effects such as Halls of the Blind. The
+world mutations can now also assign validated native transparency and native
+object-layer rectangles for set-piece effects such as Halls of the Blind.
+Object-layer values are retained for the explicit mapping catalog while dynamic
+object rematerialization remains a follow-up seam. The
 Diablo module now parses native `.dun` layers, native little-endian `.til`
 mega-tile records, and `.sol` tile-property bytes, then exposes an exact
 materializer when those collision inputs are supplied, without guessing from
