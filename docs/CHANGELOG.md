@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Present the server-selected Normal, Nightmare, or Hell difficulty in the
   Godot HUD and add live Hell projection coverage.
 
+- Add live Hellfire coverage proving that the server-selected difficulty also
+  scales authoritative monster hit points before they reach the Godot client.
+
 - Enforce the authoritative stash session for Repair, Recharge, and Identify
   commands that target stash items; crafted closed-session requests now fail
   with `NotAllowed` instead of bypassing the presentation boundary.

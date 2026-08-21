@@ -33,6 +33,34 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportReceivesDifficultyScaledAuthoritativeMonsterState()
+    {
+        var hellfireRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "hellfire");
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            hellfireRoot,
+            difficultyOverride: "hell");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-difficulty-monster", requestedClassId: 2));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var snapshot = initial.Snapshot!;
+        Assert.Equal(GameDifficulty.Hell, snapshot.Difficulty);
+        var monster = Assert.Single(snapshot.Monsters, candidate => candidate.EntityId == 10);
+
+        Assert.Equal(2U, monster.MonsterId);
+        Assert.Equal(244, monster.MaxHitPoints);
+        Assert.Equal(monster.MaxHitPoints, monster.HitPoints);
+    }
+
+    [Fact]
     public async Task GodotTransportAllocatesASeededAuthoritativeAttributePoint()
     {
         using var server = await StartedServer.StartAsync(
