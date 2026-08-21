@@ -492,6 +492,7 @@ struct ReplayFixtureExecutionState {
 	uint32_t combatTargetLevelId = 0;
 	int32_t combatTargetPositionX = 0;
 	int32_t combatTargetPositionY = 0;
+	int32_t combatTargetDirection = 0;
 	int32_t combatTargetHitPoints = 0;
 	int32_t combatTargetMaxHitPoints = 0;
 	int32_t combatTargetHitPointsQ6 = 0;

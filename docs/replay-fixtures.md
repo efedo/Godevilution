@@ -137,11 +137,11 @@ gate contains 83 fixture cases, including seeded and autonomous MonsterArrow
 source coverage, autonomous Succubus BloodStar admission/impact/block lanes,
 and a Lich-family MonsterMagic admission/hit/miss/secondary-impact lane. With
 the native `replay_test` executable rebuilt on 2026-08-21 and run from the
-repository root, 73 of 88 tests pass. The remaining 15 failures are known
-C++/C# behavior or projection mismatches in
-death/restart/level-transition, Firebolt tuning, Bone Spirit homing,
-Hellfire blocking, multiplayer autonomous actions, and autonomous monster
-projectile lanes; they remain targeted parity work rather than untriaged
+repository root, 76 of 88 tests pass. The remaining 12 failures are known
+C++/C# behavior or projection mismatches in restart/level-transition,
+Firebolt tuning, Bone Spirit homing, Hellfire blocking, SkeletonRanged arrow
+projection, and Succubus/Lich autonomous projectile lanes; they remain targeted
+parity work rather than untriaged
 fixture failures. The managed replay suite passes locally.
 
 ## Current Coverage

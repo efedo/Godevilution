@@ -421,6 +421,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendInt32(state.combatTargetFuturePositionY);
 			hasher.AppendBool(state.combatTargetPetrified);
 		}
+		if (state.combatTargetDirection != 0) {
+			hasher.AppendString("godevilution-monster-direction-v1");
+			hasher.AppendInt32(state.combatTargetDirection);
+		}
 		if (state.combatTargetStoneCurseImmune) {
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
@@ -4245,6 +4249,11 @@ void AdvanceReplayMonsterAttack(
 			state.combatTargetMoving = true;
 			state.combatTargetFuturePositionX = candidate.first;
 			state.combatTargetFuturePositionY = candidate.second;
+			state.combatTargetDirection = GetDirection(
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY,
+			    candidate.first,
+			    candidate.second);
 			break;
 		}
 		return;
