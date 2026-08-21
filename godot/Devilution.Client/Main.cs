@@ -40,6 +40,14 @@ public partial class Main : Node2D
         };
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
         hud.CloseStoreRequested += () => QueueIfConnected(new Command { CloseStoreRequested = new CloseStoreRequested() });
+        hud.OpenStashRequested += () => QueueIfConnected(new Command { OpenStashRequested = new OpenStashRequested() });
+        hud.CloseStashRequested += () => QueueIfConnected(new Command { CloseStashRequested = new CloseStashRequested() });
+        hud.DepositStashGoldRequested += amount => QueueIfConnected(new Command {
+            DepositStashGoldRequested = new DepositStashGoldRequested { Amount = amount },
+        });
+        hud.WithdrawStashGoldRequested += amount => QueueIfConnected(new Command {
+            WithdrawStashGoldRequested = new WithdrawStashGoldRequested { Amount = amount },
+        });
         hud.PurchaseRequested += (storeId, storeSlot) => QueueIfConnected(new Command { PurchaseRequested = new PurchaseRequested { StoreId = storeId, StoreSlot = storeSlot } });
         hud.SellItemRequested += item => QueueIfConnected(new Command {
             SellItemRequested = new SellItemRequested {

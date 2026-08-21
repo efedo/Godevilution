@@ -15,12 +15,14 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label clock = new();
     private readonly Label inventory = new();
     private readonly Label store = new();
+    private readonly Label stash = new();
     private readonly Label dialog = new();
     private readonly Label commandFeedback = new();
     private readonly Label diagnostics = new();
     private readonly Label victory = new();
     private readonly ItemList spellSources = new();
     private readonly ItemList storeItems = new();
+    private readonly ItemList stashItems = new();
     private readonly ItemList beltItems = new();
     private readonly ItemList equipmentItems = new();
     private readonly ItemList oilTargets = new();
@@ -34,6 +36,14 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button openSmith = new() { Text = "Open Smith" };
     private readonly Button openAdria = new() { Text = "Open Adria" };
     private readonly Button closeStore = new() { Text = "Close store" };
+    private readonly Button openStash = new() { Text = "Open stash" };
+    private readonly Button closeStash = new() { Text = "Close stash" };
+    private readonly Button depositStashGold = new() { Text = "Deposit stash gold" };
+    private readonly Button withdrawStashGold = new() { Text = "Withdraw stash gold" };
+    private readonly LineEdit stashGoldAmount = new() {
+        Text = "10",
+        PlaceholderText = "Gold amount",
+    };
     private readonly Button buySelected = new() { Text = "Buy selected" };
     private readonly Button sellSelected = new() { Text = "Sell selected" };
     private readonly Button repairSelected = new() { Text = "Repair selected" };
@@ -73,6 +83,10 @@ public partial class HudPresentation : CanvasLayer
 
     public event Action<uint>? OpenStoreRequested;
     public event Action? CloseStoreRequested;
+    public event Action? OpenStashRequested;
+    public event Action? CloseStashRequested;
+    public event Action<uint>? DepositStashGoldRequested;
+    public event Action<uint>? WithdrawStashGoldRequested;
     public event Action<uint, uint>? PurchaseRequested;
     public event Action<PlayerItemReference>? SellItemRequested;
     public event Action<PlayerItemReference>? RepairItemRequested;
@@ -150,12 +164,18 @@ public partial class HudPresentation : CanvasLayer
         storeItems.CustomMinimumSize = new Vector2(340, 110);
         sideBox.AddChild(storeItems);
         sideBox.AddChild(store);
+        sideBox.AddChild(new Label { Text = "Stash (authoritative summary)" });
+        stashItems.CustomMinimumSize = new Vector2(340, 90);
+        sideBox.AddChild(stashItems);
+        sideBox.AddChild(stash);
+        sideBox.AddChild(stashGoldAmount);
         sideBox.AddChild(new Label { Text = "Dialog / world interactions" });
         sideBox.AddChild(dialog);
 
         var controls = new GridContainer { Columns = 2 };
         foreach (var button in new Control[] {
-            openSmith, openAdria, closeStore, buySelected, sellSelected, repairSelected,
+            openSmith, openAdria, closeStore, openStash, closeStash, depositStashGold,
+            withdrawStashGold, buySelected, sellSelected, repairSelected,
             rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
             useConsumableSelected, applyOilSelected,
             questTownerInteraction,
@@ -234,6 +254,10 @@ public partial class HudPresentation : CanvasLayer
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
         openAdria.Pressed += () => OpenStoreRequested?.Invoke(10);
         closeStore.Pressed += () => CloseStoreRequested?.Invoke();
+        openStash.Pressed += () => OpenStashRequested?.Invoke();
+        closeStash.Pressed += () => CloseStashRequested?.Invoke();
+        depositStashGold.Pressed += () => InvokeStashGoldAction(DepositStashGoldRequested);
+        withdrawStashGold.Pressed += () => InvokeStashGoldAction(WithdrawStashGoldRequested);
         buySelected.Pressed += BuySelected;
         sellSelected.Pressed += () => InvokeInventoryAction(SellItemRequested);
         repairSelected.Pressed += () => InvokeInventoryAction(RepairItemRequested);
@@ -363,6 +387,7 @@ public partial class HudPresentation : CanvasLayer
         ApplyEquipmentItems(player);
         ApplyOilTargets(player);
         ApplyStore(model.Snapshot?.ActiveStore);
+        ApplyStash(player);
         dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
         availableObjectEntityId = model.Snapshot?.Objects.FirstOrDefault(@object => !@object.Activated)?.EntityId;
         availableTrapEntityId = model.ArmedTrapObjects
@@ -374,6 +399,7 @@ public partial class HudPresentation : CanvasLayer
         var connected = client?.IsConnected == true;
         var hasStatPoints = connected && player?.StatPoints > 0;
         var activeStore = model.Snapshot?.ActiveStore;
+        var stashOpen = player?.StashOpen == true;
         var hasInventory = player is not null && player.Inventory.Count > 0;
         var hasSelectedInventory = hasInventory && selectedInventoryIndex >= 0 && selectedInventoryIndex < player!.Inventory.Count;
         var hasSelectedBelt = player is not null && selectedBeltSlot is { } selectedBelt
@@ -396,9 +422,14 @@ public partial class HudPresentation : CanvasLayer
             && AuthoritativeItemActionRules.IsTargetlessConsumable(selectedItemAction);
         var hasTargetedConsumable = hasSelectedItem
             && AuthoritativeItemActionRules.IsTargetedConsumable(selectedItemAction);
-        openSmith.Disabled = !connected;
-        openAdria.Disabled = !connected;
+        openSmith.Disabled = !connected || stashOpen;
+        openAdria.Disabled = !connected || stashOpen;
         closeStore.Disabled = !connected || activeStore is null;
+        openStash.Disabled = !connected || stashOpen || activeStore is not null;
+        closeStash.Disabled = !connected || !stashOpen;
+        stashGoldAmount.Editable = connected && stashOpen;
+        depositStashGold.Disabled = !connected || !stashOpen;
+        withdrawStashGold.Disabled = !connected || !stashOpen;
         allocateStrength.Disabled = !hasStatPoints;
         allocateMagic.Disabled = !hasStatPoints;
         allocateDexterity.Disabled = !hasStatPoints;
@@ -475,6 +506,31 @@ public partial class HudPresentation : CanvasLayer
             else
                 storeItems.Select(selectedIndex, false);
         }
+    }
+
+    private void ApplyStash(PlayerSnapshot? player)
+    {
+        stashItems.Clear();
+        if (player is null) {
+            stash.Text = "No authoritative stash projection";
+            return;
+        }
+
+        foreach (var item in player.Stash.OrderBy(item => item.Page).ThenBy(item => item.Cell)) {
+            stashItems.AddItem(
+                $"page {item.Page}, cell {item.Cell}: {DescribeItem(item.Item?.State)}");
+        }
+
+        var pageZero = StashLayout.Build(player.Stash, 0);
+        var occupied = pageZero.Anchors.Count(cell => cell >= 0);
+        stash.Text = $"{(player.StashOpen ? "Open" : "Closed")}   Gold {player.StashGold}   Items {player.Stash.Count}   Page 0 occupied {occupied}";
+    }
+
+    private void InvokeStashGoldAction(Action<uint>? action)
+    {
+        if (action is null || !uint.TryParse(stashGoldAmount.Text, out var amount) || amount == 0)
+            return;
+        action(amount);
     }
 
     private void ApplyInventoryGrid(PlayerSnapshot? player)

@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   now fail closed while the stash session is closed, and vendor/stash sessions
   cannot overlap.
 
+- Add Godot HUD stash session controls and a read-only authoritative stash
+  summary, including server-reconciled stash gold and page occupancy.
+
 - Add server-owned 100-page stash state with native-compatible 10x10 page
   grids, stable page/cell references, overlap validation, inventory↔stash
   transfers, snapshot projection, and version-1 save round-tripping. Native
