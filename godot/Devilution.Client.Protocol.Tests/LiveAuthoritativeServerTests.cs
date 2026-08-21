@@ -35,6 +35,144 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportSubmitsAnAuthoredQuestTownerDialogueStage()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Quest-Towner-Overlay-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.godot-quest-towner-stage",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.383.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    { "table": "levels.tsv", "keys": ["level_id"], "mode": "upsert" },
+                    { "table": "quest_states.tsv", "keys": ["quest_id"], "mode": "upsert" },
+                    { "table": "quest_towner_interactions.tsv", "keys": ["interaction_id"], "mode": "upsert" }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+
+            var repositoryRoot = FindRepositoryRoot();
+            var levelsPath = Path.Combine(repositoryRoot, "server", "content", "base", "levels.tsv");
+            var levelLines = await File.ReadAllLinesAsync(
+                levelsPath,
+                TestContext.Current.CancellationToken);
+            var townLevel = levelLines
+                .Single(line => line.StartsWith("0\t", StringComparison.Ordinal))
+                .Split('\t');
+            townLevel[6] = "1";
+            var cathedralLevel = levelLines
+                .Single(line => line.StartsWith("1\t", StringComparison.Ordinal))
+                .Split('\t');
+            cathedralLevel[6] = "0";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "levels.tsv"),
+                [levelLines[0], string.Join('\t', townLevel), string.Join('\t', cathedralLevel)],
+                TestContext.Current.CancellationToken);
+
+            var questStatesPath = Path.Combine(repositoryRoot, "server", "content", "base", "quest_states.tsv");
+            var questStateLines = await File.ReadAllLinesAsync(
+                questStatesPath,
+                TestContext.Current.CancellationToken);
+            var questStateHeader = questStateLines[0].Split('\t');
+            int QuestStateColumn(string name)
+                => Array.IndexOf(questStateHeader, name);
+            var kingLeoric = questStateLines
+                .Single(line => line.StartsWith("3013\t", StringComparison.Ordinal))
+                .Split('\t');
+            kingLeoric[6] = "1";
+            kingLeoric[8] = "0";
+            kingLeoric[9] = "1";
+            kingLeoric[11] = "1";
+            kingLeoric[QuestStateColumn("turn_in_towner_id")] = "3";
+            kingLeoric[QuestStateColumn("turn_in_level_id")] = "0";
+            kingLeoric[QuestStateColumn("turn_in_position_x")] = "0";
+            kingLeoric[QuestStateColumn("turn_in_position_y")] = "0";
+            kingLeoric[QuestStateColumn("turn_in_on_completion")] = "true";
+            kingLeoric[QuestStateColumn("turn_in_completion_variable2")] = "2";
+            kingLeoric[QuestStateColumn("turn_in_completion_message_id")] = "999";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "quest_states.tsv"),
+                [questStateLines[0], string.Join('\t', kingLeoric)],
+                TestContext.Current.CancellationToken);
+
+            var interactionsPath = Path.Combine(repositoryRoot, "server", "content", "base", "quest_towner_interactions.tsv");
+            var interactionLines = await File.ReadAllLinesAsync(
+                interactionsPath,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "quest_towner_interactions.tsv"),
+                [
+                    interactionLines[0],
+                    "399001\t3013\tking_leoric\t3\t0\ttown\t0\t0\t0\tNONE\tDialogue\t-1\t1\t2\t2\t999\tfalse\ttrue\t0\t0\tfalse",
+                ],
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                gameMode: "single-player");
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-quest-towner-stage", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            var player = Assert.Single(model.Snapshot!.Players);
+            Assert.Equal(0U, player.LevelId);
+            Assert.Equal((0, 0), (player.PositionX, player.PositionY));
+            var interaction = model.QuestTownerInteractionAt(0, 0);
+            Assert.NotNull(interaction);
+            Assert.Equal(399001U, interaction.InteractionId);
+            Assert.Equal(3013U, interaction.QuestId);
+            Assert.Equal(3, interaction.TownerId);
+
+            var sequence = client.Queue(new Command {
+                TurnInQuestRequested = new TurnInQuestRequested {
+                    QuestId = interaction.QuestId,
+                    TownerId = checked((uint)interaction.TownerId),
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+            var dialogue = await WaitForMessageAsync(
+                client,
+                message => message.Events?.Events.Any(gameEvent =>
+                    gameEvent.Dialogue is {
+                        QuestId: 3013,
+                        MessageId: 999,
+                    }) == true);
+            var eventDialogue = Assert.Single(
+                dialogue.Events!.Events,
+                gameEvent => gameEvent.Dialogue is not null).Dialogue;
+            Assert.Equal(3013U, eventDialogue.QuestId);
+            Assert.Equal(999, eventDialogue.MessageId);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GodotTransportFollowsAnAuthoredProgressionWarp()
     {
         var overlayRoot = Path.Combine(

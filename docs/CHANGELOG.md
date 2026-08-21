@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   authored quest/towner stages before falling back to spell casting or movement;
   trap clicks fail closed when the local player lacks Trap Disarm.
 
+- Continue authoritative quest/towner stage selection past out-of-range active
+  stages, and add live Godot protocol coverage for an authored itemless,
+  completed-quest dialogue stage submitted through `TurnInQuestRequested`.
+
 - Add a server-driven Godot victory banner for typed Diablo defeat events and
   terminal victory snapshots, preserving the multiplayer/single-player level
   identity distinction without adding client gameplay state.

@@ -1913,9 +1913,8 @@ public sealed class DiabloWorldCommandProcessor
             if (interaction.LevelId != player.LevelId
                 || Math.Max(
                     Math.Abs(interaction.PositionX - player.PositionX),
-                    Math.Abs(interaction.PositionY - player.PositionY)) > 1) {
-                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-            }
+                    Math.Abs(interaction.PositionY - player.PositionY)) > 1)
+                continue;
 
             if (interaction.ItemId != 0) {
                 if (items is null
