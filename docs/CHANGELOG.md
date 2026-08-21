@@ -20,6 +20,9 @@ All notable changes to this fork are documented below.
 
 
 - Stop projecting a second native walk destination after the authoritative
+- Align Godot walk-position projection with the authoritative effect-applied
+  flag so reconciled snapshots do not schedule a second client-side step.
+
   movement effect has already advanced the player position.
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native

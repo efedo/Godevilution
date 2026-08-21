@@ -15,7 +15,7 @@ public static class AuthoritativePlayerPositionProjection
 
         var x = player.PositionX;
         var y = player.PositionY;
-        if (player.CurrentAction is { Kind: PlayerActionKind.Move } move) {
+        if (player.CurrentAction is { Kind: PlayerActionKind.Move, EffectApplied: false } move) {
             x += move.DirectionX;
             y += move.DirectionY;
         }

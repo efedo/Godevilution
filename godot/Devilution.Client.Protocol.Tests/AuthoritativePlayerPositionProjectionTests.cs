@@ -36,6 +36,26 @@ public sealed class AuthoritativePlayerPositionProjectionTests
     }
 
     [Fact]
+    public void UsesTheOccupiedTileAfterTheAuthoritativeWalkEffectApplies()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            CombatMode = PlayerCombatMode.WalkSideways,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                DirectionX = -1,
+                DirectionY = 1,
+                EffectApplied = true,
+            },
+        };
+
+        Assert.Equal(
+            new ClientPosition(4, 5),
+            AuthoritativePlayerPositionProjection.Resolve(player));
+    }
+
+    [Fact]
     public void DoesNotApplyAttackDirectionFieldsToPresentationPosition()
     {
         var player = new PlayerSnapshot {
