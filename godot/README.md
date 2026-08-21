@@ -223,6 +223,11 @@ Dexterity, and Vitality requests. The server validates the spend and returns
 the resulting attributes and resources; Godot does not apply the increase
 locally.
 
+The store panel also exposes a `Close store` action. It sends the
+server-authoritative `CloseStoreRequested` intent and waits for the snapshot to
+remove the active store; repeated requests are safe and do not mutate local
+vendor stock.
+
 Right-clicking a visible monster or living remote player submits an
 authoritative `AttackRequested` intent for that entity. The presentation client
 resolves the clicked tile, including a remote player's reserved walk

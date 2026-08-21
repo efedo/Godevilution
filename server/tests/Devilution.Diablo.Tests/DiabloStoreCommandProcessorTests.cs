@@ -1251,6 +1251,23 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void CloseStoreClearsActiveStoreAndIsIdempotent()
+    {
+        var processor = new DiabloStoreCommandProcessor(CreateCatalog());
+        var player = CreatePlayer();
+
+        Assert.True(processor.Execute(player, new DiabloOpenStoreIntent(1), 0).Succeeded);
+        Assert.Equal(1U, player.ActiveStoreId);
+
+        var closed = processor.Execute(player, new DiabloCloseStoreIntent(), 1);
+        var repeated = processor.Execute(player, new DiabloCloseStoreIntent(), 2);
+
+        Assert.True(closed.Succeeded);
+        Assert.True(repeated.Succeeded);
+        Assert.Null(player.ActiveStoreId);
+    }
+
+    [Fact]
     public void InventoryMoveUsesStableReferenceWhenPresent()
     {
         var item = new OwnedStoreItem(

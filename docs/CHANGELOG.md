@@ -4,6 +4,14 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an idempotent server-owned `CloseStoreRequested` intent and Godot HUD
+  control so vendor and Adria service sessions can end without relying on a
+  town restart or stale active-store state.
+
+- Refresh shipped-content assertions for the composed procedural level catalog
+  and current Hellfire level set, keeping the full Diablo test suite aligned
+  with validated external content.
+
 - Restrict Godot world-object clicks to server-authored interactions. Ordinary
   presentation-only objects no longer submit `OperateObjectRequested`, while
   authored effects, quest links/transitions, rewards, follow-ups, and revealed

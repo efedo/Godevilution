@@ -33,6 +33,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly List<PlayerItemReference> oilTargetReferences = [];
     private readonly Button openSmith = new() { Text = "Open Smith" };
     private readonly Button openAdria = new() { Text = "Open Adria" };
+    private readonly Button closeStore = new() { Text = "Close store" };
     private readonly Button buySelected = new() { Text = "Buy selected" };
     private readonly Button sellSelected = new() { Text = "Sell selected" };
     private readonly Button repairSelected = new() { Text = "Repair selected" };
@@ -71,6 +72,7 @@ public partial class HudPresentation : CanvasLayer
     private string selectedSpellText = "none";
 
     public event Action<uint>? OpenStoreRequested;
+    public event Action? CloseStoreRequested;
     public event Action<uint, uint>? PurchaseRequested;
     public event Action<PlayerItemReference>? SellItemRequested;
     public event Action<PlayerItemReference>? RepairItemRequested;
@@ -153,7 +155,7 @@ public partial class HudPresentation : CanvasLayer
 
         var controls = new GridContainer { Columns = 2 };
         foreach (var button in new Control[] {
-            openSmith, openAdria, buySelected, sellSelected, repairSelected,
+            openSmith, openAdria, closeStore, buySelected, sellSelected, repairSelected,
             rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
             useConsumableSelected, applyOilSelected,
             questTownerInteraction,
@@ -231,6 +233,7 @@ public partial class HudPresentation : CanvasLayer
         };
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
         openAdria.Pressed += () => OpenStoreRequested?.Invoke(10);
+        closeStore.Pressed += () => CloseStoreRequested?.Invoke();
         buySelected.Pressed += BuySelected;
         sellSelected.Pressed += () => InvokeInventoryAction(SellItemRequested);
         repairSelected.Pressed += () => InvokeInventoryAction(RepairItemRequested);
@@ -395,6 +398,7 @@ public partial class HudPresentation : CanvasLayer
             && AuthoritativeItemActionRules.IsTargetedConsumable(selectedItemAction);
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
+        closeStore.Disabled = !connected || activeStore is null;
         allocateStrength.Disabled = !hasStatPoints;
         allocateMagic.Disabled = !hasStatPoints;
         allocateDexterity.Disabled = !hasStatPoints;

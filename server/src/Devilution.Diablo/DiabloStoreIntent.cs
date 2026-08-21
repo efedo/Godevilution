@@ -18,6 +18,9 @@ public abstract record DiabloStoreIntent;
 
 public sealed record DiabloOpenStoreIntent(uint StoreId) : DiabloStoreIntent;
 
+/** Closes the player's current vendor or service store; repeated closes are safe. */
+public sealed record DiabloCloseStoreIntent : DiabloStoreIntent;
+
 public sealed record DiabloPurchaseIntent(uint StoreId, uint StoreSlot) : DiabloStoreIntent;
 
 public sealed record DiabloSellItemIntent(

@@ -227,6 +227,10 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     player,
                     new DiabloOpenStoreIntent(command.OpenStoreRequested.StoreId),
                     appliedTick),
+                Command.IntentOneofCase.CloseStoreRequested => ExecuteStoreIntent(
+                    player,
+                    new DiabloCloseStoreIntent(),
+                    appliedTick),
                 Command.IntentOneofCase.PurchaseRequested => ExecuteStoreIntent(
                     player,
                     new DiabloPurchaseIntent(

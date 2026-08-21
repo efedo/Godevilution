@@ -39,6 +39,7 @@ public partial class Main : Node2D
                 });
         };
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
+        hud.CloseStoreRequested += () => QueueIfConnected(new Command { CloseStoreRequested = new CloseStoreRequested() });
         hud.PurchaseRequested += (storeId, storeSlot) => QueueIfConnected(new Command { PurchaseRequested = new PurchaseRequested { StoreId = storeId, StoreSlot = storeSlot } });
         hud.SellItemRequested += item => QueueIfConnected(new Command {
             SellItemRequested = new SellItemRequested {

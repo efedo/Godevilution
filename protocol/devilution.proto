@@ -132,6 +132,7 @@ message Command {
 	UseConsumableRequested use_consumable_requested = 33;
 	TurnInQuestRequested turn_in_quest_requested = 34;
 	AllocateAttributeRequested allocate_attribute_requested = 35;
+		CloseStoreRequested close_store_requested = 36;
 	}
 }
 
@@ -180,6 +181,8 @@ enum CastSourceKind {
 message OpenStoreRequested {
 	uint32 store_id = 1;
 }
+
+message CloseStoreRequested {}
 
 message PurchaseRequested {
 	uint32 store_id = 1;

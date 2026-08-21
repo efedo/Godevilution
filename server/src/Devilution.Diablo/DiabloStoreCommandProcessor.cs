@@ -58,6 +58,7 @@ public sealed class DiabloStoreCommandProcessor
 
         return intent switch {
             DiabloOpenStoreIntent open => OpenStore(player, open.StoreId),
+            DiabloCloseStoreIntent => CloseStore(player),
             DiabloPurchaseIntent purchase => Purchase(player, purchase, appliedTick),
             DiabloSellItemIntent sale => Sell(player, sale.Item, sale.LegacyInventoryIndex),
             DiabloRepairItemIntent repair => Repair(player, repair),
@@ -83,6 +84,12 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         player.ActiveStoreId = storeId;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private static DiabloIntentResult CloseStore(AuthoritativePlayerState player)
+    {
+        player.ActiveStoreId = null;
         return DiabloIntentResult.Accepted;
     }
 

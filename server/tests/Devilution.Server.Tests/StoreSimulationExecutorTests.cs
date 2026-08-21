@@ -86,6 +86,23 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void CloseStoreClearsAuthoritativeStoreSnapshot()
+    {
+        var executor = new StoreSimulationExecutor(CreateCatalog(), startingGold: 100);
+        var server = new AuthoritativeCommandServer(executor);
+
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", OpenStore(1), 10).Status);
+        Assert.Equal(1U, executor.GetPlayerState("player-a").ActiveStoreId);
+
+        var close = server.Process("player-a", CloseStore(2, 12), 12);
+        var repeated = server.Process("player-a", CloseStore(3, 13), 13);
+
+        Assert.Equal(CommandStatus.Accepted, close.Status);
+        Assert.Equal(CommandStatus.Accepted, repeated.Status);
+        Assert.Null(executor.GetPlayerState("player-a").ActiveStoreId);
+    }
+
+    [Fact]
     public void InsufficientGoldLeavesWalletAndStockUnchanged()
     {
         var catalog = CreateCatalog(new StoreItem(0, 42, 75));
@@ -3206,6 +3223,15 @@ public sealed class StoreSimulationExecutorTests
             ClientSequence = clientSequence,
             RequestedTick = 12,
             PurchaseRequested = new PurchaseRequested { StoreId = 1, StoreSlot = slot },
+        };
+    }
+
+    private static Command CloseStore(ulong clientSequence, ulong requestedTick)
+    {
+        return new Command {
+            ClientSequence = clientSequence,
+            RequestedTick = requestedTick,
+            CloseStoreRequested = new CloseStoreRequested(),
         };
     }
 }

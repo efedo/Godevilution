@@ -28,7 +28,8 @@ public sealed class CommandAdmissionPolicy
             return CommandAdmission.Accepted(command.RequestedTick);
 
         var lateness = currentTick - command.RequestedTick;
-        var lateTolerance = command.IntentCase == Command.IntentOneofCase.OpenStoreRequested
+        var lateTolerance = command.IntentCase is Command.IntentOneofCase.OpenStoreRequested
+            or Command.IntentOneofCase.CloseStoreRequested
             ? NonCriticalLateToleranceTicks
             : GameplayCriticalLateToleranceTicks;
         if (lateness <= lateTolerance)

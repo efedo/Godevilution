@@ -2416,6 +2416,17 @@ public sealed class LiveAuthoritativeServerTests
                 && message.Snapshot.ActiveStore.Items.Count == itemCount - 1);
             model.Apply(message);
         }
+
+        var closeSequence = client.Queue(new Command {
+            CloseStoreRequested = new CloseStoreRequested(),
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var closeAcknowledgement = await WaitForAcknowledgementAsync(client, closeSequence);
+        Assert.Equal(CommandStatus.Accepted, closeAcknowledgement.Status);
+        message = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null && message.Snapshot.ActiveStore is null);
+        Assert.Null(message.Snapshot!.ActiveStore);
     }
 
     [Fact]

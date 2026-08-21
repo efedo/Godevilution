@@ -353,13 +353,14 @@ public sealed class ShippedContentTests
             .Single(table => table.SourcePath == "level_generation.tsv")
             .ToCanonicalTsv()
             .Replace("7\t24\t30", "7\t25\t30", StringComparison.Ordinal);
+        var procedural = basePack.Tables
+            .Single(table => table.SourcePath == "procedural_levels.tsv")
+            .ToCanonicalTsv()
+            + "25\tgenerated_test\t25\t21\t1234\t60\t70\t0\t0\n";
         var tables = basePack.Tables
-            .Where(table => table.SourcePath != "level_generation.tsv")
+            .Where(table => table.SourcePath is not ("level_generation.tsv" or "procedural_levels.tsv"))
             .Append(TsvTable.Parse("level_generation.tsv", generation))
-            .Append(TsvTable.Parse(
-                "procedural_levels.tsv",
-                "level_id\tlevel_symbol\twidth\theight\tgeneration_seed\tblocked_percent\tmissile_blocked_percent\tdefault_start\n"
-                    + "25\tgenerated_test\t25\t21\t1234\t60\t70\t0\n"))
+            .Append(TsvTable.Parse("procedural_levels.tsv", procedural))
             .ToArray();
         var pack = new ContentPack(
             basePack.Id,
@@ -412,7 +413,7 @@ public sealed class ShippedContentTests
         var explicitLevels = TsvTable.Parse(
             "levels.tsv",
             basePack.Tables.Single(table => table.SourcePath == "levels.tsv").ToCanonicalTsv()
-                + "3\tcaves\t17\t18\tnone\tnone\t0\t0\n");
+                + "3\tcaves\t38\t39\tnone\tnone\t0\t0\n");
         var tables = basePack.Tables
             .Where(table => table.SourcePath != "levels.tsv")
             .Append(explicitLevels)
@@ -429,7 +430,7 @@ public sealed class ShippedContentTests
             activation.Simulation.WorldState.World!.Levels,
             candidate => candidate.LevelId == 3);
 
-        Assert.Equal((17, 18, "caves"), (level.Width, level.Height, level.StableSymbol));
+        Assert.Equal((38, 39, "caves"), (level.Width, level.Height, level.StableSymbol));
     }
 
     [Fact]
@@ -2198,7 +2199,7 @@ public sealed class ShippedContentTests
             jerseyQuest.TurnInAlternateItemId,
             jerseyQuest.TurnInAlternateMessageId));
         Assert.Equal(
-            [0U, 1U, 2U, 3U, 4U, 9U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U],
+            Enumerable.Range(0, 25).Select(levelId => (uint)levelId),
             activation.Simulation.WorldState.World!.Levels.Select(level => level.LevelId));
         Assert.True(activation.Simulation.WorldState.World!.IsWalkable(24, 39, 39));
         Assert.Equal(5, activation.LevelGeneration!.Definitions.Count);

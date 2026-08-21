@@ -76,6 +76,14 @@ duplicate outcomes. Commands express intent only: clients never supply the
 resulting gold, health, damage, inventory placement, quest state, or world
 mutation.
 
+`OpenStoreRequested` selects a validated vendor or service store for the
+session. `CloseStoreRequested` clears that active-store selection and is
+idempotent, including when no store is open. The resulting snapshot carries no
+`active_store` and a player `active_store_id` of zero; clients must use that
+snapshot rather than clearing vendor state optimistically. Store open and close
+commands are non-critical for late-command scheduling, but all purchases and
+paid item services still require the matching authoritative active store.
+
 `CastRequested.source` identifies an ability, memorized spell, charged item, or
 consumable item. Item-backed casts must also carry the exact authoritative
 `PlayerItemReference`; non-item sources must not. The server verifies that the
