@@ -2042,6 +2042,92 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesWarriorRepairAbilityOnAnOpenStashItem()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-warrior-repair-stash", requestedClassId: 0));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(PlayerAbilityKind.Repair, player.AbilityKind);
+        var equipment = Assert.Single(player.Equipment, item => item.Slot == 4);
+        var stableItemId = equipment.State.StableItemId;
+        Assert.NotEqual(0U, stableItemId);
+
+        var openSequence = client.Queue(new Command {
+            OpenStashRequested = new OpenStashRequested(),
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, openSequence)).Status);
+        var opened = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().StashOpen == true);
+        model.Apply(opened);
+
+        var moveSequence = client.Queue(new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                    StableItemId = stableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, moveSequence)).Status);
+        var moved = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId) == true);
+        model.Apply(moved);
+
+        var repairSequence = client.Queue(new Command {
+            RepairItemRequested = new RepairItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+                Source = ItemServiceSourceKind.ClassAbility,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, repairSequence)).Status);
+        var repaired = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId) == true);
+        var repairedItem = Assert.Single(repaired.Snapshot!.Players).Stash
+            .Single(item => item.Page == 0 && item.Cell == 0);
+        Assert.Equal(24, repairedItem.Item.State.Durability);
+        Assert.Equal(24, repairedItem.Item.State.MaxDurability);
+    }
+
+    [Fact]
     public async Task LiveServerUsesRogueTrapDisarmAbilityOnArmedObject()
     {
         var overlayRoot = Path.Combine(
@@ -2394,6 +2480,120 @@ public sealed class LiveAuthoritativeServerTests
             .Single(item => item.Slot == 4).State;
         Assert.Equal(39, rechargedStaff.Charges);
         Assert.Equal(39, rechargedStaff.MaxCharges);
+    }
+
+    [Fact]
+    public async Task LiveServerUsesSorcererRechargeAbilityOnAnOpenStashStaff()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            randomSeed: 1);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-sorcerer-recharge-stash", requestedClassId: 2));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
+        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.Alive);
+        var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
+        var stableItemId = staff.State.StableItemId;
+        Assert.Equal(30, staff.State.SpellId);
+        Assert.Equal(40, staff.State.Charges);
+        Assert.Equal(40, staff.State.MaxCharges);
+
+        var castSequence = client.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = (uint)staff.State.SpellId,
+                TargetEntityId = target.EntityId,
+                Source = CastSourceKind.ChargedItem,
+                SourceItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                    StableItemId = stableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, castSequence)).Status);
+        var consumed = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Equipment
+                .Single(item => item.Slot == 4).State.Charges == 39);
+        model.Apply(consumed);
+
+        var openSequence = client.Queue(new Command {
+            OpenStashRequested = new OpenStashRequested(),
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, openSequence)).Status);
+        var opened = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().StashOpen == true);
+        model.Apply(opened);
+
+        var moveSequence = client.Queue(new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                    StableItemId = stableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, moveSequence)).Status);
+        var moved = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId) == true);
+        model.Apply(moved);
+
+        var rechargeSequence = client.Queue(new Command {
+            RechargeItemRequested = new RechargeItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+                Source = ItemServiceSourceKind.ClassAbility,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, rechargeSequence)).Status);
+        var recharged = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId
+                && item.Item.State.Charges == 39
+                && item.Item.State.MaxCharges == 39) == true);
+        var rechargedItem = Assert.Single(recharged.Snapshot!.Players).Stash
+            .Single(item => item.Page == 0 && item.Cell == 0);
+        Assert.Equal(39, rechargedItem.Item.State.Charges);
+        Assert.Equal(39, rechargedItem.Item.State.MaxCharges);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ All notable changes to this fork are documented below.
 
 - Add live Godot protocol coverage for moving an equipment item into an open
   authoritative stash and identifying it there through a stable page/cell
-  reference.
+  reference, plus Warrior Repair and Sorcerer Recharge stash targets.
 
 - Allow Godot's Warrior Repair, Sorcerer Recharge, and Bard Identify service
   controls to target stable-reference items in an open authoritative stash;
