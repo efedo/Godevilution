@@ -107,6 +107,7 @@ public sealed class ShippedContentTests
             stage => stage.QuestId == 3003 && stage.RequiredVariable1 == 1);
         Assert.Equal(AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop, gharbadReward.RewardKind);
         Assert.Equal((1, 1), (gharbadReward.RewardOffsetX, gharbadReward.RewardOffsetY));
+        Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.None, gharbadReward.FollowUpKind);
         var snotspill = Assert.Single(
             catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 2);

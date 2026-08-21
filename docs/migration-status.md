@@ -703,9 +703,9 @@ rebuilding the projects before a future run.
 - Schema 1.354 adds `quest_dialogue_stages.tsv`, a reusable server-owned
   contract for user-visible unique-monster dialogue messages and monotonic
   `_qvar1`/`_qvar2` transitions. Base Gharbad now routes all four authored
-  dialogue stages through `TalkToQuestRequested`; its random item reward and
-  quest-specific map mutations remain explicit native fallbacks until those
-  effects have their own content contracts.
+  dialogue stages through `TalkToQuestRequested`; its random item reward is
+  externalized in schema 1.358, while encounter-state and presentation
+  transitions remain explicit native fallbacks.
 
 - Schema 1.355 extends `quest_dialogue_stages.tsv` with validated item gates
   and optional quest completion. The shared Ogden's Sign/Snotspill quest now
@@ -726,8 +726,8 @@ rebuilding the projects before a future run.
 - Schema 1.358 adds a validated staged-dialogue reward contract. Base Gharbad's
   second authored stage now generates one deterministic native-quality random
   unique-monster drop from the active item catalog and places it at the
-  authored relative position; his set-piece map mutations remain a separate
-  native fallback.
+  authored relative position; his encounter-state and presentation transitions
+  remain a separate native fallback.
 
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one

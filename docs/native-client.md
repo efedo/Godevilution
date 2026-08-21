@@ -235,8 +235,9 @@ identities are now declared independently of static placement and are applied
 when their validated procedural unique encounters materialize. Gharbad's four
 user-visible dialogue stages now use the server-owned
 `quest_dialogue_stages.tsv` contract for authored messages and monotonic
-quest-variable transitions. Its random item reward and quest-specific map
-mutations remain local fallbacks until those effects are externalized.
+quest-variable transitions. Its random item reward is server-owned; encounter-
+state and presentation transitions remain local fallbacks until an
+authoritative encounter-state contract is added.
 When the active pack includes `dialogue_messages.tsv`, the server also sends
 the authored text on `DialogueEvent.text`; older packs continue to use the
 message identity fallback.
@@ -300,11 +301,12 @@ The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
-- `TalktoMonster` still owns Gharbad/Snotspill quest-specific map changes.
+- `TalktoMonster` still owns Snotspill's Banner quest-specific map changes.
   Gharbad's authored dialogue messages, quest-variable transitions, and
   second-stage random unique-monster reward now move through
-  `TalkToQuestRequested`; the remaining dynamic effects need their own
-  content-backed map-mutation definitions.
+  `TalkToQuestRequested`; his remaining encounter-state and presentation
+  transitions stay in the native compatibility path until they have an
+  authoritative encounter-state contract.
 - Warlord's staged unique-monster conversation now uses authored messages and
   `_qvar1` transitions through `TalkToQuestRequested`, while its native AI-driven
   speech completion and encounter-state presentation remain local fallbacks.

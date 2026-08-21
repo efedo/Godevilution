@@ -1556,8 +1556,9 @@ quest to a required `_qvar1` value, an optional exact `_qvar2` value (`-1`
 means wildcard), an authored message identity, and monotonic next variable
 values. The server emits the message and owns the transition; staged rows may
 not be combined with legacy dialogue hand-in or reward fields. Base Gharbad
-uses four rows for messages 144-147. Its random item reward and map mutations
-remain native compatibility fallbacks.
+uses four rows for messages 144-147. Its random item reward and encounter-state
+presentation remain native compatibility fallbacks until their content
+contracts are added.
 
 Schema 1.355 adds optional `required_item_symbol`, `consume_item`, and
 `complete_quest` columns to `quest_dialogue_stages.tsv`. Item-gated stages
@@ -1583,7 +1584,8 @@ Schema 1.358 adds optional `reward_kind`, `reward_item_level`,
 native unique-monster drop family from the active item catalog, generates it
 with the authored item-generation rules, and places it relative to the unique
 target using a deterministic server seed. Base Gharbad's second stage now owns
-this reward; its set-piece map mutations remain a separate native fallback.
+this reward; its encounter-state and presentation transitions remain a
+separate native fallback.
 
 `objects.tsv` also accepts the backward-compatible `GrantSpellLevel` effect;
 its numeric `effect_amount` is a validated active spell ID, with optional
