@@ -1788,7 +1788,7 @@ int32_t GetReplayBaseMagicToHit(uint32_t characterClassId)
 	return 50;
 }
 
-void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state)
+void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
@@ -1848,6 +1848,57 @@ void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state)
 					hitTarget = true;
 				}
 			}
+			const bool playerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.multiplayer
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
+			if (playerAtTile) {
+				const int32_t hitChance = std::clamp(
+				    state.attributes[3]
+				        + GetReplayBaseMagicToHit(state.characterClassId)
+				        - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2,
+				    5,
+				    95);
+				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+				if (hitRoll < hitChance) {
+					bool blocked = false;
+					const int32_t damageQ6 = projectile.damage * 32;
+					static_cast<void>(GenerateRnd(state, 1));
+					const bool canBlock = state.secondaryPlayerBlockCapable
+					    && (state.secondaryPlayerCombatMode == 0
+					        || state.secondaryPlayerCombatMode == 4);
+					const int32_t blockRoll = canBlock
+					    ? std::max(GenerateRnd(state, 100), 0)
+					    : 100;
+					const int32_t blockChance = std::clamp(
+					    state.secondaryPlayerDexterity
+					        + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
+					        - static_cast<int32_t>(state.characterLevel) * 2,
+					    0,
+					    100);
+					blocked = blockRoll < blockChance;
+					if (blocked) {
+						state.secondaryPlayerCombatMode = 6;
+						state.secondaryPlayerCombatModeEndTick = tick + 4;
+						if (state.hellfire)
+							static_cast<void>(GenerateRnd(state, 2));
+					} else {
+						state.secondaryPlayerLife = std::max(
+						    0,
+						    state.secondaryPlayerLife - damageQ6);
+						if (state.secondaryPlayerLife == 0) {
+							StartReplaySecondaryPlayerDeath(state);
+						} else if ((damageQ6 >> 6)
+						    >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+							state.secondaryPlayerCombatMode = 7;
+							state.secondaryPlayerCombatModeEndTick = tick + 6;
+						}
+					}
+					hitTarget = true;
+				}
+			}
 			const bool blockingObject = state.objectEntityId != 0
 			    && !state.objectActivated
 			    && !state.objectDestroyed
@@ -1860,7 +1911,9 @@ void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state)
 			const bool outsideWorld = x < 0 || x >= 40 || y < 0 || y >= 40;
 			return std::pair<bool, uint32_t> {
 				hitTarget || blockingObject || outsideWorld,
-				targetAtTile ? state.combatTargetEntityId : 0,
+				 targetAtTile
+				     ? state.combatTargetEntityId
+				     : playerAtTile ? state.secondaryPlayerEntityId : 0,
 			};
 		};
 
@@ -4791,7 +4844,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
-		AdvanceFireboltsOneTick(state);
+		AdvanceFireboltsOneTick(state, simulationTick);
 		AdvanceFireballsOneTick(state, simulationTick);
 		AdvanceBoneSpiritsOneTick(state, simulationTick);
 		AdvanceLightningOneTick(state, simulationTick);

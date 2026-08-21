@@ -137,10 +137,10 @@ gate contains 83 fixture cases, including seeded and autonomous MonsterArrow
 source coverage, autonomous Succubus BloodStar admission/impact/block lanes,
 and a Lich-family MonsterMagic admission/hit/miss/secondary-impact lane. With
 the native `replay_test` executable rebuilt on 2026-08-21 and run from the
-repository root, 78 of 88 tests pass. The remaining 10 failures are known
+repository root, 80 of 88 tests pass. The remaining 8 failures are known
 C++/C# behavior or projection mismatches in
-Firebolt tuning, Bone Spirit homing, Hellfire blocking, SkeletonRanged arrow
-projection, and Succubus/Lich autonomous projectile lanes; they remain targeted
+Bone Spirit homing, SkeletonRanged arrow projection, and Succubus/Lich
+autonomous projectile lanes; they remain targeted
 parity work rather than untriaged
 fixture failures. The managed replay suite passes locally.
 
@@ -255,6 +255,13 @@ post-cast RNG state. Tick 2 proves swept collision, magic hit RNG, one-quarter
 fire-resistance damage, exact `400/64` monster health, and impact rollback.
 Tick 3 proves deterministic impact expiry. The native parser and managed loader
 also reject fire resistance outside the authoritative `-100..100` range.
+
+`gameplay-firebolt-pvp.json` uses the same level-3 Firebolt against a second
+participant. The fixture proves class-adjusted Q6 mana, native player magic-hit
+RNG, half-Q6 player damage, hit animation timing, projectile impact, and
+removal parity. `gameplay-firebolt-hellfire-block.json` adds a shield-capable
+participant and proves Hellfire block admission, block animation timing,
+variant RNG, and retained impact parity.
 
 `gameplay-fireball-resolution.json` uses activated Fireball, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified adjacent target,

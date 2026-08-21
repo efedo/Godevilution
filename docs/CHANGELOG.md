@@ -5,9 +5,11 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Align native replay item, monster-direction, and historical-level hashing
-  with authoritative C# snapshots, and preserve checked-in base item names in
-  the native store fixture; the rebuilt native runner now passes 78 of 88
-  tests, with the remaining mismatches documented in `docs/replay-fixtures.md`.
+  with authoritative C# snapshots, preserve checked-in base item names in the
+  native store fixture, and add native Firebolt player-collision parity for
+  ordinary and Hellfire shield-block paths. The rebuilt native runner now
+  passes 80 of 88 tests, with the remaining mismatches documented in
+  `docs/replay-fixtures.md`.
 
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;
