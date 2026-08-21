@@ -88,8 +88,10 @@ future position, allowing the existing renderer to interpolate the walk without
 giving the compatibility client movement authority. Party-panel hover and
 right-click inspection now resolve through authoritative entity IDs, and the
 inspected presentation player receives authoritative stats, spells, and item
-layout. Correction buffering and remaining legacy interaction parity remain
-separate migrations.
+layout. Delayed remote snapshots older than the last applied server tick are
+discarded before they can regress presentation position, action, or level state.
+Correction buffering and remaining legacy interaction parity remain separate
+migrations.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,

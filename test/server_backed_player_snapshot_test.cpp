@@ -735,6 +735,38 @@ TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePo
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, IgnoresStaleRemotePlayerSnapshots)
+{
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.life = 640;
+	remote.lifeMaximum = 640;
+	remote.positionX = 12;
+	remote.positionY = 13;
+	remote.serverTick = 10;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+
+	remote.positionX = 2;
+	remote.positionY = 3;
+	remote.serverTick = 9;
+	remote.combatMode = PM_DEATH;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+
+	const Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_EQ(remotePlayer->position.tile, (WorldTilePosition { 12, 13 }));
+	EXPECT_NE(remotePlayer->_pmode, PM_DEATH);
+
+	presentation.Clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsRemoteWalkDestinationOutsideNativeDungeon)
 {
 	ProjectedPlayerSnapshot local;

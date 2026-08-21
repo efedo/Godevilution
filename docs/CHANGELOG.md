@@ -51,6 +51,9 @@ All notable changes to this fork are documented below.
   a monotonic sequence window so feedback remains synchronized when old entries
   roll off during long-running sessions.
 
+- Reject stale native remote-player snapshots before they can regress the
+  compatibility presentation's position, action, or level state.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

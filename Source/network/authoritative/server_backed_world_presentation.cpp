@@ -835,6 +835,10 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		}
 		retainedRemotePlayers.insert(snapshot.entityId);
 		auto [it, inserted] = remotePlayers_.try_emplace(snapshot.entityId);
+		const bool hasPreviousTick = it->second.hasServerTick;
+		const uint64_t previousTick = it->second.serverTick;
+		if (hasPreviousTick && snapshot.serverTick < previousTick)
+			continue;
 		const bool classChanged = !inserted && it->second.player._pClass != static_cast<HeroClass>(snapshot.characterClassId);
 		const bool equipmentChanged = !inserted && !classChanged
 		    && it->second.player._pgfxnum != GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
@@ -855,8 +859,6 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		    || it->second.player.direction != direction
 		    || it->second.actionKind != actionKind
 		    || it->second.actionStartedAtTick != actionStartedAtTick;
-		const bool hasPreviousTick = it->second.hasServerTick;
-		const uint64_t previousTick = it->second.serverTick;
 		ApplyRemotePlayerSnapshot(it->second.player, snapshot);
 		ApplyRemotePlayerAnimation(it->second.player, snapshot, graphic, animationChanged, hasPreviousTick, previousTick);
 		it->second.levelId = snapshot.levelId;
@@ -864,10 +866,8 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		it->second.graphic = graphic;
 		it->second.actionKind = actionKind;
 		it->second.actionStartedAtTick = actionStartedAtTick;
-		if (!hasPreviousTick || snapshot.serverTick >= previousTick) {
-			it->second.serverTick = snapshot.serverTick;
-			it->second.hasServerTick = true;
-		}
+		it->second.serverTick = snapshot.serverTick;
+		it->second.hasServerTick = true;
 	}
 	for (auto it = remotePlayers_.begin(); it != remotePlayers_.end();) {
 		if (!retainedRemotePlayers.contains(it->first)) {
