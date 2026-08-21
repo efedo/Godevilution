@@ -1905,6 +1905,95 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesBardIdentifyAbilityOnAnOpenStashItem()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-bard-identify-stash", requestedClassId: 4));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var initialPlayer = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(PlayerAbilityKind.Identify, initialPlayer.AbilityKind);
+        var equipment = Assert.Single(initialPlayer.Equipment, item => item.Slot == 4);
+        var stableItemId = equipment.State.StableItemId;
+        Assert.NotEqual(0U, stableItemId);
+        Assert.False(equipment.State.Identified);
+
+        var openSequence = client.Queue(new Command {
+            OpenStashRequested = new OpenStashRequested(),
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, openSequence)).Status);
+        var opened = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().StashOpen == true);
+        model.Apply(opened);
+
+        var moveSequence = client.Queue(new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                    StableItemId = stableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, moveSequence)).Status);
+        var moved = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId) == true);
+        model.Apply(moved);
+
+        var identifySequence = client.Queue(new Command {
+            IdentifyItemRequested = new IdentifyItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+                Source = ItemServiceSourceKind.ClassAbility,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, identifySequence)).Status);
+
+        var identified = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId
+                && item.Item.State.Identified) == true);
+        var identifiedItem = Assert.Single(identified.Snapshot!.Players).Stash
+            .Single(item => item.Page == 0 && item.Cell == 0);
+        Assert.Equal(stableItemId, identifiedItem.Item.State.StableItemId);
+        Assert.True(identifiedItem.Item.State.Identified);
+    }
+
+    [Fact]
     public async Task LiveServerUsesWarriorRepairAbilityOnFullyRepairedEquipment()
     {
         using var server = await StartedServer.StartAsync(
