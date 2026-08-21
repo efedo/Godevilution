@@ -12,6 +12,27 @@ public sealed class LiveAuthoritativeServerTests
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
 
     [Fact]
+    public async Task GodotTransportProjectsTheServerSelectedDifficulty()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            difficultyOverride: "hell");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-difficulty", requestedClassId: 2));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        model.Apply(await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null));
+
+        Assert.Equal(GameDifficulty.Hell, model.Snapshot!.Difficulty);
+        Assert.Equal(
+            "Hell",
+            AuthoritativeDifficultyPresentation.Format(model.Snapshot.Difficulty));
+    }
+
+    [Fact]
     public async Task GodotTransportAllocatesASeededAuthoritativeAttributePoint()
     {
         using var server = await StartedServer.StartAsync(
@@ -3307,6 +3328,7 @@ public sealed class LiveAuthoritativeServerTests
             uint? startingStatPointsOverride = null,
             uint? randomSeed = null,
             string? gameMode = null,
+            string? difficultyOverride = null,
             string? saveRootOverride = null,
             bool deleteSaveRootOnDispose = true)
         {
@@ -3368,6 +3390,10 @@ public sealed class LiveAuthoritativeServerTests
             if (!string.IsNullOrWhiteSpace(gameMode)) {
                 startInfo.ArgumentList.Add("--game-mode");
                 startInfo.ArgumentList.Add(gameMode);
+            }
+            if (!string.IsNullOrWhiteSpace(difficultyOverride)) {
+                startInfo.ArgumentList.Add("--difficulty");
+                startInfo.ArgumentList.Add(difficultyOverride);
             }
             if (!string.IsNullOrWhiteSpace(contentOverlayRoot)) {
                 startInfo.ArgumentList.Add("--content-overlay");
