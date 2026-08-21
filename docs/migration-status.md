@@ -66,8 +66,9 @@ substitute for rebuilding the projects before a future run.
   tile only until the authoritative movement effect is applied; post-effect
   snapshots no longer schedule a second client-side step.
 - Native remote-player drawing now checks the projected player's authoritative
-  level before rendering, so snapshots retained for inspection on other levels
-  cannot appear at matching coordinates in the active dungeon.
+  level before rendering, while preserving level `0`'s compatibility wildcard;
+  snapshots retained for inspection on other explicit levels cannot appear at
+  matching coordinates in the active dungeon.
 
 
 - The Godot HUD now owns the legacy clock presentation with a tested invariant

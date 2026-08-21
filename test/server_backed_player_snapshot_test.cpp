@@ -681,9 +681,10 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	ASSERT_NE(remotePlayer, nullptr);
 	const uint8_t previousLevel = currentLevelNumber();
 	currentLevelNumber() = 2;
-	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(*remotePlayer));
+	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(remote.levelId, *remotePlayer));
 	currentLevelNumber() = 1;
-	EXPECT_FALSE(IsRemotePlayerOnActiveLevel(*remotePlayer));
+	EXPECT_FALSE(IsRemotePlayerOnActiveLevel(remote.levelId, *remotePlayer));
+	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(0, *remotePlayer));
 	currentLevelNumber() = previousLevel;
 	EXPECT_EQ(presentation.FindRemotePlayer(99), nullptr);
 	ProjectedPlayerSnapshot secondRemote = remote;

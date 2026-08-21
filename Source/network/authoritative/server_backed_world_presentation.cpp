@@ -676,9 +676,9 @@ uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snaps
 	return GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
 }
 
-bool IsRemotePlayerOnActiveLevel(const Player &player)
+bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player)
 {
-	return player.isOnActiveLevel();
+	return projectedLevelId == 0 || player.isOnActiveLevel();
 }
 
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
@@ -929,7 +929,7 @@ void ServerBackedWorldPresentation::DrawRemotePlayers(
 {
 	for (const auto &[entityId, remote] : remotePlayers_) {
 		(void)entityId;
-		if (!IsRemotePlayerOnActiveLevel(remote.player)
+		if (!IsRemotePlayerOnActiveLevel(remote.levelId, remote.player)
 		    || remote.tilePosition != tilePosition
 		    || !remote.player.animInfo.sprites)
 			continue;
