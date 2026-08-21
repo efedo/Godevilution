@@ -70,6 +70,10 @@ All notable changes to this fork are documented below.
   authored rewards; ordinary objects without authoritative behavior retain
   their legacy local path.
 
+- Validate authored object transition, reward, projectile, and follow-up
+  metadata at the Godot protocol boundary before presentation or interaction
+  routing can consume it.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

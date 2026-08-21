@@ -118,8 +118,10 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid world item.");
                 }
             }
-            foreach (var @object in message.Snapshot.Objects)
+            foreach (var @object in message.Snapshot.Objects) {
                 ValidateEntityId(entityIds, @object.EntityId);
+                ValidateObject(@object);
+            }
             foreach (var projectile in message.Snapshot.Projectiles)
                 ValidateEntityId(entityIds, projectile.EntityId);
             foreach (var corpse in message.Snapshot.Corpses)
@@ -379,6 +381,66 @@ public sealed class AuthoritativeClientModel
             || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster vitality.");
+        }
+    }
+
+    private static void ValidateObject(ObjectSnapshot @object)
+    {
+        var transitionKind = @object.QuestTransitionKind;
+        var rewardKind = @object.RewardKind;
+        var followUpKind = @object.QuestSequenceFollowUpKind;
+        var effectKind = @object.EffectKind;
+        var transitionSetsVariable = transitionKind is 3 or 4 or 5 or 6 or 7 or 8;
+        var transitionValid = transitionKind == 0
+            || @object.QuestId != 0
+                && (transitionSetsVariable
+                    ? @object.QuestTransitionAmount > 0
+                    : @object.QuestTransitionAmount == 0);
+        var rewardValid = rewardKind == 0
+            ? @object.RewardId == 0
+                && @object.RewardItemLevel == 0
+                && @object.RewardOffsetX == 0
+                && @object.RewardOffsetY == 0
+            : @object.RewardId != 0;
+        var producesProjectile = effectKind is 8 or 9
+            || followUpKind == 2;
+        var followUpValid = followUpKind switch {
+            0 => @object.QuestSequenceFollowUpAmount == 0
+                && @object.QuestSequenceFollowUpOffsetX == 0
+                && @object.QuestSequenceFollowUpOffsetY == 0,
+            1 => effectKind == 4
+                && @object.QuestSequenceFollowUpAmount != 0
+                && @object.QuestSequenceFollowUpOffsetX == 0
+                && @object.QuestSequenceFollowUpOffsetY == 0,
+            2 => (effectKind == 4 || effectKind == 6)
+                && @object.QuestSequenceFollowUpAmount != 0,
+            _ => false,
+        };
+        if (@object.EffectAmount < 0
+            || effectKind < 0
+            || transitionKind is < 0 or > 8
+            || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
+            || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue
+            || @object.QuestTransitionRequiredVariable2 is < -1 or > byte.MaxValue
+            || !transitionValid
+            || rewardKind is < 0 or > 2
+            || @object.RewardItemLevel is < 0 or > byte.MaxValue
+            || @object.RewardOffsetX is < -16 or > 16
+            || @object.RewardOffsetY is < -16 or > 16
+            || !rewardValid
+            || @object.ProjectileTargetOffsetX is < -32 or > 32
+            || @object.ProjectileTargetOffsetY is < -32 or > 32
+            || !producesProjectile
+                && (@object.ProjectileTargetOffsetX != 0
+                    || @object.ProjectileTargetOffsetY != 0)
+            || followUpKind is < 0 or > 2
+            || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
+            || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
+            || !followUpValid
+            || @object.ProjectileSourceKind is < 0 or > 1
+            || !producesProjectile && @object.ProjectileSourceKind != 0) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid object effect metadata.");
         }
     }
 

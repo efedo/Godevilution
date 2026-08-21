@@ -655,6 +655,43 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedAuthoredObjectMetadata()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 10,
+                    ObjectId = 4,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        var invalidTransition = valid.Clone();
+        invalidTransition.Objects[0].QuestTransitionKind = 1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidTransition)));
+
+        var invalidReward = valid.Clone();
+        invalidReward.Objects[0].RewardKind = 1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidReward)));
+
+        var invalidFollowUp = valid.Clone();
+        invalidFollowUp.Objects[0].EffectKind = 4;
+        invalidFollowUp.Objects[0].QuestSequenceFollowUpKind = 1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidFollowUp)));
+
+        var invalidProjectileSource = valid.Clone();
+        invalidProjectileSource.Objects[0].ProjectileSourceKind = 1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidProjectileSource)));
+    }
+
+    [Fact]
     public void ValidatesAndRetainsTheAuthoritativeHeldItem()
     {
         var model = new AuthoritativeClientModel();
