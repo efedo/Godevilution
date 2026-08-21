@@ -116,6 +116,28 @@ public sealed class AuthoritativePlayerPositionProjectionTests
     }
 
     [Fact]
+    public void PrefersBoundedLocalPredictionWhileItIsAvailable()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                StartedAtTick = 10,
+                EffectTick = 14,
+                DirectionX = 1,
+            },
+        };
+
+        var position = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            player,
+            12,
+            new ClientPosition(8, 9));
+
+        Assert.Equal(new ClientPresentationPosition(8, 9), position);
+    }
+
+    [Fact]
     public void DoesNotApplyAttackDirectionFieldsToPresentationPosition()
     {
         var player = new PlayerSnapshot {

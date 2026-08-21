@@ -86,9 +86,10 @@ authoritative stream.
 
 An authoritative snapshot may also contain an in-progress movement, attack,
 cast, death, level-transition, or restart-in-town action. The protocol model
-validates its timing and payload. For deferred movement, local presentation predicts from the
-server-reserved destination so the accepted command does not snap back before
-the authoritative end tick. Death and portal transitions arrive already
+validates its timing and payload. For deferred movement, local presentation
+uses bounded prediction while the command is unacknowledged, then falls back to
+the server-owned `started_at_tick`/`effect_tick` interval so reconciliation does
+not snap the player to a tile. Death and portal transitions arrive already
 applied with server-owned Death or NewLevel modes; Godot never resolves their
 damage or destination effects itself.
 After terminal Death, Escape sends `RestartTownRequested`. The server chooses

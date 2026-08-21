@@ -42,18 +42,17 @@ public partial class WorldPresentation : Node2D
 
         foreach (var player in snapshot.Players) {
             activeEntityIds.Add(player.EntityId);
-            ClientPresentationPosition? projected = player.EntityId == localPlayer?.EntityId
-                ? predicted is { } localPrediction
-                    ? new ClientPresentationPosition(localPrediction.X, localPrediction.Y)
-                    : null
-                : AuthoritativePlayerPositionProjection.ResolvePresentation(player, snapshot.Tick);
+            var projected = AuthoritativePlayerPositionProjection.ResolvePresentation(
+                player,
+                snapshot.Tick,
+                player.EntityId == localPlayer?.EntityId ? predicted : null);
             var reset = displayedPlayerSnapshots.TryGetValue(player.EntityId, out var previous)
                 && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player);
             UpdatePosition(
                 player.EntityId,
                 ToScreen(
-                    projected?.X ?? player.PositionX,
-                    projected?.Y ?? player.PositionY),
+                    projected.X,
+                    projected.Y),
                 delta,
                 player.LevelId,
                 reset);

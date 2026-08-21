@@ -99,6 +99,10 @@ rebuilding the projects before a future run.
   presentation path clamps at the effect tick and never changes the discrete
   reserved position used by gameplay or target selection.
 
+- Godot local presentation uses bounded input prediction while a move is
+  unacknowledged, then uses that same authoritative interval after
+  reconciliation instead of snapping to the occupied tile.
+
 - Godot local movement prediction now retains at most 16 unacknowledged
   commands; additional input remains server-authoritative until snapshots catch
   up.

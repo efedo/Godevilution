@@ -58,6 +58,22 @@ public static class AuthoritativePlayerPositionProjection
     }
 
     /**
+     * Resolves a local presentation position, preferring bounded prediction
+     * while it remains queued and otherwise using the same authoritative
+     * action-tick projection as remote players.
+     */
+    public static ClientPresentationPosition ResolvePresentation(
+        PlayerSnapshot player,
+        ulong snapshotTick,
+        ClientPosition? predicted)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        return predicted is { } position
+            ? new ClientPresentationPosition(position.X, position.Y)
+            : ResolvePresentation(player, snapshotTick);
+    }
+
+    /**
      * Returns true when a cached player presentation position must snap to the
      * next authoritative position instead of interpolating toward it.
      */
