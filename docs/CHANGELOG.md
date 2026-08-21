@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restrict Godot world-object clicks to server-authored interactions. Ordinary
+  presentation-only objects no longer submit `OperateObjectRequested`, while
+  authored effects, quest links/transitions, rewards, follow-ups, and revealed
+  traps continue to resolve by authoritative entity ID.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 
