@@ -37,6 +37,9 @@ All notable changes to this fork are documented below.
 - Clear pending Godot movement prediction when the authoritative local player
   identity or level changes, preventing old-level inputs from crossing levels.
 
+- Reset Godot presentation prediction when reconnecting while retaining the
+  server-side pending-command retry ledger.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

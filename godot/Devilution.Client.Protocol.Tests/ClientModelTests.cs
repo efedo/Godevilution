@@ -1086,6 +1086,24 @@ public sealed class ClientModelTests
         Assert.Equal(new ClientPosition(11, 11), model.PredictedPlayerPosition);
     }
 
+    [Fact]
+    public void ResetsPresentationPredictionWithoutDroppingAuthoritativeSnapshot()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 2, PositionY = 3 },
+            },
+        }));
+        model.TrackPredictedMove(1, 1, 0);
+
+        model.ResetPrediction();
+
+        Assert.NotNull(model.Snapshot);
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
+    }
+
     [Theory]
     [InlineData(PlayerActionKind.Death, PlayerCombatMode.Death, 0, 9U)]
     [InlineData(

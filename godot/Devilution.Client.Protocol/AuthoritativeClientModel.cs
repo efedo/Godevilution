@@ -159,6 +159,13 @@ public sealed class AuthoritativeClientModel
         recentEvents.Clear();
     }
 
+    /** Clears presentation-only movement prediction without discarding server state. */
+    public void ResetPrediction()
+    {
+        predictedMoves.Clear();
+        RebuildPredictedPosition();
+    }
+
     public void TrackPredictedMove(ulong sequence, int directionX, int directionY)
     {
         if (sequence == 0 || (directionX == 0 && directionY == 0))
