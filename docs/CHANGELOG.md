@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
   withdrawals, and Ctrl-click inventory-to-stash placement are reconciled from
   authoritative snapshots.
 
+- Extend native Identify, Repair, and Staff Recharge class-ability cursors to
+  submit authoritative stash page/cell references and apply server snapshots.
+
 - Expand Godot authoritative walk-projection coverage across all eight native
   adjacent directions and the start, midpoint, effect, and post-effect tick
   boundaries.

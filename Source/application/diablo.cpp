@@ -3143,6 +3143,16 @@ std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceFor
 	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(itemSeed);
 }
 
+std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForStashCursor(uint16_t stashItemIndex)
+{
+	if (stashItemIndex == StashStruct::EmptyCell || stashItemIndex >= Stash.stashList.size())
+		return std::nullopt;
+	const Item &item = Stash.stashList[stashItemIndex];
+	if (item.isEmpty() || item._iSeed == 0)
+		return std::nullopt;
+	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+}
+
 std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForSpellCursor(Player &player, SpellID &spellId)
 {
 	const int itemLocation = player.spellFrom;
@@ -3291,7 +3301,12 @@ bool TryIconCurs()
 		else if (pcursstashitem != StashStruct::EmptyCell) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				LogError("Server-backed Identify ability does not support stash items");
+				const auto reference = ServerBackedReferenceForStashCursor(pcursstashitem);
+				if (!reference.has_value()) {
+					LogError("Server-backed Identify ability has no authoritative stash item reference.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().IdentifyItemWithAbility(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+					LogError("Server-backed Identify ability failed: {}", result.error());
+				}
 				NewCursor(CURSOR_HAND);
 				return true;
 			}
@@ -3326,7 +3341,14 @@ bool TryIconCurs()
 		} else if (pcursstashitem != StashStruct::EmptyCell) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				LogError("Server-backed Repair ability does not support stash items");
+				const auto reference = ServerBackedReferenceForStashCursor(pcursstashitem);
+				if (!reference.has_value()) {
+					LogError("Server-backed Repair ability has no authoritative stash item reference.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().RepairItemWithAbility(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+					LogError("Server-backed Repair ability failed: {}", result.error());
+				} else {
+					PlaySfxLoc(SfxID::SpellRepair, myPlayer.position.tile);
+				}
 				NewCursor(CURSOR_HAND);
 				return true;
 			}
@@ -3356,7 +3378,12 @@ bool TryIconCurs()
 		} else if (pcursstashitem != StashStruct::EmptyCell) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				LogError("Server-backed Staff Recharge ability does not support stash items");
+				const auto reference = ServerBackedReferenceForStashCursor(pcursstashitem);
+				if (!reference.has_value()) {
+					LogError("Server-backed Staff Recharge ability has no authoritative stash item reference.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().RechargeItemWithAbility(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+					LogError("Server-backed Staff Recharge ability failed: {}", result.error());
+				}
 				NewCursor(CURSOR_HAND);
 				return true;
 			}

@@ -107,24 +107,22 @@ does not retain locally generated creation items as gameplay authority.
 For the Bard's server-owned Identify class skill, native spell selection opens
 only the legacy item cursor. Clicking equipment or inventory submits the exact
 item reference with the class-ability service source, waits for the accepted
-snapshot, and does not call the local identification rule. Stash service
-selection remains unsupported while connected until the legacy service cursor
-exposes page/cell references; paid vendor identification retains its original
-source-zero path.
+snapshot, and does not call the local identification rule. Stash page/cell
+selection uses the same authoritative reference path; paid vendor
+identification retains its original source-zero path.
 
 The Warrior's server-owned Repair skill similarly opens only the legacy repair
 cursor. Equipment or inventory selection sends the class-ability source and
 waits for the snapshot before playing presentation audio; it does not call the
-local random repair rule. Connected stash repair remains blocked until the
-legacy service cursor exposes page/cell references. Visual-store and classic
-Smith flows retain source-zero vendor repair.
+local random repair rule. Connected stash repair uses the same authoritative
+page/cell reference path. Visual-store and classic Smith flows retain source-zero
+vendor repair.
 
 The Sorcerer's server-owned Staff Recharge skill opens only the legacy recharge
 cursor. Equipment or inventory selection submits the exact item with the
 class-ability source and projects the accepted snapshot instead of invoking the
-local recharge rule. Connected stash recharge remains blocked until the legacy
-service cursor exposes page/cell references; paid Witch recharge retains its
-source-zero vendor path.
+local recharge rule. Connected stash recharge uses the same authoritative
+page/cell reference path; paid Witch recharge retains its source-zero vendor path.
 
 The Barmaid stash entry now opens the server-owned stash session while
 connected. The native client validates and projects the authoritative 100-page

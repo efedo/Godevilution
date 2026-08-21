@@ -1406,6 +1406,43 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void RepairAbilityCanTargetAnAuthoritativeStashItem()
+    {
+        const uint repairSpellId = 26;
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = 706,
+            ItemType = 1,
+            ItemIndex = 17,
+            Durability = 1,
+            MaxDurability = 20,
+        };
+        var player = CreatePlayer(gold: 0);
+        player.AbilitySpellId = repairSpellId;
+        player.CharacterLevel = 10;
+        player.Stash.Add(new StashStoreItem(2, 13, 0, 0, 1234, 1, 0, state));
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: new DiabloRandom(1),
+            repairAbilitySpellId: repairSpellId);
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 0).Succeeded);
+
+        var result = processor.Execute(
+            player,
+            new DiabloRepairItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 13, state.StableItemId, 2),
+                0,
+                DiabloItemServiceSourceKind.ClassAbility),
+            1);
+
+        Assert.True(result.Succeeded);
+        var repaired = Assert.Single(player.Stash);
+        Assert.Equal((uint)2, repaired.Page);
+        Assert.Equal((uint)13, repaired.Cell);
+        Assert.True(repaired.State.Durability > state.Durability);
+        Assert.True(repaired.State.MaxDurability < state.MaxDurability);
+    }
+
+    [Fact]
     public void StashGoldRequiresOpenSessionAndTransfersAtomically()
     {
         var player = CreatePlayer(gold: 100);

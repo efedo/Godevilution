@@ -88,6 +88,10 @@ rebuilding the projects before a future run.
   withdrawals, and Ctrl-click inventory-to-stash placement now use stable
   page/cell move commands and server-reconciled snapshots.
 
+- Native Identify, Repair, and Staff Recharge class-ability cursors now resolve
+  projected stash items to stable page/cell references and submit the same
+  authoritative service intents used for inventory and equipment.
+
 - Godot now submits those stash session and gold commands from its HUD and
   presents server-reconciled paged 10x10 stash grids. Grid clicks submit only
   stable item references and destinations; the server remains authoritative for

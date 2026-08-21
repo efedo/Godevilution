@@ -181,6 +181,7 @@ TEST(ServerBackedVendorCommand, BuildsStableUseConsumableIntent)
 TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 {
 	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2 };
+	const ServerBackedItemReference stash { .location = ServerBackedItemLocation::Stash, .slot = 13, .stableItemId = 704, .page = 2 };
 	const auto identifyVendor = MakeIdentifyItemCommand(inventory, 10);
 	const auto identifyAbility = MakeIdentifyItemCommand(
 	    inventory,
@@ -196,6 +197,10 @@ TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 	    inventory,
 	    ServerBackedItemServiceSourceKind::ClassAbility,
 	    15);
+	const auto stashRepairAbility = MakeRepairItemCommand(
+	    stash,
+	    ServerBackedItemServiceSourceKind::ClassAbility,
+	    16);
 
 	ASSERT_TRUE(identifyVendor.has_value()) << identifyVendor.error();
 	ASSERT_TRUE(identifyAbility.has_value()) << identifyAbility.error();
@@ -203,6 +208,7 @@ TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 	ASSERT_TRUE(repairAbility.has_value()) << repairAbility.error();
 	ASSERT_TRUE(rechargeVendor.has_value()) << rechargeVendor.error();
 	ASSERT_TRUE(rechargeAbility.has_value()) << rechargeAbility.error();
+	ASSERT_TRUE(stashRepairAbility.has_value()) << stashRepairAbility.error();
 	EXPECT_EQ(identifyVendor->identify_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
 	EXPECT_EQ(identifyAbility->identify_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
 	EXPECT_EQ(repairVendor->repair_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
@@ -212,6 +218,10 @@ TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 	EXPECT_EQ(repairAbility->repair_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
 	EXPECT_EQ(repairAbility->repair_item_requested().item().slot(), 2U);
 	EXPECT_EQ(repairAbility->requested_tick(), 13U);
+	EXPECT_EQ(stashRepairAbility->repair_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_STASH);
+	EXPECT_EQ(stashRepairAbility->repair_item_requested().item().slot(), 13U);
+	EXPECT_EQ(stashRepairAbility->repair_item_requested().item().page(), 2U);
+	EXPECT_EQ(stashRepairAbility->repair_item_requested().item().stable_item_id(), 704U);
 }
 
 TEST(ServerBackedVendorCommand, BuildsExplicitInventoryToBeltTransfer)
