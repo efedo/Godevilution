@@ -13,6 +13,10 @@ All notable changes to this fork are documented below.
   admission, damage, block, hit-recovery, and canonical monster-range state.
   The rebuilt native replay runner now passes all 88 tests.
 
+- Add an end-to-end TCP ruleset-replacement fixture: a connected session now
+  migrates through the live host barrier, continues operating on the new
+  generation, and resumes with the published independent ruleset identity.
+
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;
   trap clicks fail closed when the local player lacks Trap Disarm.

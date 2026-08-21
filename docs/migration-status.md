@@ -3386,7 +3386,9 @@ retains the legacy-named protocol executor and replay helpers, format-1 packages
 provide gameplay modules rather than host adapters, live ruleset replacement
   now exposes transactional candidate preparation, a host operation barrier,
   save-based session migration, handshake identity publication, generation
-  leases, and explicit retired-target disposal; broader reload fixtures and
+  leases, and explicit retired-target disposal. An end-to-end TCP fixture now
+  proves active-session migration, continued operation on the replacement, and
+  resume under the published identity; broader reload fixtures and
   authoritative content/gameplay coverage are still partial. Static content
   portal routes remain protocol-visible without perturbing legacy replay hashes;
   owned, expiring portal state is hash-visible, and the base-content replay

@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using Devilution.Data;
+using Devilution.Engine;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Host;
@@ -553,6 +555,110 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpRulesetReloadMigratesAnActiveSessionAndResumesWithTheReplacementIdentity()
+    {
+        var initial = new ReloadableHostAdapter("initial");
+        var replacement = new ReloadableHostAdapter("replacement");
+        var candidates = new Queue<ReloadableHostAdapter>([initial, replacement]);
+        var runtime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+            CreateReloadManifest("1", "initial"),
+            [new ReloadableModule("rules", "1.0.0")],
+            new DelegateAuthoritativeClock(() => 10),
+            (_, _) => candidates.Dequeue());
+        using var leasedAdapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+        var commandServer = new AuthoritativeCommandServer(leasedAdapter);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            new DelegateAuthoritativeClock(() => 10),
+            gameAdapter: leasedAdapter);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string resumeToken;
+        uint entityId;
+
+        using (var firstClient = new TcpClient()) {
+            await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await SendHelloAsync(
+                firstStream,
+                cancellationToken,
+                requestedCharacterName: "Migrating-Hero");
+            var initialHello = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.ServerHello;
+            resumeToken = initialHello.SessionToken;
+            var initialSnapshot = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.Snapshot;
+            var initialPlayer = Assert.Single(initialSnapshot.Players);
+            entityId = initialPlayer.EntityId;
+            Assert.Equal("Migrating-Hero", initialPlayer.CharacterName);
+            Assert.Contains(Assert.Single(server.ActiveSessionIds), server.ActiveSessionIds);
+
+            var reload = server.TryReloadRuleset(
+                CreateReloadManifest("2", "replacement"),
+                [new ReloadableModule("rules", "2.0.0")]);
+
+            Assert.True(reload.Succeeded);
+            Assert.True(initial.Disposed);
+            Assert.True(replacement.SessionStateImported);
+            Assert.Equal(
+                reload.Active.Identity.CombinedSha256,
+                handshake.Identity.ContentManifestHash);
+            Assert.Equal(
+                reload.Active.Identity.CombinedSha256,
+                handshake.Identity.RulesetIdentityHash);
+
+            await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+                CommandBatch = new CommandBatch {
+                    Commands = { new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 10,
+                        AttackRequested = new AttackRequested { TargetEntityId = entityId },
+                    } },
+                },
+            }, cancellationToken);
+            Assert.Equal(
+                CommandStatus.Accepted,
+                (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.CommandAck.Results.Single().Status);
+            var migratedSnapshot = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.Snapshot;
+            Assert.Equal("Migrating-Hero", Assert.Single(migratedSnapshot.Players).CharacterName);
+        }
+
+        using var resumedClient = new TcpClient();
+        await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var resumedStream = resumedClient.GetStream();
+        await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
+            ClientHello = new ClientHello {
+                ClientBuildId = "client-build",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = handshake.Identity.ContentManifestHash,
+                RulesetIdentityHash = handshake.Identity.RulesetIdentityHash,
+                ResumeToken = resumeToken,
+            },
+        }, cancellationToken);
+        var resumedHello = (await EnvelopeCodec.ReadAsync(
+            resumedStream,
+            cancellationToken))!.ServerHello;
+        Assert.Equal(handshake.Identity.ContentManifestHash, resumedHello.ContentManifestHash);
+        Assert.Equal(handshake.Identity.RulesetIdentityHash, resumedHello.RulesetIdentityHash);
+        var resumedSnapshot = (await EnvelopeCodec.ReadAsync(
+            resumedStream,
+            cancellationToken))!.Snapshot;
+        var resumedPlayer = Assert.Single(resumedSnapshot.Players);
+        Assert.Equal(entityId, resumedPlayer.EntityId);
+        Assert.Equal("Migrating-Hero", resumedPlayer.CharacterName);
+    }
+
+    [Fact]
     public async Task ReconnectSoakPreservesCompleteParticipantSnapshotAndSelfFirstOrder()
     {
         var executor = new ParticipantSnapshotExecutor();
@@ -791,6 +897,17 @@ public sealed class AuthoritativeTcpServerTests
             cancellationToken);
     }
 
+    private static ContentManifest CreateReloadManifest(string version, string value)
+    {
+        return new ContentManifest(
+            "rules",
+            version,
+            [new ContentPack(
+                "base",
+                version,
+                [TsvTable.Parse("rules.tsv", $"id\tvalue\na\t{value}\n")])]);
+    }
+
     private static async Task WaitUntilAsync(
         Func<bool> predicate,
         CancellationToken cancellationToken)
@@ -819,6 +936,88 @@ public sealed class AuthoritativeTcpServerTests
                 Tick = tick,
                 Players = { new PlayerSnapshot { EntityId = entityId } },
             };
+        }
+    }
+
+    private sealed class ReloadableHostAdapter(string name)
+        : IAuthoritativeGameHostAdapter, IDisposable
+    {
+        private readonly Dictionary<string, string> sessionStates = new(StringComparer.Ordinal);
+
+        public bool Disposed { get; private set; }
+
+        public bool SessionStateImported { get; private set; }
+
+        public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
+        {
+            return CommandExecutionResult.Accepted;
+        }
+
+        public void AdvanceTo(ulong tick)
+        {
+        }
+
+        public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
+        {
+            var snapshot = new Snapshot {
+                Tick = tick,
+                Players = { new PlayerSnapshot {
+                    EntityId = entityId,
+                    CharacterName = ExportSessionState(sessionId),
+                } },
+            };
+            snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
+            return snapshot;
+        }
+
+        public EventBatch? DrainEvents(string sessionId, uint entityId, ulong tick)
+        {
+            return null;
+        }
+
+        public string ExportPlayerSave(string sessionId)
+        {
+            return ExportSessionState(sessionId);
+        }
+
+        public void ImportPlayerSave(string sessionId, string serializedSave)
+        {
+            ImportSessionState(sessionId, serializedSave);
+        }
+
+        public string ExportSessionState(string sessionId)
+        {
+            return sessionStates.TryGetValue(sessionId, out var state)
+                ? state
+                : name;
+        }
+
+        public void ImportSessionState(string sessionId, string serializedState)
+        {
+            sessionStates[sessionId] = serializedState;
+            SessionStateImported = true;
+        }
+
+        public void InitializeParticipant(
+            string sessionId,
+            AuthoritativeParticipantSelection selection)
+        {
+            sessionStates.TryAdd(sessionId, selection.CharacterName ?? name);
+        }
+
+        public void Dispose()
+        {
+            Disposed = true;
+        }
+    }
+
+    private sealed class ReloadableModule(string id, string version) : IGameplayModule
+    {
+        public GameplayModuleIdentity Identity { get; } =
+            new(id, version, $"hash-{version}");
+
+        public void Register(GameplayModuleRegistry registry, GameplayModuleContext context)
+        {
         }
     }
 
