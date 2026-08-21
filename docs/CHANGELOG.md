@@ -17,7 +17,8 @@ All notable changes to this fork are documented below.
 
 - Route Godot clicks for distant world items, authored objects, quest/towner
   stages, and portals through authoritative target-cell movement before
-  submitting the range-constrained interaction intent.
+  submitting the range-constrained interaction intent; the original intent is
+  automatically submitted after the authoritative position reaches range.
 
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.

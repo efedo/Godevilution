@@ -164,7 +164,8 @@ substitute for rebuilding the projects before a future run.
 
 - Godot world clicks now use server-owned target-cell movement before pickup,
   authored-object, quest/towner, or portal commands when the current player
-  position does not satisfy the server interaction range.
+  position does not satisfy the server interaction range, then submit the
+  original entity-addressed intent once the authoritative position arrives.
 
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;

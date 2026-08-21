@@ -19,6 +19,7 @@ public partial class Main : Node2D
     private Task? reconnectTask;
     private string? pendingConnectionError;
     private string? selectedSpellSourceKey;
+    private PendingWorldInteraction? pendingWorldInteraction;
 
     public override void _Ready()
     {
@@ -169,6 +170,7 @@ public partial class Main : Node2D
         }
 
         world?.Apply(model.Snapshot, delta, model.PredictedPlayerPosition);
+        TrySubmitPendingWorldInteraction();
         var spellSources = AuthoritativeSpellSourceSelector.GetSources(model.Snapshot);
         var selectedSpell = AuthoritativeSpellSourceSelector.Select(
             spellSources,
@@ -243,6 +245,7 @@ public partial class Main : Node2D
             world?.SetTargetPreview(target);
 
             if (mouse.ButtonIndex == MouseButton.Right) {
+                pendingWorldInteraction = null;
                 if (world?.CombatTargetEntityIdAt(target) is { } targetEntityId) {
                     Queue(new Command {
                         AttackRequested = new AttackRequested {
@@ -259,6 +262,7 @@ public partial class Main : Node2D
             if (mouse.ButtonIndex != MouseButton.Left)
                 return;
 
+            pendingWorldInteraction = null;
             var player = model.Snapshot?.Players.FirstOrDefault();
             if (player?.HeldItem is not null) {
                 Queue(new Command {
@@ -271,12 +275,7 @@ public partial class Main : Node2D
                 return;
             }
             if (world?.WorldItemEntityIdAt(target) is { } itemEntityId) {
-                if (player is null || !AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y)) {
-                    QueueMoveTo(target);
-                    GetViewport().SetInputAsHandled();
-                    return;
-                }
-                Queue(new Command {
+                QueueInteractionAfterMove(target, new Command {
                     PickupWorldItemRequested = new PickupWorldItemRequested {
                         ItemEntityId = itemEntityId,
                     },
@@ -287,12 +286,11 @@ public partial class Main : Node2D
             if (world?.PortalEntityIdAt(target) is { } portalEntityId) {
                 var portal = model.Snapshot?.Portals.FirstOrDefault(
                     candidate => candidate.PortalId == portalEntityId);
-                if (player is null || portal is null || !AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal)) {
-                    QueueMoveTo(target);
+                if (portal is null) {
                     GetViewport().SetInputAsHandled();
                     return;
                 }
-                Queue(new Command {
+                QueueInteractionAfterMove(target, new Command {
                     UsePortalRequested = new UsePortalRequested {
                         PortalId = portalEntityId,
                     },
@@ -303,22 +301,17 @@ public partial class Main : Node2D
             if (world?.ObjectEntityIdAt(target) is { } objectEntityId) {
                 var worldObject = model.Snapshot?.Objects.FirstOrDefault(
                     @object => @object.EntityId == objectEntityId);
-                if (player is null || !AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y)) {
-                    QueueMoveTo(target);
-                    GetViewport().SetInputAsHandled();
-                    return;
-                }
                 var playerAbility = model.Snapshot?.Players.FirstOrDefault()?.AbilityKind;
                 if (worldObject?.TrapArmed == true && playerAbility != PlayerAbilityKind.TrapDisarm) {
                     hud?.SetStatus("This trap requires the Trap Disarm ability.");
                 } else if (worldObject?.TrapArmed == true) {
-                    Queue(new Command {
+                    QueueInteractionAfterMove(target, new Command {
                         DisarmTrapRequested = new DisarmTrapRequested {
                             ObjectEntityId = objectEntityId,
                         },
                     });
                 } else {
-                    Queue(new Command {
+                    QueueInteractionAfterMove(target, new Command {
                         OperateObjectRequested = new OperateObjectRequested {
                             ObjectEntityId = objectEntityId,
                         },
@@ -328,12 +321,7 @@ public partial class Main : Node2D
                 return;
             }
             if (model.QuestTownerInteractionAt(target.X, target.Y) is { } interaction) {
-                if (player is null || !AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y)) {
-                    QueueMoveTo(target);
-                    GetViewport().SetInputAsHandled();
-                    return;
-                }
-                Queue(new Command {
+                QueueInteractionAfterMove(target, new Command {
                     TurnInQuestRequested = new TurnInQuestRequested {
                         QuestId = interaction.QuestId,
                         TownerId = checked((uint)interaction.TownerId),
@@ -386,9 +374,9 @@ public partial class Main : Node2D
         });
     }
 
-    private void QueueMoveTo(Vector2I target)
+    private ulong QueueMoveTo(Vector2I target)
     {
-        Queue(new Command {
+        return Queue(new Command {
             MoveRequested = new MoveRequested {
                 TargetCell = true,
                 TargetX = target.X,
@@ -396,6 +384,90 @@ public partial class Main : Node2D
             },
         });
     }
+
+    private void QueueInteractionAfterMove(Vector2I target, Command interaction)
+    {
+        var player = model.Snapshot?.Players.FirstOrDefault();
+        if (player is null)
+            return;
+        if (IsInteractionInRange(player, interaction, target)) {
+            Queue(interaction);
+            return;
+        }
+
+        var movementSequence = QueueMoveTo(target);
+        pendingWorldInteraction = new PendingWorldInteraction(
+            target,
+            interaction,
+            movementSequence);
+    }
+
+    private void TrySubmitPendingWorldInteraction()
+    {
+        if (pendingWorldInteraction is not { } pending)
+            return;
+        if (model.LastCommandResult is {
+                ClientSequence: var sequence,
+                Status: CommandStatus.Rejected,
+            } && sequence == pending.MovementSequence) {
+            pendingWorldInteraction = null;
+            return;
+        }
+        if (!IsPendingTargetPresent(pending)) {
+            pendingWorldInteraction = null;
+            return;
+        }
+        if (client?.IsConnected != true
+            || model.Snapshot?.Players.FirstOrDefault() is not { } player
+            || !IsInteractionInRange(player, pending.Command, pending.Target)) {
+            return;
+        }
+
+        pendingWorldInteraction = null;
+        Queue(pending.Command);
+    }
+
+    private bool IsPendingTargetPresent(PendingWorldInteraction pending)
+    {
+        return pending.Command.IntentCase switch {
+            Command.IntentOneofCase.PickupWorldItemRequested =>
+                world?.WorldItemEntityIdAt(pending.Target)
+                    == pending.Command.PickupWorldItemRequested.ItemEntityId,
+            Command.IntentOneofCase.UsePortalRequested =>
+                world?.PortalEntityIdAt(pending.Target)
+                    == pending.Command.UsePortalRequested.PortalId,
+            Command.IntentOneofCase.OperateObjectRequested =>
+                world?.ObjectEntityIdAt(pending.Target)
+                    == pending.Command.OperateObjectRequested.ObjectEntityId,
+            Command.IntentOneofCase.DisarmTrapRequested =>
+                world?.ObjectEntityIdAt(pending.Target)
+                    == pending.Command.DisarmTrapRequested.ObjectEntityId,
+            Command.IntentOneofCase.TurnInQuestRequested =>
+                model.QuestTownerInteractionAt(pending.Target.X, pending.Target.Y) is { } interaction
+                && interaction.QuestId == pending.Command.TurnInQuestRequested.QuestId
+                && interaction.TownerId == pending.Command.TurnInQuestRequested.TownerId,
+            _ => false,
+        };
+    }
+
+    private bool IsInteractionInRange(
+        PlayerSnapshot player,
+        Command interaction,
+        Vector2I target)
+    {
+        if (interaction.IntentCase == Command.IntentOneofCase.UsePortalRequested) {
+            var portal = model.Snapshot?.Portals.FirstOrDefault(
+                candidate => candidate.PortalId == interaction.UsePortalRequested.PortalId);
+            return portal is not null
+                && AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal);
+        }
+        return AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y);
+    }
+
+    private readonly record struct PendingWorldInteraction(
+        Vector2I Target,
+        Command Command,
+        ulong MovementSequence);
 
     private ItemServiceSourceKind ResolveItemServiceSource(PlayerAbilityKind abilityKind)
     {
@@ -550,11 +622,12 @@ public partial class Main : Node2D
         }
     }
 
-    private void Queue(Command command, Vector2I? predictedDirection = null)
+    private ulong Queue(Command command, Vector2I? predictedDirection = null)
     {
         var sequence = client!.Queue(command, client.SuggestedCommandTick(model.CurrentTick));
         if (predictedDirection is { } direction)
             model.TrackPredictedMove(sequence, direction.X, direction.Y);
+        return sequence;
     }
 
     private void QueueIfConnected(Command command)
