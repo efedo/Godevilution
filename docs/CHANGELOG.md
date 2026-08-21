@@ -32,6 +32,10 @@ All notable changes to this fork are documented below.
   retaining the compatibility fallback when a portal level has no geometry
   projection.
 
+- Expose authoritative equipment rows in the Godot HUD, route service actions
+  through stable equipment references, and submit explicit inventory/equipment
+  transfers through the existing server-owned item protocol.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 

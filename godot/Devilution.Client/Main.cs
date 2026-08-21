@@ -40,31 +40,31 @@ public partial class Main : Node2D
         };
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
         hud.PurchaseRequested += (storeId, storeSlot) => QueueIfConnected(new Command { PurchaseRequested = new PurchaseRequested { StoreId = storeId, StoreSlot = storeSlot } });
-        hud.SellItemRequested += inventoryIndex => QueueIfConnected(new Command {
+        hud.SellItemRequested += item => QueueIfConnected(new Command {
             SellItemRequested = new SellItemRequested {
-                InventoryIndex = inventoryIndex,
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                InventoryIndex = item.Location == PlayerItemLocation.Inventory ? item.Slot : 0,
+                Item = item,
             },
         });
-        hud.RepairItemRequested += inventoryIndex => QueueIfConnected(new Command {
+        hud.RepairItemRequested += item => QueueIfConnected(new Command {
             RepairItemRequested = new RepairItemRequested {
-                InventoryIndex = inventoryIndex,
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                InventoryIndex = item.Location == PlayerItemLocation.Inventory ? item.Slot : 0,
+                Item = item,
                 Source = ResolveItemServiceSource(PlayerAbilityKind.Repair),
             },
         });
-        hud.RechargeItemRequested += inventoryIndex => QueueIfConnected(new Command {
+        hud.RechargeItemRequested += item => QueueIfConnected(new Command {
             RechargeItemRequested = new RechargeItemRequested {
-                InventoryIndex = inventoryIndex,
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                InventoryIndex = item.Location == PlayerItemLocation.Inventory ? item.Slot : 0,
+                Item = item,
                 Source = ResolveItemServiceSource(PlayerAbilityKind.Recharge),
             },
         });
-        hud.IdentifyItemRequested += inventoryIndex => {
+        hud.IdentifyItemRequested += item => {
             var source = ResolveItemServiceSource(PlayerAbilityKind.Identify);
             var request = new IdentifyItemRequested {
-                InventoryIndex = inventoryIndex,
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                InventoryIndex = item.Location == PlayerItemLocation.Inventory ? item.Slot : 0,
+                Item = item,
                 Source = source,
             };
             if (source == ItemServiceSourceKind.ConsumableItem) {
@@ -98,6 +98,12 @@ public partial class Main : Node2D
                 InventoryIndex = inventoryIndex,
                 TargetCell = targetCell,
                 Item = ResolveInventoryItemReference(inventoryIndex),
+            },
+        });
+        hud.MoveItemRequested += (item, destination) => QueueIfConnected(new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = item,
+                Destination = destination,
             },
         });
         hud.OperateObjectRequested += entityId => QueueIfConnected(new Command { OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = entityId } });
@@ -503,11 +509,11 @@ public partial class Main : Node2D
         return null;
     }
 
-    private PlayerItemReference? ResolveInventoryItemReference(uint inventoryIndex)
+    private PlayerItemReference ResolveInventoryItemReference(uint inventoryIndex)
     {
         var player = model.Snapshot?.Players.FirstOrDefault();
         if (player is null || inventoryIndex >= player.Inventory.Count)
-            return null;
+            return new PlayerItemReference();
         return new PlayerItemReference {
             Location = PlayerItemLocation.Inventory,
             Slot = inventoryIndex,

@@ -211,6 +211,12 @@ world and quest interactions, event feedback, diagnostics, and accessibility
 HUD toggles. World layout under `Devilution.Client/assets/levels` is
 presentation data and must stay consistent with server content.
 
+The HUD also exposes authoritative equipment rows. Select an inventory item
+and then an equipment row to submit an explicit server-owned transfer;
+selecting equipment enables the same stable-reference sell, repair, recharge,
+and identify services. Godot never mutates equipment or resolves slot
+topology locally.
+
 Right-clicking a visible monster or living remote player submits an
 authoritative `AttackRequested` intent for that entity. The presentation client
 resolves the clicked tile, including a remote player's reserved walk
