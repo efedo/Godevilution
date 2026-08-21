@@ -210,6 +210,8 @@ struct ProjectedPlayerSnapshot {
 	uint32_t gold = 0;
 	uint32_t experience = 0;
 	uint32_t characterLevel = 1;
+	/** Persistent server-owned native hero rank after a Diablo defeat. */
+	uint32_t diabloKillLevel = 0;
 	uint32_t statPoints = 0;
 	uint32_t characterClassId = 0;
 	std::string characterName;

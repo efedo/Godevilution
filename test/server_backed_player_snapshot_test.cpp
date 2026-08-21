@@ -31,6 +31,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_gold(125);
 	player->set_experience(99);
 	player->set_character_level(3);
+	player->set_diablo_kill_level(2);
 	player->set_character_class_id(3);
 	player->set_character_name("Dead-RogueDM");
 	player->set_mana_shield_active(true);
@@ -89,6 +90,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->manaMaximum, 640);
 	EXPECT_EQ(projected->manaMaximumBase, 512);
 	EXPECT_EQ(projected->gold, 125U);
+	EXPECT_EQ(projected->diabloKillLevel, 2U);
 	EXPECT_EQ(projected->characterLevel, 3U);
 	EXPECT_EQ(projected->characterClassId, 3U);
 	EXPECT_EQ(projected->characterName, "Dead-RogueDM");
@@ -1169,6 +1171,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	snapshot.gold = 450;
 	snapshot.experience = 99;
 	snapshot.characterLevel = 4;
+	snapshot.diabloKillLevel = 2;
 	snapshot.characterClassId = static_cast<uint32_t>(HeroClass::Monk);
 	snapshot.characterName = "Dead-Monk";
 	snapshot.manaShieldActive = true;
@@ -1215,6 +1218,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_EQ(player.position.tile.y, 13);
 	EXPECT_EQ(player._pGold, 450);
 	EXPECT_EQ(player._pExperience, 99U);
+	EXPECT_EQ(player.pDiabloKillLevel, 2U);
 	EXPECT_EQ(player._pClass, HeroClass::Monk);
 	EXPECT_STREQ(player._pName, "Dead-Monk");
 	EXPECT_TRUE(player.pManaShield);

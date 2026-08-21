@@ -168,6 +168,7 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
 	player._pGold = static_cast<int>(snapshot.gold);
 	player._pExperience = snapshot.experience;
+	player.pDiabloKillLevel = snapshot.diabloKillLevel;
 	player._pStatPts = static_cast<int>(snapshot.statPoints);
 	player.pManaShield = snapshot.manaShieldActive;
 	player._pInfraFlag = std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {

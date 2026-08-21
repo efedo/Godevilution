@@ -42,6 +42,10 @@ substitute for rebuilding the projects before a future run.
   healing, and experience events directly into its floating-number renderer;
   legacy Lua floating-number mods remain available in legacy mode.
 
+- Native authoritative player snapshots now retain the server-owned Diablo kill
+  rank in the native player state, preserving victory progression across the
+  compatibility projection and subsequent saves.
+
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains
   available for compatibility mode.
