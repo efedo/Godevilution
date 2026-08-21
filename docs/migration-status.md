@@ -26,7 +26,7 @@ Status date: 2026-08-21
 
 On 2026-08-21, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,437, Server 437, and Godot protocol 215. The rebuilt native replay runner
+1,437, Server 437, and Godot protocol 216. The rebuilt native replay runner
 passed 96 of 96 tests and the managed replay fixture class passed without
 failures. These counts are a dated verification baseline, not a substitute for
 rebuilding the projects before a future run.

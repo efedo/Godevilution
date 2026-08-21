@@ -12,6 +12,130 @@ public sealed class LiveAuthoritativeServerTests
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
 
     [Fact]
+    public async Task GodotTransportReconcilesAuthoritativeStashSessionGoldAndMoves()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-stash-session", requestedClassId: 0));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var initialPlayer = Assert.Single(model.Snapshot!.Players);
+        Assert.True(initialPlayer.Gold >= 10);
+        var initialGold = initialPlayer.Gold;
+        var initialStashGold = initialPlayer.StashGold;
+        var equipment = Assert.Single(initialPlayer.Equipment, item => item.Slot == 4);
+        var stableItemId = equipment.State.StableItemId;
+        Assert.NotEqual(0U, stableItemId);
+
+        var openSequence = client.Queue(new Command {
+            OpenStashRequested = new OpenStashRequested(),
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, openSequence)).Status);
+        var opened = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().StashOpen == true);
+        model.Apply(opened);
+
+        var depositSequence = client.Queue(new Command {
+            DepositStashGoldRequested = new DepositStashGoldRequested { Amount = 10 },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, depositSequence)).Status);
+        var deposited = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single() is { StashOpen: true }
+                player
+                && player.Gold == initialGold - 10
+                && player.StashGold == initialStashGold + 10);
+        model.Apply(deposited);
+
+        var withdrawSequence = client.Queue(new Command {
+            WithdrawStashGoldRequested = new WithdrawStashGoldRequested { Amount = 4 },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, withdrawSequence)).Status);
+        var withdrawn = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single() is { StashOpen: true }
+                player
+                && player.Gold == initialGold - 6
+                && player.StashGold == initialStashGold + 6);
+        model.Apply(withdrawn);
+
+        var moveSequence = client.Queue(new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                    StableItemId = stableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, moveSequence)).Status);
+        var moved = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+                item.Page == 0
+                && item.Cell == 0
+                && item.Item.State.StableItemId == stableItemId) == true);
+        model.Apply(moved);
+
+        var closeSequence = client.Queue(new Command {
+            CloseStashRequested = new CloseStashRequested(),
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, closeSequence)).Status);
+        var closed = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().StashOpen == false);
+        model.Apply(closed);
+
+        var rejectedMoveSequence = client.Queue(new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = stableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var rejectedMove = await WaitForAcknowledgementAsync(client, rejectedMoveSequence);
+        Assert.Equal(CommandStatus.Rejected, rejectedMove.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, rejectedMove.RejectReason);
+    }
+
+    [Fact]
     public async Task LiveServerProjectsAuthoredWarpTriggersToThePresentationModel()
     {
         using var server = await StartedServer.StartAsync(

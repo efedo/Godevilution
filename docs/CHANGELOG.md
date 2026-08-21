@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add live Godot stash-session coverage for authoritative open/close control,
+  wallet/stash-gold reconciliation, stable equipment-to-stash moves, and
+  rejection of stash moves after the session closes.
+
 - Add live Godot protocol coverage for moving an equipment item into an open
   authoritative stash and identifying it there through a stable page/cell
   reference, plus Warrior Repair and Sorcerer Recharge stash targets.
