@@ -1044,6 +1044,24 @@ public sealed class ClientModelTests
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
     }
 
+    [Fact]
+    public void BoundsUnacknowledgedMovementPrediction()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7 },
+            },
+        }));
+
+        for (ulong sequence = 1; sequence <= 16; sequence++)
+            model.TrackPredictedMove(sequence, 1, 0);
+        model.TrackPredictedMove(17, -1, 0);
+
+        Assert.Equal(new ClientPosition(16, 0), model.PredictedPlayerPosition);
+        Assert.True(model.IsCorrectingPosition);
+    }
+
     [Theory]
     [InlineData(PlayerActionKind.Death, PlayerCombatMode.Death, 0, 9U)]
     [InlineData(

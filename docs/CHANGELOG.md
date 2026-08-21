@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
 - Reset Godot entity-position interpolation when an authoritative level
   identity changes, preventing cross-level movement trails.
 
+- Bound Godot local movement prediction to 16 unacknowledged commands so
+  disconnected or delayed acknowledgements cannot grow the prediction queue.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

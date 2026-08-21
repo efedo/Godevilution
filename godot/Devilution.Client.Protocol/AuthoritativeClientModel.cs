@@ -5,6 +5,7 @@ namespace Devilution.Client.Protocol;
 /** Main-thread authoritative projection consumed by Godot presentation nodes. */
 public sealed class AuthoritativeClientModel
 {
+    private const int MaxPredictedMoves = 16;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
 
@@ -153,6 +154,8 @@ public sealed class AuthoritativeClientModel
     public void TrackPredictedMove(ulong sequence, int directionX, int directionY)
     {
         if (sequence == 0 || (directionX == 0 && directionY == 0))
+            return;
+        if (!predictedMoves.ContainsKey(sequence) && predictedMoves.Count >= MaxPredictedMoves)
             return;
         predictedMoves[sequence] = new PredictedMove(directionX, directionY);
         RebuildPredictedPosition();
