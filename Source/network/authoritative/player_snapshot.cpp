@@ -69,6 +69,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		.experience = player->experience(),
 		.characterLevel = player->character_level(),
 		.diabloKillLevel = player->diablo_kill_level(),
+		.reflectCharges = player->reflect_charges(),
 		.statPoints = player->stat_points(),
 		.characterClassId = player->character_class_id(),
 		.characterName = player->character_name(),

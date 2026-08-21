@@ -46,6 +46,10 @@ substitute for rebuilding the projects before a future run.
   rank in the native player state, preserving victory progression across the
   compatibility projection and subsequent saves.
 
+- Native authoritative player snapshots now retain server-owned Reflect charges
+  in the native `wReflections` state, preserving spell defense and renderer
+  parity while rejecting values outside the native 16-bit range.
+
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains
   available for compatibility mode.
