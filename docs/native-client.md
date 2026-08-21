@@ -107,31 +107,32 @@ does not retain locally generated creation items as gameplay authority.
 For the Bard's server-owned Identify class skill, native spell selection opens
 only the legacy item cursor. Clicking equipment or inventory submits the exact
 item reference with the class-ability service source, waits for the accepted
-snapshot, and does not call the local identification rule. Stash items remain
-unsupported while connected because the native compatibility bridge does not
-yet project stash pages; paid vendor identification retains its original
+snapshot, and does not call the local identification rule. Stash service
+selection remains unsupported while connected until the legacy service cursor
+exposes page/cell references; paid vendor identification retains its original
 source-zero path.
 
 The Warrior's server-owned Repair skill similarly opens only the legacy repair
 cursor. Equipment or inventory selection sends the class-ability source and
 waits for the snapshot before playing presentation audio; it does not call the
 local random repair rule. Connected stash repair remains blocked until the
-stable stash cursor bridge is complete. Visual-store and classic Smith flows retain
-source-zero vendor repair.
+legacy service cursor exposes page/cell references. Visual-store and classic
+Smith flows retain source-zero vendor repair.
 
 The Sorcerer's server-owned Staff Recharge skill opens only the legacy recharge
 cursor. Equipment or inventory selection submits the exact item with the
 class-ability source and projects the accepted snapshot instead of invoking the
-local recharge rule. Connected stash recharge remains blocked until the stable
-stash cursor bridge is available; paid Witch recharge retains its source-zero vendor
-path.
+local recharge rule. Connected stash recharge remains blocked until the legacy
+service cursor exposes page/cell references; paid Witch recharge retains its
+source-zero vendor path.
 
 The Barmaid stash entry now opens the server-owned stash session while
 connected. The native client validates and projects the authoritative 100-page
 10×10 grid, session state, and stash gold into the legacy renderer; gold
-deposit/withdraw commands are server-owned. Non-gold native stash cursor
-transfers remain fail-closed until the stable source/destination cursor bridge
-is complete. Disconnected legacy sessions retain the existing stash behavior.
+deposit/withdraw commands are server-owned. Normal stash drags, shift-click
+automatic withdrawals, and Ctrl-click inventory-to-stash placement submit stable
+page/cell move commands and apply the server snapshot. Disconnected legacy
+sessions retain the existing stash behavior.
 
 Native service, store, and charged/consumable spell-source requests now resolve
 their item references from the latest authoritative projection, carrying the

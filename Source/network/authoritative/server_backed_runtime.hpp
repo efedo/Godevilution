@@ -150,6 +150,8 @@ public:
 	[[nodiscard]] std::optional<ServerBackedItemReference> PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept;
 	/** Finds the authoritative stash item anchored at a page/cell. */
 	[[nodiscard]] std::optional<ServerBackedItemReference> StashItemReferenceAt(uint32_t page, uint32_t cell) const noexcept;
+	/** Finds an empty authoritative stash cell for an item footprint, preferring a page. */
+	[[nodiscard]] std::optional<ServerBackedItemReference> FindStashPlacement(uint32_t width, uint32_t height, uint32_t preferredPage) const noexcept;
 	/** Retains a native inventory drag selection while authoritative snapshots refresh. */
 	[[nodiscard]] bool BeginInventoryItemDrag(uint32_t itemSeed) noexcept;
 	/** Cancels the presentation-only inventory drag selection. */

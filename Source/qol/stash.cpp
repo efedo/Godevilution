@@ -181,7 +181,19 @@ void CheckStashPaste(Point cursorPosition)
 	}
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		LogError("Server-backed stash item placement remains disabled until the stable cursor bridge is active.");
+		const auto source = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(player.HoldItem._iSeed);
+		if (!source.has_value()) {
+			LogError("Could not resolve the held item in the authoritative stash/inventory projection.");
+			return;
+		}
+		const authoritative::ServerBackedItemReference destination {
+			.location = authoritative::ServerBackedItemLocation::Stash,
+			.slot = static_cast<uint32_t>(firstSlot.y * 10 + firstSlot.x),
+			.page = Stash.GetPage(),
+		};
+		authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
+		if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, GetMillisecondsSinceStartup()); !result.has_value())
+			LogError("Server-backed stash item placement failed: {}", result.error());
 		return;
 	}
 	#endif
@@ -217,12 +229,6 @@ void CheckStashPaste(Point cursorPosition)
 
 void CheckStashCut(Point cursorPosition, bool automaticMove)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		LogError("Server-backed stash item withdrawal remains disabled until the stable cursor bridge is active.");
-		return;
-	}
-	#endif
 	Player &player = *MyPlayer;
 
 	CloseGoldWithdraw();
@@ -254,6 +260,38 @@ void CheckStashCut(Point cursorPosition, bool automaticMove)
 
 	const StashStruct::StashCell iv = Stash.GetItemIdAtPosition(slot);
 	if (iv != StashStruct::EmptyCell) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			const Item &stashItem = Stash.stashList[iv];
+			const auto source = authoritative::GetServerBackedRuntime().StashItemReferenceAt(
+			    Stash.GetPage(), static_cast<uint32_t>(slot.y * 10 + slot.x));
+			if (!source.has_value()
+			    || !authoritative::GetServerBackedRuntime().BeginInventoryItemDrag(stashItem._iSeed)) {
+				LogError("Could not resolve the selected stash item in the authoritative snapshot.");
+				return;
+			}
+			if (automaticMove) {
+				tl::expected<void, std::string> result = tl::make_unexpected("No automatic stash destination was available.");
+				if (CanBePlacedOnBelt(player, stashItem)) {
+					for (uint32_t beltSlot = 0; beltSlot < MaxBeltItems; ++beltSlot) {
+						if (!player.SpdList[beltSlot].isEmpty())
+							continue;
+						result = authoritative::GetServerBackedRuntime().MoveItem(
+						    *source,
+						    { .location = authoritative::ServerBackedItemLocation::Belt, .slot = beltSlot },
+						    0,
+						    GetMillisecondsSinceStartup());
+						break;
+					}
+				} else {
+					result = authoritative::GetServerBackedRuntime().AutoEquipItem(*source, 0, GetMillisecondsSinceStartup());
+				}
+				if (!result.has_value())
+					LogError("Server-backed automatic stash withdrawal failed: {}", result.error());
+				return;
+			}
+		}
+	#endif
 		holdItem = Stash.stashList[iv];
 		if (automaticMove) {
 			if (CanBePlacedOnBelt(player, holdItem)) {
@@ -455,12 +493,6 @@ void DrawStash(const Surface &out)
 
 void CheckStashItem(Point mousePosition, bool isShiftHeld, bool isCtrlHeld)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (authoritative::GetServerBackedRuntime().IsConnected() && MyPlayer->HoldItem.isEmpty() && isCtrlHeld) {
-		LogError("Server-backed stash item transfer remains disabled until the stable cursor bridge is active.");
-		return;
-	}
-	#endif
 	if (!MyPlayer->HoldItem.isEmpty()) {
 		CheckStashPaste(mousePosition);
 	} else if (isCtrlHeld) {

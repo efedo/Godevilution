@@ -20,12 +20,10 @@ All notable changes to this fork are documented below.
 - Add the native authoritative stash projection and session boundary. Barmaid
   entry and close now use server-owned stash session commands; validated page
   grids, session state, and stash gold are projected into the legacy renderer;
-  native gold deposit/withdraw uses authoritative commands; non-gold cursor
-  transfers remain fail-closed until their stable cursor bridge is complete.
-
-- Fail closed on the native Barmaid stash entry while connected to the
-  authoritative server; local stash state remains available only in legacy
-  mode until the native page-grid presentation bridge is implemented.
+  native gold deposit/withdraw uses authoritative commands; item cursor transfers
+  now use the stable stash bridge. Normal stash drags, shift-click automatic
+  withdrawals, and Ctrl-click inventory-to-stash placement are reconciled from
+  authoritative snapshots.
 
 - Expand Godot authoritative walk-projection coverage across all eight native
   adjacent directions and the start, midpoint, effect, and post-effect tick

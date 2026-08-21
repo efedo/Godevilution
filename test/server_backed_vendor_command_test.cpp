@@ -255,6 +255,27 @@ TEST(ServerBackedVendorCommand, BuildsStashItemReferenceWithPage)
 		.has_value());
 }
 
+TEST(ServerBackedVendorCommand, BuildsStashDestinationReferenceWithPage)
+{
+	const ServerBackedItemReference inventory {
+		.location = ServerBackedItemLocation::Inventory,
+		.slot = 2,
+		.stableItemId = 702,
+	};
+	const ServerBackedItemReference stash {
+		.location = ServerBackedItemLocation::Stash,
+		.slot = 37,
+		.stableItemId = 0,
+		.page = 12,
+	};
+	const auto command = MakeMoveItemCommand(inventory, stash, 25);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	EXPECT_EQ(command->move_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_EQ(command->move_item_requested().destination().location(), protocol::PLAYER_ITEM_LOCATION_STASH);
+	EXPECT_EQ(command->move_item_requested().destination().page(), 12U);
+	EXPECT_EQ(command->move_item_requested().destination().slot(), 37U);
+}
+
 TEST(ServerBackedVendorCommand, BuildsStableInventoryMoveIntent)
 {
 	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2, .stableItemId = 702 };

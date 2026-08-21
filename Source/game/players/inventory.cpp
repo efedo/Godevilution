@@ -1817,6 +1817,27 @@ void TransferItemToStash(Player &player, int location)
 	}
 
 	const Item &item = GetInventoryItem(player, location);
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+		const auto source = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+		if (!source.has_value()) {
+			LogError("Could not resolve the Ctrl-click stash source in the authoritative snapshot.");
+			return;
+		}
+		const Size itemSize = GetInventorySize(item);
+		const auto destination = authoritative::GetServerBackedRuntime().FindStashPlacement(
+		    static_cast<uint32_t>(itemSize.width),
+		    static_cast<uint32_t>(itemSize.height),
+		    Stash.GetPage());
+		if (!destination.has_value()) {
+			player.SaySpecific(HeroSpeech::WhereWouldIPutThis);
+			return;
+		}
+		if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, *destination, 0, GetMillisecondsSinceStartup()); !result.has_value())
+			LogError("Server-backed Ctrl-click stash transfer failed: {}", result.error());
+		return;
+	}
+	#endif
 	if (!AutoPlaceItemInStash(item, true)) {
 		player.SaySpecific(HeroSpeech::WhereWouldIPutThis);
 		return;
