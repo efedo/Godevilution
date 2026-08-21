@@ -87,6 +87,15 @@ void AppendItemState(ReplayStateHasher &hasher, const ReplayFixtureItemState &st
 	hasher.AppendUint32(state.flags);
 	hasher.AppendInt32(state.miscId);
 	hasher.AppendInt32(state.spellId);
+	const int32_t spellSourceKind = state.miscId == 21 || state.miscId == 22
+	    ? 2
+	    : state.miscId == 23 || state.miscId == 27 || (state.miscId >= 47 && state.miscId <= 51)
+	        ? 1
+	        : 0;
+	if (spellSourceKind != 0) {
+		hasher.AppendString("godevilution-item-spell-source-kind-v1");
+		hasher.AppendInt32(spellSourceKind);
+	}
 	hasher.AppendInt32(state.itemIndex);
 	hasher.AppendInt32(state.charges);
 	hasher.AppendInt32(state.maxCharges);

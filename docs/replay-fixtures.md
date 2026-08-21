@@ -133,13 +133,16 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate now contains 83 cases, including seeded and autonomous MonsterArrow source
-coverage, autonomous Succubus BloodStar admission/impact/block lanes, and a
-Lich-family MonsterMagic admission/hit/miss/secondary-impact lane;
-the managed replay suite passes locally, while native execution still requires
-the C++ toolchain described below.
-Remaining replay work is broader fixture coverage rather than a known hash
-mismatch.
+gate contains 83 fixture cases, including seeded and autonomous MonsterArrow
+source coverage, autonomous Succubus BloodStar admission/impact/block lanes,
+and a Lich-family MonsterMagic admission/hit/miss/secondary-impact lane. With
+the native `replay_test` executable rebuilt on 2026-08-20 and run from the
+repository root, 72 of 88 tests pass. The remaining 16 failures are known
+C++/C# behavior or projection mismatches in store sale,
+death/restart/level-transition, Firebolt tuning, Bone Spirit homing,
+Hellfire blocking, multiplayer autonomous actions, and autonomous monster
+projectile lanes; they remain targeted parity work rather than untriaged
+fixture failures. The managed replay suite passes locally.
 
 ## Current Coverage
 
