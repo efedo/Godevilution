@@ -1048,6 +1048,60 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ShippedBaseProgressionWarpsExecuteThroughTheAuthoritativeTriggerPath()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "base",
+                "1",
+                [basePack])));
+        var worldState = activation.Simulation.WorldState;
+        var world = worldState.World!;
+        var warps = world.WarpTargets
+            .Where(warp => warp.WarpId is >= 1001 and <= 1016)
+            .OrderBy(warp => warp.WarpId)
+            .ToArray();
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            100,
+            0,
+            100,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            100,
+            1,
+            0,
+            0) {
+            EntityId = 1,
+        };
+        var processor = new DiabloWorldCommandProcessor(worldState);
+
+        Assert.Equal(16, warps.Length);
+        for (var index = 0; index < warps.Length; index++) {
+            var warp = warps[index];
+            player.LevelId = warp.SourceLevelId;
+            player.PositionX = warp.TriggerX;
+            player.PositionY = warp.TriggerY;
+
+            var result = processor.ExecuteLevelTrigger(player, (ulong)index + 1, [player]);
+
+            Assert.True(result.Succeeded, $"Warp {warp.StableSymbol} was rejected.");
+            Assert.Equal(warp.TargetLevelId, player.LevelId);
+            Assert.Equal(warp.TargetX, player.PositionX);
+            Assert.Equal(warp.TargetY, player.PositionY);
+            Assert.Contains(player.LevelId, player.VisitedLevelIds);
+        }
+    }
+
+    [Fact]
     public void ShippedUniqueItemsUseStableBaseItemSymbols()
     {
         var repositoryRoot = FindRepositoryRoot();

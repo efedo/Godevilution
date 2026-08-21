@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   preserving Hellfire's quest-gated dungeon warps. Bump the Diablo content
   schema to 1.383.
 
+- Verify every shipped ordinary progression warp through the authoritative
+  level-trigger execution path.
+
 - Ship deterministic ordinary-level generation rows for base levels 3 through
   16, with explicit variant `levels.tsv` rows taking precedence. Bump the
   Diablo content schema to 1.382.
