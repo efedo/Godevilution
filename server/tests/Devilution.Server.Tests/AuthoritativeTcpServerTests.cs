@@ -659,6 +659,114 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpRulesetReloadSoakKeepsAConnectedAndResumedSessionAcrossGenerations()
+    {
+        const int replacementGenerations = 8;
+        var adapters = Enumerable.Range(0, replacementGenerations + 1)
+            .Select(index => new ReloadableHostAdapter(
+                index == 0 ? "initial" : $"replacement-{index}"))
+            .ToArray();
+        var nextAdapter = 0;
+        var liveRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+            CreateReloadManifest("1", "initial"),
+            [new ReloadableModule("rules", "1.0.0")],
+            new DelegateAuthoritativeClock(() => 10),
+            (_, _) => adapters[nextAdapter++]);
+        using var leasedAdapter = new LeasedAuthoritativeGameHostAdapter(liveRuntime);
+        var commandServer = new AuthoritativeCommandServer(leasedAdapter);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            new DelegateAuthoritativeClock(() => 10),
+            gameAdapter: leasedAdapter);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string resumeToken;
+        uint entityId;
+
+        using (var client = new TcpClient()) {
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var stream = client.GetStream();
+            await SendHelloAsync(
+                stream,
+                cancellationToken,
+                requestedCharacterName: "Soak-Hero");
+            var initialHello = (await EnvelopeCodec.ReadAsync(
+                stream,
+                cancellationToken))!.ServerHello;
+            resumeToken = initialHello.SessionToken;
+            entityId = Assert.Single((await EnvelopeCodec.ReadAsync(
+                stream,
+                cancellationToken))!.Snapshot.Players).EntityId;
+
+            for (var generation = 1; generation <= replacementGenerations; generation++) {
+                var reload = server.TryReloadRuleset(
+                    CreateReloadManifest(generation.ToString(), $"replacement-{generation}"),
+                    [new ReloadableModule("rules", $"{generation + 1}.0.0")]);
+
+                Assert.True(reload.Succeeded);
+                Assert.True(adapters[generation - 1].Disposed);
+                Assert.True(adapters[generation].SessionStateImported);
+                Assert.Equal(
+                    reload.Active.Identity.CombinedSha256,
+                    handshake.Identity.RulesetIdentityHash);
+
+                await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                    CommandBatch = new CommandBatch {
+                        Commands = { new Command {
+                            ClientSequence = (ulong)generation,
+                            RequestedTick = 10,
+                            AttackRequested = new AttackRequested {
+                                TargetEntityId = entityId,
+                            },
+                        } },
+                    },
+                }, cancellationToken);
+                Assert.Equal(
+                    CommandStatus.Accepted,
+                    (await EnvelopeCodec.ReadAsync(
+                        stream,
+                        cancellationToken))!.CommandAck.Results.Single().Status);
+                var snapshot = (await EnvelopeCodec.ReadAsync(
+                    stream,
+                    cancellationToken))!.Snapshot;
+                var player = Assert.Single(snapshot.Players);
+                Assert.Equal(entityId, player.EntityId);
+                Assert.Equal("Soak-Hero", player.CharacterName);
+            }
+        }
+
+        using var resumedClient = new TcpClient();
+        await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var resumedStream = resumedClient.GetStream();
+        await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
+            ClientHello = new ClientHello {
+                ClientBuildId = "client-build",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = handshake.Identity.ContentManifestHash,
+                RulesetIdentityHash = handshake.Identity.RulesetIdentityHash,
+                ResumeToken = resumeToken,
+            },
+        }, cancellationToken);
+        var resumedHello = (await EnvelopeCodec.ReadAsync(
+            resumedStream,
+            cancellationToken))!.ServerHello;
+        Assert.Equal(
+            handshake.Identity.RulesetIdentityHash,
+            resumedHello.RulesetIdentityHash);
+        var resumedPlayer = Assert.Single((await EnvelopeCodec.ReadAsync(
+            resumedStream,
+            cancellationToken))!.Snapshot.Players);
+        Assert.Equal(entityId, resumedPlayer.EntityId);
+        Assert.Equal("Soak-Hero", resumedPlayer.CharacterName);
+    }
+
+    [Fact]
     public async Task ReconnectSoakPreservesCompleteParticipantSnapshotAndSelfFirstOrder()
     {
         var executor = new ParticipantSnapshotExecutor();

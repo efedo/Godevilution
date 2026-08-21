@@ -13,9 +13,10 @@ All notable changes to this fork are documented below.
   admission, damage, block, hit-recovery, and canonical monster-range state.
   The rebuilt native replay runner now passes all 96 tests.
 
-- Add an end-to-end TCP ruleset-replacement fixture: a connected session now
-  migrates through the live host barrier, continues operating on the new
-  generation, and resumes with the published independent ruleset identity.
+- Add an eight-generation end-to-end TCP ruleset-replacement soak: a connected
+  session now migrates through the live host barrier, continues operating on
+  every replacement, retires each prior target, and resumes with the final
+  published independent ruleset identity.
 
 - Add a shared Hellfire HorkDemon Hork Spawn replay fixture covering
   server-owned summon admission, native travel timing, and C++/C# checkpoint
