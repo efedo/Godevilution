@@ -1900,6 +1900,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnBreaksCurrentMissileBlockingObject()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-object-break.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var @object = Assert.Single(result.FinalSnapshot.Objects);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.True(@object.Destroyed);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -2872,6 +2897,17 @@ public sealed class ReplayFixtureTests
                     StatFlag = source.StatFlag,
                 }))
             .ToArray();
+        IReadOnlyList<AuthoritativeWorldObject> startingObjects = fixture.InitialState.ObjectEntityId == 0
+            ? Array.Empty<AuthoritativeWorldObject>()
+            : [new AuthoritativeWorldObject(
+                fixture.InitialState.ObjectEntityId,
+                fixture.InitialState.ObjectId,
+                fixture.InitialState.LevelId,
+                fixture.InitialState.ObjectPositionX,
+                fixture.InitialState.ObjectPositionY,
+                missilePassable: fixture.InitialState.ObjectMissilePassable,
+                breakable: fixture.InitialState.ObjectBreakable,
+                destroyed: fixture.InitialState.ObjectDestroyed)];
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -2883,6 +2919,7 @@ public sealed class ReplayFixtureTests
             startingLifeMaximum: fixture.InitialState.LifeMaximum,
             startingCharacterLevel: fixture.InitialState.CharacterLevel,
             startingEquipment: startingEquipment,
+            startingObjects: startingObjects,
             startingPositionX: fixture.InitialState.PositionX,
             startingPositionY: fixture.InitialState.PositionY,
             startingLevelId: fixture.InitialState.LevelId,

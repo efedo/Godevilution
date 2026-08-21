@@ -4883,6 +4883,18 @@ void AdvanceReplayHorkSpawnsOneTick(
 				continue;
 			}
 		}
+		const bool blockingObject = state.objectEntityId != 0
+		    && state.objectLevelId == projectile.levelId
+		    && state.objectPositionX == projectile.positionX
+		    && state.objectPositionY == projectile.positionY
+		    && !state.objectDestroyed
+		    && !state.objectMissilePassable;
+		if (blockingObject) {
+			if (state.objectBreakable)
+				state.objectDestroyed = true;
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
 		if (projectile.remainingTicks == 0) {
 			iterator = state.projectiles.erase(iterator);
 			continue;
