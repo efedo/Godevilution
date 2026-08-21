@@ -320,9 +320,18 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
-            if (model.WarpTriggerAt(target.X, target.Y) is { } warp
-                && !warp.Available) {
-                hud?.SetStatus("That route is not currently available.");
+            if (model.WarpTriggerAt(target.X, target.Y) is { } warp) {
+                if (!warp.Available) {
+                    hud?.SetStatus("That route is not currently available.");
+                } else {
+                    Queue(new Command {
+                        MoveRequested = new MoveRequested {
+                            TargetCell = true,
+                            TargetX = target.X,
+                            TargetY = target.Y,
+                        },
+                    });
+                }
                 GetViewport().SetInputAsHandled();
                 return;
             }
