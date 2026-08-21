@@ -32,6 +32,8 @@ public:
 
 	[[nodiscard]] bool IsConnected() const noexcept { return session_ != nullptr; }
 	[[nodiscard]] bool IsAuthoritativeMode() const noexcept { return authoritativeMode_; }
+	/** Stash state is not authoritative until a protocol projection is shipped. */
+	[[nodiscard]] bool SupportsStash() const noexcept { return false; }
 	[[nodiscard]] ServerBackedSession *Session() noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedSession *Session() const noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedWorldProjection &WorldProjection() const noexcept { return worldProjection_; }

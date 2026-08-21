@@ -36,6 +36,13 @@ TEST(ServerBackedRuntime, DisabledStartPreservesLocalPath)
 	EXPECT_FALSE(runtime.IsConnected());
 }
 
+TEST(ServerBackedRuntime, StashRemainsDisabledUntilItHasAnAuthoritativeProjection)
+{
+	ServerBackedRuntime runtime;
+
+	EXPECT_FALSE(runtime.SupportsStash());
+}
+
 TEST(ServerBackedRuntime, SnapshotDrivenPortalUseRequiresConnection)
 {
 	ServerBackedRuntime runtime;

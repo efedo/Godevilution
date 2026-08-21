@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Fail closed on the native Barmaid stash entry while connected to the
+  authoritative server; local stash state remains available only in legacy
+  mode until stash projection and commands are implemented.
+
 - Use the same authoritative action-tick walk projection for the Godot local
   player after bounded prediction has reconciled, preventing a snap to the
   occupied tile while the server-owned movement effect is still pending.

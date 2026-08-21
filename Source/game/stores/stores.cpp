@@ -27,6 +27,7 @@
 #include "application/game_mode.hpp"
 #include "game/events/event_bus.hpp"
 #include "ui/minitext.h"
+#include "ui/player_messages.h"
 #include "network/protocol/multi.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -2159,6 +2160,13 @@ void BarmaidEnter()
 		break;
 	case 14:
 		CurrentStoreManager.activeStore() = TalkID::None;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()
+		    && !authoritative::GetServerBackedRuntime().SupportsStash()) {
+			EventPlrMsg(_("The stash is not available in authoritative mode yet."), UiFlags::ColorRed);
+			return;
+		}
+#endif
 		IsStashOpen = true;
 		Stash.RefreshItemStatFlags();
 		invflag = true;

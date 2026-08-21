@@ -124,6 +124,11 @@ class-ability source and projects the accepted snapshot instead of invoking the
 local recharge rule. Connected stash recharge remains blocked; paid Witch
 recharge retains its source-zero vendor path.
 
+The Barmaid stash entry is also fail-closed while connected. Because stash
+state is not yet part of the authoritative protocol, the native client does
+not open or mutate its local stash in authoritative mode; disconnected legacy
+sessions retain the existing stash behavior.
+
 Native service, store, and charged/consumable spell-source requests now resolve
 their item references from the latest authoritative projection, carrying the
 stable content item ID when present. Older servers and snapshots retain the
