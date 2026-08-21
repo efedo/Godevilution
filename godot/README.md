@@ -86,6 +86,9 @@ damage or destination effects itself.
 After terminal Death, Escape sends `RestartTownRequested`. The server chooses
 the destination and resource reset; Godot accepts action kind 6 only as an
 already-applied NewLevel transition and renders the returned town snapshot.
+When the server projects the typed Diablo victory event or terminal victory
+snapshot state, Godot displays a victory banner using the server-provided kill
+level identity; it does not infer or mutate completion locally.
 If a Gold pickup exceeds inventory capacity, the snapshot carries the remainder
 as `held_item`. Godot displays it and sends `DropHeldItemRequested` for a clicked
 tile (or the current tile with `X`); it never chooses the accepted placement or

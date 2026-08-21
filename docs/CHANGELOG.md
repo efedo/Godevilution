@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   authored quest/towner stages before falling back to spell casting or movement;
   trap clicks fail closed when the local player lacks Trap Disarm.
 
+- Add a server-driven Godot victory banner for typed Diablo defeat events and
+  terminal victory snapshots, preserving the multiplayer/single-player level
+  identity distinction without adding client gameplay state.
+
 - Make Godot authored warp markers actionable at the input boundary: available
   markers continue through server-owned movement, while unavailable quest-gated
   markers provide client feedback without submitting a futile transition.

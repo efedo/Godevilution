@@ -16,6 +16,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label dialog = new();
     private readonly Label commandFeedback = new();
     private readonly Label diagnostics = new();
+    private readonly Label victory = new();
     private readonly ItemList spellSources = new();
     private readonly ItemList storeItems = new();
     private readonly ItemList beltItems = new();
@@ -86,6 +87,15 @@ public partial class HudPresentation : CanvasLayer
         statusBox.AddChild(status);
         statusBox.AddChild(state);
         AddChild(statusPanel);
+
+        victory.HorizontalAlignment = HorizontalAlignment.Center;
+        victory.Modulate = new Color("ffe38a");
+        victory.AddThemeFontSizeOverride("font_size", 28);
+        victory.Position = new Vector2(280, 128);
+        victory.Size = new Vector2(480, 56);
+        victory.MouseFilter = Control.MouseFilterEnum.Ignore;
+        victory.Visible = false;
+        AddChild(victory);
 
         sidePanel = new PanelContainer { Position = new Vector2(880, 16), Size = new Vector2(380, 680) };
         var scroll = new ScrollContainer();
@@ -262,6 +272,17 @@ public partial class HudPresentation : CanvasLayer
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
             : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.ReflectCharges > 0 ? $"   Reflect {player.ReflectCharges}" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize) ? "   Etherealize" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
+
+        var victoryEvent = model.RecentEvents.LastOrDefault(
+            @event => @event.EventCase == GameEvent.EventOneofCase.Victory);
+        if (model.Snapshot?.VictoryTriggered == true || victoryEvent is not null) {
+            victory.Text = victoryEvent is not null
+                ? AuthoritativeVictoryPresentation.Format(victoryEvent.Victory)
+                : "Victory — Diablo defeated";
+            victory.Visible = true;
+        } else {
+            victory.Visible = false;
+        }
 
         commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
         diagnostics.Text = FormatDiagnostics(model, client);
@@ -594,7 +615,7 @@ public partial class HudPresentation : CanvasLayer
     {
         var color = highContrastToggle.ButtonPressed ? Colors.White : new Color("d5d5e5");
         var muted = highContrastToggle.ButtonPressed ? Colors.White : new Color("b2b2c5");
-        foreach (var control in new Control[] { status, state, inventory, store, dialog, commandFeedback, diagnostics }) {
+        foreach (var control in new Control[] { status, state, victory, inventory, store, dialog, commandFeedback, diagnostics }) {
             control.Modulate = control == diagnostics ? muted : color;
             control.AddThemeFontSizeOverride("font_size", highContrastToggle.ButtonPressed ? 18 : 14);
         }
