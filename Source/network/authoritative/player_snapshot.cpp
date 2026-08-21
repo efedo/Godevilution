@@ -10,6 +10,7 @@
 #include "devilution.pb.h"
 #include "game/players/players.hpp"
 #include "network/authoritative/item_snapshot.hpp"
+#include "qol/floatingnumbers.h"
 #include "tables/textdat.h"
 #include "ui/minitext.h"
 
@@ -405,6 +406,7 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			    : event.damage().amount_q6();
 			player.life.current = std::max(0, player.life.current - std::max(0, damageQ6));
 			player.UpdateHitPointPercentage();
+			AddFloatingDamageNumber(player.position.tile, damageQ6, 0, true);
 		}
 		if (event.has_healing() && event.healing().target_entity_id() == entityId) {
 			const int32_t healingQ6 = event.healing().amount_q6() == 0
@@ -413,8 +415,10 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			player.life.current = std::min(player.life.maximum, player.life.current + std::max(0, healingQ6));
 			player.UpdateHitPointPercentage();
 		}
-		if (event.has_experience() && event.experience().player_entity_id() == entityId)
+		if (event.has_experience() && event.experience().player_entity_id() == entityId) {
 			player._pExperience += event.experience().amount();
+			AddFloatingExperienceNumber(player.position.tile, event.experience().amount());
+		}
 		if (event.has_dialogue()
 		    && event.dialogue().source_entity_id() == entityId
 		    && event.dialogue().message_id() >= 0

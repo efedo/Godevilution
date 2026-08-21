@@ -133,8 +133,10 @@ native diagnostics while the compatibility client exists.
 The Godot client now consumes authoritative damage, healing, and experience
 events through a typed combat-feedback mapper and renders transient floating
 numbers from snapshot entity positions. The bundled Lua floating-number mods
-remain available to the native compatibility client, but they no longer define
-the authoritative presentation path.
+remain available to the native compatibility client, but the native
+server-backed client now projects local authoritative damage and experience
+events directly through its floating-number renderer; Lua no longer defines
+that server-backed presentation path.
 
 ## Freeze Rules
 

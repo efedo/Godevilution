@@ -28,6 +28,10 @@ All notable changes to this fork are documented below.
   request timestamps through the same shared timer, keeping replay-aware time
   consistent across the compatibility adapter.
 
+- Move native server-backed local damage and experience floating-number
+  presentation into the compatibility renderer, so those authoritative event
+  projections no longer require a Lua presentation hook.
+
 - Extend the end-to-end TCP ruleset-replacement soak to 32 generations for a
   connected session. The session migrates through the live host barrier,
   continues operating on every replacement, retires each prior target, and

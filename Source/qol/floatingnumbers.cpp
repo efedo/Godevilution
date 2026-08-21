@@ -89,6 +89,27 @@ void AddFloatingNumber(Point pos, Displacement offset, std::string text, UiFlags
 	FloatingQueue.push_back(num);
 }
 
+void AddFloatingDamageNumber(Point pos, const int damageQ6, const int id, const bool reverseDirection)
+{
+	if (damageQ6 <= 0)
+		return;
+
+	const UiFlags size = damageQ6 >= 64 * 300
+	    ? UiFlags::FontSize30
+	    : damageQ6 >= 64 * 100 ? UiFlags::FontSize24 : UiFlags::FontSize12;
+	const std::string text = damageQ6 < 64
+	    ? fmt::format("{:.2f}", static_cast<double>(damageQ6) / 64.0)
+	    : fmt::format("{}", damageQ6 / 64);
+	AddFloatingNumber(pos, { 0, 0 }, text, size | UiFlags::ColorGold, id, reverseDirection);
+}
+
+void AddFloatingExperienceNumber(Point pos, const uint32_t experience, const int id)
+{
+	if (experience == 0)
+		return;
+	AddFloatingNumber(pos, { 0, 0 }, fmt::format("{} XP", experience), UiFlags::ColorWhite, id, true);
+}
+
 void DrawFloatingNumbers(const Surface &out, Point viewPosition, Displacement offset)
 {
 	for (auto &floatingNum : FloatingQueue) {
