@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add validated base progression warps from town through ordinary levels 16,
+  preserving Hellfire's quest-gated dungeon warps. Bump the Diablo content
+  schema to 1.383.
+
 - Ship deterministic ordinary-level generation rows for base levels 3 through
   16, with explicit variant `levels.tsv` rows taking precedence. Bump the
   Diablo content schema to 1.382.

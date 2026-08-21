@@ -318,6 +318,11 @@ future run.
   variant pack take precedence for overlapping identities; generated rows fill
   only levels absent from the active explicit world.
 
+- Schema 1.383 ships stable base progression warps from town through ordinary
+  level 16. Hellfire overlays retain its quest-gated dungeon warps, and the
+  composed world validates all 17 triggers against generated and explicit
+  level geometry.
+
 - Schema 1.377 extends authored mutations with validated `object_layer_rects`
   assignments. Effective native object-layer values now survive map mutation
   projection and remain available to the explicit native-DUN object mapping

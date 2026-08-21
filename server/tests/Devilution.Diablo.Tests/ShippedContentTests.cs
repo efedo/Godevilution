@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.382.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.383.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1028,16 +1028,10 @@ public sealed class ShippedContentTests
         var stableIds = StableContentIdCatalog.LoadTsv(
             "content_ids.tsv",
             composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
-        var world = AuthoritativeWorld.LoadTsv(
-            "levels.tsv",
-            composed.GetRequiredTable("levels.tsv").ToCanonicalTsv(),
-            stableIds);
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
+        var world = activation.Simulation.WorldState.World!;
         var warpsTable = composed.GetRequiredTable("warps.tsv");
-        var warps = AuthoritativeWarpCatalog.LoadTsv(
-            warpsTable.SourcePath,
-            warpsTable.ToCanonicalTsv(),
-            world,
-            stableIds);
+        var warps = world.WarpTargets;
 
         var warpIds = stableIds.Entries
             .Where(entry => entry.Kind == "warp")
@@ -1047,6 +1041,9 @@ public sealed class ShippedContentTests
             Assert.Equal(row.RequiredUInt32("warp_id"), stableIds.Resolve("warp", row.Required("warp_symbol"))));
         Assert.Contains(warps, warp => warp.StableSymbol == "grave_matters_dungeon");
         Assert.Contains(warps, warp => warp.StableSymbol == "farmers_orchard_dungeon");
+        Assert.Contains(warps, warp => warp.StableSymbol == "town_to_cathedral");
+        Assert.Contains(warps, warp => warp.StableSymbol == "caves_15_to_hell_16");
+        Assert.Equal(18, warps.Count);
         stableIds.ValidateReferences("warp", id => warps.Any(warp => warp.WarpId == id));
     }
 
@@ -1897,7 +1894,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.382.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.383.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
