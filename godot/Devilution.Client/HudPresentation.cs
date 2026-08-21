@@ -458,6 +458,12 @@ public partial class HudPresentation : CanvasLayer
         var hasSelectedEquipment = player is not null && selectedEquipmentSlot is { } selectedEquipment
             && player.Equipment.Any(item => item.Slot == selectedEquipment);
         var hasSelectedItem = hasSelectedInventory || hasSelectedBelt || hasSelectedEquipment;
+        var hasSelectedServiceItem = player is not null
+            && selectedItemReference is { } serviceReference
+            && AuthoritativeItemActionRules.IsServiceTarget(
+                player,
+                serviceReference,
+                stashOpen);
         var hasIdentifyAbility = player?.AbilityKind == PlayerAbilityKind.Identify;
         var hasIdentifyScroll = player?.Inventory.Any(item => item.State?.ItemActionKind == ItemActionKind.Identify) == true
             || player?.Belt.Any(item => item.State?.ItemActionKind == ItemActionKind.Identify) == true;
@@ -492,13 +498,13 @@ public partial class HudPresentation : CanvasLayer
             ? "Repair selected (Warrior)"
             : "Repair selected";
         repairSelected.Disabled = !connected
-            || !hasSelectedItem
+            || !hasSelectedServiceItem
             || (activeStore is null && !hasRepairAbility);
         rechargeSelected.Text = activeStore is null && hasRechargeAbility
             ? "Recharge selected (Sorcerer)"
             : "Recharge selected";
         rechargeSelected.Disabled = !connected
-            || !hasSelectedItem
+            || !hasSelectedServiceItem
             || (activeStore is null && !hasRechargeAbility);
         identifySelected.Text = activeStore is null && hasIdentifyAbility
             ? "Identify selected (Bard)"
@@ -506,7 +512,7 @@ public partial class HudPresentation : CanvasLayer
                 ? "Identify selected (Scroll)"
             : "Identify selected";
         identifySelected.Disabled = !connected
-            || !hasSelectedItem
+            || !hasSelectedServiceItem
             || (activeStore is null && !hasIdentifyAbility && !hasIdentifyScroll);
         readBookSelected.Disabled = !connected || selectedItemAction != ItemActionKind.ReadBook;
         useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;

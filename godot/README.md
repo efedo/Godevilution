@@ -216,9 +216,11 @@ presentation data and must stay consistent with server content.
 
 The HUD also exposes authoritative equipment rows. Select an inventory item
 and then an equipment row to submit an explicit server-owned transfer;
-selecting equipment enables the same stable-reference sell, repair, recharge,
-and identify services. Godot never mutates equipment or resolves slot
-topology locally.
+selecting equipment enables the stable-reference sell, repair, recharge, and
+identify services; selecting an item in an open stash enables its applicable
+repair, recharge, and identify service. Stash service targets require the
+projected stash session to remain open. Godot never mutates equipment or
+resolves slot topology locally.
 
 When the snapshot contains unspent level-up points, the HUD displays the
 server-owned primary attributes and enables one-point Strength, Magic,

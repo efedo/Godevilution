@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Allow Godot's Warrior Repair, Sorcerer Recharge, and Bard Identify service
+  controls to target stable-reference items in an open authoritative stash;
+  stale or closed-session targets remain disabled.
+
 - Add explicit server-owned stash open/close session intents plus validated
   stash-gold deposit and withdrawal commands. Item transfers and gold changes
   now fail closed while the stash session is closed, and vendor/stash sessions
