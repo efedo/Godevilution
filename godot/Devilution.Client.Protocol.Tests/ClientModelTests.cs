@@ -510,8 +510,18 @@ public sealed class ClientModelTests
                     AbilitySpellId = 28,
                     AbilityKind = PlayerAbilityKind.TrapDisarm,
                     MemorizedSpells = {
-                        new PlayerSpellLevelSnapshot { SpellId = 3, Level = 2, DisplayName = "Lightning" },
-                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 1, DisplayName = "Firebolt" },
+                        new PlayerSpellLevelSnapshot {
+                            SpellId = 3,
+                            Level = 2,
+                            DisplayName = "Lightning",
+                            TargetingKind = SpellTargetingKind.CombatEntity,
+                        },
+                        new PlayerSpellLevelSnapshot {
+                            SpellId = 1,
+                            Level = 1,
+                            DisplayName = "Firebolt",
+                            TargetingKind = SpellTargetingKind.CombatEntity,
+                        },
                     },
                     Equipment = {
                         new EquippedItemSnapshot {
@@ -524,6 +534,7 @@ public sealed class ClientModelTests
                                 MiscId = 23,
                                 SpellDisplayName = "Charged Bolt",
                                 SpellSourceKind = ItemSpellSourceKind.ChargedItem,
+                                SpellTargetingKind = SpellTargetingKind.CombatEntity,
                             },
                         },
                     },
@@ -561,8 +572,10 @@ public sealed class ClientModelTests
             ["memorized:1:1", "memorized:3:2", "equipment:4:99", "inventory:0", "belt:2", "ability:28"],
             sources.Select(source => source.Key));
         Assert.Equal(CastSourceKind.MemorizedSpell, sources[0].Kind);
+        Assert.Equal(SpellTargetingKind.CombatEntity, sources[0].TargetingKind);
         Assert.Equal("Firebolt (level 1)", sources[0].DisplayName);
         Assert.Equal(CastSourceKind.ChargedItem, sources[2].Kind);
+        Assert.Equal(SpellTargetingKind.CombatEntity, sources[2].TargetingKind);
         Assert.Equal("Charged Bolt (staff, 3 charges)", sources[2].DisplayName);
         Assert.Equal(PlayerItemLocation.Equipment, sources[2].SourceItem!.Location);
         Assert.Equal(4U, sources[2].SourceItem!.Slot);

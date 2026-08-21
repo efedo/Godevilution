@@ -538,7 +538,10 @@ public partial class Main : Node2D
         var player = model.Snapshot!.Players.First();
         return new CastRequested {
             SpellId = source.SpellId,
-            TargetEntityId = ResolveVisiblePlayerTargetEntityId(target, player),
+            TargetEntityId = ResolveVisibleCastTargetEntityId(
+                target,
+                player,
+                source.TargetingKind),
             TargetX = target.X,
             TargetY = target.Y,
             Source = source.Kind,
@@ -567,16 +570,30 @@ public partial class Main : Node2D
             hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast)");
     }
 
-    private uint ResolveVisiblePlayerTargetEntityId(
+    private uint ResolveVisibleCastTargetEntityId(
         Vector2I target,
-        PlayerSnapshot localPlayer)
+        PlayerSnapshot localPlayer,
+        SpellTargetingKind targetingKind)
     {
-        return AuthoritativeTargetSelector.SelectRemotePlayerTarget(
-            model.Snapshot,
-            localPlayer.EntityId,
-            target.X,
-            target.Y,
-            includeDead: true) ?? 0;
+        if (targetingKind == SpellTargetingKind.CombatEntity) {
+            return AuthoritativeTargetSelector.SelectCombatTarget(
+                model.Snapshot,
+                localPlayer.EntityId,
+                target.X,
+                target.Y)
+                ?? 0;
+        }
+        if (targetingKind is SpellTargetingKind.Player
+            or SpellTargetingKind.Unspecified) {
+            return AuthoritativeTargetSelector.SelectRemotePlayerTarget(
+                model.Snapshot,
+                localPlayer.EntityId,
+                target.X,
+                target.Y,
+                includeDead: true)
+                ?? 0;
+        }
+        return 0;
     }
 
     public override async void _ExitTree()

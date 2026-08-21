@@ -45,6 +45,72 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void SelectsAStableMonsterIdentityForSpellTargeting()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 2,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = true,
+                },
+                new MonsterSnapshot {
+                    EntityId = 19,
+                    LevelId = 2,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = true,
+                },
+                new MonsterSnapshot {
+                    EntityId = 21,
+                    LevelId = 3,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = true,
+                },
+            },
+        };
+
+        Assert.Equal(
+            19U,
+            AuthoritativeTargetSelector.SelectMonsterTarget(snapshot, 7, 4, 4));
+    }
+
+    [Fact]
+    public void DoesNotSelectDeadOrHiddenMonstersForSpellTargeting()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 2,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = false,
+                },
+                new MonsterSnapshot {
+                    EntityId = 21,
+                    LevelId = 2,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = true,
+                    SneakHidden = true,
+                },
+            },
+        };
+
+        Assert.Null(AuthoritativeTargetSelector.SelectMonsterTarget(snapshot, 7, 4, 4));
+    }
+
+    [Fact]
     public void SelectsRemotePlayersAtTheirReservedWalkDestination()
     {
         var snapshot = new Snapshot {

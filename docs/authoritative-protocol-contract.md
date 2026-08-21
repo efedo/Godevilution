@@ -94,6 +94,16 @@ mana, a charged item decrements one charge, and a consumable is removed. Source
 resources change only after the spell, target, range, line-of-sight, and
 projectile checks have all succeeded.
 
+`PlayerSnapshot.ability_targeting_kind`,
+`PlayerSpellLevelSnapshot.targeting_kind`, and
+`ItemStateSnapshot.spell_targeting_kind` are additive presentation hints for
+stable target selection. `COMBAT_ENTITY` permits a client to include a visible
+monster or living remote-player entity ID, while `PLAYER` is reserved for
+player-targeted spells such as Heal Other and Resurrection. `TILE` and the
+zero-valued legacy default submit only coordinates. The server remains the
+authority for target type, visibility, range, line of sight, and spell-specific
+admission; these fields never grant targeting permission.
+
 For native-scaled definitions such as Firebolt, catalog mana is resolved from
 effective spell level, character level where applicable, class/game-variant
 reduction, minimum cost, and the Q6 unit scale before admission. The client
@@ -885,8 +895,8 @@ aggregate-only compatibility participants retain the older wallet path.
 
 `PlayerSnapshot.ability_spell_id` field 20 carries the class skill and repeated
 `memorized_spells` field 21 carries learned spell IDs and levels. Each learned
-spell may also carry additive server-owned `display_name` metadata from the
-active validated spell-book catalog; older peers may ignore it. The server
+spell may also carry additive server-owned `display_name` and targeting metadata
+from the active validated spell catalog; older peers may ignore it. The server
 validates native bounds and uniqueness, saves this state, and sorts learned
 spells for protocol and hash projection. Native compatibility clients rebuild
 their ability and memorized-spell masks from the snapshot rather than retaining
@@ -895,9 +905,9 @@ the tagged `godevilution-player-spells-v1` section; an entirely empty spell
 projection adds nothing so older state hashes remain unchanged.
 
 Item-backed spell sources retain their existing `ItemStateSnapshot` identity and
-source-kind fields. Additive `spell_display_name` metadata carries the
-server-owned content name when the active spell-book catalog provides one;
-empty preserves compatibility for older snapshots and non-booked spells.
+source-kind fields. Additive `spell_display_name` and `spell_targeting_kind`
+metadata carry the server-owned content projection; zero preserves compatibility
+for older snapshots and non-spell items.
 
 `PlayerSnapshot.hostile_mode` field 22 is the inverse of native friendly mode.
 Its absent/false Protobuf default therefore preserves friendly behavior for

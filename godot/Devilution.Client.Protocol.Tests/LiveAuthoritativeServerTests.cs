@@ -290,8 +290,12 @@ public sealed class LiveAuthoritativeServerTests
         model.Apply(initial);
         var player = model.Snapshot!.Players.Single();
         Assert.Equal("Firebolt", Assert.Single(player.MemorizedSpells).DisplayName);
+        Assert.Equal(
+            SpellTargetingKind.CombatEntity,
+            Assert.Single(player.MemorizedSpells).TargetingKind);
         var chargedStaff = Assert.Single(player.Equipment, item => item.State?.SpellId == 30);
         Assert.Equal("Charged Bolt", chargedStaff.State!.SpellDisplayName);
+        Assert.Equal(SpellTargetingKind.CombatEntity, chargedStaff.State.SpellTargetingKind);
         var monster = model.Snapshot.Monsters.Single(monster => monster.Alive);
 
         var moveSequence = client.Queue(new Command {

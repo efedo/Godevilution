@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route Godot spell casts at visible living monsters through stable
+  authoritative entity IDs, preserving server-owned target validation and
+  coordinate fallback for older clients.
+
 - Add an idempotent server-owned `CloseStoreRequested` intent and Godot HUD
   control so vendor and Adria service sessions can end without relying on a
   town restart or stale active-store state.

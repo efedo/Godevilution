@@ -5,7 +5,8 @@ namespace Devilution.Client.Protocol;
 /**
  * Presentation-only view of the cast sources currently owned by the local
  * player. The server remains authoritative for admission, source ownership,
- * resource consumption, and every spell effect.
+ * resource consumption, target validation, and every spell effect. Targeting
+ * kind is an additive server-projected hint used only to choose an entity ID.
  */
 public sealed record AuthoritativeSpellSource(
     string Key,
@@ -13,7 +14,8 @@ public sealed record AuthoritativeSpellSource(
     uint SpellId,
     uint Level,
     CastSourceKind Kind,
-    PlayerItemReference? SourceItem);
+    PlayerItemReference? SourceItem,
+    SpellTargetingKind TargetingKind = SpellTargetingKind.Unspecified);
 
 public static class AuthoritativeSpellSourceSelector
 {
@@ -37,7 +39,8 @@ public static class AuthoritativeSpellSourceSelector
                 spell.SpellId,
                 spell.Level,
                 CastSourceKind.MemorizedSpell,
-                null));
+                null,
+                spell.TargetingKind));
         }
 
         foreach (var staff in player.Equipment
@@ -59,7 +62,8 @@ public static class AuthoritativeSpellSourceSelector
                     Location = PlayerItemLocation.Equipment,
                     Slot = staff.Slot,
                     StableItemId = staff.State.StableItemId,
-                });
+                },
+                staff.State.SpellTargetingKind);
         }
 
         for (var index = 0; index < player.Inventory.Count; index++) {
@@ -76,7 +80,8 @@ public static class AuthoritativeSpellSourceSelector
                     Location = PlayerItemLocation.Inventory,
                     Slot = (uint)index,
                     StableItemId = item.State.StableItemId,
-                });
+                },
+                item.State.SpellTargetingKind);
         }
 
         foreach (var item in player.Belt
@@ -92,7 +97,8 @@ public static class AuthoritativeSpellSourceSelector
                     Location = PlayerItemLocation.Belt,
                     Slot = item.Slot,
                     StableItemId = item.State.StableItemId,
-                });
+                },
+                item.State.SpellTargetingKind);
         }
 
         if (player.AbilitySpellId != 0) {
@@ -105,7 +111,8 @@ public static class AuthoritativeSpellSourceSelector
                 player.AbilitySpellId,
                 1,
                 CastSourceKind.Ability,
-                null));
+                null,
+                player.AbilityTargetingKind));
         }
 
         return sources;
@@ -147,7 +154,8 @@ public static class AuthoritativeSpellSourceSelector
         string displayName,
         uint spellId,
         CastSourceKind kind,
-        PlayerItemReference sourceItem)
+        PlayerItemReference sourceItem,
+        SpellTargetingKind targetingKind)
     {
         sources.Add(new AuthoritativeSpellSource(
             key,
@@ -155,7 +163,8 @@ public static class AuthoritativeSpellSourceSelector
             spellId,
             1,
             kind,
-            sourceItem));
+            sourceItem,
+            targetingKind));
     }
 
     private static bool IsSpellConsumable(ItemStateSnapshot? state)

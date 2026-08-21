@@ -20,14 +20,9 @@ public static class AuthoritativeTargetSelector
         if (localPlayer is null)
             return null;
 
-        var monster = snapshot.Monsters.FirstOrDefault(candidate =>
-            candidate.Alive
-            && !candidate.SneakHidden
-            && IsVisible(candidate.LevelId, localPlayer.LevelId)
-            && candidate.PositionX == targetX
-            && candidate.PositionY == targetY);
+        var monster = SelectMonsterTarget(snapshot, localPlayer, targetX, targetY);
         if (monster is not null)
-            return monster.EntityId;
+            return monster;
 
         var remotePlayer = snapshot.Players.FirstOrDefault(candidate =>
             candidate.EntityId != localPlayer.EntityId
@@ -37,6 +32,24 @@ public static class AuthoritativeTargetSelector
         if (remotePlayer is not null)
             return remotePlayer.EntityId;
         return null;
+    }
+
+    /** Resolves a visible living monster to its authoritative entity identity. */
+    public static uint? SelectMonsterTarget(
+        Snapshot? snapshot,
+        uint localPlayerEntityId,
+        int targetX,
+        int targetY)
+    {
+        if (snapshot is null)
+            return null;
+
+        var localPlayer = snapshot.Players.FirstOrDefault(
+            player => player.EntityId == localPlayerEntityId)
+            ?? snapshot.Players.FirstOrDefault();
+        return localPlayer is null
+            ? null
+            : SelectMonsterTarget(snapshot, localPlayer, targetX, targetY);
     }
 
     /** Resolves a visible remote player for a player-targeted cast request. */
@@ -68,6 +81,23 @@ public static class AuthoritativeTargetSelector
 
     private static bool IsVisible(uint levelId, uint localLevelId)
         => levelId == 0 || levelId == localLevelId;
+
+    private static uint? SelectMonsterTarget(
+        Snapshot snapshot,
+        PlayerSnapshot localPlayer,
+        int targetX,
+        int targetY)
+    {
+        return snapshot.Monsters
+            .Where(candidate => candidate.Alive
+                && !candidate.SneakHidden
+                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && candidate.PositionX == targetX
+                && candidate.PositionY == targetY)
+            .OrderBy(candidate => candidate.EntityId)
+            .Select(candidate => (uint?)candidate.EntityId)
+            .FirstOrDefault();
+    }
 
     private static bool IsAtPresentationPosition(PlayerSnapshot player, int targetX, int targetY)
     {

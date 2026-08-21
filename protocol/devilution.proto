@@ -178,6 +178,15 @@ enum CastSourceKind {
 	CAST_SOURCE_KIND_CONSUMABLE_ITEM = 4;
 }
 
+// Presentation hint for selecting an optional stable target entity. The
+// server still validates the target kind, range, visibility, and effect.
+enum SpellTargetingKind {
+	SPELL_TARGETING_KIND_UNSPECIFIED = 0;
+	SPELL_TARGETING_KIND_TILE = 1;
+	SPELL_TARGETING_KIND_PLAYER = 2;
+	SPELL_TARGETING_KIND_COMBAT_ENTITY = 3;
+}
+
 message OpenStoreRequested {
 	uint32 store_id = 1;
 }
@@ -515,6 +524,8 @@ message PlayerSnapshot {
 	repeated uint32 visited_level_ids = 35;
 	// Server-owned native level-up points available for primary attributes.
 	uint32 stat_points = 36;
+	// Additive targeting metadata for the selected class ability.
+	SpellTargetingKind ability_targeting_kind = 37;
 }
 
 enum PlayerDirection {
@@ -576,6 +587,7 @@ message PlayerSpellLevelSnapshot {
 	// Optional server-owned display metadata from the active content pack.
 	// Older peers may ignore this additive field and continue using spell_id.
 	string display_name = 3;
+	SpellTargetingKind targeting_kind = 4;
 }
 
 message MonsterSnapshot {
@@ -1090,6 +1102,8 @@ message ItemStateSnapshot {
 	ItemPresentationKind presentation_kind = 67;
 	// Stable authoritative content identity; zero preserves legacy snapshots.
 	uint32 stable_item_id = 68;
+	// Additive targeting metadata for item-backed spell sources.
+	SpellTargetingKind spell_targeting_kind = 69;
 }
 
 enum ItemPresentationKind {

@@ -416,6 +416,7 @@ internal static class DiabloProtocolMapper
             ReflectCharges = state.ReflectCharges,
             AbilitySpellId = state.AbilitySpellId,
             AbilityKind = (PlayerAbilityKind)state.AbilityKind,
+            AbilityTargetingKind = ResolveSpellTargetingKind(state.AbilitySpellId, spells),
             HostileMode = !state.FriendlyMode,
             FacingDirection = (PlayerDirection)state.FacingDirection,
             CombatMode = (PlayerCombatMode)state.CombatMode,
@@ -437,6 +438,7 @@ internal static class DiabloProtocolMapper
                 SpellId = spell.SpellId,
                 Level = spell.Level,
                 DisplayName = ResolveSpellDisplayName(spell.SpellId, spells, spellBooks),
+                TargetingKind = ResolveSpellTargetingKind(spell.SpellId, spells),
             });
         }
         if (state.CurrentAction is not null)
@@ -1256,6 +1258,9 @@ internal static class DiabloProtocolMapper
             SpellDisplayName = state.SpellId > 0
                 ? ResolveSpellDisplayName(checked((uint)state.SpellId), spells, spellBooks)
                 : string.Empty,
+            SpellTargetingKind = state.SpellId > 0
+                ? ResolveSpellTargetingKind(checked((uint)state.SpellId), spells)
+                : SpellTargetingKind.Unspecified,
             PresentationKind = ResolveItemPresentationKind(state),
             StableItemId = state.StableItemId,
         };
@@ -1306,6 +1311,34 @@ internal static class DiabloProtocolMapper
             && spellBooks.TryGet(spellId, out var book))
             return book.DisplayName;
         return string.Empty;
+    }
+
+    private static SpellTargetingKind ResolveSpellTargetingKind(
+        uint spellId,
+        AuthoritativeSpellCatalog? spells)
+    {
+        if (spellId == 0
+            || spells is null
+            || !spells.TryGet(spellId, out var spell)) {
+            return SpellTargetingKind.Unspecified;
+        }
+
+        return spell.ProjectileBehavior switch {
+            AuthoritativeProjectileBehavior.Resurrection
+                or AuthoritativeProjectileBehavior.HealOther
+                => SpellTargetingKind.Player,
+            AuthoritativeProjectileBehavior.Targeted
+                or AuthoritativeProjectileBehavior.ChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.Fireball
+                or AuthoritativeProjectileBehavior.HolyBolt
+                or AuthoritativeProjectileBehavior.BloodStar
+                or AuthoritativeProjectileBehavior.BoneSpirit
+                or AuthoritativeProjectileBehavior.Berserk
+                => SpellTargetingKind.CombatEntity,
+            _ => SpellTargetingKind.Tile,
+        };
     }
 
     private static ProjectilePresentationKind ResolveProjectilePresentationKind(
