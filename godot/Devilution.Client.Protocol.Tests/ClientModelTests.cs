@@ -205,6 +205,36 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsQuestTownerInteractionSnapshotsOutsideProjectedLevelGeometry()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+                Quests = { new QuestSnapshot { QuestId = 3002 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 0,
+                        Width = 10,
+                        Height = 10,
+                    },
+                },
+                QuestTownerInteractions = {
+                    new QuestTownerInteractionSnapshot {
+                        InteractionId = 300201,
+                        QuestId = 3002,
+                        TownerId = 6,
+                        LevelId = 0,
+                        PositionX = 10,
+                        PositionY = 9,
+                        Kind = 0,
+                        MessageId = 129,
+                    },
+                },
+            })));
+    }
+
+    [Fact]
     public void SelectsItemlessAuthoredDialogueAfterQuestCompletion()
     {
         var snapshot = new Snapshot {

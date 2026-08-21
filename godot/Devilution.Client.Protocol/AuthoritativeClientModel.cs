@@ -320,12 +320,18 @@ public sealed class AuthoritativeClientModel
         var questIds = snapshot.Quests
             .Select(quest => quest.QuestId)
             .ToHashSet();
+        var levelGeometry = snapshot.LevelGeometry
+            .ToDictionary(level => level.LevelId);
         var interactionIds = new HashSet<uint>();
         foreach (var interaction in snapshot.QuestTownerInteractions) {
             if (interaction.InteractionId == 0
                 || !interactionIds.Add(interaction.InteractionId)
                 || interaction.QuestId == 0
                 || !questIds.Contains(interaction.QuestId)
+                || levelGeometry.Count > 0
+                    && (!levelGeometry.TryGetValue(interaction.LevelId, out var level)
+                        || level.Width > 0 && interaction.PositionX >= level.Width
+                        || level.Height > 0 && interaction.PositionY >= level.Height)
                 || interaction.TownerId is < 0 or > byte.MaxValue
                 || interaction.LevelId > ushort.MaxValue
                 || interaction.RequiredVisitedLevel1 > ushort.MaxValue

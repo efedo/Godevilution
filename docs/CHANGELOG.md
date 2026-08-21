@@ -18,6 +18,9 @@ All notable changes to this fork are documented below.
 - Harden Godot snapshot validation so authored quest/towner interactions must
   reference a quest present in the same server-owned snapshot.
 
+- Extend that fail-closed validation to require authored interaction positions
+  to fit the projected level geometry whenever geometry is present.
+
 - Add a server-driven Godot victory banner for typed Diablo defeat events and
   terminal victory snapshots, preserving the multiplayer/single-player level
   identity distinction without adding client gameplay state.

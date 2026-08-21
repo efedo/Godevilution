@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,428, Server 414, and Godot protocol 155. These counts are a dated
+1,428, Server 414, and Godot protocol 156. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
