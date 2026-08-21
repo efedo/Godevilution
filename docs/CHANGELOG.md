@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project native spell-source target metadata through authoritative player
+  snapshots and use it to prevent tile/world casts from submitting accidental
+  creature entity IDs; older snapshots retain the legacy selection behavior.
+
 - Route Godot spell casts at visible living monsters through stable
   authoritative entity IDs, preserving server-owned target validation and
   coordinate fallback for older clients.

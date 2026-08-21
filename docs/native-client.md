@@ -129,6 +129,12 @@ their item references from the latest authoritative projection, carrying the
 stable content item ID when present. Older servers and snapshots retain the
 zero-valued positional compatibility path.
 
+Connected native spell casts now consume the server-projected targeting role
+for the selected ability, memorized spell, or item source. Tile-targeted and
+world-targeted casts keep their entity ID empty even when the cursor is over a
+creature, while player/combat-entity casts retain stable projected entity IDs;
+missing metadata preserves the legacy selection behavior for older snapshots.
+
 The indexed `SellItem`, `RepairItem`, `RechargeItem`, and `IdentifyItem`
 convenience entry points use that same projection lookup before submitting a
 command. An out-of-range or removed inventory slot is rejected locally instead

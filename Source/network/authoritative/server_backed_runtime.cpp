@@ -786,6 +786,16 @@ std::optional<uint32_t> ServerBackedRuntime::PortalEntityIdAt(int32_t positionX,
 	return std::nullopt;
 }
 
+std::optional<ProjectedSpellTargetingKind> ServerBackedRuntime::SpellTargetingKindForSpell(uint32_t spellId) const noexcept
+{
+	if (!session_)
+		return std::nullopt;
+	const auto *snapshot = session_->PlayerState().Snapshot();
+	if (snapshot == nullptr)
+		return std::nullopt;
+	return ProjectedSpellTargetingKindForSpell(*snapshot, spellId);
+}
+
 std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept
 {
 	if (!session_)

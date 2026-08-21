@@ -31,12 +31,23 @@ struct ProjectedPlayerAttribute {
 	int32_t current = 0;
 };
 
+/** Server-owned semantic targeting role for a spell source. */
+enum class ProjectedSpellTargetingKind : uint32_t {
+	Unspecified = 0,
+	Tile = 1,
+	Player = 2,
+	CombatEntity = 3,
+	WorldEntity = 4,
+};
+
 struct ProjectedInventoryItem {
 	uint32_t storeId = 0;
 	uint32_t storeSlot = 0;
 	uint32_t itemSeed = 0;
 	/** Stable content identity projected from the authoritative snapshot. */
 	uint32_t stableItemId = 0;
+	uint32_t spellId = 0;
+	ProjectedSpellTargetingKind spellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
 	uint32_t price = 0;
 	uint64_t purchasedAtTick = 0;
 	Item item;
@@ -46,6 +57,8 @@ struct ProjectedEquippedItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
 	uint32_t stableItemId = 0;
+	uint32_t spellId = 0;
+	ProjectedSpellTargetingKind spellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
 	Item item;
 };
 
@@ -53,6 +66,8 @@ struct ProjectedBeltItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
 	uint32_t stableItemId = 0;
+	uint32_t spellId = 0;
+	ProjectedSpellTargetingKind spellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
 	Item item;
 };
 
@@ -66,6 +81,7 @@ struct ProjectedStatusEffect {
 struct ProjectedMemorizedSpell {
 	uint32_t spellId = 0;
 	uint32_t level = 0;
+	ProjectedSpellTargetingKind targetingKind = ProjectedSpellTargetingKind::Unspecified;
 };
 
 struct ProjectedMonsterSnapshot {
@@ -229,6 +245,7 @@ struct ProjectedPlayerSnapshot {
 	std::string characterName;
 	bool manaShieldActive = false;
 	uint32_t abilitySpellId = 0;
+	ProjectedSpellTargetingKind abilitySpellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
 	uint32_t levelId = 0;
 	/** Server-owned native _pLvlVisited flags keyed by authored level ID. */
 	std::vector<uint32_t> visitedLevelIds;
@@ -252,6 +269,11 @@ struct ProjectedPlayerSnapshot {
 	std::vector<ProjectedStatusEffect> statusEffects;
 	std::vector<ProjectedMemorizedSpell> memorizedSpells;
 };
+
+/** Finds the server-projected targeting role for one authoritative spell source. */
+[[nodiscard]] std::optional<ProjectedSpellTargetingKind> ProjectedSpellTargetingKindForSpell(
+	const ProjectedPlayerSnapshot &snapshot,
+	uint32_t spellId) noexcept;
 
 /** Projects exactly one entity's player state from a server snapshot. */
 [[nodiscard]] tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(

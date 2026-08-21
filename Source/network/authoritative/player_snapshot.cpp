@@ -79,6 +79,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		.characterName = player->character_name(),
 		.manaShieldActive = player->mana_shield_active(),
 		.abilitySpellId = player->ability_spell_id(),
+		.abilitySpellTargetingKind = static_cast<ProjectedSpellTargetingKind>(player->ability_targeting_kind()),
 		.levelId = player->level_id(),
 		.visitedLevelIds = { player->visited_level_ids().begin(), player->visited_level_ids().end() },
 		.friendlyMode = !player->hostile_mode(),
@@ -123,7 +124,11 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	projected.memorizedSpells.reserve(player->memorized_spells_size());
 	for (const auto &spell : player->memorized_spells())
-		projected.memorizedSpells.push_back({ spell.spell_id(), spell.level() });
+		projected.memorizedSpells.push_back({
+		    .spellId = spell.spell_id(),
+		    .level = spell.level(),
+		    .targetingKind = static_cast<ProjectedSpellTargetingKind>(spell.targeting_kind()),
+		});
 	projected.statusEffects.reserve(player->status_effects_size());
 	for (const auto &effect : player->status_effects())
 		projected.statusEffects.push_back({ effect.effect_id(), effect.remaining_ticks(), effect.magnitude(), static_cast<uint32_t>(effect.behavior()) });
@@ -137,6 +142,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		    .storeSlot = source.store_slot(),
 		    .itemSeed = source.item_seed(),
 		    .stableItemId = source.state().stable_item_id(),
+		    .spellId = static_cast<uint32_t>(source.state().spell_id()),
+		    .spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(source.state().spell_targeting_kind()),
 		    .price = source.price(),
 		    .purchasedAtTick = source.purchased_at_tick(),
 		    .item = std::move(*item),
@@ -154,6 +161,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 			.storeSlot = source.store_slot(),
 			.itemSeed = source.item_seed(),
 			.stableItemId = source.state().stable_item_id(),
+			.spellId = static_cast<uint32_t>(source.state().spell_id()),
+			.spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(source.state().spell_targeting_kind()),
 			.price = source.price(),
 			.purchasedAtTick = source.purchased_at_tick(),
 			.item = std::move(*item),
@@ -168,6 +177,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		    .slot = source.slot(),
 		    .itemSeed = source.item_seed(),
 		    .stableItemId = source.state().stable_item_id(),
+		    .spellId = static_cast<uint32_t>(source.state().spell_id()),
+		    .spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(source.state().spell_targeting_kind()),
 		    .item = std::move(*item),
 		});
 	}
@@ -180,11 +191,49 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		    .slot = source.slot(),
 		    .itemSeed = source.item_seed(),
 		    .stableItemId = source.state().stable_item_id(),
+		    .spellId = static_cast<uint32_t>(source.state().spell_id()),
+		    .spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(source.state().spell_targeting_kind()),
 		    .item = std::move(*item),
 		});
 	}
 	projected.inventoryGrid.assign(player->inventory_grid().begin(), player->inventory_grid().end());
 	return projected;
+}
+
+std::optional<ProjectedSpellTargetingKind> ProjectedSpellTargetingKindForSpell(
+	const ProjectedPlayerSnapshot &snapshot,
+	uint32_t spellId) noexcept
+{
+	if (spellId == 0)
+		return std::nullopt;
+	if (snapshot.abilitySpellId == spellId)
+		return snapshot.abilitySpellTargetingKind;
+	for (const auto &spell : snapshot.memorizedSpells) {
+		if (spell.spellId == spellId)
+			return spell.targetingKind;
+	}
+	const auto itemTargetingKind = [spellId](const auto &item) -> std::optional<ProjectedSpellTargetingKind> {
+		if (item.spellId == spellId)
+			return item.spellTargetingKind;
+		return std::nullopt;
+	};
+	for (const auto &item : snapshot.inventory) {
+		if (const auto targetingKind = itemTargetingKind(item); targetingKind.has_value())
+			return targetingKind;
+	}
+	if (snapshot.heldItem.has_value()) {
+		if (const auto targetingKind = itemTargetingKind(*snapshot.heldItem); targetingKind.has_value())
+			return targetingKind;
+	}
+	for (const auto &item : snapshot.equipment) {
+		if (const auto targetingKind = itemTargetingKind(item); targetingKind.has_value())
+			return targetingKind;
+	}
+	for (const auto &item : snapshot.belt) {
+		if (const auto targetingKind = itemTargetingKind(item); targetingKind.has_value())
+			return targetingKind;
+	}
+	return std::nullopt;
 }
 
 tl::expected<std::vector<ProjectedPlayerSnapshot>, std::string> ProjectPlayerSnapshots(const protocol::Snapshot &snapshot)

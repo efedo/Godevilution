@@ -42,11 +42,13 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_character_name("Dead-RogueDM");
 	player->set_mana_shield_active(true);
 	player->set_ability_spell_id(static_cast<uint32_t>(SpellID::Search));
+	player->set_ability_targeting_kind(protocol::SPELL_TARGETING_KIND_TILE);
 	player->set_hostile_mode(true);
 	player->set_facing_direction(protocol::PLAYER_DIRECTION_NORTH_EAST);
 	auto *memorizedSpell = player->add_memorized_spells();
 	memorizedSpell->set_spell_id(static_cast<uint32_t>(SpellID::Firebolt));
 	memorizedSpell->set_level(2);
+	memorizedSpell->set_targeting_kind(protocol::SPELL_TARGETING_KIND_COMBAT_ENTITY);
 	player->set_level_id(7);
 	player->add_status_effects()->set_effect_id(1);
 	player->mutable_status_effects(0)->set_remaining_ticks(10);
@@ -64,6 +66,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	inventory->set_store_slot(2);
 	inventory->set_item_seed(42);
 	inventory->mutable_state()->set_stable_item_id(700);
+	inventory->mutable_state()->set_spell_id(static_cast<uint32_t>(SpellID::Telekinesis));
+	inventory->mutable_state()->set_spell_targeting_kind(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY);
 	inventory->set_price(75);
 	inventory->set_purchased_at_tick(20);
 	inventory->mutable_state()->set_item_type(4);
@@ -104,11 +108,13 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->characterName, "Dead-RogueDM");
 	EXPECT_TRUE(projected->manaShieldActive);
 	EXPECT_EQ(projected->abilitySpellId, static_cast<uint32_t>(SpellID::Search));
+	EXPECT_EQ(projected->abilitySpellTargetingKind, ProjectedSpellTargetingKind::Tile);
 	EXPECT_FALSE(projected->friendlyMode);
 	EXPECT_EQ(projected->facingDirection, static_cast<uint32_t>(Direction::NorthEast));
 	ASSERT_EQ(projected->memorizedSpells.size(), 1U);
 	EXPECT_EQ(projected->memorizedSpells[0].spellId, static_cast<uint32_t>(SpellID::Firebolt));
 	EXPECT_EQ(projected->memorizedSpells[0].level, 2U);
+	EXPECT_EQ(projected->memorizedSpells[0].targetingKind, ProjectedSpellTargetingKind::CombatEntity);
 	EXPECT_EQ(projected->levelId, 7U);
 	ASSERT_EQ(projected->statusEffects.size(), 2U);
 	EXPECT_EQ(projected->statusEffects[0].remainingTicks, 10U);
@@ -120,6 +126,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	ASSERT_EQ(projected->inventory.size(), 1U);
 	EXPECT_EQ(projected->inventory[0].itemSeed, 42U);
 	EXPECT_EQ(projected->inventory[0].stableItemId, 700U);
+	EXPECT_EQ(projected->inventory[0].spellId, static_cast<uint32_t>(SpellID::Telekinesis));
+	EXPECT_EQ(projected->inventory[0].spellTargetingKind, ProjectedSpellTargetingKind::WorldEntity);
 	EXPECT_EQ(projected->inventory[0].item._itype, static_cast<ItemType>(4));
 	ASSERT_EQ(projected->equipment.size(), 1U);
 	EXPECT_EQ(projected->equipment[0].itemSeed, 77U);
@@ -134,6 +142,28 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->heldItem->item._itype, ItemType::Gold);
 	EXPECT_EQ(projected->heldItem->item._ivalue, 65);
 	EXPECT_EQ(projected->inventoryGrid, std::vector<int32_t>({ 0, -1 }));
+}
+
+TEST(ServerBackedPlayerSnapshot, ResolvesTargetingKindAcrossAuthoritativeSources)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.abilitySpellId = 10;
+	snapshot.abilitySpellTargetingKind = ProjectedSpellTargetingKind::Player;
+	snapshot.memorizedSpells.push_back({ 11, 1, ProjectedSpellTargetingKind::CombatEntity });
+	snapshot.inventory.push_back({
+	    .spellId = 12,
+	    .spellTargetingKind = ProjectedSpellTargetingKind::WorldEntity,
+	});
+	snapshot.belt.push_back({
+	    .spellId = 13,
+	    .spellTargetingKind = ProjectedSpellTargetingKind::Tile,
+	});
+
+	EXPECT_EQ(ProjectedSpellTargetingKindForSpell(snapshot, 10), ProjectedSpellTargetingKind::Player);
+	EXPECT_EQ(ProjectedSpellTargetingKindForSpell(snapshot, 11), ProjectedSpellTargetingKind::CombatEntity);
+	EXPECT_EQ(ProjectedSpellTargetingKindForSpell(snapshot, 12), ProjectedSpellTargetingKind::WorldEntity);
+	EXPECT_EQ(ProjectedSpellTargetingKindForSpell(snapshot, 13), ProjectedSpellTargetingKind::Tile);
+	EXPECT_FALSE(ProjectedSpellTargetingKindForSpell(snapshot, 99).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)

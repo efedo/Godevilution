@@ -3569,15 +3569,27 @@ void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 			LastPlayerAction = PlayerActionType::Spell;
 			return;
 		}
+		const auto targetingKind = authoritative::GetServerBackedRuntime().SpellTargetingKindForSpell(static_cast<uint32_t>(spellID));
+		const bool preserveLegacyTargeting = !targetingKind.has_value()
+		    || *targetingKind == authoritative::ProjectedSpellTargetingKind::Unspecified
+		    || (*targetingKind != authoritative::ProjectedSpellTargetingKind::Tile
+		        && *targetingKind != authoritative::ProjectedSpellTargetingKind::Player
+		        && *targetingKind != authoritative::ProjectedSpellTargetingKind::CombatEntity
+		        && *targetingKind != authoritative::ProjectedSpellTargetingKind::WorldEntity);
+		const bool allowsPlayerTarget = preserveLegacyTargeting
+		    || *targetingKind == authoritative::ProjectedSpellTargetingKind::Player
+		    || *targetingKind == authoritative::ProjectedSpellTargetingKind::CombatEntity;
+		const bool allowsCombatEntityTarget = preserveLegacyTargeting
+		    || *targetingKind == authoritative::ProjectedSpellTargetingKind::CombatEntity;
 		uint32_t targetEntityId = 0;
-		if (PlayerUnderCursor != nullptr) {
+		if (allowsPlayerTarget && PlayerUnderCursor != nullptr) {
 			if (const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
 				targetEntityId = *entityId;
-		} else if (pcursmonst != -1) {
+		} else if (allowsCombatEntityTarget && pcursmonst != -1) {
 			if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
 				targetEntityId = *entityId;
 		}
-		if (PlayerUnderCursor != nullptr && targetEntityId == 0)
+		if (allowsPlayerTarget && PlayerUnderCursor != nullptr && targetEntityId == 0)
 			LogError("Server-backed spell target is not an authoritative entity.");
 		auto source = MakeServerBackedCastSource(myPlayer, spellID, spellType);
 		if (!source.has_value()) {
@@ -3587,9 +3599,9 @@ void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 		if (auto result = authoritative::GetServerBackedRuntime().Cast(
 		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed spell cast failed: {}", result.error());
-		LastPlayerAction = PlayerUnderCursor != nullptr
-		    ? PlayerActionType::SpellPlayerTarget
-		    : targetEntityId != 0 ? PlayerActionType::SpellMonsterTarget : PlayerActionType::Spell;
+		LastPlayerAction = targetEntityId == 0
+		    ? PlayerActionType::Spell
+		    : PlayerUnderCursor != nullptr ? PlayerActionType::SpellPlayerTarget : PlayerActionType::SpellMonsterTarget;
 		return;
 	}
 #endif

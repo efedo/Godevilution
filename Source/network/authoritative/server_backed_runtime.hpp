@@ -135,6 +135,8 @@ public:
 	[[nodiscard]] std::optional<uint32_t> AuthoritativeObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the lowest-ID authoritative portal endpoint at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> PortalEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
+	/** Returns the server-projected targeting role for the selected spell source. */
+	[[nodiscard]] std::optional<ProjectedSpellTargetingKind> SpellTargetingKindForSpell(uint32_t spellId) const noexcept;
 	/** Finds the authoritative location of an item, including while it is held by the legacy cursor. */
 	[[nodiscard]] std::optional<ServerBackedItemReference> PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept;
 	/** Retains a native inventory drag selection while authoritative snapshots refresh. */
