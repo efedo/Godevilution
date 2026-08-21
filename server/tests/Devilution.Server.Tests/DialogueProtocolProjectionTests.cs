@@ -49,10 +49,14 @@ public sealed class DialogueProtocolProjectionTests
 
         var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(
             source,
-            levelGeometry: [new AuthoritativeLevel(0, 10, 10)],
+            levelGeometry: [
+                new AuthoritativeLevel(0, 10, 10),
+                new AuthoritativeLevel(1, 10, 10),
+            ],
             warpTargets: [warp]);
 
-        var trigger = Assert.Single(Assert.Single(snapshot.LevelGeometry).WarpTriggers);
+        var trigger = Assert.Single(
+            snapshot.LevelGeometry.Single(level => level.LevelId == 0).WarpTriggers);
         Assert.Equal(2U, trigger.WarpId);
         Assert.Equal((3, 4), (trigger.TriggerX, trigger.TriggerY));
         Assert.Equal((1U, 1, 1), (trigger.TargetLevelId, trigger.TargetX, trigger.TargetY));

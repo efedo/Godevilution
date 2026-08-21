@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Harden authored warp-trigger projection validation at the Godot protocol boundary:
+  destination level identities and coordinates must resolve to declared level
+  geometry before presentation consumes a route, with malformed-snapshot coverage.
+
 - Project authored level triggers through additive level-geometry snapshots and render
   available or quest-gated markers in the Godot presentation client.
 

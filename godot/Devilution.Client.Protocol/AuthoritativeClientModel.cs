@@ -337,15 +337,29 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateWarpTriggers(Snapshot snapshot)
     {
+        var levels = new Dictionary<uint, LevelGeometrySnapshot>();
+        foreach (var level in snapshot.LevelGeometry) {
+            if (!levels.TryAdd(level.LevelId, level)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate level geometry.");
+            }
+        }
+
         var warpIds = new HashSet<uint>();
         foreach (var level in snapshot.LevelGeometry) {
             foreach (var warp in level.WarpTriggers) {
+                var hasTargetLevel = levels.TryGetValue(warp.TargetLevelId, out var targetLevel);
                 if (warp.WarpId == 0
                     || !warpIds.Add(warp.WarpId)
                     || warp.TriggerX < 0
                     || warp.TriggerY < 0
                     || (level.Width > 0 && warp.TriggerX >= level.Width)
                     || (level.Height > 0 && warp.TriggerY >= level.Height)
+                    || !hasTargetLevel
+                    || warp.TargetX < 0
+                    || warp.TargetY < 0
+                    || (targetLevel!.Width > 0 && warp.TargetX >= targetLevel.Width)
+                    || (targetLevel.Height > 0 && warp.TargetY >= targetLevel.Height)
                     || (warp.RequiredQuestId == 0 && warp.RequiredQuestCompleted)
                     || (warp.RequiredQuestId == 0 && !warp.Available)
                     || warp.StableSymbol.Any(character => character is < (char)0x21 or > (char)0x7e)) {

@@ -56,6 +56,57 @@ public sealed class ClientModelTests
                         },
                     },
                 },
+        })));
+    }
+
+    [Fact]
+    public void RejectsWarpTriggersWithUnknownOrOutOfBoundsDestinations()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 1,
+                        Width = 10,
+                        Height = 10,
+                        WarpTriggers = {
+                            new WarpTriggerSnapshot {
+                                WarpId = 1,
+                                TriggerX = 3,
+                                TriggerY = 4,
+                                TargetLevelId = 2,
+                                TargetX = 1,
+                                TargetY = 1,
+                                Available = true,
+                            },
+                        },
+                    },
+                },
+            })));
+
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 1,
+                        Width = 10,
+                        Height = 10,
+                        WarpTriggers = {
+                            new WarpTriggerSnapshot {
+                                WarpId = 1,
+                                TriggerX = 3,
+                                TriggerY = 4,
+                                TargetLevelId = 1,
+                                TargetX = 10,
+                                TargetY = 1,
+                                Available = true,
+                            },
+                        },
+                    },
+                },
             })));
     }
 
