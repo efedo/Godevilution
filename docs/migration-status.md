@@ -42,6 +42,10 @@ substitute for rebuilding the projects before a future run.
   healing, and experience events directly into its floating-number renderer;
   legacy Lua floating-number mods remain available in legacy mode.
 
+- The Godot HUD now owns the legacy clock presentation with a tested invariant
+  `HH:mm:ss` formatter; the optional native legacy clock script remains
+  available for compatibility mode.
+
 - Native remote-player presentation now selects walk, attack, ranged, block,
   hit, spell, and death sprite families from the authoritative combat mode
   without inserting those players into native simulation pools, and projects

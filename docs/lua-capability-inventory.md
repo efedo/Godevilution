@@ -111,8 +111,10 @@ rather than a Lua-owned data path.
 
 ## Bundled Scripts
 
-The clock and floating-number mods are presentation candidates for Godot. The
-Adria mana-refill mod maps to trusted server store rules. Hellfire activation
+The clock mod now has a Godot HUD owner, while the legacy native client keeps
+its optional script for compatibility. Floating-number mods remain presentation
+candidates for Godot. The Adria mana-refill mod maps to trusted server store
+rules. Hellfire activation
 now uses a native declarative archive-selection path rather than a Lua
 bootstrap. All six Diablo/Hellfire character
 classes, new-session class selection, starting attributes, and native Q6

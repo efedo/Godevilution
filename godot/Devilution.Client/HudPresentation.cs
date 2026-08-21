@@ -11,6 +11,7 @@ public partial class HudPresentation : CanvasLayer
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
     private readonly Label state = new();
+    private readonly Label clock = new();
     private readonly Label inventory = new();
     private readonly Label store = new();
     private readonly Label dialog = new();
@@ -87,6 +88,12 @@ public partial class HudPresentation : CanvasLayer
         statusBox.AddChild(status);
         statusBox.AddChild(state);
         AddChild(statusPanel);
+
+        clock.HorizontalAlignment = HorizontalAlignment.Right;
+        clock.Position = new Vector2(760, 16);
+        clock.Size = new Vector2(100, 24);
+        clock.MouseFilter = Control.MouseFilterEnum.Ignore;
+        AddChild(clock);
 
         victory.HorizontalAlignment = HorizontalAlignment.Center;
         victory.Modulate = new Color("ffe38a");
@@ -256,6 +263,7 @@ public partial class HudPresentation : CanvasLayer
 
     public void Apply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connectionTask)
     {
+        clock.Text = ClockPresentation.Format(DateTimeOffset.Now);
         if (!string.IsNullOrWhiteSpace(model.LastError))
             status.Text = model.LastError;
         else if (client?.IsConnected == true)

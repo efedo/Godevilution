@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move the optional clock presentation to the Godot HUD with a tested,
+  client-only `HH:mm:ss` formatter while retaining the legacy native script.
+
 - Project native server-backed healing feedback directly into the compatibility
   client's floating-number renderer, completing the local damage/healing/
   experience presentation seam while retaining legacy Lua mods outside the
