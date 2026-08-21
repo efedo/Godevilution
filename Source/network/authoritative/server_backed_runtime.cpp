@@ -751,6 +751,11 @@ std::optional<uint32_t> ServerBackedRuntime::QuestObjectEntityIdAt(int32_t posit
 	return worldProjection_.QuestObjectAt(positionX, positionY);
 }
 
+std::optional<uint32_t> ServerBackedRuntime::AuthoritativeObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
+{
+	return worldProjection_.AuthoritativeObjectAt(positionX, positionY);
+}
+
 std::optional<uint32_t> ServerBackedRuntime::PortalEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
 {
 	if (!session_)

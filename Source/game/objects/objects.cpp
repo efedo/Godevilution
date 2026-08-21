@@ -4577,7 +4577,7 @@ void OperateObject(Player &player, Object &object)
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
 		auto &runtime = authoritative::GetServerBackedRuntime();
-		if (const auto entityId = runtime.QuestObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
+		if (const auto entityId = runtime.AuthoritativeObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
 			if (auto result = runtime.OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Failed to submit the authoritative quest object operation: {}", result.error());
 			return;

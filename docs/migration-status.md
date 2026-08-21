@@ -142,6 +142,11 @@ substitute for rebuilding the projects before a future run.
   sessions retain legacy `CMD_WARP` compatibility behavior. Portal projection
   is sorted and duplicate-checked before entering the native session state.
 
+- Native authoritative object interaction now routes every projected object
+  with a server-owned effect, quest link, transition, reward, or follow-up
+  through `OperateObject`; objects without authored authoritative behavior keep
+  the legacy local interaction path.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.

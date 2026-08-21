@@ -323,6 +323,9 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .missilePassable = source.missile_passable(),
 		    .breakable = source.breakable(),
 		    .destroyed = source.destroyed(),
+		    .questTransitionKind = source.quest_transition_kind(),
+		    .rewardKind = source.reward_kind(),
+		    .questSequenceFollowUpKind = source.quest_sequence_follow_up_kind(),
 		});
 	}
 	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) { return left.entityId < right.entityId; });

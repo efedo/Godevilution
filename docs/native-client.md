@@ -282,6 +282,12 @@ mega-tile records, and `.sol` tile-property bytes, then exposes an exact
 materializer when those collision inputs are supplied, without guessing from
 tile presentation IDs.
 
+Native object activation now resolves any projected object with an authored
+server effect or quest/reward link before consulting the legacy object behavior
+registry. This keeps future set-piece templates on the authoritative path while
+leaving ordinary doors, chests, and other un-authored objects compatible with
+the legacy client behavior.
+
 ## Remaining native-only interaction inventory
 
 The following paths were audited against `Source/game` on 2026-08-18 and are

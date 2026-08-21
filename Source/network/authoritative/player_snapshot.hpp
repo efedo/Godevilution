@@ -111,6 +111,10 @@ enum class ProjectedObjectEffectKind : int32_t {
 	Experience = 3,
 	QuestSequence = 4,
 	QuestItemCompletion = 5,
+	WorldMutation = 6,
+	GrantSpellLevel = 7,
+	SpawnSpellProjectile = 8,
+	GrantSpellLevelAndSpawnProjectile = 9,
 };
 
 struct ProjectedObjectSnapshot {
@@ -126,6 +130,12 @@ struct ProjectedObjectSnapshot {
 	bool missilePassable = false;
 	bool breakable = false;
 	bool destroyed = false;
+	/** Authored quest-state transition identity, when present. */
+	int32_t questTransitionKind = 0;
+	/** Authored item reward identity, when present. */
+	int32_t rewardKind = 0;
+	/** Ordered quest/world-mutation follow-up identity, when present. */
+	int32_t questSequenceFollowUpKind = 0;
 };
 
 struct ProjectedProjectileSnapshot {

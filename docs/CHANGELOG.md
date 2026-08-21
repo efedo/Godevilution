@@ -65,6 +65,11 @@ All notable changes to this fork are documented below.
   server-tick guard. Direct adapter calls now reject delayed snapshots without
   replacing the last accepted state, matching the session-level ordering rule.
 
+- Route native authoritative object activation for every projected server-owned
+  object effect, including world mutations, spell effects, quest links, and
+  authored rewards; ordinary objects without authoritative behavior retain
+  their legacy local path.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

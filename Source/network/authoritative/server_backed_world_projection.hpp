@@ -45,6 +45,8 @@ public:
 	[[nodiscard]] std::optional<uint32_t> ObjectAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds an active content-owned quest object at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> QuestObjectAt(int32_t positionX, int32_t positionY) const noexcept;
+	/** Finds an active object whose behavior is owned by the authoritative server. */
+	[[nodiscard]] std::optional<uint32_t> AuthoritativeObjectAt(int32_t positionX, int32_t positionY) const noexcept;
 
 private:
 	std::vector<ProjectedMonsterSnapshot> monsters_;

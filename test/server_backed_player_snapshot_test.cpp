@@ -411,6 +411,9 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	second->set_quest_id(30);
 	second->set_effect_kind(static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
 	second->set_effect_amount(2);
+	second->set_quest_transition_kind(6);
+	second->set_reward_kind(2);
+	second->set_quest_sequence_follow_up_kind(1);
 	second->set_breakable(true);
 	second->set_destroyed(true);
 	auto *first = snapshot.add_objects();
@@ -431,6 +434,9 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].questId, 30U);
 	EXPECT_EQ((*projected)[1].effectKind, static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
 	EXPECT_EQ((*projected)[1].effectAmount, 2);
+	EXPECT_EQ((*projected)[1].questTransitionKind, 6);
+	EXPECT_EQ((*projected)[1].rewardKind, 2);
+	EXPECT_EQ((*projected)[1].questSequenceFollowUpKind, 1);
 	EXPECT_TRUE((*projected)[1].breakable);
 	EXPECT_TRUE((*projected)[1].destroyed);
 }
@@ -1092,6 +1098,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_FALSE(projection.WorldItemAt(4, 5).has_value());
 	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t>(30));
 	EXPECT_FALSE(projection.QuestObjectAt(4, 5).has_value());
+	EXPECT_FALSE(projection.AuthoritativeObjectAt(4, 5).has_value());
 	ProjectedObjectSnapshot questObject;
 	questObject.entityId = 32;
 	questObject.levelId = 1;
@@ -1100,9 +1107,20 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	questObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence);
 	ASSERT_TRUE(projection.Apply({ monster }, { item }, { questObject }, 1).has_value());
 	EXPECT_EQ(projection.QuestObjectAt(7, 8), std::optional<uint32_t>(32));
+	EXPECT_EQ(projection.AuthoritativeObjectAt(7, 8), std::optional<uint32_t>(32));
 	questObject.activated = true;
 	ASSERT_TRUE(projection.Apply({ monster }, { item }, { questObject }, 1).has_value());
 	EXPECT_FALSE(projection.QuestObjectAt(7, 8).has_value());
+	EXPECT_FALSE(projection.AuthoritativeObjectAt(7, 8).has_value());
+	ProjectedObjectSnapshot mutationObject;
+	mutationObject.entityId = 33;
+	mutationObject.levelId = 1;
+	mutationObject.positionX = 9;
+	mutationObject.positionY = 10;
+	mutationObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation);
+	ASSERT_TRUE(projection.Apply({ }, { }, { mutationObject }, 1).has_value());
+	EXPECT_EQ(projection.AuthoritativeObjectAt(9, 10), std::optional<uint32_t>(33));
+	EXPECT_FALSE(projection.QuestObjectAt(9, 10).has_value());
 	object.activated = true;
 	ASSERT_TRUE(projection.Apply({ }, { item }, { object }, 1).has_value());
 	EXPECT_FALSE(projection.ObjectAt(4, 5).has_value());

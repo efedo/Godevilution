@@ -104,4 +104,21 @@ std::optional<uint32_t> ServerBackedWorldProjection::QuestObjectAt(int32_t posit
 	return object == objects_.end() ? std::nullopt : std::optional<uint32_t> { object->entityId };
 }
 
+std::optional<uint32_t> ServerBackedWorldProjection::AuthoritativeObjectAt(int32_t positionX, int32_t positionY) const noexcept
+{
+	const auto levelId = levelId_;
+	const auto object = std::find_if(objects_.begin(), objects_.end(), [positionX, positionY, levelId](const auto &candidate) {
+		const bool hasAuthoritativeBehavior = candidate.effectKind != static_cast<int32_t>(ProjectedObjectEffectKind::None)
+		    || candidate.questId != 0
+		    || candidate.questTransitionKind != 0
+		    || candidate.rewardKind != 0
+		    || candidate.questSequenceFollowUpKind != 0;
+		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed
+		    && hasAuthoritativeBehavior
+		    && (candidate.levelId == 0 || candidate.levelId == levelId)
+		    && candidate.positionX == positionX && candidate.positionY == positionY;
+	});
+	return object == objects_.end() ? std::nullopt : std::optional<uint32_t> { object->entityId };
+}
+
 } // namespace devilution::authoritative
