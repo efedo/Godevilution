@@ -13,6 +13,7 @@ internal static class DiabloProtocolMapper
         AuthoritativeSpellCatalog? spells = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         IReadOnlyList<AuthoritativeLevel>? levelGeometry = null,
+        IReadOnlyList<AuthoritativeWarpTarget>? warpTargets = null,
         bool allowZeroPlayerEntityId = false)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -343,6 +344,22 @@ internal static class DiabloProtocolMapper
             geometry.BlockedCells.Add(level.BlockedCells);
             geometry.MissileBlockedCells.Add(level.MissileBlockedCells);
             geometry.NativeTransparency.Add(level.NativeTransparency.Select(value => (uint)value));
+            foreach (var warp in (warpTargets ?? [])
+                         .Where(warp => warp.SourceLevelId == level.LevelId)
+                         .OrderBy(warp => warp.WarpId)) {
+                geometry.WarpTriggers.Add(new WarpTriggerSnapshot {
+                    WarpId = warp.WarpId,
+                    TriggerX = warp.TriggerX,
+                    TriggerY = warp.TriggerY,
+                    TargetLevelId = warp.TargetLevelId,
+                    TargetX = warp.TargetX,
+                    TargetY = warp.TargetY,
+                    RequiredQuestId = warp.RequiredQuestId,
+                    RequiredQuestCompleted = warp.RequiredQuestCompleted,
+                    StableSymbol = warp.StableSymbol,
+                    Available = IsWarpAvailable(warp, source.Quests),
+                });
+            }
             snapshot.LevelGeometry.Add(geometry);
         }
         if (source.ActiveStore is not null) {
@@ -361,6 +378,18 @@ internal static class DiabloProtocolMapper
         ValidateEntityIds(snapshot, allowZeroPlayerEntityId);
         snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
         return snapshot;
+    }
+
+    private static bool IsWarpAvailable(
+        AuthoritativeWarpTarget warp,
+        IReadOnlyList<DiabloQuestState> quests)
+    {
+        if (warp.RequiredQuestId == 0)
+            return true;
+        var quest = quests.FirstOrDefault(quest => quest.QuestId == warp.RequiredQuestId);
+        return quest is not null
+            && !quest.Unavailable
+            && (warp.RequiredQuestCompleted ? quest.Completed : quest.Active);
     }
 
     private static PlayerSnapshot ToProtocolPlayer(

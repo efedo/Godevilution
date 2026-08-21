@@ -8,6 +8,61 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [new DiabloQuestState(3017, 0, 0, 1, true)],
+            [],
+            null);
+        var warp = new AuthoritativeWarpTarget(
+            2,
+            0,
+            3,
+            4,
+            1,
+            1,
+            1,
+            requiredQuestId: 3017,
+            requiredQuestCompleted: true) {
+            StableSymbol = "grave_matters_dungeon",
+        };
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            source,
+            levelGeometry: [new AuthoritativeLevel(0, 10, 10)],
+            warpTargets: [warp]);
+
+        var trigger = Assert.Single(Assert.Single(snapshot.LevelGeometry).WarpTriggers);
+        Assert.Equal(2U, trigger.WarpId);
+        Assert.Equal((3, 4), (trigger.TriggerX, trigger.TriggerY));
+        Assert.Equal((1U, 1, 1), (trigger.TargetLevelId, trigger.TargetX, trigger.TargetY));
+        Assert.Equal(3017U, trigger.RequiredQuestId);
+        Assert.True(trigger.RequiredQuestCompleted);
+        Assert.True(trigger.Available);
+        Assert.Equal("grave_matters_dungeon", trigger.StableSymbol);
+    }
+
+    [Fact]
     public void ProjectsServerOwnedTextAndPreservesNumericIdentity()
     {
         var catalog = new AuthoritativeDialogueMessageCatalog([

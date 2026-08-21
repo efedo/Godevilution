@@ -12,6 +12,29 @@ public sealed class LiveAuthoritativeServerTests
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
 
     [Fact]
+    public async Task LiveServerProjectsAuthoredWarpTriggersToThePresentationModel()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            gameMode: "single-player");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-warp-projection", requestedClassId: 2));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        model.Apply(await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null));
+
+        var trigger = Assert.Single(
+            model.VisibleWarpTriggers,
+            warp => warp.StableSymbol == "cathedral_to_catacombs");
+        Assert.Equal((36, 36), (trigger.TriggerX, trigger.TriggerY));
+        Assert.Equal(2U, trigger.TargetLevelId);
+        Assert.True(trigger.Available);
+    }
+
+    [Fact]
     public async Task GodotTransportCompletesLiveMoveAndCastSlice()
     {
         using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);

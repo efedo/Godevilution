@@ -49,6 +49,10 @@ future run.
   sessions retain legacy `CMD_WARP` compatibility behavior. Portal projection
   is sorted and duplicate-checked before entering the native session state.
 
+- Level geometry snapshots now carry validated authored warp-trigger metadata.
+  Godot renders available and quest-gated markers from the server projection;
+  clients never select or apply the transition locally.
+
 - The native authoritative world projection now carries sorted, validated
   server projectile snapshots through the same boundary as monsters, items,
   and objects. The native presentation bridge materializes the first supported

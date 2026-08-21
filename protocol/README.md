@@ -129,6 +129,10 @@ Windows toolchain command.
   presentation metadata. `SHRINE`, `QUEST`, and `BREAKABLE` identify safe
   visual families; `TRAP` is emitted only when trap state is already revealed.
   Zero or unknown values retain the generic object presentation.
+- `LevelGeometrySnapshot.warp_triggers` is additive presentation metadata for
+  authored level transitions. Each trigger carries its server-owned source
+  cell, destination, stable symbol, quest gate, and current availability;
+  clients may render a marker but never choose or apply the transition.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

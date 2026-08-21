@@ -7,6 +7,7 @@ namespace Devilution.Client;
 public sealed class LevelLayoutCatalog
 {
     private readonly Dictionary<uint, LevelLayout> layouts = [];
+    private readonly Dictionary<uint, IReadOnlyList<WarpTriggerSnapshot>> warpTriggers = [];
 
     public LevelLayoutCatalog()
     {
@@ -19,6 +20,9 @@ public sealed class LevelLayoutCatalog
             return layout;
         return layouts.TryGetValue(0, out var fallback) ? fallback : LevelLayout.Empty;
     }
+
+    public IReadOnlyList<WarpTriggerSnapshot> GetWarpTriggers(uint levelId)
+        => warpTriggers.TryGetValue(levelId, out var definitions) ? definitions : [];
 
     /** Replaces presentation geometry with the active server's validated projection. */
     public void ApplyAuthoritative(IEnumerable<LevelGeometrySnapshot> definitions)
@@ -37,6 +41,7 @@ public sealed class LevelLayoutCatalog
                 definition.Height,
                 cells,
                 definition.NativeTransparency.ToArray());
+            warpTriggers[definition.LevelId] = definition.WarpTriggers.ToArray();
         }
     }
 

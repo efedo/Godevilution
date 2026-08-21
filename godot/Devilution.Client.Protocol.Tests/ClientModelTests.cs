@@ -8,6 +8,58 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientModelTests
 {
     [Fact]
+    public void ExposesOnlyActiveLevelWarpTriggersToPresentation()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 0,
+                        Width = 10,
+                        Height = 10,
+                        WarpTriggers = {
+                            new WarpTriggerSnapshot { WarpId = 1, TriggerX = 2, TriggerY = 2, Available = true },
+                        },
+                    },
+                    new LevelGeometrySnapshot {
+                        LevelId = 1,
+                        Width = 10,
+                        Height = 10,
+                        WarpTriggers = {
+                            new WarpTriggerSnapshot { WarpId = 2, TriggerX = 3, TriggerY = 4, Available = true },
+                        },
+                    },
+                },
+            }));
+
+        var trigger = Assert.Single(model.VisibleWarpTriggers);
+        Assert.Equal(2U, trigger.WarpId);
+        Assert.Equal((3, 4), (trigger.TriggerX, trigger.TriggerY));
+    }
+
+    [Fact]
+    public void RejectsMalformedWarpTriggerSnapshots()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 1,
+                        Width = 10,
+                        Height = 10,
+                        WarpTriggers = {
+                            new WarpTriggerSnapshot { WarpId = 0, TriggerX = 3, TriggerY = 4 },
+                        },
+                    },
+                },
+            })));
+    }
+
+    [Fact]
     public void SelectsAvailableContentOwnedQuestTownerStageByStateAndAdjacency()
     {
         var snapshot = new Snapshot {

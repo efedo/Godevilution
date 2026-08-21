@@ -21,6 +21,15 @@ public sealed class AuthoritativeClientModel
         .Where(@object => @object.TrapArmed)
         .ToArray() ?? [];
 
+    /** Presentation-only level triggers for the local player's active level. */
+    public IReadOnlyList<WarpTriggerSnapshot> VisibleWarpTriggers
+        => Snapshot is { } snapshot
+            ? snapshot.LevelGeometry
+                .Where(level => level.LevelId == snapshot.Players.FirstOrDefault()?.LevelId)
+                .SelectMany(level => level.WarpTriggers)
+                .ToArray()
+            : [];
+
     public ulong CurrentTick => Snapshot?.Tick ?? 0;
 
     /** The server puts the receiving participant first in every snapshot. */
@@ -91,6 +100,7 @@ public sealed class AuthoritativeClientModel
                 ValidateEntityId(entityIds, projectile.EntityId);
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
+            ValidateWarpTriggers(message.Snapshot);
             ValidateQuestTownerInteractions(message.Snapshot);
             var portalIds = new HashSet<uint>();
             foreach (var portal in message.Snapshot.Portals) {
@@ -321,6 +331,27 @@ public sealed class AuthoritativeClientModel
                     && interaction.Variable2 is < 0 or > byte.MaxValue)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
+            }
+        }
+    }
+
+    private static void ValidateWarpTriggers(Snapshot snapshot)
+    {
+        var warpIds = new HashSet<uint>();
+        foreach (var level in snapshot.LevelGeometry) {
+            foreach (var warp in level.WarpTriggers) {
+                if (warp.WarpId == 0
+                    || !warpIds.Add(warp.WarpId)
+                    || warp.TriggerX < 0
+                    || warp.TriggerY < 0
+                    || (level.Width > 0 && warp.TriggerX >= level.Width)
+                    || (level.Height > 0 && warp.TriggerY >= level.Height)
+                    || (warp.RequiredQuestId == 0 && warp.RequiredQuestCompleted)
+                    || (warp.RequiredQuestId == 0 && !warp.Available)
+                    || warp.StableSymbol.Any(character => character is < (char)0x21 or > (char)0x7e)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid warp trigger.");
+                }
             }
         }
     }

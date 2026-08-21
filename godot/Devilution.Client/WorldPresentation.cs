@@ -169,6 +169,18 @@ public partial class WorldPresentation : Node2D
             var y = cell / currentLevel.Width;
             DrawRect(new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize), new Color("202033"));
         }
+        foreach (var trigger in levels.GetWarpTriggers(currentLevel.Id))
+            DrawWarpTrigger(trigger);
+    }
+
+    private void DrawWarpTrigger(WarpTriggerSnapshot trigger)
+    {
+        var center = ToScreen(trigger.TriggerX, trigger.TriggerY);
+        var color = trigger.Available ? new Color("f3c969") : new Color("6f6680");
+        DrawCircle(center, 8, new Color(color, 0.28f));
+        DrawArc(center, 10, 0, Mathf.Tau, 4, color, 2);
+        DrawLine(center + new Vector2(-4, 0), center + new Vector2(4, 0), color, 2);
+        DrawLine(center + new Vector2(0, -4), center + new Vector2(0, 4), color, 2);
     }
 
     private void DrawTargetPreview()

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project authored level triggers through additive level-geometry snapshots and render
+  available or quest-gated markers in the Godot presentation client.
+
 - Add validated base progression warps from town through ordinary levels 16,
   preserving Hellfire's quest-gated dungeon warps. Bump the Diablo content
   schema to 1.383.

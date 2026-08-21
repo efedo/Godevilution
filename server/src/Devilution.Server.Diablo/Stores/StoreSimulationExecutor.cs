@@ -407,6 +407,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 simulation.Spells,
                 simulation.SpellBooks,
                 simulation.WorldState.LevelGeometry,
+                simulation.WorldState.World?.WarpTargets,
                 allowZeroPlayerEntityId: entityId == 0);
         });
     }
