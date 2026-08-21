@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
 - Reject inconsistent authoritative player/vendor active-store identities at
   the native session boundary.
 
+- Stop projecting a second native walk destination after the authoritative
+  movement effect has already advanced the player position.
+
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.
 

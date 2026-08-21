@@ -62,6 +62,10 @@ substitute for rebuilding the projects before a future run.
   against the matching authoritative vendor snapshot, rejecting inconsistent
   reconnect or poll state before it reaches the store UI.
 
+- Native local and remote player projections now use a walk action's future
+  tile only until the authoritative movement effect is applied; post-effect
+  snapshots no longer schedule a second client-side step.
+
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains
   available for compatibility mode.

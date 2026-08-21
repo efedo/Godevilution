@@ -162,7 +162,9 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 
 	player.position.tile = { static_cast<WorldTileCoord>(snapshot.positionX), static_cast<WorldTileCoord>(snapshot.positionY) };
 	player.position.future = player.position.tile;
-	if (snapshot.currentAction.has_value() && snapshot.currentAction->kind == 1) {
+	if (snapshot.currentAction.has_value()
+	    && snapshot.currentAction->kind == 1
+	    && !snapshot.currentAction->effectApplied) {
 		player.position.future += Displacement {
 			static_cast<int8_t>(snapshot.currentAction->directionX),
 			static_cast<int8_t>(snapshot.currentAction->directionY),

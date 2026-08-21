@@ -716,6 +716,14 @@ TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePo
 	EXPECT_EQ(remotePlayer->position.tile, (WorldTilePosition { 12, 13 }));
 	EXPECT_EQ(remotePlayer->position.future, (WorldTilePosition { 13, 12 }));
 
+	remote.positionX = 13;
+	remote.positionY = 12;
+	remote.currentAction->effectApplied = true;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_EQ(remotePlayer->position.future, (WorldTilePosition { 13, 12 }));
+
 	presentation.Clear();
 }
 
@@ -1312,6 +1320,12 @@ TEST(ServerBackedPlayerSnapshot, AppliesTimedMoveDestinationToNativeFuturePositi
 	EXPECT_EQ(player.position.future.x, 13);
 	EXPECT_EQ(player.position.future.y, 13);
 	EXPECT_EQ(player.direction, Direction::SouthEast);
+
+	snapshot.positionX = 13;
+	snapshot.positionY = 13;
+	snapshot.currentAction->effectApplied = true;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player.position.future, (WorldTilePosition { 13, 13 }));
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesDeathAndLevelTransitionActions)

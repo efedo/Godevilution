@@ -304,6 +304,7 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	};
 	player.position.future = player.position.tile;
 	if (snapshot.currentAction.has_value() && snapshot.currentAction->kind == 1
+	    && !snapshot.currentAction->effectApplied
 	    && snapshot.currentAction->directionX >= -1 && snapshot.currentAction->directionX <= 1
 	    && snapshot.currentAction->directionY >= -1 && snapshot.currentAction->directionY <= 1
 	    && (snapshot.currentAction->directionX != 0 || snapshot.currentAction->directionY != 0)) {
@@ -817,7 +818,9 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		}
 		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
 			return tl::make_unexpected("Authoritative remote player position cannot be represented by the native world tile type.");
-		if (snapshot.currentAction.has_value() && snapshot.currentAction->kind == 1) {
+		if (snapshot.currentAction.has_value()
+		    && snapshot.currentAction->kind == 1
+		    && !snapshot.currentAction->effectApplied) {
 			const auto &action = *snapshot.currentAction;
 			if (action.directionX < -1 || action.directionX > 1
 			    || action.directionY < -1 || action.directionY > 1
