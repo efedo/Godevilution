@@ -5,8 +5,9 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Align native replay item hashing with the authoritative spell-source field
-  used by C# snapshots; the rebuilt native runner now passes 72 of 88 tests,
-  with the remaining mismatches documented in `docs/replay-fixtures.md`.
+  used by C# snapshots and preserve checked-in base item names in the native
+  store fixture; the rebuilt native runner now passes 73 of 88 tests, with the
+  remaining mismatches documented in `docs/replay-fixtures.md`.
 
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;

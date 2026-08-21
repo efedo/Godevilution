@@ -513,6 +513,8 @@ TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
 	itemState.maxDamage = 8;
 	itemState.durability = 20;
 	itemState.maxDurability = 20;
+	itemState.baseName = "Short Sword";
+	itemState.identifiedName = "Short Sword";
 	state.activeStoreItems.push_back({ 0, 42, 75, itemState });
 	ReplayFixtureItemState armorState;
 	armorState.createInfo = 43;
@@ -524,6 +526,8 @@ TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
 	armorState.armorClass = 5;
 	armorState.durability = 20;
 	armorState.maxDurability = 20;
+	armorState.baseName = "Buckler";
+	armorState.identifiedName = "Buckler";
 	state.activeStoreItems.push_back({ 1, 43, 25, armorState });
 
 	ReplayFixtureExecutionResult result;
