@@ -21,6 +21,9 @@ All notable changes to this fork are documented below.
   server-owned summon admission, native travel timing, and C++/C# checkpoint
   parity.
 
+- Add shared Hellfire HorkDemon decision-delay replay coverage, including
+  persisted delay state and the native first-tick decrement in both runners.
+
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;
   trap clicks fail closed when the local player lacks Trap Disarm.

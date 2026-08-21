@@ -83,6 +83,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetMinDamage != 0
                     || initialTarget.CombatTargetMaxDamage != 0
                     || initialTarget.CombatTargetIntelligence != 0
+                    || initialTarget.CombatTargetHorkDemonDelayTicks != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
@@ -101,6 +102,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetMinDamage < 0
             || initialTarget.CombatTargetMaxDamage < initialTarget.CombatTargetMinDamage
             || initialTarget.CombatTargetIntelligence is < 0 or > 255
+            || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
                     initialTarget.CombatTargetNativeAi))
@@ -333,6 +335,9 @@ public static class ReplayFixtureLoader
             CombatTargetMinDamage = GetOptionalInt(value, "combat_target_min_damage"),
             CombatTargetMaxDamage = GetOptionalInt(value, "combat_target_max_damage"),
             CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
+            CombatTargetHorkDemonDelayTicks = GetOptionalInt(
+                value,
+                "combat_target_hork_demon_delay_ticks"),
             CombatTargetMoving = GetOptionalBool(value, "combat_target_moving"),
             CombatTargetFuturePositionX = value.TryGetProperty(
                 "combat_target_future_position_x",

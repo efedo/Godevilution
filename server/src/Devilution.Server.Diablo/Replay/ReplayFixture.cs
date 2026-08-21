@@ -197,6 +197,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetIntelligence { get; init; }
 
+    /** Optional native HorkDemon decision-delay state. */
+    public int CombatTargetHorkDemonDelayTicks { get; init; }
+
     public bool CombatTargetMoving { get; init; }
 
     public int CombatTargetFuturePositionX { get; init; }

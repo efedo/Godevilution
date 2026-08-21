@@ -477,6 +477,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-intelligence-v1");
 			hasher.AppendInt32(state.combatTargetIntelligence);
 		}
+		if (state.combatTargetHorkDemonDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
+			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
+		}
 	}
 
 	if (!state.corpses.empty()) {
@@ -4713,6 +4717,10 @@ void AdmitReplayAutonomousHorkSpawn(
 		        && projectile.behavior == HorkSpawnBehavior;
 	    }))
 		return;
+	if (state.combatTargetHorkDemonDelayTicks > 0) {
+		--state.combatTargetHorkDemonDelayTicks;
+		return;
+	}
 
 	struct Candidate {
 		uint32_t entityId;
@@ -5379,6 +5387,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetMaxDamage);
 			if (key == "combat_target_intelligence")
 				return ParseSigned(fixture_.initialState.combatTargetIntelligence);
+			if (key == "combat_target_hork_demon_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetHorkDemonDelayTicks);
 			if (key == "combat_target_fire_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetFireResistance);
 			if (key == "combat_target_lightning_resistance")
@@ -6123,6 +6133,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetMinDamage != 0
 			|| target.combatTargetMaxDamage != 0
 			|| target.combatTargetIntelligence != 0
+			|| target.combatTargetHorkDemonDelayTicks != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
@@ -6139,6 +6150,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetMinDamage < 0
 		|| target.combatTargetMaxDamage < target.combatTargetMinDamage
 		|| target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
+		|| target.combatTargetHorkDemonDelayTicks < 0
+		|| target.combatTargetHorkDemonDelayTicks > 1024
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -6349,6 +6362,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 		state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;

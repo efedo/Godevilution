@@ -133,12 +133,12 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate contains 84 fixture cases, including seeded and autonomous MonsterArrow
+gate contains 85 fixture cases, including seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, autonomous Succubus
 BloodStar admission/impact/block lanes, and a Lich-family MonsterMagic
 admission/hit/miss/secondary-impact lane. With
 the native `replay_test` executable rebuilt on 2026-08-21 and run from the
-repository root, all 89 tests pass. The managed replay suite also passes
+repository root, all 90 tests pass. The managed replay suite also passes
 locally, so the checked-in native and C# replay projections currently share a
 clean deterministic gate.
 
@@ -153,7 +153,7 @@ commands, a secondary-session melee attack timeline, multi-level world
 occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
 SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
 travel, player impact, and secondary-player block, Hellfire HorkDemon Hork Spawn
-admission, a Lich-family MonsterMagic
+admission and decision-delay state, a Lich-family MonsterMagic
 impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
 impact against the secondary participant. The native and C# runners
 are wired to preserve the same baseline resources,
@@ -486,8 +486,9 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 ```
 
 Future fixtures should prioritize uncovered legacy parity rather than repeat
-already-characterized transitions: broader autonomous monster-arrow, HorkDemon,
-and monster-magic AI branches, monster-magic hit/block resolution, multi-actor target selection, mod/content reload
-ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
+already-characterized transitions: broader autonomous monster-arrow, HorkDemon
+delay and summon lifecycle, monster-magic AI branches, monster-magic hit/block
+resolution, multi-actor target selection, mod/content reload ordering, an
+end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, cursor-held pickup overflow, and broader combat/event
 ordering.
