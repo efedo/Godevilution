@@ -156,6 +156,9 @@ substitute for rebuilding the projects before a future run.
   an authoritative operation; authored effects, quest links/transitions,
   rewards, follow-ups, and revealed traps still route by projected entity ID.
 
+- Godot rejects authored object links to quests absent from the same snapshot,
+  keeping quest-object interaction selection fail-closed at the protocol edge.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.

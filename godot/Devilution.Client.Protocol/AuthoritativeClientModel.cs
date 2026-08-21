@@ -118,9 +118,12 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid world item.");
                 }
             }
+            var questIds = message.Snapshot.Quests
+                .Select(quest => quest.QuestId)
+                .ToHashSet();
             foreach (var @object in message.Snapshot.Objects) {
                 ValidateEntityId(entityIds, @object.EntityId);
-                ValidateObject(@object);
+                ValidateObject(@object, questIds);
             }
             foreach (var projectile in message.Snapshot.Projectiles)
                 ValidateEntityId(entityIds, projectile.EntityId);
@@ -384,7 +387,9 @@ public sealed class AuthoritativeClientModel
         }
     }
 
-    private static void ValidateObject(ObjectSnapshot @object)
+    private static void ValidateObject(
+        ObjectSnapshot @object,
+        IReadOnlySet<uint> questIds)
     {
         var transitionKind = @object.QuestTransitionKind;
         var rewardKind = @object.RewardKind;
@@ -418,6 +423,7 @@ public sealed class AuthoritativeClientModel
         };
         if (@object.EffectAmount < 0
             || effectKind < 0
+            || @object.QuestId != 0 && !questIds.Contains(@object.QuestId)
             || transitionKind is < 0 or > 8
             || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
             || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue

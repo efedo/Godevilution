@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   authored effects, quest links/transitions, rewards, follow-ups, and revealed
   traps continue to resolve by authoritative entity ID.
 
+- Cross-validate Godot authored object quest links against the current quest
+  snapshot so unknown quest references are rejected before interaction routing.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 

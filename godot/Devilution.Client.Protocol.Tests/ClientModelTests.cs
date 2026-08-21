@@ -692,6 +692,24 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsAuthoredObjectWithUnknownQuestReference()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 10,
+                    QuestId = 3002,
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void ValidatesAndRetainsTheAuthoritativeHeldItem()
     {
         var model = new AuthoritativeClientModel();
