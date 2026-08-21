@@ -76,10 +76,11 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
 /** Explicit list of built-in host adapters; no filesystem scanning occurs. */
 public static class BuiltInAuthoritativeGameHostAdapters
 {
-    public static AuthoritativeGameHostAdapterCatalog Create()
+    public static AuthoritativeGameHostAdapterCatalog Create(
+        string? selectedFactoryId = null)
     {
         return new AuthoritativeGameHostAdapterCatalog([
             new DiabloAuthoritativeGameHostAdapterFactory(),
-        ]);
+        ], selectedFactoryId);
     }
 }

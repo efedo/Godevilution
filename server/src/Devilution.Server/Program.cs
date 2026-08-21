@@ -51,7 +51,7 @@ internal static class Program
         var saveStore = new AuthoritativeSaveStore(options.SaveRoot);
         var worldSeedStore = new AuthoritativeWorldSeedStore(options.SaveRoot);
         var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
-        var gameAdapters = BuiltInAuthoritativeGameHostAdapters.Create();
+        var gameAdapters = BuiltInAuthoritativeGameHostAdapters.Create(options.GameAdapterId);
         var builtInModules = gameAdapters.CreateBuiltInModules();
         var modulePackageLoader = new GameplayModulePackageLoader(
             builtInModules.Select(module => module.GetType().Assembly));

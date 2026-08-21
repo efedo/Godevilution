@@ -13,6 +13,10 @@ All notable changes to this fork are documented below.
   admission, damage, block, hit-recovery, and canonical monster-range state.
   The rebuilt native replay runner now passes all 96 tests.
 
+- Add optional `--game-adapter` host selection. The generic adapter catalog now
+  selects a named compatible factory when configured, while preserving default
+  ambiguity rejection and failing closed for unknown or incompatible IDs.
+
 - Extend the end-to-end TCP ruleset-replacement soak to 32 generations for a
   connected session. The session migrates through the live host barrier,
   continues operating on every replacement, retires each prior target, and

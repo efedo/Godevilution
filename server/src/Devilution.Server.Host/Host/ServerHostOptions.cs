@@ -29,6 +29,9 @@ public sealed record ServerHostOptions(
 
     public IReadOnlyList<string> GameplayModulePackageRoots { get; init; } = [];
 
+    /** Optional adapter factory ID; null preserves single-compatible-factory selection. */
+    public string? GameAdapterId { get; init; }
+
     /** Standalone servers are multiplayer unless a local single-player launch opts out. */
     public AuthoritativeGameMode GameMode { get; init; } = AuthoritativeGameMode.Multiplayer;
 
@@ -108,6 +111,9 @@ public sealed record ServerHostOptions(
                         .Append(value)
                         .ToArray(),
                 };
+                break;
+            case "--game-adapter":
+                current = current with { GameAdapterId = value };
                 break;
             case "--build-id":
                 current = current with { BuildId = value };
@@ -207,6 +213,12 @@ public sealed record ServerHostOptions(
             error = "Content, build, and protocol identity values cannot be empty.";
             return false;
         }
+        if (current.GameAdapterId is not null
+            && string.IsNullOrWhiteSpace(current.GameAdapterId)) {
+            options = current;
+            error = "The game adapter ID cannot be empty.";
+            return false;
+        }
         if (current.ProceduralMonsterLevelId.HasValue
             && !current.ProceduralMonsterLimit.HasValue) {
             options = current;
@@ -266,6 +278,7 @@ public sealed record ServerHostOptions(
           --content-version <version>  Content pack version
           --content-overlay <directory> Ordered pack with content-pack.json; repeatable
           --module-package <directory> Hash-verified gameplay-module package; repeatable
+          --game-adapter <id>         Select a compatible host adapter factory
           --build-id <id>              Server build identity
           --protocol-version <version> Protocol schema version
           --tick-rate <hz>             Authoritative simulation rate

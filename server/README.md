@@ -134,7 +134,8 @@ dotnet run --project server/src/Devilution.Server/Devilution.Server.csproj
 The default endpoint is `127.0.0.1:6113`, content is loaded from
 `server/content/base`, and authoritative saves are written under `server/saves`.
 Use `--help` for the complete option list. Common overrides are `--bind`,
-`--port`, `--content-root`, `--save-root`, and `--game-mode`. The standalone
+`--port`, `--content-root`, `--save-root`, `--game-mode`, and (when multiple
+factories are installed) `--game-adapter`. The standalone
 host defaults to multiplayer; use `--game-mode single-player` for the same
 protocol and simulation in a local single-player session. Normal starting life and mana are
 derived from the class catalog's native Q6 formulas, while the initial wallet,
@@ -149,6 +150,9 @@ Use the repeatable `--content-overlay <directory>` option to compose ordered,
 manifest-declared overlay packs over the base content.
 Use the repeatable `--module-package <directory>` option to load explicitly
 installed gameplay-module packages before Engine compatibility preflight.
+By default exactly one compatible host-adapter factory must be available. Use
+`--game-adapter <id>` to select a named compatible factory when a deployment
+provides more than one; unknown or incompatible IDs fail before network startup.
 
 At startup the server prints the content-manifest hash, combined ruleset
 identity, and protocol schema. Production protocol `0.2.0` clients send the

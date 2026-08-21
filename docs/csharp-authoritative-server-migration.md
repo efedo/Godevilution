@@ -568,8 +568,10 @@ The executable then selects exactly one compatible
 `IAuthoritativeGameHostAdapter`. This Server-side bridge combines command,
 autonomous-tick, snapshot, event, and save services. Its built-in Diablo factory
 resolves the module bootstrap and creates the protocol executor, leaving the
-composition root independent of game types. Multiple or missing compatible
-adapters fail before network startup.
+composition root independent of game types. With no host selection, multiple or
+missing compatible adapters fail before network startup; an optional configured
+factory ID selects one named compatible adapter and rejects unknown or
+incompatible IDs before startup.
 
 The standalone host's package format is an installation policy, not an Engine
 contract. Version 1 accepts one explicitly named managed DLL, verifies its

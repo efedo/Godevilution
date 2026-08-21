@@ -30,6 +30,27 @@ public sealed class AuthoritativeGameHostAdapterCatalogTests
     }
 
     [Fact]
+    public void ConfiguredFactorySelectsOneCompatibleFactoryWhenSeveralMatch()
+    {
+        var firstAdapter = new TestAdapter();
+        var secondAdapter = new TestAdapter();
+        var catalog = new AuthoritativeGameHostAdapterCatalog(
+            [
+                new TestFactory("first", true, firstAdapter),
+                new TestFactory("second", true, secondAdapter),
+            ],
+            "second");
+
+        var result = catalog.Activate(
+            new GameplayModuleRegistry(),
+            CreateContent(),
+            new AuthoritativePlayerStartConfiguration(0, 0, 0));
+
+        Assert.Equal("second", catalog.SelectedFactoryId);
+        Assert.Same(secondAdapter, result);
+    }
+
+    [Fact]
     public void RejectsMissingAmbiguousAndDuplicateFactories()
     {
         var adapter = new TestAdapter();
@@ -40,6 +61,10 @@ public sealed class AuthoritativeGameHostAdapterCatalogTests
                 new TestFactory("duplicate", true, adapter),
                 new TestFactory("duplicate", false, adapter),
             ]));
+        Assert.Throws<ArgumentException>(() =>
+            new AuthoritativeGameHostAdapterCatalog(
+                [new TestFactory("one", true, adapter)],
+                " "));
 
         var none = new AuthoritativeGameHostAdapterCatalog([
             new TestFactory("none", false, adapter),
@@ -56,6 +81,22 @@ public sealed class AuthoritativeGameHostAdapterCatalogTests
                 new AuthoritativePlayerStartConfiguration(0, 0, 0)));
         Assert.Throws<InvalidOperationException>(() =>
             ambiguous.Activate(
+                new GameplayModuleRegistry(),
+                CreateContent(),
+                new AuthoritativePlayerStartConfiguration(0, 0, 0)));
+        var unknown = new AuthoritativeGameHostAdapterCatalog(
+            [new TestFactory("one", true, adapter)],
+            "missing");
+        Assert.Throws<InvalidOperationException>(() =>
+            unknown.Activate(
+                new GameplayModuleRegistry(),
+                CreateContent(),
+                new AuthoritativePlayerStartConfiguration(0, 0, 0)));
+        var incompatible = new AuthoritativeGameHostAdapterCatalog(
+            [new TestFactory("one", false, adapter)],
+            "one");
+        Assert.Throws<InvalidOperationException>(() =>
+            incompatible.Activate(
                 new GameplayModuleRegistry(),
                 CreateContent(),
                 new AuthoritativePlayerStartConfiguration(0, 0, 0)));

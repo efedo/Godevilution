@@ -22,9 +22,11 @@ public interface IAuthoritativeGameHostAdapterFactory
 public sealed class AuthoritativeGameHostAdapterCatalog
 {
     private readonly IReadOnlyList<IAuthoritativeGameHostAdapterFactory> factories;
+    private readonly string? selectedFactoryId;
 
     public AuthoritativeGameHostAdapterCatalog(
-        IEnumerable<IAuthoritativeGameHostAdapterFactory> factories)
+        IEnumerable<IAuthoritativeGameHostAdapterFactory> factories,
+        string? selectedFactoryId = null)
     {
         ArgumentNullException.ThrowIfNull(factories);
         var discovered = factories.ToArray();
@@ -35,6 +37,11 @@ public sealed class AuthoritativeGameHostAdapterCatalog
                 "At least one named game-host adapter factory is required.",
                 nameof(factories));
         }
+        var normalizedSelection = selectedFactoryId?.Trim();
+        if (selectedFactoryId is not null && string.IsNullOrWhiteSpace(normalizedSelection))
+            throw new ArgumentException(
+                "The selected game-host adapter factory ID cannot be blank.",
+                nameof(selectedFactoryId));
         var duplicateIds = discovered
             .GroupBy(factory => factory.Id, StringComparer.Ordinal)
             .Where(group => group.Count() > 1)
@@ -46,7 +53,11 @@ public sealed class AuthoritativeGameHostAdapterCatalog
                 nameof(factories));
         }
         this.factories = discovered;
+        this.selectedFactoryId = normalizedSelection;
     }
+
+    /** Optional host-selected factory ID; null retains deterministic single-match selection. */
+    public string? SelectedFactoryId => selectedFactoryId;
 
     public IReadOnlyList<IGameplayModule> CreateBuiltInModules()
     {
@@ -80,13 +91,34 @@ public sealed class AuthoritativeGameHostAdapterCatalog
             throw new InvalidOperationException(
                 "No game-host adapter is compatible with the loaded gameplay modules.");
         }
-        if (compatible.Length > 1) {
-            throw new InvalidOperationException(
-                "More than one game-host adapter is compatible with the loaded gameplay modules: "
-                + $"{string.Join(", ", compatible.Select(factory => factory.Id))}.");
+
+        IAuthoritativeGameHostAdapterFactory selectedFactory;
+        if (selectedFactoryId is not null) {
+            var configuredFactory = factories.SingleOrDefault(
+                factory => string.Equals(
+                    factory.Id,
+                    selectedFactoryId,
+                    StringComparison.Ordinal));
+            if (configuredFactory is null) {
+                throw new InvalidOperationException(
+                    $"Configured game-host adapter factory '{selectedFactoryId}' is not registered.");
+            }
+            if (!compatible.Contains(configuredFactory)) {
+                throw new InvalidOperationException(
+                    $"Configured game-host adapter factory '{selectedFactoryId}' is not compatible with the loaded gameplay modules.");
+            }
+            selectedFactory = configuredFactory;
+        } else {
+            if (compatible.Length > 1) {
+                throw new InvalidOperationException(
+                    "More than one game-host adapter is compatible with the loaded gameplay modules: "
+                    + $"{string.Join(", ", compatible.Select(factory => factory.Id))}.");
+            }
+            selectedFactory = compatible[0];
         }
-        return compatible[0].Activate(registry, content, playerStart)
+
+        return selectedFactory.Activate(registry, content, playerStart)
             ?? throw new InvalidOperationException(
-                $"Game-host adapter factory '{compatible[0].Id}' returned no adapter.");
+                $"Game-host adapter factory '{selectedFactory.Id}' returned no adapter.");
     }
 }

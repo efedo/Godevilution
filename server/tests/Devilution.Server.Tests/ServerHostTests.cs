@@ -25,6 +25,7 @@ public sealed class ServerHostTests
         Assert.Equal(AuthoritativeGameDifficulty.Normal, ServerHostOptions.Defaults.Difficulty);
         Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLimit);
         Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLevelId);
+        Assert.Null(ServerHostOptions.Defaults.GameAdapterId);
     }
 
     [Fact]
@@ -40,6 +41,7 @@ public sealed class ServerHostTests
             "--content-overlay", "content/mod-b",
             "--module-package", "modules/rules-a",
             "--module-package", "modules/rules-b",
+            "--game-adapter", "devilution.diablo",
             "--build-id", "test-server",
             "--protocol-version", "0.2.0",
             "--tick-rate", "30",
@@ -62,6 +64,7 @@ public sealed class ServerHostTests
         Assert.Equal("2.0.0", options.ContentVersion);
         Assert.Equal(["content/mod-a", "content/mod-b"], options.ContentOverlayRoots);
         Assert.Equal(["modules/rules-a", "modules/rules-b"], options.GameplayModulePackageRoots);
+        Assert.Equal("devilution.diablo", options.GameAdapterId);
         Assert.Equal(30U, options.TickRateHz);
         Assert.Equal(900U, options.StartingGold!.Value);
         Assert.Equal(4480, options.StartingLife);
@@ -83,6 +86,7 @@ public sealed class ServerHostTests
     [InlineData("--random-seed", "4294967296")]
     [InlineData("--procedural-monsters", "-1")]
     [InlineData("--procedural-monster-level", "not-a-level")]
+    [InlineData("--game-adapter", " ")]
     [InlineData("--game-mode", "cooperative")]
     [InlineData("--difficulty", "torment")]
     [InlineData("--unknown", "value")]
