@@ -125,6 +125,14 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid portal.");
                 }
             }
+            var previousPlayer = Snapshot?.Players.FirstOrDefault();
+            var nextPlayer = message.Snapshot.Players[0];
+            if (previousPlayer is null
+                || previousPlayer.EntityId != nextPlayer.EntityId
+                || AuthoritativeEntityPositionProjection.RequiresLevelReset(
+                    previousPlayer.LevelId,
+                    nextPlayer.LevelId))
+                predictedMoves.Clear();
             Snapshot = message.Snapshot;
             LastError = null;
             recentEvents.Clear();

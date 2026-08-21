@@ -34,6 +34,9 @@ All notable changes to this fork are documented below.
 - Bound Godot local movement prediction to 16 unacknowledged commands so
   disconnected or delayed acknowledgements cannot grow the prediction queue.
 
+- Clear pending Godot movement prediction when the authoritative local player
+  identity or level changes, preventing old-level inputs from crossing levels.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

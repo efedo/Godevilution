@@ -1062,6 +1062,30 @@ public sealed class ClientModelTests
         Assert.True(model.IsCorrectingPosition);
     }
 
+    [Fact]
+    public void ClearsPendingMovementPredictionWhenTheAuthoritativePlayerChangesLevel()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 1, PositionX = 2, PositionY = 3 },
+            },
+        }));
+        model.TrackPredictedMove(1, 1, 0);
+        Assert.Equal(new ClientPosition(3, 3), model.PredictedPlayerPosition);
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2, PositionX = 10, PositionY = 11 },
+            },
+        }));
+
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
+        model.TrackPredictedMove(2, 1, 0);
+        Assert.Equal(new ClientPosition(11, 11), model.PredictedPlayerPosition);
+    }
+
     [Theory]
     [InlineData(PlayerActionKind.Death, PlayerCombatMode.Death, 0, 9U)]
     [InlineData(
