@@ -108,6 +108,34 @@ public partial class WorldPresentation : Node2D
             && item.PositionY == target.Y)?.EntityId;
     }
 
+    /** Returns an authoritative portal occupying a visible clicked tile. */
+    public uint? PortalEntityIdAt(Vector2I target)
+    {
+        var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
+        return snapshot?.Portals.FirstOrDefault(portal =>
+            currentLevelId.HasValue
+            && ((portal.SourceLevelId == currentLevelId.Value
+                    && portal.SourcePositionX == target.X
+                    && portal.SourcePositionY == target.Y)
+                || (portal.Bidirectional
+                    && portal.DestinationLevelId == currentLevelId.Value
+                    && portal.DestinationPositionX == target.X
+                    && portal.DestinationPositionY == target.Y)))?.PortalId;
+    }
+
+    /** Returns an authoritative world object occupying a visible clicked tile. */
+    public uint? ObjectEntityIdAt(Vector2I target)
+    {
+        var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
+        return snapshot?.Objects.FirstOrDefault(@object =>
+            currentLevelId.HasValue
+            && @object.LevelId == currentLevelId.Value
+            && !@object.Activated
+            && !@object.Destroyed
+            && @object.PositionX == target.X
+            && @object.PositionY == target.Y)?.EntityId;
+    }
+
     /** Returns the authoritative combat entity occupying a visible target tile. */
     public uint? CombatTargetEntityIdAt(Vector2I target)
     {

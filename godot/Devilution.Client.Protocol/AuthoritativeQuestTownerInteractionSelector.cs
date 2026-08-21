@@ -14,9 +14,35 @@ public static class AuthoritativeQuestTownerInteractionSelector
             return null;
 
         var quests = snapshot!.Quests.ToDictionary(quest => quest.QuestId);
-        return snapshot.QuestTownerInteractions
+        return Available(snapshot, player, quests)
             .OrderBy(interaction => interaction.InteractionId)
-            .FirstOrDefault(interaction => IsAvailable(interaction, player, quests));
+            .FirstOrDefault();
+    }
+
+    /** Selects an available authored interaction at the exact clicked tile. */
+    public static QuestTownerInteractionSnapshot? SelectAt(
+        Snapshot? snapshot,
+        int x,
+        int y)
+    {
+        var player = snapshot?.Players.FirstOrDefault();
+        if (player is null)
+            return null;
+
+        var quests = snapshot!.Quests.ToDictionary(quest => quest.QuestId);
+        return Available(snapshot, player, quests)
+            .Where(interaction => interaction.PositionX == x && interaction.PositionY == y)
+            .OrderBy(interaction => interaction.InteractionId)
+            .FirstOrDefault();
+    }
+
+    private static IEnumerable<QuestTownerInteractionSnapshot> Available(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        IReadOnlyDictionary<uint, QuestSnapshot> quests)
+    {
+        return snapshot.QuestTownerInteractions
+            .Where(interaction => IsAvailable(interaction, player, quests));
     }
 
     private static bool IsAvailable(

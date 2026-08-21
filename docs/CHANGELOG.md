@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route Godot world clicks through authoritative portals, objects, traps, and
+  authored quest/towner stages before falling back to spell casting or movement;
+  trap clicks fail closed when the local player lacks Trap Disarm.
+
 - Make Godot authored warp markers actionable at the input boundary: available
   markers continue through server-owned movement, while unavailable quest-gated
   markers provide client feedback without submitting a futile transition.

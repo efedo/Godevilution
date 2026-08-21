@@ -36,6 +36,10 @@ public sealed class AuthoritativeClientModel
             trigger.TriggerX == x
             && trigger.TriggerY == y);
 
+    /** Returns an available authored quest/towner interaction at a clicked tile. */
+    public QuestTownerInteractionSnapshot? QuestTownerInteractionAt(int x, int y)
+        => AuthoritativeQuestTownerInteractionSelector.SelectAt(Snapshot, x, y);
+
     public ulong CurrentTick => Snapshot?.Tick ?? 0;
 
     /** The server puts the receiving participant first in every snapshot. */

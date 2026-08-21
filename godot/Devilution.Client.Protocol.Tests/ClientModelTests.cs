@@ -155,6 +155,10 @@ public sealed class ClientModelTests
         Assert.Equal(
             300201U,
             AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+        Assert.Equal(
+            300201U,
+            AuthoritativeQuestTownerInteractionSelector.SelectAt(snapshot, 80, 20)!.InteractionId);
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.SelectAt(snapshot, 79, 20));
 
         snapshot.Players[0].PositionX = 50;
         Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));

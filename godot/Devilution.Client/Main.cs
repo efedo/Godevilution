@@ -279,14 +279,56 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
-            var cast = CreateCastRequest(target);
-            if (cast is not null)
-                Queue(new Command { CastRequested = cast });
-            else if (model.WarpTriggerAt(target.X, target.Y) is { } warp
+            if (world?.PortalEntityIdAt(target) is { } portalEntityId) {
+                Queue(new Command {
+                    UsePortalRequested = new UsePortalRequested {
+                        PortalId = portalEntityId,
+                    },
+                });
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            if (world?.ObjectEntityIdAt(target) is { } objectEntityId) {
+                var worldObject = model.Snapshot?.Objects.FirstOrDefault(
+                    @object => @object.EntityId == objectEntityId);
+                var playerAbility = model.Snapshot?.Players.FirstOrDefault()?.AbilityKind;
+                if (worldObject?.TrapArmed == true && playerAbility != PlayerAbilityKind.TrapDisarm) {
+                    hud?.SetStatus("This trap requires the Trap Disarm ability.");
+                } else if (worldObject?.TrapArmed == true) {
+                    Queue(new Command {
+                        DisarmTrapRequested = new DisarmTrapRequested {
+                            ObjectEntityId = objectEntityId,
+                        },
+                    });
+                } else {
+                    Queue(new Command {
+                        OperateObjectRequested = new OperateObjectRequested {
+                            ObjectEntityId = objectEntityId,
+                        },
+                    });
+                }
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            if (model.QuestTownerInteractionAt(target.X, target.Y) is { } interaction) {
+                Queue(new Command {
+                    TurnInQuestRequested = new TurnInQuestRequested {
+                        QuestId = interaction.QuestId,
+                        TownerId = checked((uint)interaction.TownerId),
+                    },
+                });
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            if (model.WarpTriggerAt(target.X, target.Y) is { } warp
                 && !warp.Available) {
                 hud?.SetStatus("That route is not currently available.");
                 GetViewport().SetInputAsHandled();
+                return;
             }
+            var cast = CreateCastRequest(target);
+            if (cast is not null)
+                Queue(new Command { CastRequested = cast });
             else
                 Queue(new Command {
                     MoveRequested = new MoveRequested {
