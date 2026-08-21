@@ -133,14 +133,15 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate contains 88 fixture cases, including seeded and autonomous MonsterArrow
+gate contains 89 fixture cases, including seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
-miss-before-expiry, secondary-player Hork Spawn block, autonomous Succubus
+miss-before-expiry, secondary-player Hork Spawn block and impact, autonomous
+Succubus
 BloodStar admission/impact/block lanes,
 and a Lich-family
 MonsterMagic admission/hit/miss/secondary-impact lane. With
 the native `replay_test` executable rebuilt on 2026-08-21 and run from the
-repository root, all 93 tests pass. The managed replay suite also passes
+repository root, all 94 tests pass. The managed replay suite also passes
 locally, so the checked-in native and C# replay projections currently share a
 clean deterministic gate.
 
@@ -155,8 +156,8 @@ commands, a secondary-session melee attack timeline, multi-level world
 occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
 SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
 travel, player impact, and secondary-player block, Hellfire HorkDemon Hork Spawn
-admission, decision-delay state, miss-before-expiry lifecycle, and secondary-
-player block, a Lich-family
+admission, decision-delay state, miss-before-expiry lifecycle, secondary-player
+block and impact, a Lich-family
 MonsterMagic
 impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
 impact against the secondary participant. The native and C# runners

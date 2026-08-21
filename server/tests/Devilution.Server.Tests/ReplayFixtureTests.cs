@@ -1871,6 +1871,35 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnSecondaryImpactMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-secondary-impact.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6336, secondary.Life);
+        Assert.Equal(PlayerCombatMode.GotHit, secondary.CombatMode);
+        Assert.Equal(7UL, secondary.CombatModeEndTick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(

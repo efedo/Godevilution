@@ -1,0 +1,81 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/hork-spawn-secondary-impact",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "hork-spawn-secondary-impact-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 3,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 3,
+    "combat_target_monster_level": 27,
+    "combat_target_native_ai": "HorkDemon",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1,
+      "block_capable": false,
+      "combat_mode": 0
+    }
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "spell_id": 117,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 0,
+      "damage_type": 0,
+      "remaining_ticks": 1,
+      "behavior": 57,
+      "phase": 0,
+      "speed": 8,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "2d8c92c130c260c12851e33853c6db27ab980099f2fae5f5ec25b3a30b9a4ec7" }
+  ]
+}

@@ -11,7 +11,7 @@ All notable changes to this fork are documented below.
   Spirit hit roll to preserve native RNG order, keep generic native monster
   pursuit out of autonomous ranged lanes, and align Succubus/Lich projectile
   admission, damage, block, hit-recovery, and canonical monster-range state.
-  The rebuilt native replay runner now passes all 93 tests.
+  The rebuilt native replay runner now passes all 94 tests.
 
 - Add an end-to-end TCP ruleset-replacement fixture: a connected session now
   migrates through the live host barrier, continues operating on the new
@@ -32,6 +32,9 @@ All notable changes to this fork are documented below.
 
 - Add multiplayer Hork Spawn secondary-player block parity, including native
   block RNG, Block timing, and projectile removal ordering.
+
+- Add multiplayer Hork Spawn secondary-player impact parity, including Q6
+  damage, GotHit timing, and projectile removal ordering.
 
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;
