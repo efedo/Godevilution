@@ -112,6 +112,17 @@ public sealed class LiveAuthoritativeServerTests
             var destination = Assert.Single(model.Snapshot!.Players);
             Assert.Equal(2U, destination.LevelId);
             Assert.Equal((10, 10), (destination.PositionX, destination.PositionY));
+
+            var sessionToken = client.SessionToken;
+            await client.ReconnectAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(sessionToken, client.SessionToken);
+            var resumed = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Players.Single().LevelId == trigger.TargetLevelId);
+            model.Apply(resumed);
+            var resumedPlayer = Assert.Single(model.Snapshot!.Players);
+            Assert.Equal(2U, resumedPlayer.LevelId);
+            Assert.Equal((10, 10), (resumedPlayer.PositionX, resumedPlayer.PositionY));
         } finally {
             if (Directory.Exists(overlayRoot))
                 Directory.Delete(overlayRoot, recursive: true);
