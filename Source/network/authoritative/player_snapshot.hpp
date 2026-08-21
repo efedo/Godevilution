@@ -53,6 +53,21 @@ struct ProjectedInventoryItem {
 	Item item;
 };
 
+/** One server-owned item anchored in the native-compatible stash grid. */
+struct ProjectedStashItem {
+	uint32_t page = 0;
+	uint32_t cell = 0;
+	uint32_t itemSeed = 0;
+	uint32_t stableItemId = 0;
+	uint32_t spellId = 0;
+	ProjectedSpellTargetingKind spellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
+	uint32_t price = 0;
+	uint64_t purchasedAtTick = 0;
+	uint32_t width = 1;
+	uint32_t height = 1;
+	Item item;
+};
+
 struct ProjectedEquippedItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
@@ -266,6 +281,9 @@ struct ProjectedPlayerSnapshot {
 	std::vector<ProjectedEquippedItem> equipment;
 	std::vector<ProjectedBeltItem> belt;
 	std::vector<int32_t> inventoryGrid;
+	std::vector<ProjectedStashItem> stash;
+	uint32_t stashGold = 0;
+	bool stashOpen = false;
 	std::vector<ProjectedStatusEffect> statusEffects;
 	std::vector<ProjectedMemorizedSpell> memorizedSpells;
 };

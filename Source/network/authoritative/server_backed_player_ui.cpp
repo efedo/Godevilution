@@ -1,6 +1,7 @@
 #include "network/authoritative/server_backed_player_ui.hpp"
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
@@ -9,6 +10,7 @@
 
 #include "engine/cursor.h"
 #include "game/spells/spells.hpp"
+#include "qol/stash.h"
 #include "ui/automap.h"
 #include "utils/string/utf8.hpp"
 
@@ -25,6 +27,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
 	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX) || snapshot.statPoints > static_cast<uint32_t>(INT_MAX) || snapshot.reflectCharges > UINT16_MAX)
 		return tl::make_unexpected("Server-backed player resources are outside the native range.");
+	if (snapshot.stashGold > static_cast<uint32_t>(INT_MAX) || snapshot.stash.size() > 10000)
+		return tl::make_unexpected("Server-backed stash resources are outside the native range.");
 	if (snapshot.characterClassId > static_cast<uint32_t>(HeroClass::LAST))
 		return tl::make_unexpected("Server-backed player class is outside the native range.");
 	if (snapshot.characterName.size() >= PlayerNameLength
@@ -138,6 +142,26 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		if (equipment.slot >= NUM_INVLOC || !equipmentSlots.insert(equipment.slot).second)
 			return tl::make_unexpected("Server-backed equipment contains a duplicate or invalid slot.");
 	}
+	std::array<bool, 100 * 100> occupied { };
+	for (const auto &stashItem : snapshot.stash) {
+		if (stashItem.page >= 100 || stashItem.cell >= 100
+		    || stashItem.width == 0 || stashItem.height == 0
+		    || stashItem.width > 10 || stashItem.height > 10
+		    || stashItem.cell % 10 + stashItem.width > 10
+		    || stashItem.cell / 10 + stashItem.height > 10) {
+			return tl::make_unexpected("Server-backed stash contains an invalid item footprint.");
+		}
+		for (uint32_t y = 0; y < stashItem.height; ++y) {
+			for (uint32_t x = 0; x < stashItem.width; ++x) {
+				const std::size_t index = static_cast<std::size_t>(stashItem.page) * 100
+				    + static_cast<std::size_t>(stashItem.cell / 10 + y) * 10
+				    + stashItem.cell % 10 + x;
+				if (occupied[index])
+					return tl::make_unexpected("Server-backed stash contains overlapping items.");
+				occupied[index] = true;
+			}
+		}
+	}
 	for (const int32_t cell : snapshot.inventoryGrid) {
 		if (cell < -1 || (cell >= 0 && static_cast<std::size_t>(cell) >= snapshot.inventory.size()))
 			return tl::make_unexpected("Server-backed inventory grid references an invalid item.");
@@ -154,6 +178,36 @@ void ApplyResource(VitalResource &destination, int32_t current)
 }
 
 } // namespace
+
+tl::expected<void, std::string> ApplyServerBackedStashProjection(const ProjectedPlayerSnapshot &snapshot)
+{
+	if (auto result = ValidateSnapshot(snapshot); !result.has_value())
+		return result;
+
+	const unsigned currentPage = Stash.GetPage();
+	Stash.stashGrids.clear();
+	Stash.stashList.clear();
+	Stash.gold = static_cast<int>(snapshot.stashGold);
+	Stash.dirty = false;
+	for (const auto &stashItem : snapshot.stash) {
+		Item item = stashItem.item;
+		const unsigned column = stashItem.cell % 10;
+		const unsigned row = stashItem.cell / 10;
+		item.position = { static_cast<int>(column), static_cast<int>(row + stashItem.height - 1) };
+		const auto stashIndex = static_cast<StashStruct::StashCell>(Stash.stashList.size());
+		Stash.stashList.push_back(std::move(item));
+		for (uint32_t y = 0; y < stashItem.height; ++y) {
+			for (uint32_t x = 0; x < stashItem.width; ++x)
+				Stash.stashGrids[stashItem.page][column + x][row + y] = stashIndex + 1;
+		}
+	}
+	Stash.SetPage(currentPage);
+	Stash.dirty = false;
+	IsStashOpen = snapshot.stashOpen;
+	if (!IsStashOpen)
+		CloseGoldWithdraw();
+	return { };
+}
 
 tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
 {

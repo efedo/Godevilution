@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <limits>
+#include <vector>
 #include <unordered_set>
 #include <utility>
 
@@ -17,6 +18,11 @@
 namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
 namespace {
+
+constexpr uint32_t StashPageCount = 100;
+constexpr uint32_t StashCellCount = 100;
+constexpr uint32_t StashGridWidth = 10;
+constexpr uint32_t StashGridHeight = 10;
 
 bool HasValidItemIdentity(uint32_t itemSeed, const protocol::ItemStateSnapshot &state)
 {
@@ -58,6 +64,12 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	if (player->reflect_charges() > std::numeric_limits<uint16_t>::max())
 		return tl::make_unexpected("Server-backed snapshot contains Reflect charges outside the native range.");
+	if (player->stash_size() > StashPageCount * StashCellCount)
+		return tl::make_unexpected("Server-backed snapshot contains too many stash items.");
+	if (player->stash_gold() > static_cast<uint32_t>(std::numeric_limits<int32_t>::max()))
+		return tl::make_unexpected("Server-backed snapshot contains stash gold outside the native range.");
+	if (player->stash_open() && player->active_store_id() != 0)
+		return tl::make_unexpected("Server-backed snapshot opens both a stash and a vendor.");
 
 	ProjectedPlayerSnapshot projected {
 		.entityId = player->entity_id(),
@@ -196,6 +208,48 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		    .item = std::move(*item),
 		});
 	}
+	projected.stash.reserve(player->stash_size());
+	std::vector<bool> occupied(StashPageCount * StashCellCount, false);
+	for (const auto &source : player->stash()) {
+		if (source.page() >= StashPageCount || source.cell() >= StashCellCount)
+			return tl::make_unexpected("Server-backed snapshot contains a stash item outside the native page grid.");
+		if (!HasValidItemIdentity(source.item().item_seed(), source.item().state()))
+			return tl::make_unexpected("Server-backed snapshot contains a stash item with an invalid native identity.");
+		const uint32_t width = std::max(1U, source.item().state().inventory_width());
+		const uint32_t height = std::max(1U, source.item().state().inventory_height());
+		const uint32_t column = source.cell() % StashGridWidth;
+		const uint32_t row = source.cell() / StashGridWidth;
+		if (width > StashGridWidth || height > StashGridHeight
+		    || column + width > StashGridWidth || row + height > StashGridHeight)
+			return tl::make_unexpected("Server-backed snapshot contains a stash item with an invalid footprint.");
+		for (uint32_t y = 0; y < height; ++y) {
+			for (uint32_t x = 0; x < width; ++x) {
+				const std::size_t index = static_cast<std::size_t>(source.page()) * StashCellCount
+				    + static_cast<std::size_t>(row + y) * StashGridWidth + column + x;
+				if (occupied[index])
+					return tl::make_unexpected("Server-backed snapshot contains overlapping stash items.");
+				occupied[index] = true;
+			}
+		}
+		auto item = ProjectNativeItem(source.item().state(), source.item().item_seed(), source.item().price());
+		if (!item.has_value())
+			return tl::make_unexpected(item.error());
+		projected.stash.push_back({
+		    .page = source.page(),
+		    .cell = source.cell(),
+		    .itemSeed = source.item().item_seed(),
+		    .stableItemId = source.item().state().stable_item_id(),
+		    .spellId = static_cast<uint32_t>(source.item().state().spell_id()),
+		    .spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(source.item().state().spell_targeting_kind()),
+		    .price = source.item().price(),
+		    .purchasedAtTick = source.item().purchased_at_tick(),
+		    .width = width,
+		    .height = height,
+		    .item = std::move(*item),
+		});
+	}
+	projected.stashGold = player->stash_gold();
+	projected.stashOpen = player->stash_open();
 	projected.inventoryGrid.assign(player->inventory_grid().begin(), player->inventory_grid().end());
 	return projected;
 }
@@ -232,6 +286,10 @@ std::optional<ProjectedSpellTargetingKind> ProjectedSpellTargetingKindForSpell(
 	for (const auto &item : snapshot.belt) {
 		if (const auto targetingKind = itemTargetingKind(item); targetingKind.has_value())
 			return targetingKind;
+	}
+	for (const auto &item : snapshot.stash) {
+		if (item.spellId == spellId)
+			return item.spellTargetingKind;
 	}
 	return std::nullopt;
 }

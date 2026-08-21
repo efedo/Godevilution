@@ -18,4 +18,7 @@ namespace devilution::authoritative {
 /** Applies one complete authoritative player snapshot without partial mutation. */
 tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot);
 
+/** Rebuilds the legacy stash buffers from a validated server-owned projection. */
+tl::expected<void, std::string> ApplyServerBackedStashProjection(const ProjectedPlayerSnapshot &snapshot);
+
 } // namespace devilution::authoritative

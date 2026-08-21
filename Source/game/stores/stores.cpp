@@ -2161,9 +2161,16 @@ void BarmaidEnter()
 	case 14:
 		CurrentStoreManager.activeStore() = TalkID::None;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-		if (authoritative::GetServerBackedRuntime().IsConnected()
-		    && !authoritative::GetServerBackedRuntime().SupportsStash()) {
-			EventPlrMsg(_("The stash is not available in authoritative mode yet."), UiFlags::ColorRed);
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().OpenStash(0, GetMillisecondsSinceStartup()); !result.has_value()) {
+				LogError("Server-backed stash open failed: {}", result.error());
+				EventPlrMsg(_("The stash is unavailable right now."), UiFlags::ColorRed);
+				return;
+			}
+			if (!authoritative::GetServerBackedRuntime().SupportsStash()) {
+				EventPlrMsg(_("The stash is unavailable right now."), UiFlags::ColorRed);
+				return;
+			}
 			return;
 		}
 #endif

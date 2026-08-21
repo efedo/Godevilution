@@ -22,6 +22,7 @@ bool SameItemReference(const ServerBackedItemReference &left, const ServerBacked
 {
 	return left.location == right.location
 	    && left.slot == right.slot
+	    && left.page == right.page
 	    && left.stableItemId == right.stableItemId;
 }
 
@@ -192,6 +193,50 @@ tl::expected<void, std::string> ServerBackedRuntime::CloseVendor(uint64_t reques
 	if (auto result = session_->CloseVendor(requestedTick, nowMs); !result.has_value())
 		return result;
 	return EnsureCommandAccepted();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::OpenStash(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->OpenStash(requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::CloseStash(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->CloseStash(requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::DepositStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->DepositStashGold(amount, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::WithdrawStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->WithdrawStashGold(amount, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::PurchaseVendor(uint32_t storeId, uint32_t storeSlot, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs)
@@ -827,6 +872,34 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenc
 			    .stableItemId = equipment.stableItemId,
 			};
 	}
+	for (const auto &stashItem : snapshot->stash) {
+		if (stashItem.itemSeed == itemSeed)
+			return ServerBackedItemReference {
+			    .location = ServerBackedItemLocation::Stash,
+			    .slot = stashItem.cell,
+			    .stableItemId = stashItem.stableItemId,
+			    .page = stashItem.page,
+			};
+	}
+	return std::nullopt;
+}
+
+std::optional<ServerBackedItemReference> ServerBackedRuntime::StashItemReferenceAt(uint32_t page, uint32_t cell) const noexcept
+{
+	if (!session_ || page >= 100 || cell >= 100)
+		return std::nullopt;
+	const auto *snapshot = session_->PlayerState().Snapshot();
+	if (snapshot == nullptr)
+		return std::nullopt;
+	for (const auto &stashItem : snapshot->stash) {
+		if (stashItem.page == page && stashItem.cell == cell)
+			return ServerBackedItemReference {
+			    .location = ServerBackedItemLocation::Stash,
+			    .slot = cell,
+			    .stableItemId = stashItem.stableItemId,
+			    .page = page,
+			};
+	}
 	return std::nullopt;
 }
 
@@ -895,6 +968,8 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 		ApplyServerBackedEventBatch(*player_, eventBatch, session_->EntityId());
 	}
 	if (auto result = ApplyServerBackedPlayerSnapshot(*player_, *snapshot); !result.has_value())
+		return result;
+	if (auto result = ApplyServerBackedStashProjection(*snapshot); !result.has_value())
 		return result;
 	if (!pendingInventoryItemDrag_.has_value() || !pendingItem.has_value())
 		return { };

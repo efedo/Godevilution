@@ -49,6 +49,34 @@ tl::expected<void, std::string> ServerBackedSession::CloseVendor(uint64_t reques
 	return Flush(nowMs, sequence);
 }
 
+tl::expected<void, std::string> ServerBackedSession::OpenStash(uint64_t requestedTick, uint64_t nowMs)
+{
+	lastCommandResolution_ = CommandResolution::None;
+	const auto *snapshot = playerState_.Snapshot();
+	if (snapshot == nullptr || snapshot->activeStoreId.has_value())
+		return tl::make_unexpected("The server-backed stash cannot open while a vendor is active.");
+	return SubmitInventoryCommand(MakeOpenStashCommand(requestedTick), nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::CloseStash(uint64_t requestedTick, uint64_t nowMs)
+{
+	lastCommandResolution_ = CommandResolution::None;
+	const auto *snapshot = playerState_.Snapshot();
+	if (snapshot == nullptr || !snapshot->stashOpen)
+		return tl::make_unexpected("The server-backed stash is not open.");
+	return SubmitInventoryCommand(MakeCloseStashCommand(requestedTick), nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::DepositStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeDepositStashGoldCommand(amount, requestedTick), nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::WithdrawStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeWithdrawStashGoldCommand(amount, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::Purchase(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs)
 {
 	lastCommandResolution_ = CommandResolution::None;

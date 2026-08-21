@@ -12,6 +12,8 @@ namespace devilution::authoritative {
 
 tl::expected<protocol::v1::PlayerItemReference, std::string> MakeItemReference(ServerBackedItemReference item)
 {
+	if (item.slot == UINT32_MAX)
+		return tl::make_unexpected("Cannot reference an invalid server-backed item slot.");
 	protocol::v1::PlayerItemReference reference;
 	reference.set_slot(item.slot);
 	reference.set_stable_item_id(item.stableItemId);
@@ -25,6 +27,14 @@ tl::expected<protocol::v1::PlayerItemReference, std::string> MakeItemReference(S
 	case ServerBackedItemLocation::Equipment:
 		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_EQUIPMENT);
 		break;
+	case ServerBackedItemLocation::Stash:
+		if (item.page >= 100 || item.slot >= 100)
+			return tl::make_unexpected("Cannot reference a stash item outside the native page grid.");
+		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_STASH);
+		reference.set_page(item.page);
+		break;
+	default:
+		return tl::make_unexpected("The server-backed item location is invalid.");
 	}
 	return reference;
 }
@@ -44,6 +54,42 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeCloseStoreCom
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
 	command.mutable_close_store_requested();
+	return command;
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeOpenStashCommand(uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_open_stash_requested();
+	return command;
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeCloseStashCommand(uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_close_stash_requested();
+	return command;
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeDepositStashGoldCommand(uint32_t amount, uint64_t requestedTick)
+{
+	if (amount == 0)
+		return tl::make_unexpected("Cannot deposit zero stash gold.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_deposit_stash_gold_requested()->set_amount(amount);
+	return command;
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeWithdrawStashGoldCommand(uint32_t amount, uint64_t requestedTick)
+{
+	if (amount == 0)
+		return tl::make_unexpected("Cannot withdraw zero stash gold.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_withdraw_stash_gold_requested()->set_amount(amount);
 	return command;
 }
 

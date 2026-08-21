@@ -40,6 +40,12 @@
 #include "utils/sdl/sdl_compat.h"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
+#include "utils/timer.hpp"
+#include "utils/log.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -132,6 +138,17 @@ void CheckStashPaste(Point cursorPosition)
 		return;
 
 	if (player.HoldItem._itype == ItemType::Gold) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().DepositStashGold(static_cast<uint32_t>(player.HoldItem._ivalue), 0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Server-backed stash gold deposit failed: {}", result.error());
+			else {
+				player.HoldItem.clear();
+				NewCursor(CURSOR_HAND);
+			}
+			return;
+		}
+	#endif
 		if (Stash.gold > std::numeric_limits<int>::max() - player.HoldItem._ivalue)
 			return;
 		Stash.gold += player.HoldItem._ivalue;
@@ -162,6 +179,12 @@ void CheckStashPaste(Point cursorPosition)
 		}
 		return; // Found a second item
 	}
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		LogError("Server-backed stash item placement remains disabled until the stable cursor bridge is active.");
+		return;
+	}
+	#endif
 
 	PlaySFX(ItemInvSnds[ItemCAnimTbl[player.HoldItem._iCurs]]);
 
@@ -194,6 +217,12 @@ void CheckStashPaste(Point cursorPosition)
 
 void CheckStashCut(Point cursorPosition, bool automaticMove)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		LogError("Server-backed stash item withdrawal remains disabled until the stable cursor bridge is active.");
+		return;
+	}
+	#endif
 	Player &player = *MyPlayer;
 
 	CloseGoldWithdraw();
@@ -266,6 +295,13 @@ void CheckStashCut(Point cursorPosition, bool automaticMove)
 
 void WithdrawGold(Player &player, int amount)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		if (auto result = authoritative::GetServerBackedRuntime().WithdrawStashGold(static_cast<uint32_t>(amount), 0, GetMillisecondsSinceStartup()); !result.has_value())
+			LogError("Server-backed stash gold withdrawal failed: {}", result.error());
+		return;
+	}
+	#endif
 	AddGoldToInventory(player, amount);
 	Stash.gold -= amount;
 	Stash.dirty = true;
@@ -419,6 +455,12 @@ void DrawStash(const Surface &out)
 
 void CheckStashItem(Point mousePosition, bool isShiftHeld, bool isCtrlHeld)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected() && MyPlayer->HoldItem.isEmpty() && isCtrlHeld) {
+		LogError("Server-backed stash item transfer remains disabled until the stable cursor bridge is active.");
+		return;
+	}
+	#endif
 	if (!MyPlayer->HoldItem.isEmpty()) {
 		CheckStashPaste(mousePosition);
 	} else if (isCtrlHeld) {

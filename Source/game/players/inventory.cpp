@@ -2567,6 +2567,12 @@ void CloseStash()
 		#endif
 			NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, myPlayer.HoldItem);
 		} else {
+		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				LogError("Server-backed stash-close cannot place a held item without an authoritative destination.");
+				return;
+			}
+		#endif
 			if (!AutoPlaceItemInBelt(myPlayer, myPlayer.HoldItem, true, true)
 			    && !AutoPlaceItemInInventory(myPlayer, myPlayer.HoldItem, true)
 			    && !AutoPlaceItemInStash(myPlayer.HoldItem, true)) {
@@ -2579,6 +2585,15 @@ void CloseStash()
 		myPlayer.HoldItem.clear();
 		NewCursor(CURSOR_HAND);
 	}
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		if (auto result = authoritative::GetServerBackedRuntime().CloseStash(0, GetMillisecondsSinceStartup()); !result.has_value()) {
+			LogError("Server-backed stash close failed: {}", result.error());
+			return;
+		}
+		return;
+	}
+	#endif
 
 	IsStashOpen = false;
 }

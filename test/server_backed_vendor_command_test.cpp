@@ -26,6 +26,24 @@ TEST(ServerBackedVendorCommand, BuildsCloseStoreIntent)
 	EXPECT_EQ(command->intent_case(), protocol::Command::kCloseStoreRequested);
 }
 
+TEST(ServerBackedVendorCommand, BuildsStashSessionAndGoldIntents)
+{
+	const auto open = MakeOpenStashCommand(21);
+	const auto close = MakeCloseStashCommand(22);
+	const auto deposit = MakeDepositStashGoldCommand(300, 23);
+	const auto withdraw = MakeWithdrawStashGoldCommand(125, 24);
+	ASSERT_TRUE(open.has_value());
+	ASSERT_TRUE(close.has_value());
+	ASSERT_TRUE(deposit.has_value());
+	ASSERT_TRUE(withdraw.has_value());
+	EXPECT_EQ(open->intent_case(), protocol::Command::kOpenStashRequested);
+	EXPECT_EQ(close->intent_case(), protocol::Command::kCloseStashRequested);
+	EXPECT_EQ(deposit->deposit_stash_gold_requested().amount(), 300U);
+	EXPECT_EQ(withdraw->withdraw_stash_gold_requested().amount(), 125U);
+	EXPECT_FALSE(MakeDepositStashGoldCommand(0, 1).has_value());
+	EXPECT_FALSE(MakeWithdrawStashGoldCommand(0, 1).has_value());
+}
+
 TEST(ServerBackedVendorCommand, BuildsPurchaseIntentWithStableSlot)
 {
 	auto command = MakePurchaseCommand(4, 12, 21);
@@ -209,6 +227,32 @@ TEST(ServerBackedVendorCommand, BuildsExplicitInventoryToBeltTransfer)
 	EXPECT_EQ(command->move_item_requested().destination().location(), protocol::PLAYER_ITEM_LOCATION_BELT);
 	EXPECT_EQ(command->move_item_requested().destination().slot(), 5U);
 	EXPECT_EQ(command->move_item_requested().destination().stable_item_id(), 703U);
+}
+
+TEST(ServerBackedVendorCommand, BuildsStashItemReferenceWithPage)
+{
+	const ServerBackedItemReference stash {
+		.location = ServerBackedItemLocation::Stash,
+		.slot = 37,
+		.stableItemId = 704,
+		.page = 12,
+	};
+	const ServerBackedItemReference inventory {
+		.location = ServerBackedItemLocation::Inventory,
+		.slot = 2,
+		.stableItemId = 702,
+	};
+	const auto command = MakeMoveItemCommand(stash, inventory, 25);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	EXPECT_EQ(command->move_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_STASH);
+	EXPECT_EQ(command->move_item_requested().item().page(), 12U);
+	EXPECT_EQ(command->move_item_requested().item().slot(), 37U);
+	EXPECT_EQ(command->move_item_requested().destination().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_FALSE(MakeMoveItemCommand(
+		ServerBackedItemReference { .location = ServerBackedItemLocation::Stash, .slot = 100, .page = 12 },
+		inventory,
+		25)
+		.has_value());
 }
 
 TEST(ServerBackedVendorCommand, BuildsStableInventoryMoveIntent)

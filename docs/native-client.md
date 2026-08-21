@@ -115,21 +115,23 @@ source-zero path.
 The Warrior's server-owned Repair skill similarly opens only the legacy repair
 cursor. Equipment or inventory selection sends the class-ability source and
 waits for the snapshot before playing presentation audio; it does not call the
-local random repair rule. Connected stash repair is blocked until the native
-stash bridge projects page items. Visual-store and classic Smith flows retain
+local random repair rule. Connected stash repair remains blocked until the
+stable stash cursor bridge is complete. Visual-store and classic Smith flows retain
 source-zero vendor repair.
 
 The Sorcerer's server-owned Staff Recharge skill opens only the legacy recharge
 cursor. Equipment or inventory selection submits the exact item with the
 class-ability source and projects the accepted snapshot instead of invoking the
-local recharge rule. Connected stash recharge remains blocked until the native
-stash bridge is available; paid Witch recharge retains its source-zero vendor
+local recharge rule. Connected stash recharge remains blocked until the stable
+stash cursor bridge is available; paid Witch recharge retains its source-zero vendor
 path.
 
-The Barmaid stash entry is also fail-closed while connected. Although stash
-state is now part of the authoritative protocol, the native client does not
-yet project the page grid or open/mutate its local stash in authoritative mode;
-disconnected legacy sessions retain the existing stash behavior.
+The Barmaid stash entry now opens the server-owned stash session while
+connected. The native client validates and projects the authoritative 100-page
+10×10 grid, session state, and stash gold into the legacy renderer; gold
+deposit/withdraw commands are server-owned. Non-gold native stash cursor
+transfers remain fail-closed until the stable source/destination cursor bridge
+is complete. Disconnected legacy sessions retain the existing stash behavior.
 
 Native service, store, and charged/consumable spell-source requests now resolve
 their item references from the latest authoritative projection, carrying the

@@ -45,6 +45,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_ability_targeting_kind(protocol::SPELL_TARGETING_KIND_TILE);
 	player->set_hostile_mode(true);
 	player->set_facing_direction(protocol::PLAYER_DIRECTION_NORTH_EAST);
+	player->set_stash_gold(350);
+	player->set_stash_open(true);
 	auto *memorizedSpell = player->add_memorized_spells();
 	memorizedSpell->set_spell_id(static_cast<uint32_t>(SpellID::Firebolt));
 	memorizedSpell->set_level(2);
@@ -89,6 +91,15 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	heldItem->mutable_state()->set_item_index(IDI_GOLD);
 	heldItem->mutable_state()->set_value(65);
 	heldItem->mutable_state()->set_stat_flag(true);
+	auto *stashItem = player->add_stash();
+	stashItem->set_page(2);
+	stashItem->set_cell(13);
+	stashItem->mutable_item()->set_item_seed(1234);
+	stashItem->mutable_item()->set_price(90);
+	stashItem->mutable_item()->mutable_state()->set_stable_item_id(704);
+	stashItem->mutable_item()->mutable_state()->set_item_type(7);
+	stashItem->mutable_item()->mutable_state()->set_inventory_width(2);
+	stashItem->mutable_item()->mutable_state()->set_inventory_height(1);
 
 	auto projected = ProjectPlayerSnapshot(snapshot, 7);
 	ASSERT_TRUE(projected.has_value()) << projected.error();
@@ -142,6 +153,15 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->heldItem->item._itype, ItemType::Gold);
 	EXPECT_EQ(projected->heldItem->item._ivalue, 65);
 	EXPECT_EQ(projected->inventoryGrid, std::vector<int32_t>({ 0, -1 }));
+	EXPECT_EQ(projected->stashGold, 350U);
+	EXPECT_TRUE(projected->stashOpen);
+	ASSERT_EQ(projected->stash.size(), 1U);
+	EXPECT_EQ(projected->stash[0].page, 2U);
+	EXPECT_EQ(projected->stash[0].cell, 13U);
+	EXPECT_EQ(projected->stash[0].itemSeed, 1234U);
+	EXPECT_EQ(projected->stash[0].stableItemId, 704U);
+	EXPECT_EQ(projected->stash[0].width, 2U);
+	EXPECT_EQ(projected->stash[0].height, 1U);
 }
 
 TEST(ServerBackedPlayerSnapshot, ResolvesTargetingKindAcrossAuthoritativeSources)
@@ -426,6 +446,33 @@ TEST(ServerBackedPlayerSnapshot, RejectsIncompleteDynamicItemIdentity)
 	player->set_entity_id(7);
 	player->mutable_held_item()->mutable_state()->set_identified_name("A");
 	EXPECT_FALSE(ProjectPlayerSnapshot(playerSnapshot, 7).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidStashFootprintsAndSessionConflicts)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	auto *first = player->add_stash();
+	first->set_page(0);
+	first->set_cell(9);
+	first->mutable_item()->set_item_seed(1);
+	first->mutable_item()->mutable_state()->set_item_type(1);
+	first->mutable_item()->mutable_state()->set_inventory_width(2);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	first->mutable_item()->mutable_state()->set_inventory_width(1);
+	auto *second = player->add_stash();
+	second->set_page(0);
+	second->set_cell(9);
+	second->mutable_item()->set_item_seed(2);
+	second->mutable_item()->mutable_state()->set_item_type(1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	player->clear_stash();
+	player->set_stash_open(true);
+	player->set_active_store_id(1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)

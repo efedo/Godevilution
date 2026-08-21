@@ -15,9 +15,13 @@ All notable changes to this fork are documented below.
 
 - Add server-owned 100-page stash state with native-compatible 10x10 page
   grids, stable page/cell references, overlap validation, inventory↔stash
-  transfers, snapshot projection, and version-1 save round-tripping. Native
-  stash presentation remains fail-closed until its authoritative bridge is
-  implemented.
+  transfers, snapshot projection, and version-1 save round-tripping.
+
+- Add the native authoritative stash projection and session boundary. Barmaid
+  entry and close now use server-owned stash session commands; validated page
+  grids, session state, and stash gold are projected into the legacy renderer;
+  native gold deposit/withdraw uses authoritative commands; non-gold cursor
+  transfers remain fail-closed until their stable cursor bridge is complete.
 
 - Fail closed on the native Barmaid stash entry while connected to the
   authoritative server; local stash state remains available only in legacy

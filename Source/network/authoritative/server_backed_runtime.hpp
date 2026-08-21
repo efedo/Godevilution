@@ -32,8 +32,11 @@ public:
 
 	[[nodiscard]] bool IsConnected() const noexcept { return session_ != nullptr; }
 	[[nodiscard]] bool IsAuthoritativeMode() const noexcept { return authoritativeMode_; }
-	/** Stash state is not authoritative until a protocol projection is shipped. */
-	[[nodiscard]] bool SupportsStash() const noexcept { return false; }
+	/** Returns true once a validated authoritative stash projection exists. */
+	[[nodiscard]] bool SupportsStash() const noexcept
+	{
+		return session_ != nullptr && session_->PlayerState().Snapshot() != nullptr;
+	}
 	[[nodiscard]] ServerBackedSession *Session() noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedSession *Session() const noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedWorldProjection &WorldProjection() const noexcept { return worldProjection_; }
@@ -63,6 +66,10 @@ public:
 	tl::expected<void, std::string> OpenVendor(uint32_t storeId, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs);
 	/** Closes the active server-backed vendor and waits for its authoritative snapshot. */
 	tl::expected<void, std::string> CloseVendor(uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> OpenStash(uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> CloseStash(uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> DepositStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> WithdrawStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PurchaseVendor(uint32_t storeId, uint32_t storeSlot, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OpenSmithStore(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OpenWitchStore(uint64_t requestedTick, uint64_t nowMs);
@@ -141,6 +148,8 @@ public:
 	[[nodiscard]] std::optional<ProjectedSpellTargetingKind> SpellTargetingKindForSpell(uint32_t spellId) const noexcept;
 	/** Finds the authoritative location of an item, including while it is held by the legacy cursor. */
 	[[nodiscard]] std::optional<ServerBackedItemReference> PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept;
+	/** Finds the authoritative stash item anchored at a page/cell. */
+	[[nodiscard]] std::optional<ServerBackedItemReference> StashItemReferenceAt(uint32_t page, uint32_t cell) const noexcept;
 	/** Retains a native inventory drag selection while authoritative snapshots refresh. */
 	[[nodiscard]] bool BeginInventoryItemDrag(uint32_t itemSeed) noexcept;
 	/** Cancels the presentation-only inventory drag selection. */

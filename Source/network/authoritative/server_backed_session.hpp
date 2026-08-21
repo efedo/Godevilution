@@ -56,6 +56,12 @@ public:
 	tl::expected<void, std::string> OpenVendor(uint32_t storeId, uint64_t requestedTick, uint64_t nowMs);
 	/** Closes the active vendor and waits for the authoritative empty snapshot. */
 	tl::expected<void, std::string> CloseVendor(uint64_t requestedTick, uint64_t nowMs);
+	/** Opens the server-owned stash session and waits for its projection. */
+	tl::expected<void, std::string> OpenStash(uint64_t requestedTick, uint64_t nowMs);
+	/** Closes the server-owned stash session and waits for its projection. */
+	tl::expected<void, std::string> CloseStash(uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> DepositStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> WithdrawStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
 
 	/** Purchases one stable vendor slot and waits for the updated snapshot. */
 	tl::expected<void, std::string> Purchase(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs);

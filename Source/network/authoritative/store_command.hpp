@@ -20,6 +20,7 @@ enum class ServerBackedItemLocation {
 	Inventory,
 	Belt,
 	Equipment,
+	Stash,
 };
 
 struct ServerBackedItemReference {
@@ -27,6 +28,8 @@ struct ServerBackedItemReference {
 	uint32_t slot = 0;
 	/** Stable content identity; zero preserves positional compatibility. */
 	uint32_t stableItemId = 0;
+	/** Native-compatible stash page; ignored for non-stash references. */
+	uint32_t page = 0;
 };
 
 enum class ServerBackedItemServiceSourceKind {
@@ -56,6 +59,10 @@ struct ServerBackedCastSource {
 
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeOpenStoreCommand(uint32_t storeId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeCloseStoreCommand(uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeOpenStashCommand(uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeCloseStashCommand(uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeDepositStashGoldCommand(uint32_t amount, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeWithdrawStashGoldCommand(uint32_t amount, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakePurchaseCommand(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSellItemCommand(uint32_t inventoryIndex, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCommand(uint32_t inventoryIndex, uint64_t requestedTick);
