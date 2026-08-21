@@ -26,8 +26,8 @@ Status date: 2026-08-21
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,428, Server 420, and Godot protocol 156. On 2026-08-21, the rebuilt native
-replay runner passed 91 of 91 tests and the managed replay fixture class passed
+1,428, Server 421, and Godot protocol 156. On 2026-08-21, the rebuilt native
+replay runner passed 92 of 92 tests and the managed replay fixture class passed
 without failures. These counts are a dated verification baseline, not a
 substitute for rebuilding the projects before a future run.
 
@@ -693,7 +693,9 @@ substitute for rebuilding the projects before a future run.
   state also has a shared first-tick decrement checkpoint; the compatibility
   adapter accepts an optional spawn planner so the admission and delay cases
   exercise the same authoritative branch, while a player-impact checkpoint
-  verifies native hit RNG, Q6 damage, GotHit timing, and projectile removal.
+  verifies native hit RNG, Q6 damage, GotHit timing, and projectile removal;
+  a seeded miss checkpoint preserves the projectile through its remaining
+  travel tick before expiry.
 
 - Lich-family MonsterMagic misses now preserve the living player's state and
   the projectile's travel phase while retaining the failed occupant identity;

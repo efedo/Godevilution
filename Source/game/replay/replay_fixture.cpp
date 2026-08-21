@@ -4832,7 +4832,8 @@ void AdvanceReplayHorkSpawnsOneTick(
 			        - 2 * static_cast<int>(state.characterLevel) - 2 * distance),
 			    0,
 			    100);
-			if (std::max(GenerateRnd(state, 100), 0) < hitChance) {
+			const bool hit = std::max(GenerateRnd(state, 100), 0) < hitChance;
+			if (hit) {
 				// Native PlayerMHit consumes the zero-width damage roll even
 				// though Hork Spawn always applies its one-point minimum.
 				static_cast<void>(GenerateRnd(state, 1));
@@ -4842,9 +4843,9 @@ void AdvanceReplayHorkSpawnsOneTick(
 					state.combatMode = 7;
 					state.combatModeEndTick = tick + 6;
 				}
+				iterator = state.projectiles.erase(iterator);
+				continue;
 			}
-			iterator = state.projectiles.erase(iterator);
-			continue;
 		}
 		if (projectile.remainingTicks == 0) {
 			iterator = state.projectiles.erase(iterator);

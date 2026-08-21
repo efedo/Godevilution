@@ -1817,6 +1817,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnMissPreservesTravelBeforeExpiry()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-miss.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -2787,6 +2812,7 @@ public sealed class ReplayFixtureTests
             fixture.InitialState.Life,
             fixture.InitialState.Mana,
             startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
             startingPositionX: fixture.InitialState.PositionX,
             startingPositionY: fixture.InitialState.PositionY,
             startingLevelId: fixture.InitialState.LevelId,

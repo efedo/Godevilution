@@ -79,6 +79,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-autonomous.json" Link="Fixtures/gameplay-hork-spawn-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-delay.json" Link="Fixtures/gameplay-hork-spawn-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-impact.json" Link="Fixtures/gameplay-hork-spawn-impact.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-miss.json" Link="Fixtures/gameplay-hork-spawn-miss.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-autonomous.json" Link="Fixtures/gameplay-blood-star-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-impact.json" Link="Fixtures/gameplay-blood-star-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-secondary-block.json" Link="Fixtures/gameplay-blood-star-secondary-block.json" CopyToOutputDirectory="PreserveNewest" />
