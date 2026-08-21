@@ -8,10 +8,10 @@ All notable changes to this fork are documented below.
   with authoritative C# snapshots, preserve checked-in base item names in the
   native store fixture, and add native Firebolt player-collision parity for
   ordinary and Hellfire shield-block paths. Skip the petrified-target Bone
-  Spirit hit roll to preserve native RNG order, and keep generic native
-  monster pursuit out of the SkeletonRanged arrow lane. The rebuilt native
-  runner now passes 82 of 88 tests, with the remaining mismatches documented in
-  `docs/replay-fixtures.md`.
+  Spirit hit roll to preserve native RNG order, keep generic native monster
+  pursuit out of autonomous ranged lanes, and align Succubus/Lich projectile
+  admission, damage, block, hit-recovery, and canonical monster-range state.
+  The rebuilt native replay runner now passes all 88 tests.
 
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;

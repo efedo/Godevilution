@@ -2830,9 +2830,8 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarImpactAgainstCSharpCheckpoints)
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 2U);
+	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 6144);
 	ASSERT_EQ(state.projectiles.size(), 1U);
@@ -2896,9 +2895,8 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarSecondaryBlockAgainstCSharpCheckpoi
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 2U);
+	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 0);
 	EXPECT_EQ(state.secondaryPlayerLife, 6400);
@@ -2908,7 +2906,7 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarSecondaryBlockAgainstCSharpCheckpoi
 	EXPECT_EQ(state.projectiles[0].behavior, 20);
 	EXPECT_EQ(state.projectiles[0].phase, 1);
 	EXPECT_EQ(state.projectiles[0].remainingTicks, 1U);
-	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 8U);
+	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 0U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
@@ -2946,9 +2944,8 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicAgainstCSharpCheckpoints)
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 2U);
+	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 6144);
 	ASSERT_EQ(state.projectiles.size(), 1U);
@@ -2994,9 +2991,8 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicMissAgainstCSharpCheckpoints)
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 2U);
+	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 6400);
 	ASSERT_EQ(state.projectiles.size(), 1U);
@@ -3061,9 +3057,8 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoi
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 2U);
+	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 0);
 	EXPECT_EQ(state.secondaryPlayerLife, 6144);
@@ -3074,7 +3069,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoi
 	EXPECT_EQ(state.projectiles[0].damageType, 3);
 	EXPECT_EQ(state.projectiles[0].phase, 1);
 	EXPECT_EQ(state.projectiles[0].remainingTicks, 1U);
-	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 8U);
+	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 0U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 

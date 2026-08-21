@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-20
+Status date: 2026-08-21
 
 ## Current state
 
@@ -26,9 +26,10 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,428, Server 415, and Godot protocol 156. These counts are a dated
-verification baseline, not a substitute for rebuilding the projects before a
-future run.
+1,428, Server 415, and Godot protocol 156. On 2026-08-21, the rebuilt native
+replay runner passed 88 of 88 tests and the managed replay fixture class passed
+without failures. These counts are a dated verification baseline, not a
+substitute for rebuilding the projects before a future run.
 
 ## Implemented authoritative systems
 

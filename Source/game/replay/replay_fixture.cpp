@@ -441,6 +441,28 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
 		}
+		const int32_t targetMinDamage = state.combatTargetMinDamage == 0
+		        && state.combatTargetMaxDamage == 0
+		        && state.combatTargetAttackDamage != 0
+		    ? state.combatTargetAttackDamage
+		    : state.combatTargetMinDamage;
+		const int32_t targetMaxDamage = state.combatTargetMinDamage == 0
+		        && state.combatTargetMaxDamage == 0
+		        && state.combatTargetAttackDamage != 0
+		    ? state.combatTargetAttackDamage
+		    : state.combatTargetMaxDamage;
+		if (targetMinDamage != state.combatTargetAttackDamage
+		    || targetMaxDamage != state.combatTargetAttackDamage) {
+			hasher.AppendString("godevilution-monster-berserk-v1");
+			hasher.AppendBool(false);
+			hasher.AppendBool(false);
+			hasher.AppendBool(false);
+			hasher.AppendInt32(targetMinDamage);
+			hasher.AppendInt32(targetMaxDamage);
+			hasher.AppendInt32(targetMinDamage);
+			hasher.AppendInt32(targetMaxDamage);
+			hasher.AppendBool(false);
+		}
 		if (state.combatTargetToHit != 0) {
 			hasher.AppendString("godevilution-monster-accuracy-v1");
 			hasher.AppendInt32(state.combatTargetToHit);
@@ -4285,9 +4307,16 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetPetrified) {
 		return;
 	}
-	// SkeletonRanged owns its clear-lane movement and arrow admission below;
-	// the generic compact monster branch must not pursue it into melee range.
-	if (state.combatTargetNativeAi == "SkeletonRanged")
+	// Autonomous ranged identities own their movement and projectile admission
+	// below; the generic compact monster branch must not pursue them into melee.
+	if (state.combatTargetNativeAi == "SkeletonRanged"
+	    || state.combatTargetNativeAi == "Succubus"
+	    || state.combatTargetNativeAi == "LazarusSuccubus"
+	    || state.combatTargetNativeAi == "Lich"
+	    || state.combatTargetNativeAi == "ArchLich"
+	    || state.combatTargetNativeAi == "Psychorb"
+	    || state.combatTargetNativeAi == "Necromorb"
+	    || state.combatTargetNativeAi == "BoneDemon")
 		return;
 	const int distance = std::max(
 	    std::abs(state.positionX - state.combatTargetPositionX),
@@ -4444,7 +4473,9 @@ void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
 }
 
 /** Advances compact autonomous monster-magic lanes through native travel and impact. */
-void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &state)
+void AdvanceReplayAutonomousMonsterMagicOneTick(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
@@ -4468,7 +4499,14 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &sta
 			iterator = state.projectiles.erase(iterator);
 			continue;
 		}
-		const auto playerEntityAt = [&](int32_t x, int32_t y) {
+		const auto entityAt = [&](int32_t x, int32_t y) {
+			const bool monsterAtTile = state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && state.combatTargetLevelId == projectile.levelId
+			    && state.combatTargetPositionX == x
+			    && state.combatTargetPositionY == y;
+			if (monsterAtTile)
+				return state.combatTargetEntityId;
 			const bool primaryPlayerAtTile = state.life > 0
 			    && state.levelId == projectile.levelId
 			    && state.positionX == x
@@ -4524,20 +4562,31 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &sta
 			const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 			if (canBlock && blockRoll < blockChance) {
 				state.secondaryPlayerCombatMode = 6;
-				state.secondaryPlayerCombatModeEndTick = state.lastAppliedTick + 1 + 4;
+				state.secondaryPlayerCombatModeEndTick = tick + 4;
 			} else if (primaryPlayerAtTile) {
-				state.life = std::max(0, state.life - std::max(1, projectile.damage) * 64);
+				const int32_t damageQ6 = std::max(1, projectile.damage) * 64;
+				state.life = std::max(0, state.life - damageQ6);
+				if (state.life > 0
+				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+					state.combatMode = 7;
+					state.combatModeEndTick = tick + 6;
+				}
 			} else {
-				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - std::max(1, projectile.damage) * 64);
+				const int32_t damageQ6 = std::max(1, projectile.damage) * 64;
+				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
+				if (state.secondaryPlayerLife > 0
+				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+					state.secondaryPlayerCombatMode = 7;
+					state.secondaryPlayerCombatModeEndTick = tick + 6;
+				}
 			}
-			projectile.lastCollisionTargetEntityId = targetEntityId;
 			EnterReplayProjectileImpact(projectile);
 			return true;
 		};
 
 		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
 		if (visitedTiles.empty()) {
-			const uint32_t targetEntityId = playerEntityAt(projectile.positionX, projectile.positionY);
+			const uint32_t targetEntityId = entityAt(projectile.positionX, projectile.positionY);
 			if (projectile.lastCollisionTargetEntityId != targetEntityId
 			    && resolvePlayerAt(projectile.positionX, projectile.positionY)) {
 				++iterator;
@@ -4554,7 +4603,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &sta
 			projectile.traveledY = tile.traveledY;
 			if (resolvePlayerAt(tile.x, tile.y))
 				break;
-			projectile.lastCollisionTargetEntityId = playerEntityAt(tile.x, tile.y);
+			projectile.lastCollisionTargetEntityId = entityAt(tile.x, tile.y);
 		}
 		if (projectile.phase == 1) {
 			++iterator;
@@ -4847,7 +4896,7 @@ void AdvanceReplayStateToTick(
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
-		AdvanceReplayAutonomousMonsterMagicOneTick(state);
+		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state, simulationTick);
 		AdvanceFireballsOneTick(state, simulationTick);

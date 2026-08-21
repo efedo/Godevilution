@@ -127,7 +127,7 @@ fixture.
   manifest identity or adds a non-observable catalog entry; regenerate hashes
   only when canonical state actually changes, then verify both runners.
 
-## Known parity debt
+## Parity status
 
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
@@ -137,11 +137,9 @@ gate contains 83 fixture cases, including seeded and autonomous MonsterArrow
 source coverage, autonomous Succubus BloodStar admission/impact/block lanes,
 and a Lich-family MonsterMagic admission/hit/miss/secondary-impact lane. With
 the native `replay_test` executable rebuilt on 2026-08-21 and run from the
-repository root, 82 of 88 tests pass. The remaining 6 failures are known
-C++/C# behavior or projection mismatches in
-Succubus/Lich autonomous projectile lanes; they remain targeted
-parity work rather than untriaged
-fixture failures. The managed replay suite passes locally.
+repository root, all 88 tests pass. The managed replay suite also passes
+locally, so the checked-in native and C# replay projections currently share a
+clean deterministic gate.
 
 ## Current Coverage
 
