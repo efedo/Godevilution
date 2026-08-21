@@ -17,7 +17,7 @@ public partial class PresentationFeedback : Node
     private readonly AudioStreamPlayer healing = new();
     private readonly AudioStreamPlayer commandRejected = new();
     private readonly List<FloatingNumber> floatingNumbers = [];
-    private int appliedEventCount;
+    private ulong appliedEventSequence;
     private string? appliedCommandResult;
 
     public override void _Ready()
@@ -45,9 +45,12 @@ public partial class PresentationFeedback : Node
 
     public void Apply(AuthoritativeClientModel model, WorldPresentation? world = null)
     {
-        if (model.RecentEvents.Count < appliedEventCount)
-            appliedEventCount = 0;
-        for (var index = appliedEventCount; index < model.RecentEvents.Count; index++) {
+        if (appliedEventSequence < model.RecentEventsStartSequence)
+            appliedEventSequence = model.RecentEventsStartSequence;
+        if (appliedEventSequence > model.RecentEventsEndSequence)
+            appliedEventSequence = model.RecentEventsEndSequence;
+        var firstIndex = checked((int)(appliedEventSequence - model.RecentEventsStartSequence));
+        for (var index = firstIndex; index < model.RecentEvents.Count; index++) {
             var gameEvent = model.RecentEvents[index];
             switch (gameEvent.EventCase) {
                 case GameEvent.EventOneofCase.Damage:
@@ -62,7 +65,7 @@ public partial class PresentationFeedback : Node
                 && world.ScreenPositionForEntity(feedback.TargetEntityId) is { } position)
                 AddFloatingNumber(feedback, position);
         }
-        appliedEventCount = model.RecentEvents.Count;
+        appliedEventSequence = model.RecentEventsEndSequence;
 
         var result = model.LastCommandResult;
         if (result is null)

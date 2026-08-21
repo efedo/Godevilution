@@ -10,6 +10,11 @@ into transient floating feedback positioned from the latest snapshot. This is
 the server-backed presentation path; the native Lua floating-number mods remain
 available only to the legacy compatibility client.
 
+The protocol model retains the latest 256 accepted event entries. A monotonic
+sequence window lets feedback advance past entries that roll off, so a
+long-running session cannot grow the client event history without bound or
+silently duplicate or skip newly appended feedback.
+
 The HUD presents every server-provided memorized spell, charged item,
 consumable, and class ability as a selectable spell source. Selection is keyed
 by the authoritative source identity, so reconnects and snapshot updates do

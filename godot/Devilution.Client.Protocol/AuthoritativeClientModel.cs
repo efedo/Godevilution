@@ -6,8 +6,11 @@ namespace Devilution.Client.Protocol;
 public sealed class AuthoritativeClientModel
 {
     private const int MaxPredictedMoves = 16;
+    private const int MaxRecentEvents = 256;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
+    private ulong recentEventsStartSequence;
+    private ulong recentEventsEndSequence;
 
     public Snapshot? Snapshot { get; private set; }
 
@@ -16,6 +19,12 @@ public sealed class AuthoritativeClientModel
     public CommandResult? LastCommandResult { get; private set; }
 
     public IReadOnlyList<GameEvent> RecentEvents => recentEvents;
+
+    /** Sequence number of the first event retained in the bounded history. */
+    public ulong RecentEventsStartSequence => recentEventsStartSequence;
+
+    /** Exclusive sequence number immediately after the retained event history. */
+    public ulong RecentEventsEndSequence => recentEventsEndSequence;
 
     /** Server-owned armed traps available to presentation code for typed interaction. */
     public IReadOnlyList<ObjectSnapshot> ArmedTrapObjects => Snapshot?.Objects
@@ -143,8 +152,17 @@ public sealed class AuthoritativeClientModel
         }
 
         if (message.Events is { } events
-            && events.Tick >= CurrentTick)
+            && events.Tick >= CurrentTick) {
             recentEvents.AddRange(events.Events);
+            recentEventsEndSequence = checked(
+                recentEventsEndSequence + (ulong)events.Events.Count);
+            var excess = recentEvents.Count - MaxRecentEvents;
+            if (excess > 0) {
+                recentEvents.RemoveRange(0, excess);
+                recentEventsStartSequence = checked(
+                    recentEventsStartSequence + (ulong)excess);
+            }
+        }
 
         if (message.Error is not null)
             LastError = message.Error.Detail;
@@ -166,7 +184,10 @@ public sealed class AuthoritativeClientModel
 
     public void ClearRecentEvents()
     {
+        if (recentEvents.Count == 0)
+            return;
         recentEvents.Clear();
+        recentEventsStartSequence = recentEventsEndSequence;
     }
 
     /** Clears presentation-only movement prediction without discarding server state. */

@@ -571,6 +571,35 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void BoundsRecentEventHistoryAndAdvancesItsSequenceWindow()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 1,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+        var events = new EventBatch { Tick = 1 };
+        for (var amount = 0; amount < 300; amount++)
+            events.Events.Add(new GameEvent {
+                Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = (uint)amount },
+            });
+
+        model.Apply(new AuthoritativeClientMessage(Events: events));
+
+        Assert.Equal(256, model.RecentEvents.Count);
+        Assert.Equal(44U, model.RecentEvents[0].Experience.Amount);
+        Assert.Equal(299U, model.RecentEvents[^1].Experience.Amount);
+        Assert.Equal(44UL, model.RecentEventsStartSequence);
+        Assert.Equal(300UL, model.RecentEventsEndSequence);
+
+        model.ClearRecentEvents();
+
+        Assert.Empty(model.RecentEvents);
+        Assert.Equal(300UL, model.RecentEventsStartSequence);
+        Assert.Equal(300UL, model.RecentEventsEndSequence);
+    }
+
+    [Fact]
     public void RejectsSnapshotsWithoutALocalPlayerOrWithInvalidEntityIds()
     {
         var model = new AuthoritativeClientModel();

@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
 - Preserve Godot event batches that arrive immediately before their snapshot;
   stale event ticks are ignored and command-result presentation stays monotonic.
 
+- Bound Godot's retained authoritative event history to 256 entries and expose
+  a monotonic sequence window so feedback remains synchronized when old entries
+  roll off during long-running sessions.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

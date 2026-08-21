@@ -95,6 +95,10 @@ substitute for rebuilding the projects before a future run.
 - Godot retains event batches delivered before their matching snapshot and
   ignores older event ticks; command-result presentation cannot regress.
 
+- Godot bounds retained authoritative event history to 256 entries for
+  long-running sessions and advances a presentation sequence cursor when
+  entries roll off.
+
 - Native remote-player drawing now checks the projected player's authoritative
   level before rendering, while preserving level `0`'s compatibility wildcard;
   snapshots retained for inspection on other explicit levels cannot appear at
