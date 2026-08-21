@@ -282,6 +282,11 @@ public partial class Main : Node2D
             var cast = CreateCastRequest(target);
             if (cast is not null)
                 Queue(new Command { CastRequested = cast });
+            else if (model.WarpTriggerAt(target.X, target.Y) is { } warp
+                && !warp.Available) {
+                hud?.SetStatus("That route is not currently available.");
+                GetViewport().SetInputAsHandled();
+            }
             else
                 Queue(new Command {
                     MoveRequested = new MoveRequested {

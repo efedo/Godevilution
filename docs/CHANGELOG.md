@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make Godot authored warp markers actionable at the input boundary: available
+  markers continue through server-owned movement, while unavailable quest-gated
+  markers provide client feedback without submitting a futile transition.
+
 - Add live Godot protocol coverage that follows a validated authored progression
   warp through server-owned movement and level transition using a content overlay,
   then reconnects and verifies the destination state is retained.

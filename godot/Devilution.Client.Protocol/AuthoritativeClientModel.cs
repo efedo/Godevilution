@@ -30,6 +30,12 @@ public sealed class AuthoritativeClientModel
                 .ToArray()
             : [];
 
+    /** Returns the server-authored route marker at a tile on the active level. */
+    public WarpTriggerSnapshot? WarpTriggerAt(int x, int y)
+        => VisibleWarpTriggers.FirstOrDefault(trigger =>
+            trigger.TriggerX == x
+            && trigger.TriggerY == y);
+
     public ulong CurrentTick => Snapshot?.Tick ?? 0;
 
     /** The server puts the receiving participant first in every snapshot. */

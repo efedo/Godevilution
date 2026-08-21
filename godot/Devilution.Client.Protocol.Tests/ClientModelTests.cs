@@ -37,6 +37,8 @@ public sealed class ClientModelTests
         var trigger = Assert.Single(model.VisibleWarpTriggers);
         Assert.Equal(2U, trigger.WarpId);
         Assert.Equal((3, 4), (trigger.TriggerX, trigger.TriggerY));
+        Assert.Same(trigger, model.WarpTriggerAt(3, 4));
+        Assert.Null(model.WarpTriggerAt(2, 2));
     }
 
     [Fact]
