@@ -107,6 +107,10 @@ substitute for rebuilding the projects before a future run.
   local player's last applied server tick and filters event batches older than
   that projection before native feedback is applied.
 
+- The native authoritative player-state owner now also rejects a snapshot older
+  than its retained server tick, so delayed packets cannot regress state when a
+  lower-level adapter applies a projection outside the normal session poll.
+
 - Native remote-player drawing now checks the projected player's authoritative
   level before rendering, while preserving level `0`'s compatibility wildcard;
   snapshots retained for inspection on other explicit levels cannot appear at

@@ -440,6 +440,9 @@ bool ServerBackedPlayerState::ApplySnapshot(ProjectedPlayerSnapshot snapshot)
 {
 	if (snapshot.entityId == 0)
 		return false;
+	if (snapshot_
+	    && snapshot.serverTick < snapshot_->serverTick)
+		return false;
 	snapshot_ = std::move(snapshot);
 	return true;
 }

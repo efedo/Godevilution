@@ -57,6 +57,10 @@ All notable changes to this fork are documented below.
 - Ignore stale native local-player snapshots and their older event batches
   during polling, preserving the last authoritative local projection.
 
+- Harden the native authoritative player-state projection with a monotonic
+  server-tick guard. Direct adapter calls now reject delayed snapshots without
+  replacing the last accepted state, matching the session-level ordering rule.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

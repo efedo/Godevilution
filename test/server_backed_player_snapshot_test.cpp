@@ -1221,6 +1221,27 @@ TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)
 	EXPECT_EQ(state.FindInventoryItem(0), nullptr);
 }
 
+TEST(ServerBackedPlayerSnapshot, StateRejectsStaleSnapshotWithoutRegression)
+{
+	ServerBackedPlayerState state;
+	ProjectedPlayerSnapshot current;
+	current.entityId = 7;
+	current.serverTick = 12;
+	current.positionX = 4;
+	current.positionY = 5;
+	ASSERT_TRUE(state.ApplySnapshot(current));
+
+	ProjectedPlayerSnapshot stale = current;
+	stale.serverTick = 11;
+	stale.positionX = 1;
+	stale.positionY = 2;
+	EXPECT_FALSE(state.ApplySnapshot(stale));
+	ASSERT_NE(state.Snapshot(), nullptr);
+	EXPECT_EQ(state.Snapshot()->serverTick, 12U);
+	EXPECT_EQ(state.Snapshot()->positionX, 4);
+	EXPECT_EQ(state.Snapshot()->positionY, 5);
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 {
 	Player player;

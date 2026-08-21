@@ -94,6 +94,10 @@ The same tick boundary now protects the local player projection and native
 feedback from delayed stale snapshots and event batches. Correction buffering
 and remaining legacy interaction parity remain separate migrations.
 
+The lower-level authoritative player-state owner enforces the same monotonic
+server-tick rule, so delayed snapshots cannot regress state even when an adapter
+applies a validated projection outside the normal session poll.
+
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,
 and charge counts. The adapter rebuilds native equipment and spell masks from
