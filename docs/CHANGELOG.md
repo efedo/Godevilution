@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
 - Filter retained native remote-player presentation by authoritative level
   before drawing while preserving the level-zero compatibility wildcard.
 
+- Reset Godot entity-position interpolation when an authoritative level
+  identity changes, preventing cross-level movement trails.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

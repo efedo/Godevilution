@@ -28,6 +28,7 @@ On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
 1,428, Server 430, and Godot protocol 156. On 2026-08-21, the rebuilt native
 replay runner passed 96 of 96 tests and the managed replay fixture class passed
+without failures. The rebuilt Godot protocol suite also passed 161 of 161 tests
 without failures. These counts are a dated verification baseline, not a
 substitute for rebuilding the projects before a future run.
 
@@ -73,6 +74,9 @@ substitute for rebuilding the projects before a future run.
 - Godot local prediction now reconciles one matching pending move sequence
   against the authoritative move action, both before and after its effect tick,
   while retaining later queued inputs for bounded prediction.
+
+- Godot world-position caches now reset when an entity's authoritative level
+  identity changes; same-level snapshots retain smooth interpolation.
 
 - Native remote-player drawing now checks the projected player's authoritative
   level before rendering, while preserving level `0`'s compatibility wildcard;

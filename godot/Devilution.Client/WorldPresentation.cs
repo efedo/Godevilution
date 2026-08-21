@@ -14,6 +14,7 @@ public partial class WorldPresentation : Node2D
     private const float OriginX = 96;
     private const float OriginY = 96;
     private readonly Dictionary<uint, Vector2> displayedPositions = [];
+    private readonly Dictionary<uint, uint> displayedPositionLevels = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
     private Snapshot? snapshot;
@@ -27,6 +28,7 @@ public partial class WorldPresentation : Node2D
         predictedPlayerPosition = predicted;
         if (snapshot is null) {
             displayedPositions.Clear();
+            displayedPositionLevels.Clear();
             QueueRedraw();
             return;
         }
@@ -46,35 +48,38 @@ public partial class WorldPresentation : Node2D
                 ToScreen(
                     projected?.X ?? player.PositionX,
                     projected?.Y ?? player.PositionY),
-                delta);
+                delta,
+                player.LevelId);
         }
         foreach (var monster in snapshot.Monsters) {
             activeEntityIds.Add(monster.EntityId);
-            UpdatePosition(monster.EntityId, ToScreen(monster.PositionX, monster.PositionY), delta);
+            UpdatePosition(monster.EntityId, ToScreen(monster.PositionX, monster.PositionY), delta, monster.LevelId);
         }
         foreach (var item in snapshot.WorldItems) {
             activeEntityIds.Add(item.EntityId);
-            UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta);
+            UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta, item.LevelId);
         }
         foreach (var @object in snapshot.Objects) {
             activeEntityIds.Add(@object.EntityId);
-            UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta);
+            UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta, @object.LevelId);
         }
         foreach (var portal in snapshot.Portals) {
             if (localPlayer is not null && portal.SourceLevelId == localPlayer.LevelId) {
                 activeEntityIds.Add(portal.PortalId);
-                UpdatePosition(portal.PortalId, ToScreen(portal.SourcePositionX, portal.SourcePositionY), delta);
+                UpdatePosition(portal.PortalId, ToScreen(portal.SourcePositionX, portal.SourcePositionY), delta, localPlayer.LevelId);
             } else if (localPlayer is not null && portal.Bidirectional && portal.DestinationLevelId == localPlayer.LevelId) {
                 activeEntityIds.Add(portal.PortalId);
-                UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta);
+                UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta, localPlayer.LevelId);
             }
         }
         foreach (var projectile in snapshot.Projectiles) {
             activeEntityIds.Add(projectile.EntityId);
-            UpdatePosition(projectile.EntityId, ToScreen(projectile.PositionX, projectile.PositionY), delta);
+            UpdatePosition(projectile.EntityId, ToScreen(projectile.PositionX, projectile.PositionY), delta, projectile.LevelId);
         }
-        foreach (var entityId in displayedPositions.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+        foreach (var entityId in displayedPositions.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray()) {
             displayedPositions.Remove(entityId);
+            displayedPositionLevels.Remove(entityId);
+        }
         QueueRedraw();
     }
 
@@ -475,12 +480,15 @@ public partial class WorldPresentation : Node2D
         return displayedPositions.TryGetValue(entityId, out var position) ? position : ToScreen(x, y);
     }
 
-    private void UpdatePosition(uint entityId, Vector2 target, double delta)
+    private void UpdatePosition(uint entityId, Vector2 target, double delta, uint levelId)
     {
-        if (!displayedPositions.TryGetValue(entityId, out var current))
+        var levelChanged = displayedPositionLevels.TryGetValue(entityId, out var previousLevelId)
+            && AuthoritativeEntityPositionProjection.RequiresLevelReset(previousLevelId, levelId);
+        if (levelChanged || !displayedPositions.TryGetValue(entityId, out var current))
             displayedPositions[entityId] = target;
         else
             displayedPositions[entityId] = current.Lerp(target, 1.0f - Mathf.Exp((float)(-delta * 16)));
+        displayedPositionLevels[entityId] = levelId;
     }
 
     private static Vector2 ToScreen(int x, int y) => new(OriginX + (x + 0.5f) * TileSize, OriginY + (y + 0.5f) * TileSize);
