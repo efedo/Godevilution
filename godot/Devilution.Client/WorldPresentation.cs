@@ -42,9 +42,11 @@ public partial class WorldPresentation : Node2D
 
         foreach (var player in snapshot.Players) {
             activeEntityIds.Add(player.EntityId);
-            var projected = player.EntityId == localPlayer?.EntityId
-                ? predicted
-                : AuthoritativePlayerPositionProjection.Resolve(player);
+            ClientPresentationPosition? projected = player.EntityId == localPlayer?.EntityId
+                ? predicted is { } localPrediction
+                    ? new ClientPresentationPosition(localPrediction.X, localPrediction.Y)
+                    : null
+                : AuthoritativePlayerPositionProjection.ResolvePresentation(player, snapshot.Tick);
             var reset = displayedPlayerSnapshots.TryGetValue(player.EntityId, out var previous)
                 && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player);
             UpdatePosition(
@@ -498,6 +500,10 @@ public partial class WorldPresentation : Node2D
     }
 
     private static Vector2 ToScreen(int x, int y) => new(OriginX + (x + 0.5f) * TileSize, OriginY + (y + 0.5f) * TileSize);
+
+    private static Vector2 ToScreen(double x, double y) => new(
+        (float)(OriginX + (x + 0.5) * TileSize),
+        (float)(OriginY + (y + 0.5) * TileSize));
 
     private static bool IsVisible(uint levelId, uint currentLevel) => levelId == 0 || levelId == currentLevel;
 }

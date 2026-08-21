@@ -94,6 +94,11 @@ rebuilding the projects before a future run.
   restart-town actions and same-level relocations larger than one tile, while
   ordinary one-tile authoritative walks continue to interpolate.
 
+- Godot remote-player walk presentation now derives its fractional position
+  from the authoritative `started_at_tick`/`effect_tick` interval. The
+  presentation path clamps at the effect tick and never changes the discrete
+  reserved position used by gameplay or target selection.
+
 - Godot local movement prediction now retains at most 16 unacknowledged
   commands; additional input remains server-authoritative until snapshots catch
   up.

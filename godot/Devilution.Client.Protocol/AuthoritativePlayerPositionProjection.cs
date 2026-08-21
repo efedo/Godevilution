@@ -23,6 +23,41 @@ public static class AuthoritativePlayerPositionProjection
     }
 
     /**
+     * Returns the presentation position at an authoritative snapshot tick.
+     *
+     * Only an in-progress walk is interpolated. Gameplay and target selection
+     * continue to use Resolve, which returns the discrete occupied or reserved
+     * tile. A missing or zero-length timing window is treated as an immediate
+     * move so malformed timing cannot produce an unbounded presentation state.
+     */
+    public static ClientPresentationPosition ResolvePresentation(
+        PlayerSnapshot player,
+        ulong snapshotTick)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+
+        var x = (double)player.PositionX;
+        var y = (double)player.PositionY;
+        var action = player.CurrentAction;
+        if (action is not { Kind: PlayerActionKind.Move, EffectApplied: false })
+            return new ClientPresentationPosition(x, y);
+
+        var destinationX = x + action.DirectionX;
+        var destinationY = y + action.DirectionY;
+        if (action.EffectTick <= action.StartedAtTick)
+            return new ClientPresentationPosition(destinationX, destinationY);
+
+        var elapsed = snapshotTick <= action.StartedAtTick
+            ? 0UL
+            : Math.Min(snapshotTick - action.StartedAtTick, action.EffectTick - action.StartedAtTick);
+        var duration = action.EffectTick - action.StartedAtTick;
+        var progress = (double)elapsed / duration;
+        return new ClientPresentationPosition(
+            x + action.DirectionX * progress,
+            y + action.DirectionY * progress);
+    }
+
+    /**
      * Returns true when a cached player presentation position must snap to the
      * next authoritative position instead of interpolating toward it.
      */
@@ -50,3 +85,6 @@ public static class AuthoritativePlayerPositionProjection
     private static bool IsDiscontinuousAction(PlayerActionSnapshot? action)
         => action?.Kind is PlayerActionKind.LevelTransition or PlayerActionKind.RestartTown;
 }
+
+/** A fractional, presentation-only position derived from authoritative state. */
+public readonly record struct ClientPresentationPosition(double X, double Y);

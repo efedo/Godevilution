@@ -56,6 +56,66 @@ public sealed class AuthoritativePlayerPositionProjectionTests
     }
 
     [Fact]
+    public void PresentsAWalkAtItsAuthoritativeActionProgress()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                StartedAtTick = 10,
+                EffectTick = 14,
+                DirectionX = 1,
+            },
+        };
+
+        var position = AuthoritativePlayerPositionProjection.ResolvePresentation(player, 12);
+
+        Assert.Equal(4.5, position.X, precision: 6);
+        Assert.Equal(5, position.Y, precision: 6);
+    }
+
+    [Fact]
+    public void ClampsPresentationToTheReservedDestinationAtTheEffectTick()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                StartedAtTick = 10,
+                EffectTick = 14,
+                DirectionX = -1,
+                DirectionY = 1,
+            },
+        };
+
+        var position = AuthoritativePlayerPositionProjection.ResolvePresentation(player, 20);
+
+        Assert.Equal(3, position.X, precision: 6);
+        Assert.Equal(6, position.Y, precision: 6);
+    }
+
+    [Fact]
+    public void DoesNotInterpolateActionsOtherThanAnInProgressWalk()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Attack,
+                StartedAtTick = 10,
+                EffectTick = 14,
+                DirectionX = 1,
+            },
+        };
+
+        var position = AuthoritativePlayerPositionProjection.ResolvePresentation(player, 12);
+
+        Assert.Equal(new ClientPresentationPosition(4, 5), position);
+    }
+
+    [Fact]
     public void DoesNotApplyAttackDirectionFieldsToPresentationPosition()
     {
         var player = new PlayerSnapshot {

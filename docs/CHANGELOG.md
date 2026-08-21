@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Drive Godot remote-player walk presentation from the authoritative
+  `started_at_tick`/`effect_tick` interval, while leaving discrete reserved
+  tiles unchanged for gameplay and target selection.
+
 - Project native spell-source target metadata through authoritative player
   snapshots and use it to prevent tile/world casts from submitting accidental
   creature entity IDs; older snapshots retain the legacy selection behavior.
