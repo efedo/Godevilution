@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
 
 - Reject inconsistent authoritative player/vendor active-store identities at
   the native session boundary.
+- Filter retained native remote-player presentation by authoritative level
+  before drawing.
+
 
 - Stop projecting a second native walk destination after the authoritative
   movement effect has already advanced the player position.

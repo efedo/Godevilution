@@ -5,6 +5,7 @@
 #include "devilution.pb.h"
 #include "engine/cursor.h"
 #include "game/missiles/missiles.hpp"
+#include "game/levels/dungeon_common.h"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
@@ -678,6 +679,12 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	EXPECT_EQ(visitedEntityId, remote.entityId);
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
+	const uint8_t previousLevel = currentLevelNumber();
+	currentLevelNumber() = 2;
+	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(*remotePlayer));
+	currentLevelNumber() = 1;
+	EXPECT_FALSE(IsRemotePlayerOnActiveLevel(*remotePlayer));
+	currentLevelNumber() = previousLevel;
 	EXPECT_EQ(presentation.FindRemotePlayer(99), nullptr);
 	ProjectedPlayerSnapshot secondRemote = remote;
 	secondRemote.entityId = 3;

@@ -676,6 +676,11 @@ uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snaps
 	return GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
 }
 
+bool IsRemotePlayerOnActiveLevel(const Player &player)
+{
+	return player.isOnActiveLevel();
+}
+
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const ServerBackedWorldProjection &projection,
     uint32_t levelId,
@@ -924,7 +929,9 @@ void ServerBackedWorldPresentation::DrawRemotePlayers(
 {
 	for (const auto &[entityId, remote] : remotePlayers_) {
 		(void)entityId;
-		if (remote.tilePosition != tilePosition || !remote.player.animInfo.sprites)
+		if (!IsRemotePlayerOnActiveLevel(remote.player)
+		    || remote.tilePosition != tilePosition
+		    || !remote.player.animInfo.sprites)
 			continue;
 		DrawPlayer(out, remote.player, tilePosition, targetBufferPosition, lightTableIndex);
 	}

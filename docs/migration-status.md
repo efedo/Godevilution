@@ -65,6 +65,10 @@ substitute for rebuilding the projects before a future run.
 - Native local and remote player projections now use a walk action's future
   tile only until the authoritative movement effect is applied; post-effect
   snapshots no longer schedule a second client-side step.
+- Native remote-player drawing now checks the projected player's authoritative
+  level before rendering, so snapshots retained for inspection on other levels
+  cannot appear at matching coordinates in the active dungeon.
+
 
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains

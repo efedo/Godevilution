@@ -29,6 +29,9 @@ namespace devilution::authoritative {
 /** Maps authoritative equipment to the native weapon/armor sprite bitmask. */
 [[nodiscard]] uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snapshot);
 
+/** Returns whether a projected remote player belongs to the currently rendered level. */
+[[nodiscard]] bool IsRemotePlayerOnActiveLevel(const Player &player);
+
 /** Keeps legacy rendering and tile lookup state synchronized with the server. */
 class ServerBackedWorldPresentation {
 public:
