@@ -85,6 +85,9 @@ legacy name as a compatibility alias.
 The `dev.level.exportDun` helper now delegates to `debug.level.exportDun`; the
 native handler owns the legacy binary tile, monster, object, and transparency
 export while Lua retains the compatibility alias.
+The compatibility `system.get_ticks` wrapper now delegates to the shared native
+`GetMillisecondsSinceStartup` timer, so demo/replay time and live SDL time use
+one owner; the Lua function remains only as the legacy presentation alias.
 The `dev.items.spawn` and `dev.items.spawnUnique` helpers now delegate to
 `debug.items.spawn` and `debug.items.spawnUnique`; item generation, placement,
 and network spawning remain native-owned while Lua retains the compatibility

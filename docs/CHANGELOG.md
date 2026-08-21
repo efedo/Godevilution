@@ -21,6 +21,9 @@ All notable changes to this fork are documented below.
   host disposal, restores through a fresh adapter and save root, and retains
   the persisted character state over a new requested identity.
 
+- Route the compatibility system tick wrapper through the shared native timer,
+  preserving demo/replay timing while removing its direct SDL dependency.
+
 - Extend the end-to-end TCP ruleset-replacement soak to 32 generations for a
   connected session. The session migrates through the live host barrier,
   continues operating on every replacement, retires each prior target, and
