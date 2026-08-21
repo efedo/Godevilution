@@ -710,6 +710,28 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsZeroOrDuplicateQuestIdentities()
+    {
+        var model = new AuthoritativeClientModel();
+        var zeroId = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Quests = { new QuestSnapshot { RequiredProgress = 1 } },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: zeroId)));
+
+        var duplicateIds = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Quests = {
+                new QuestSnapshot { QuestId = 3002, RequiredProgress = 1 },
+                new QuestSnapshot { QuestId = 3002, RequiredProgress = 1 },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateIds)));
+    }
+
+    [Fact]
     public void ValidatesAndRetainsTheAuthoritativeHeldItem()
     {
         var model = new AuthoritativeClientModel();

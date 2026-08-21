@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
 - Cross-validate Godot authored object quest links against the current quest
   snapshot so unknown quest references are rejected before interaction routing.
 
+- Validate Godot quest identity uniqueness and core progress/variable bounds
+  before quest, towner, and authored-object selectors consume the catalog.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 

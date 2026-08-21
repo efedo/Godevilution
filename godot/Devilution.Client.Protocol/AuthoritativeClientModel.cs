@@ -118,6 +118,7 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid world item.");
                 }
             }
+            ValidateQuests(message.Snapshot);
             var questIds = message.Snapshot.Quests
                 .Select(quest => quest.QuestId)
                 .ToHashSet();
@@ -447,6 +448,37 @@ public sealed class AuthoritativeClientModel
             || !producesProjectile && @object.ProjectileSourceKind != 0) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid object effect metadata.");
+        }
+    }
+
+    private static void ValidateQuests(Snapshot snapshot)
+    {
+        if (snapshot.Quests.Count > 4096) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many quests.");
+        }
+
+        var questIds = new HashSet<uint>();
+        foreach (var quest in snapshot.Quests) {
+            if (quest.QuestId == 0
+                || !questIds.Add(quest.QuestId)
+                || quest.RequiredProgress == 0
+                || quest.Progress > quest.RequiredProgress
+                || (quest.Unavailable && (quest.Completed || quest.Progress != 0))
+                || quest.Variable1 is < 0 or > byte.MaxValue
+                || quest.Variable2 is < 0 or > byte.MaxValue
+                || quest.MessageId is < 0 or > short.MaxValue
+                || quest.TurnInTownerId is < -1 or > byte.MaxValue
+                || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
+                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInVariable1 is < -1 or > byte.MaxValue
+                || quest.CompletionUniqueIdentity.Length > 128) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid quest state.");
+            }
         }
     }
 

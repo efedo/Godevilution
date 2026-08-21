@@ -159,6 +159,9 @@ substitute for rebuilding the projects before a future run.
 - Godot rejects authored object links to quests absent from the same snapshot,
   keeping quest-object interaction selection fail-closed at the protocol edge.
 
+- Godot validates quest identity uniqueness and core progress/variable bounds
+  before exposing quest, towner, or authored-object interactions.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.
