@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add live Godot protocol coverage that follows a validated authored progression
+  warp through server-owned movement and level transition using a content overlay.
+
 - Harden authored warp-trigger projection validation at the Godot protocol boundary:
   destination level identities and coordinates must resolve to declared level
   geometry before presentation consumes a route, with malformed-snapshot coverage.

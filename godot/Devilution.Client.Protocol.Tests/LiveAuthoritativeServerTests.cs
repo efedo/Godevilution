@@ -35,6 +35,90 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportFollowsAnAuthoredProgressionWarp()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Warp-Transition-Overlay-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.godot-warp-transition",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.383.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "warps.tsv",
+                      "keys": ["warp_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "warps.tsv"),
+                "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\n"
+                + "1002\tcathedral_to_catacombs\t1\tcathedral\t0\t1\t2\tcatacombs\t10\t10\t0\t\t0\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                gameMode: "single-player");
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-warp-transition", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            var player = Assert.Single(model.Snapshot!.Players);
+            Assert.Equal(1U, player.LevelId);
+            Assert.Equal((0, 0), (player.PositionX, player.PositionY));
+            var trigger = Assert.Single(
+                model.VisibleWarpTriggers,
+                warp => warp.StableSymbol == "cathedral_to_catacombs");
+            Assert.Equal((0, 1), (trigger.TriggerX, trigger.TriggerY));
+            Assert.True(trigger.Available);
+
+            var sequence = client.Queue(new Command {
+                MoveRequested = new MoveRequested {
+                    DirectionX = 0,
+                    DirectionY = 1,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+            var transitioned = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Players.Single().LevelId == trigger.TargetLevelId);
+            model.Apply(transitioned);
+            var destination = Assert.Single(model.Snapshot!.Players);
+            Assert.Equal(2U, destination.LevelId);
+            Assert.Equal((10, 10), (destination.PositionX, destination.PositionY));
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GodotTransportCompletesLiveMoveAndCastSlice()
     {
         using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
