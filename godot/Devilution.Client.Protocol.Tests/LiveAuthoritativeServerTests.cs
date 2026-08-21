@@ -12,6 +12,45 @@ public sealed class LiveAuthoritativeServerTests
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
 
     [Fact]
+    public async Task GodotTransportAllocatesASeededAuthoritativeAttributePoint()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            startingStatPointsOverride: 1);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-stat-point", requestedClassId: 0));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        model.Apply(await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null));
+        var initial = Assert.Single(model.Snapshot!.Players);
+        var initialVitality = initial.Attributes.Vitality.Current;
+        var initialLife = initial.Life;
+        Assert.Equal(1U, initial.StatPoints);
+
+        var sequence = client.Queue(new Command {
+            AllocateAttributeRequested = new AllocateAttributeRequested {
+                Attribute = PlayerAttribute.Vitality,
+                Amount = 1,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, sequence)).Status);
+
+        var allocated = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single() is { } player
+                && player.StatPoints == 0
+                && player.Attributes.Vitality.Current == initialVitality + 1
+                && player.Life > initialLife);
+        model.Apply(allocated);
+    }
+
+    [Fact]
     public async Task GodotTransportReconcilesAuthoritativeStashSessionGoldAndMoves()
     {
         using var server = await StartedServer.StartAsync(
@@ -3265,6 +3304,7 @@ public sealed class LiveAuthoritativeServerTests
             uint? startingGoldOverride = null,
             int? startingLifeOverride = null,
             int? startingManaOverride = null,
+            uint? startingStatPointsOverride = null,
             uint? randomSeed = null,
             string? gameMode = null,
             string? saveRootOverride = null,
@@ -3313,6 +3353,11 @@ public sealed class LiveAuthoritativeServerTests
             if (startingManaOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-mana");
                 startInfo.ArgumentList.Add(startingManaOverride.Value.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture));
+            }
+            if (startingStatPointsOverride.HasValue) {
+                startInfo.ArgumentList.Add("--starting-stat-points");
+                startInfo.ArgumentList.Add(startingStatPointsOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (randomSeed.HasValue) {

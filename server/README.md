@@ -141,8 +141,9 @@ protocol and simulation in a local single-player session. Normal starting life a
 derived from the class catalog's native Q6 formulas, while the initial wallet,
 items, class skill, and learned spells come from the selected class loadout.
 The wallet is backed by physical Gold piles from session creation onward.
-`--starting-gold`, `--starting-life`, and `--starting-mana` remain optional
-development overrides; without them, activated content owns all three values.
+`--starting-gold`, `--starting-life`, `--starting-mana`, and
+`--starting-stat-points` remain optional development overrides; without them,
+activated content owns the initial resources and attribute-point state.
 The server generates and logs a fresh 32-bit gameplay RNG seed at startup. Use
 `--random-seed <uint32>` to reproduce an authoritative run exactly; the active
 module owns subsequent draws, and snapshots and saves persist the current state.

@@ -205,7 +205,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         uint? goldOverride,
         int? lifeOverride,
         int? manaOverride,
-        uint startingLevelId)
+        uint startingLevelId,
+        uint? statPointsOverride = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         var playerClass = playerClasses.GetRequired(classId);
@@ -310,7 +311,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             baseManaMaximum: baseMana,
             playerClass: playerClass,
             abilityKind: loadout.AbilityKind,
-            items: items);
+            items: items,
+            statPoints: statPointsOverride ?? 0);
     }
 
     public static AuthoritativePlayerLoadoutCatalog LoadTsv(

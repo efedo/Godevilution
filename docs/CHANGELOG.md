@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an optional standalone-server starting-stat-points override and live
+  Godot coverage for allocating a server-owned Vitality point through the
+  shared protocol and reconciling the resulting resources from a snapshot.
+
 - Enforce the authoritative stash session for Repair, Recharge, and Identify
   commands that target stash items; crafted closed-session requests now fail
   with `NotAllowed` instead of bypassing the presentation boundary.

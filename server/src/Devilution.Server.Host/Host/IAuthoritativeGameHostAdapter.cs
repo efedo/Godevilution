@@ -51,6 +51,9 @@ public sealed record AuthoritativePlayerStartConfiguration(
     int? Life,
     int? Mana)
 {
+    /** Optional server-owned primary-attribute points for development starts. */
+    public uint? StatPoints { get; init; }
+
     /** Host-owned seed for the selected module's deterministic simulation. */
     public uint RandomSeed { get; init; }
 

@@ -83,6 +83,7 @@ internal static class Program
             options.StartingGold,
             options.StartingLife,
             options.StartingMana) {
+            StatPoints = options.StartingStatPoints,
             RandomSeed = randomSeed,
             GameMode = options.GameMode,
             Difficulty = options.Difficulty,

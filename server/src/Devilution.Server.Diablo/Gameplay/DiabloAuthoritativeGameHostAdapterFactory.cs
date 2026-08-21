@@ -68,7 +68,8 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
                     playerStart.Gold,
                     playerStart.Life,
                     playerStart.Mana,
-                    activatedContent.DefaultStartingLevelId);
+                    activatedContent.DefaultStartingLevelId,
+                    playerStart.StatPoints);
             });
     }
 }
