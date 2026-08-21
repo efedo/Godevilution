@@ -242,6 +242,8 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (!Enum.IsDefined(intent.Source))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        if (IsClosedStashTarget(player, intent.Item))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
         if (isClassAbility) {
             if (!player.HasAbility(
@@ -329,6 +331,8 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (!Enum.IsDefined(intent.Source))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        if (IsClosedStashTarget(player, intent.Item))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
         if (isClassAbility) {
             if (!player.HasAbility(
@@ -732,6 +736,8 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (!Enum.IsDefined(intent.Source))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        if (IsClosedStashTarget(player, intent.Item))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
         var isConsumableItem = intent.Source == DiabloItemServiceSourceKind.ConsumableItem;
         if (isClassAbility) {
@@ -1672,6 +1678,14 @@ public sealed class DiabloStoreCommandProcessor
         return source.Location == destination.Location
             && source.Slot == destination.Slot
             && source.Page == destination.Page;
+    }
+
+    private static bool IsClosedStashTarget(
+        AuthoritativePlayerState player,
+        DiabloPlayerItemReference? reference)
+    {
+        return !player.StashOpen
+            && reference?.Location == DiabloPlayerItemLocation.Stash;
     }
 
     private static void RecalculateEquipmentResourcesIfChanged(

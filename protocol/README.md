@@ -45,8 +45,10 @@ Windows toolchain command.
   clearing vendor state optimistically.
 - `OpenStashRequested` and `CloseStashRequested` explicitly control the
   server-owned stash session and are safe to repeat. `MoveItemRequested` and
-  the stash gold commands are rejected while the stash is closed. A snapshot's
-  `stash_open` flag is authoritative; stash and vendor sessions cannot overlap.
+  the stash gold commands are rejected while the stash is closed. Repair,
+  Recharge, and Identify requests that target a stash item are rejected while
+  the stash is closed as well. A snapshot's `stash_open` flag is authoritative;
+  stash and vendor sessions cannot overlap.
 - `DepositStashGoldRequested` and `WithdrawStashGoldRequested` transfer only
   the requested amount between the server-owned wallet and stash gold. The
   server validates the open session and available balance before changing

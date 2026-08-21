@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforce the authoritative stash session for Repair, Recharge, and Identify
+  commands that target stash items; crafted closed-session requests now fail
+  with `NotAllowed` instead of bypassing the presentation boundary.
+
 - Add live Godot stash-session coverage for authoritative open/close control,
   wallet/stash-gold reconciliation, stable equipment-to-stash moves, and
   rejection of stash moves after the session closes.

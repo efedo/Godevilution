@@ -1443,6 +1443,85 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ItemServicesRejectClosedStashTargets()
+    {
+        var repairState = AuthoritativeItemState.Empty with {
+            StableItemId = 707,
+            Durability = 1,
+            MaxDurability = 20,
+        };
+        var repairPlayer = CreatePlayer(gold: 0);
+        repairPlayer.AbilitySpellId = 26;
+        repairPlayer.Stash.Add(new StashStoreItem(0, 0, 0, 0, 1001, 1, 0, repairState));
+        var repair = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            repairAbilitySpellId: 26).Execute(
+                repairPlayer,
+                new DiabloRepairItemIntent(
+                    new DiabloPlayerItemReference(
+                        DiabloPlayerItemLocation.Stash,
+                        0,
+                        repairState.StableItemId,
+                        0),
+                    0,
+                    DiabloItemServiceSourceKind.ClassAbility),
+                1);
+
+        var rechargeState = AuthoritativeItemState.Empty with {
+            StableItemId = 708,
+            ItemType = 10,
+            SpellId = 30,
+            Charges = 1,
+            MaxCharges = 10,
+        };
+        var rechargePlayer = CreatePlayer(gold: 0);
+        rechargePlayer.AbilitySpellId = 27;
+        rechargePlayer.Stash.Add(new StashStoreItem(0, 0, 0, 0, 1002, 1, 0, rechargeState));
+        var recharge = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            rechargeAbilitySpellId: 27).Execute(
+                rechargePlayer,
+                new DiabloRechargeItemIntent(
+                    new DiabloPlayerItemReference(
+                        DiabloPlayerItemLocation.Stash,
+                        0,
+                        rechargeState.StableItemId,
+                        0),
+                    0,
+                    DiabloItemServiceSourceKind.ClassAbility),
+                1);
+
+        var identifyState = AuthoritativeItemState.Empty with {
+            StableItemId = 709,
+            Magical = 1,
+            Identified = false,
+        };
+        var identifyPlayer = CreatePlayer(gold: 0);
+        identifyPlayer.AbilitySpellId = 5;
+        identifyPlayer.Stash.Add(new StashStoreItem(0, 0, 0, 0, 1003, 1, 0, identifyState));
+        var identify = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            identifyAbilitySpellId: 5).Execute(
+                identifyPlayer,
+                new DiabloIdentifyItemIntent(
+                    new DiabloPlayerItemReference(
+                        DiabloPlayerItemLocation.Stash,
+                        0,
+                        identifyState.StableItemId,
+                        0),
+                    0,
+                    DiabloItemServiceSourceKind.ClassAbility),
+                1);
+
+        Assert.Equal(DiabloRuleFailure.NotAllowed, repair.Failure);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, recharge.Failure);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, identify.Failure);
+        Assert.False(repairPlayer.StashOpen);
+        Assert.False(rechargePlayer.StashOpen);
+        Assert.False(identifyPlayer.StashOpen);
+    }
+
+    [Fact]
     public void StashGoldRequiresOpenSessionAndTransfersAtomically()
     {
         var player = CreatePlayer(gold: 100);

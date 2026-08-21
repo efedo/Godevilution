@@ -87,8 +87,9 @@ paid item services still require the matching authoritative active store.
 `OpenStashRequested` and `CloseStashRequested` establish the equivalent
 server-owned stash session. They are idempotent and mutually exclusive with an
 active vendor store. `PlayerSnapshot.stash_open` is the authoritative session
-state; stash item transfers and stash gold commands are rejected while it is
-false. `DepositStashGoldRequested` and `WithdrawStashGoldRequested` move only
+state; stash item transfers, stash gold commands, and item-service requests
+targeting stash items are rejected while it is false. `DepositStashGoldRequested`
+and `WithdrawStashGoldRequested` move only
 the requested amount after validating the open session and available balance.
 The existing stash-item/gold canonical-hash section remains unchanged for a
 closed session; an open session adds a separate tagged session extension.
