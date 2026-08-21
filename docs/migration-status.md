@@ -54,6 +54,10 @@ substitute for rebuilding the projects before a future run.
   level set to `_pLvlVisited`, with native-range and duplicate validation so
   legacy quest and dungeon-entry gates cannot read stale local state.
 
+- Native remote-player presentation now retains authoritative Diablo rank,
+  Reflect charges, and visited levels as well, keeping aura and inspection
+  state aligned without adding remote players to simulation pools.
+
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains
   available for compatibility mode.

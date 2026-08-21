@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Apply server-owned visited-level state to the authoritative native player's
   `_pLvlVisited` flags, rejecting invalid or duplicate level IDs.
 
+- Preserve authoritative Diablo rank, Reflect charges, and visited levels in
+  native remote-player presentation state.
+
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.
 

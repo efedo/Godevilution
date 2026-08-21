@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <limits>
+
 #include "devilution.pb.h"
 #include "engine/cursor.h"
 #include "game/missiles/missiles.hpp"
@@ -247,6 +249,15 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 	invalid.add_players()->set_entity_id(0);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalid, 7).has_value());
 	EXPECT_FALSE(ProjectPlayerSnapshots(invalid).has_value());
+
+	protocol::Snapshot invalidNativeState;
+	auto *invalidPlayer = invalidNativeState.add_players();
+	invalidPlayer->set_entity_id(7);
+	invalidPlayer->add_visited_level_ids(NUMLEVELS);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
+	invalidPlayer->clear_visited_level_ids();
+	invalidPlayer->set_reflect_charges(static_cast<uint32_t>(std::numeric_limits<uint16_t>::max()) + 1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
@@ -633,6 +644,9 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.gold = 1234;
 	remote.experience = 5678;
 	remote.characterLevel = 7;
+	remote.diabloKillLevel = 2;
+	remote.reflectCharges = 17;
+	remote.visitedLevelIds = { 4 };
 	remote.statPoints = 9;
 	remote.characterName = "Remote";
 	remote.strength = { 12, 14 };
@@ -653,6 +667,9 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 		EXPECT_EQ(player._pGold, 1234);
 		EXPECT_EQ(player._pExperience, 5678U);
 		EXPECT_EQ(player.getCharacterLevel(), 7);
+		EXPECT_EQ(player.pDiabloKillLevel, 2);
+		EXPECT_EQ(player.wReflections, 17);
+		EXPECT_TRUE(player._pLvlVisited[4]);
 		EXPECT_EQ(player._pStatPts, 9);
 		EXPECT_EQ(player.attributes.strength.base, 12);
 		EXPECT_EQ(player.attributes.strength.current, 14);

@@ -51,9 +51,13 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	std::unordered_set<uint32_t> visitedLevelIds;
 	for (const auto levelId : player->visited_level_ids()) {
+		if (levelId >= NUMLEVELS)
+			return tl::make_unexpected("Server-backed snapshot contains a visited level outside the native range.");
 		if (!visitedLevelIds.insert(levelId).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate visited levels.");
 	}
+	if (player->reflect_charges() > std::numeric_limits<uint16_t>::max())
+		return tl::make_unexpected("Server-backed snapshot contains Reflect charges outside the native range.");
 
 	ProjectedPlayerSnapshot projected {
 		.entityId = player->entity_id(),

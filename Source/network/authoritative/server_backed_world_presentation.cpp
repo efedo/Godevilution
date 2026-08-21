@@ -214,6 +214,8 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.plractive = true;
 	player.friendlyMode = snapshot.friendlyMode;
 	player.pManaShield = snapshot.manaShieldActive;
+	player.pDiabloKillLevel = static_cast<uint8_t>(std::min<uint32_t>(snapshot.diabloKillLevel, UINT8_MAX));
+	player.wReflections = static_cast<uint16_t>(snapshot.reflectCharges);
 	player._pGold = snapshot.gold > static_cast<uint32_t>(std::numeric_limits<int>::max())
 	    ? std::numeric_limits<int>::max()
 	    : static_cast<int>(snapshot.gold);
