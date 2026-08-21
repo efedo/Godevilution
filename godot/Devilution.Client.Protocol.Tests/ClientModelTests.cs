@@ -1138,6 +1138,61 @@ public sealed class ClientModelTests
         Assert.Equal(1UL, model.LastCommandResult!.ClientSequence);
     }
 
+    [Fact]
+    public void RetainsEventsThatArriveBeforeTheirAuthoritativeSnapshot()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 10,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+            Tick = 11,
+            Events = {
+                new GameEvent { Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 10 } },
+            },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 11,
+            Players = { new PlayerSnapshot { EntityId = 7, PositionX = 1 } },
+        }));
+
+        var gameEvent = Assert.Single(model.RecentEvents);
+        Assert.Equal(10U, gameEvent.Experience.Amount);
+        Assert.Equal(11UL, model.CurrentTick);
+    }
+
+    [Fact]
+    public void IgnoresStaleEventsAndDoesNotRegressCommandResultPresentation()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 10,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Acknowledgement: new CommandAck {
+            Results = {
+                new CommandResult { ClientSequence = 2, Status = CommandStatus.Accepted },
+            },
+        }));
+        model.Apply(new AuthoritativeClientMessage(
+            Events: new EventBatch {
+                Tick = 9,
+                Events = {
+                    new GameEvent { Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 99 } },
+                },
+            },
+            Acknowledgement: new CommandAck {
+                Results = {
+                    new CommandResult { ClientSequence = 1, Status = CommandStatus.Rejected },
+                },
+            }));
+
+        Assert.Empty(model.RecentEvents);
+        Assert.Equal(2UL, model.LastCommandResult!.ClientSequence);
+        Assert.Equal(CommandStatus.Accepted, model.LastCommandResult.Status);
+    }
+
     [Theory]
     [InlineData(PlayerActionKind.Death, PlayerCombatMode.Death, 0, 9U)]
     [InlineData(

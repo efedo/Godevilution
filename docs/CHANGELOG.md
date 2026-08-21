@@ -43,6 +43,9 @@ All notable changes to this fork are documented below.
 - Ignore older Godot snapshots after reconnect or queued delivery while still
   applying acknowledgements carried by the same model message.
 
+- Preserve Godot event batches that arrive immediately before their snapshot;
+  stale event ticks are ignored and command-result presentation stays monotonic.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

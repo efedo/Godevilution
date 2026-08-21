@@ -139,19 +139,25 @@ public sealed class AuthoritativeClientModel
                 predictedMoves.Clear();
             Snapshot = message.Snapshot;
             LastError = null;
-            recentEvents.Clear();
             RebuildPredictedPosition();
         }
 
-        if (message.Events is not null)
-            recentEvents.AddRange(message.Events.Events);
+        if (message.Events is { } events
+            && events.Tick >= CurrentTick)
+            recentEvents.AddRange(events.Events);
 
         if (message.Error is not null)
             LastError = message.Error.Detail;
 
         if (message.Acknowledgement is not null) {
-            if (message.Acknowledgement.Results.Count > 0)
-                LastCommandResult = message.Acknowledgement.Results[^1].Clone();
+            if (message.Acknowledgement.Results.Count > 0) {
+                var latestResult = message.Acknowledgement.Results
+                    .OrderBy(result => result.ClientSequence)
+                    .Last();
+                if (LastCommandResult is null
+                    || latestResult.ClientSequence >= LastCommandResult.ClientSequence)
+                    LastCommandResult = latestResult.Clone();
+            }
             foreach (var result in message.Acknowledgement.Results)
                 predictedMoves.Remove(result.ClientSequence);
             RebuildPredictedPosition();

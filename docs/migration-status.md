@@ -28,7 +28,7 @@ On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
 1,428, Server 430, and Godot protocol 156. On 2026-08-21, the rebuilt native
 replay runner passed 96 of 96 tests and the managed replay fixture class passed
-without failures. The rebuilt Godot protocol suite also passed 165 of 165 tests
+without failures. The rebuilt Godot protocol suite also passed 167 of 167 tests
 without failures. These counts are a dated verification baseline, not a
 substitute for rebuilding the projects before a future run.
 
@@ -90,6 +90,9 @@ substitute for rebuilding the projects before a future run.
 
 - Godot ignores snapshots older than its current authoritative tick while still
   processing acknowledgements and other message payloads.
+
+- Godot retains event batches delivered before their matching snapshot and
+  ignores older event ticks; command-result presentation cannot regress.
 
 - Native remote-player drawing now checks the projected player's authoritative
   level before rendering, while preserving level `0`'s compatibility wildcard;
