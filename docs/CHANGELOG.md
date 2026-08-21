@@ -15,15 +15,19 @@ All notable changes to this fork are documented below.
 
 - Reject inconsistent authoritative player/vendor active-store identities at
   the native session boundary.
-- Filter retained native remote-player presentation by authoritative level
-  before drawing while preserving the level-zero compatibility wildcard.
-
 
 - Stop projecting a second native walk destination after the authoritative
+  movement effect has already advanced the player position.
+
 - Align Godot walk-position projection with the authoritative effect-applied
   flag so reconciled snapshots do not schedule a second client-side step.
 
-  movement effect has already advanced the player position.
+- Reconcile a matching pending Godot move command against the server action
+  before applying later queued movement predictions.
+
+- Filter retained native remote-player presentation by authoritative level
+  before drawing while preserving the level-zero compatibility wildcard.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.

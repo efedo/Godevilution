@@ -1002,6 +1002,12 @@ public sealed class ClientModelTests
     public void ValidatesTimedMovementAndPresentsItsReservedDestination()
     {
         var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 2, PositionY = 3 },
+            },
+        }));
+        model.TrackPredictedMove(12, 1, 0);
         var moving = new Snapshot {
             Players = {
                 new PlayerSnapshot {
@@ -1026,6 +1032,12 @@ public sealed class ClientModelTests
 
         Assert.Equal(new ClientPosition(3, 3), model.PredictedPlayerPosition);
         Assert.True(model.IsCorrectingPosition);
+        var applied = moving.Clone();
+        applied.Players[0].PositionX = 3;
+        applied.Players[0].CurrentAction.EffectApplied = true;
+        model.Apply(new AuthoritativeClientMessage(Snapshot: applied));
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
         var invalid = moving.Clone();
         invalid.Players[0].CurrentAction.ReadyTick = 19;
         Assert.Throws<InvalidDataException>(() =>

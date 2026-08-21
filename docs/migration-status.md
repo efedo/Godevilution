@@ -65,9 +65,14 @@ substitute for rebuilding the projects before a future run.
 - Native local and remote player projections now use a walk action's future
   tile only until the authoritative movement effect is applied; post-effect
   snapshots no longer schedule a second client-side step.
+
 - The Godot authoritative player-position projection now follows the same
   action lifecycle: it reserves a walk destination only before the server's
   movement effect tick, preventing a second client-side step after reconciliation.
+
+- Godot local prediction now reconciles one matching pending move sequence
+  against the authoritative move action, both before and after its effect tick,
+  while retaining later queued inputs for bounded prediction.
 
 - Native remote-player drawing now checks the projected player's authoritative
   level before rendering, while preserving level `0`'s compatibility wildcard;

@@ -169,8 +169,20 @@ public sealed class AuthoritativeClientModel
         var authoritativePosition = AuthoritativePlayerPositionProjection.Resolve(player);
         var x = authoritativePosition.X;
         var y = authoritativePosition.Y;
-        foreach (var move in predictedMoves.Values)
+        var authoritativeMove = player.CurrentAction is { Kind: PlayerActionKind.Move } action
+            ? action
+            : null;
+        var skippedAuthoritativeMove = false;
+        foreach (var move in predictedMoves.OrderBy(pair => pair.Key).Select(pair => pair.Value)) {
+            if (!skippedAuthoritativeMove
+                && authoritativeMove is not null
+                && move.DirectionX == authoritativeMove.DirectionX
+                && move.DirectionY == authoritativeMove.DirectionY) {
+                skippedAuthoritativeMove = true;
+                continue;
+            }
             (x, y) = (x + move.DirectionX, y + move.DirectionY);
+        }
 
         IsCorrectingPosition = x != player.PositionX || y != player.PositionY;
         PredictedPlayerPosition = IsCorrectingPosition ? new ClientPosition(x, y) : null;
