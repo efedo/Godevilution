@@ -74,7 +74,10 @@ authoritative snapshot is received, so the Godot presentation layer does not nee
 recreate its protocol model for a transient disconnect.
 The `Main` presentation node observes transport closure and poll failures, then
 retries with bounded exponential backoff while retaining the same authoritative
-model and pending-command ledger.
+model and pending-command ledger. Reconnect also clears transient movement
+prediction and the prior event history, so dialogue, victory, and floating
+feedback from the interrupted stream cannot be presented as part of the new
+authoritative stream.
 
 An authoritative snapshot may also contain an in-progress movement, attack,
 cast, death, level-transition, or restart-in-town action. The protocol model

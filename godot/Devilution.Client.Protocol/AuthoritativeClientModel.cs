@@ -176,6 +176,16 @@ public sealed class AuthoritativeClientModel
         RebuildPredictedPosition();
     }
 
+    /**
+     * Clears transient presentation state when reconnecting without discarding
+     * the authoritative snapshot or transport command-result ledger.
+     */
+    public void ResetTransientPresentation()
+    {
+        recentEvents.Clear();
+        ResetPrediction();
+    }
+
     public void TrackPredictedMove(ulong sequence, int directionX, int directionY)
     {
         if (sequence == 0 || (directionX == 0 && directionY == 0))

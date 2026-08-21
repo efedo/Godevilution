@@ -481,7 +481,7 @@ public partial class Main : Node2D
 
     private void StartReconnect(bool force)
     {
-        model.ResetPrediction();
+        model.ResetTransientPresentation();
         if (reconnectTask is null || reconnectTask.IsCompleted)
             reconnectTask = ReconnectLoopAsync(force);
     }

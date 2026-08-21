@@ -1105,6 +1105,33 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void ResetsTransientPresentationWithoutDroppingAuthoritativeState()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 4,
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 2, PositionY = 3 },
+            },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+            Tick = 4,
+            Events = {
+                new GameEvent { Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 10 } },
+            },
+        }));
+        model.TrackPredictedMove(1, 1, 0);
+
+        model.ResetTransientPresentation();
+
+        Assert.NotNull(model.Snapshot);
+        Assert.Equal(4UL, model.CurrentTick);
+        Assert.Empty(model.RecentEvents);
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
+    }
+
+    [Fact]
     public void IgnoresStaleSnapshotsWhileApplyingTheirAcknowledgements()
     {
         var model = new AuthoritativeClientModel();

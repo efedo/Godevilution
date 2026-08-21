@@ -38,7 +38,8 @@ All notable changes to this fork are documented below.
   identity or level changes, preventing old-level inputs from crossing levels.
 
 - Reset Godot presentation prediction when reconnecting while retaining the
-  server-side pending-command retry ledger.
+  server-side pending-command retry ledger, and clear the prior event history
+  so stale dialogue and victory feedback cannot survive into the new stream.
 
 - Ignore older Godot snapshots after reconnect or queued delivery while still
   applying acknowledgements carried by the same model message.

@@ -85,8 +85,9 @@ substitute for rebuilding the projects before a future run.
 - Godot clears pending local movement prediction when the authoritative player
   identity or level changes, so transitions cannot replay old-level inputs.
 
-- Godot clears presentation-only prediction when reconnect begins; the client
-  still retains the transport command ledger for server-side retry.
+- Godot clears transient presentation prediction and event history when
+  reconnect begins; the client still retains the authoritative snapshot and
+  transport command ledger for server-side retry.
 
 - Godot ignores snapshots older than its current authoritative tick while still
   processing acknowledgements and other message payloads.
