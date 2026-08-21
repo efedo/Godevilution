@@ -217,6 +217,12 @@ selecting equipment enables the same stable-reference sell, repair, recharge,
 and identify services. Godot never mutates equipment or resolves slot
 topology locally.
 
+When the snapshot contains unspent level-up points, the HUD displays the
+server-owned primary attributes and enables one-point Strength, Magic,
+Dexterity, and Vitality requests. The server validates the spend and returns
+the resulting attributes and resources; Godot does not apply the increase
+locally.
+
 Right-clicking a visible monster or living remote player submits an
 authoritative `AttackRequested` intent for that entity. The presentation client
 resolves the clicked tile, including a remote player's reserved walk

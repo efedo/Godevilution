@@ -181,6 +181,10 @@ substitute for rebuilding the projects before a future run.
   identify through stable equipment references, and submits explicit
   inventory/equipment transfers without local topology decisions.
 
+- Godot now displays server-owned primary attributes and stat points and sends
+  one-point allocation intents for Strength, Magic, Dexterity, and Vitality;
+  resulting values remain snapshot-authoritative.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.

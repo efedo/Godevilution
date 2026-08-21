@@ -11,6 +11,7 @@ public partial class HudPresentation : CanvasLayer
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
     private readonly Label state = new();
+    private readonly Label attributes = new();
     private readonly Label clock = new();
     private readonly Label inventory = new();
     private readonly Label store = new();
@@ -40,6 +41,10 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button readBookSelected = new() { Text = "Read book selected" };
     private readonly Button useConsumableSelected = new() { Text = "Use consumable selected" };
     private readonly Button applyOilSelected = new() { Text = "Apply oil to target" };
+    private readonly Button allocateStrength = new() { Text = "+Strength" };
+    private readonly Button allocateMagic = new() { Text = "+Magic" };
+    private readonly Button allocateDexterity = new() { Text = "+Dexterity" };
+    private readonly Button allocateVitality = new() { Text = "+Vitality" };
     private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
@@ -77,6 +82,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? DisarmTrapRequested;
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<PlayerItemReference, PlayerItemReference>? MoveItemRequested;
+    public event Action<PlayerAttribute>? AllocateAttributeRequested;
     public event Action<uint>? OperateObjectRequested;
     public event Action<uint>? AdvanceQuestRequested;
     public event Action<uint, uint>? QuestTownerInteractionRequested;
@@ -117,6 +123,13 @@ public partial class HudPresentation : CanvasLayer
         sideBox.AddChild(new Label { Text = "AUTHORITATIVE CLIENT" });
         sideBox.AddChild(commandFeedback);
         sideBox.AddChild(diagnostics);
+        sideBox.AddChild(attributes);
+        var attributeControls = new GridContainer { Columns = 2 };
+        foreach (var button in new Control[] {
+            allocateStrength, allocateMagic, allocateDexterity, allocateVitality,
+        })
+            attributeControls.AddChild(button);
+        sideBox.AddChild(attributeControls);
         sideBox.AddChild(new Label { Text = "Spell sources (click to select; Q/E cycles)" });
         spellSources.CustomMinimumSize = new Vector2(340, 100);
         sideBox.AddChild(spellSources);
@@ -226,6 +239,10 @@ public partial class HudPresentation : CanvasLayer
         readBookSelected.Pressed += () => InvokeSelectedItemAction(ReadBookRequested);
         useConsumableSelected.Pressed += () => InvokeSelectedItemAction(UseConsumableRequested);
         applyOilSelected.Pressed += ApplyOil;
+        allocateStrength.Pressed += () => AllocateAttributeRequested?.Invoke(PlayerAttribute.Strength);
+        allocateMagic.Pressed += () => AllocateAttributeRequested?.Invoke(PlayerAttribute.Magic);
+        allocateDexterity.Pressed += () => AllocateAttributeRequested?.Invoke(PlayerAttribute.Dexterity);
+        allocateVitality.Pressed += () => AllocateAttributeRequested?.Invoke(PlayerAttribute.Vitality);
         disarmTrap.Pressed += () => {
             if (availableTrapEntityId is { } entityId)
                 DisarmTrapRequested?.Invoke(entityId);
@@ -250,6 +267,7 @@ public partial class HudPresentation : CanvasLayer
 
         status.Text = "Starting...";
         commandFeedback.Text = "Commands are sent to the authoritative server.";
+        attributes.Text = "Attributes\nWaiting for authoritative snapshot";
         inventory.Text = "Inventory\nWaiting for authoritative snapshot";
         store.Text = "No active store";
         dialog.Text = "No interaction selected.";
@@ -321,6 +339,7 @@ public partial class HudPresentation : CanvasLayer
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
             : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.ReflectCharges > 0 ? $"   Reflect {player.ReflectCharges}" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize) ? "   Etherealize" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
+        attributes.Text = FormatAttributes(player);
 
         var victoryEvent = model.RecentEvents.LastOrDefault(
             @event => @event.EventCase == GameEvent.EventOneofCase.Victory);
@@ -350,6 +369,7 @@ public partial class HudPresentation : CanvasLayer
         availableQuestTownerInteraction = AuthoritativeQuestTownerInteractionSelector.Select(model.Snapshot);
 
         var connected = client?.IsConnected == true;
+        var hasStatPoints = connected && player?.StatPoints > 0;
         var activeStore = model.Snapshot?.ActiveStore;
         var hasInventory = player is not null && player.Inventory.Count > 0;
         var hasSelectedInventory = hasInventory && selectedInventoryIndex >= 0 && selectedInventoryIndex < player!.Inventory.Count;
@@ -375,6 +395,10 @@ public partial class HudPresentation : CanvasLayer
             && AuthoritativeItemActionRules.IsTargetedConsumable(selectedItemAction);
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
+        allocateStrength.Disabled = !hasStatPoints;
+        allocateMagic.Disabled = !hasStatPoints;
+        allocateDexterity.Disabled = !hasStatPoints;
+        allocateVitality.Disabled = !hasStatPoints;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
         sellSelected.Disabled = !connected || !hasSelectedItem;
         repairSelected.Text = activeStore is null && hasRepairAbility
@@ -664,6 +688,16 @@ public partial class HudPresentation : CanvasLayer
             ? string.Empty
             : $"\nHeld: {DescribeItem(player.HeldItem.State)}";
         return $"Inventory ({player.Inventory.Count})\nBelt ({player.Belt.Count})\nEquipment ({player.Equipment.Count})\nClick an item to select it; click an empty cell to request a move.{held}";
+    }
+
+    private static string FormatAttributes(PlayerSnapshot? player)
+    {
+        if (player is null)
+            return "Attributes\nWaiting for authoritative snapshot";
+        var attributes = player.Attributes;
+        return $"Attributes (points: {player.StatPoints})\n"
+            + $"Strength {attributes?.Strength?.Base ?? 0}  Magic {attributes?.Magic?.Base ?? 0}\n"
+            + $"Dexterity {attributes?.Dexterity?.Base ?? 0}  Vitality {attributes?.Vitality?.Base ?? 0}";
     }
 
     private static string FormatStoreItem(StoreItemSnapshot item)

@@ -106,6 +106,12 @@ public partial class Main : Node2D
                 Destination = destination,
             },
         });
+        hud.AllocateAttributeRequested += attribute => QueueIfConnected(new Command {
+            AllocateAttributeRequested = new AllocateAttributeRequested {
+                Attribute = attribute,
+                Amount = 1,
+            },
+        });
         hud.OperateObjectRequested += entityId => QueueIfConnected(new Command { OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = entityId } });
         hud.AdvanceQuestRequested += questId => QueueIfConnected(new Command { AdvanceQuestRequested = new AdvanceQuestRequested { QuestId = questId } });
         hud.QuestTownerInteractionRequested += (questId, townerId) => QueueIfConnected(new Command {

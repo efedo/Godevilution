@@ -36,6 +36,9 @@ All notable changes to this fork are documented below.
   through stable equipment references, and submit explicit inventory/equipment
   transfers through the existing server-owned item protocol.
 
+- Add snapshot-driven Godot attribute display and one-point level-up controls
+  backed by the existing server-owned allocation command.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 
