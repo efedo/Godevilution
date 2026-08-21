@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.381.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.382.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -379,6 +379,57 @@ public sealed class ShippedContentTests
         Assert.True(generated.BlockedCells.Count > 0);
         Assert.True(generated.MissileBlockedCells.Count >= generated.BlockedCells.Count);
         Assert.True(generated.IsWalkable(1, 1));
+    }
+
+    [Fact]
+    public void BaseContentPackShipsProceduralLevelsForTheOrdinaryDungeonRange()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var catalog = AuthoritativeProceduralLevelCatalog.LoadTsv(
+            "procedural_levels.tsv",
+            pack.Tables.Single(table => table.SourcePath == "procedural_levels.tsv").ToCanonicalTsv());
+
+        Assert.Equal(14, catalog.Definitions.Count);
+        Assert.Equal(
+            Enumerable.Range(3, 14).Select(levelId => (uint)levelId),
+            catalog.Definitions.Select(definition => definition.LevelId));
+        Assert.Equal("caves", catalog.Definitions.First().StableSymbol);
+        Assert.Equal("hell_depth_16", catalog.Definitions.Last().StableSymbol);
+        Assert.All(catalog.Definitions, definition => {
+            Assert.Equal(40, definition.Width);
+            Assert.Equal(40, definition.Height);
+            Assert.False(definition.IsDefaultStart);
+            Assert.False(definition.SuppressMultiplayerDeathDrops);
+        });
+    }
+
+    [Fact]
+    public void ExplicitLevelRowsTakePrecedenceOverShippedProceduralRows()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var explicitLevels = TsvTable.Parse(
+            "levels.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "levels.tsv").ToCanonicalTsv()
+                + "3\tcaves\t17\t18\tnone\tnone\t0\t0\n");
+        var tables = basePack.Tables
+            .Where(table => table.SourcePath != "levels.tsv")
+            .Append(explicitLevels)
+            .ToArray();
+        var pack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            tables,
+            schema: basePack.Schema);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("explicit-level", "1", [pack])));
+        var level = Assert.Single(
+            activation.Simulation.WorldState.World!.Levels,
+            candidate => candidate.LevelId == 3);
+
+        Assert.Equal((17, 18, "caves"), (level.Width, level.Height, level.StableSymbol));
     }
 
     [Fact]
@@ -1846,7 +1897,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.381.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.382.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

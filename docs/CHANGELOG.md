@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Ship deterministic ordinary-level generation rows for base levels 3 through
+  16, with explicit variant `levels.tsv` rows taking precedence. Bump the
+  Diablo content schema to 1.382.
+
 - Allow `native_dun_objects.tsv` rows to carry an optional stable
   `object_symbol` cross-check while retaining numeric object-ID compatibility.
   Bump the Diablo content schema to 1.381.

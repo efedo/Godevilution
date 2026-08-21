@@ -371,8 +371,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (world is null) {
                 world = generatedWorld;
             } else {
-                foreach (var level in generatedWorld.Levels)
-                    world.AddLevel(level);
+                foreach (var level in generatedWorld.Levels) {
+                    // Explicit levels remain authoritative when a variant pack
+                    // overlays metadata for the same identity. Procedural rows
+                    // fill only levels absent from that pack's explicit world.
+                    if (!world.ContainsLevel(level.LevelId))
+                        world.AddLevel(level);
+                }
             }
         }
         var nativeDunLevels = content.TryGetTable(
