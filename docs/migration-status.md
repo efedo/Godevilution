@@ -28,7 +28,7 @@ On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
 1,428, Server 430, and Godot protocol 156. On 2026-08-21, the rebuilt native
 replay runner passed 96 of 96 tests and the managed replay fixture class passed
-without failures. The rebuilt Godot protocol suite also passed 189 of 189 tests
+without failures. The rebuilt Godot protocol suite also passed 190 of 190 tests
 without failures. These counts are a dated verification baseline, not a
 substitute for rebuilding the projects before a future run.
 
@@ -173,6 +173,9 @@ substitute for rebuilding the projects before a future run.
 - Godot rejects projected players and world entities outside a supplied level
   geometry, including moving-monster future cells, while allowing legacy
   snapshots that omit geometry for that level.
+
+- Godot rejects projected portal endpoints outside supplied level geometry,
+  while allowing legacy portal snapshots that omit geometry for either level.
 
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;

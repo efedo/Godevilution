@@ -173,6 +173,36 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsPortalEndpointsOutsideProjectedLevelGeometry()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 4,
+                    Height = 4,
+                },
+            },
+            Portals = {
+                new PortalSnapshot {
+                    PortalId = 12,
+                    SourceLevelId = 1,
+                    SourcePositionX = 0,
+                    SourcePositionY = 0,
+                    DestinationLevelId = 1,
+                    DestinationPositionX = 4,
+                    DestinationPositionY = 0,
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void SelectsAvailableContentOwnedQuestTownerStageByStateAndAdjacency()
     {
         var snapshot = new Snapshot {

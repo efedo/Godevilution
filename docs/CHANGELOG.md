@@ -28,6 +28,10 @@ All notable changes to this fork are documented below.
   geometry, including moving-monster future positions, while retaining the
   compatibility fallback when a level has no geometry projection.
 
+- Reject Godot projected portal endpoints outside supplied level geometry while
+  retaining the compatibility fallback when a portal level has no geometry
+  projection.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 

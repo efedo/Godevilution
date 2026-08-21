@@ -561,7 +561,16 @@ public sealed class AuthoritativeClientModel
             || snapshot.Projectiles.Any(projectile =>
                 !IsInBounds(projectile.LevelId, projectile.PositionX, projectile.PositionY))
             || snapshot.Corpses.Any(corpse =>
-                !IsInBounds(corpse.LevelId, corpse.PositionX, corpse.PositionY))) {
+                !IsInBounds(corpse.LevelId, corpse.PositionX, corpse.PositionY))
+            || snapshot.Portals.Any(portal =>
+                !IsInBounds(
+                    portal.SourceLevelId,
+                    portal.SourcePositionX,
+                    portal.SourcePositionY)
+                || !IsInBounds(
+                    portal.DestinationLevelId,
+                    portal.DestinationPositionX,
+                    portal.DestinationPositionY))) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains an entity outside projected level geometry.");
         }
