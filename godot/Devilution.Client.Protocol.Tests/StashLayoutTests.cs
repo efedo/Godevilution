@@ -36,6 +36,23 @@ public sealed class StashLayoutTests
     }
 
     [Fact]
+    public void KeepsEachPagedGridIndependentAcrossTheFullPageRange()
+    {
+        var items = new[] {
+            Item(0, 99, 1, 1),
+            Item(99, 0, 1, 1),
+        };
+
+        var first = StashLayout.Build(items, 0);
+        var last = StashLayout.Build(items, 99);
+
+        Assert.Equal(0, first.GetItemIndexAt(99));
+        Assert.Equal(-1, first.GetItemIndexAt(0));
+        Assert.Equal(1, last.GetItemIndexAt(0));
+        Assert.Equal(-1, last.GetItemIndexAt(99));
+    }
+
+    [Fact]
     public void ClientModelValidatesAndExposesAuthoritativeStashPage()
     {
         var model = new AuthoritativeClientModel();

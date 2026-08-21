@@ -23,11 +23,14 @@ public partial class HudPresentation : CanvasLayer
     private readonly ItemList spellSources = new();
     private readonly ItemList storeItems = new();
     private readonly ItemList stashItems = new();
+    private readonly OptionButton stashPageSelector = new();
     private readonly ItemList beltItems = new();
     private readonly ItemList equipmentItems = new();
     private readonly ItemList oilTargets = new();
     private readonly GridContainer inventoryGrid = new() { Columns = InventoryColumns };
+    private readonly GridContainer stashGrid = new() { Columns = StashLayout.ColumnCount };
     private readonly List<Button> inventoryCells = [];
+    private readonly List<Button> stashCells = [];
     private readonly List<uint> storeSlots = [];
     private readonly List<uint> beltSlots = [];
     private readonly List<uint> equipmentSlots = [];
@@ -68,12 +71,17 @@ public partial class HudPresentation : CanvasLayer
     private PanelContainer? sidePanel;
     private InventoryLayout inventoryLayout = InventoryLayout.Build(null, null, InventoryColumns, VisibleInventoryRows);
     private uint activeStoreId;
+    private uint stashPage;
     private uint? selectedStoreSlot;
     private uint? availableObjectEntityId;
     private uint? availableTrapEntityId;
     private uint? availableQuestId;
     private QuestTownerInteractionSnapshot? availableQuestTownerInteraction;
     private int selectedInventoryIndex = -1;
+    private int selectedStashItemIndex = -1;
+    private uint? selectedStashStableItemId;
+    private uint selectedStashItemPage;
+    private uint selectedStashItemCell;
     private uint? selectedBeltSlot;
     private uint? selectedEquipmentSlot;
     private PlayerItemReference? selectedItemReference;
@@ -165,6 +173,17 @@ public partial class HudPresentation : CanvasLayer
         sideBox.AddChild(storeItems);
         sideBox.AddChild(store);
         sideBox.AddChild(new Label { Text = "Stash (authoritative summary)" });
+        stashPageSelector.AddItem("Page 0");
+        for (var page = 1U; page < StashLayout.PageCount; page++)
+            stashPageSelector.AddItem($"Page {page}");
+        stashPageSelector.Select(0);
+        stashPageSelector.ItemSelected += index => {
+            stashPage = checked((uint)index);
+            ApplyStash(currentPlayer);
+        };
+        sideBox.AddChild(stashPageSelector);
+        stashGrid.CustomMinimumSize = new Vector2(340, 340);
+        sideBox.AddChild(stashGrid);
         stashItems.CustomMinimumSize = new Vector2(340, 90);
         sideBox.AddChild(stashItems);
         sideBox.AddChild(stash);
@@ -198,6 +217,17 @@ public partial class HudPresentation : CanvasLayer
             inventoryGrid.AddChild(cell);
         }
 
+        for (var index = 0; index < StashLayout.CellCount; index++) {
+            var cell = new Button {
+                CustomMinimumSize = new Vector2(32, 32),
+                Text = "·",
+            };
+            var cellIndex = index;
+            cell.Pressed += () => SelectOrMoveStashItem(cellIndex);
+            stashCells.Add(cell);
+            stashGrid.AddChild(cell);
+        }
+
         storeItems.ItemSelected += index => {
             var itemIndex = checked((int)index);
             selectedStoreSlot = itemIndex >= 0 && itemIndex < storeSlots.Count ? storeSlots[itemIndex] : null;
@@ -221,6 +251,7 @@ public partial class HudPresentation : CanvasLayer
             selectedEquipmentSlot = null;
             if (selectedBeltSlot is not null) {
                 selectedInventoryIndex = -1;
+                ClearSelectedStashItem();
                 selectedItemReference = ResolveSelectedItemReference(currentPlayer);
             }
         };
@@ -249,6 +280,7 @@ public partial class HudPresentation : CanvasLayer
             selectedEquipmentSlot = slot;
             selectedBeltSlot = null;
             selectedInventoryIndex = -1;
+            ClearSelectedStashItem();
             selectedItemReference = ResolveSelectedItemReference(currentPlayer);
         };
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
@@ -357,6 +389,25 @@ public partial class HudPresentation : CanvasLayer
         var player = model.Snapshot?.Players.FirstOrDefault();
         if (player is null || selectedInventoryIndex >= player.Inventory.Count)
             selectedInventoryIndex = -1;
+        if (player is null)
+            ClearSelectedStashItem();
+        else if (selectedStashStableItemId is { } stableItemId && stableItemId != 0) {
+            selectedStashItemIndex = FindStashItemIndex(
+                player,
+                stableItemId,
+                selectedStashItemPage,
+                selectedStashItemCell);
+            if (selectedStashItemIndex < 0)
+                ClearSelectedStashItem();
+        } else {
+            selectedStashItemIndex = FindStashItemIndex(
+                player,
+                selectedStashStableItemId,
+                selectedStashItemPage,
+                selectedStashItemCell);
+            if (selectedStashItemIndex < 0)
+                ClearSelectedStashItem();
+        }
         if (player is null || selectedBeltSlot is not { } beltSlot || !player.Belt.Any(item => item.Slot == beltSlot))
             selectedBeltSlot = null;
         if (player is null || selectedEquipmentSlot is not { } equipmentSlot || !player.Equipment.Any(item => item.Slot == equipmentSlot))
@@ -428,6 +479,7 @@ public partial class HudPresentation : CanvasLayer
         openStash.Disabled = !connected || stashOpen || activeStore is not null;
         closeStash.Disabled = !connected || !stashOpen;
         stashGoldAmount.Editable = connected && stashOpen;
+        stashPageSelector.Disabled = !connected;
         depositStashGold.Disabled = !connected || !stashOpen;
         withdrawStashGold.Disabled = !connected || !stashOpen;
         allocateStrength.Disabled = !hasStatPoints;
@@ -510,6 +562,26 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyStash(PlayerSnapshot? player)
     {
+        var layout = StashLayout.Build(player?.Stash, stashPage);
+        for (var cellIndex = 0; cellIndex < stashCells.Count; cellIndex++) {
+            var occupant = layout.Occupants[cellIndex];
+            var anchor = occupant >= 0 && occupant < layout.Anchors.Count
+                ? layout.Anchors[occupant]
+                : -1;
+            var cell = stashCells[cellIndex];
+            cell.Text = occupant < 0
+                ? "·"
+                : anchor == cellIndex
+                    ? occupant == selectedStashItemIndex ? $"[{occupant + 1}]" : $"{occupant + 1}"
+                    : "·";
+            cell.TooltipText = occupant >= 0
+                && player is not null
+                && occupant < player.Stash.Count
+                ? DescribeItem(player.Stash[occupant].Item?.State)
+                : "Empty stash cell. Select an item, then choose a destination.";
+            cell.Disabled = player is null || !player.StashOpen;
+        }
+
         stashItems.Clear();
         if (player is null) {
             stash.Text = "No authoritative stash projection";
@@ -521,9 +593,11 @@ public partial class HudPresentation : CanvasLayer
                 $"page {item.Page}, cell {item.Cell}: {DescribeItem(item.Item?.State)}");
         }
 
-        var pageZero = StashLayout.Build(player.Stash, 0);
-        var occupied = pageZero.Anchors.Count(cell => cell >= 0);
-        stash.Text = $"{(player.StashOpen ? "Open" : "Closed")}   Gold {player.StashGold}   Items {player.Stash.Count}   Page 0 occupied {occupied}";
+        var occupied = layout.Anchors.Count(cell => cell >= 0);
+        var selected = selectedStashItemIndex >= 0 && selectedStashItemIndex < player.Stash.Count
+            ? $"   Selected {selectedStashItemIndex + 1}"
+            : string.Empty;
+        stash.Text = $"{(player.StashOpen ? "Open" : "Closed")}   Gold {player.StashGold}   Items {player.Stash.Count}   Page {stashPage} occupied {occupied}{selected}";
     }
 
     private void InvokeStashGoldAction(Action<uint>? action)
@@ -640,11 +714,25 @@ public partial class HudPresentation : CanvasLayer
 
     private void SelectOrMoveInventoryItem(int cellIndex)
     {
+        if (selectedStashItemIndex >= 0 && currentPlayer is not null) {
+            if (ResolveSelectedItemReference(currentPlayer) is { } stashItem) {
+                MoveItemRequested?.Invoke(
+                    stashItem,
+                    new PlayerItemReference {
+                        Location = PlayerItemLocation.Inventory,
+                        Slot = checked((uint)cellIndex),
+                    });
+                ClearSelectedItem();
+            }
+            return;
+        }
+
         var occupant = inventoryLayout.Occupants[cellIndex];
         if (occupant >= 0) {
             selectedInventoryIndex = occupant;
             selectedEquipmentSlot = null;
             selectedBeltSlot = null;
+            ClearSelectedStashItem();
             selectedItemReference = ResolveSelectedItemReference(currentPlayer);
             return;
         }
@@ -668,6 +756,93 @@ public partial class HudPresentation : CanvasLayer
         }
         if (selectedInventoryIndex >= 0)
             MoveInventoryItemRequested?.Invoke(checked((uint)selectedInventoryIndex), checked((uint)cellIndex));
+    }
+
+    private void SelectOrMoveStashItem(int cellIndex)
+    {
+        var layout = StashLayout.Build(currentPlayer?.Stash, stashPage);
+        var occupant = layout.GetItemIndexAt(checked((uint)cellIndex));
+        if (selectedItemReference is { } source && source.Location != PlayerItemLocation.Stash) {
+            MoveItemRequested?.Invoke(
+                source,
+                new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = stashPage,
+                    Slot = checked((uint)cellIndex),
+                });
+            ClearSelectedItem();
+            return;
+        }
+
+        if (occupant >= 0 && currentPlayer is not null && occupant < currentPlayer.Stash.Count) {
+            if (selectedStashItemIndex >= 0 && occupant != selectedStashItemIndex
+                && ResolveSelectedItemReference(currentPlayer) is { } stashItem) {
+                MoveItemRequested?.Invoke(
+                    stashItem,
+                    new PlayerItemReference {
+                        Location = PlayerItemLocation.Stash,
+                        Page = stashPage,
+                        Slot = checked((uint)cellIndex),
+                    });
+                ClearSelectedItem();
+                return;
+            }
+            selectedStashItemIndex = occupant;
+            var selectedStashItem = currentPlayer.Stash[occupant];
+            var stableItemId = selectedStashItem.Item?.State?.StableItemId ?? 0;
+            selectedStashStableItemId = stableItemId == 0 ? null : stableItemId;
+            selectedStashItemPage = selectedStashItem.Page;
+            selectedStashItemCell = selectedStashItem.Cell;
+            selectedInventoryIndex = -1;
+            selectedEquipmentSlot = null;
+            selectedBeltSlot = null;
+            selectedItemReference = ResolveSelectedItemReference(currentPlayer);
+            ApplyStash(currentPlayer);
+            return;
+        }
+
+        if (selectedStashItemIndex >= 0 && currentPlayer is not null
+            && ResolveSelectedItemReference(currentPlayer) is { } sourceStashItem) {
+            MoveItemRequested?.Invoke(
+                sourceStashItem,
+                new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = stashPage,
+                    Slot = checked((uint)cellIndex),
+                });
+            ClearSelectedItem();
+        }
+    }
+
+    private void ClearSelectedStashItem()
+    {
+        selectedStashItemIndex = -1;
+        selectedStashStableItemId = null;
+        selectedStashItemPage = 0;
+        selectedStashItemCell = 0;
+    }
+
+    private void ClearSelectedItem()
+    {
+        selectedInventoryIndex = -1;
+        selectedBeltSlot = null;
+        selectedEquipmentSlot = null;
+        ClearSelectedStashItem();
+        selectedItemReference = null;
+    }
+
+    private static int FindStashItemIndex(
+        PlayerSnapshot player,
+        uint? stableItemId,
+        uint page,
+        uint cell)
+    {
+        for (var index = 0; index < player.Stash.Count; index++)
+            if (stableItemId is { } stable
+                ? player.Stash[index].Item?.State?.StableItemId == stable
+                : player.Stash[index].Page == page && player.Stash[index].Cell == cell)
+                return index;
+        return -1;
     }
 
     private void BuySelected()
@@ -713,6 +888,15 @@ public partial class HudPresentation : CanvasLayer
                 Slot = checked((uint)selectedInventoryIndex),
                 StableItemId = player.Inventory[selectedInventoryIndex].State?.StableItemId ?? 0,
             };
+        if (selectedStashItemIndex >= 0 && selectedStashItemIndex < player.Stash.Count) {
+            var stashItem = player.Stash[selectedStashItemIndex];
+            return new PlayerItemReference {
+                Location = PlayerItemLocation.Stash,
+                Page = stashItem.Page,
+                Slot = stashItem.Cell,
+                StableItemId = stashItem.Item?.State?.StableItemId ?? 0,
+            };
+        }
         if (selectedBeltSlot is { } beltSlot
             && player.Belt.FirstOrDefault(item => item.Slot == beltSlot) is { } beltItem)
             return new PlayerItemReference {
