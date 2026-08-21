@@ -114,11 +114,13 @@ object visual.
 Snapshots contain every assigned participant. The server puts this client's
 player first and orders the remaining players by entity ID. The client validates
 all identities and action state, applies prediction only to that first player,
-and renders same-level remote players from their authoritative coordinates,
-including the reserved destination of an in-progress one-tile walk. Remote
-players remain presentation-only; the client never advances their gameplay
-state. Replacing a snapshot removes positions for entities no longer present,
-and disconnecting clears all displayed entity state.
+and renders same-level remote players from authoritative coordinates. An
+in-progress one-tile walk is presented from its server-owned
+`started_at_tick`/`effect_tick` interval; discrete reserved destinations remain
+available for target selection. Remote players remain presentation-only; the
+client never advances their gameplay state. Replacing a snapshot removes
+positions for entities no longer present, and disconnecting clears all
+displayed entity state.
 When a player-targeted Resurrection or Heal Other source is selected, clicking a
 same-level remote player sends that player's stable entity ID. The server uses
 the active external spell behavior to admit the cast, validate life state,
@@ -230,7 +232,7 @@ vendor stock.
 
 Right-clicking a visible monster or living remote player submits an
 authoritative `AttackRequested` intent for that entity. The presentation client
-resolves the clicked tile, including a remote player's reserved walk
+resolves the clicked tile, including a remote player's discrete reserved walk
 destination, to a snapshot entity ID; the server owns range,
 timing, hit, damage, and action state. The protocol/server path admits adjacent
 melee and line-of-sight ranged attacks against a same-level remote player when
