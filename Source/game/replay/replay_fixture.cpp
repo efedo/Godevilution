@@ -4285,6 +4285,10 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetPetrified) {
 		return;
 	}
+	// SkeletonRanged owns its clear-lane movement and arrow admission below;
+	// the generic compact monster branch must not pursue it into melee range.
+	if (state.combatTargetNativeAi == "SkeletonRanged")
+		return;
 	const int distance = std::max(
 	    std::abs(state.positionX - state.combatTargetPositionX),
 	    std::abs(state.positionY - state.combatTargetPositionY));
