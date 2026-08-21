@@ -162,6 +162,10 @@ substitute for rebuilding the projects before a future run.
 - Godot validates quest identity uniqueness and core progress/variable bounds
   before exposing quest, towner, or authored-object interactions.
 
+- Godot world clicks now use server-owned target-cell movement before pickup,
+  authored-object, quest/towner, or portal commands when the current player
+  position does not satisfy the server interaction range.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.

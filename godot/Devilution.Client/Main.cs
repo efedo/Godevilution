@@ -271,6 +271,11 @@ public partial class Main : Node2D
                 return;
             }
             if (world?.WorldItemEntityIdAt(target) is { } itemEntityId) {
+                if (player is null || !AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y)) {
+                    QueueMoveTo(target);
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
                 Queue(new Command {
                     PickupWorldItemRequested = new PickupWorldItemRequested {
                         ItemEntityId = itemEntityId,
@@ -280,6 +285,13 @@ public partial class Main : Node2D
                 return;
             }
             if (world?.PortalEntityIdAt(target) is { } portalEntityId) {
+                var portal = model.Snapshot?.Portals.FirstOrDefault(
+                    candidate => candidate.PortalId == portalEntityId);
+                if (player is null || portal is null || !AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal)) {
+                    QueueMoveTo(target);
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
                 Queue(new Command {
                     UsePortalRequested = new UsePortalRequested {
                         PortalId = portalEntityId,
@@ -291,6 +303,11 @@ public partial class Main : Node2D
             if (world?.ObjectEntityIdAt(target) is { } objectEntityId) {
                 var worldObject = model.Snapshot?.Objects.FirstOrDefault(
                     @object => @object.EntityId == objectEntityId);
+                if (player is null || !AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y)) {
+                    QueueMoveTo(target);
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
                 var playerAbility = model.Snapshot?.Players.FirstOrDefault()?.AbilityKind;
                 if (worldObject?.TrapArmed == true && playerAbility != PlayerAbilityKind.TrapDisarm) {
                     hud?.SetStatus("This trap requires the Trap Disarm ability.");
@@ -311,6 +328,11 @@ public partial class Main : Node2D
                 return;
             }
             if (model.QuestTownerInteractionAt(target.X, target.Y) is { } interaction) {
+                if (player is null || !AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y)) {
+                    QueueMoveTo(target);
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
                 Queue(new Command {
                     TurnInQuestRequested = new TurnInQuestRequested {
                         QuestId = interaction.QuestId,
@@ -360,6 +382,17 @@ public partial class Main : Node2D
             DropHeldItemRequested = new DropHeldItemRequested {
                 TargetX = origin.X,
                 TargetY = origin.Y,
+            },
+        });
+    }
+
+    private void QueueMoveTo(Vector2I target)
+    {
+        Queue(new Command {
+            MoveRequested = new MoveRequested {
+                TargetCell = true,
+                TargetX = target.X,
+                TargetY = target.Y,
             },
         });
     }

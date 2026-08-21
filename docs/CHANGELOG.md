@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
 - Validate Godot quest identity uniqueness and core progress/variable bounds
   before quest, towner, and authored-object selectors consume the catalog.
 
+- Route Godot clicks for distant world items, authored objects, quest/towner
+  stages, and portals through authoritative target-cell movement before
+  submitting the range-constrained interaction intent.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 
