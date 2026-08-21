@@ -352,6 +352,181 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportProjectsLiveHolyBoltAgainstAnUndeadMonster()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Holy-Bolt-Overlay-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.godot-holy-bolt",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.383.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    { "table": "levels.tsv", "keys": ["level_id"], "mode": "upsert" },
+                    { "table": "class_loadouts.tsv", "keys": ["class_id"], "mode": "upsert" },
+                    { "table": "monsters.tsv", "keys": ["entity_id"], "mode": "upsert" },
+                    { "table": "spells.tsv", "keys": ["spell_id"], "mode": "upsert" }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+
+            var repositoryRoot = FindRepositoryRoot();
+            var levelsPath = Path.Combine(repositoryRoot, "server", "content", "base", "levels.tsv");
+            var levelLines = await File.ReadAllLinesAsync(
+                levelsPath,
+                TestContext.Current.CancellationToken);
+            var townLevel = levelLines
+                .Single(line => line.StartsWith("0\t", StringComparison.Ordinal))
+                .Split('\t');
+            townLevel[6] = "1";
+            var cathedralLevel = levelLines
+                .Single(line => line.StartsWith("1\t", StringComparison.Ordinal))
+                .Split('\t');
+            cathedralLevel[6] = "0";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "levels.tsv"),
+                [levelLines[0], string.Join('\t', townLevel), string.Join('\t', cathedralLevel)],
+                TestContext.Current.CancellationToken);
+
+            var loadoutPath = Path.Combine(repositoryRoot, "server", "content", "base", "class_loadouts.tsv");
+            var loadoutLines = await File.ReadAllLinesAsync(
+                loadoutPath,
+                TestContext.Current.CancellationToken);
+            var loadoutHeader = loadoutLines[0].Split('\t');
+            int LoadoutColumn(string name)
+                => Array.IndexOf(loadoutHeader, name);
+            var sorcererLoadout = loadoutLines
+                .Single(line => line.StartsWith("2\t", StringComparison.Ordinal))
+                .Split('\t');
+            sorcererLoadout[LoadoutColumn("starting_spell_id")] = "5";
+            sorcererLoadout[LoadoutColumn("starting_spell_symbol")] = "holy_bolt";
+            sorcererLoadout[LoadoutColumn("starting_spell_level")] = "1";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                [loadoutLines[0], string.Join('\t', sorcererLoadout)],
+                TestContext.Current.CancellationToken);
+
+            var monsterPath = Path.Combine(repositoryRoot, "server", "content", "base", "monsters.tsv");
+            var monsterLines = await File.ReadAllLinesAsync(
+                monsterPath,
+                TestContext.Current.CancellationToken);
+            var monsterHeader = monsterLines[0].Split('\t');
+            int MonsterColumn(string name)
+                => Array.IndexOf(monsterHeader, name);
+            var monster = monsterLines
+                .Single(line => line.StartsWith("9\t", StringComparison.Ordinal))
+                .Split('\t');
+            monster[MonsterColumn("level_id")] = "0";
+            monster[MonsterColumn("level_symbol")] = "town";
+            monster[MonsterColumn("position_x")] = "1";
+            monster[MonsterColumn("position_y")] = "0";
+            monster[MonsterColumn("undead")] = "1";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "monsters.tsv"),
+                [monsterLines[0], string.Join('\t', monster)],
+                TestContext.Current.CancellationToken);
+
+            var spellsPath = Path.Combine(repositoryRoot, "server", "content", "base", "spells.tsv");
+            var spellLines = await File.ReadAllLinesAsync(
+                spellsPath,
+                TestContext.Current.CancellationToken);
+            var spellHeader = spellLines[0].Split('\t');
+            int SpellColumn(string name)
+                => Array.IndexOf(spellHeader, name);
+            var holyBolt = spellLines
+                .Single(line => line.StartsWith("5\t", StringComparison.Ordinal))
+                .Split('\t');
+            holyBolt[SpellColumn("holy_bolt_minimum_hit_chance")] = "100";
+            holyBolt[SpellColumn("holy_bolt_maximum_hit_chance")] = "100";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "spells.tsv"),
+                [spellLines[0], string.Join('\t', holyBolt)],
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                gameMode: "single-player",
+                randomSeed: 0);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-holy-bolt", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            var player = Assert.Single(model.Snapshot!.Players);
+            var target = Assert.Single(
+                model.Snapshot.Monsters,
+                candidate => candidate.Alive);
+            Assert.Equal(0U, player.LevelId);
+            Assert.Equal((0, 0), (player.PositionX, player.PositionY));
+            Assert.Equal((1, 0), (target.PositionX, target.PositionY));
+            Assert.True(target.IsUndead);
+            Assert.Contains(
+                player.MemorizedSpells,
+                spell => spell.SpellId == 5 && spell.Level == 1);
+            var targetLife = target.HitPoints;
+
+            var sequence = client.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 5,
+                    TargetEntityId = target.EntityId,
+                    TargetX = target.PositionX,
+                    TargetY = target.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+            var resolved = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Monsters.Any(
+                    candidate => candidate.EntityId == target.EntityId
+                        && (!candidate.Alive || candidate.HitPoints < targetLife)) == true
+                    || message.Events?.Events.Any(gameEvent =>
+                        gameEvent.Damage is {
+                            TargetEntityId: var targetEntityId,
+                            Amount: > 0,
+                        } && targetEntityId == target.EntityId) == true);
+            if (resolved.Snapshot is not null) {
+                var resolvedTarget = Assert.Single(
+                    resolved.Snapshot.Monsters,
+                    candidate => candidate.EntityId == target.EntityId);
+                Assert.True(!resolvedTarget.Alive || resolvedTarget.HitPoints < targetLife);
+            } else {
+                Assert.Contains(
+                    resolved.Events!.Events,
+                    gameEvent => gameEvent.Damage is {
+                        TargetEntityId: var targetEntityId,
+                        Amount: > 0,
+                    } && targetEntityId == target.EntityId);
+            }
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerMovesInventoryByStableReferenceAndRejectsStaleMove()
     {
         using var server = await StartedServer.StartAsync(
