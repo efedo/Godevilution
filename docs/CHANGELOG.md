@@ -17,6 +17,10 @@ All notable changes to this fork are documented below.
   selects a named compatible factory when configured, while preserving default
   ambiguity rejection and failing closed for unknown or incompatible IDs.
 
+- Add end-to-end TCP restart recovery coverage: a saved session now survives
+  host disposal, restores through a fresh adapter and save root, and retains
+  the persisted character state over a new requested identity.
+
 - Extend the end-to-end TCP ruleset-replacement soak to 32 generations for a
   connected session. The session migrates through the live host barrier,
   continues operating on every replacement, retires each prior target, and

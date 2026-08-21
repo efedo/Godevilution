@@ -441,6 +441,130 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpServerRestartRestoresSavedSessionStateWithAFreshAdapter()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Restart-Recovery-" + Guid.NewGuid().ToString("N"));
+        const string resumeToken = "restart-recovery-session";
+        var sessionId = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(resumeToken)))
+            .ToLowerInvariant();
+        uint initialEntityId;
+
+        try {
+            var initial = new ReloadableHostAdapter("initial");
+            var initialRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+                CreateReloadManifest("1", "initial"),
+                [new ReloadableModule("rules", "1.0.0")],
+                new DelegateAuthoritativeClock(() => 10),
+                (_, _) => initial);
+            var initialAdapter = new LeasedAuthoritativeGameHostAdapter(initialRuntime);
+            var initialHandshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            var saveStore = new AuthoritativeSaveStore(saveRoot);
+            await using (var server = new AuthoritativeTcpServer(
+                             new AuthoritativeCommandServer(initialAdapter),
+                             initialHandshake,
+                             new DelegateAuthoritativeClock(() => 10),
+                             gameAdapter: initialAdapter,
+                             saveStore: saveStore)) {
+                server.Start();
+                var cancellationToken = TestContext.Current.CancellationToken;
+                using var client = new TcpClient();
+                await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                await using var stream = client.GetStream();
+                await SendHelloAsync(
+                    stream,
+                    cancellationToken,
+                    resumeToken,
+                    requestedCharacterName: "Persistent-Hero");
+                var hello = (await EnvelopeCodec.ReadAsync(
+                    stream,
+                    cancellationToken))!.ServerHello;
+                var initialSnapshot = (await EnvelopeCodec.ReadAsync(
+                    stream,
+                    cancellationToken))!.Snapshot;
+                initialEntityId = Assert.Single(initialSnapshot.Players).EntityId;
+                Assert.Equal("Persistent-Hero", Assert.Single(initialSnapshot.Players).CharacterName);
+
+                await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                    CommandBatch = new CommandBatch {
+                        Commands = { new Command {
+                            ClientSequence = 1,
+                            RequestedTick = 10,
+                            AttackRequested = new AttackRequested {
+                                TargetEntityId = initialEntityId,
+                            },
+                        } },
+                    },
+                }, cancellationToken);
+                Assert.Equal(
+                    CommandStatus.Accepted,
+                    (await EnvelopeCodec.ReadAsync(
+                        stream,
+                        cancellationToken))!.CommandAck.Results.Single().Status);
+                Assert.Equal(
+                    "Persistent-Hero",
+                    Assert.Single((await EnvelopeCodec.ReadAsync(
+                        stream,
+                        cancellationToken))!.Snapshot.Players).CharacterName);
+                Assert.NotNull(saveStore.Load(sessionId));
+                Assert.Equal(resumeToken, hello.SessionToken);
+            }
+
+            var replacement = new ReloadableHostAdapter("fresh");
+            var replacementRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+                CreateReloadManifest("1", "initial"),
+                [new ReloadableModule("rules", "1.0.0")],
+                new DelegateAuthoritativeClock(() => 10),
+                (_, _) => replacement);
+            var replacementAdapter = new LeasedAuthoritativeGameHostAdapter(replacementRuntime);
+            var replacementHandshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            await using var restartedServer = new AuthoritativeTcpServer(
+                new AuthoritativeCommandServer(replacementAdapter),
+                replacementHandshake,
+                new DelegateAuthoritativeClock(() => 10),
+                gameAdapter: replacementAdapter,
+                saveStore: saveStore);
+            restartedServer.Start();
+            var restartCancellationToken = TestContext.Current.CancellationToken;
+            using var resumedClient = new TcpClient();
+            await resumedClient.ConnectAsync(
+                IPAddress.Loopback,
+                restartedServer.Port,
+                restartCancellationToken);
+            await using var resumedStream = resumedClient.GetStream();
+            await SendHelloAsync(
+                resumedStream,
+                restartCancellationToken,
+                resumeToken,
+                requestedCharacterName: "Ignored-New-Character");
+            var resumedHello = (await EnvelopeCodec.ReadAsync(
+                resumedStream,
+                restartCancellationToken))!.ServerHello;
+            var resumedSnapshot = (await EnvelopeCodec.ReadAsync(
+                resumedStream,
+                restartCancellationToken))!.Snapshot;
+            var resumedPlayer = Assert.Single(resumedSnapshot.Players);
+            Assert.Equal(resumeToken, resumedHello.SessionToken);
+            Assert.True(replacement.SessionStateImported);
+            Assert.Equal(initialEntityId, resumedPlayer.EntityId);
+            Assert.Equal("Persistent-Hero", resumedPlayer.CharacterName);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task ConcurrentConnectionsForOneTokenShareOneParticipantInitialization()
     {
         var executor = new RecordingExecutor();

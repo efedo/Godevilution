@@ -173,6 +173,10 @@ updates the handshake identity only after migration succeeds, and retires old
 adapters after in-flight leases drain. The standalone executable also provides
 an operator-facing reload command through its local console.
 
+The save root is reusable across process restarts: a reconnect carrying the
+same resume token restores the persisted session through the fresh adapter and
+save provider before any new character selection is considered.
+
 When attached to an interactive console, the standalone executable accepts the
 local operator commands `status`, `reload`, `help`, and `quit`. `reload` reads
 the configured content and module-package roots again, validates the candidate,
