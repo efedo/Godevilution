@@ -1281,6 +1281,7 @@ public sealed class DiabloStoreCommandProcessorTests
             inventory: [new OwnedStoreItem(9, 4, 1234, 77, 55, state)],
             inventoryGrid: [0, 0, -1, -1]);
         var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 0).Succeeded);
 
         var toStash = processor.Execute(
             player,
@@ -1347,6 +1348,7 @@ public sealed class DiabloStoreCommandProcessorTests
             ],
             inventoryGrid: [0, 0, 1, 1]);
         var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 0).Succeeded);
 
         Assert.True(processor.Execute(
             player,
@@ -1387,6 +1389,7 @@ public sealed class DiabloStoreCommandProcessorTests
             equipment: []);
         player.Stash.Add(new StashStoreItem(0, 10, 0, 1, 301, 2, 0, stashState));
         var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 0).Succeeded);
 
         var result = processor.Execute(
             player,
@@ -1400,6 +1403,82 @@ public sealed class DiabloStoreCommandProcessorTests
         var stashed = Assert.Single(player.Stash);
         Assert.Equal(300U, stashed.ItemSeed);
         Assert.Equal((uint)10, stashed.Cell);
+    }
+
+    [Fact]
+    public void StashGoldRequiresOpenSessionAndTransfersAtomically()
+    {
+        var player = CreatePlayer(gold: 100);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var closed = processor.Execute(
+            player,
+            new DiabloDepositStashGoldIntent(25),
+            1);
+        Assert.False(closed.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, closed.Failure);
+
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 2).Succeeded);
+        Assert.True(processor.Execute(player, new DiabloDepositStashGoldIntent(75), 3).Succeeded);
+        Assert.Equal(25U, player.Gold);
+        Assert.Equal(75U, player.StashGold);
+
+        Assert.True(processor.Execute(player, new DiabloWithdrawStashGoldIntent(20), 4).Succeeded);
+        Assert.Equal(45U, player.Gold);
+        Assert.Equal(55U, player.StashGold);
+
+        Assert.True(processor.Execute(player, new DiabloCloseStashIntent(), 5).Succeeded);
+        var closedMove = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            6);
+        Assert.False(closedMove.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, closedMove.Failure);
+    }
+
+    [Fact]
+    public void StashGoldOverflowRejectsWithoutMutatingEitherBalance()
+    {
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        var player = CreatePlayer(gold: uint.MaxValue - 10);
+        player.StashGold = uint.MaxValue - 5;
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 1).Succeeded);
+
+        var deposit = processor.Execute(player, new DiabloDepositStashGoldIntent(10), 2);
+
+        Assert.False(deposit.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InsufficientResources, deposit.Failure);
+        Assert.Equal(uint.MaxValue - 10, player.Gold);
+        Assert.Equal(uint.MaxValue - 5, player.StashGold);
+
+        player.Gold = uint.MaxValue - 5;
+        player.StashGold = 10;
+        var withdraw = processor.Execute(player, new DiabloWithdrawStashGoldIntent(10), 3);
+
+        Assert.False(withdraw.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InsufficientResources, withdraw.Failure);
+        Assert.Equal(uint.MaxValue - 5, player.Gold);
+        Assert.Equal(10U, player.StashGold);
+    }
+
+    [Fact]
+    public void StashAndVendorSessionsAreMutuallyExclusive()
+    {
+        var processor = new DiabloStoreCommandProcessor(CreateCatalog());
+        var player = CreatePlayer();
+
+        Assert.True(processor.Execute(player, new DiabloOpenStoreIntent(1), 1).Succeeded);
+        var openWhileVendor = processor.Execute(player, new DiabloOpenStashIntent(), 2);
+        Assert.False(openWhileVendor.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, openWhileVendor.Failure);
+
+        Assert.True(processor.Execute(player, new DiabloCloseStoreIntent(), 3).Succeeded);
+        Assert.True(processor.Execute(player, new DiabloOpenStashIntent(), 4).Succeeded);
+        var vendorWhileOpen = processor.Execute(player, new DiabloOpenStoreIntent(1), 5);
+        Assert.False(vendorWhileOpen.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, vendorWhileOpen.Failure);
     }
 
     [Fact]

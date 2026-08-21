@@ -966,9 +966,14 @@ public sealed class StoreSimulationExecutorTests
             startingStash: [new StashStoreItem(6, 12, 3, 4, 99, 11, 7, stashState)],
             startingStashGold: 250);
         var server = new AuthoritativeCommandServer(executor);
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 0,
+            OpenStashRequested = new OpenStashRequested(),
+        }, 0).Status);
 
         var toStash = new Command {
-            ClientSequence = 1,
+            ClientSequence = 2,
             RequestedTick = 1,
             MoveItemRequested = new MoveItemRequested {
                 Item = new PlayerItemReference {
@@ -992,7 +997,7 @@ public sealed class StoreSimulationExecutorTests
             item.Page == 6 && item.Cell == 20 && item.ItemSeed == 42);
 
         var toInventory = new Command {
-            ClientSequence = 2,
+            ClientSequence = 3,
             RequestedTick = 2,
             MoveItemRequested = new MoveItemRequested {
                 Item = new PlayerItemReference {
@@ -1039,6 +1044,45 @@ public sealed class StoreSimulationExecutorTests
         Assert.Equal(99U, Assert.Single(executor.GetPlayerState("player-a").Inventory).ItemSeed);
         Assert.Equal(42U, Assert.Single(executor.GetPlayerState("player-a").Equipment).ItemSeed);
         Assert.Equal(new[] { 0 }, executor.GetPlayerState("player-a").InventoryGrid);
+    }
+
+    [Fact]
+    public void StashGoldCommandsUseTheAuthoritativeSessionBoundary()
+    {
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingStashGold: 25);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var closedDeposit = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            DepositStashGoldRequested = new DepositStashGoldRequested { Amount = 10 },
+        }, 1);
+        Assert.Equal(CommandStatus.Rejected, closedDeposit.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, closedDeposit.RejectReason);
+
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", new Command {
+            ClientSequence = 2,
+            RequestedTick = 2,
+            OpenStashRequested = new OpenStashRequested(),
+        }, 2).Status);
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", new Command {
+            ClientSequence = 3,
+            RequestedTick = 3,
+            DepositStashGoldRequested = new DepositStashGoldRequested { Amount = 40 },
+        }, 3).Status);
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", new Command {
+            ClientSequence = 4,
+            RequestedTick = 4,
+            WithdrawStashGoldRequested = new WithdrawStashGoldRequested { Amount = 15 },
+        }, 4).Status);
+
+        var state = executor.GetPlayerState("player-a");
+        Assert.Equal(75U, state.Gold);
+        Assert.Equal(50U, state.StashGold);
+        Assert.True(state.StashOpen);
     }
 
     [Fact]

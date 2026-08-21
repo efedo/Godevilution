@@ -501,6 +501,7 @@ internal static class DiabloProtocolMapper
             });
         }
         player.StashGold = state.StashGold;
+        player.StashOpen = state.StashOpen;
         return player;
     }
 
@@ -1036,6 +1037,7 @@ internal static class DiabloProtocolMapper
                 item.Item?.PurchasedAtTick ?? 0,
                 FromProtocolItemState(item.Item?.State))).ToArray(),
             StashGold = source.StashGold,
+            StashOpen = source.StashOpen,
         };
     }
 

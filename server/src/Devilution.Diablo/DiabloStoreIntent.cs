@@ -23,6 +23,18 @@ public sealed record DiabloOpenStoreIntent(uint StoreId) : DiabloStoreIntent;
 /** Closes the player's current vendor or service store; repeated closes are safe. */
 public sealed record DiabloCloseStoreIntent : DiabloStoreIntent;
 
+/** Opens the server-owned stash session for item and gold commands. */
+public sealed record DiabloOpenStashIntent : DiabloStoreIntent;
+
+/** Closes the server-owned stash session; repeated closes are safe. */
+public sealed record DiabloCloseStashIntent : DiabloStoreIntent;
+
+/** Moves carried wallet gold into the open server-owned stash. */
+public sealed record DiabloDepositStashGoldIntent(uint Amount) : DiabloStoreIntent;
+
+/** Moves stash gold into the carried authoritative wallet. */
+public sealed record DiabloWithdrawStashGoldIntent(uint Amount) : DiabloStoreIntent;
+
 public sealed record DiabloPurchaseIntent(uint StoreId, uint StoreSlot) : DiabloStoreIntent;
 
 public sealed record DiabloSellItemIntent(

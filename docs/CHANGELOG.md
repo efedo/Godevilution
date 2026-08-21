@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add explicit server-owned stash open/close session intents plus validated
+  stash-gold deposit and withdrawal commands. Item transfers and gold changes
+  now fail closed while the stash session is closed, and vendor/stash sessions
+  cannot overlap.
+
 - Add server-owned 100-page stash state with native-compatible 10x10 page
   grids, stable page/cell references, overlap validation, inventory↔stash
   transfers, snapshot projection, and version-1 save round-tripping. Native

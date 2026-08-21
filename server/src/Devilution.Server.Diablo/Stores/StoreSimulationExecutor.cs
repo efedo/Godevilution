@@ -235,6 +235,24 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     player,
                     new DiabloCloseStoreIntent(),
                     appliedTick),
+                Command.IntentOneofCase.OpenStashRequested => ExecuteStoreIntent(
+                    player,
+                    new DiabloOpenStashIntent(),
+                    appliedTick),
+                Command.IntentOneofCase.CloseStashRequested => ExecuteStoreIntent(
+                    player,
+                    new DiabloCloseStashIntent(),
+                    appliedTick),
+                Command.IntentOneofCase.DepositStashGoldRequested => ExecuteStoreIntent(
+                    player,
+                    new DiabloDepositStashGoldIntent(
+                        command.DepositStashGoldRequested.Amount),
+                    appliedTick),
+                Command.IntentOneofCase.WithdrawStashGoldRequested => ExecuteStoreIntent(
+                    player,
+                    new DiabloWithdrawStashGoldIntent(
+                        command.WithdrawStashGoldRequested.Amount),
+                    appliedTick),
                 Command.IntentOneofCase.PurchaseRequested => ExecuteStoreIntent(
                     player,
                     new DiabloPurchaseIntent(

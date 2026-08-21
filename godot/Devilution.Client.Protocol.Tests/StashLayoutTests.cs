@@ -45,6 +45,7 @@ public sealed class StashLayoutTests
                     new PlayerSnapshot {
                         EntityId = 7,
                         StashGold = 123,
+                        StashOpen = true,
                         Stash = { Item(4, 22, 1, 2) },
                     },
                 },
@@ -53,8 +54,26 @@ public sealed class StashLayoutTests
         var layout = model.GetStashLayout(4);
 
         Assert.Equal(22, layout.Anchors[0]);
+        Assert.True(model.IsStashOpen);
         Assert.Equal(0, layout.GetItemIndexAt(32));
         Assert.Equal(-1, layout.GetItemIndexAt(42));
+    }
+
+    [Fact]
+    public void ClientModelRejectsOverlappingAuthoritativeSessions()
+    {
+        var model = new AuthoritativeClientModel();
+
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 7,
+                        ActiveStoreId = 1,
+                        StashOpen = true,
+                    },
+                },
+            })));
     }
 
     private static StashItemSnapshot Item(uint page, uint cell, uint width, uint height)

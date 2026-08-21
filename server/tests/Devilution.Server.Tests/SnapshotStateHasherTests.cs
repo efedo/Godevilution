@@ -189,6 +189,7 @@ public sealed class SnapshotStateHasherTests
         };
         var withStash = baseline.Clone();
         withStash.Players[0].StashGold = 50;
+        withStash.Players[0].StashOpen = true;
         withStash.Players[0].Stash.Add(new StashItemSnapshot {
             Page = 2,
             Cell = 11,

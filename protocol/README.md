@@ -43,6 +43,14 @@ Windows toolchain command.
   `CloseStoreRequested` clears the active store and is safe to repeat. Clients
   wait for the authoritative snapshot to remove `active_store` instead of
   clearing vendor state optimistically.
+- `OpenStashRequested` and `CloseStashRequested` explicitly control the
+  server-owned stash session and are safe to repeat. `MoveItemRequested` and
+  the stash gold commands are rejected while the stash is closed. A snapshot's
+  `stash_open` flag is authoritative; stash and vendor sessions cannot overlap.
+- `DepositStashGoldRequested` and `WithdrawStashGoldRequested` transfer only
+  the requested amount between the server-owned wallet and stash gold. The
+  server validates the open session and available balance before changing
+  either total.
 - The server assigns `server_receipt_sequence` and `applied_tick`; command
   acknowledgements explicitly report acceptance, rescheduling, rejection, or
   duplication.

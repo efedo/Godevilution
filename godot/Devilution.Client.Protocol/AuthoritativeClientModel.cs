@@ -63,6 +63,9 @@ public sealed class AuthoritativeClientModel
     /** The server puts the receiving participant first in every snapshot. */
     public uint PlayerEntityId => Snapshot?.Players.FirstOrDefault()?.EntityId ?? 0;
 
+    /** Whether the authoritative local stash session is currently open. */
+    public bool IsStashOpen => Snapshot?.Players.FirstOrDefault()?.StashOpen == true;
+
     public ulong NextCommandTick => checked(CurrentTick + 1);
 
     public ClientPosition? PredictedPlayerPosition { get; private set; }
@@ -365,6 +368,9 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateStash(PlayerSnapshot player)
     {
+        if (player.StashOpen && player.ActiveStoreId != 0)
+            throw new InvalidDataException(
+                "The authoritative snapshot opens a stash and store simultaneously.");
         if (player.Stash.Count > StashLayout.PageCount * StashLayout.CellCount)
             throw new InvalidDataException(
                 "The authoritative snapshot contains too many stash items.");

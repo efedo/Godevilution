@@ -59,6 +59,10 @@ public sealed class DiabloStoreCommandProcessor
         return intent switch {
             DiabloOpenStoreIntent open => OpenStore(player, open.StoreId),
             DiabloCloseStoreIntent => CloseStore(player),
+            DiabloOpenStashIntent => OpenStash(player),
+            DiabloCloseStashIntent => CloseStash(player),
+            DiabloDepositStashGoldIntent deposit => DepositStashGold(player, deposit.Amount),
+            DiabloWithdrawStashGoldIntent withdraw => WithdrawStashGold(player, withdraw.Amount),
             DiabloPurchaseIntent purchase => Purchase(player, purchase, appliedTick),
             DiabloSellItemIntent sale => Sell(player, sale.Item, sale.LegacyInventoryIndex),
             DiabloRepairItemIntent repair => Repair(player, repair),
@@ -80,6 +84,8 @@ public sealed class DiabloStoreCommandProcessor
 
     private DiabloIntentResult OpenStore(AuthoritativePlayerState player, uint storeId)
     {
+        if (player.StashOpen)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (storeId != adriaStoreId && !catalog.ContainsStore(storeId))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
@@ -90,6 +96,50 @@ public sealed class DiabloStoreCommandProcessor
     private static DiabloIntentResult CloseStore(AuthoritativePlayerState player)
     {
         player.ActiveStoreId = null;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private static DiabloIntentResult OpenStash(AuthoritativePlayerState player)
+    {
+        if (player.ActiveStoreId is not null)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        player.StashOpen = true;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private static DiabloIntentResult CloseStash(AuthoritativePlayerState player)
+    {
+        player.StashOpen = false;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private static DiabloIntentResult DepositStashGold(
+        AuthoritativePlayerState player,
+        uint amount)
+    {
+        if (!player.StashOpen || amount == 0)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (amount > player.Gold)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+        if (amount > uint.MaxValue - player.StashGold)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+        player.Gold -= amount;
+        player.StashGold += amount;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private static DiabloIntentResult WithdrawStashGold(
+        AuthoritativePlayerState player,
+        uint amount)
+    {
+        if (!player.StashOpen || amount == 0)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (amount > player.StashGold)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+        if (amount > uint.MaxValue - player.Gold)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+        player.StashGold -= amount;
+        player.Gold += amount;
         return DiabloIntentResult.Accepted;
     }
 
@@ -818,6 +868,11 @@ public sealed class DiabloStoreCommandProcessor
         AuthoritativePlayerState player,
         DiabloMoveItemIntent intent)
     {
+        if ((intent.Item.Location == DiabloPlayerItemLocation.Stash
+                || intent.Destination.Location == DiabloPlayerItemLocation.Stash)
+            && !player.StashOpen) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
         if (!TryGetTransfer(player, intent.Item, out var source))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (DiabloGoldInventory.HasGoldIdentity(source.State, combatRules, items)

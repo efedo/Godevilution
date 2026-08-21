@@ -198,6 +198,9 @@ public sealed record StorePlayerSnapshot(
     /** Native stash gold, persisted separately from the carried wallet. */
     public uint StashGold { get; init; }
 
+    /** Whether the player has an authoritative stash session open. */
+    public bool StashOpen { get; init; }
+
     public int PositionX { get; init; }
     public int PositionY { get; init; }
     public int LifeMaximum { get; init; }
@@ -459,6 +462,9 @@ public sealed class AuthoritativePlayerState(
 
     /** Server-owned gold stored in the stash. */
     public uint StashGold { get; set; } = stashGold;
+
+    /** Whether stash item and gold commands are currently admitted. */
+    public bool StashOpen { get; set; }
 
     /** Server-owned item currently carried by the presentation cursor. */
     public OwnedStoreItem? HeldItem { get; set; } = heldItem;

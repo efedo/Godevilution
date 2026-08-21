@@ -133,6 +133,10 @@ message Command {
 	TurnInQuestRequested turn_in_quest_requested = 34;
 	AllocateAttributeRequested allocate_attribute_requested = 35;
 		CloseStoreRequested close_store_requested = 36;
+		OpenStashRequested open_stash_requested = 37;
+		CloseStashRequested close_stash_requested = 38;
+		DepositStashGoldRequested deposit_stash_gold_requested = 39;
+		WithdrawStashGoldRequested withdraw_stash_gold_requested = 40;
 	}
 }
 
@@ -193,6 +197,18 @@ message OpenStoreRequested {
 }
 
 message CloseStoreRequested {}
+
+message OpenStashRequested {}
+
+message CloseStashRequested {}
+
+message DepositStashGoldRequested {
+	uint32 amount = 1;
+}
+
+message WithdrawStashGoldRequested {
+	uint32 amount = 1;
+}
 
 message PurchaseRequested {
 	uint32 store_id = 1;
@@ -533,6 +549,7 @@ message PlayerSnapshot {
 	// Server-owned stash projection. Each page is a native-compatible 10x10 grid.
 	repeated StashItemSnapshot stash = 38;
 	uint32 stash_gold = 39;
+	bool stash_open = 40;
 }
 
 message StashItemSnapshot {

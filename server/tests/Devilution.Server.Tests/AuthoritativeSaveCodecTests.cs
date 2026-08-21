@@ -91,6 +91,7 @@ public sealed class AuthoritativeSaveCodecTests
             Player = baseline.Player with {
                 Stash = [stashItem],
                 StashGold = 4321,
+                StashOpen = true,
             },
         };
 
@@ -98,6 +99,7 @@ public sealed class AuthoritativeSaveCodecTests
         var restored = codec.Deserialize(codec.Serialize(source));
 
         Assert.Equal(4321U, restored.Player.StashGold);
+        Assert.True(restored.Player.StashOpen);
         Assert.Equal([stashItem], restored.Player.Stash.ToArray());
     }
 

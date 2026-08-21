@@ -501,6 +501,7 @@ public sealed partial class DiabloSimulation
             HeldItem = player.HeldItem,
             Stash = player.Stash.ToArray(),
             StashGold = player.StashGold,
+            StashOpen = player.StashOpen,
         };
     }
 
@@ -1747,6 +1748,7 @@ public sealed partial class DiabloSimulation
         destination.Stash.Clear();
         destination.Stash.AddRange(source.Stash);
         destination.StashGold = source.StashGold;
+        destination.StashOpen = source.StashOpen;
         destination.EntityId = source.EntityId;
     }
 
@@ -2261,6 +2263,7 @@ public sealed partial class DiabloSimulation
             || !IsValidPlayerAction(source)
             || source.LifeMaximum != expectedResources.LifeQ6
             || source.ManaMaximum != expectedResources.ManaQ6
+            || (source.StashOpen && source.ActiveStoreId is not null)
             || source.Attributes is null
             || source.Attributes.Strength is null
             || source.Attributes.Magic is null

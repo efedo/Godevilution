@@ -235,6 +235,10 @@ public static class SnapshotStateHasher
                     AppendItemState(hasher, item.Item?.State);
                 }
             }
+            if (player.StashOpen) {
+                hasher.AppendString("godevilution-player-stash-session-v1");
+                hasher.AppendBool(true);
+            }
 
             hasher.AppendUInt64((ulong)player.InventoryGrid.Count);
             foreach (var cell in player.InventoryGrid)
