@@ -36,6 +36,19 @@ tl::expected<void, std::string> ServerBackedSession::OpenVendor(uint32_t storeId
 	return Flush(nowMs, sequence);
 }
 
+tl::expected<void, std::string> ServerBackedSession::CloseVendor(uint64_t requestedTick, uint64_t nowMs)
+{
+	lastCommandResolution_ = CommandResolution::None;
+	if (!client_ || !vendorState_.Snapshot())
+		return tl::make_unexpected("The server-backed vendor is not open.");
+	auto command = MakeCloseStoreCommand(requestedTick);
+	if (!command.has_value())
+		return tl::make_unexpected(command.error());
+	const uint64_t sequence = client_->QueueCommand(std::move(*command));
+	pendingIntents_.emplace(sequence, PendingIntent { .kind = PendingIntent::Kind::CloseVendor });
+	return Flush(nowMs, sequence);
+}
+
 tl::expected<void, std::string> ServerBackedSession::Purchase(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs)
 {
 	lastCommandResolution_ = CommandResolution::None;

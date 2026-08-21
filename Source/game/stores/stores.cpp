@@ -1684,6 +1684,8 @@ void WitchRefillManaEnterImpl()
 		} else if (auto result = authoritative::GetServerBackedRuntime().RefillMana(0, now); !result.has_value()) {
 			LogError("Failed to refill mana through Adria: {}", result.error());
 		} else {
+			if (auto result = authoritative::GetServerBackedRuntime().CloseVendor(0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Failed to close the server-backed Adria service: {}", result.error());
 			CurrentStoreManager.activeStore() = TalkID::None;
 			return;
 		}

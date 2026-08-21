@@ -39,6 +39,10 @@ Windows toolchain command.
   clients may ignore them while preserving them through authoritative snapshots.
 - `client_sequence` is scoped to a resumable session. Retrying a command with
   the same sequence returns the recorded result without applying it twice.
+- `OpenStoreRequested` selects a validated vendor or service store, while
+  `CloseStoreRequested` clears the active store and is safe to repeat. Clients
+  wait for the authoritative snapshot to remove `active_store` instead of
+  clearing vendor state optimistically.
 - The server assigns `server_receipt_sequence` and `applied_tick`; command
   acknowledgements explicitly report acceptance, rescheduling, rejection, or
   duplication.

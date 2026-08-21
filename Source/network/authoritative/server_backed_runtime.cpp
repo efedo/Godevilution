@@ -185,6 +185,15 @@ tl::expected<void, std::string> ServerBackedRuntime::OpenVendor(uint32_t storeId
 	return vendorUiAdapter_->Apply(*snapshot, destination, storeId);
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::CloseVendor(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->CloseVendor(requestedTick, nowMs); !result.has_value())
+		return result;
+	return EnsureCommandAccepted();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::PurchaseVendor(uint32_t storeId, uint32_t storeSlot, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_ || !vendorUiAdapter_)

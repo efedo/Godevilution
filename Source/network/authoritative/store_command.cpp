@@ -39,6 +39,14 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeOpenStoreComm
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeCloseStoreCommand(uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_close_store_requested();
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakePurchaseCommand(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick)
 {
 	if (storeId == 0)

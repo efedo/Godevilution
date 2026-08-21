@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   control so vendor and Adria service sessions can end without relying on a
   town restart or stale active-store state.
 
+- Route native authoritative visual-store closure and the Adria refill path
+  through the same server-owned close intent, so native and Godot clients no
+  longer leave an active vendor selected after the presentation closes.
+
 - Refresh shipped-content assertions for the composed procedural level catalog
   and current Hellfire level set, keeping the full Diablo test suite aligned
   with validated external content.

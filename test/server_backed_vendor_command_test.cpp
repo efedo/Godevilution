@@ -17,6 +17,15 @@ TEST(ServerBackedVendorCommand, BuildsOpenStoreIntent)
 	EXPECT_EQ(command->client_sequence(), 0U);
 }
 
+TEST(ServerBackedVendorCommand, BuildsCloseStoreIntent)
+{
+	const auto command = MakeCloseStoreCommand(20);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	EXPECT_EQ(command->requested_tick(), 20U);
+	EXPECT_TRUE(command->has_close_store_requested());
+	EXPECT_EQ(command->intent_case(), protocol::Command::kCloseStoreRequested);
+}
+
 TEST(ServerBackedVendorCommand, BuildsPurchaseIntentWithStableSlot)
 {
 	auto command = MakePurchaseCommand(4, 12, 21);

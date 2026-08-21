@@ -36,6 +36,7 @@
 #include "game/stores/stores.hpp"
 #include "utils/string/format_int.hpp"
 #include "utils/language.h"
+#include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/timer.hpp"
 
@@ -281,6 +282,12 @@ void OpenVisualStore(VisualStoreVendor vendor)
 void CloseVisualStore()
 {
 	if (IsVisualStoreOpen) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().CloseVendor(0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Failed to close the server-backed vendor: {}", result.error());
+		}
+#endif
 		IsVisualStoreOpen = false;
 		invflag = false;
 		pcursstoreitem = -1;

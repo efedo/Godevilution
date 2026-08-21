@@ -165,17 +165,21 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		item->mutable_state()->set_item_type(1);
 		WriteEnvelope(socket, snapshot);
 
-		auto pollPayload = EnvelopeCodec::Read(socket);
-		if (!pollPayload.has_value() || !pollPayload->has_value())
+		auto closePayload = EnvelopeCodec::Read(socket);
+		if (!closePayload.has_value() || !closePayload->has_value())
 			return;
-		protocol::Envelope poll;
-		if (!poll.ParseFromArray(pollPayload->value().data(), static_cast<int>(pollPayload->value().size()))
-		    || !poll.has_snapshot_request())
+		protocol::Envelope close;
+		if (!close.ParseFromArray(closePayload->value().data(), static_cast<int>(closePayload->value().size()))
+		    || close.command_batch().commands_size() != 1
+		    || !close.command_batch().commands(0).has_close_store_requested())
 			return;
-		protocol::Envelope inconsistent;
-		inconsistent.mutable_snapshot()->add_players()->set_entity_id(7);
-		inconsistent.mutable_snapshot()->mutable_active_store()->set_store_id(1);
-		WriteEnvelope(socket, inconsistent);
+		protocol::Envelope closeAck;
+		closeAck.mutable_command_ack()->add_results()->set_client_sequence(2);
+		closeAck.mutable_command_ack()->mutable_results(0)->set_status(protocol::COMMAND_STATUS_ACCEPTED);
+		WriteEnvelope(socket, closeAck);
+		protocol::Envelope closedSnapshot;
+		closedSnapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		WriteEnvelope(socket, closedSnapshot);
 		observed = true;
 	});
 
@@ -209,7 +213,11 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	const auto *item = (*session)->VendorState().FindItem(1, 0);
 	ASSERT_NE(item, nullptr);
 	EXPECT_EQ(item->itemSeed, 42U);
-	EXPECT_FALSE((*session)->Poll(1000).has_value());
+	auto close = (*session)->CloseVendor(11, 0);
+	ASSERT_TRUE(close.has_value()) << close.error();
+	EXPECT_EQ((*session)->LastCommandResolution(), ServerBackedSession::CommandResolution::Accepted);
+	EXPECT_EQ((*session)->VendorState().Phase(), ServerBackedVendorPhase::AwaitingSnapshot);
+	EXPECT_EQ((*session)->VendorState().Snapshot(), nullptr);
 	(*session)->Close();
 	server.join();
 	EXPECT_TRUE(observed);

@@ -55,6 +55,7 @@ struct ServerBackedCastSource {
 };
 
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeOpenStoreCommand(uint32_t storeId, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeCloseStoreCommand(uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakePurchaseCommand(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSellItemCommand(uint32_t inventoryIndex, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCommand(uint32_t inventoryIndex, uint64_t requestedTick);

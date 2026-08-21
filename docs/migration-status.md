@@ -66,6 +66,10 @@ rebuilding the projects before a future run.
   the Diablo module clears the server-owned active store and the Godot HUD waits
   for the resulting empty vendor snapshot instead of closing optimistically.
 
+- The native authoritative client now submits that same close intent when the
+  visual vendor panel closes and after the Adria mana service completes, then
+  reconciles the empty vendor snapshot before continuing local presentation.
+
 - Native local and remote player projections now use a walk action's future
   tile only until the authoritative movement effect is applied; post-effect
   snapshots no longer schedule a second client-side step.
