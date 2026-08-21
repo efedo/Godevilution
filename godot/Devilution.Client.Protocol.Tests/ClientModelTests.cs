@@ -146,6 +146,33 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsEntitiesOutsideProjectedLevelGeometry()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 4,
+                    Height = 4,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 10,
+                    LevelId = 1,
+                    PositionX = 4,
+                    PositionY = 0,
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void SelectsAvailableContentOwnedQuestTownerStageByStateAndAdjacency()
     {
         var snapshot = new Snapshot {

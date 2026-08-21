@@ -24,6 +24,10 @@ All notable changes to this fork are documented below.
   transparency lengths, and native transparency bounds before movement or
   warp presentation consumes the geometry.
 
+- Reject Godot projected entities whose positions fall outside supplied level
+  geometry, including moving-monster future positions, while retaining the
+  compatibility fallback when a level has no geometry projection.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 

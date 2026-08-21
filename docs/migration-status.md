@@ -170,6 +170,10 @@ substitute for rebuilding the projects before a future run.
 - Godot rejects projected level geometry with out-of-range or duplicate
   collision cells and mismatched native transparency layers.
 
+- Godot rejects projected players and world entities outside a supplied level
+  geometry, including moving-monster future cells, while allowing legacy
+  snapshots that omit geometry for that level.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.

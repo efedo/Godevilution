@@ -131,6 +131,7 @@ public sealed class AuthoritativeClientModel
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
             ValidateWarpTriggers(message.Snapshot);
+            ValidateEntityPositions(message.Snapshot);
             ValidateQuestTownerInteractions(message.Snapshot);
             var portalIds = new HashSet<uint>();
             foreach (var portal in message.Snapshot.Portals) {
@@ -523,6 +524,46 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
             }
+        }
+    }
+
+    private static void ValidateEntityPositions(Snapshot snapshot)
+    {
+        var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        bool IsInBounds(uint levelId, int x, int y)
+        {
+            if (!levels.TryGetValue(levelId, out var level)
+                || level.Width == 0
+                || level.Height == 0) {
+                return true;
+            }
+            return x >= 0
+                && y >= 0
+                && x < level.Width
+                && y < level.Height;
+        }
+
+        bool IsValidMonster(MonsterSnapshot monster)
+            => IsInBounds(monster.LevelId, monster.PositionX, monster.PositionY)
+                && (!monster.Moving
+                    || IsInBounds(
+                        monster.LevelId,
+                        monster.FuturePositionX,
+                        monster.FuturePositionY));
+
+        if (snapshot.Players.Any(player =>
+                !IsInBounds(player.LevelId, player.PositionX, player.PositionY))
+            || snapshot.Monsters.Any(monster => !IsValidMonster(monster))
+            || snapshot.WorldItems.Any(item =>
+                !IsInBounds(item.LevelId, item.PositionX, item.PositionY))
+            || snapshot.Objects.Any(@object =>
+                !IsInBounds(@object.LevelId, @object.PositionX, @object.PositionY))
+            || snapshot.Projectiles.Any(projectile =>
+                !IsInBounds(projectile.LevelId, projectile.PositionX, projectile.PositionY))
+            || snapshot.Corpses.Any(corpse =>
+                !IsInBounds(corpse.LevelId, corpse.PositionX, corpse.PositionY))) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an entity outside projected level geometry.");
         }
     }
 
