@@ -317,11 +317,15 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 "The authoritative snapshot contains too many quest/towner interactions.");
         }
+        var questIds = snapshot.Quests
+            .Select(quest => quest.QuestId)
+            .ToHashSet();
         var interactionIds = new HashSet<uint>();
         foreach (var interaction in snapshot.QuestTownerInteractions) {
             if (interaction.InteractionId == 0
                 || !interactionIds.Add(interaction.InteractionId)
                 || interaction.QuestId == 0
+                || !questIds.Contains(interaction.QuestId)
                 || interaction.TownerId is < 0 or > byte.MaxValue
                 || interaction.LevelId > ushort.MaxValue
                 || interaction.RequiredVisitedLevel1 > ushort.MaxValue

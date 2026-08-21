@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
 - Add live Godot protocol coverage for server-owned Holy Bolt admission and
   undead-only damage using an external class, spell, level, and monster overlay.
 
+- Harden Godot snapshot validation so authored quest/towner interactions must
+  reference a quest present in the same server-owned snapshot.
+
 - Add a server-driven Godot victory banner for typed Diablo defeat events and
   terminal victory snapshots, preserving the multiplayer/single-player level
   identity distinction without adding client gameplay state.

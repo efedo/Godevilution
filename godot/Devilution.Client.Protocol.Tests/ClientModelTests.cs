@@ -183,6 +183,28 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsQuestTownerInteractionSnapshotsWithUnknownQuest()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+                QuestTownerInteractions = {
+                    new QuestTownerInteractionSnapshot {
+                        InteractionId = 300201,
+                        QuestId = 3002,
+                        TownerId = 6,
+                        LevelId = 0,
+                        PositionX = 80,
+                        PositionY = 20,
+                        Kind = 0,
+                        MessageId = 129,
+                    },
+                },
+            })));
+    }
+
+    [Fact]
     public void SelectsItemlessAuthoredDialogueAfterQuestCompletion()
     {
         var snapshot = new Snapshot {
