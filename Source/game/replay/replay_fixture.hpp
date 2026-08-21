@@ -441,6 +441,7 @@ struct ReplayFixtureExecutionState {
 	int32_t lifeMaximum = 0;
 	uint32_t characterLevel = 1;
 	uint32_t levelId = 0;
+	std::vector<uint32_t> visitedLevelIds;
 	uint32_t facingDirection = 0;
 	bool multiplayer = false;
 	bool suppressMultiplayerDeathDrops = false;

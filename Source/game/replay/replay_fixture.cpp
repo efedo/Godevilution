@@ -253,6 +253,18 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 	hasher.AppendInt32(state.lifeMaximum);
 	hasher.AppendUint32(state.characterLevel);
 	hasher.AppendUint32(state.levelId);
+	std::vector<uint32_t> historicalVisitedLevelIds;
+	for (const uint32_t levelId : state.visitedLevelIds) {
+		if (levelId != state.levelId)
+			historicalVisitedLevelIds.push_back(levelId);
+	}
+	std::sort(historicalVisitedLevelIds.begin(), historicalVisitedLevelIds.end());
+	if (!historicalVisitedLevelIds.empty()) {
+		hasher.AppendString("godevilution-player-visited-levels-v1");
+		hasher.AppendUint64(historicalVisitedLevelIds.size());
+		for (const uint32_t levelId : historicalVisitedLevelIds)
+			hasher.AppendUint32(levelId);
+	}
 	if (state.characterClassId != 0) {
 		hasher.AppendString("godevilution-player-class-v1");
 		hasher.AppendUint32(state.characterClassId);
@@ -5989,6 +6001,8 @@ bool ExecuteReplayFixture(
 		return false;
 	}
 	state.randomState = static_cast<uint32_t>(fixture.rngSeed);
+	if (state.visitedLevelIds.empty())
+		state.visitedLevelIds.push_back(state.levelId);
 	state.hellfire = fixture.gameVariant == "Hellfire";
 	state.multiplayer = fixture.gameMode == "Multiplayer";
 	state.suppressMultiplayerDeathDrops = fixture.initialState.suppressMultiplayerDeathDrops;
@@ -6396,6 +6410,8 @@ bool ExecuteReplayFixture(
 					if (!fixture.playerActionTiming.defined
 					    || (state.combatMode == 0 && !state.currentAction.defined)) {
 						state.levelId = state.portalDestinationLevelId;
+						if (std::find(state.visitedLevelIds.begin(), state.visitedLevelIds.end(), state.levelId) == state.visitedLevelIds.end())
+							state.visitedLevelIds.push_back(state.levelId);
 						state.positionX = state.portalDestinationX;
 						state.positionY = state.portalDestinationY;
 						state.manaShieldActive = false;
@@ -6427,6 +6443,8 @@ bool ExecuteReplayFixture(
 				    && state.combatMode == 8
 				    && !state.currentAction.defined) {
 					state.levelId = 0;
+					if (std::find(state.visitedLevelIds.begin(), state.visitedLevelIds.end(), state.levelId) == state.visitedLevelIds.end())
+						state.visitedLevelIds.push_back(state.levelId);
 					state.positionX = 75;
 					state.positionY = 68;
 					state.life = std::min(state.lifeMaximum, 64);
