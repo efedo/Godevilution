@@ -4822,26 +4822,62 @@ void AdvanceReplayHorkSpawnsOneTick(
 		    && state.positionX == projectile.positionX
 		    && state.positionY == projectile.positionY
 		    && projectile.targetEntityId == (state.entityId == 0 ? 1U : state.entityId);
-		if (primaryPlayerAtTile) {
+		const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+		    && state.secondaryPlayerLife > 0
+		    && state.secondaryPlayerLevelId == projectile.levelId
+		    && state.secondaryPlayerPositionX == projectile.positionX
+		    && state.secondaryPlayerPositionY == projectile.positionY
+		    && projectile.targetEntityId == state.secondaryPlayerEntityId;
+		if (primaryPlayerAtTile || secondaryPlayerAtTile) {
 			constexpr int damageQ6 = 64;
+			const int targetLevel = primaryPlayerAtTile
+			    ? static_cast<int>(state.characterLevel)
+			    : static_cast<int>(state.secondaryPlayerCharacterLevel);
 			const int distance = std::max(
-			    std::abs(state.positionX - state.combatTargetPositionX),
-			    std::abs(state.positionY - state.combatTargetPositionY));
+			    std::abs((primaryPlayerAtTile ? state.positionX : state.secondaryPlayerPositionX)
+			        - state.combatTargetPositionX),
+			    std::abs((primaryPlayerAtTile ? state.positionY : state.secondaryPlayerPositionY)
+			        - state.combatTargetPositionY));
 			const int hitChance = std::clamp(
 			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-			        - 2 * static_cast<int>(state.characterLevel) - 2 * distance),
+			        - 2 * targetLevel - 2 * distance),
 			    0,
 			    100);
 			const bool hit = std::max(GenerateRnd(state, 100), 0) < hitChance;
 			if (hit) {
+				const bool canBlock = secondaryPlayerAtTile
+				    && state.secondaryPlayerBlockCapable
+				    && (state.secondaryPlayerCombatMode == 0
+				        || state.secondaryPlayerCombatMode == 4);
+				const int blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
+				const int blockChance = std::clamp(
+				    (secondaryPlayerAtTile ? state.secondaryPlayerDexterity : 0)
+				        + 2 * targetLevel - 2 * state.combatTargetMonsterLevel,
+				    0,
+				    100);
+				if (canBlock && blockRoll < blockChance) {
+					state.secondaryPlayerCombatMode = 6;
+					state.secondaryPlayerCombatModeEndTick = tick + 4;
+					iterator = state.projectiles.erase(iterator);
+					continue;
+				}
 				// Native PlayerMHit consumes the zero-width damage roll even
 				// though Hork Spawn always applies its one-point minimum.
 				static_cast<void>(GenerateRnd(state, 1));
-				state.life = std::max(0, state.life - damageQ6);
-				if (state.life > 0
-				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
-					state.combatMode = 7;
-					state.combatModeEndTick = tick + 6;
+				if (primaryPlayerAtTile) {
+					state.life = std::max(0, state.life - damageQ6);
+					if (state.life > 0
+					    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+						state.combatMode = 7;
+						state.combatModeEndTick = tick + 6;
+					}
+				} else {
+					state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
+					if (state.secondaryPlayerLife > 0
+					    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+						state.secondaryPlayerCombatMode = 7;
+						state.secondaryPlayerCombatModeEndTick = tick + 6;
+					}
 				}
 				iterator = state.projectiles.erase(iterator);
 				continue;

@@ -1842,6 +1842,35 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnSecondaryBlockMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-secondary-block.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, secondary.Life);
+        Assert.Equal(PlayerCombatMode.Block, secondary.CombatMode);
+        Assert.Equal(5UL, secondary.CombatModeEndTick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -2803,6 +2832,17 @@ public sealed class ReplayFixtureTests
                 DamageMaximum = source.DamageMaximum,
             })
             .ToArray();
+        var startingEquipment = fixture.InitialState.Equipment
+            .Select(source => new EquippedStoreItem(
+                source.Slot,
+                source.ItemSeed,
+                AuthoritativeItemState.Empty with {
+                    ItemType = source.ItemType,
+                    ItemClass = source.ItemClass,
+                    Flags = source.Flags,
+                    StatFlag = source.StatFlag,
+                }))
+            .ToArray();
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -2813,6 +2853,7 @@ public sealed class ReplayFixtureTests
             fixture.InitialState.Mana,
             startingLifeMaximum: fixture.InitialState.LifeMaximum,
             startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingEquipment: startingEquipment,
             startingPositionX: fixture.InitialState.PositionX,
             startingPositionY: fixture.InitialState.PositionY,
             startingLevelId: fixture.InitialState.LevelId,
@@ -2820,7 +2861,8 @@ public sealed class ReplayFixtureTests
             startingProjectiles: startingProjectiles,
             startingMonsterMissiles: missiles,
             startingMonsterSpawnPlanner: enableSpawnPlanner ? spawnPlanner : null,
-            startingRandomSeed: checked((uint)fixture.RngSeed));
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
     }
 
     private static ReplayFixture LoadFixture()
