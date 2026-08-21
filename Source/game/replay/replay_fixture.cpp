@@ -35,6 +35,7 @@ constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t BloodStarBehavior = 20;
 constexpr int32_t MonsterMagicBehavior = 50;
+constexpr int32_t HorkSpawnBehavior = 57;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -4310,6 +4311,7 @@ void AdvanceReplayMonsterAttack(
 	// Autonomous ranged identities own their movement and projectile admission
 	// below; the generic compact monster branch must not pursue them into melee.
 	if (state.combatTargetNativeAi == "SkeletonRanged"
+	    || state.combatTargetNativeAi == "HorkDemon"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
 	    || state.combatTargetNativeAi == "Lich"
@@ -4697,6 +4699,129 @@ void AdmitReplayAutonomousMonsterArrow(
 	state.projectiles.push_back(std::move(projectile));
 }
 
+/** Admits the compact Hellfire HorkDemon Hork Spawn branch. */
+void AdmitReplayAutonomousHorkSpawn(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetNativeAi != "HorkDemon"
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetAggroRange <= 0
+	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+		    return projectile.sourceEntityId == state.combatTargetEntityId
+		        && projectile.behavior == HorkSpawnBehavior;
+	    }))
+		return;
+
+	struct Candidate {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Candidate> candidates;
+	if (state.life > 0 && state.levelId == state.combatTargetLevelId)
+		candidates.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId)
+		candidates.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (candidates.empty())
+		return;
+	const auto candidateDistance = [&](const Candidate &candidate) {
+		return std::max(
+		    std::abs(candidate.positionX - state.combatTargetPositionX),
+		    std::abs(candidate.positionY - state.combatTargetPositionY));
+	};
+	std::sort(candidates.begin(), candidates.end(), [&](const auto &left, const auto &right) {
+		const int32_t leftDistance = candidateDistance(left);
+		const int32_t rightDistance = candidateDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Candidate &target = candidates.front();
+	const int distance = candidateDistance(target);
+	if (distance > state.combatTargetAggroRange || distance < 3)
+		return;
+
+	const uint32_t actionSeed = static_cast<uint32_t>(tick)
+	    ^ state.combatTargetEntityId
+	    ^ target.entityId;
+	if (actionSeed % 100U >= 43U)
+		return;
+
+	const auto displacement = DirectionDisplacements[state.combatTargetDirection];
+	const int32_t spawnCheckX = state.combatTargetPositionX + displacement.first;
+	const int32_t spawnCheckY = state.combatTargetPositionY + displacement.second;
+	if (spawnCheckX < 0 || spawnCheckX >= 40 || spawnCheckY < 0 || spawnCheckY >= 40
+	    || (spawnCheckX == state.positionX && spawnCheckY == state.positionY)
+	    || (state.secondaryPlayerEntityId != 0
+	        && state.secondaryPlayerLife > 0
+	        && spawnCheckX == state.secondaryPlayerPositionX
+	        && spawnCheckY == state.secondaryPlayerPositionY))
+		return;
+
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+	const auto velocity = CalculateVelocity(
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	    target.positionX,
+	    target.positionY,
+	    8);
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.combatTargetEntityId;
+	projectile.targetEntityId = target.entityId;
+	projectile.spellId = 117;
+	projectile.levelId = state.combatTargetLevelId;
+	projectile.positionX = state.combatTargetPositionX;
+	projectile.positionY = state.combatTargetPositionY;
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
+	projectile.targetX = target.positionX;
+	projectile.targetY = target.positionY;
+	projectile.damage = 0;
+	projectile.damageType = 0;
+	projectile.remainingTicks = 9;
+	projectile.behavior = HorkSpawnBehavior;
+	projectile.originalDirection = state.combatTargetDirection;
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.speed = 8;
+	projectile.impactLifetime = 1;
+	projectile.resistantDamageDivisor = 1;
+	state.projectiles.push_back(std::move(projectile));
+}
+
+/** Advances compact Hork Spawn travel through its first lifecycle ticks. */
+void AdvanceReplayHorkSpawnsOneTick(ReplayFixtureExecutionState &state)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != HorkSpawnBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.remainingTicks == 0) {
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		for (const auto &tile : visitedTiles) {
+			projectile.positionX = tile.x;
+			projectile.positionY = tile.y;
+			projectile.traveledX = tile.traveledX;
+			projectile.traveledY = tile.traveledY;
+		}
+		++iterator;
+	}
+}
+
 /** Admits the compact Succubus BloodStar native ranged branch. */
 void AdmitReplayAutonomousBloodStar(
     ReplayFixtureExecutionState &state)
@@ -4891,9 +5016,11 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
 		AdmitReplayAutonomousBloodStar(state);
 		AdmitReplayAutonomousMonsterMagic(state);
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
+		AdvanceReplayHorkSpawnsOneTick(state);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);

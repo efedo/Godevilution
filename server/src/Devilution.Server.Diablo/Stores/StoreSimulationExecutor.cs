@@ -110,7 +110,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null,
         AuthoritativePlayerClassDefinition? startingPlayerClass = null,
         AuthoritativeItemQuestEffectCatalog? startingItemQuestEffects = null,
-        uint startingStatPoints = 0)
+        uint startingStatPoints = 0,
+        AuthoritativeMonsterSpawnPlanner? startingMonsterSpawnPlanner = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -146,6 +147,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 GameMode = gameMode,
                 Difficulty = difficulty,
                 MonsterMissiles = startingMonsterMissiles,
+                MonsterSpawnPlanner = startingMonsterSpawnPlanner,
             });
         var compatibilityTemplate = new DiabloPlayerTemplate(
             startingGold,

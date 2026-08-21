@@ -11,11 +11,15 @@ All notable changes to this fork are documented below.
   Spirit hit roll to preserve native RNG order, keep generic native monster
   pursuit out of autonomous ranged lanes, and align Succubus/Lich projectile
   admission, damage, block, hit-recovery, and canonical monster-range state.
-  The rebuilt native replay runner now passes all 88 tests.
+  The rebuilt native replay runner now passes all 89 tests.
 
 - Add an end-to-end TCP ruleset-replacement fixture: a connected session now
   migrates through the live host barrier, continues operating on the new
   generation, and resumes with the published independent ruleset identity.
+
+- Add a shared Hellfire HorkDemon Hork Spawn replay fixture covering
+  server-owned summon admission, native travel timing, and C++/C# checkpoint
+  parity.
 
 - Route Godot world clicks through authoritative portals, objects, traps, and
   authored quest/towner stages before falling back to spell casting or movement;

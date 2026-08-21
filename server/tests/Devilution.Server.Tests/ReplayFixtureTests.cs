@@ -1735,6 +1735,104 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnAdmissionMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-autonomous.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        Assert.Empty(fixture.InitialProjectiles);
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            monsterId: fixture.InitialState.CombatTargetMonsterId,
+            aggroRange: fixture.InitialState.CombatTargetAggroRange,
+            attackDamage: fixture.InitialState.CombatTargetAttackDamage,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel,
+            nativeAi: fixture.InitialState.CombatTargetNativeAi,
+            intelligence: fixture.InitialState.CombatTargetIntelligence);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                fixture.InitialState.CombatTargetNativeAi,
+                "HorkSpawn",
+                AuthoritativeProjectileBehavior.HorkSpawn,
+                SpawnMonsterId: 117,
+                ProjectileSpeed: 8,
+                ProjectileLifetime: 9,
+                ProjectileImpactLifetime: 1,
+                DamageType: AuthoritativeDamageType.Physical),
+        ]);
+        var spawnWorld = new AuthoritativeWorld();
+        spawnWorld.AddLevel(new AuthoritativeLevel(1, 40, 40));
+        var spawnTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                117,
+                117,
+                "Hork Spawn",
+                0,
+                100,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "HorkDemon",
+                AggroRange = 6,
+            },
+        ]);
+        var spawnPlanner = new AuthoritativeMonsterSpawnPlanner(
+            spawnWorld,
+            spawnTypes,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(0, 100, 100, 100, 0),
+            ]));
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingMonsterSpawnPlanner: spawnPlanner,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, player.Life);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.HorkSpawn, projectile.Behavior);
+        Assert.Equal(117U, projectile.SpellId);
+        Assert.Equal(8U, projectile.RemainingTicks);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
