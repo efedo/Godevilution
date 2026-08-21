@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   authoritative server; local stash state remains available only in legacy
   mode until stash projection and commands are implemented.
 
+- Expand Godot authoritative walk-projection coverage across all eight native
+  adjacent directions and the start, midpoint, effect, and post-effect tick
+  boundaries.
+
 - Use the same authoritative action-tick walk projection for the Godot local
   player after bounded prediction has reconciled, preventing a snap to the
   occupied tile while the server-owned movement effect is still pending.

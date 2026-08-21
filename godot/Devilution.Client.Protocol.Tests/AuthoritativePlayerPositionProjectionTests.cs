@@ -96,6 +96,62 @@ public sealed class AuthoritativePlayerPositionProjectionTests
         Assert.Equal(6, position.Y, precision: 6);
     }
 
+    [Theory]
+    [InlineData(-1, -1)]
+    [InlineData(0, -1)]
+    [InlineData(1, -1)]
+    [InlineData(-1, 0)]
+    [InlineData(1, 0)]
+    [InlineData(-1, 1)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    public void InterpolatesEveryAdjacentWalkDirectionAtAuthoritativeBoundaries(
+        int directionX,
+        int directionY)
+    {
+        const int startX = 10;
+        const int startY = 20;
+        const ulong startedAtTick = 100;
+        const ulong effectTick = 108;
+        var player = new PlayerSnapshot {
+            PositionX = startX,
+            PositionY = startY,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                StartedAtTick = startedAtTick,
+                EffectTick = effectTick,
+                DirectionX = directionX,
+                DirectionY = directionY,
+            },
+        };
+
+        var atStart = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            player,
+            startedAtTick);
+        var atMidpoint = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            player,
+            startedAtTick + 4);
+        var atEffect = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            player,
+            effectTick);
+        var afterEffect = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            player,
+            effectTick + 20);
+
+        Assert.Equal(new ClientPresentationPosition(startX, startY), atStart);
+        Assert.Equal(
+            new ClientPresentationPosition(
+                startX + directionX * 0.5,
+                startY + directionY * 0.5),
+            atMidpoint);
+        Assert.Equal(
+            new ClientPresentationPosition(
+                startX + directionX,
+                startY + directionY),
+            atEffect);
+        Assert.Equal(atEffect, afterEffect);
+    }
+
     [Fact]
     public void DoesNotInterpolateActionsOtherThanAnInProgressWalk()
     {
