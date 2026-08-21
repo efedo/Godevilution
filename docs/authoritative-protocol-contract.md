@@ -100,9 +100,11 @@ projectile checks have all succeeded.
 stable target selection. `COMBAT_ENTITY` permits a client to include a visible
 monster or living remote-player entity ID, while `PLAYER` is reserved for
 player-targeted spells such as Heal Other and Resurrection. `TILE` and the
-zero-valued legacy default submit only coordinates. The server remains the
-authority for target type, visibility, range, line of sight, and spell-specific
-admission; these fields never grant targeting permission.
+zero-valued legacy default submit only coordinates. `WORLD_ENTITY` permits a
+Telekinesis client to name a visible world item, authored object, or living
+monster. The server remains the authority for target type, visibility, range,
+line of sight, and spell-specific admission; these fields never grant targeting
+permission.
 
 For native-scaled definitions such as Firebolt, catalog mana is resolved from
 effective spell level, character level where applicable, class/game-variant

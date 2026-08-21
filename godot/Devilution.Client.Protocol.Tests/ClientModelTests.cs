@@ -559,6 +559,7 @@ public sealed class ClientModelTests
                                 MiscId = 22,
                                 SpellDisplayName = "Telekinesis",
                                 SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
+                                SpellTargetingKind = SpellTargetingKind.WorldEntity,
                             },
                         },
                     },
@@ -584,6 +585,7 @@ public sealed class ClientModelTests
         Assert.Equal(PlayerItemLocation.Inventory, sources[3].SourceItem!.Location);
         Assert.Equal(701U, sources[3].SourceItem!.StableItemId);
         Assert.Equal(702U, sources[4].SourceItem!.StableItemId);
+        Assert.Equal(SpellTargetingKind.WorldEntity, sources[4].TargetingKind);
         Assert.Equal(CastSourceKind.Ability, sources[^1].Kind);
         Assert.Equal("Ability TrapDisarm", sources[^1].DisplayName);
 

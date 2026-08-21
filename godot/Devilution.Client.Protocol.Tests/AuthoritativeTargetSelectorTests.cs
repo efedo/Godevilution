@@ -111,6 +111,46 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void SelectsWorldEntitiesInServerTelekinesisPrecedenceOrder()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2 },
+            },
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 30,
+                    LevelId = 2,
+                    PositionX = 4,
+                    PositionY = 4,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 31,
+                    LevelId = 2,
+                    PositionX = 5,
+                    PositionY = 5,
+                    EffectKind = 1,
+                },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 32,
+                    LevelId = 2,
+                    PositionX = 6,
+                    PositionY = 6,
+                    Alive = true,
+                },
+            },
+        };
+
+        Assert.Equal(30U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 4, 4));
+        Assert.Equal(31U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 5, 5));
+        Assert.Equal(32U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 6, 6));
+    }
+
+    [Fact]
     public void SelectsRemotePlayersAtTheirReservedWalkDestination()
     {
         var snapshot = new Snapshot {

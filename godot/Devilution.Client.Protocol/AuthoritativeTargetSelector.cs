@@ -52,6 +52,53 @@ public static class AuthoritativeTargetSelector
             : SelectMonsterTarget(snapshot, localPlayer, targetX, targetY);
     }
 
+    /** Resolves a visible item, object, or living monster for Telekinesis. */
+    public static uint? SelectWorldEntityTarget(
+        Snapshot? snapshot,
+        uint localPlayerEntityId,
+        int targetX,
+        int targetY)
+    {
+        if (snapshot is null)
+            return null;
+
+        var localPlayer = snapshot.Players.FirstOrDefault(
+            player => player.EntityId == localPlayerEntityId)
+            ?? snapshot.Players.FirstOrDefault();
+        if (localPlayer is null)
+            return null;
+
+        var item = snapshot.WorldItems.FirstOrDefault(candidate =>
+            candidate.EntityId != 0
+            && candidate.LevelId == localPlayer.LevelId
+            && candidate.PositionX == targetX
+            && candidate.PositionY == targetY);
+        if (item is not null)
+            return item.EntityId;
+
+        var worldObject = snapshot.Objects.FirstOrDefault(candidate =>
+            candidate.EntityId != 0
+            && candidate.LevelId == localPlayer.LevelId
+            && !candidate.Activated
+            && !candidate.Destroyed
+            && AuthoritativeObjectSelector.HasAuthoritativeInteraction(candidate)
+            && candidate.PositionX == targetX
+            && candidate.PositionY == targetY);
+        if (worldObject is not null)
+            return worldObject.EntityId;
+
+        return snapshot.Monsters
+            .Where(candidate => candidate.EntityId != 0
+                && candidate.Alive
+                && !candidate.SneakHidden
+                && candidate.LevelId == localPlayer.LevelId
+                && candidate.PositionX == targetX
+                && candidate.PositionY == targetY)
+            .OrderBy(candidate => candidate.EntityId)
+            .Select(candidate => (uint?)candidate.EntityId)
+            .FirstOrDefault();
+    }
+
     /** Resolves a visible remote player for a player-targeted cast request. */
     public static uint? SelectRemotePlayerTarget(
         Snapshot? snapshot,

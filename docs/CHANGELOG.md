@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   authoritative entity IDs, preserving server-owned target validation and
   coordinate fallback for older clients.
 
+- Route Godot Telekinesis casts at visible items, authored objects, and living
+  monsters through the same server-projected world-entity targeting boundary.
+
 - Add an idempotent server-owned `CloseStoreRequested` intent and Godot HUD
   control so vendor and Adria service sessions can end without relying on a
   town restart or stale active-store state.

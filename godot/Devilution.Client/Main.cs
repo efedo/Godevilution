@@ -287,6 +287,24 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            var selectedSpellSource = AuthoritativeSpellSourceSelector.Select(
+                AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
+                selectedSpellSourceKey);
+            if (selectedSpellSource?.TargetingKind == SpellTargetingKind.WorldEntity
+                && AuthoritativeTargetSelector.SelectWorldEntityTarget(
+                    model.Snapshot,
+                    player?.EntityId ?? 0,
+                    target.X,
+                    target.Y) is { } worldTargetEntityId) {
+                Queue(new Command {
+                    CastRequested = CreateCastRequest(
+                        target,
+                        selectedSpellSource,
+                        worldTargetEntityId),
+                });
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             if (world?.WorldItemEntityIdAt(target) is { } itemEntityId) {
                 QueueInteractionAfterMove(target, new Command {
                     PickupWorldItemRequested = new PickupWorldItemRequested {
@@ -536,12 +554,20 @@ public partial class Main : Node2D
         if (source is null)
             return null;
         var player = model.Snapshot!.Players.First();
+        return CreateCastRequest(
+            target,
+            source,
+            ResolveVisibleCastTargetEntityId(target, player, source.TargetingKind));
+    }
+
+    private static CastRequested CreateCastRequest(
+        Vector2I target,
+        AuthoritativeSpellSource source,
+        uint targetEntityId)
+    {
         return new CastRequested {
             SpellId = source.SpellId,
-            TargetEntityId = ResolveVisibleCastTargetEntityId(
-                target,
-                player,
-                source.TargetingKind),
+            TargetEntityId = targetEntityId,
             TargetX = target.X,
             TargetY = target.Y,
             Source = source.Kind,

@@ -8,6 +8,52 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsSpellTargetingMetadataFromAuthoritativeSpellBehavior()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+            AbilitySpellId = 33,
+            MemorizedSpells = [new MemorizedSpellState(33, 1)],
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+                DisplayName = "Telekinesis",
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+            },
+        ]);
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source, spells: spells);
+
+        Assert.Equal(
+            SpellTargetingKind.WorldEntity,
+            snapshot.Players[0].AbilityTargetingKind);
+        Assert.Equal(
+            SpellTargetingKind.WorldEntity,
+            Assert.Single(snapshot.Players[0].MemorizedSpells).TargetingKind);
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(

@@ -1327,6 +1327,8 @@ internal static class DiabloProtocolMapper
             AuthoritativeProjectileBehavior.Resurrection
                 or AuthoritativeProjectileBehavior.HealOther
                 => SpellTargetingKind.Player,
+            AuthoritativeProjectileBehavior.Telekinesis
+                => SpellTargetingKind.WorldEntity,
             AuthoritativeProjectileBehavior.Targeted
                 or AuthoritativeProjectileBehavior.ChargedBolt
                 or AuthoritativeProjectileBehavior.Firebolt
