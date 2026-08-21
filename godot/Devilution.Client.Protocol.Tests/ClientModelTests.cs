@@ -1104,6 +1104,40 @@ public sealed class ClientModelTests
         Assert.False(model.IsCorrectingPosition);
     }
 
+    [Fact]
+    public void IgnoresStaleSnapshotsWhileApplyingTheirAcknowledgements()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 10,
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 4, PositionY = 5 },
+            },
+        }));
+        model.TrackPredictedMove(1, 1, 0);
+
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Tick = 9,
+                Players = {
+                    new PlayerSnapshot { EntityId = 7, PositionX = 1, PositionY = 1 },
+                },
+            },
+            Acknowledgement: new CommandAck {
+                Results = {
+                    new CommandResult {
+                        ClientSequence = 1,
+                        Status = CommandStatus.Rejected,
+                    },
+                },
+            }));
+
+        Assert.Equal(10UL, model.CurrentTick);
+        Assert.Equal((4, 5), (model.Snapshot!.Players[0].PositionX, model.Snapshot.Players[0].PositionY));
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.Equal(1UL, model.LastCommandResult!.ClientSequence);
+    }
+
     [Theory]
     [InlineData(PlayerActionKind.Death, PlayerCombatMode.Death, 0, 9U)]
     [InlineData(

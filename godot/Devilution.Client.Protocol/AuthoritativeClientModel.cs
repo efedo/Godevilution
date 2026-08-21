@@ -54,6 +54,10 @@ public sealed class AuthoritativeClientModel
 
     public void Apply(AuthoritativeClientMessage message)
     {
+        if (message.Snapshot is { } incomingSnapshot
+            && Snapshot is { } currentSnapshot
+            && incomingSnapshot.Tick < currentSnapshot.Tick)
+            message = message with { Snapshot = null };
         if (message.Snapshot is not null) {
             if (message.Snapshot.Players.Count == 0)
                 throw new InvalidDataException("The authoritative snapshot has no local player.");
