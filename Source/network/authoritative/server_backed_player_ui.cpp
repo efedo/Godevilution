@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <set>
 
 #include "engine/cursor.h"
@@ -95,6 +96,11 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	}
 	if (snapshot.abilitySpellId > static_cast<uint32_t>(SpellID::LAST))
 		return tl::make_unexpected("Server-backed player ability is outside the native spell range.");
+	std::set<uint32_t> visitedLevelIds;
+	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds) {
+		if (visitedLevelId >= NUMLEVELS || !visitedLevelIds.insert(visitedLevelId).second)
+			return tl::make_unexpected("Server-backed visited levels contain an invalid or duplicate native level.");
+	}
 	std::set<uint32_t> memorizedSpellIds;
 	for (const auto &spell : snapshot.memorizedSpells) {
 		if (spell.spellId == 0 || spell.spellId > static_cast<uint32_t>(SpellID::LAST)
@@ -182,6 +188,9 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.direction = static_cast<Direction>(snapshot.facingDirection);
 	player._pmode = static_cast<PLR_MODE>(snapshot.combatMode);
 	player._pClass = static_cast<HeroClass>(snapshot.characterClassId);
+	std::fill(std::begin(player._pLvlVisited), std::end(player._pLvlVisited), false);
+	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds)
+		player._pLvlVisited[visitedLevelId] = true;
 	if (!snapshot.characterName.empty())
 		CopyUtf8(player._pName, snapshot.characterName, PlayerNameLength);
 	player._pAblSpells = snapshot.abilitySpellId == 0

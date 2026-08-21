@@ -50,6 +50,10 @@ substitute for rebuilding the projects before a future run.
   in the native `wReflections` state, preserving spell defense and renderer
   parity while rejecting values outside the native 16-bit range.
 
+- Native authoritative local-player snapshots now apply the server-owned visited
+  level set to `_pLvlVisited`, with native-range and duplicate validation so
+  legacy quest and dungeon-entry gates cannot read stale local state.
+
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains
   available for compatibility mode.
