@@ -3268,9 +3268,9 @@ substitute for rebuilding the projects before a future run.
 - The generic host adapter now has an eight-generation replacement soak that
   migrates two sessions through every candidate and retires each prior target
   only after publication, preserving session state at every boundary. The live
-  TCP host now keeps one or two connected sessions operating across all eight
-  replacement generations and resumes both with the final published ruleset
-  identity.
+  TCP host now keeps one connected session operating across 32 replacement
+  generations and two connected sessions operating across eight generations;
+  both paths resume with the final published ruleset identity.
 - The Diablo content boundary now exposes stable-ID monster candidates for a
   requested dungeon level, with validated range filtering and deterministic
   ordering; map layout and spawn placement remain explicitly separate.
@@ -3404,11 +3404,11 @@ retains the legacy-named protocol executor and replay helpers, format-1 packages
 provide gameplay modules rather than host adapters, live ruleset replacement
   now exposes transactional candidate preparation, a host operation barrier,
   save-based session migration, handshake identity publication, generation
-  leases, and explicit retired-target disposal. An eight-generation end-to-end
-  TCP soak now proves active-session migration for two connected sessions,
-  continued operation on every replacement, retired-target disposal, and
-  resume under the final published identity; long-duration replacement
-  coverage plus authoritative content/gameplay coverage are still partial. Static content
+  leases, and explicit retired-target disposal. A 32-generation single-session
+  and eight-generation two-session end-to-end TCP soak now proves active-session
+  migration, continued operation on every replacement, retired-target disposal,
+  and resume under the final published identity; sustained operation pressure
+  and authoritative content/gameplay coverage are still partial. Static content
   portal routes remain protocol-visible without perturbing legacy replay hashes;
   owned, expiring portal state is hash-visible, and the base-content replay
   golden vectors track the current manifest. Cast source ownership and immediate
@@ -4332,7 +4332,8 @@ resistance, lifetime, collision, and deterministic projectile state.
 3. Grow the Godot client from a protocol demonstration into a complete playable
    presentation client using production assets.
 4. Add the missing replay, reconnect, multiplayer, and long-running soak cases.
-5. Add long-duration host-controlled ruleset replacement and safe-retirement
-   soak coverage; generalize adapter selection when a second adapter exists.
+5. Add sustained operation pressure to host-controlled ruleset replacement and
+   safe-retirement soaks; generalize adapter selection when a second adapter
+   exists.
 6. Replace the remaining Lua capability destinations and remove Lua only after
    every removal gate is satisfied.

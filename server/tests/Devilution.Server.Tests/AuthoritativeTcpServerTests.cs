@@ -661,7 +661,7 @@ public sealed class AuthoritativeTcpServerTests
     [Fact]
     public async Task TcpRulesetReloadSoakKeepsAConnectedAndResumedSessionAcrossGenerations()
     {
-        const int replacementGenerations = 8;
+        const int replacementGenerations = 32;
         var adapters = Enumerable.Range(0, replacementGenerations + 1)
             .Select(index => new ReloadableHostAdapter(
                 index == 0 ? "initial" : $"replacement-{index}"))
