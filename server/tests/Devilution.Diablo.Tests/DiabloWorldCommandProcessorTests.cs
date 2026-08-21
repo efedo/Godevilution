@@ -53,6 +53,94 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestSequenceFollowUpMaterializesDeterministicUniqueMonster()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 40, 40));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                139,
+                137,
+                "Na-Krul",
+                24,
+                24,
+                31,
+                1332,
+                1332,
+                125,
+                40,
+                50,
+                40,
+                50,
+                false,
+                false,
+                false) {
+                NativeAi = "SkeletonMelee",
+            },
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            monsterTypes,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(24, 24, 100, 100, 0),
+            ]),
+            uniqueMonsters: new AuthoritativeUniqueMonsterCatalog([
+                new AuthoritativeUniqueMonsterDefinition(0, 139, "Na-Krul", "SkeletonMelee") {
+                    SpawnHealthPercent = 50,
+                    SpawnArmorDelta = -50,
+                    SpawnFireResistance = 0,
+                    SpawnLightningResistance = 0,
+                    SpawnMagicResistance = 0,
+                    SpawnAcidResistance = 0,
+                },
+            ]));
+        var quest = new AuthoritativeQuestState(
+            3022,
+            24,
+            1,
+            variable1: 2,
+            completionVariable1: 3);
+        var @object = new AuthoritativeWorldObject(
+            2403,
+            6003,
+            24,
+            10,
+            10,
+            questId: 3022,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 3,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
+            questSequenceFollowUpAmount: 137,
+            questSequenceFollowUpOffsetX: 1,
+            questSequenceFollowUpOffsetY: 0);
+        var worldState = new DiabloWorldState(
+            world,
+            objects: [@object],
+            quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            worldState,
+            random: new DiabloRandom(7),
+            gameMode: DiabloGameMode.SinglePlayer,
+            monsterSpawnPlanner: planner,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(positionX: 9, positionY: 10, levelId: 24, entityId: 1);
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(@object.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        var target = Assert.Single(worldState.CombatTargets.Values);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId,
+            target.EntityId);
+        Assert.Equal(("Na-Krul", 666, 75), (target.UniqueIdentity, target.MaxHitPoints, target.ArmorClass));
+        Assert.True(quest.Completed);
+    }
+
+    [Fact]
     public void MovementRejectsLiveMonsterOccupancy()
     {
         var monster = new AuthoritativeCombatTarget(10, 1, 0, 5);

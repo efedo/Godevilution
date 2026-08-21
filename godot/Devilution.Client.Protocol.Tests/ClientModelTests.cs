@@ -784,6 +784,15 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidReward)));
 
+        var nativeMonsterFollowUp = valid.Clone();
+        nativeMonsterFollowUp.Objects[0].EffectKind = 4;
+        nativeMonsterFollowUp.Objects[0].QuestId = 3002;
+        nativeMonsterFollowUp.Quests.Add(new QuestSnapshot { QuestId = 3002 });
+        nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpKind = 3;
+        nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpAmount = 139;
+        nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpOffsetX = 1;
+        model.Apply(new AuthoritativeClientMessage(Snapshot: nativeMonsterFollowUp));
+
         var invalidFollowUp = valid.Clone();
         invalidFollowUp.Objects[0].EffectKind = 4;
         invalidFollowUp.Objects[0].QuestSequenceFollowUpKind = 1;

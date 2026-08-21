@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the Hellfire Na-Krul tome completion's server-owned native
+  monster materialization. The validated content pack now binds the Na-Krul
+  identity, applies its native health/armor/resistance weakening transition,
+  scales the spawned target through the selected difficulty, and preserves a
+  deterministic entity identity; dynamic room-opening geometry remains a
+  documented follow-up seam.
+
 - Add an optional standalone-server starting-stat-points override and live
   Godot coverage for allocating a server-owned Vitality point through the
   shared protocol and reconciling the resulting resources from a snapshot.

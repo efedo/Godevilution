@@ -130,4 +130,44 @@ public sealed class AuthoritativeUniqueMonsterCatalogTests
 
         Assert.Throws<InvalidDataException>(() => catalog.ApplyTo([target]));
     }
+
+    [Fact]
+    public void AppliesAuthoredSpawnWeakeningAlongsideUniqueIdentity()
+    {
+        var target = new AuthoritativeCombatTarget(
+            16,
+            1,
+            1,
+            1332,
+            armorClass: 125,
+            maxHitPoints: 1332,
+            monsterId: 139,
+            unique: true,
+            fireResistance: 100,
+            lightningResistance: 100,
+            magicResistance: 100,
+            acidResistance: 100,
+            nativeAi: "SkeletonMelee");
+        var catalog = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 139, "Na-Krul", "SkeletonMelee") {
+                SpawnHealthPercent = 50,
+                SpawnArmorDelta = -50,
+                SpawnFireResistance = 0,
+                SpawnLightningResistance = 0,
+                SpawnMagicResistance = 0,
+                SpawnAcidResistance = 0,
+            },
+        ]);
+
+        catalog.ApplyToGenerated([target]);
+
+        Assert.Equal("Na-Krul", target.UniqueIdentity);
+        Assert.Equal((666, 75), (target.MaxHitPoints, target.HitPoints));
+        Assert.Equal(75, target.ArmorClass);
+        Assert.Equal((0, 0, 0, 0), (
+            target.FireResistance,
+            target.LightningResistance,
+            target.MagicResistance,
+            target.AcidResistance));
+    }
 }

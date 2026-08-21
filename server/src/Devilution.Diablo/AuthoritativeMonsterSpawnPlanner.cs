@@ -147,15 +147,19 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         int positionY,
         uint entityId,
         bool multiplayer = false,
-        int direction = 0)
+        int direction = 0,
+        bool ignoreDungeonLevelRange = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
         if (!world.ContainsLevel(levelId) || levelId > int.MaxValue)
             return null;
         if (!monsterTypes.TryGetNative(nativeMonsterId, out var definition)
-            || definition.MinimumDungeonLevel > (int)levelId
-            || definition.MaximumDungeonLevel < (int)levelId)
+            && !monsterTypes.TryGet(nativeMonsterId, out definition))
+            return null;
+        if (!ignoreDungeonLevelRange
+            && (definition.MinimumDungeonLevel > (int)levelId
+                || definition.MaximumDungeonLevel < (int)levelId))
             return null;
 
         var hitPointRange = checked(
@@ -166,7 +170,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             + (int)(seed % (uint)hitPointRange);
         var attackDamage = definition.MinimumDamage
             + (int)((seed / 0x100U) % (uint)damageRange);
-        return CreateCombatTarget(
+        var target = CreateCombatTarget(
             new AuthoritativeMonsterSpawn(
                 definition,
                 levelId,
@@ -179,6 +183,19 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             entityId,
             multiplayer,
             direction);
+        if (uniqueMonsters?.Definitions.Any(uniqueDefinition =>
+                uniqueDefinition.EntityId == 0
+                && (uniqueDefinition.MonsterId == 0
+                    || uniqueDefinition.MonsterId == definition.MonsterId)
+                && (uniqueDefinition.NativeAi.Length == 0
+                    || string.Equals(
+                        uniqueDefinition.NativeAi,
+                        definition.NativeAi,
+                        StringComparison.Ordinal))) == true) {
+            target.IsUnique = true;
+            uniqueMonsters.ApplyToGenerated([target]);
+        }
+        return target;
     }
 
     /** Creates one content-defined SkeletonMelee summon at an explicit cell. */

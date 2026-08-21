@@ -22,8 +22,13 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
     private readonly AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions;
     private readonly AuthoritativeQuestDialogueStageCatalog? questDialogueStages;
+    private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
+    private readonly DiabloDifficulty difficulty;
+    private readonly DiabloGameVariant gameVariant;
+    private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextAuthoredProjectileEntityId = 0xC0000000;
+    private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
     public DiabloWorldCommandProcessor(
         DiabloWorldState world,
@@ -41,7 +46,11 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
-        AuthoritativeSpellCatalog? spells = null)
+        AuthoritativeSpellCatalog? spells = null,
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+        DiabloGameVariant gameVariant = DiabloGameVariant.Diablo,
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -59,6 +68,10 @@ public sealed class DiabloWorldCommandProcessor
         this.spellBooks = spellBooks;
         this.questTownerInteractions = questTownerInteractions;
         this.questDialogueStages = questDialogueStages;
+        this.monsterSpawnPlanner = monsterSpawnPlanner;
+        this.difficulty = difficulty;
+        this.gameVariant = gameVariant;
+        this.monsterTypes = monsterTypes;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -1173,6 +1186,10 @@ public sealed class DiabloWorldCommandProcessor
                 @object.ProjectileTargetOffsetX,
                 @object.ProjectileTargetOffsetY);
         if (@object.QuestSequenceFollowUpKind
+            == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster) {
+            return CanSpawnNativeMonster(@object);
+        }
+        if (@object.QuestSequenceFollowUpKind
             != AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
             return true;
         }
@@ -1181,6 +1198,72 @@ public sealed class DiabloWorldCommandProcessor
             @object.QuestSequenceFollowUpAmount,
             @object.QuestSequenceFollowUpOffsetX,
             @object.QuestSequenceFollowUpOffsetY);
+    }
+
+    private bool CanSpawnNativeMonster(AuthoritativeWorldObject @object)
+    {
+        if (monsterSpawnPlanner is null
+            || @object.QuestSequenceFollowUpAmount == 0) {
+            return false;
+        }
+        var targetX = checked(@object.PositionX + @object.QuestSequenceFollowUpOffsetX);
+        var targetY = checked(@object.PositionY + @object.QuestSequenceFollowUpOffsetY);
+        return world.ContainsPosition(@object.LevelId, targetX, targetY)
+            && world.IsWalkable(@object.LevelId, targetX, targetY)
+            && !world.IsOccupied(
+                @object.LevelId,
+                targetX,
+                targetY,
+                [],
+                0);
+    }
+
+    private void SpawnNativeMonster(AuthoritativeWorldObject @object)
+    {
+        if (!CanSpawnNativeMonster(@object))
+            throw new InvalidDataException(
+                $"Object {@object.EntityId} cannot materialize native monster {@object.QuestSequenceFollowUpAmount}.");
+
+        var targetX = checked(@object.PositionX + @object.QuestSequenceFollowUpOffsetX);
+        var targetY = checked(@object.PositionY + @object.QuestSequenceFollowUpOffsetY);
+        var entityId = AllocateGeneratedMonsterEntityId();
+        var target = monsterSpawnPlanner!.CreateNativeMonsterSummon(
+            @object.LevelId,
+            @object.QuestSequenceFollowUpAmount,
+            random.NextUInt32(),
+            targetX,
+            targetY,
+            entityId,
+            gameMode == DiabloGameMode.Multiplayer,
+            ignoreDungeonLevelRange: true);
+        if (target is null)
+            throw new InvalidDataException(
+                $"Object {@object.EntityId} references native monster {@object.QuestSequenceFollowUpAmount} that is unavailable on level {@object.LevelId}.");
+        DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+            target,
+            difficulty,
+            gameVariant,
+            gameMode,
+            combatRules.DifficultyRules);
+        DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+            target,
+            difficulty,
+            monsterTypes);
+        world.CombatTargets.Add(target.EntityId, target);
+    }
+
+    private uint AllocateGeneratedMonsterEntityId()
+    {
+        while (nextGeneratedMonsterEntityId == 0
+            || world.CombatTargets.ContainsKey(nextGeneratedMonsterEntityId)
+            || world.WorldItems.ContainsKey(nextGeneratedMonsterEntityId)
+            || world.Objects.ContainsKey(nextGeneratedMonsterEntityId)
+            || world.Projectiles.ContainsKey(nextGeneratedMonsterEntityId)
+            || world.Portals.ContainsKey(nextGeneratedMonsterEntityId)
+            || world.Corpses.ContainsKey(nextGeneratedMonsterEntityId)) {
+            nextGeneratedMonsterEntityId = checked(nextGeneratedMonsterEntityId + 1);
+        }
+        return nextGeneratedMonsterEntityId++;
     }
 
     private bool CanSpawnObjectSpellProjectile(
@@ -1512,6 +1595,9 @@ public sealed class DiabloWorldCommandProcessor
             return;
         case AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile:
             SpawnObjectSpellProjectile(@object, player);
+            return;
+        case AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster:
+            SpawnNativeMonster(@object);
             return;
         default:
             throw new InvalidDataException(

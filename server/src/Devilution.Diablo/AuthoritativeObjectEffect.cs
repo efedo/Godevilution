@@ -33,6 +33,8 @@ public enum AuthoritativeQuestSequenceFollowUpKind
     None,
     WorldMutation,
     SpawnSpellProjectile,
+    /** Spawns one validated native monster identity at the authored offset. */
+    SpawnNativeMonster,
 }
 
 /** Native quest-state transition applied when an authored object is activated. */

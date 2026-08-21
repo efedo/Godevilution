@@ -219,7 +219,11 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.SpellBooks,
             options.QuestTownerInteractions,
             options.QuestDialogueStages,
-            spells);
+            spells,
+            options.MonsterSpawnPlanner,
+            options.Difficulty,
+            combatRules.GameVariant,
+            options.MonsterTypes);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,

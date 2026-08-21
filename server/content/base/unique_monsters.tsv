@@ -1,6 +1,6 @@
-entity_id	monster_id	monster_symbol	identity	native_ai
-0	0		Gharbad	Gharbad
-0	0		Zhar	Zhar
-0	0		Warlord	Warlord
-0	0		Lazarus	Lazarus
-0	0		Snotspill	Snotspill
+entity_id	monster_id	monster_symbol	identity	native_ai	spawn_health_percent	spawn_armor_delta	spawn_fire_resistance	spawn_lightning_resistance	spawn_magic_resistance	spawn_acid_resistance
+0	0		Gharbad	Gharbad	none	0	none	none	none	none
+0	0		Zhar	Zhar	none	0	none	none	none	none
+0	0		Warlord	Warlord	none	0	none	none	none	none
+0	0		Lazarus	Lazarus	none	0	none	none	none	none
+0	0		Snotspill	Snotspill	none	0	none	none	none	none

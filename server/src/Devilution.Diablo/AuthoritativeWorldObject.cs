@@ -297,6 +297,8 @@ public sealed class AuthoritativeWorldObject
                 => amount != 0 && offsetX == 0 && offsetY == 0,
             AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
                 => amount != 0,
+            AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster
+                => amount != 0,
             _ => false,
         };
     }
@@ -352,6 +354,15 @@ public static class AuthoritativeWorldObjectCatalog
                     checked(@object.PositionY + @object.QuestSequenceFollowUpOffsetY))) {
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} contains a quest-sequence projectile target outside its level.");
+            }
+            if (@object.QuestSequenceFollowUpKind
+                    == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster
+                && !world.ContainsPosition(
+                    @object.LevelId,
+                    checked(@object.PositionX + @object.QuestSequenceFollowUpOffsetX),
+                    checked(@object.PositionY + @object.QuestSequenceFollowUpOffsetY))) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} contains a quest-sequence monster spawn outside its level.");
             }
         }
     }
@@ -500,6 +511,25 @@ public static class AuthoritativeWorldObjectCatalog
                 if (@object.RewardItemLevel < unique.MinimumLevel)
                     throw new InvalidDataException(
                         $"Object {@object.EntityId} reward unique {@object.RewardId} requires item level {unique.MinimumLevel}.");
+            }
+        }
+    }
+
+    /** Validates native monster identities used by authored encounter follow-ups. */
+    public static void ValidateMonsterRequirements(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        foreach (var @object in objects.Where(@object =>
+                     @object.QuestSequenceFollowUpKind
+                         == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster)) {
+            var monsterId = @object.QuestSequenceFollowUpAmount;
+            if (!monsterTypes.TryGet(monsterId, out _)
+                && !monsterTypes.TryGetNative(monsterId, out _)) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unknown native monster {monsterId}.");
             }
         }
     }
@@ -706,10 +736,18 @@ public static class AuthoritativeWorldObjectCatalog
         var spellSymbol = AuthoritativeSpellIdentity.ReadSymbol(
             row,
             "quest_sequence_follow_up_spell_symbol");
+        var monsterSymbol = AuthoritativeMonsterIdentity.ReadSymbol(
+            row,
+            "quest_sequence_follow_up_monster_symbol");
         if (spellSymbol.Length > 0
             && followUpKind != AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
             throw new InvalidDataException(
                 $"Object row {row.LineNumber} supplies quest_sequence_follow_up_spell_symbol for follow-up kind '{followUpKind}'.");
+        }
+        if (monsterSymbol.Length > 0
+            && followUpKind != AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster) {
+            throw new InvalidDataException(
+                $"Object row {row.LineNumber} supplies quest_sequence_follow_up_monster_symbol for follow-up kind '{followUpKind}'.");
         }
         if (followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
             return AuthoritativeSpellIdentity.ResolveOptional(
@@ -717,6 +755,13 @@ public static class AuthoritativeWorldObjectCatalog
                 stableIds,
                 "quest_sequence_follow_up_amount",
                 "quest_sequence_follow_up_spell_symbol");
+        }
+        if (followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster) {
+            return AuthoritativeMonsterIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "quest_sequence_follow_up_amount",
+                "quest_sequence_follow_up_monster_symbol");
         }
         return row.OptionalUInt32("quest_sequence_follow_up_amount");
     }

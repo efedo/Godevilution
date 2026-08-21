@@ -452,6 +452,8 @@ public sealed class AuthoritativeClientModel
                 && @object.QuestSequenceFollowUpOffsetY == 0,
             2 => (effectKind == 4 || effectKind == 6)
                 && @object.QuestSequenceFollowUpAmount != 0,
+            3 => effectKind == 4
+                && @object.QuestSequenceFollowUpAmount != 0,
             _ => false,
         };
         if (@object.EffectAmount < 0
@@ -472,7 +474,7 @@ public sealed class AuthoritativeClientModel
             || !producesProjectile
                 && (@object.ProjectileTargetOffsetX != 0
                     || @object.ProjectileTargetOffsetY != 0)
-            || followUpKind is < 0 or > 2
+            || followUpKind is < 0 or > 3
             || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
             || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
             || !followUpValid

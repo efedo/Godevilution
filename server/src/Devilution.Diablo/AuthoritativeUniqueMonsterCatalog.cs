@@ -11,7 +11,20 @@ public sealed record AuthoritativeUniqueMonsterDefinition(
     uint EntityId,
     uint MonsterId,
     string Identity,
-    string NativeAi = "");
+    string NativeAi = "")
+{
+    /** Optional native spawn health percentage applied when this identity is materialized. */
+    public int? SpawnHealthPercent { get; init; }
+
+    /** Native armor adjustment applied by an encounter-specific spawn transition. */
+    public int SpawnArmorDelta { get; init; }
+
+    /** Optional native resistance overrides applied by an encounter-specific spawn transition. */
+    public int? SpawnFireResistance { get; init; }
+    public int? SpawnLightningResistance { get; init; }
+    public int? SpawnMagicResistance { get; init; }
+    public int? SpawnAcidResistance { get; init; }
+}
 
 /** External unique identity catalog kept separate from base monster type metadata. */
 public sealed class AuthoritativeUniqueMonsterCatalog
@@ -29,7 +42,13 @@ public sealed class AuthoritativeUniqueMonsterCatalog
                     && string.IsNullOrWhiteSpace(definition.NativeAi))
                 || string.IsNullOrWhiteSpace(definition.Identity)
                 || definition.Identity.Length > 128
-                || definition.NativeAi.Length > 128)
+                || definition.NativeAi.Length > 128
+                || definition.SpawnHealthPercent is < 1 or > 100
+                || definition.SpawnArmorDelta is < -255 or > 255
+                || definition.SpawnFireResistance is < -100 or > 100
+                || definition.SpawnLightningResistance is < -100 or > 100
+                || definition.SpawnMagicResistance is < -100 or > 100
+                || definition.SpawnAcidResistance is < -100 or > 100)
             || values.Where(definition => definition.EntityId != 0)
                 .GroupBy(definition => definition.EntityId)
                 .Any(group => group.Count() != 1)
@@ -96,6 +115,7 @@ public sealed class AuthoritativeUniqueMonsterCatalog
                 throw new InvalidDataException(
                     $"Unique monster encounter {matchedTarget.EntityId} already has a conflicting identity.");
             matchedTarget.UniqueIdentity = definition.Identity;
+            ApplySpawnModifiers(matchedTarget, definition);
         }
     }
 
@@ -129,7 +149,28 @@ public sealed class AuthoritativeUniqueMonsterCatalog
                 throw new InvalidDataException(
                     $"Unique monster encounter {matchedTarget.EntityId} already has a conflicting identity.");
             matchedTarget.UniqueIdentity = definition.Identity;
+            ApplySpawnModifiers(matchedTarget, definition);
         }
+    }
+
+    private static void ApplySpawnModifiers(
+        AuthoritativeCombatTarget target,
+        AuthoritativeUniqueMonsterDefinition definition)
+    {
+        if (definition.SpawnHealthPercent is int healthPercent) {
+            var maximum = checked(target.MaxHitPointsQ6 * healthPercent / 100);
+            var current = checked(target.HitPointsQ6 * healthPercent / 100);
+            target.RestoreHitPointsQ6(current, maximum);
+        }
+        target.ArmorClass = checked(target.ArmorClass + definition.SpawnArmorDelta);
+        if (definition.SpawnFireResistance is int fire)
+            target.FireResistance = fire;
+        if (definition.SpawnLightningResistance is int lightning)
+            target.LightningResistance = lightning;
+        if (definition.SpawnMagicResistance is int magic)
+            target.MagicResistance = magic;
+        if (definition.SpawnAcidResistance is int acid)
+            target.AcidResistance = acid;
     }
 
     public static AuthoritativeUniqueMonsterCatalog LoadTsv(
@@ -149,6 +190,23 @@ public sealed class AuthoritativeUniqueMonsterCatalog
                 row.Required("identity"),
                 row.TryGet("native_ai", out var nativeAi)
                     ? nativeAi.Trim()
-                    : string.Empty)));
+                    : string.Empty) {
+                SpawnHealthPercent = OptionalNullableInt32(row, "spawn_health_percent"),
+                SpawnArmorDelta = row.OptionalInt32("spawn_armor_delta"),
+                SpawnFireResistance = OptionalNullableInt32(row, "spawn_fire_resistance"),
+                SpawnLightningResistance = OptionalNullableInt32(row, "spawn_lightning_resistance"),
+                SpawnMagicResistance = OptionalNullableInt32(row, "spawn_magic_resistance"),
+                SpawnAcidResistance = OptionalNullableInt32(row, "spawn_acid_resistance"),
+            }));
+    }
+
+    private static int? OptionalNullableInt32(TsvRow row, string column)
+    {
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return null;
+        }
+        return row.OptionalInt32(column);
     }
 }

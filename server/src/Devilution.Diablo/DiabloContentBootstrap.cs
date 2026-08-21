@@ -530,6 +530,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objectDefinitions, itemCatalog!);
         if (objectDefinitions.Length > 0 && spells is not null)
             AuthoritativeWorldObjectCatalog.ValidateSpellRequirements(objectDefinitions, spells);
+        if (objectDefinitions.Length > 0 && monsterTypes is not null)
+            AuthoritativeWorldObjectCatalog.ValidateMonsterRequirements(objectDefinitions, monsterTypes);
+        if (objectDefinitions.Any(@object =>
+                @object.QuestSequenceFollowUpKind
+                    == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster) == true
+            && monsterTypes is null) {
+            throw new InvalidDataException(
+                "Native-monster follow-ups require an active monster type catalog.");
+        }
         if (objectDefinitions.Any(@object => @object.EffectKind is
                 AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.SpawnSpellProjectile
