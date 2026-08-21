@@ -26,8 +26,8 @@ Status date: 2026-08-21
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,428, Server 424, and Godot protocol 156. On 2026-08-21, the rebuilt native
-replay runner passed 95 of 95 tests and the managed replay fixture class passed
+1,428, Server 425, and Godot protocol 156. On 2026-08-21, the rebuilt native
+replay runner passed 96 of 96 tests and the managed replay fixture class passed
 without failures. These counts are a dated verification baseline, not a
 substitute for rebuilding the projects before a future run.
 
@@ -698,7 +698,9 @@ substitute for rebuilding the projects before a future run.
   travel tick before expiry; a multiplayer checkpoint covers secondary-player
   block admission, Block timing, and Hork Spawn removal ordering; a secondary
   impact checkpoint covers non-blocking Q6 damage, GotHit timing, and removal;
-  a current-tile checkpoint covers breakable-object destruction and removal.
+  a current-tile checkpoint covers breakable-object destruction and removal;
+  a shield-seeded primary-player checkpoint covers native block admission and
+  Block timing.
 
 - Lich-family MonsterMagic misses now preserve the living player's state and
   the projectile's travel phase while retaining the failed occupant identity;

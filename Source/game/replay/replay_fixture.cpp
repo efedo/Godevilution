@@ -4845,10 +4845,16 @@ void AdvanceReplayHorkSpawnsOneTick(
 			    100);
 			const bool hit = std::max(GenerateRnd(state, 100), 0) < hitChance;
 			if (hit) {
-				const bool canBlock = secondaryPlayerAtTile
-				    && state.secondaryPlayerBlockCapable
-				    && (state.secondaryPlayerCombatMode == 0
-				        || state.secondaryPlayerCombatMode == 4);
+				const bool primaryPlayerBlockCapable = primaryPlayerAtTile
+				    && (state.combatMode == 0 || state.combatMode == 4)
+				    && std::any_of(state.equipment.begin(), state.equipment.end(), [](const auto &item) {
+					    return item.state.itemType == 5;
+				    });
+				const bool canBlock = (secondaryPlayerAtTile
+				        && state.secondaryPlayerBlockCapable
+				        && (state.secondaryPlayerCombatMode == 0
+				            || state.secondaryPlayerCombatMode == 4))
+				    || primaryPlayerBlockCapable;
 				const int blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 				const int blockChance = std::clamp(
 				    (secondaryPlayerAtTile ? state.secondaryPlayerDexterity : 0)
@@ -4856,8 +4862,13 @@ void AdvanceReplayHorkSpawnsOneTick(
 				    0,
 				    100);
 				if (canBlock && blockRoll < blockChance) {
-					state.secondaryPlayerCombatMode = 6;
-					state.secondaryPlayerCombatModeEndTick = tick + 4;
+					if (primaryPlayerAtTile) {
+						state.combatMode = 6;
+						state.combatModeEndTick = tick + 4;
+					} else {
+						state.secondaryPlayerCombatMode = 6;
+						state.secondaryPlayerCombatModeEndTick = tick + 4;
+					}
 					iterator = state.projectiles.erase(iterator);
 					continue;
 				}
