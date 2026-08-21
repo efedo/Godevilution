@@ -113,6 +113,39 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsOutOfRangeLevelGeometryCellsAndLayers()
+    {
+        var model = new AuthoritativeClientModel();
+        var outOfRangeCell = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 4,
+                    Height = 4,
+                    BlockedCells = { 16 },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: outOfRangeCell)));
+
+        var invalidTransparency = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 4,
+                    Height = 4,
+                    NativeTransparency = { 0, 1 },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidTransparency)));
+    }
+
+    [Fact]
     public void SelectsAvailableContentOwnedQuestTownerStageByStateAndAdjacency()
     {
         var snapshot = new Snapshot {

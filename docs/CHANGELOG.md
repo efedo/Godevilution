@@ -20,6 +20,10 @@ All notable changes to this fork are documented below.
   submitting the range-constrained interaction intent; the original intent is
   automatically submitted after the authoritative position reaches range.
 
+- Validate Godot projected level blocked-cell indices, duplicate cells,
+  transparency lengths, and native transparency bounds before movement or
+  warp presentation consumes the geometry.
+
 - Preserve server-owned Reflect charges when applying authoritative native
   player snapshots, with validation against the native 16-bit range.
 

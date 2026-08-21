@@ -530,6 +530,27 @@ public sealed class AuthoritativeClientModel
     {
         var levels = new Dictionary<uint, LevelGeometrySnapshot>();
         foreach (var level in snapshot.LevelGeometry) {
+            if (level.Width < 0
+                || level.Height < 0
+                || level.NativeTransparency.Any(value => value > ushort.MaxValue)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid level geometry dimensions.");
+            }
+            if (level.Width > 0 && level.Height > 0) {
+                var cellCount = checked((long)level.Width * level.Height);
+                if (level.BlockedCells.Count > cellCount
+                    || level.MissileBlockedCells.Count > cellCount
+                    || level.BlockedCells.Any(cell => cell < 0 || cell >= cellCount)
+                    || level.MissileBlockedCells.Any(cell => cell < 0 || cell >= cellCount)
+                    || level.BlockedCells.Distinct().Count() != level.BlockedCells.Count
+                    || level.MissileBlockedCells.Distinct().Count()
+                        != level.MissileBlockedCells.Count
+                    || level.NativeTransparency.Count != 0
+                        && level.NativeTransparency.Count != cellCount) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains invalid level geometry cells.");
+                }
+            }
             if (!levels.TryAdd(level.LevelId, level)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains duplicate level geometry.");

@@ -167,6 +167,9 @@ substitute for rebuilding the projects before a future run.
   position does not satisfy the server interaction range, then submit the
   original entity-addressed intent once the authoritative position arrives.
 
+- Godot rejects projected level geometry with out-of-range or duplicate
+  collision cells and mismatched native transparency layers.
+
 - Level geometry snapshots now carry validated authored warp-trigger metadata.
   Godot renders available and quest-gated markers from the server projection;
   clients never select or apply the transition locally.
