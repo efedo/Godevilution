@@ -2199,8 +2199,9 @@ void AdvanceBoneSpiritsOneTick(ReplayFixtureExecutionState &state, uint64_t tick
 				        - state.combatTargetMonsterLevel * 2,
 				    5,
 				    95);
-				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
-				if (state.combatTargetPetrified || hitRoll < hitChance) {
+				const bool hit = state.combatTargetPetrified
+				    || std::max(GenerateRnd(state, 100), 0) < hitChance;
+				if (hit) {
 					int32_t damageQ6 = state.combatTargetHitPointsQ6 / 3 / 64 * 64;
 					if (state.combatTargetMagicResistance > 0)
 						damageQ6 /= projectile.resistantDamageDivisor;
