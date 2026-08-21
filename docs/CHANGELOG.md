@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
 - Preserve authoritative Diablo rank, Reflect charges, and visited levels in
   native remote-player presentation state.
 
+- Reject inconsistent authoritative player/vendor active-store identities at
+  the native session boundary.
+
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.
 

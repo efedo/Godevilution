@@ -164,6 +164,18 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		item->set_price(75);
 		item->mutable_state()->set_item_type(1);
 		WriteEnvelope(socket, snapshot);
+
+		auto pollPayload = EnvelopeCodec::Read(socket);
+		if (!pollPayload.has_value() || !pollPayload->has_value())
+			return;
+		protocol::Envelope poll;
+		if (!poll.ParseFromArray(pollPayload->value().data(), static_cast<int>(pollPayload->value().size()))
+		    || !poll.has_snapshot_request())
+			return;
+		protocol::Envelope inconsistent;
+		inconsistent.mutable_snapshot()->add_players()->set_entity_id(7);
+		inconsistent.mutable_snapshot()->mutable_active_store()->set_store_id(1);
+		WriteEnvelope(socket, inconsistent);
 		observed = true;
 	});
 
@@ -197,6 +209,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	const auto *item = (*session)->VendorState().FindItem(1, 0);
 	ASSERT_NE(item, nullptr);
 	EXPECT_EQ(item->itemSeed, 42U);
+	EXPECT_FALSE((*session)->Poll(1000).has_value());
 	(*session)->Close();
 	server.join();
 	EXPECT_TRUE(observed);

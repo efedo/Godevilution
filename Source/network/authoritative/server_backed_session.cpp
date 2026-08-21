@@ -458,6 +458,11 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	});
 	if (player == players->end())
 		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
+	const bool hasActiveStore = snapshot.has_active_store();
+	if (hasActiveStore != player->activeStoreId.has_value()
+	    || (hasActiveStore && *player->activeStoreId != snapshot.active_store().store_id())) {
+		return tl::make_unexpected("Server-backed player and vendor snapshots disagree about the active store.");
+	}
 	if (!playerState_.ApplySnapshot(*player))
 		return tl::make_unexpected("Server-backed player snapshot could not be applied.");
 	playerStates_ = std::move(*players);

@@ -58,6 +58,10 @@ substitute for rebuilding the projects before a future run.
   Reflect charges, and visited levels as well, keeping aura and inspection
   state aligned without adding remote players to simulation pools.
 
+- The native session boundary now cross-validates the player `active_store_id`
+  against the matching authoritative vendor snapshot, rejecting inconsistent
+  reconnect or poll state before it reaches the store UI.
+
 - The Godot HUD now owns the legacy clock presentation with a tested invariant
   `HH:mm:ss` formatter; the optional native legacy clock script remains
   available for compatibility mode.
