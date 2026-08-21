@@ -103,6 +103,10 @@ substitute for rebuilding the projects before a future run.
   applied server tick, preserving authoritative position and action state
   during delayed or reordered delivery.
 
+- Native authoritative session polling now ignores snapshots older than the
+  local player's last applied server tick and filters event batches older than
+  that projection before native feedback is applied.
+
 - Native remote-player drawing now checks the projected player's authoritative
   level before rendering, while preserving level `0`'s compatibility wildcard;
   snapshots retained for inspection on other explicit levels cannot appear at

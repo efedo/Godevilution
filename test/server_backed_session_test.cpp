@@ -215,6 +215,79 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	EXPECT_TRUE(observed);
 }
 
+TEST(ServerBackedSession, IgnoresStaleSnapshotsAndEventsDuringPolling)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool observed = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_session_token("session");
+		WriteEnvelope(socket, serverHello);
+
+		protocol::Envelope initial;
+		auto *initialPlayer = initial.mutable_snapshot()->add_players();
+		initialPlayer->set_entity_id(7);
+		initialPlayer->set_position_x(4);
+		initialPlayer->set_position_y(5);
+		initial.mutable_snapshot()->set_tick(10);
+		WriteEnvelope(socket, initial);
+
+		auto pollPayload = EnvelopeCodec::Read(socket);
+		if (!pollPayload.has_value() || !pollPayload->has_value())
+			return;
+		protocol::Envelope poll;
+		if (!poll.ParseFromArray(pollPayload->value().data(), static_cast<int>(pollPayload->value().size()))
+		    || !poll.has_snapshot_request())
+			return;
+
+		protocol::Envelope staleEvents;
+		staleEvents.mutable_event_batch()->set_tick(9);
+		staleEvents.mutable_event_batch()->add_events()->mutable_experience()->set_player_entity_id(7);
+		staleEvents.mutable_event_batch()->mutable_events(0)->mutable_experience()->set_amount(99);
+		WriteEnvelope(socket, staleEvents);
+
+		protocol::Envelope stale;
+		auto *stalePlayer = stale.mutable_snapshot()->add_players();
+		stalePlayer->set_entity_id(7);
+		stalePlayer->set_position_x(1);
+		stalePlayer->set_position_y(2);
+		stale.mutable_snapshot()->set_tick(9);
+		WriteEnvelope(socket, stale);
+		observed = true;
+	});
+
+	ServerBackedSession::Configuration configuration {
+		.client = {
+			.host = "127.0.0.1",
+			.port = acceptor.local_endpoint().port(),
+			.clientBuildId = "client",
+			.protocolSchemaVersion = "1",
+			.contentManifestHash = "content",
+		},
+	};
+	auto session = ServerBackedSession::Connect(configuration);
+	ASSERT_TRUE(session.has_value()) << session.error();
+	ASSERT_TRUE((*session)->Poll(1000).has_value());
+	ASSERT_NE((*session)->PlayerState().Snapshot(), nullptr);
+	EXPECT_EQ((*session)->PlayerState().Snapshot()->serverTick, 10U);
+	EXPECT_EQ((*session)->PlayerState().Snapshot()->positionX, 4);
+	EXPECT_EQ((*session)->PlayerState().Snapshot()->positionY, 5);
+	(*session)->Close();
+	server.join();
+	EXPECT_TRUE(observed);
+}
+
 TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 {
 	asio::io_context serverIo;

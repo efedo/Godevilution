@@ -865,8 +865,11 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 			session_->EntityId());
 		!result.has_value())
 		return result;
-	for (const auto &eventBatch : session_->TakePendingEventBatches())
+	for (const auto &eventBatch : session_->TakePendingEventBatches()) {
+		if (eventBatch.tick() < snapshot->serverTick)
+			continue;
 		ApplyServerBackedEventBatch(*player_, eventBatch, session_->EntityId());
+	}
 	if (auto result = ApplyServerBackedPlayerSnapshot(*player_, *snapshot); !result.has_value())
 		return result;
 	if (!pendingInventoryItemDrag_.has_value() || !pendingItem.has_value())

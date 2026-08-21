@@ -54,6 +54,9 @@ All notable changes to this fork are documented below.
 - Reject stale native remote-player snapshots before they can regress the
   compatibility presentation's position, action, or level state.
 
+- Ignore stale native local-player snapshots and their older event batches
+  during polling, preserving the last authoritative local projection.
+
 
 - Preserve the server-owned Diablo kill rank when applying authoritative native
   player snapshots, keeping victory progression aligned with C# state and saves.
