@@ -52,6 +52,7 @@
 #include "utils/sdl/sdl_geometry.h"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -606,7 +607,7 @@ void CheckInvPaste(Player &player, Point cursorPosition)
 				.slot = static_cast<uint32_t>(slot - SLOTXY_INV_FIRST),
 			};
 			authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
-			if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed inventory placement failed: {}", result.error());
 			return;
 		}
@@ -616,7 +617,7 @@ void CheckInvPaste(Player &player, Point cursorPosition)
 				.slot = static_cast<uint32_t>(slot - SLOTXY_BELT_FIRST),
 			};
 			authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
-			if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed belt placement failed: {}", result.error());
 			return;
 		}
@@ -624,7 +625,7 @@ void CheckInvPaste(Player &player, Point cursorPosition)
 		// Equipment placement uses the atomic server auto-equip intent so that
 		// hand selection and two-handed displacement are resolved authoritatively.
 		authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
-		if (auto result = authoritative::GetServerBackedRuntime().AutoEquipItem(*source, static_cast<uint32_t>(slot), 0, SDL_GetTicks()); !result.has_value())
+		if (auto result = authoritative::GetServerBackedRuntime().AutoEquipItem(*source, static_cast<uint32_t>(slot), 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed equipment placement failed: {}", result.error());
 		return;
 	}
@@ -814,7 +815,7 @@ std::optional<bool> TryServerBackedAutomaticMoveToInventory(Player &player, cons
 		.location = authoritative::ServerBackedItemLocation::Inventory,
 		.slot = static_cast<uint32_t>(*targetSlot),
 	};
-	if (auto result = runtime.MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value()) {
+	if (auto result = runtime.MoveItem(*source, destination, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 		LogError("Server-backed automatic inventory placement failed: {}", result.error());
 		return false;
 	}
@@ -846,7 +847,7 @@ std::optional<bool> TryServerBackedAutomaticMoveToBelt(Player &player, const Ite
 		.location = authoritative::ServerBackedItemLocation::Belt,
 		.slot = *targetSlot,
 	};
-	if (auto result = runtime.MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value()) {
+	if (auto result = runtime.MoveItem(*source, destination, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 		LogError("Server-backed automatic belt placement failed: {}", result.error());
 		return false;
 	}
@@ -864,7 +865,7 @@ std::optional<bool> TryServerBackedAutomaticAutoEquip(Player &player, const Item
 		LogError("Could not resolve the automatic equipment source in the authoritative snapshot.");
 		return false;
 	}
-	if (auto result = runtime.AutoEquipItem(*source, 0, SDL_GetTicks()); !result.has_value()) {
+	if (auto result = runtime.AutoEquipItem(*source, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 		LogError("Server-backed automatic equipment placement failed: {}", result.error());
 		return false;
 	}
@@ -2359,7 +2360,7 @@ bool UseInvItem(int cii)
 					if (!objectEntityId.has_value())
 						return false;
 					foundObject = true;
-					if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, SDL_GetTicks()); result.has_value())
+					if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, GetMillisecondsSinceStartup()); result.has_value())
 						return true;
 					LogError("Server-backed Rune Bomb use found a rejected hive object.");
 					return false;
@@ -2395,7 +2396,7 @@ bool UseInvItem(int cii)
 					if (!objectEntityId.has_value())
 						continue;
 					foundObject = true;
-					if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, SDL_GetTicks()); result.has_value())
+					if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, GetMillisecondsSinceStartup()); result.has_value())
 						return true;
 					else
 						LogError("Server-backed Cathedral Map use failed: {}", result.error());
@@ -2462,7 +2463,7 @@ bool UseInvItem(int cii)
 			LogError("Server-backed consumable use has no authoritative item reference.");
 			return true;
 		}
-		if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+		if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 			LogError("Server-backed consumable use failed: {}", result.error());
 			return true;
 		}
@@ -2499,7 +2500,7 @@ bool UseInvItem(int cii)
 			LogError("Server-backed spell-book use has no authoritative item reference.");
 			return true;
 		}
-		if (auto result = authoritative::GetServerBackedRuntime().ReadBook(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+		if (auto result = authoritative::GetServerBackedRuntime().ReadBook(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 			LogError("Server-backed spell-book use failed: {}", result.error());
 			return true;
 		}
@@ -2558,7 +2559,7 @@ void CloseStash()
 		if (itemTile) {
 		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, SDL_GetTicks()); !result.has_value()) {
+				if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed stash-close held-item drop failed: {}", result.error());
 					return;
 				}

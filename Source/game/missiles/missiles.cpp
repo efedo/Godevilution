@@ -69,6 +69,7 @@
 #include "utils/is_of.hpp"
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
+#include "utils/timer.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -3389,7 +3390,7 @@ void ProcessTownPortal(Missile &missile)
 				auto &runtime = authoritative::GetServerBackedRuntime();
 				if (runtime.IsConnected()) {
 					if (const auto portalId = runtime.PortalEntityIdAt(missile.position.tile.x, missile.position.tile.y); portalId.has_value()) {
-						if (auto result = runtime.UsePortal(*portalId, 0, SDL_GetTicks()); !result.has_value())
+						if (auto result = runtime.UsePortal(*portalId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 							LogError("Server-backed portal use failed: {}", result.error());
 						else
 							player._pmode = PM_NEWLVL;
@@ -4218,7 +4219,7 @@ void ProcessMissiles()
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (MyPlayer->_pmode == PM_STAND && authoritative::GetServerBackedRuntime().IsConnected()) {
 		auto &runtime = authoritative::GetServerBackedRuntime();
-		if (auto result = runtime.UsePortalAt(MyPlayer->position.tile.x, MyPlayer->position.tile.y, 0, SDL_GetTicks()); !result.has_value()) {
+		if (auto result = runtime.UsePortalAt(MyPlayer->position.tile.x, MyPlayer->position.tile.y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 			LogError("Server-backed portal collision check failed: {}", result.error());
 		} else if (*result) {
 			MyPlayer->clearPath();

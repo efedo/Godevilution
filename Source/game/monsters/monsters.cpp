@@ -111,6 +111,7 @@
 #include "utils/container/static_vector.hpp"
 #include "utils/status_macros.hpp"
 #include "utils/string/str_cat.hpp"
+#include "utils/timer.hpp"
 
 #ifdef _DEBUG
 #include "application/debug.h"
@@ -4673,7 +4674,7 @@ void TalktoMonster(Player &player, Monster &monster)
 		if (monsterEntityId.has_value()) {
 			const auto questId = runtime.ActiveQuestForMonster(*monsterEntityId);
 			if (questId.has_value()) {
-				if (auto result = runtime.TalkToQuest(*questId, *monsterEntityId, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = runtime.TalkToQuest(*questId, *monsterEntityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Failed to submit the authoritative quest dialogue: {}", result.error());
 				return;
 			}

@@ -42,6 +42,7 @@
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
+#include "utils/timer.hpp"
 
 namespace devilution {
 
@@ -1677,7 +1678,7 @@ void WitchRefillManaEnterImpl()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		const auto now = SDL_GetTicks();
+		const auto now = GetMillisecondsSinceStartup();
 		if (auto result = authoritative::GetServerBackedRuntime().OpenAdriaStore(0, now); !result.has_value()) {
 			LogError("Failed to open the server-backed Adria service: {}", result.error());
 		} else if (auto result = authoritative::GetServerBackedRuntime().RefillMana(0, now); !result.has_value()) {
@@ -1897,13 +1898,13 @@ void ConfirmEnter(Item &item)
 				tl::expected<void, std::string> result = [&] {
 					switch (CurrentStoreManager.oldActiveStore()) {
 					case TalkID::SmithBuy:
-						return authoritative::GetServerBackedRuntime().PurchaseSmith(*storeSlot, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().PurchaseSmith(*storeSlot, 0, GetMillisecondsSinceStartup());
 					case TalkID::WitchBuy:
-						return authoritative::GetServerBackedRuntime().PurchaseWitch(*storeSlot, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().PurchaseWitch(*storeSlot, 0, GetMillisecondsSinceStartup());
 					case TalkID::BoyBuy:
-						return authoritative::GetServerBackedRuntime().PurchaseWirt(*storeSlot, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().PurchaseWirt(*storeSlot, 0, GetMillisecondsSinceStartup());
 					case TalkID::HealerBuy:
-						return authoritative::GetServerBackedRuntime().PurchaseHealer(*storeSlot, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().PurchaseHealer(*storeSlot, 0, GetMillisecondsSinceStartup());
 					default:
 						return tl::expected<void, std::string> {};
 					}
@@ -1929,13 +1930,13 @@ void ConfirmEnter(Item &item)
 					switch (CurrentStoreManager.oldActiveStore()) {
 					case TalkID::SmithSell:
 					case TalkID::WitchSell:
-						return authoritative::GetServerBackedRuntime().SellItem(*itemReference, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().SellItem(*itemReference, 0, GetMillisecondsSinceStartup());
 					case TalkID::SmithRepair:
-						return authoritative::GetServerBackedRuntime().RepairItem(*itemReference, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().RepairItem(*itemReference, 0, GetMillisecondsSinceStartup());
 					case TalkID::WitchRecharge:
-						return authoritative::GetServerBackedRuntime().RechargeItem(*itemReference, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().RechargeItem(*itemReference, 0, GetMillisecondsSinceStartup());
 					case TalkID::StorytellerIdentify:
-						return authoritative::GetServerBackedRuntime().IdentifyItem(*itemReference, 0, SDL_GetTicks());
+						return authoritative::GetServerBackedRuntime().IdentifyItem(*itemReference, 0, GetMillisecondsSinceStartup());
 					default:
 						return tl::expected<void, std::string> {};
 					}
@@ -2839,16 +2840,16 @@ void StoreManager::StoreEnter()
 		tl::expected<void, std::string> result;
 		switch (activeStore_) {
 		case TalkID::Smith:
-			result = authoritative::GetServerBackedRuntime().OpenSmithStore(/*requestedTick=*/0, SDL_GetTicks());
+			result = authoritative::GetServerBackedRuntime().OpenSmithStore(/*requestedTick=*/0, GetMillisecondsSinceStartup());
 			break;
 		case TalkID::Witch:
-			result = authoritative::GetServerBackedRuntime().OpenWitchStore(/*requestedTick=*/0, SDL_GetTicks());
+			result = authoritative::GetServerBackedRuntime().OpenWitchStore(/*requestedTick=*/0, GetMillisecondsSinceStartup());
 			break;
 		case TalkID::Boy:
-			result = authoritative::GetServerBackedRuntime().OpenWirtStore(/*requestedTick=*/0, SDL_GetTicks());
+			result = authoritative::GetServerBackedRuntime().OpenWirtStore(/*requestedTick=*/0, GetMillisecondsSinceStartup());
 			break;
 		case TalkID::Healer:
-			result = authoritative::GetServerBackedRuntime().OpenHealerStore(/*requestedTick=*/0, SDL_GetTicks());
+			result = authoritative::GetServerBackedRuntime().OpenHealerStore(/*requestedTick=*/0, GetMillisecondsSinceStartup());
 			break;
 		default:
 			break;

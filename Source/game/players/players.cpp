@@ -62,6 +62,7 @@
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -3584,7 +3585,7 @@ void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 			return;
 		}
 		if (auto result = authoritative::GetServerBackedRuntime().Cast(
-		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, *source, 0, SDL_GetTicks()); !result.has_value())
+		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed spell cast failed: {}", result.error());
 		LastPlayerAction = PlayerUnderCursor != nullptr
 		    ? PlayerActionType::SpellPlayerTarget

@@ -33,6 +33,11 @@ substitute for rebuilding the projects before a future run.
 
 ## Implemented authoritative systems
 
+- Native server-backed input, polling, portal, store, quest, and ability
+  requests now timestamp the compatibility boundary with the shared
+  demo-aware timer; the adapter no longer reintroduces direct SDL timing for
+  authoritative commands.
+
 - Native remote-player presentation now selects walk, attack, ranged, block,
   hit, spell, and death sprite families from the authoritative combat mode
   without inserting those players into native simulation pools, and projects

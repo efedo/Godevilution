@@ -63,6 +63,7 @@
 #include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"
 #include "utils/string/str_cat.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -544,7 +545,7 @@ void Interact()
 		}
 		const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 		if (entityId.has_value()) {
-			if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed monster attack failed: {}", result.error());
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 			return;
@@ -556,9 +557,9 @@ void Interact()
 		    objectEntityId.has_value())) {
 		case ServerBackedObjectInteractionRoute::Submit:
 			if (pcurs == CURSOR_DISARM) {
-				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*objectEntityId, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*objectEntityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed trap disarm failed: {}", result.error());
-			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed object interaction failed: {}", result.error());
 			}
 			LastPlayerAction = PlayerActionType::OperateObject;
@@ -591,7 +592,7 @@ void Interact()
 
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(position.x, position.y, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(position.x, position.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed controller cell attack failed: {}", result.error());
 			LastPlayerAction = PlayerActionType::Attack;
 			return;
@@ -608,7 +609,7 @@ void Interact()
 			const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed controller monster target is not an authoritative entity.");
-			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed controller monster attack failed: {}", result.error());
 			}
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
@@ -630,7 +631,7 @@ void Interact()
 			const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed controller player target is not an authoritative entity.");
-			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed controller player attack failed: {}", result.error());
 			}
 			LastPlayerAction = PlayerActionType::AttackPlayerTarget;
@@ -649,9 +650,9 @@ void Interact()
 			if (!entityId.has_value()) {
 				LogError("Server-backed controller object target is not an authoritative entity.");
 			} else if (pcurs == CURSOR_DISARM) {
-				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed trap disarm failed: {}", result.error());
-			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed object interaction failed: {}", result.error());
 			}
 			LastPlayerAction = PlayerActionType::OperateObject;
@@ -1856,7 +1857,7 @@ void WalkInDir(Player &player, AxisDirection dir)
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		const int directionX = dir.x == AxisDirectionX_LEFT ? -1 : dir.x == AxisDirectionX_RIGHT ? 1 : 0;
 		const int directionY = dir.y == AxisDirectionY_UP ? -1 : dir.y == AxisDirectionY_DOWN ? 1 : 0;
-		if (auto result = authoritative::GetServerBackedRuntime().Move(directionX, directionY, 0, SDL_GetTicks()); !result.has_value())
+		if (auto result = authoritative::GetServerBackedRuntime().Move(directionX, directionY, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed movement failed: {}", result.error());
 		return;
 	}
@@ -2534,7 +2535,7 @@ bool TryDropItem()
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, SDL_GetTicks()); !result.has_value()) {
+		if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 			LogError("Server-backed held-item drop failed: {}", result.error());
 			return false;
 		}
@@ -2683,7 +2684,7 @@ void PerformSecondaryAction()
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		if (const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value()) {
-			if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed world-item pickup failed: {}", result.error());
 			return;
 		}
@@ -2692,7 +2693,7 @@ void PerformSecondaryAction()
 			return;
 		}
 		if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value()) {
-			if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed object interaction failed: {}", result.error());
 			LastPlayerAction = PlayerActionType::OperateObject;
 			return;
@@ -2722,7 +2723,7 @@ void PerformSecondaryAction()
 				target = Quests[pcursquest].position;
 
 			if (target.has_value()) {
-				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(target->x, target->y, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(target->x, target->y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed controller target movement failed: {}", result.error());
 			}
 			return;

@@ -62,6 +62,7 @@
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
+#include "utils/timer.hpp"
 
 namespace devilution {
 
@@ -4577,7 +4578,7 @@ void OperateObject(Player &player, Object &object)
 	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
 		auto &runtime = authoritative::GetServerBackedRuntime();
 		if (const auto entityId = runtime.QuestObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
-			if (auto result = runtime.OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = runtime.OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Failed to submit the authoritative quest object operation: {}", result.error());
 			return;
 		}

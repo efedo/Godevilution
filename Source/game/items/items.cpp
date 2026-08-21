@@ -93,6 +93,7 @@
 #include "utils/string/str_split.hpp"
 #include "utils/string/string_or_view.hpp"
 #include "utils/string/utf8.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -4410,7 +4411,7 @@ bool TryServerBackedConsumableCast(Player &player, int spellFrom)
 	if (auto result = authoritative::GetServerBackedRuntime().Cast(
 	        static_cast<uint32_t>(sourceItem._iSpell), targetEntityId, target.x, target.y,
 	        { authoritative::ServerBackedCastSourceKind::ConsumableItem, sourceReference },
-	        0, SDL_GetTicks()); !result.has_value())
+	        0, GetMillisecondsSinceStartup()); !result.has_value())
 		LogError("Server-backed consumable cast failed: {}", result.error());
 	NewCursor(CURSOR_HAND);
 	return true;

@@ -24,6 +24,10 @@ All notable changes to this fork are documented below.
 - Route the compatibility system tick wrapper through the shared native timer,
   preserving demo/replay timing while removing its direct SDL dependency.
 
+- Route native server-backed input, polling, portal, store, quest, and ability
+  request timestamps through the same shared timer, keeping replay-aware time
+  consistent across the compatibility adapter.
+
 - Extend the end-to-end TCP ruleset-replacement soak to 32 generations for a
   connected session. The session migrates through the live host barrier,
   continues operating on every replacement, retires each prior target, and

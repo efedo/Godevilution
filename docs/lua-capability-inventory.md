@@ -88,6 +88,9 @@ export while Lua retains the compatibility alias.
 The compatibility `system.get_ticks` wrapper now delegates to the shared native
 `GetMillisecondsSinceStartup` timer, so demo/replay time and live SDL time use
 one owner; the Lua function remains only as the legacy presentation alias.
+Native server-backed input, polling, portal, store, quest, and ability requests
+also use that timer at the compatibility boundary, so replay-aware time is not
+reintroduced by the native client adapter.
 The `dev.items.spawn` and `dev.items.spawnUnique` helpers now delegate to
 `debug.items.spawn` and `debug.items.spawnUnique`; item generation, placement,
 and network spawning remain native-owned while Lua retains the compatibility

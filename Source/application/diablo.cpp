@@ -128,6 +128,7 @@
 #include "utils/status_macros.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
+#include "utils/timer.hpp"
 
 #ifndef USE_SDL1
 #include "controls/touch/gamepad.h"
@@ -276,7 +277,7 @@ void LeftMouseCmd(bool bShift)
 				const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
 					LogError("Server-backed town item target is not an authoritative entity.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed town item pickup failed: {}", result.error());
 				}
 				return;
@@ -297,7 +298,7 @@ void LeftMouseCmd(bool bShift)
 			LastPlayerAction = PlayerActionType::Walk;
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed town walk-to-target failed: {}", result.error());
 				return;
 			}
@@ -315,7 +316,7 @@ void LeftMouseCmd(bool bShift)
 			const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed item target is not an authoritative entity.");
-			} else if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed item pickup failed: {}", result.error());
 			}
 			return;
@@ -329,9 +330,9 @@ void LeftMouseCmd(bool bShift)
 			if (!entityId.has_value()) {
 				LogError("Server-backed object target is not an authoritative entity.");
 			} else if (pcurs == CURSOR_DISARM) {
-				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed trap disarm failed: {}", result.error());
-			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed object interaction failed: {}", result.error());
 			}
 			LastPlayerAction = PlayerActionType::OperateObject;
@@ -344,7 +345,7 @@ void LeftMouseCmd(bool bShift)
 		if (bShift) {
 		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed ranged cell attack failed: {}", result.error());
 				LastPlayerAction = PlayerActionType::Attack;
 				return;
@@ -367,7 +368,7 @@ void LeftMouseCmd(bool bShift)
 					const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 					if (!entityId.has_value()) {
 						LogError("Server-backed monster target is not an authoritative entity.");
-					} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+					} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 						LogError("Server-backed monster attack failed: {}", result.error());
 					}
 					LastPlayerAction = PlayerActionType::AttackMonsterTarget;
@@ -383,7 +384,7 @@ void LeftMouseCmd(bool bShift)
 				const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
 					LogError("Server-backed player target is not an authoritative entity.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed player attack failed: {}", result.error());
 				}
 				LastPlayerAction = PlayerActionType::AttackPlayerTarget;
@@ -408,7 +409,7 @@ void LeftMouseCmd(bool bShift)
 					LastPlayerAction = PlayerActionType::Attack;
 				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (authoritative::GetServerBackedRuntime().IsConnected()) {
-						if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+						if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 							LogError("Server-backed melee cell attack failed: {}", result.error());
 						return;
 					}
@@ -419,7 +420,7 @@ void LeftMouseCmd(bool bShift)
 				LastPlayerAction = PlayerActionType::Attack;
 			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 				if (authoritative::GetServerBackedRuntime().IsConnected()) {
-					if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+					if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 						LogError("Server-backed melee cell attack failed: {}", result.error());
 					return;
 				}
@@ -438,7 +439,7 @@ void LeftMouseCmd(bool bShift)
 				const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
 					LogError("Server-backed monster target is not an authoritative entity.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed monster attack failed: {}", result.error());
 				}
 				LastPlayerAction = PlayerActionType::AttackMonsterTarget;
@@ -453,7 +454,7 @@ void LeftMouseCmd(bool bShift)
 				const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
 					LogError("Server-backed player target is not an authoritative entity.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed player attack failed: {}", result.error());
 				}
 				LastPlayerAction = PlayerActionType::AttackPlayerTarget;
@@ -468,7 +469,7 @@ void LeftMouseCmd(bool bShift)
 		LastPlayerAction = PlayerActionType::Walk;
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed walk-to-target failed: {}", result.error());
 			return;
 		}
@@ -565,7 +566,7 @@ void LeftMouseDown(uint16_t modState)
 					if (itemTile) {
 					#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 						if (authoritative::GetServerBackedRuntime().IsConnected()) {
-							if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, SDL_GetTicks()); !result.has_value())
+							if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 								LogError("Server-backed held-item drop failed: {}", result.error());
 							else
 								NewCursor(CURSOR_HAND);
@@ -697,7 +698,7 @@ void PressKey(SDL_Keycode vkey, uint16_t modState)
 			} else {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 				if (authoritative::GetServerBackedRuntime().IsConnected()) {
-					if (auto result = authoritative::GetServerBackedRuntime().RestartTown(0, SDL_GetTicks()); !result.has_value())
+					if (auto result = authoritative::GetServerBackedRuntime().RestartTown(0, GetMillisecondsSinceStartup()); !result.has_value())
 						LogError("Server-backed restart-in-town failed: {}", result.error());
 				} else
 #endif
@@ -1099,7 +1100,7 @@ void RunGameLoop(interface_mode uMsg)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				if (auto result = authoritative::GetServerBackedRuntime().Poll(SDL_GetTicks()); !result.has_value()) {
+				if (auto result = authoritative::GetServerBackedRuntime().Poll(GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed session polling failed: {}", result.error());
 					authoritative::GetServerBackedRuntime().Stop();
 					if (authoritative::GetServerBackedRuntimeConfiguration().mode == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative) {
@@ -3194,7 +3195,7 @@ bool TryIconCurs()
 					LogError("Server-backed Resurrection cursor has no authoritative spell source.");
 				} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
 				               static_cast<uint32_t>(spellId), *targetEntityId,
-				               cursPosition.x, cursPosition.y, *source, 0, SDL_GetTicks()); !result.has_value()) {
+			               cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed Resurrection cast failed: {}", result.error());
 				}
 				NewCursor(CURSOR_HAND);
@@ -3222,7 +3223,7 @@ bool TryIconCurs()
 					LogError("Server-backed Heal Other cursor has no authoritative spell source.");
 				} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
 				               static_cast<uint32_t>(spellId), *targetEntityId,
-				               cursPosition.x, cursPosition.y, *source, 0, SDL_GetTicks()); !result.has_value()) {
+			               cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed Heal Other cast failed: {}", result.error());
 				}
 				NewCursor(CURSOR_HAND);
@@ -3258,7 +3259,7 @@ bool TryIconCurs()
 				LogError("Server-backed Telekinesis target is not an authoritative entity.");
 			} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
 			               static_cast<uint32_t>(SpellID::Telekinesis), targetEntityId,
-			               cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value()) {
+			               cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed Telekinesis cast failed: {}", result.error());
 			}
 			NewCursor(CURSOR_HAND);
@@ -3278,7 +3279,7 @@ bool TryIconCurs()
 				const auto reference = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
 				if (!reference.has_value()) {
 					LogError("Server-backed Identify ability has no authoritative item reference.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().IdentifyItemWithAbility(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().IdentifyItemWithAbility(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed Identify ability failed: {}", result.error());
 				}
 				NewCursor(CURSOR_HAND);
@@ -3309,7 +3310,7 @@ bool TryIconCurs()
 				const auto reference = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
 				if (!reference.has_value()) {
 					LogError("Server-backed Repair ability has no authoritative item reference.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().RepairItemWithAbility(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().RepairItemWithAbility(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed Repair ability failed: {}", result.error());
 				} else {
 					PlaySfxLoc(SfxID::SpellRepair, myPlayer.position.tile);
@@ -3344,7 +3345,7 @@ bool TryIconCurs()
 				const auto reference = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
 				if (!reference.has_value()) {
 					LogError("Server-backed Staff Recharge ability has no authoritative item reference.");
-				} else if (auto result = authoritative::GetServerBackedRuntime().RechargeItemWithAbility(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().RechargeItemWithAbility(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed Staff Recharge ability failed: {}", result.error());
 				}
 				NewCursor(CURSOR_HAND);
@@ -3377,7 +3378,7 @@ bool TryIconCurs()
 				if (!target.has_value() || !source.has_value()) {
 					LogError("Server-backed oil use has no authoritative source or target reference.");
 					changeCursor = false;
-				} else if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*source, *target, 0, SDL_GetTicks()); !result.has_value()) {
+				} else if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*source, *target, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed oil use failed: {}", result.error());
 					changeCursor = false;
 				}
@@ -3425,7 +3426,7 @@ bool TryIconCurs()
 			               static_cast<uint32_t>(spellID), targetEntityId,
 			               cursPosition.x, cursPosition.y,
 			               { authoritative::ServerBackedCastSourceKind::ConsumableItem, sourceItem },
-			               0, SDL_GetTicks()); !result.has_value()) {
+			               0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed spell cursor cast failed: {}", result.error());
 			}
 			NewCursor(CURSOR_HAND);
@@ -3452,7 +3453,7 @@ bool TryIconCurs()
 			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed trap target is not an authoritative entity.");
-			} else if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed trap disarm failed: {}", result.error());
 			}
 			NewCursor(CURSOR_HAND);

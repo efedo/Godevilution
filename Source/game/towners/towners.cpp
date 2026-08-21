@@ -9,12 +9,6 @@
 #include <cstdint>
 #include <unordered_map>
 
-#ifdef USE_SDL3
-#include <SDL3/SDL_timer.h>
-#else
-#include <SDL.h>
-#endif
-
 #include "engine/cursor.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_cel.hpp"
@@ -33,6 +27,7 @@
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/string/str_case.hpp"
+#include "utils/timer.hpp"
 
 namespace devilution {
 namespace {
@@ -861,7 +856,7 @@ void TalkToTowner(Player &player, int t)
 			        *questId,
 			        static_cast<uint32_t>(towner._ttype),
 			        0,
-			        SDL_GetTicks()); !result.has_value()) {
+			        GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Failed to submit the authoritative quest turn-in: {}", result.error());
 			}
 			return;

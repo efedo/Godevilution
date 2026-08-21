@@ -13,13 +13,9 @@
 #include "game/players/players.hpp"
 #include "game/stores/stores.hpp"
 #include "utils/log.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-#ifdef USE_SDL3
-#include <SDL3/SDL_timer.h>
-#else
-#include <SDL.h>
-#endif
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
 
@@ -41,7 +37,7 @@ void RepeatWalk(Player &player)
 
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+		if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed repeated walk-to-target failed: {}", result.error());
 		return;
 	}
@@ -101,7 +97,7 @@ void RepeatPlayerAction()
 	case PlayerActionType::Attack:
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed repeated cell attack failed: {}", result.error());
 			break;
 		}
@@ -117,7 +113,7 @@ void RepeatPlayerAction()
 			const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed repeated monster target is not an authoritative entity.");
-			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed repeated monster attack failed: {}", result.error());
 			}
 			return;
@@ -134,7 +130,7 @@ void RepeatPlayerAction()
 			const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed repeated player target is not an authoritative entity.");
-			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed repeated player attack failed: {}", result.error());
 			}
 			return;
@@ -166,9 +162,9 @@ void RepeatPlayerAction()
 			if (!entityId.has_value()) {
 				LogError("Server-backed repeated object target is not an authoritative entity.");
 			} else if (pcurs == CURSOR_DISARM) {
-				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed repeated trap disarm failed: {}", result.error());
-			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 				LogError("Server-backed repeated object interaction failed: {}", result.error());
 			}
 			return;

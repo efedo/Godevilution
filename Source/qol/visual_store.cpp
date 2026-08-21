@@ -37,6 +37,7 @@
 #include "utils/string/format_int.hpp"
 #include "utils/language.h"
 #include "utils/string/str_cat.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -354,7 +355,7 @@ void VisualStoreRepairAll()
 			const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(myPlayer.InvBody[slot]._iSeed);
 			if (!reference.has_value())
 				return;
-			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				return;
 			repaired = true;
 		}
@@ -364,7 +365,7 @@ void VisualStoreRepairAll()
 			const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(myPlayer.InvList[index]._iSeed);
 			if (!reference.has_value())
 				return;
-			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, SDL_GetTicks()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				return;
 			repaired = true;
 		}
@@ -436,7 +437,7 @@ void VisualStoreRepairItem(int invIndex)
 		}
 		if (!reference.has_value())
 			return;
-		if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, SDL_GetTicks()); result.has_value()) {
+		if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, GetMillisecondsSinceStartup()); result.has_value()) {
 			PlaySFX(SfxID::ItemGold);
 			RefreshVisualStoreLayout();
 		}
@@ -735,7 +736,7 @@ void CheckVisualStoreItem(Point mousePosition, bool isCtrlHeld, bool isShiftHeld
 		const auto storeSlot = authoritative::GetServerBackedRuntime().StoreSlotAt(static_cast<std::size_t>(itemIndex));
 		if (!storeSlot.has_value())
 			return;
-		if (auto result = authoritative::GetServerBackedRuntime().PurchaseVendor(serverVendor->storeId, *storeSlot, serverVendor->destination, 0, SDL_GetTicks()); !result.has_value())
+		if (auto result = authoritative::GetServerBackedRuntime().PurchaseVendor(serverVendor->storeId, *storeSlot, serverVendor->destination, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			return;
 		PlaySFX(purchaseSound);
 		pcursstoreitem = -1;
@@ -822,7 +823,7 @@ void CheckVisualStorePaste(Point mousePosition)
 		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(player.HoldItem._iSeed);
 		if (!reference.has_value())
 			return;
-		if (auto result = authoritative::GetServerBackedRuntime().SellItem(*reference, 0, SDL_GetTicks()); !result.has_value())
+		if (auto result = authoritative::GetServerBackedRuntime().SellItem(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			return;
 		player.HoldItem.clear();
 		NewCursor(CURSOR_HAND);
@@ -886,7 +887,7 @@ void SellItemToVisualStore(int invIndex)
 		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
 		if (!reference.has_value())
 			return;
-		if (auto result = authoritative::GetServerBackedRuntime().SellItem(*reference, 0, SDL_GetTicks()); !result.has_value())
+		if (auto result = authoritative::GetServerBackedRuntime().SellItem(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			return;
 		PlaySFX(SfxID::ItemGold);
 		RefreshVisualStoreLayout();

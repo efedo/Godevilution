@@ -33,6 +33,7 @@
 #include "ui/panel/spell_list.hpp"
 #include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -597,7 +598,7 @@ void CheckMainPanelButtonUp()
 				} else {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (authoritative::GetServerBackedRuntime().IsConnected()) {
-						if (auto result = authoritative::GetServerBackedRuntime().RestartTown(0, SDL_GetTicks()); !result.has_value())
+						if (auto result = authoritative::GetServerBackedRuntime().RestartTown(0, GetMillisecondsSinceStartup()); !result.has_value())
 							LogError("Server-backed restart-in-town failed: {}", result.error());
 					} else
 #endif
@@ -634,7 +635,7 @@ void CheckMainPanelButtonUp()
 			// Toggle friendly Mode
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				if (auto result = authoritative::GetServerBackedRuntime().SetFriendlyMode(!MyPlayer->friendlyMode, 0, SDL_GetTicks()); !result.has_value())
+				if (auto result = authoritative::GetServerBackedRuntime().SetFriendlyMode(!MyPlayer->friendlyMode, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed friendly-mode change failed: {}", result.error());
 				break;
 			}
@@ -764,7 +765,7 @@ void ReleaseChrBtns(bool addAllStatPoints)
 					return authoritative::ServerBackedPlayerAttribute::Strength;
 				}();
 				if (statPointsToAdd > 0) {
-					if (auto result = authoritative::GetServerBackedRuntime().AllocateAttribute(serverAttribute, static_cast<uint32_t>(statPointsToAdd), 0, SDL_GetTicks()); !result.has_value())
+					if (auto result = authoritative::GetServerBackedRuntime().AllocateAttribute(serverAttribute, static_cast<uint32_t>(statPointsToAdd), 0, GetMillisecondsSinceStartup()); !result.has_value())
 						LogError("Server-backed attribute allocation failed: {}", result.error());
 				}
 				continue;
