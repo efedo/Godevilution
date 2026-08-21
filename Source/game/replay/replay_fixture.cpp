@@ -4805,7 +4805,9 @@ void AdmitReplayAutonomousHorkSpawn(
 }
 
 /** Advances compact Hork Spawn travel through its first lifecycle ticks. */
-void AdvanceReplayHorkSpawnsOneTick(ReplayFixtureExecutionState &state)
+void AdvanceReplayHorkSpawnsOneTick(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
@@ -4815,6 +4817,35 @@ void AdvanceReplayHorkSpawnsOneTick(ReplayFixtureExecutionState &state)
 		}
 		if (projectile.remainingTicks > 0)
 			--projectile.remainingTicks;
+		const bool primaryPlayerAtTile = state.life > 0
+		    && state.levelId == projectile.levelId
+		    && state.positionX == projectile.positionX
+		    && state.positionY == projectile.positionY
+		    && projectile.targetEntityId == (state.entityId == 0 ? 1U : state.entityId);
+		if (primaryPlayerAtTile) {
+			constexpr int damageQ6 = 64;
+			const int distance = std::max(
+			    std::abs(state.positionX - state.combatTargetPositionX),
+			    std::abs(state.positionY - state.combatTargetPositionY));
+			const int hitChance = std::clamp(
+			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
+			        - 2 * static_cast<int>(state.characterLevel) - 2 * distance),
+			    0,
+			    100);
+			if (std::max(GenerateRnd(state, 100), 0) < hitChance) {
+				// Native PlayerMHit consumes the zero-width damage roll even
+				// though Hork Spawn always applies its one-point minimum.
+				static_cast<void>(GenerateRnd(state, 1));
+				state.life = std::max(0, state.life - damageQ6);
+				if (state.life > 0
+				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+					state.combatMode = 7;
+					state.combatModeEndTick = tick + 6;
+				}
+			}
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
 		if (projectile.remainingTicks == 0) {
 			iterator = state.projectiles.erase(iterator);
 			continue;
@@ -5028,7 +5059,7 @@ void AdvanceReplayStateToTick(
 		AdmitReplayAutonomousBloodStar(state);
 		AdmitReplayAutonomousMonsterMagic(state);
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
-		AdvanceReplayHorkSpawnsOneTick(state);
+		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);

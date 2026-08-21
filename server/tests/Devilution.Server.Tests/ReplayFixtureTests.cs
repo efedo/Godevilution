@@ -1791,6 +1791,32 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnPlayerImpactMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-impact.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6336, player.Life);
+        Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -2669,7 +2695,9 @@ public sealed class ReplayFixtureTests
             exception.Message);
     }
 
-    private static StoreSimulationExecutor CreateHorkSpawnExecutor(ReplayFixture fixture)
+    private static StoreSimulationExecutor CreateHorkSpawnExecutor(
+        ReplayFixture fixture,
+        bool enableSpawnPlanner = true)
     {
         var target = new AuthoritativeCombatTarget(
             fixture.InitialState.CombatTargetEntityId,
@@ -2726,6 +2754,30 @@ public sealed class ReplayFixtureTests
             new AuthoritativeLevelGenerationCatalog([
                 new AuthoritativeLevelGenerationRule(0, 100, 100, 100, 0),
             ]));
+        var startingProjectiles = fixture.InitialProjectiles
+            .Select(source => new AuthoritativeProjectile(
+                source.EntityId,
+                source.SourceEntityId,
+                source.TargetEntityId,
+                source.SpellId,
+                source.LevelId,
+                source.PositionX,
+                source.PositionY,
+                source.TargetX,
+                source.TargetY,
+                source.Damage,
+                (AuthoritativeDamageType)source.DamageType,
+                source.AreaRadius,
+                source.RemainingTicks,
+                allowZeroSpellId: source.SpellId == 0) {
+                Behavior = (AuthoritativeProjectileBehavior)source.Behavior,
+                Phase = (AuthoritativeProjectilePhase)source.Phase,
+                Speed = source.Speed,
+                ImpactLifetime = source.ImpactLifetime,
+                DamageMinimum = source.DamageMinimum,
+                DamageMaximum = source.DamageMaximum,
+            })
+            .ToArray();
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -2739,8 +2791,9 @@ public sealed class ReplayFixtureTests
             startingPositionY: fixture.InitialState.PositionY,
             startingLevelId: fixture.InitialState.LevelId,
             startingCombatTargets: [target],
+            startingProjectiles: startingProjectiles,
             startingMonsterMissiles: missiles,
-            startingMonsterSpawnPlanner: spawnPlanner,
+            startingMonsterSpawnPlanner: enableSpawnPlanner ? spawnPlanner : null,
             startingRandomSeed: checked((uint)fixture.RngSeed));
     }
 
