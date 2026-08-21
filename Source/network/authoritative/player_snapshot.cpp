@@ -412,8 +412,10 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			const int32_t healingQ6 = event.healing().amount_q6() == 0
 			    ? event.healing().amount()
 			    : event.healing().amount_q6();
+			const int32_t lifeBefore = player.life.current;
 			player.life.current = std::min(player.life.maximum, player.life.current + std::max(0, healingQ6));
 			player.UpdateHitPointPercentage();
+			AddFloatingHealingNumber(player.position.tile, player.life.current - lifeBefore);
 		}
 		if (event.has_experience() && event.experience().player_entity_id() == entityId) {
 			player._pExperience += event.experience().amount();

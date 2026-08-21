@@ -103,6 +103,17 @@ void AddFloatingDamageNumber(Point pos, const int damageQ6, const int id, const 
 	AddFloatingNumber(pos, { 0, 0 }, text, size | UiFlags::ColorGold, id, reverseDirection);
 }
 
+void AddFloatingHealingNumber(Point pos, const int healingQ6, const int id)
+{
+	if (healingQ6 <= 0)
+		return;
+
+	const std::string text = healingQ6 < 64
+	    ? fmt::format("+{:.2f}", static_cast<double>(healingQ6) / 64.0)
+	    : fmt::format("+{}", healingQ6 / 64);
+	AddFloatingNumber(pos, { 0, 0 }, text, UiFlags::ColorWhite, id, true);
+}
+
 void AddFloatingExperienceNumber(Point pos, const uint32_t experience, const int id)
 {
 	if (experience == 0)

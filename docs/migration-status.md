@@ -38,9 +38,9 @@ substitute for rebuilding the projects before a future run.
   demo-aware timer; the adapter no longer reintroduces direct SDL timing for
   authoritative commands.
 
-- The native server-backed client now projects local authoritative damage and
-  experience events directly into its floating-number renderer; legacy Lua
-  floating-number mods remain available in legacy mode.
+- The native server-backed client now projects local authoritative damage,
+  healing, and experience events directly into its floating-number renderer;
+  legacy Lua floating-number mods remain available in legacy mode.
 
 - Native remote-player presentation now selects walk, attack, ranged, block,
   hit, spell, and death sprite families from the authoritative combat mode

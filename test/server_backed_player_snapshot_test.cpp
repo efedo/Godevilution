@@ -153,6 +153,22 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources
 	EXPECT_EQ(player._pExperience, 40U);
 }
 
+TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedback)
+{
+	Player player;
+	player.life.maximum = 100;
+	player.life.maximumBase = 100;
+	player.life.current = 95;
+	protocol::EventBatch events;
+	auto *healing = events.add_events()->mutable_healing();
+	healing->set_target_entity_id(7);
+	healing->set_amount_q6(20);
+
+	ApplyServerBackedEventBatch(player, events, 7);
+
+	EXPECT_EQ(player.life.current, 100);
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
 {
 	protocol::Snapshot snapshot;

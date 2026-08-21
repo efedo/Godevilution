@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project native server-backed healing feedback directly into the compatibility
+  client's floating-number renderer, completing the local damage/healing/
+  experience presentation seam while retaining legacy Lua mods outside the
+  authoritative path.
+
 - Align native replay item, monster-direction, and historical-level hashing
   with authoritative C# snapshots, preserve checked-in base item names in the
   native store fixture, and add native Firebolt player-collision parity for
