@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,421, Server 414, and Godot protocol 145. These counts are a dated
+1,424, Server 414, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -303,6 +303,11 @@ future run.
   levels used by quest and composite-map paths. Set-level mappings retain their
   existing identity contract, while ordinary-level mappings use a separate
   reserved entity range and require an explicit level identity.
+
+- Schema 1.380 adds `native_dun_levels.tsv`. Each ordinary runtime level may
+  explicitly reference one immutable native `.dun` asset; its object layer is
+  attached to the existing level geometry without inferring collision behavior.
+  Dimensions, level identities, and asset paths are validated before activation.
 
 - Schema 1.377 extends authored mutations with validated `object_layer_rects`
   assignments. Effective native object-layer values now survive map mutation

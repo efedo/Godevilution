@@ -20,6 +20,20 @@ public sealed class AuthoritativeWorld
             throw new InvalidDataException($"Level {level.LevelId} is registered more than once.");
     }
 
+    /** Replaces an already registered level while retaining world identity invariants. */
+    public void ReplaceLevel(AuthoritativeLevel level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        if (!levels.ContainsKey(level.LevelId))
+            throw new InvalidDataException($"Level {level.LevelId} is not registered.");
+        if (level.IsDefaultStart && levels.Values.Any(candidate =>
+                candidate.LevelId != level.LevelId && candidate.IsDefaultStart)) {
+            throw new InvalidDataException(
+                "Authoritative world content must not define more than one default starting level.");
+        }
+        levels[level.LevelId] = level;
+    }
+
     public bool IsWalkable(uint levelId, int positionX, int positionY)
     {
         return levels.TryGetValue(levelId, out var level) && level.IsWalkable(positionX, positionY);

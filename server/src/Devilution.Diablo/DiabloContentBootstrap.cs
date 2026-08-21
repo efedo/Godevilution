@@ -375,6 +375,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     world.AddLevel(level);
             }
         }
+        var nativeDunLevels = content.TryGetTable(
+            "native_dun_levels.tsv",
+            out var nativeDunLevelsTable)
+            ? AuthoritativeNativeDunLevelCatalog.LoadTsv(
+                nativeDunLevelsTable.SourcePath,
+                nativeDunLevelsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (nativeDunLevels is not null) {
+            if (world is null)
+                throw new InvalidDataException(
+                    "Native DUN level layers require levels.tsv or procedural_levels.tsv.");
+            nativeDunLevels.Apply(content, world);
+        }
         var levelGeneration = content.TryGetTable(
             "level_generation.tsv",
             out var levelGenerationTable)

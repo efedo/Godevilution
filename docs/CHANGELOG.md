@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the validated `native_dun_levels.tsv` catalog. Ordinary runtime levels
+  can now acquire their native DUN object layers from immutable content assets,
+  preserving authored collision geometry while enabling explicit object
+  materialization. Bump the Diablo content schema to 1.380.
+
 - Extend `native_dun_objects.tsv` mappings to ordinary runtime levels as well
   as set-level variants, with separate validated identity ranges. Bump the
   Diablo content schema to 1.379.
