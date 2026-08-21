@@ -824,7 +824,7 @@ public sealed class DiabloStoreCommandProcessor
             && intent.Destination.Location != DiabloPlayerItemLocation.Inventory) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
-        if (!IsValidDestination(player, intent.Destination, source.State))
+        if (!IsValidDestination(player, intent.Destination, source.State, intent.Item))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (SameLocation(intent.Item, intent.Destination))
             return DiabloIntentResult.Accepted;
@@ -832,6 +832,28 @@ public sealed class DiabloStoreCommandProcessor
         var destinationIndex = intent.Destination.Location == DiabloPlayerItemLocation.Inventory
             ? InventoryGridLayout.GetItemIndexAt(player.InventoryGrid, intent.Destination.Slot)
             : -1;
+        if (intent.Destination.Location == DiabloPlayerItemLocation.Stash) {
+            var stashDestination = GetStashItemAt(
+                player,
+                intent.Destination.Page,
+                intent.Destination.Slot);
+            if (stashDestination is not null) {
+                var destinationReference = new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Stash,
+                    stashDestination.Cell,
+                    stashDestination.State.StableItemId,
+                    stashDestination.Page);
+                if (!TryGetTransfer(player, destinationReference, out var destination))
+                    return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                return SwapTransfers(
+                    player,
+                    intent.Item,
+                    intent.Destination,
+                    source,
+                    destinationReference,
+                    destination);
+            }
+        }
         if (destinationIndex >= 0) {
             var destinationReference = intent.Destination with {
                 Location = DiabloPlayerItemLocation.Inventory,
@@ -1345,9 +1367,21 @@ public sealed class DiabloStoreCommandProcessor
         } else if (reference.Location == DiabloPlayerItemLocation.Belt) {
             var index = player.Belt.FindIndex(candidate => candidate.Slot == reference.Slot);
             player.Belt[index] = new BeltStoreItem(reference.Slot, item.ItemSeed, item.State);
-        } else {
+        } else if (reference.Location == DiabloPlayerItemLocation.Equipment) {
             var index = player.Equipment.FindIndex(candidate => candidate.Slot == reference.Slot);
             player.Equipment[index] = new EquippedStoreItem(reference.Slot, item.ItemSeed, item.State);
+        } else {
+            var index = player.Stash.FindIndex(candidate =>
+                candidate.Page == reference.Page && candidate.Cell == reference.Slot);
+            player.Stash[index] = new StashStoreItem(
+                reference.Page,
+                reference.Slot,
+                item.StoreId,
+                item.StoreSlot,
+                item.ItemSeed,
+                item.Price,
+                item.PurchasedAtTick,
+                item.State);
         }
     }
 
@@ -1393,6 +1427,20 @@ public sealed class DiabloStoreCommandProcessor
                 return MatchesStableIdentity(equipment.State, reference);
             }
             break;
+        case DiabloPlayerItemLocation.Stash:
+            var stash = player.Stash.FirstOrDefault(candidate =>
+                candidate.Page == reference.Page && candidate.Cell == reference.Slot);
+            if (stash is not null) {
+                item = new TransferItem(
+                    stash.ItemSeed,
+                    stash.State,
+                    stash.StoreId,
+                    stash.StoreSlot,
+                    stash.Price,
+                    stash.PurchasedAtTick);
+                return MatchesStableIdentity(stash.State, reference);
+            }
+            break;
         }
 
         item = default;
@@ -1410,7 +1458,8 @@ public sealed class DiabloStoreCommandProcessor
     private bool IsValidDestination(
         AuthoritativePlayerState player,
         DiabloPlayerItemReference reference,
-        AuthoritativeItemState state)
+        AuthoritativeItemState state,
+        DiabloPlayerItemReference? ignoredReference = null)
     {
         return reference.Location switch {
             DiabloPlayerItemLocation.Inventory => InventoryGridLayout.IsWithinBounds(
@@ -1422,8 +1471,38 @@ public sealed class DiabloStoreCommandProcessor
                 && state.InventoryWidth == 1
                 && state.InventoryHeight == 1,
             DiabloPlayerItemLocation.Equipment => IsValidEquipmentDestination(reference.Slot, state),
+            DiabloPlayerItemLocation.Stash => IsValidStashDestination(
+                player,
+                reference,
+                state,
+                ignoredReference),
             _ => false,
         };
+    }
+
+    private static bool IsValidStashDestination(
+        AuthoritativePlayerState player,
+        DiabloPlayerItemReference reference,
+        AuthoritativeItemState state,
+        DiabloPlayerItemReference? ignoredReference)
+    {
+        if (reference.Page >= DiabloStashLayout.PageCount
+            || reference.Slot >= DiabloStashLayout.CellCount)
+            return false;
+        var occupied = GetStashItemAt(player, reference.Page, reference.Slot);
+        var ignored = ignoredReference;
+        if (occupied is not null) {
+            ignored = new DiabloPlayerItemReference(
+                DiabloPlayerItemLocation.Stash,
+                occupied.Cell,
+                occupied.State.StableItemId,
+                occupied.Page);
+        }
+        return DiabloStashLayout.CanPlace(
+            GetStashPageGrid(player, reference.Page, ignored),
+            reference.Slot,
+            state.InventoryWidth,
+            state.InventoryHeight);
     }
 
     private bool IsValidEquipmentDestination(
@@ -1455,8 +1534,69 @@ public sealed class DiabloStoreCommandProcessor
         return reference.Location switch {
             DiabloPlayerItemLocation.Belt => player.Belt.Any(item => item.Slot == reference.Slot),
             DiabloPlayerItemLocation.Equipment => player.Equipment.Any(item => item.Slot == reference.Slot),
+            DiabloPlayerItemLocation.Stash => player.Stash.Any(item =>
+                item.Page == reference.Page && item.Cell == reference.Slot),
             _ => false,
         };
+    }
+
+    private static int[] GetStashPageGrid(
+        AuthoritativePlayerState player,
+        uint page,
+        DiabloPlayerItemReference? ignoredReference)
+    {
+        var grid = DiabloStashLayout.CreateEmptyPage();
+        foreach (var item in player.Stash.Where(item =>
+                     item.Page == page
+                     && (ignoredReference is null
+                         || ignoredReference.Value.Location != DiabloPlayerItemLocation.Stash
+                         || ignoredReference.Value.Page != item.Page
+                         || ignoredReference.Value.Slot != item.Cell))) {
+            if (DiabloStashLayout.CanPlace(
+                    grid,
+                    item.Cell,
+                    item.State.InventoryWidth,
+                    item.State.InventoryHeight)) {
+                DiabloStashLayout.Fill(
+                    grid,
+                    item.Cell,
+                    item.State.InventoryWidth,
+                    item.State.InventoryHeight);
+            }
+        }
+        return grid;
+    }
+
+    private static StashStoreItem? GetStashItemAt(
+        AuthoritativePlayerState player,
+        uint page,
+        uint cell)
+    {
+        if (page >= DiabloStashLayout.PageCount || cell >= DiabloStashLayout.CellCount)
+            return null;
+        var grid = DiabloStashLayout.CreateEmptyPage();
+        var items = player.Stash
+            .Where(item => item.Page == page)
+            .OrderBy(item => item.Cell)
+            .ToArray();
+        for (var index = 0; index < items.Length; index++) {
+            if (!DiabloStashLayout.CanPlace(
+                    grid,
+                    items[index].Cell,
+                    items[index].State.InventoryWidth,
+                    items[index].State.InventoryHeight))
+                continue;
+            DiabloStashLayout.Fill(
+                grid,
+                items[index].Cell,
+                items[index].State.InventoryWidth,
+                items[index].State.InventoryHeight,
+                index);
+        }
+        var itemIndex = grid[(int)cell];
+        return itemIndex >= 0 && itemIndex < items.Length
+            ? items[itemIndex]
+            : items.FirstOrDefault(item => item.Cell == cell);
     }
 
     private static OwnedStoreItem ToOwnedItem(TransferItem item)
@@ -1474,7 +1614,9 @@ public sealed class DiabloStoreCommandProcessor
         DiabloPlayerItemReference source,
         DiabloPlayerItemReference destination)
     {
-        return source.Location == destination.Location && source.Slot == destination.Slot;
+        return source.Location == destination.Location
+            && source.Slot == destination.Slot
+            && source.Page == destination.Page;
     }
 
     private static void RecalculateEquipmentResourcesIfChanged(
@@ -1497,8 +1639,11 @@ public sealed class DiabloStoreCommandProcessor
             InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, (int)reference.Slot);
         } else if (reference.Location == DiabloPlayerItemLocation.Belt) {
             player.Belt.RemoveAll(item => item.Slot == reference.Slot);
-        } else {
+        } else if (reference.Location == DiabloPlayerItemLocation.Equipment) {
             player.Equipment.RemoveAll(item => item.Slot == reference.Slot);
+        } else {
+            player.Stash.RemoveAll(item =>
+                item.Page == reference.Page && item.Cell == reference.Slot);
         }
     }
 
@@ -1518,8 +1663,18 @@ public sealed class DiabloStoreCommandProcessor
                 item.State.InventoryHeight);
         } else if (destination.Location == DiabloPlayerItemLocation.Belt) {
             player.Belt.Add(new BeltStoreItem(destination.Slot, item.ItemSeed, item.State));
-        } else {
+        } else if (destination.Location == DiabloPlayerItemLocation.Equipment) {
             player.Equipment.Add(new EquippedStoreItem(destination.Slot, item.ItemSeed, item.State));
+        } else {
+            player.Stash.Add(new StashStoreItem(
+                destination.Page,
+                destination.Slot,
+                item.StoreId,
+                item.StoreSlot,
+                item.ItemSeed,
+                item.Price,
+                item.PurchasedAtTick,
+                item.State));
         }
     }
 

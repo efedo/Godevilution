@@ -66,6 +66,42 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsAuthoritativeStashPages()
+    {
+        var baseline = CreateSnapshot();
+        var stashItem = new StashStoreItem(
+            4,
+            12,
+            9,
+            3,
+            88,
+            25,
+            55,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 12,
+                StableItemId = 2,
+                InventoryWidth = 2,
+                InventoryHeight = 1,
+                Value = 25,
+                IdentifiedValue = 25,
+                StatFlag = true,
+            });
+        var source = baseline with {
+            Player = baseline.Player with {
+                Stash = [stashItem],
+                StashGold = 4321,
+            },
+        };
+
+        var codec = new AuthoritativeSaveCodec();
+        var restored = codec.Deserialize(codec.Serialize(source));
+
+        Assert.Equal(4321U, restored.Player.StashGold);
+        Assert.Equal([stashItem], restored.Player.Stash.ToArray());
+    }
+
+    [Fact]
     public void VersionOneRoundTripsActiveWorldMutationIdentities()
     {
         var source = CreateSnapshot() with {

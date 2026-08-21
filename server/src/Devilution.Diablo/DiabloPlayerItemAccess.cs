@@ -34,6 +34,20 @@ internal static class DiabloPlayerItemAccess
                 return MatchesStableIdentity(item.State, reference);
             }
             break;
+        case DiabloPlayerItemLocation.Stash:
+            var stashItem = player.Stash.FirstOrDefault(candidate =>
+                candidate.Page == reference.Page && candidate.Cell == reference.Slot);
+            if (stashItem is not null) {
+                item = new OwnedStoreItem(
+                    stashItem.StoreId,
+                    stashItem.StoreSlot,
+                    stashItem.ItemSeed,
+                    stashItem.Price,
+                    stashItem.PurchasedAtTick,
+                    stashItem.State);
+                return MatchesStableIdentity(item.State, reference);
+            }
+            break;
         }
 
         item = null!;
@@ -70,11 +84,28 @@ internal static class DiabloPlayerItemAccess
 
         var equipmentIndex = player.Equipment.FindIndex(
             candidate => candidate.Slot == reference.Slot);
-        if (equipmentIndex >= 0) {
-            player.Equipment[equipmentIndex] = new EquippedStoreItem(
-                reference.Slot,
-                item.ItemSeed,
-                item.State);
+        if (reference.Location == DiabloPlayerItemLocation.Equipment) {
+            if (equipmentIndex >= 0) {
+                player.Equipment[equipmentIndex] = new EquippedStoreItem(
+                    reference.Slot,
+                    item.ItemSeed,
+                    item.State);
+            }
+            return;
+        }
+        if (reference.Location == DiabloPlayerItemLocation.Stash) {
+            var stashIndex = player.Stash.FindIndex(candidate =>
+                candidate.Page == reference.Page && candidate.Cell == reference.Slot);
+            if (stashIndex >= 0)
+                player.Stash[stashIndex] = new StashStoreItem(
+                    reference.Page,
+                    reference.Slot,
+                    item.StoreId,
+                    item.StoreSlot,
+                    item.ItemSeed,
+                    item.Price,
+                    item.PurchasedAtTick,
+                    item.State);
         }
     }
 
@@ -89,8 +120,11 @@ internal static class DiabloPlayerItemAccess
             InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, (int)reference.Slot);
         } else if (reference.Location == DiabloPlayerItemLocation.Belt) {
             player.Belt.RemoveAll(candidate => candidate.Slot == reference.Slot);
-        } else {
+        } else if (reference.Location == DiabloPlayerItemLocation.Equipment) {
             player.Equipment.RemoveAll(candidate => candidate.Slot == reference.Slot);
+        } else {
+            player.Stash.RemoveAll(candidate =>
+                candidate.Page == reference.Page && candidate.Cell == reference.Slot);
         }
     }
 

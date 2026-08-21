@@ -1268,6 +1268,141 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MovesInventoryItemIntoAndOutOfAuthoritativeStashPage()
+    {
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = 701,
+            ItemType = 1,
+            InventoryWidth = 2,
+            InventoryHeight = 1,
+            ItemIndex = 12,
+        };
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(9, 4, 1234, 77, 55, state)],
+            inventoryGrid: [0, 0, -1, -1]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var toStash = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    state.StableItemId),
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Stash,
+                    11,
+                    state.StableItemId,
+                    3)),
+            100);
+
+        Assert.True(toStash.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.All(player.InventoryGrid, cell => Assert.Equal(-1, cell));
+        var stashed = Assert.Single(player.Stash);
+        Assert.Equal((uint)3, stashed.Page);
+        Assert.Equal((uint)11, stashed.Cell);
+        Assert.Equal((uint)1234, stashed.ItemSeed);
+        Assert.Equal((uint)9, stashed.StoreId);
+        Assert.Equal((ulong)55, stashed.PurchasedAtTick);
+
+        var toInventory = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Stash,
+                    11,
+                    state.StableItemId,
+                    3),
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    2,
+                    state.StableItemId)),
+            101);
+
+        Assert.True(toInventory.Succeeded);
+        Assert.Empty(player.Stash);
+        var restored = Assert.Single(player.Inventory);
+        Assert.Equal((uint)1234, restored.ItemSeed);
+        Assert.Equal((uint)9, restored.StoreId);
+        Assert.Equal((ulong)55, restored.PurchasedAtTick);
+        Assert.Equal([-1, -1, 0, 0], player.InventoryGrid);
+    }
+
+    [Fact]
+    public void StashMoveRejectsOverlappingFootprintAndPreservesState()
+    {
+        var firstState = AuthoritativeItemState.Empty with {
+            StableItemId = 702,
+            ItemType = 1,
+            InventoryWidth = 2,
+            InventoryHeight = 1,
+            ItemIndex = 13,
+        };
+        var secondState = firstState with { StableItemId = 703, ItemIndex = 14 };
+        var player = CreatePlayer(
+            inventory: [
+                new OwnedStoreItem(0, 0, 200, 1, 0, firstState),
+                new OwnedStoreItem(0, 1, 201, 1, 0, secondState),
+            ],
+            inventoryGrid: [0, 0, 1, 1]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 702),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 10, 702)),
+            1).Succeeded);
+        var before = player.Stash.ToArray();
+
+        var rejected = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 703),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 9, 703)),
+            2);
+
+        Assert.False(rejected.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, rejected.Failure);
+        Assert.Equal(before, player.Stash);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
+    public void StashMoveSwapsWithItemCoveredByDestinationCell()
+    {
+        var inventoryState = AuthoritativeItemState.Empty with {
+            StableItemId = 704,
+            ItemType = 1,
+            ItemIndex = 15,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var stashState = inventoryState with { StableItemId = 705, ItemIndex = 16 };
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 300, 1, 0, inventoryState)],
+            inventoryGrid: [0],
+            belt: [],
+            equipment: []);
+        player.Stash.Add(new StashStoreItem(0, 10, 0, 1, 301, 2, 0, stashState));
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 704),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 10, 704)),
+            3);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(301U, Assert.Single(player.Inventory).ItemSeed);
+        var stashed = Assert.Single(player.Stash);
+        Assert.Equal(300U, stashed.ItemSeed);
+        Assert.Equal((uint)10, stashed.Cell);
+    }
+
+    [Fact]
     public void InventoryMoveUsesStableReferenceWhenPresent()
     {
         var item = new OwnedStoreItem(

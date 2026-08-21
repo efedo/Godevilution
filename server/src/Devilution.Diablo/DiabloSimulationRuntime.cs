@@ -76,7 +76,9 @@ public sealed class DiabloPlayerTemplate
         AuthoritativePlayerClassDefinition? playerClass = null,
         DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
         AuthoritativeItemCatalog? items = null,
-        uint statPoints = 0)
+        uint statPoints = 0,
+        IReadOnlyList<StashStoreItem>? stash = null,
+        uint stashGold = 0)
     {
         Gold = gold;
         Experience = experience;
@@ -123,6 +125,8 @@ public sealed class DiabloPlayerTemplate
         ManaShieldActive = manaShieldActive;
         ReflectCharges = reflectCharges;
         StatPoints = statPoints;
+        Stash = stash?.ToArray() ?? [];
+        StashGold = stashGold;
     }
 
     public uint Gold { get; }
@@ -158,6 +162,8 @@ public sealed class DiabloPlayerTemplate
     public bool ManaShieldActive { get; }
     public uint ReflectCharges { get; }
     public uint StatPoints { get; }
+    public IReadOnlyList<StashStoreItem> Stash { get; }
+    public uint StashGold { get; }
 
     /** Returns a fresh-template identity without mutating the content-owned loadout. */
     public DiabloPlayerTemplate WithCharacterName(string characterName)
@@ -195,7 +201,9 @@ public sealed class DiabloPlayerTemplate
             PlayerClass,
             AbilityKind,
             Items,
-            statPoints: StatPoints);
+            statPoints: StatPoints,
+            stash: Stash,
+            stashGold: StashGold);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -234,7 +242,9 @@ public sealed class DiabloPlayerTemplate
             PlayerClass,
             AbilityKind,
             Items,
-            statPoints: StatPoints);
+            statPoints: StatPoints,
+            stash: Stash,
+            stashGold: StashGold);
         player.RecalculateEquipmentAttributes();
         player.RecalculateEquipmentArmor();
         return player;

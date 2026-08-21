@@ -499,6 +499,8 @@ public sealed partial class DiabloSimulation
             CombatModeEndTick = player.CombatModeEndTick,
             CurrentAction = ClonePlayerAction(player.CurrentAction),
             HeldItem = player.HeldItem,
+            Stash = player.Stash.ToArray(),
+            StashGold = player.StashGold,
         };
     }
 
@@ -1742,6 +1744,9 @@ public sealed partial class DiabloSimulation
         destination.InventoryGrid.Clear();
         destination.InventoryGrid.AddRange(source.InventoryGrid);
         destination.HeldItem = source.HeldItem;
+        destination.Stash.Clear();
+        destination.Stash.AddRange(source.Stash);
+        destination.StashGold = source.StashGold;
         destination.EntityId = source.EntityId;
     }
 
@@ -2220,6 +2225,7 @@ public sealed partial class DiabloSimulation
             || source.Equipment is null
             || source.Belt is null
             || source.InventoryGrid is null
+            || source.Stash is null
             || source.MemorizedSpells is null
             || source.StatusEffects is null
             || source.VisitedLevelIds is null
@@ -2238,6 +2244,7 @@ public sealed partial class DiabloSimulation
             || source.Inventory.Count > 40
             || source.Equipment.Count > 7
             || source.Belt.Count > 8
+            || source.Stash.Count > DiabloStashLayout.MaximumItems
             || source.InventoryGrid.Count > 400
             || source.AbilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
             || !Enum.IsDefined(source.AbilityKind)
@@ -2444,6 +2451,42 @@ public sealed partial class DiabloSimulation
             != source.Belt.Count) {
             throw new InvalidDataException(
                 "The authoritative save contains duplicate belt slots.");
+        }
+        var stashPages = new Dictionary<uint, int[]>();
+        foreach (var item in source.Stash) {
+            if (item is null
+                || item.Page >= DiabloStashLayout.PageCount
+                || item.Cell >= DiabloStashLayout.CellCount
+                || item.State is null
+                || !HasKnownStableItemIdentity(item.State)
+                || !HasValidItemIdentity(item.ItemSeed, item.State)
+                || !InventoryGridLayout.HasValidDimensions(
+                    item.State.InventoryWidth,
+                    item.State.InventoryHeight)
+                || !itemIdentities.Add((
+                    item.ItemSeed,
+                    item.State.CreateInfo,
+                    item.State.ItemIndex))) {
+                throw new InvalidDataException(
+                    "The authoritative save contains an invalid or duplicate stash item.");
+            }
+            if (!stashPages.TryGetValue(item.Page, out var page)) {
+                page = DiabloStashLayout.CreateEmptyPage();
+                stashPages.Add(item.Page, page);
+            }
+            if (!DiabloStashLayout.CanPlace(
+                    page,
+                    item.Cell,
+                    item.State.InventoryWidth,
+                    item.State.InventoryHeight)) {
+                throw new InvalidDataException(
+                    "The authoritative save contains overlapping stash items.");
+            }
+            DiabloStashLayout.Fill(
+                page,
+                item.Cell,
+                item.State.InventoryWidth,
+                item.State.InventoryHeight);
         }
         if (source.HeldItem is { } heldItem
             && (heldItem.State is null

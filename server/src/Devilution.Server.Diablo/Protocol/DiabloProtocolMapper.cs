@@ -486,6 +486,21 @@ internal static class DiabloProtocolMapper
             });
         }
         player.InventoryGrid.Add(state.InventoryGrid);
+        foreach (var item in state.Stash.OrderBy(item => item.Page).ThenBy(item => item.Cell)) {
+            player.Stash.Add(new StashItemSnapshot {
+                Page = item.Page,
+                Cell = item.Cell,
+                Item = new ItemSnapshot {
+                    StoreId = item.StoreId,
+                    StoreSlot = item.StoreSlot,
+                    ItemSeed = item.ItemSeed,
+                    Price = item.Price,
+                    PurchasedAtTick = item.PurchasedAtTick,
+                    State = ToProtocolItemState(item.State, spells, spellBooks),
+                },
+            });
+        }
+        player.StashGold = state.StashGold;
         return player;
     }
 
@@ -1011,6 +1026,16 @@ internal static class DiabloProtocolMapper
                     source.HeldItem.Price,
                     source.HeldItem.PurchasedAtTick,
                     FromProtocolItemState(source.HeldItem.State)),
+            Stash = source.Stash.Select(item => new StashStoreItem(
+                item.Page,
+                item.Cell,
+                item.Item?.StoreId ?? 0,
+                item.Item?.StoreSlot ?? 0,
+                item.Item?.ItemSeed ?? 0,
+                item.Item?.Price ?? 0,
+                item.Item?.PurchasedAtTick ?? 0,
+                FromProtocolItemState(item.Item?.State))).ToArray(),
+            StashGold = source.StashGold,
         };
     }
 
@@ -1044,6 +1069,7 @@ internal static class DiabloProtocolMapper
                     Location = (PlayerItemLocation)item.Location,
                     Slot = item.Slot,
                     StableItemId = item.StableItemId,
+                    Page = item.Page,
                 };
             }
         }
@@ -1062,7 +1088,8 @@ internal static class DiabloProtocolMapper
                 : new DiabloPlayerItemReference(
                     (DiabloPlayerItemLocation)source.Cast.SourceItem.Location,
                     source.Cast.SourceItem.Slot,
-                    source.Cast.SourceItem.StableItemId);
+                    source.Cast.SourceItem.StableItemId,
+                    source.Cast.SourceItem.Page);
             castIntent = new DiabloCastIntent(
                 source.Cast.SpellId,
                 source.Cast.TargetEntityId,

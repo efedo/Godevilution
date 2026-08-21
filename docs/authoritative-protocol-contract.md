@@ -147,6 +147,15 @@ When present, the server validates its stable identity before changing the
 inventory grid; an absent or zero-valued reference retains positional
 compatibility with older clients.
 
+`MoveItemRequested` also accepts `PLAYER_ITEM_LOCATION_STASH`. A stash
+reference carries a page and 10x10 grid cell in addition to its stable item
+identity. The server validates page bounds, item footprint, occupancy, and
+cross-location identity before applying an atomic transfer or swap. Every
+`PlayerSnapshot` projects the validated stash items and stash gold; the same
+state is included in the version-1 authoritative save envelope. Native stash
+presentation remains gated until its compatibility bridge consumes this
+projection.
+
 `SetFriendlyModeRequested.friendly_mode` is an explicit, retry-safe state
 assignment. The server does not interpret repeated delivery as another toggle.
 The following snapshot is the authority for the resulting mode.

@@ -182,6 +182,44 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void StashStateChangesHashAndRetainsLegacyHashWhenAbsent()
+    {
+        var baseline = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var withStash = baseline.Clone();
+        withStash.Players[0].StashGold = 50;
+        withStash.Players[0].Stash.Add(new StashItemSnapshot {
+            Page = 2,
+            Cell = 11,
+            Item = new ItemSnapshot {
+                ItemSeed = 42,
+                Price = 65,
+                State = new ItemStateSnapshot {
+                    ItemType = 1,
+                    ItemIndex = 7,
+                    StableItemId = 700,
+                    Value = 65,
+                },
+            },
+        });
+        var changed = withStash.Clone();
+        changed.Players[0].Stash[0].Cell = 12;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+            }));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(withStash));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(withStash),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void StableItemIdentityPreservesLegacySnapshotHash()
     {
         var baseline = new Snapshot {

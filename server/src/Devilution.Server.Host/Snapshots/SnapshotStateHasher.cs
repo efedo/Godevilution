@@ -136,6 +136,10 @@ public static class SnapshotStateHasher
                     if (action.Cast.SourceItem is not null) {
                         hasher.AppendInt32((int)action.Cast.SourceItem.Location);
                         hasher.AppendUInt32(action.Cast.SourceItem.Slot);
+                        if (action.Cast.SourceItem.Page != 0) {
+                            hasher.AppendString("godevilution-player-item-reference-page-v1");
+                            hasher.AppendUInt32(action.Cast.SourceItem.Page);
+                        }
                     }
                 }
             }
@@ -205,6 +209,31 @@ public static class SnapshotStateHasher
                 hasher.AppendUInt32(item.Price);
                 hasher.AppendUInt64(item.PurchasedAtTick);
                 AppendItemState(hasher, item.State);
+            }
+
+            var stash = player.Stash
+                .OrderBy(item => item.Page)
+                .ThenBy(item => item.Cell)
+                .ThenBy(item => item.Item?.StoreId ?? 0)
+                .ThenBy(item => item.Item?.StoreSlot ?? 0)
+                .ThenBy(item => item.Item?.ItemSeed ?? 0)
+                .ThenBy(item => item.Item?.Price ?? 0)
+                .ThenBy(item => item.Item?.PurchasedAtTick ?? 0)
+                .ToArray();
+            if (stash.Length > 0 || player.StashGold != 0) {
+                hasher.AppendString("godevilution-player-stash-v1");
+                hasher.AppendUInt32(player.StashGold);
+                hasher.AppendUInt64((ulong)stash.Length);
+                foreach (var item in stash) {
+                    hasher.AppendUInt32(item.Page);
+                    hasher.AppendUInt32(item.Cell);
+                    hasher.AppendUInt32(item.Item?.StoreId ?? 0);
+                    hasher.AppendUInt32(item.Item?.StoreSlot ?? 0);
+                    hasher.AppendUInt32(item.Item?.ItemSeed ?? 0);
+                    hasher.AppendUInt32(item.Item?.Price ?? 0);
+                    hasher.AppendUInt64(item.Item?.PurchasedAtTick ?? 0);
+                    AppendItemState(hasher, item.Item?.State);
+                }
             }
 
             hasher.AppendUInt64((ulong)player.InventoryGrid.Count);

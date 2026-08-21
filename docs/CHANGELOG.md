@@ -4,9 +4,15 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add server-owned 100-page stash state with native-compatible 10x10 page
+  grids, stable page/cell references, overlap validation, inventory↔stash
+  transfers, snapshot projection, and version-1 save round-tripping. Native
+  stash presentation remains fail-closed until its authoritative bridge is
+  implemented.
+
 - Fail closed on the native Barmaid stash entry while connected to the
   authoritative server; local stash state remains available only in legacy
-  mode until stash projection and commands are implemented.
+  mode until the native page-grid presentation bridge is implemented.
 
 - Expand Godot authoritative walk-projection coverage across all eight native
   adjacent directions and the start, midpoint, effect, and post-effect tick

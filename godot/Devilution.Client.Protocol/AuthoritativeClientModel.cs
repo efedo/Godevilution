@@ -46,6 +46,14 @@ public sealed class AuthoritativeClientModel
             trigger.TriggerX == x
             && trigger.TriggerY == y);
 
+    /** Returns the validated server-owned stash page for presentation. */
+    public StashLayout GetStashLayout(uint page)
+    {
+        return StashLayout.Build(
+            Snapshot?.Players.FirstOrDefault()?.Stash,
+            page);
+    }
+
     /** Returns an available authored quest/towner interaction at a clicked tile. */
     public QuestTownerInteractionSnapshot? QuestTownerInteractionAt(int x, int y)
         => AuthoritativeQuestTownerInteractionSelector.SelectAt(Snapshot, x, y);
@@ -88,6 +96,7 @@ public sealed class AuthoritativeClientModel
                 }
                 ValidatePlayerResources(player);
                 ValidateVisitedLevels(player);
+                ValidateStash(player);
                 if (!Enum.IsDefined(player.CombatMode)
                     || (player.CombatMode == PlayerCombatMode.Stand
                         && player.CombatModeEndTick != 0)
@@ -352,6 +361,22 @@ public sealed class AuthoritativeClientModel
                     "The authoritative snapshot contains invalid status-effect state.");
             }
         }
+    }
+
+    private static void ValidateStash(PlayerSnapshot player)
+    {
+        if (player.Stash.Count > StashLayout.PageCount * StashLayout.CellCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many stash items.");
+        var pages = player.Stash
+            .Select(item => item.Page)
+            .Distinct()
+            .ToArray();
+        if (pages.Any(page => page >= StashLayout.PageCount))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid stash page.");
+        foreach (var page in pages)
+            _ = StashLayout.Build(player.Stash, page);
     }
 
     private static void ValidatePlayerResources(PlayerSnapshot player)

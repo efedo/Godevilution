@@ -111,6 +111,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         AuthoritativePlayerClassDefinition? startingPlayerClass = null,
         AuthoritativeItemQuestEffectCatalog? startingItemQuestEffects = null,
         uint startingStatPoints = 0,
+        IReadOnlyList<StashStoreItem>? startingStash = null,
+        uint startingStashGold = 0,
         AuthoritativeMonsterSpawnPlanner? startingMonsterSpawnPlanner = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -176,7 +178,9 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             reflectCharges: startingReflectCharges,
             items: startingItems,
             playerClass: startingPlayerClass,
-            statPoints: startingStatPoints);
+            statPoints: startingStatPoints,
+            stash: startingStash,
+            stashGold: startingStashGold);
         playerTemplateFactory = (_, _) => compatibilityTemplate;
         runtime = simulation.CreateRuntime(compatibilityTemplate);
         this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();
@@ -755,6 +759,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             PlayerItemLocation.Inventory => DiabloPlayerItemLocation.Inventory,
             PlayerItemLocation.Belt => DiabloPlayerItemLocation.Belt,
             PlayerItemLocation.Equipment => DiabloPlayerItemLocation.Equipment,
+            PlayerItemLocation.Stash => DiabloPlayerItemLocation.Stash,
             _ => (DiabloPlayerItemLocation?)null,
         };
         if (!location.HasValue) {
@@ -765,7 +770,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         destination = new DiabloPlayerItemReference(
             location.Value,
             source.Slot,
-            source.StableItemId);
+            source.StableItemId,
+            source.Page);
         return true;
     }
 

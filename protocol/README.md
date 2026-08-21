@@ -93,6 +93,10 @@ Windows toolchain command.
 - `MoveInventoryItemRequested.item` is an additive exact inventory reference.
   When present, the server rejects a stale slot before changing the inventory
   grid; an absent or zero-valued reference retains positional compatibility.
+- `MoveItemRequested` also supports the server-owned stash. Stash references
+  use `PlayerItemLocation.STASH`, a page, and a 10x10 grid cell; snapshots carry
+  the validated stash item projection and stash gold. Older clients omit these
+  additive fields and retain their previous inventory/belt/equipment behavior.
 - `AutoEquipItemRequested` accepts an exact inventory item reference and owns
   the native automatic equipment selection and any atomic displacement back to
   inventory. An optional `equipment_slot` preserves the hand, ring, or other

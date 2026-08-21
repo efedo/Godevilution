@@ -942,6 +942,80 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ExplicitMoveTransfersInventoryAndStashItemsThroughProtocol()
+    {
+        var inventoryState = AuthoritativeItemState.Empty with {
+            StableItemId = 910,
+            ItemType = 1,
+            ItemIndex = 10,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var stashState = AuthoritativeItemState.Empty with {
+            StableItemId = 911,
+            ItemType = 1,
+            ItemIndex = 11,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingInventoryGrid: [0],
+            startingInventory: [new OwnedStoreItem(0, 0, 42, 10, 0, inventoryState)],
+            startingStash: [new StashStoreItem(6, 12, 3, 4, 99, 11, 7, stashState)],
+            startingStashGold: 250);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var toStash = new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = 910,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 6,
+                    Slot = 20,
+                    StableItemId = 910,
+                },
+            },
+        };
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", toStash, 1).Status);
+        var afterStash = executor.GetPlayerState("player-a");
+        Assert.Empty(afterStash.Inventory);
+        Assert.Equal(250U, afterStash.StashGold);
+        Assert.Contains(afterStash.Stash, item =>
+            item.Page == 6 && item.Cell == 20 && item.ItemSeed == 42);
+
+        var toInventory = new Command {
+            ClientSequence = 2,
+            RequestedTick = 2,
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 6,
+                    Slot = 20,
+                    StableItemId = 910,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = 910,
+                },
+            },
+        };
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", toInventory, 2).Status);
+        var restored = executor.GetPlayerState("player-a");
+        Assert.Equal(42U, Assert.Single(restored.Inventory).ItemSeed);
+        Assert.Equal(7UL, Assert.Single(restored.Stash).PurchasedAtTick);
+        Assert.Contains(restored.Stash, item => item.ItemSeed == 99);
+    }
+
+    [Fact]
     public void ExplicitMoveSwapsInventoryAndEquipmentItemsAtomically()
     {
         var executor = new StoreSimulationExecutor(
@@ -3157,6 +3231,39 @@ public sealed class StoreSimulationExecutorTests
         });
         var duplicateItem = document with { SnapshotBase64 = Convert.ToBase64String(duplicateSnapshot.ToByteArray()) };
         Assert.Throws<InvalidDataException>(() => destination.ImportPlayerSave("player-a", System.Text.Json.JsonSerializer.Serialize(duplicateItem)));
+    }
+
+    [Fact]
+    public void AuthoritativeSaveRejectsOverlappingStashFootprints()
+    {
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 20,
+            StableItemId = 920,
+            InventoryWidth = 2,
+            InventoryHeight = 1,
+        };
+        var source = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingStash: [
+                new StashStoreItem(0, 0, 0, 0, 501, 1, 0, itemState),
+                new StashStoreItem(0, 1, 0, 1, 502, 1, 0, itemState with {
+                    StableItemId = 921,
+                    ItemIndex = 21,
+                }),
+            ]);
+        var destination = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        var sourceServer = new AuthoritativeCommandServer(source);
+        Assert.Equal(CommandStatus.Accepted, sourceServer.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 0,
+            SetFriendlyModeRequested = new SetFriendlyModeRequested { FriendlyMode = true },
+        }, 0).Status);
+
+        Assert.Throws<InvalidDataException>(() => destination.ImportPlayerSave(
+            "player-a",
+            source.ExportPlayerSave("player-a")));
     }
 
     [Fact]

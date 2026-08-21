@@ -161,6 +161,17 @@ public sealed record BeltStoreItem(uint Slot, uint ItemSeed, AuthoritativeItemSt
     }
 }
 
+/** One server-owned item placed in a native-compatible stash page grid. */
+public sealed record StashStoreItem(
+    uint Page,
+    uint Cell,
+    uint StoreId,
+    uint StoreSlot,
+    uint ItemSeed,
+    uint Price,
+    ulong PurchasedAtTick,
+    AuthoritativeItemState State);
+
 /** One learned spell and its native-compatible base level. */
 public sealed record MemorizedSpellState(uint SpellId, uint Level);
 
@@ -180,6 +191,12 @@ public sealed record StorePlayerSnapshot(
 {
     /** Item currently carried by the native cursor and excluded from inventory totals. */
     public OwnedStoreItem? HeldItem { get; init; }
+
+    /** Server-owned stash items; page and cell identify the 10x10 placement. */
+    public IReadOnlyList<StashStoreItem> Stash { get; init; } = [];
+
+    /** Native stash gold, persisted separately from the carried wallet. */
+    public uint StashGold { get; init; }
 
     public int PositionX { get; init; }
     public int PositionY { get; init; }
@@ -277,7 +294,9 @@ public sealed class AuthoritativePlayerState(
     int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute,
     uint diabloKillLevel = 0,
     IReadOnlyList<uint>? visitedLevelIds = null,
-    uint statPoints = 0)
+    uint statPoints = 0,
+    IReadOnlyList<StashStoreItem>? stash = null,
+    uint stashGold = 0)
 {
     public uint Gold { get; set; } = gold;
 
@@ -434,6 +453,12 @@ public sealed class AuthoritativePlayerState(
     public uint? ActiveStoreId { get; set; }
 
     public List<OwnedStoreItem> Inventory { get; } = inventory?.ToList() ?? [];
+
+    /** Server-owned native-compatible stash pages. */
+    public List<StashStoreItem> Stash { get; } = stash?.ToList() ?? [];
+
+    /** Server-owned gold stored in the stash. */
+    public uint StashGold { get; set; } = stashGold;
 
     /** Server-owned item currently carried by the presentation cursor. */
     public OwnedStoreItem? HeldItem { get; set; } = heldItem;

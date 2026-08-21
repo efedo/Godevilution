@@ -108,26 +108,28 @@ For the Bard's server-owned Identify class skill, native spell selection opens
 only the legacy item cursor. Clicking equipment or inventory submits the exact
 item reference with the class-ability service source, waits for the accepted
 snapshot, and does not call the local identification rule. Stash items remain
-unsupported while connected because they are not yet part of authoritative
-item state; paid vendor identification retains its original source-zero path.
+unsupported while connected because the native compatibility bridge does not
+yet project stash pages; paid vendor identification retains its original
+source-zero path.
 
 The Warrior's server-owned Repair skill similarly opens only the legacy repair
 cursor. Equipment or inventory selection sends the class-ability source and
 waits for the snapshot before playing presentation audio; it does not call the
-local random repair rule. Connected stash repair is blocked until stash state is
-authoritative. Visual-store and classic Smith flows retain source-zero vendor
-repair.
+local random repair rule. Connected stash repair is blocked until the native
+stash bridge projects page items. Visual-store and classic Smith flows retain
+source-zero vendor repair.
 
 The Sorcerer's server-owned Staff Recharge skill opens only the legacy recharge
 cursor. Equipment or inventory selection submits the exact item with the
 class-ability source and projects the accepted snapshot instead of invoking the
-local recharge rule. Connected stash recharge remains blocked; paid Witch
-recharge retains its source-zero vendor path.
+local recharge rule. Connected stash recharge remains blocked until the native
+stash bridge is available; paid Witch recharge retains its source-zero vendor
+path.
 
-The Barmaid stash entry is also fail-closed while connected. Because stash
-state is not yet part of the authoritative protocol, the native client does
-not open or mutate its local stash in authoritative mode; disconnected legacy
-sessions retain the existing stash behavior.
+The Barmaid stash entry is also fail-closed while connected. Although stash
+state is now part of the authoritative protocol, the native client does not
+yet project the page grid or open/mutate its local stash in authoritative mode;
+disconnected legacy sessions retain the existing stash behavior.
 
 Native service, store, and charged/consumable spell-source requests now resolve
 their item references from the latest authoritative projection, carrying the

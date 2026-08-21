@@ -343,12 +343,15 @@ message PlayerItemReference {
 	// Optional stable content identity for stale-slot protection; zero preserves
 	// compatibility with older clients and legacy snapshots.
 	uint32 stable_item_id = 3;
+	// Stash references use the page field; other locations leave it zero.
+	uint32 page = 4;
 }
 
 enum PlayerItemLocation {
 	PLAYER_ITEM_LOCATION_INVENTORY = 0;
 	PLAYER_ITEM_LOCATION_BELT = 1;
 	PLAYER_ITEM_LOCATION_EQUIPMENT = 2;
+	PLAYER_ITEM_LOCATION_STASH = 3;
 }
 
 message CommandAck {
@@ -527,6 +530,15 @@ message PlayerSnapshot {
 	uint32 stat_points = 36;
 	// Additive targeting metadata for the selected class ability.
 	SpellTargetingKind ability_targeting_kind = 37;
+	// Server-owned stash projection. Each page is a native-compatible 10x10 grid.
+	repeated StashItemSnapshot stash = 38;
+	uint32 stash_gold = 39;
+}
+
+message StashItemSnapshot {
+	uint32 page = 1;
+	uint32 cell = 2;
+	ItemSnapshot item = 3;
 }
 
 enum PlayerDirection {
