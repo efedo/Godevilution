@@ -73,4 +73,69 @@ public sealed class AuthoritativePlayerPositionProjectionTests
             new ClientPosition(4, 5),
             AuthoritativePlayerPositionProjection.Resolve(player));
     }
+
+    [Fact]
+    public void KeepsInterpolationForAOneTileAuthoritativeWalk()
+    {
+        var previous = new PlayerSnapshot {
+            EntityId = 7,
+            LevelId = 2,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var next = new PlayerSnapshot {
+            EntityId = 7,
+            LevelId = 2,
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                DirectionX = 1,
+                EffectApplied = false,
+            },
+        };
+
+        Assert.False(AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, next));
+    }
+
+    [Fact]
+    public void SnapsSameLevelLargeAuthoritativeRelocations()
+    {
+        var previous = new PlayerSnapshot {
+            EntityId = 7,
+            LevelId = 2,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var next = new PlayerSnapshot {
+            EntityId = 7,
+            LevelId = 2,
+            PositionX = 20,
+            PositionY = 15,
+        };
+
+        Assert.True(AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, next));
+    }
+
+    [Fact]
+    public void SnapsAcrossExplicitTransitionActions()
+    {
+        var previous = new PlayerSnapshot {
+            EntityId = 7,
+            LevelId = 2,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var next = new PlayerSnapshot {
+            EntityId = 7,
+            LevelId = 2,
+            PositionX = 5,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.RestartTown,
+            },
+        };
+
+        Assert.True(AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, next));
+    }
 }

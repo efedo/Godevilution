@@ -15,6 +15,7 @@ public partial class WorldPresentation : Node2D
     private const float OriginY = 96;
     private readonly Dictionary<uint, Vector2> displayedPositions = [];
     private readonly Dictionary<uint, uint> displayedPositionLevels = [];
+    private readonly Dictionary<uint, PlayerSnapshot> displayedPlayerSnapshots = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
     private Snapshot? snapshot;
@@ -29,6 +30,7 @@ public partial class WorldPresentation : Node2D
         if (snapshot is null) {
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
+            displayedPlayerSnapshots.Clear();
             QueueRedraw();
             return;
         }
@@ -43,13 +45,17 @@ public partial class WorldPresentation : Node2D
             var projected = player.EntityId == localPlayer?.EntityId
                 ? predicted
                 : AuthoritativePlayerPositionProjection.Resolve(player);
+            var reset = displayedPlayerSnapshots.TryGetValue(player.EntityId, out var previous)
+                && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player);
             UpdatePosition(
                 player.EntityId,
                 ToScreen(
                     projected?.X ?? player.PositionX,
                     projected?.Y ?? player.PositionY),
                 delta,
-                player.LevelId);
+                player.LevelId,
+                reset);
+            displayedPlayerSnapshots[player.EntityId] = player.Clone();
         }
         foreach (var monster in snapshot.Monsters) {
             activeEntityIds.Add(monster.EntityId);
@@ -80,6 +86,8 @@ public partial class WorldPresentation : Node2D
             displayedPositions.Remove(entityId);
             displayedPositionLevels.Remove(entityId);
         }
+        foreach (var entityId in displayedPlayerSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            displayedPlayerSnapshots.Remove(entityId);
         QueueRedraw();
     }
 
@@ -480,11 +488,16 @@ public partial class WorldPresentation : Node2D
         return displayedPositions.TryGetValue(entityId, out var position) ? position : ToScreen(x, y);
     }
 
-    private void UpdatePosition(uint entityId, Vector2 target, double delta, uint levelId)
+    private void UpdatePosition(
+        uint entityId,
+        Vector2 target,
+        double delta,
+        uint levelId,
+        bool forceReset = false)
     {
         var levelChanged = displayedPositionLevels.TryGetValue(entityId, out var previousLevelId)
             && AuthoritativeEntityPositionProjection.RequiresLevelReset(previousLevelId, levelId);
-        if (levelChanged || !displayedPositions.TryGetValue(entityId, out var current))
+        if (forceReset || levelChanged || !displayedPositions.TryGetValue(entityId, out var current))
             displayedPositions[entityId] = target;
         else
             displayedPositions[entityId] = current.Lerp(target, 1.0f - Mathf.Exp((float)(-delta * 16)));
