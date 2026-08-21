@@ -26,7 +26,7 @@ Status date: 2026-08-21
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,428, Server 426, and Godot protocol 156. On 2026-08-21, the rebuilt native
+1,428, Server 427, and Godot protocol 156. On 2026-08-21, the rebuilt native
 replay runner passed 96 of 96 tests and the managed replay fixture class passed
 without failures. These counts are a dated verification baseline, not a
 substitute for rebuilding the projects before a future run.
@@ -3268,8 +3268,9 @@ substitute for rebuilding the projects before a future run.
 - The generic host adapter now has an eight-generation replacement soak that
   migrates two sessions through every candidate and retires each prior target
   only after publication, preserving session state at every boundary. The live
-  TCP host now keeps a connected session operating across all eight replacement
-  generations and resumes it with the final published ruleset identity.
+  TCP host now keeps one or two connected sessions operating across all eight
+  replacement generations and resumes both with the final published ruleset
+  identity.
 - The Diablo content boundary now exposes stable-ID monster candidates for a
   requested dungeon level, with validated range filtering and deterministic
   ordering; map layout and spawn placement remain explicitly separate.
@@ -3404,10 +3405,10 @@ provide gameplay modules rather than host adapters, live ruleset replacement
   now exposes transactional candidate preparation, a host operation barrier,
   save-based session migration, handshake identity publication, generation
   leases, and explicit retired-target disposal. An eight-generation end-to-end
-  TCP soak now proves active-session migration, continued operation on every
-  replacement, retired-target disposal, and resume under the final published
-  identity; multi-client and long-duration replacement coverage plus
-  authoritative content/gameplay coverage are still partial. Static content
+  TCP soak now proves active-session migration for two connected sessions,
+  continued operation on every replacement, retired-target disposal, and
+  resume under the final published identity; long-duration replacement
+  coverage plus authoritative content/gameplay coverage are still partial. Static content
   portal routes remain protocol-visible without perturbing legacy replay hashes;
   owned, expiring portal state is hash-visible, and the base-content replay
   golden vectors track the current manifest. Cast source ownership and immediate
@@ -4331,8 +4332,7 @@ resistance, lifetime, collision, and deterministic projectile state.
 3. Grow the Godot client from a protocol demonstration into a complete playable
    presentation client using production assets.
 4. Add the missing replay, reconnect, multiplayer, and long-running soak cases.
-5. Add multi-client and long-duration host-controlled ruleset replacement and
-   safe-retirement soak coverage; generalize adapter selection when a second
-   adapter exists.
+5. Add long-duration host-controlled ruleset replacement and safe-retirement
+   soak coverage; generalize adapter selection when a second adapter exists.
 6. Replace the remaining Lua capability destinations and remove Lua only after
    every removal gate is satisfied.

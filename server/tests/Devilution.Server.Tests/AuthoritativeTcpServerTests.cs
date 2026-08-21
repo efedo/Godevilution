@@ -767,6 +767,179 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpRulesetReloadSoakMigratesTwoConnectedSessionsAcrossGenerations()
+    {
+        const int replacementGenerations = 8;
+        var adapters = Enumerable.Range(0, replacementGenerations + 1)
+            .Select(index => new ReloadableHostAdapter(
+                index == 0 ? "initial" : $"replacement-{index}"))
+            .ToArray();
+        var nextAdapter = 0;
+        var runtime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+            CreateReloadManifest("1", "initial"),
+            [new ReloadableModule("rules", "1.0.0")],
+            new DelegateAuthoritativeClock(() => 10),
+            (_, _) => adapters[nextAdapter++]);
+        using var leasedAdapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+        var commandServer = new AuthoritativeCommandServer(leasedAdapter);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            new DelegateAuthoritativeClock(() => 10),
+            gameAdapter: leasedAdapter);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string firstResumeToken;
+        string secondResumeToken;
+        uint firstEntityId;
+        uint secondEntityId;
+
+        using (var firstClient = new TcpClient())
+        using (var secondClient = new TcpClient()) {
+            await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await using var secondStream = secondClient.GetStream();
+            await SendHelloAsync(
+                firstStream,
+                cancellationToken,
+                requestedCharacterName: "Soak-First");
+            await SendHelloAsync(
+                secondStream,
+                cancellationToken,
+                requestedCharacterName: "Soak-Second");
+
+            firstResumeToken = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.ServerHello.SessionToken;
+            secondResumeToken = (await EnvelopeCodec.ReadAsync(
+                secondStream,
+                cancellationToken))!.ServerHello.SessionToken;
+            var initialFirstPlayer = Assert.Single((await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.Snapshot.Players);
+            var initialSecondPlayer = Assert.Single((await EnvelopeCodec.ReadAsync(
+                secondStream,
+                cancellationToken))!.Snapshot.Players);
+            firstEntityId = initialFirstPlayer.EntityId;
+            secondEntityId = initialSecondPlayer.EntityId;
+            Assert.Equal(
+                ["Soak-First", "Soak-Second"],
+                adapters[0].InitializedNames.OrderBy(name => name, StringComparer.Ordinal));
+            Assert.Equal("Soak-First", initialFirstPlayer.CharacterName);
+            Assert.Equal("Soak-Second", initialSecondPlayer.CharacterName);
+            Assert.Equal(2, server.ActiveSessionIds.Count);
+
+            for (var generation = 1; generation <= replacementGenerations; generation++) {
+                var reload = server.TryReloadRuleset(
+                    CreateReloadManifest(generation.ToString(), $"replacement-{generation}"),
+                    [new ReloadableModule("rules", $"{generation + 1}.0.0")]);
+
+                Assert.True(reload.Succeeded);
+                Assert.True(adapters[generation - 1].Disposed);
+                Assert.True(adapters[generation].SessionStateImported);
+                Assert.Equal(
+                    reload.Active.Identity.CombinedSha256,
+                    handshake.Identity.RulesetIdentityHash);
+
+                await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+                    CommandBatch = new CommandBatch {
+                        Commands = { new Command {
+                            ClientSequence = (ulong)generation,
+                            RequestedTick = 10,
+                            AttackRequested = new AttackRequested {
+                                TargetEntityId = firstEntityId,
+                            },
+                        } },
+                    },
+                }, cancellationToken);
+                await EnvelopeCodec.WriteAsync(secondStream, new Envelope {
+                    CommandBatch = new CommandBatch {
+                        Commands = { new Command {
+                            ClientSequence = (ulong)generation,
+                            RequestedTick = 10,
+                            AttackRequested = new AttackRequested {
+                                TargetEntityId = secondEntityId,
+                            },
+                        } },
+                    },
+                }, cancellationToken);
+
+                Assert.Equal(
+                    CommandStatus.Accepted,
+                    (await EnvelopeCodec.ReadAsync(
+                        firstStream,
+                        cancellationToken))!.CommandAck.Results.Single().Status);
+                Assert.Equal(
+                    CommandStatus.Accepted,
+                    (await EnvelopeCodec.ReadAsync(
+                        secondStream,
+                        cancellationToken))!.CommandAck.Results.Single().Status);
+                var firstSnapshot = (await EnvelopeCodec.ReadAsync(
+                    firstStream,
+                    cancellationToken))!.Snapshot;
+                var secondSnapshot = (await EnvelopeCodec.ReadAsync(
+                    secondStream,
+                    cancellationToken))!.Snapshot;
+                var firstPlayer = Assert.Single(firstSnapshot.Players);
+                var secondPlayer = Assert.Single(secondSnapshot.Players);
+                Assert.Equal(firstEntityId, firstPlayer.EntityId);
+                Assert.Equal(secondEntityId, secondPlayer.EntityId);
+                Assert.Equal("Soak-First", firstPlayer.CharacterName);
+                Assert.Equal("Soak-Second", secondPlayer.CharacterName);
+            }
+        }
+
+        using var resumedFirstClient = new TcpClient();
+        using var resumedSecondClient = new TcpClient();
+        await resumedFirstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await resumedSecondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var resumedFirstStream = resumedFirstClient.GetStream();
+        await using var resumedSecondStream = resumedSecondClient.GetStream();
+        await EnvelopeCodec.WriteAsync(resumedFirstStream, new Envelope {
+            ClientHello = new ClientHello {
+                ClientBuildId = "client-build",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = handshake.Identity.ContentManifestHash,
+                RulesetIdentityHash = handshake.Identity.RulesetIdentityHash,
+                ResumeToken = firstResumeToken,
+            },
+        }, cancellationToken);
+        await EnvelopeCodec.WriteAsync(resumedSecondStream, new Envelope {
+            ClientHello = new ClientHello {
+                ClientBuildId = "client-build",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = handshake.Identity.ContentManifestHash,
+                RulesetIdentityHash = handshake.Identity.RulesetIdentityHash,
+                ResumeToken = secondResumeToken,
+            },
+        }, cancellationToken);
+        var resumedFirstHello = (await EnvelopeCodec.ReadAsync(
+            resumedFirstStream,
+            cancellationToken))!.ServerHello;
+        var resumedSecondHello = (await EnvelopeCodec.ReadAsync(
+            resumedSecondStream,
+            cancellationToken))!.ServerHello;
+        Assert.Equal(handshake.Identity.RulesetIdentityHash, resumedFirstHello.RulesetIdentityHash);
+        Assert.Equal(handshake.Identity.RulesetIdentityHash, resumedSecondHello.RulesetIdentityHash);
+        var resumedFirstPlayer = Assert.Single((await EnvelopeCodec.ReadAsync(
+            resumedFirstStream,
+            cancellationToken))!.Snapshot.Players);
+        var resumedSecondPlayer = Assert.Single((await EnvelopeCodec.ReadAsync(
+            resumedSecondStream,
+            cancellationToken))!.Snapshot.Players);
+        Assert.Equal(firstEntityId, resumedFirstPlayer.EntityId);
+        Assert.Equal(secondEntityId, resumedSecondPlayer.EntityId);
+        Assert.Equal("Soak-First", resumedFirstPlayer.CharacterName);
+        Assert.Equal("Soak-Second", resumedSecondPlayer.CharacterName);
+    }
+
+    [Fact]
     public async Task ReconnectSoakPreservesCompleteParticipantSnapshotAndSelfFirstOrder()
     {
         var executor = new ParticipantSnapshotExecutor();
@@ -1051,10 +1224,13 @@ public sealed class AuthoritativeTcpServerTests
         : IAuthoritativeGameHostAdapter, IDisposable
     {
         private readonly Dictionary<string, string> sessionStates = new(StringComparer.Ordinal);
+        private readonly object initializationSynchronization = new();
 
         public bool Disposed { get; private set; }
 
         public bool SessionStateImported { get; private set; }
+
+        public List<string> InitializedNames { get; } = [];
 
         public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
         {
@@ -1095,14 +1271,17 @@ public sealed class AuthoritativeTcpServerTests
 
         public string ExportSessionState(string sessionId)
         {
-            return sessionStates.TryGetValue(sessionId, out var state)
-                ? state
-                : name;
+            lock (initializationSynchronization) {
+                return sessionStates.TryGetValue(sessionId, out var state)
+                    ? state
+                    : name;
+            }
         }
 
         public void ImportSessionState(string sessionId, string serializedState)
         {
-            sessionStates[sessionId] = serializedState;
+            lock (initializationSynchronization)
+                sessionStates[sessionId] = serializedState;
             SessionStateImported = true;
         }
 
@@ -1110,7 +1289,11 @@ public sealed class AuthoritativeTcpServerTests
             string sessionId,
             AuthoritativeParticipantSelection selection)
         {
-            sessionStates.TryAdd(sessionId, selection.CharacterName ?? name);
+            var characterName = selection.CharacterName ?? name;
+            lock (initializationSynchronization) {
+                InitializedNames.Add(characterName);
+                sessionStates.TryAdd(sessionId, characterName);
+            }
         }
 
         public void Dispose()
