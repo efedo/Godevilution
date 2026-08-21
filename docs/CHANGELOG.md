@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Allow `native_dun_objects.tsv` rows to carry an optional stable
+  `object_symbol` cross-check while retaining numeric object-ID compatibility.
+  Bump the Diablo content schema to 1.381.
+
 - Add the validated `native_dun_levels.tsv` catalog. Ordinary runtime levels
   can now acquire their native DUN object layers from immutable content assets,
   preserving authored collision geometry while enabling explicit object

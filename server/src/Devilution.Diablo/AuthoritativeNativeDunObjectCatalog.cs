@@ -21,6 +21,9 @@ public sealed record AuthoritativeNativeDunObjectDefinition(
 
     public string SetLevelSymbol { get; init; } = string.Empty;
 
+    /** Stable authored-object symbol retained for composed-pack diagnostics. */
+    public string ObjectSymbol { get; init; } = string.Empty;
+
     /** Selects the legacy set-level target or an ordinary runtime level target. */
     public AuthoritativeNativeDunObjectTargetKind TargetKind { get; init; }
         = AuthoritativeNativeDunObjectTargetKind.SetLevel;
@@ -271,7 +274,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                 0,
                 row.OptionalBoolean("active_map"),
                 (ushort)nativeObjectId,
-                row.RequiredUInt32("object_id"),
+                AuthoritativeWorldObjectIdentity.Resolve(row, stableIds),
                 row.OptionalUInt32("template_entity_id")) {
                 TargetKind = AuthoritativeNativeDunObjectTargetKind.Level,
                 LevelId = AuthoritativeLevelIdentity.ResolveOptional(
@@ -280,6 +283,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                     "level_id",
                     "level_symbol"),
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
+                ObjectSymbol = AuthoritativeWorldObjectIdentity.ReadSymbol(row),
             };
         }
 
@@ -291,11 +295,12 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                 "set_level_symbol"),
             row.RequiredBoolean("active_map"),
             (ushort)nativeObjectId,
-            row.RequiredUInt32("object_id"),
+            AuthoritativeWorldObjectIdentity.Resolve(row, stableIds),
             row.OptionalUInt32("template_entity_id")) {
             SetLevelSymbol = row.TryGet("set_level_symbol", out var symbol)
                 ? symbol
                 : string.Empty,
+            ObjectSymbol = AuthoritativeWorldObjectIdentity.ReadSymbol(row),
         };
     }
 }

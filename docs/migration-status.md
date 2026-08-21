@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,424, Server 414, and Godot protocol 145. These counts are a dated
+1,426, Server 414, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -308,6 +308,10 @@ future run.
   explicitly reference one immutable native `.dun` asset; its object layer is
   attached to the existing level geometry without inferring collision behavior.
   Dimensions, level identities, and asset paths are validated before activation.
+
+- Schema 1.381 adds optional stable `object_symbol` cross-checks to
+  `native_dun_objects.tsv`. Numeric `object_id` rows remain backward-compatible;
+  when a symbol is supplied, it must resolve to the same authored object ID.
 
 - Schema 1.377 extends authored mutations with validated `object_layer_rects`
   assignments. Effective native object-layer values now survive map mutation

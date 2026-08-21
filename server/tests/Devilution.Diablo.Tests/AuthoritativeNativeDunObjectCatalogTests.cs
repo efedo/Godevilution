@@ -1,4 +1,5 @@
 using Devilution.Diablo;
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -10,8 +11,8 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
     {
         var catalog = AuthoritativeNativeDunObjectCatalog.LoadTsv(
             "native_dun_objects.tsv",
-            "set_level_id\tset_level_symbol\tactive_map\tnative_object_id\tobject_id\ttemplate_entity_id\n"
-                + "2\tSL_BONECHAMB\t1\t37\t4\t3001\n");
+            "set_level_id\tset_level_symbol\tactive_map\tnative_object_id\tobject_id\tobject_symbol\ttemplate_entity_id\n"
+                + "2\tSL_BONECHAMB\t1\t37\t4\tbone_door\t3001\n");
 
         var definition = Assert.Single(catalog.Definitions);
         Assert.Equal(2, definition.SetLevelId);
@@ -20,6 +21,42 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
         Assert.Equal(4U, definition.ObjectId);
         Assert.Equal(3001U, definition.TemplateEntityId);
         Assert.Equal("SL_BONECHAMB", definition.SetLevelSymbol);
+        Assert.Equal("bone_door", definition.ObjectSymbol);
+    }
+
+    [Fact]
+    public void TsvLoaderResolvesStableObjectSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "catacombs", 8),
+            new StableContentId("object", "bone_door", 4),
+        ]);
+        var catalog = AuthoritativeNativeDunObjectCatalog.LoadTsv(
+            "native_dun_objects.tsv",
+            "level_id\tlevel_symbol\tnative_object_id\tobject_id\tobject_symbol\n"
+                + "8\tcatacombs\t71\t4\tbone_door\n",
+            stableIds);
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal(4U, definition.ObjectId);
+        Assert.Equal("bone_door", definition.ObjectSymbol);
+    }
+
+    [Fact]
+    public void TsvLoaderRejectsMismatchedStableObjectSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "catacombs", 8),
+            new StableContentId("object", "bone_door", 4),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunObjectCatalog.LoadTsv(
+                "native_dun_objects.tsv",
+                "level_id\tlevel_symbol\tnative_object_id\tobject_id\tobject_symbol\n"
+                    + "8\tcatacombs\t71\t5\tbone_door\n",
+                stableIds));
+        Assert.Contains("maps object 5 to symbol 'bone_door'", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
