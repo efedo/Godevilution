@@ -112,11 +112,21 @@ public sealed class DiabloWorldCommandProcessorTests
             questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
             questSequenceFollowUpAmount: 137,
             questSequenceFollowUpOffsetX: 1,
-            questSequenceFollowUpOffsetY: 0);
+            questSequenceFollowUpOffsetY: 0,
+            questSequenceFollowUpWorldMutationId: 7);
         var worldState = new DiabloWorldState(
             world,
             objects: [@object],
-            quests: [quest]);
+            quests: [quest],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(
+                    7,
+                    24,
+                    anchorEntityId: @object.EntityId,
+                    objectLayerRectangles: [
+                        new AuthoritativeWorldMutationObjectRectangle(0, 0, 1, 1, 297),
+                    ]),
+            ]));
         var processor = new DiabloWorldCommandProcessor(
             worldState,
             random: new DiabloRandom(7),
@@ -138,6 +148,7 @@ public sealed class DiabloWorldCommandProcessorTests
             target.EntityId);
         Assert.Equal(("Na-Krul", 666, 75), (target.UniqueIdentity, target.MaxHitPoints, target.ArmorClass));
         Assert.True(quest.Completed);
+        Assert.Equal((ushort)297, worldState.LevelGeometry.Single().NativeObjectLayer[10 * 40 + 10]);
     }
 
     [Fact]

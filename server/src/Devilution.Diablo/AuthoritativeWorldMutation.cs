@@ -26,16 +26,22 @@ public class AuthoritativeWorldMutationRectangle
 
     public int Height { get; }
 
-    public IEnumerable<int> EnumerateCells(int levelWidth, int levelHeight)
+    public IEnumerable<int> EnumerateCells(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
     {
         if (levelWidth <= 0 || levelHeight <= 0)
             throw new ArgumentOutOfRangeException(nameof(levelWidth));
-        var endX = checked(X + Width);
-        var endY = checked(Y + Height);
-        if (X < 0 || Y < 0 || endX > levelWidth || endY > levelHeight)
+        var startX = checked(X + originX);
+        var startY = checked(Y + originY);
+        var endX = checked(startX + Width);
+        var endY = checked(startY + Height);
+        if (startX < 0 || startY < 0 || endX > levelWidth || endY > levelHeight)
             throw new InvalidDataException("A world mutation rectangle exceeds its level bounds.");
-        for (var y = Y; y < endY; y++)
-            for (var x = X; x < endX; x++)
+        for (var y = startY; y < endY; y++)
+            for (var x = startX; x < endX; x++)
                 yield return checked(y * levelWidth + x);
     }
 }
@@ -89,12 +95,14 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesAdd = null,
         IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesRemove = null,
         IEnumerable<AuthoritativeWorldMutationTransparencyRectangle>? transparencyRectangles = null,
-        IEnumerable<AuthoritativeWorldMutationObjectRectangle>? objectLayerRectangles = null)
+        IEnumerable<AuthoritativeWorldMutationObjectRectangle>? objectLayerRectangles = null,
+        uint anchorEntityId = 0)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
         MutationId = mutationId;
         LevelId = levelId;
+        AnchorEntityId = anchorEntityId;
         GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
         TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
@@ -120,6 +128,9 @@ public sealed class AuthoritativeWorldMutation
 
     public uint LevelId { get; }
 
+    /** Optional runtime object whose position becomes the mutation origin. */
+    public uint AnchorEntityId { get; }
+
     public IReadOnlyList<int> BlockedCellsAdd { get; }
 
     public IReadOnlyList<int> BlockedCellsRemove { get; }
@@ -140,33 +151,77 @@ public sealed class AuthoritativeWorldMutation
     /** Native object-layer assignments retained for explicit object mapping. */
     public IReadOnlyList<AuthoritativeWorldMutationObjectRectangle> ObjectLayerRectangles { get; }
 
-    public IReadOnlyList<int> GetBlockedCells(int levelWidth, int levelHeight)
-        => MergeCells(BlockedCellsAdd, GeometryRectanglesAdd, levelWidth, levelHeight);
+    public IReadOnlyList<int> GetBlockedCells(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
+        => MergeCells(
+            BlockedCellsAdd,
+            GeometryRectanglesAdd,
+            levelWidth,
+            levelHeight,
+            originX,
+            originY);
 
-    public IReadOnlyList<int> GetBlockedCellsToRemove(int levelWidth, int levelHeight)
-        => MergeCells(BlockedCellsRemove, GeometryRectanglesRemove, levelWidth, levelHeight);
+    public IReadOnlyList<int> GetBlockedCellsToRemove(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
+        => MergeCells(
+            BlockedCellsRemove,
+            GeometryRectanglesRemove,
+            levelWidth,
+            levelHeight,
+            originX,
+            originY);
 
-    public IReadOnlyList<int> GetMissileBlockedCells(int levelWidth, int levelHeight)
-        => MergeCells(MissileBlockedCellsAdd, GeometryRectanglesAdd, levelWidth, levelHeight);
+    public IReadOnlyList<int> GetMissileBlockedCells(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
+        => MergeCells(
+            MissileBlockedCellsAdd,
+            GeometryRectanglesAdd,
+            levelWidth,
+            levelHeight,
+            originX,
+            originY);
 
-    public IReadOnlyList<int> GetMissileBlockedCellsToRemove(int levelWidth, int levelHeight)
-        => MergeCells(MissileBlockedCellsRemove, GeometryRectanglesRemove, levelWidth, levelHeight);
+    public IReadOnlyList<int> GetMissileBlockedCellsToRemove(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
+        => MergeCells(
+            MissileBlockedCellsRemove,
+            GeometryRectanglesRemove,
+            levelWidth,
+            levelHeight,
+            originX,
+            originY);
 
     public IReadOnlyList<(int Cell, ushort Value)> GetTransparencyCells(
         int levelWidth,
-        int levelHeight)
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
         => TransparencyRectangles
             .SelectMany(rectangle => rectangle
-                .EnumerateCells(levelWidth, levelHeight)
+                .EnumerateCells(levelWidth, levelHeight, originX, originY)
                 .Select(cell => (cell, rectangle.Value)))
             .ToArray();
 
     public IReadOnlyList<(int Cell, ushort ObjectId)> GetObjectLayerCells(
         int levelWidth,
-        int levelHeight)
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
         => ObjectLayerRectangles
             .SelectMany(rectangle => rectangle
-                .EnumerateCells(levelWidth, levelHeight)
+                .EnumerateCells(levelWidth, levelHeight, originX, originY)
                 .Select(cell => (cell, rectangle.ObjectId)))
             .ToArray();
 
@@ -214,12 +269,35 @@ public sealed class AuthoritativeWorldMutation
         IReadOnlyList<int> cells,
         IReadOnlyList<AuthoritativeWorldMutationRectangle> rectangles,
         int levelWidth,
-        int levelHeight)
+        int levelHeight,
+        int originX,
+        int originY)
         => cells
-            .Concat(rectangles.SelectMany(rectangle => rectangle.EnumerateCells(levelWidth, levelHeight)))
+            .Select(cell => TranslateCell(cell, levelWidth, levelHeight, originX, originY))
+            .Concat(rectangles.SelectMany(rectangle => rectangle.EnumerateCells(
+                levelWidth,
+                levelHeight,
+                originX,
+                originY)))
             .Distinct()
             .OrderBy(cell => cell)
             .ToArray();
+
+    private static int TranslateCell(
+        int cell,
+        int levelWidth,
+        int levelHeight,
+        int originX,
+        int originY)
+    {
+        if (cell < 0 || cell >= checked(levelWidth * levelHeight))
+            throw new InvalidDataException("A world mutation cell is outside its level bounds.");
+        var x = checked(cell % levelWidth + originX);
+        var y = checked(cell / levelWidth + originY);
+        if (x < 0 || x >= levelWidth || y < 0 || y >= levelHeight)
+            throw new InvalidDataException("An anchored world mutation cell is outside its level bounds.");
+        return checked(y * levelWidth + x);
+    }
 }
 
 /** Validated external world-cell mutations used by object interactions. */
@@ -242,7 +320,9 @@ public sealed class AuthoritativeWorldMutationCatalog
     public bool TryGet(uint mutationId, out AuthoritativeWorldMutation mutation)
         => definitions.TryGetValue(mutationId, out mutation!);
 
-    public void ValidateWorld(AuthoritativeWorld world)
+    public void ValidateWorld(
+        AuthoritativeWorld world,
+        IEnumerable<AuthoritativeWorldObject>? objects = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         foreach (var mutation in definitions.Values) {
@@ -250,6 +330,7 @@ public sealed class AuthoritativeWorldMutationCatalog
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} references unknown level {mutation.LevelId}.");
             var level = world.Levels.Single(candidate => candidate.LevelId == mutation.LevelId);
+            var anchor = ResolveAnchor(mutation, objects, level);
             IReadOnlyList<int> blockedAdd;
             IReadOnlyList<int> blockedRemove;
             IReadOnlyList<int> missileBlockedAdd;
@@ -257,12 +338,36 @@ public sealed class AuthoritativeWorldMutationCatalog
             IReadOnlyList<(int Cell, ushort Value)> transparencyCells;
             IReadOnlyList<(int Cell, ushort ObjectId)> objectLayerCells;
             try {
-                blockedAdd = mutation.GetBlockedCells(level.Width, level.Height);
-                blockedRemove = mutation.GetBlockedCellsToRemove(level.Width, level.Height);
-                missileBlockedAdd = mutation.GetMissileBlockedCells(level.Width, level.Height);
-                missileBlockedRemove = mutation.GetMissileBlockedCellsToRemove(level.Width, level.Height);
-                transparencyCells = mutation.GetTransparencyCells(level.Width, level.Height);
-                objectLayerCells = mutation.GetObjectLayerCells(level.Width, level.Height);
+                blockedAdd = mutation.GetBlockedCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.PositionX ?? 0,
+                    anchor?.PositionY ?? 0);
+                blockedRemove = mutation.GetBlockedCellsToRemove(
+                    level.Width,
+                    level.Height,
+                    anchor?.PositionX ?? 0,
+                    anchor?.PositionY ?? 0);
+                missileBlockedAdd = mutation.GetMissileBlockedCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.PositionX ?? 0,
+                    anchor?.PositionY ?? 0);
+                missileBlockedRemove = mutation.GetMissileBlockedCellsToRemove(
+                    level.Width,
+                    level.Height,
+                    anchor?.PositionX ?? 0,
+                    anchor?.PositionY ?? 0);
+                transparencyCells = mutation.GetTransparencyCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.PositionX ?? 0,
+                    anchor?.PositionY ?? 0);
+                objectLayerCells = mutation.GetObjectLayerCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.PositionX ?? 0,
+                    anchor?.PositionY ?? 0);
             } catch (Exception exception)
                 when (exception is InvalidDataException or OverflowException) {
                 throw new InvalidDataException(
@@ -280,9 +385,6 @@ public sealed class AuthoritativeWorldMutationCatalog
             if (transparencyCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns transparency more than once to a cell.");
-            if (objectLayerCells.Count > 0 && level.NativeObjectLayer.Count == 0)
-                throw new InvalidDataException(
-                    $"World mutation {mutation.MutationId} requires a native object layer.");
             if (objectLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns an object layer value more than once to a cell.");
@@ -314,7 +416,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseRectangles(row, "geometry_rect_add"),
                 ParseRectangles(row, "geometry_rect_remove"),
                 ParseTransparencyRectangles(row),
-                ParseObjectLayerRectangles(row))));
+                ParseObjectLayerRectangles(row),
+                row.OptionalUInt32("anchor_entity_id"))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -386,6 +489,24 @@ public sealed class AuthoritativeWorldMutationCatalog
 
     private static bool HasValue(TsvRow row, string column)
         => row.TryGet(column, out var value) && !string.IsNullOrWhiteSpace(value);
+
+    private static AuthoritativeWorldObject? ResolveAnchor(
+        AuthoritativeWorldMutation mutation,
+        IEnumerable<AuthoritativeWorldObject>? objects,
+        AuthoritativeLevel level)
+    {
+        if (mutation.AnchorEntityId == 0)
+            return null;
+        var anchor = objects?.SingleOrDefault(@object =>
+            @object.EntityId == mutation.AnchorEntityId);
+        if (anchor is null)
+            throw new InvalidDataException(
+                $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
+        if (anchor.LevelId != level.LevelId)
+            throw new InvalidDataException(
+                $"World mutation {mutation.MutationId} anchor entity {mutation.AnchorEntityId} is on level {anchor.LevelId}, expected {level.LevelId}.");
+        return anchor;
+    }
 
     private static IReadOnlyList<int> ParseCells(TsvRow row, string column)
     {

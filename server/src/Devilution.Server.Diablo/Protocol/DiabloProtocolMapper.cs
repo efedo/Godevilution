@@ -344,6 +344,7 @@ internal static class DiabloProtocolMapper
             geometry.BlockedCells.Add(level.BlockedCells);
             geometry.MissileBlockedCells.Add(level.MissileBlockedCells);
             geometry.NativeTransparency.Add(level.NativeTransparency.Select(value => (uint)value));
+            geometry.NativeObjectLayer.Add(level.NativeObjectLayer.Select(value => (uint)value));
             foreach (var warp in (warpTargets ?? [])
                          .Where(warp => warp.SourceLevelId == level.LevelId)
                          .OrderBy(warp => warp.WarpId)) {

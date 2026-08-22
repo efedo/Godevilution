@@ -36,7 +36,7 @@ public sealed class DiabloWorldState
         this.nativeDunObjects = nativeDunObjects;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         if (World is not null)
-            WorldMutations?.ValidateWorld(World);
+            WorldMutations?.ValidateWorld(World, objects);
         foreach (var mutationId in activeWorldMutationIds ?? []) {
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
@@ -292,22 +292,53 @@ public sealed class DiabloWorldState
                     || mutation.LevelId != baseLevel.LevelId) {
                     continue;
                 }
-                blocked.UnionWith(mutation.GetBlockedCells(baseLevel.Width, baseLevel.Height));
-                blocked.ExceptWith(mutation.GetBlockedCellsToRemove(baseLevel.Width, baseLevel.Height));
-                missileBlocked.UnionWith(mutation.GetMissileBlockedCells(baseLevel.Width, baseLevel.Height));
+                var anchor = mutation.AnchorEntityId == 0
+                    ? null
+                    : Objects.TryGetValue(mutation.AnchorEntityId, out var anchoredObject)
+                        ? anchoredObject
+                        : throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
+                var originX = anchor?.PositionX ?? 0;
+                var originY = anchor?.PositionY ?? 0;
+                blocked.UnionWith(mutation.GetBlockedCells(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY));
+                blocked.ExceptWith(mutation.GetBlockedCellsToRemove(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY));
+                missileBlocked.UnionWith(mutation.GetMissileBlockedCells(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY));
                 missileBlocked.ExceptWith(
-                    mutation.GetMissileBlockedCellsToRemove(baseLevel.Width, baseLevel.Height));
+                    mutation.GetMissileBlockedCellsToRemove(
+                        baseLevel.Width,
+                        baseLevel.Height,
+                        originX,
+                        originY));
                 foreach (var (cell, value) in mutation.GetTransparencyCells(
                              baseLevel.Width,
-                             baseLevel.Height)) {
+                             baseLevel.Height,
+                             originX,
+                             originY)) {
                     if (transparency.Length == 0)
                         throw new InvalidDataException(
                             $"World mutation {mutation.MutationId} requires a native transparency layer.");
                     transparency[cell] = value;
                 }
-                foreach (var (cell, objectId) in mutation.GetObjectLayerCells(
-                             baseLevel.Width,
-                             baseLevel.Height)) {
+                var objectLayerCells = mutation.GetObjectLayerCells(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY);
+                if (objectLayerCells.Count > 0 && objectLayer.Length == 0)
+                    objectLayer = new ushort[checked(baseLevel.Width * baseLevel.Height)];
+                foreach (var (cell, objectId) in objectLayerCells) {
                     if (objectLayer.Length == 0)
                         throw new InvalidDataException(
                             $"World mutation {mutation.MutationId} requires a native object layer.");

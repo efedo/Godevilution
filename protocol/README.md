@@ -151,6 +151,9 @@ Windows toolchain command.
   authored level transitions. Each trigger carries its server-owned source
   cell, destination, stable symbol, quest gate, and current availability;
   clients may render a marker but never choose or apply the transition.
+- `LevelGeometrySnapshot.native_object_layer` is an additive row-major
+  projection of server-owned native object-layer values. It is presentation
+  metadata only; clients must not infer gameplay authority from it.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

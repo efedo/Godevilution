@@ -178,20 +178,34 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
-    public void RejectsObjectLayerAssignmentsWithoutLayerOrWithOverlap()
+    public void AnchoredObjectLayerMutationUsesRuntimeObjectPosition()
     {
-        var noLayer = new AuthoritativeWorld();
-        noLayer.AddLevel(new AuthoritativeLevel(1, 2, 2));
-        var mutation = new AuthoritativeWorldMutationCatalog([
-            new AuthoritativeWorldMutation(
-                7,
-                1,
-                objectLayerRectangles: [
-                    new AuthoritativeWorldMutationObjectRectangle(0, 0, 1, 1, 14),
-                ]),
-        ]);
-        Assert.Throws<InvalidDataException>(() => mutation.ValidateWorld(noLayer));
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_entity_id\tobject_layer_rects\n"
+                + "7\t1\t20\t-1,0,1,1,299;0,0,1,1,297\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal(20U, mutation.AnchorEntityId);
 
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var anchor = new AuthoritativeWorldObject(20, 6003, 1, 2, 2);
+        catalog.ValidateWorld(geometry, [anchor]);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [anchor],
+            worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal(16, level.NativeObjectLayer.Count);
+        Assert.Equal((ushort)299, level.NativeObjectLayer[2 * 4 + 1]);
+        Assert.Equal((ushort)297, level.NativeObjectLayer[2 * 4 + 2]);
+    }
+
+    [Fact]
+    public void RejectsOverlappingObjectLayerAssignments()
+    {
         var geometry = new AuthoritativeWorld();
         geometry.AddLevel(new AuthoritativeLevel(
             1,

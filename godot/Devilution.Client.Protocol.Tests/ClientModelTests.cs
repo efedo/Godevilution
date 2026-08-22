@@ -146,6 +146,28 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void AcceptsNativeObjectLayerProjection()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 1,
+                        Width = 2,
+                        Height = 2,
+                        NativeObjectLayer = { 0, 297, 300, 299 },
+                    },
+                },
+            }));
+
+        Assert.Equal(
+            [0U, 297U, 300U, 299U],
+            Assert.Single(model.Snapshot!.LevelGeometry).NativeObjectLayer);
+    }
+
+    [Fact]
     public void RejectsEntitiesOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

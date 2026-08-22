@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the Hellfire Na-Krul completion's four native room-opening
+  object-layer assignments as a validated mutation anchored to the authored
+  encounter object. The server applies the room mutation together with the
+  deterministic Na-Krul spawn, persists it through active mutation state, and
+  projects the resulting native object layer through the authoritative geometry
+  protocol.
+
 - Externalize the Hellfire Na-Krul tome completion's server-owned native
   monster materialization. The validated content pack now binds the Na-Krul
   identity, applies its native health/armor/resistance weakening transition,

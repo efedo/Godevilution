@@ -1593,21 +1593,26 @@ public sealed class DiabloWorldCommandProcessor
     {
         switch (@object.QuestSequenceFollowUpKind) {
         case AuthoritativeQuestSequenceFollowUpKind.None:
-            return;
+            break;
         case AuthoritativeQuestSequenceFollowUpKind.WorldMutation:
             if (!world.ApplyWorldMutation(@object.QuestSequenceFollowUpAmount))
                 throw new InvalidDataException(
                     $"Object authored follow-up references unknown world mutation {@object.QuestSequenceFollowUpAmount}.");
-            return;
+            break;
         case AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile:
             SpawnObjectSpellProjectile(@object, player);
-            return;
+            break;
         case AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster:
             SpawnNativeMonster(@object, player);
-            return;
+            break;
         default:
             throw new InvalidDataException(
                 $"Object authored follow-up kind '{@object.QuestSequenceFollowUpKind}' is unsupported.");
+        }
+        if (@object.QuestSequenceFollowUpWorldMutationId != 0
+            && !world.ApplyWorldMutation(@object.QuestSequenceFollowUpWorldMutationId)) {
+            throw new InvalidDataException(
+                $"Object authored follow-up references unknown world mutation {@object.QuestSequenceFollowUpWorldMutationId}.");
         }
     }
 

@@ -552,7 +552,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (objectDefinitions.Any(@object => @object.EffectKind
                 == AuthoritativeObjectEffectKind.WorldMutation
                 || @object.QuestSequenceFollowUpKind
-                    == AuthoritativeQuestSequenceFollowUpKind.WorldMutation) == true
+                    == AuthoritativeQuestSequenceFollowUpKind.WorldMutation
+                || @object.QuestSequenceFollowUpWorldMutationId != 0) == true
             && worldMutations is null) {
             throw new InvalidDataException(
                 "World-mutation objects require a world_mutations.tsv content table.");
@@ -640,7 +641,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         if (world is not null && worldMutations is not null)
-            worldMutations.ValidateWorld(world);
+            worldMutations.ValidateWorld(world, objects);
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,

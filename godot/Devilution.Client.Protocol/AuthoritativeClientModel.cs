@@ -615,7 +615,8 @@ public sealed class AuthoritativeClientModel
         foreach (var level in snapshot.LevelGeometry) {
             if (level.Width < 0
                 || level.Height < 0
-                || level.NativeTransparency.Any(value => value > ushort.MaxValue)) {
+                || level.NativeTransparency.Any(value => value > ushort.MaxValue)
+                || level.NativeObjectLayer.Any(value => value > ushort.MaxValue)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid level geometry dimensions.");
             }
@@ -629,7 +630,9 @@ public sealed class AuthoritativeClientModel
                     || level.MissileBlockedCells.Distinct().Count()
                         != level.MissileBlockedCells.Count
                     || level.NativeTransparency.Count != 0
-                        && level.NativeTransparency.Count != cellCount) {
+                        && level.NativeTransparency.Count != cellCount
+                    || level.NativeObjectLayer.Count != 0
+                        && level.NativeObjectLayer.Count != cellCount) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains invalid level geometry cells.");
                 }

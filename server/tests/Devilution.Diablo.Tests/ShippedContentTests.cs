@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.384.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.385.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1950,7 +1950,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.383.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.385.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2245,6 +2245,22 @@ public sealed class ShippedContentTests
         Assert.Equal(
             [1, 2, 3],
             nakrulTomes.Select(@object => @object.EffectAmount).ToArray());
+        var finalNakrulTome = nakrulTomes.Single(@object => @object.EffectAmount == 3);
+        Assert.Equal(
+            (AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster, 139U, 9200U),
+            (finalNakrulTome.QuestSequenceFollowUpKind,
+             finalNakrulTome.QuestSequenceFollowUpAmount,
+             finalNakrulTome.QuestSequenceFollowUpWorldMutationId));
+        var nakrulRoomMutation = Assert.Single(
+            activation.Simulation.WorldState.WorldMutations!.Definitions,
+            mutation => mutation.MutationId == 9200);
+        Assert.Equal(2403U, nakrulRoomMutation.AnchorEntityId);
+        Assert.Equal(
+            [(22, 20, (ushort)299), (23, 20, (ushort)300),
+             (24, 20, (ushort)297), (25, 20, (ushort)298)],
+            nakrulRoomMutation
+                .GetObjectLayerCells(40, 40, finalNakrulTome.PositionX, finalNakrulTome.PositionY)
+                .Select(entry => (entry.Cell % 40, entry.Cell / 40, entry.ObjectId)));
         var graveObject = Assert.Single(
             activation.Simulation.WorldState.Objects.Values,
             @object => @object.ObjectId == 6004);

@@ -37,7 +37,8 @@ public sealed class AuthoritativeWorldObject
         int questSequenceFollowUpOffsetX = 0,
         int questSequenceFollowUpOffsetY = 0,
         AuthoritativeObjectProjectileSourceKind projectileSourceKind
-            = AuthoritativeObjectProjectileSourceKind.Object)
+            = AuthoritativeObjectProjectileSourceKind.Object,
+        uint questSequenceFollowUpWorldMutationId = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -114,10 +115,17 @@ public sealed class AuthoritativeWorldObject
                 projectileSourceKind)) {
             throw new InvalidDataException("Object projectile source values are invalid.");
         }
+        if (questSequenceFollowUpWorldMutationId != 0
+            && (effectKind != AuthoritativeObjectEffectKind.QuestSequence
+                || questSequenceFollowUpKind == AuthoritativeQuestSequenceFollowUpKind.None)) {
+            throw new InvalidDataException(
+                "Object quest-sequence world-mutation follow-up values are invalid.");
+        }
         QuestSequenceFollowUpKind = questSequenceFollowUpKind;
         QuestSequenceFollowUpAmount = questSequenceFollowUpAmount;
         QuestSequenceFollowUpOffsetX = questSequenceFollowUpOffsetX;
         QuestSequenceFollowUpOffsetY = questSequenceFollowUpOffsetY;
+        QuestSequenceFollowUpWorldMutationId = questSequenceFollowUpWorldMutationId;
         ProjectileSourceKind = projectileSourceKind;
         MissilePassable = missilePassable;
         Breakable = breakable;
@@ -158,6 +166,9 @@ public sealed class AuthoritativeWorldObject
     public int QuestSequenceFollowUpOffsetX { get; set; }
 
     public int QuestSequenceFollowUpOffsetY { get; set; }
+
+    /** Optional second follow-up applied after the primary quest-sequence action. */
+    public uint QuestSequenceFollowUpWorldMutationId { get; set; }
 
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
@@ -209,7 +220,8 @@ public sealed class AuthoritativeWorldObject
             QuestSequenceFollowUpAmount,
             QuestSequenceFollowUpOffsetX,
             QuestSequenceFollowUpOffsetY,
-            ProjectileSourceKind);
+            ProjectileSourceKind,
+            QuestSequenceFollowUpWorldMutationId);
     }
 
     public static bool IsValidQuestTransition(
@@ -436,7 +448,8 @@ public static class AuthoritativeWorldObjectCatalog
                     ParseQuestSequenceFollowUpAmount(row, followUpKind, stableIds),
                     row.OptionalInt32("quest_sequence_follow_up_offset_x"),
                     row.OptionalInt32("quest_sequence_follow_up_offset_y"),
-                    projectileSourceKind),
+                    projectileSourceKind,
+                    row.OptionalUInt32("quest_sequence_follow_up_world_mutation_id")),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();
@@ -544,10 +557,14 @@ public static class AuthoritativeWorldObjectCatalog
         foreach (var @object in objects.Where(@object =>
                      @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
                      || @object.QuestSequenceFollowUpKind
-                         == AuthoritativeQuestSequenceFollowUpKind.WorldMutation)) {
+                         == AuthoritativeQuestSequenceFollowUpKind.WorldMutation
+                     || @object.QuestSequenceFollowUpWorldMutationId != 0)) {
             var mutationId = @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
                 ? @object.EffectAmount > 0 ? (uint)@object.EffectAmount : 0
-                : @object.QuestSequenceFollowUpAmount;
+                : @object.QuestSequenceFollowUpKind
+                    == AuthoritativeQuestSequenceFollowUpKind.WorldMutation
+                    ? @object.QuestSequenceFollowUpAmount
+                    : @object.QuestSequenceFollowUpWorldMutationId;
             if (mutationId == 0 || !mutations.TryGet(mutationId, out _)) {
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unknown world mutation {mutationId}.");

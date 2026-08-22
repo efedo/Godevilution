@@ -1,0 +1,2 @@
+mutation_id	level_id	anchor_entity_id	blocked_cells_add	blocked_cells_remove	missile_blocked_cells_add	missile_blocked_cells_remove	geometry_rect_add	geometry_rect_remove	transparency_rects	object_layer_rects
+9200	24	2403	none	none	none	none	none	none	none	-2,0,1,1,299;-1,0,1,1,300;0,0,1,1,297;1,0,1,1,298
