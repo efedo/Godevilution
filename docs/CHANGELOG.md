@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 - Connected native inventory actions now fail closed before the legacy item-use
   fallback can remove or mutate unsupported local items; scroll and rune uses
   retain only their immediate authoritative cast-intent route.
+- Connected native gold splitting now fails closed because no authoritative
+  drop-gold command exists; offline sessions retain the legacy behavior.
 - Native, Godot, and saved-state validation now require zero magnitude for all
   typed status behaviors, including Etherealize, keeping malformed authoritative
   snapshots fail-closed across clients and persistence.

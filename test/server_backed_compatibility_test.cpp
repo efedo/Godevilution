@@ -152,6 +152,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyItemUseFailsClosedExceptServerRou
 	EXPECT_TRUE(ShouldProcessLegacyItemUse(true, true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedGoldSplittingFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyGoldDrop(false));
+	EXPECT_FALSE(ShouldProcessLegacyGoldDrop(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyAttributeMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyAttributeMessage(false));

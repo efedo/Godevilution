@@ -21,4 +21,10 @@ constexpr bool ShouldProcessLegacyItemUse(bool serverConnected, bool serverRoute
 	return !serverConnected || serverRoutedCast;
 }
 
+/** Gold splitting has no authoritative command yet, so it remains offline-only. */
+constexpr bool ShouldProcessLegacyGoldDrop(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 } // namespace devilution

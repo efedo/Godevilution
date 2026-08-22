@@ -15,6 +15,11 @@
 #include "utils/string/format_int.hpp"
 #include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"
+#include "network/protocol/legacy_item_policy.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -90,6 +95,14 @@ void DrawGoldSplit(const Surface &out)
 
 void control_drop_gold(SDL_Keycode vkey)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyGoldDrop(authoritative::GetServerBackedRuntime().IsConnected())) {
+		CloseGoldDrop();
+		LogError("Connected gold splitting has no authoritative drop command.");
+		return;
+	}
+	#endif
+
 	Player &myPlayer = *MyPlayer;
 
 	if (myPlayer.hasNoLife()) {

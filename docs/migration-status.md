@@ -5,6 +5,8 @@ Status date: 2026-08-22
 Connected native inventory actions now fail closed before unsupported legacy
 item-use fallbacks can remove or mutate local state; scroll and rune items retain
 only their immediate authoritative cast-intent route.
+Connected native gold splitting is also offline-only until an authoritative
+drop-gold command exists; the local inventory cannot be changed by that dialog.
 Native player projections now accept protocol behavior `3` (Etherealize) status
 effects and hydrate the native `SpellFlag::Etherealize` bit for local and remote
 presentation; valid server snapshots no longer fail closed on this effect.

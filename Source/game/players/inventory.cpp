@@ -1276,6 +1276,13 @@ bool CanUseStaff(Item &staff, SpellID spell)
 
 void StartGoldDrop()
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyGoldDrop(authoritative::GetServerBackedRuntime().IsConnected())) {
+		LogError("Connected gold splitting has no authoritative drop command.");
+		return;
+	}
+	#endif
+
 	CloseGoldWithdraw();
 
 	const int8_t invIndex = pcursinvitem;
