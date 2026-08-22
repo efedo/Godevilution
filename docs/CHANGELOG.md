@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
   closed instead of opening local set pieces.
 - Native authoritative inventory Cathedral Maps now also fail closed when no
   projected grave interaction is available, preventing legacy DoomFlag changes.
+- Native authoritative unique-monster quest lookup now includes eligible
+  activation-stage quests, so conversations such as Zhar and Warlord cannot
+  fall through to local quest activation or reward mutation.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

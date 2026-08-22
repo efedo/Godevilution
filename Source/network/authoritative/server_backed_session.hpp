@@ -107,7 +107,7 @@ public:
 	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	/** Returns the lowest-ID active quest whose content declares this towner for turn-in. */
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForTowner(uint32_t townerId) const noexcept;
-	/** Returns the lowest-ID active quest whose content declares this unique target identity. */
+	/** Returns the lowest-ID eligible quest whose content declares this unique target identity. */
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForUniqueIdentity(std::string_view uniqueIdentity) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AllocateAttribute(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick, uint64_t nowMs);

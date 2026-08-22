@@ -387,8 +387,7 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForUniqueIdentity(std::s
 		return std::nullopt;
 	std::optional<uint32_t> result;
 	for (const auto &quest : questStates_) {
-		if (quest.initial()
-		    || quest.completed()
+		if (quest.completed()
 		    || quest.unavailable()
 		    || quest.completion_unique_identity() != uniqueIdentity)
 			continue;

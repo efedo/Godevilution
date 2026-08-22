@@ -119,7 +119,7 @@ public:
 	tl::expected<void, std::string> TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
 	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForTowner(uint32_t townerId) const noexcept;
-	/** Returns the lowest-ID active quest authored for a projected unique monster. */
+	/** Returns the lowest-ID eligible quest authored for a projected unique monster. */
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForMonster(uint32_t monsterEntityId) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AllocateAttribute(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick, uint64_t nowMs);

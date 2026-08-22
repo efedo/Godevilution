@@ -54,6 +54,11 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		activeQuest->set_required_progress(1);
 		activeQuest->set_turn_in_towner_id(0);
 		activeQuest->set_completion_unique_identity("Defiler");
+		auto *activationQuest = initial.mutable_snapshot()->add_quests();
+		activationQuest->set_quest_id(3004);
+		activationQuest->set_required_progress(1);
+		activationQuest->set_initial(true);
+		activationQuest->set_completion_unique_identity("Zhar");
 		auto *completedQuest = initial.mutable_snapshot()->add_quests();
 		completedQuest->set_quest_id(3002);
 		completedQuest->set_required_progress(1);
@@ -205,6 +210,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	EXPECT_EQ((*session)->ActiveQuestForTowner(13), std::optional<uint32_t> { 3025 });
 	EXPECT_FALSE((*session)->ActiveQuestForTowner(14).has_value());
 	EXPECT_EQ((*session)->ActiveQuestForUniqueIdentity("Defiler"), std::optional<uint32_t> { 3011 });
+	EXPECT_EQ((*session)->ActiveQuestForUniqueIdentity("Zhar"), std::optional<uint32_t> { 3004 });
 	EXPECT_FALSE((*session)->ActiveQuestForUniqueIdentity("Na-Krul").has_value());
 	auto open = (*session)->OpenVendor(1, 10, 0);
 	ASSERT_TRUE(open.has_value()) << open.error();
