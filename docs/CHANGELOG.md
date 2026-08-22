@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Native authoritative unique-monster conversations now fail closed when the
   native target has no authoritative monster projection, preventing stale
   local targets from reaching legacy quest mutation.
+- Native authoritative path-based trap disarm now submits the server-owned
+  disarm intent before the legacy action loop, preventing local trap RNG and
+  state mutation from preceding authoritative validation.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

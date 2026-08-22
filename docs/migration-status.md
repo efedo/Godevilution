@@ -157,6 +157,9 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative unique-monster conversations now fail closed when the
   native target has no authoritative monster projection, preventing stale
   local targets from reaching legacy quest mutation.
+- Native authoritative path-based trap disarm now submits the server-owned
+  disarm intent before the legacy action loop, preventing local trap RNG and
+  state mutation from preceding authoritative validation.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

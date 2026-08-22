@@ -1290,6 +1290,26 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 					d = GetDirection(player.position.tile, object->position);
 					StartAttack(player, d, pmWillBeCalled);
 				} else {
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+						const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(object->position.x, object->position.y);
+						switch (ResolveServerBackedObjectInteractionRoute(
+						    true,
+						    true,
+						    objectEntityId.has_value())) {
+						case ServerBackedObjectInteractionRoute::Submit:
+							if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*objectEntityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+								LogError("Server-backed path trap disarm failed: {}", result.error());
+							break;
+						case ServerBackedObjectInteractionRoute::FailClosed:
+							LogError("Server-backed path object target is not an authoritative entity.");
+							break;
+						case ServerBackedObjectInteractionRoute::None:
+							break;
+						}
+						break;
+					}
+				#endif
 					TryDisarm(player, *object);
 					OperateObject(player, *object);
 				}
