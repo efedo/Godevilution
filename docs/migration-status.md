@@ -26,6 +26,9 @@ sessions retain only presentation object setup until authored replacements exist
 Native monster level setup now also leaves the legacy Zhar-unavailable fallback
 quest-state write offline-only; connected monster presentation is reconciled from
 the authoritative snapshot.
+Connected single-player level transitions now bypass legacy visited-level
+`LoadLevel()` restoration in dungeon, town, and set-level branches; local flags no
+longer select a second gameplay state while the server-backed runtime is active.
 
 ## Current state
 

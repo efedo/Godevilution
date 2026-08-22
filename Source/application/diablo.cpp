@@ -3762,7 +3762,7 @@ void LoadGameLevelStash()
 
 tl::expected<void, std::string> LoadGameLevelDungeon(bool firstflag, lvl_entry lvldir, const Player &myPlayer)
 {
-	if (firstflag || lvldir == ENTRY_LOAD || !myPlayer._pLvlVisited[currentLevelNumber()] || gbIsMultiplayer) {
+	if (firstflag || lvldir == ENTRY_LOAD || !myPlayer._pLvlVisited[currentLevelNumber()] || gbIsMultiplayer || !LegacyLevelLoadMutationAllowed()) {
 		HoldThemeRooms();
 		[[maybe_unused]] const uint32_t mid1Seed = GetLCGEngineState();
 		InitGolems();
@@ -3873,7 +3873,7 @@ tl::expected<void, std::string> LoadGameLevelTown(bool firstflag, lvl_entry lvld
 
 	IncProgress();
 
-	if (!firstflag && lvldir != ENTRY_LOAD && myPlayer._pLvlVisited[currentLevelNumber()] && !gbIsMultiplayer)
+	if (!firstflag && lvldir != ENTRY_LOAD && myPlayer._pLvlVisited[currentLevelNumber()] && !gbIsMultiplayer && LegacyLevelLoadMutationAllowed())
 		RETURN_IF_ERROR(LoadLevel());
 	if (gbIsMultiplayer)
 		DeltaLoadLevel();
@@ -3920,7 +3920,7 @@ tl::expected<void, std::string> LoadGameLevelSetLevel(bool firstflag, lvl_entry 
 	InitMultiView();
 	IncProgress();
 
-	if (firstflag || lvldir == ENTRY_LOAD || !myPlayer._pSLvlVisited[setLevelNumber()] || gbIsMultiplayer) {
+	if (firstflag || lvldir == ENTRY_LOAD || !myPlayer._pSLvlVisited[setLevelNumber()] || gbIsMultiplayer || !LegacyLevelLoadMutationAllowed()) {
 		InitItems();
 		CurrentLightManager.SavePreLighting();
 	} else {

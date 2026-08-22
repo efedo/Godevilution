@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected single-player level transitions now bypass legacy visited-level
+  `LoadLevel()` restoration in dungeon, town, and set-level branches, keeping
+  the server-backed runtime on authoritative state.
 - Native monster level setup no longer writes the legacy Zhar-unavailable quest
   state while connected; monster presentation remains reconstructed from the
   authoritative snapshot.
