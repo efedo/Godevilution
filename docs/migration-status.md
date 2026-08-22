@@ -45,6 +45,10 @@ Native DUN fragment activation now uses the same staged publication boundary,
 while retaining ordered composition for multiple non-overlapping fragments on
 one level.
 
+The native authoritative client remains Lua-free at runtime: its console,
+quick-message handling, and startup path expose only native diagnostics. Lua
+REPL and compatibility aliases remain available only for explicit legacy mode.
+
 Native `.til`/`.sol` fragment collision provenance now remains attached to
 authoritative d-piece layers, so later `piece_layer_rects` mutations update
 native-owned movement and missile cells without changing authored geometry.

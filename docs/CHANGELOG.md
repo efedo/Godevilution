@@ -24,6 +24,9 @@ All notable changes to this fork are documented below.
   catalog validates, preventing partial world composition on activation errors.
 - Apply native-DUN fragments through the same staged publication boundary while
   preserving deterministic composition of multiple fragments per level.
+- Clarify that the native Lua REPL, quick-message frontend, and compatibility
+  aliases are legacy-mode only; authoritative server-backed mode remains
+  native-diagnostics-only.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining

@@ -9,10 +9,12 @@ top toolbar, then use **Console**, **Inspector**, and **Editor** to open or
 close their independent windows. Press <kbd>Escape</kbd> to close the toolbar
 and all overlay windows.
 
-The Console window executes registered native debug commands first and falls
-back to Lua in the same REPL environment used by the existing debug
-command-line support. The Inspector reports the tile and entity under the
-cursor, or the Editor's selected tile when one is selected.
+In legacy mode, the Console window executes registered native debug commands
+first and falls back to Lua in the same REPL environment used by the existing
+debug command-line support. Authoritative server-backed mode is native-only:
+it does not initialize Lua and exposes only the registered native commands.
+The Inspector reports the tile and entity under the cursor, or the Editor's
+selected tile when one is selected.
 
 Opening Editor in single-player pauses gameplay without showing the normal
 pause label. Click a tile in the game view to select it; the selected tile is
@@ -90,13 +92,14 @@ Some commands are still available from multiplayer chat:
 | `/ping` | Shows latency statistics for another player. |
 
 Debug quick messages using `/lua ...` continue to run through the Lua
-compatibility frontend.
+compatibility frontend in legacy mode only. Authoritative server-backed mode
+does not execute Lua quick messages.
 
 ## Command-line parameters
 
 | Command | Description |
 | ------- | ----------- |
-| `+` | Executes a debug-console command when loading the first game. Native commands run first; Lua expressions such as `+dev.player.god()` remain supported for compatibility. |
+| `+` | Executes a debug-console command when loading the first game. Native commands run first; legacy mode continues to support Lua expressions such as `+dev.player.god()`, while authoritative mode accepts only native commands. |
 | `-f` | Display frames per second. |
 | `-i` | Disable network timeout. |
 | `-n` | Disable startup video. |
