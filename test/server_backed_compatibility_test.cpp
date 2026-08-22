@@ -85,7 +85,7 @@ TEST(ServerBackedCompatibility, MissingMonsterProjectionFailsClosed)
 	    Route::Submit);
 	EXPECT_EQ(
 	    ResolveServerBackedMonsterInteractionRoute(true, true, false),
-	    Route::None);
+	    Route::FailClosed);
 }
 
 TEST(ServerBackedCompatibility, ConnectedManaShieldUsesServerLifecycle)

@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native unique-monster conversations now fail closed when no
+  authored server quest dialogue is available instead of entering legacy quest
+  mutation handlers.
 - Connected native towner clicks now enter supported store menus through a
   presentation-only path and fail closed for unsupported towners, preventing
   legacy quest handlers from mutating local state when no server interaction

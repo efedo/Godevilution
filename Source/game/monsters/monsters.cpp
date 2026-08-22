@@ -4694,10 +4694,14 @@ void TalktoMonster(Player &player, Monster &monster)
 				LogError("Failed to submit the authoritative quest dialogue: {}", result.error());
 			return;
 		case ServerBackedMonsterInteractionRoute::FailClosed:
-			LogError("Server-backed monster target is not an authoritative entity.");
+			if (!monsterEntityId.has_value())
+				LogError("Server-backed monster target is not an authoritative entity.");
+			else
+				LogError("No authoritative quest dialogue is available for the projected monster.");
 			return;
 		case ServerBackedMonsterInteractionRoute::None:
-			break;
+			LogError("Server-backed monster conversation is unavailable.");
+			return;
 		}
 	}
 #endif

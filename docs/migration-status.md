@@ -44,6 +44,9 @@ they can make a connected snapshot ambiguous.
 Connected native towner clicks now bypass legacy quest checks when opening
 supported store menus and fail closed when no authored server interaction or
 safe presentation menu exists.
+Connected native unique-monster conversations now also fail closed when a
+projected monster has no authored server dialogue, preventing legacy quest
+activation, item consumption, and reward mutation.
 
 ## Current state
 

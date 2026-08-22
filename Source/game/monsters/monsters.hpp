@@ -48,9 +48,8 @@ enum class ServerBackedMonsterInteractionRoute : uint8_t {
 };
 
 /**
- * Keeps a missing authoritative monster projection from falling through to
- * local quest mutation while retaining compatibility for projected monsters
- * whose quest behavior has not been externalized yet.
+ * Keeps connected monster conversations on the authoritative boundary; the
+ * caller must fail closed when no authored quest dialogue is available.
  */
 constexpr ServerBackedMonsterInteractionRoute ResolveServerBackedMonsterInteractionRoute(
 	bool serverConnected,
@@ -63,7 +62,7 @@ constexpr ServerBackedMonsterInteractionRoute ResolveServerBackedMonsterInteract
 		return ServerBackedMonsterInteractionRoute::FailClosed;
 	return questAvailable
 	    ? ServerBackedMonsterInteractionRoute::Submit
-	    : ServerBackedMonsterInteractionRoute::None;
+	    : ServerBackedMonsterInteractionRoute::FailClosed;
 }
 
 enum monster_flag : uint16_t {
