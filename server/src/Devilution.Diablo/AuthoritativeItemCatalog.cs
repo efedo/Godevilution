@@ -602,6 +602,24 @@ public sealed class AuthoritativeItemCatalog
                 result = result with { NativeCursorGraphic = cursorGraphic };
         }
         if (hasIdentityDefinition) {
+            if (result.ItemType < 0)
+                result = result with { ItemType = definition.ItemType };
+            if (result.ItemIndex < 0 && definition.NativeItemIndex >= 0)
+                result = result with { ItemIndex = definition.NativeItemIndex };
+            if (result.EquipLocation == 0 && definition.EquipLocation != 0)
+                result = result with { EquipLocation = definition.EquipLocation };
+            if (result.ItemClass == 0 && definition.ItemClass != 0)
+                result = result with { ItemClass = definition.ItemClass };
+            if (result.MinimumStrength == 0 && definition.MinimumStrength > 0)
+                result = result with { MinimumStrength = definition.MinimumStrength };
+            if (result.MinimumMagic == 0 && definition.MinimumMagic > 0)
+                result = result with { MinimumMagic = definition.MinimumMagic };
+            if (result.MinimumDexterity == 0 && definition.MinimumDexterity > 0)
+                result = result with { MinimumDexterity = definition.MinimumDexterity };
+            if (result.Flags == 0 && definition.Flags != 0)
+                result = result with { Flags = definition.Flags };
+            if (result.HellfireDamageArmorFlags == 0 && definition.HellfireDamageArmorFlags != 0)
+                result = result with { HellfireDamageArmorFlags = definition.HellfireDamageArmorFlags };
             if (result.Value == 0)
                 result = result with { Value = definition.Value };
             if (result.IdentifiedValue == 0)

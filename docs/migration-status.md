@@ -54,6 +54,9 @@ scaled hit points), not only the client's difficulty label.
 - Snapshot and live world-item hydration now also restores omitted authored
   presentation names and native cursor graphics without replacing explicit
   unique-item overrides.
+- Compatibility item hydration also restores omitted immutable classification,
+  attribute requirements, native index, and authored effect flags whenever
+  stable/native identity resolves, preserving nonzero runtime state.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

@@ -211,6 +211,36 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AuthoredIdentityHydrationFillsOmittedClassificationAndRequirements()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 2, 75, 100, 1, 3, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 99,
+                EquipLocation = 7,
+                ItemClass = 3,
+                MinimumStrength = 25,
+                MinimumMagic = 12,
+                MinimumDexterity = 18,
+                Flags = 0x20,
+                HellfireDamageArmorFlags = 0x40,
+            },
+        ]);
+
+        var resolved = catalog.ResolveAuthoredMetadata(
+            AuthoritativeItemState.Empty with { StableItemId = 7 });
+
+        Assert.Equal(2, resolved.ItemType);
+        Assert.Equal(99, resolved.ItemIndex);
+        Assert.Equal(7, resolved.EquipLocation);
+        Assert.Equal(3, resolved.ItemClass);
+        Assert.Equal(25, resolved.MinimumStrength);
+        Assert.Equal(12, resolved.MinimumMagic);
+        Assert.Equal(18, resolved.MinimumDexterity);
+        Assert.Equal(0x20U, resolved.Flags);
+        Assert.Equal(0x40, resolved.HellfireDamageArmorFlags);
+    }
+
+    [Fact]
     public void RejectsMalformedNormalizedBooleanMetadata()
     {
         Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(

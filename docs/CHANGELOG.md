@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Compatibility item-state hydration now restores omitted authored display
   names and native cursor graphics by stable/native identity or unambiguous
   `misc_id`, while preserving explicit unique-item presentation overrides.
+- The same identity hydration now restores omitted immutable item type,
+  equipment classification, requirements, native index, and authored effect
+  flags without replacing nonzero runtime or affix state.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
