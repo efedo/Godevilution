@@ -546,12 +546,7 @@ public sealed partial class DiabloSimulation
         uint entityId,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
-        return WorldState.CombatTargets.ContainsKey(entityId)
-            || WorldState.WorldItems.ContainsKey(entityId)
-            || WorldState.Objects.ContainsKey(entityId)
-            || WorldState.Projectiles.ContainsKey(entityId)
-            || WorldState.Portals.ContainsKey(entityId)
-            || WorldState.Corpses.ContainsKey(entityId)
+        return WorldState.IsEntityIdOccupied(entityId)
             || participants.Any(player => player.EntityId == entityId);
     }
 

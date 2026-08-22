@@ -188,6 +188,17 @@ public sealed class DiabloWorldState
     /** Defeated non-minion monster tiles used by corpse-consuming AI. */
     public Dictionary<uint, AuthoritativeCorpse> Corpses { get; } = [];
 
+    /** Returns whether an ID is occupied by any authoritative world entity. */
+    public bool IsEntityIdOccupied(uint entityId)
+    {
+        return CombatTargets.ContainsKey(entityId)
+            || WorldItems.ContainsKey(entityId)
+            || Objects.ContainsKey(entityId)
+            || Projectiles.ContainsKey(entityId)
+            || Portals.ContainsKey(entityId)
+            || Corpses.ContainsKey(entityId);
+    }
+
     public bool IsWalkable(uint levelId, int positionX, int positionY)
     {
         if (World is not null)

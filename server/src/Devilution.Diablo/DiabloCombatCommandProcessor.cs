@@ -14371,12 +14371,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         while (nextWorldItemEntityId == 0
             || players.Any(player => player.EntityId == nextWorldItemEntityId)
-            || world.CombatTargets.ContainsKey(nextWorldItemEntityId)
-            || world.WorldItems.ContainsKey(nextWorldItemEntityId)
-            || world.Objects.ContainsKey(nextWorldItemEntityId)
-            || world.Projectiles.ContainsKey(nextWorldItemEntityId)
-            || world.Portals.ContainsKey(nextWorldItemEntityId)
-            || world.Corpses.ContainsKey(nextWorldItemEntityId)) {
+            || world.IsEntityIdOccupied(nextWorldItemEntityId)) {
             nextWorldItemEntityId = checked(nextWorldItemEntityId + 1);
         }
         return nextWorldItemEntityId++;

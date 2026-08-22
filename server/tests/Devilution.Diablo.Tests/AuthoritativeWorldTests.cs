@@ -552,6 +552,46 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void EntityIdOccupancyIncludesAllWorldCategories()
+    {
+        var world = new DiabloWorldState(
+            combatTargets: [new AuthoritativeCombatTarget(10, 1, 0, 5)],
+            portals: [new AuthoritativePortal(11, 0, 0, 0, 0, 1, 1)],
+            worldItems: [new AuthoritativeWorldItem(
+                12,
+                0,
+                1,
+                0,
+                42,
+                75,
+                AuthoritativeItemState.Empty)],
+            objects: [new AuthoritativeWorldObject(13, 4, 0, 1, 0)],
+            projectiles: [new AuthoritativeProjectile(
+                14,
+                10,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                1,
+                AuthoritativeDamageType.Physical,
+                0,
+                1)],
+            corpses: [new AuthoritativeCorpse(15, 0, 1, 0)]);
+
+        Assert.True(world.IsEntityIdOccupied(10));
+        Assert.True(world.IsEntityIdOccupied(11));
+        Assert.True(world.IsEntityIdOccupied(12));
+        Assert.True(world.IsEntityIdOccupied(13));
+        Assert.True(world.IsEntityIdOccupied(14));
+        Assert.True(world.IsEntityIdOccupied(15));
+        Assert.False(world.IsEntityIdOccupied(16));
+    }
+
+    [Fact]
     public void LineOfSightRejectsBlockedIntermediateCells()
     {
         var level = new AuthoritativeLevel(1, 5, 3, [1 * 5 + 2]);

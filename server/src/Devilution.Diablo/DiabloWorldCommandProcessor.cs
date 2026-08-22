@@ -1016,10 +1016,7 @@ public sealed class DiabloWorldCommandProcessor
     {
         while (nextWorldItemEntityId == 0
             || players.Any(player => player.EntityId == nextWorldItemEntityId)
-            || world.CombatTargets.ContainsKey(nextWorldItemEntityId)
-            || world.WorldItems.ContainsKey(nextWorldItemEntityId)
-            || world.Objects.ContainsKey(nextWorldItemEntityId)
-            || world.Projectiles.ContainsKey(nextWorldItemEntityId)) {
+            || world.IsEntityIdOccupied(nextWorldItemEntityId)) {
             nextWorldItemEntityId = checked(nextWorldItemEntityId + 1);
         }
         return nextWorldItemEntityId++;
@@ -1261,12 +1258,7 @@ public sealed class DiabloWorldCommandProcessor
     private uint AllocateGeneratedMonsterEntityId()
     {
         while (nextGeneratedMonsterEntityId == 0
-            || world.CombatTargets.ContainsKey(nextGeneratedMonsterEntityId)
-            || world.WorldItems.ContainsKey(nextGeneratedMonsterEntityId)
-            || world.Objects.ContainsKey(nextGeneratedMonsterEntityId)
-            || world.Projectiles.ContainsKey(nextGeneratedMonsterEntityId)
-            || world.Portals.ContainsKey(nextGeneratedMonsterEntityId)
-            || world.Corpses.ContainsKey(nextGeneratedMonsterEntityId)) {
+            || world.IsEntityIdOccupied(nextGeneratedMonsterEntityId)) {
             nextGeneratedMonsterEntityId = checked(nextGeneratedMonsterEntityId + 1);
         }
         return nextGeneratedMonsterEntityId++;
@@ -1385,10 +1377,7 @@ public sealed class DiabloWorldCommandProcessor
     private uint AllocateAuthoredProjectileEntityId()
     {
         while (nextAuthoredProjectileEntityId == 0
-            || world.Projectiles.ContainsKey(nextAuthoredProjectileEntityId)
-            || world.WorldItems.ContainsKey(nextAuthoredProjectileEntityId)
-            || world.Objects.ContainsKey(nextAuthoredProjectileEntityId)
-            || world.CombatTargets.ContainsKey(nextAuthoredProjectileEntityId)) {
+            || world.IsEntityIdOccupied(nextAuthoredProjectileEntityId)) {
             nextAuthoredProjectileEntityId = checked(nextAuthoredProjectileEntityId + 1);
         }
         return nextAuthoredProjectileEntityId++;

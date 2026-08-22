@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   construction, matching the save/snapshot identity invariant before runtime
   commands can observe ambiguous targets.
 
+- Centralize runtime entity-ID occupancy checks across world-item, generated
+  monster, and authored-projectile allocators so corpses and portals cannot be
+  skipped by a server-owned allocation path.
+
 - Add the optional `unique_monster_placements.tsv` contract for validated,
   content-owned placement of generated unique encounters. Placements resolve
   unique identity selectors, monster types, level geometry, stable entity IDs,
