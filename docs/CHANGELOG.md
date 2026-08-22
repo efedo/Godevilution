@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Allow authored world mutations to follow one validated server-owned unique
+  encounter by identity, removing the fixed-object-anchor limitation for future
+  generated set-piece transitions while preserving existing object anchors.
+
 - Refresh the migration verification baseline to record the current Diablo
   module result: 1,452 of 1,452 focused module tests pass.
 

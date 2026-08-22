@@ -96,13 +96,20 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesRemove = null,
         IEnumerable<AuthoritativeWorldMutationTransparencyRectangle>? transparencyRectangles = null,
         IEnumerable<AuthoritativeWorldMutationObjectRectangle>? objectLayerRectangles = null,
-        uint anchorEntityId = 0)
+        uint anchorEntityId = 0,
+        string anchorUniqueIdentity = "")
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
         MutationId = mutationId;
         LevelId = levelId;
         AnchorEntityId = anchorEntityId;
+        AnchorUniqueIdentity = anchorUniqueIdentity.Trim();
+        if (AnchorEntityId != 0 && AnchorUniqueIdentity.Length != 0)
+            throw new InvalidDataException(
+                "A world mutation cannot use both an object and unique-identity anchor.");
+        if (AnchorUniqueIdentity.Length > 128)
+            throw new ArgumentOutOfRangeException(nameof(anchorUniqueIdentity));
         GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
         TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
@@ -130,6 +137,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Optional runtime object whose position becomes the mutation origin. */
     public uint AnchorEntityId { get; }
+
+    /** Optional server-owned unique encounter identity whose position is the mutation origin. */
+    public string AnchorUniqueIdentity { get; }
 
     public IReadOnlyList<int> BlockedCellsAdd { get; }
 
@@ -322,7 +332,8 @@ public sealed class AuthoritativeWorldMutationCatalog
 
     public void ValidateWorld(
         AuthoritativeWorld world,
-        IEnumerable<AuthoritativeWorldObject>? objects = null)
+        IEnumerable<AuthoritativeWorldObject>? objects = null,
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         foreach (var mutation in definitions.Values) {
@@ -330,7 +341,11 @@ public sealed class AuthoritativeWorldMutationCatalog
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} references unknown level {mutation.LevelId}.");
             var level = world.Levels.Single(candidate => candidate.LevelId == mutation.LevelId);
-            var anchor = ResolveAnchor(mutation, objects, level);
+            var anchor = ResolveAnchor(mutation, objects, combatTargets, level);
+            if (mutation.AnchorUniqueIdentity.Length != 0 && anchor is null)
+                // Generated unique encounters may be materialized after content
+                // activation; the simulation validates the resolved position.
+                continue;
             IReadOnlyList<int> blockedAdd;
             IReadOnlyList<int> blockedRemove;
             IReadOnlyList<int> missileBlockedAdd;
@@ -341,33 +356,33 @@ public sealed class AuthoritativeWorldMutationCatalog
                 blockedAdd = mutation.GetBlockedCells(
                     level.Width,
                     level.Height,
-                    anchor?.PositionX ?? 0,
-                    anchor?.PositionY ?? 0);
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
                 blockedRemove = mutation.GetBlockedCellsToRemove(
                     level.Width,
                     level.Height,
-                    anchor?.PositionX ?? 0,
-                    anchor?.PositionY ?? 0);
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
                 missileBlockedAdd = mutation.GetMissileBlockedCells(
                     level.Width,
                     level.Height,
-                    anchor?.PositionX ?? 0,
-                    anchor?.PositionY ?? 0);
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
                 missileBlockedRemove = mutation.GetMissileBlockedCellsToRemove(
                     level.Width,
                     level.Height,
-                    anchor?.PositionX ?? 0,
-                    anchor?.PositionY ?? 0);
+                        anchor?.X ?? 0,
+                        anchor?.Y ?? 0);
                 transparencyCells = mutation.GetTransparencyCells(
                     level.Width,
                     level.Height,
-                    anchor?.PositionX ?? 0,
-                    anchor?.PositionY ?? 0);
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
                 objectLayerCells = mutation.GetObjectLayerCells(
                     level.Width,
                     level.Height,
-                    anchor?.PositionX ?? 0,
-                    anchor?.PositionY ?? 0);
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
             } catch (Exception exception)
                 when (exception is InvalidDataException or OverflowException) {
                 throw new InvalidDataException(
@@ -417,7 +432,10 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseRectangles(row, "geometry_rect_remove"),
                 ParseTransparencyRectangles(row),
                 ParseObjectLayerRectangles(row),
-                row.OptionalUInt32("anchor_entity_id"))));
+                row.OptionalUInt32("anchor_entity_id"),
+                row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
+                    ? anchorUniqueIdentity
+                    : string.Empty)));
     }
 
     private static uint ResolveTargetLevelId(
@@ -490,22 +508,46 @@ public sealed class AuthoritativeWorldMutationCatalog
     private static bool HasValue(TsvRow row, string column)
         => row.TryGet(column, out var value) && !string.IsNullOrWhiteSpace(value);
 
-    private static AuthoritativeWorldObject? ResolveAnchor(
+    private static (int X, int Y)? ResolveAnchor(
         AuthoritativeWorldMutation mutation,
         IEnumerable<AuthoritativeWorldObject>? objects,
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets,
         AuthoritativeLevel level)
     {
-        if (mutation.AnchorEntityId == 0)
+        if (mutation.AnchorEntityId == 0 && mutation.AnchorUniqueIdentity.Length == 0)
             return null;
-        var anchor = objects?.SingleOrDefault(@object =>
-            @object.EntityId == mutation.AnchorEntityId);
-        if (anchor is null)
+        if (mutation.AnchorEntityId != 0) {
+            var anchor = objects?.SingleOrDefault(@object =>
+                @object.EntityId == mutation.AnchorEntityId);
+            if (anchor is null)
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
+            if (anchor.LevelId != level.LevelId)
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} anchor entity {mutation.AnchorEntityId} is on level {anchor.LevelId}, expected {level.LevelId}.");
+            return (anchor.PositionX, anchor.PositionY);
+        }
+
+        if (combatTargets is null)
+            return null;
+        var matches = combatTargets
+            .Where(target => target.IsUnique
+                && string.Equals(
+                    target.UniqueIdentity,
+                    mutation.AnchorUniqueIdentity,
+                    StringComparison.Ordinal))
+            .ToArray();
+        if (matches.Length == 0)
+            return null;
+        if (matches.Length != 1)
             throw new InvalidDataException(
-                $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
-        if (anchor.LevelId != level.LevelId)
+                $"World mutation {mutation.MutationId} unique anchor '{mutation.AnchorUniqueIdentity}' "
+                + $"must match exactly one encounter; found {matches.Length}.");
+        if (matches[0].LevelId != level.LevelId)
             throw new InvalidDataException(
-                $"World mutation {mutation.MutationId} anchor entity {mutation.AnchorEntityId} is on level {anchor.LevelId}, expected {level.LevelId}.");
-        return anchor;
+                $"World mutation {mutation.MutationId} unique anchor '{mutation.AnchorUniqueIdentity}' "
+                + $"is on level {matches[0].LevelId}, expected {level.LevelId}.");
+        return (matches[0].PositionX, matches[0].PositionY);
     }
 
     private static IReadOnlyList<int> ParseCells(TsvRow row, string column)

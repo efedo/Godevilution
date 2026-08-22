@@ -204,6 +204,46 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void AnchoredGeometryMutationUsesUniqueEncounterPosition()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_unique_identity\tgeometry_rect_add\n"
+                + "7\t1\tSnotspill\t-1,0,1,1\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal("Snotspill", mutation.AnchorUniqueIdentity);
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var target = new AuthoritativeCombatTarget(
+            20,
+            2,
+            2,
+            100,
+            levelId: 1,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var world = new DiabloWorldState(
+            geometry,
+            combatTargets: [target],
+            worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        Assert.False(world.IsWalkable(1, 1, 2));
+        Assert.True(world.IsWalkable(1, 0, 0));
+    }
+
+    [Fact]
+    public void RejectsObjectAndUniqueIdentityAnchorsTogether()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeWorldMutation(
+            7,
+            1,
+            anchorEntityId: 20,
+            anchorUniqueIdentity: "Snotspill"));
+    }
+
+    [Fact]
     public void RejectsOverlappingObjectLayerAssignments()
     {
         var geometry = new AuthoritativeWorld();

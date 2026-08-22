@@ -641,6 +641,12 @@ scaled hit points), not only the client's difficulty label.
   after set-level geometry materialization, enabling authored set-piece cell
   overlays while retaining ordinary level targets.
 
+- World mutations may now use an optional `anchor_unique_identity` instead of a
+  fixed object entity. The server resolves exactly one matching unique encounter
+  when projecting an active mutation, so generated quest targets can provide a
+  deterministic origin for future set-piece transitions; fixed-object anchors
+  remain backward compatible.
+
 - Schema 1.372 adds the composite
   `GrantSpellLevelAndSpawnProjectile` object effect. One validated server-owned
   interaction can now grant a spell level and create its Phasing or Guardian

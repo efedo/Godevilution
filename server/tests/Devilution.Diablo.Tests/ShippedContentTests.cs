@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.390.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.391.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -455,8 +455,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t4\t\t\t\t\t\t\t\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -1951,7 +1951,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.390.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.391.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

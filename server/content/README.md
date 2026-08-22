@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.390.0` schema in
+It declares its identity and `devilution.diablo@1.391.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1778,6 +1778,12 @@ after consuming the item and creating its reward. The flag requires the same
 validated dialogue item and unique identity as the hand-in itself; omitted or
 false values preserve existing dialogue-only behavior.
 
+Schema 1.391 adds the optional `anchor_unique_identity` column to
+`world_mutations.tsv`. A mutation may follow exactly one server-owned unique
+encounter by identity instead of using a fixed object anchor; the two anchor
+columns are mutually exclusive. Existing packs without the column remain
+backward compatible.
+
 Schema 1.387 adds optional native tile-definition paths to
 `native_dun_fragments.tsv`. When a fragment supplies both `tile_asset_path` and
 `sol_asset_path`, the server expands its `.dun` mega-tiles through the external
@@ -2554,7 +2560,7 @@ the complete target header even when they upsert only one row.
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission, damage-type, and spell-identity tuning, optional ranged-avoidance distance/chance/movement-goal tuning, optional ranged-avoidance ordinary movement-band and divisor tuning, optional post-melee missile identity, optional ranged-retreat distance/chance tuning, optional Snake adjacent-attack and distance-delay admission tuning, optional monster-Inferno admission tuning, and optional native random-damage bounds; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence`, `QuestItemCompletion`, `WorldMutation`, `GrantSpellLevel`, `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` interactions), linked-quest progress amounts, optional quest activation/completion or `_qvar1`/`_qvar2` transition kind, amount, and required-variable gates, optional normal/unique item rewards with stable ID, item level, and relative offsets, optional `projectile_target_offset_x`/`projectile_target_offset_y` target displacement, optional `projectile_source` (`Object` or `ActivatingPlayer`, defaulting to `Object`), optional quest-sequence/world-mutation follow-up mutation/projectile/native-monster metadata and relative offsets, optional second `quest_sequence_follow_up_world_mutation_id` applied after the primary follow-up, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; spell effects store the validated spell ID in `effect_amount` with optional `effect_spell_symbol` cross-checking; native-monster follow-ups store a validated monster ID or `quest_sequence_follow_up_monster_symbol`; other follow-ups use their own amount and optional spell symbol. Projectile-producing effects currently accept only Phasing and Guardian controller spell behaviors; `ActivatingPlayer` is currently valid only for Phasing. |
 | `objects.tsv` | `entity_id` | Optional `template_only` rows are validated and available for set-level/native-DUN behavior cloning but are excluded from ordinary world placement; rows omitted from the column or marked `0` retain the full world-object behavior contract. |
-| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to the referenced runtime object, allowing deterministic changes at generated encounter anchors. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer. |
+| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter, allowing generated quest targets to provide the mutation origin. The two anchor columns are mutually exclusive. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer. |
 | `set_level_objects.tsv` | `placement_id`, `set_level_id`, `object_id` | Validated native fixed-object placements and template footprints for set-level maps, with optional `template_entity_id` linking an authored `objects.tsv` behavior template. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; positions and template rectangles are bounded, duplicate placements are rejected, and template object IDs must match. |
 | `native_dun_objects.tsv` | `native_object_id`, one level target | Optional explicit mapping from native DUN object-layer values to authoritative object identities for either a set-level variant (`set_level_id`/`set_level_symbol` plus `active_map`) or an ordinary runtime level (`level_id`/`level_symbol`). Optional `object_symbol` cross-checks the authored object identity. Duplicate mappings, ambiguous targets, unknown identities, missing native layers, and mismatched templates reject activation; unmapped values remain inert. |
 | `native_dun_levels.tsv` | `level_id`, `asset_path` | Optional ordinary-level native `.dun` object-layer assets. Stable `level_symbol` values cross-check the active level catalog; missing assets, unknown levels, invalid paths, malformed DUN data, and dimension mismatches reject activation. Collision geometry remains owned by the level or procedural catalog. |
@@ -2603,7 +2609,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.390.0"
+    "version": "1.391.0"
   },
   "dependencyConstraints": [
     {
@@ -2635,7 +2641,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.390.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.391.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

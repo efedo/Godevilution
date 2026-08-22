@@ -35,8 +35,6 @@ public sealed class DiabloWorldState
         WorldMutations = worldMutations;
         this.nativeDunObjects = nativeDunObjects;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
-        if (World is not null)
-            WorldMutations?.ValidateWorld(World, objects);
         foreach (var mutationId in activeWorldMutationIds ?? []) {
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
@@ -83,6 +81,8 @@ public sealed class DiabloWorldState
             Projectiles.Add(projectile.EntityId, projectile);
         foreach (var corpse in corpses ?? [])
             Corpses.Add(corpse.EntityId, corpse);
+        if (World is not null)
+            WorldMutations?.ValidateWorld(World, Objects.Values, CombatTargets.Values);
         RebuildProjectedGeometry();
     }
 
@@ -293,14 +293,7 @@ public sealed class DiabloWorldState
                     || mutation.LevelId != baseLevel.LevelId) {
                     continue;
                 }
-                var anchor = mutation.AnchorEntityId == 0
-                    ? null
-                    : Objects.TryGetValue(mutation.AnchorEntityId, out var anchoredObject)
-                        ? anchoredObject
-                        : throw new InvalidDataException(
-                            $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
-                var originX = anchor?.PositionX ?? 0;
-                var originY = anchor?.PositionY ?? 0;
+                var (originX, originY) = ResolveMutationOrigin(mutation);
                 blocked.UnionWith(mutation.GetBlockedCells(
                     baseLevel.Width,
                     baseLevel.Height,
@@ -364,6 +357,37 @@ public sealed class DiabloWorldState
         }
 
         SynchronizeNativeDunObjects();
+    }
+
+    /** Resolves an authored mutation origin from a fixed object or unique encounter. */
+    private (int X, int Y) ResolveMutationOrigin(AuthoritativeWorldMutation mutation)
+    {
+        if (mutation.AnchorEntityId != 0) {
+            if (!Objects.TryGetValue(mutation.AnchorEntityId, out var anchoredObject))
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
+            return (anchoredObject.PositionX, anchoredObject.PositionY);
+        }
+
+        if (mutation.AnchorUniqueIdentity.Length == 0)
+            return (0, 0);
+
+        var matches = CombatTargets.Values
+            .Where(target => target.IsUnique
+                && string.Equals(
+                    target.UniqueIdentity,
+                    mutation.AnchorUniqueIdentity,
+                    StringComparison.Ordinal))
+            .ToArray();
+        if (matches.Length != 1)
+            throw new InvalidDataException(
+                $"World mutation {mutation.MutationId} unique anchor '{mutation.AnchorUniqueIdentity}' "
+                + $"must match exactly one encounter; found {matches.Length}.");
+        if (matches[0].LevelId != mutation.LevelId)
+            throw new InvalidDataException(
+                $"World mutation {mutation.MutationId} unique anchor '{mutation.AnchorUniqueIdentity}' "
+                + $"is on level {matches[0].LevelId}, expected {mutation.LevelId}.");
+        return (matches[0].PositionX, matches[0].PositionY);
     }
 
     /** Reconciles mapped native object entities with the currently projected object layer. */
