@@ -1095,6 +1095,10 @@ public sealed class AuthoritativeItemCatalog
                 nativeTopologyCatalog);
             var armorMin = row.OptionalInt32("minArmor");
             var armorMax = row.OptionalInt32("maxArmor", armorMin);
+            var miscId = ParseLegacyMiscId(
+                OptionalText(row, "miscId"),
+                nativeMiscCatalog);
+            var isStaff = IsLegacyStaffMisc(miscId, nativeMiscCatalog);
             return new AuthoritativeItemDefinition(
                 checked((uint)index + 1),
                 itemType,
@@ -1119,9 +1123,7 @@ public sealed class AuthoritativeItemCatalog
                     ItemClass = ParseLegacyItemClass(
                         row.Required("class"),
                         nativeTopologyCatalog),
-                    MiscId = ParseLegacyMiscId(
-                        OptionalText(row, "miscId"),
-                        nativeMiscCatalog),
+                    MiscId = miscId,
                     SpellId = ParseLegacySpellId(
                         OptionalText(row, "spell"),
                         spellCatalog,
@@ -1133,16 +1135,8 @@ public sealed class AuthoritativeItemCatalog
                     MinimumMagic = row.OptionalInt32("minMagic"),
                     MinimumDexterity = row.OptionalInt32("minDexterity"),
                     NativeItemIndex = index,
-                    Charges = ParseLegacyMiscId(
-                        OptionalText(row, "miscId"),
-                        nativeMiscCatalog) == 24
-                        ? 40
-                        : 0,
-                    MaxCharges = ParseLegacyMiscId(
-                        OptionalText(row, "miscId"),
-                        nativeMiscCatalog) == 24
-                        ? 40
-                        : 0,
+                    Charges = isStaff ? 40 : 0,
+                    MaxCharges = isStaff ? 40 : 0,
                     Name = OptionalText(row, "name"),
                     IdentifiedName = OptionalText(row, "shortName"),
                     CursorGraphic = LegacyCursorSymbol(row),
@@ -1171,6 +1165,16 @@ public sealed class AuthoritativeItemCatalog
                 catalog.legacySymbols.TryAdd(symbol, numericId);
         }
         return catalog;
+    }
+
+    private static bool IsLegacyStaffMisc(
+        int miscId,
+        AuthoritativeNativeMiscCatalog? nativeMiscCatalog)
+    {
+        if (nativeMiscCatalog is not null
+            && nativeMiscCatalog.TryGetId("STAFF", out var staffMiscId))
+            return miscId == staffMiscId;
+        return miscId == 24;
     }
 
     private static int ParseLegacyItemType(

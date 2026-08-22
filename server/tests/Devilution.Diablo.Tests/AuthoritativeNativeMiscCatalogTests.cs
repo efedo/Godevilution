@@ -54,4 +54,22 @@ public sealed class AuthoritativeNativeMiscCatalogTests
 
         Assert.Equal(37, items.GetRequired(1).MiscId);
     }
+
+    [Fact]
+    public void LegacyStaffChargesUseTheExternalStaffMiscIdentity()
+    {
+        var catalog = new AuthoritativeNativeMiscCatalog([
+            new(99, "STAFF"),
+        ]);
+        var items = AuthoritativeItemCatalog.LoadLegacyTsv(
+            "itemdat.tsv",
+            "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+                + "STAFF_ITEM\t0\tWeapon\tOne-handed\tSTAFF\tStaff\tNONE\tStaff\tStaff\t0\t20\t1\t2\t0\t0\t0\t0\t0\t\tSTAFF\tNull\tfalse\t100\n",
+            nativeMiscCatalog: catalog);
+
+        var staff = items.GetRequired(1);
+        Assert.Equal(99, staff.MiscId);
+        Assert.Equal(40, staff.Charges);
+        Assert.Equal(40, staff.MaxCharges);
+    }
 }

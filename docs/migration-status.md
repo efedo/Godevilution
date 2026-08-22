@@ -7,6 +7,9 @@ Legacy item-table spell names now resolve through the validated external
 fallback remains available to older direct callers.
 Legacy item-table miscellaneous symbols now resolve through the validated
 external `native_item_misc.tsv` namespace as well.
+Legacy charged-staff initialization now resolves the `STAFF` miscellaneous
+identity through that namespace, retaining the native fallback for older
+callers.
 Legacy item-table type, class, and equipment-location symbols now resolve
 through the validated external `native_item_topology.tsv` namespace as well.
 Legacy item-table special-effect symbols now resolve through the validated

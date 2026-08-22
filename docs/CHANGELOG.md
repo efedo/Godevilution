@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Legacy charged-staff initialization now resolves the `STAFF` miscellaneous
+  identity through validated `native_item_misc.tsv` content while retaining
+  the native fallback for older callers.
 - Spell-book rows can now author single-player admission through the validated
   `single_player_excluded` field, advancing the Diablo content schema to
   `1.414.0` while retaining native behavior and ID fallbacks for older rows.
