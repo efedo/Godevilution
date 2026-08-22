@@ -963,6 +963,40 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsImpossibleCoreItemStateRanges()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot {
+                                Value = -1,
+                                MaxCharges = 1,
+                                Charges = 2,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+
+        snapshot.Players[0].Inventory[0].State.Value = 0;
+        snapshot.Players[0].Inventory[0].State.Charges = 0;
+        snapshot.Players[0].Inventory[0].State.MaxCharges = 0;
+        snapshot.Players[0].Inventory[0].State.MinDamage = 5;
+        snapshot.Players[0].Inventory[0].State.MaxDamage = 4;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void AppliesMultiplayerSnapshotsWithTheReceivingParticipantFirst()
     {
         var model = new AuthoritativeClientModel();

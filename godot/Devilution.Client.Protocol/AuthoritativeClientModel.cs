@@ -126,6 +126,7 @@ public sealed class AuthoritativeClientModel
             }
             foreach (var item in message.Snapshot.WorldItems) {
                 ValidateEntityId(entityIds, item.EntityId);
+                ValidateItemState(item.State);
                 if (!HasValidItemIdentity(item.ItemSeed, item.State)) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid world item.");
@@ -411,6 +412,7 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 "The authoritative snapshot contains duplicate player item references.");
         ValidateInventoryFootprint(state);
+        ValidateItemState(state);
     }
 
     private static void ValidateInventoryFootprint(ItemStateSnapshot? state)
@@ -420,6 +422,28 @@ public sealed class AuthoritativeClientModel
         if (state.InventoryWidth > 10 || state.InventoryHeight > 4) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains an item footprint outside the native inventory grid.");
+        }
+    }
+
+    private static void ValidateItemState(ItemStateSnapshot? state)
+    {
+        if (state is null)
+            return;
+        if (state.Value < 0
+            || state.IdentifiedValue < 0
+            || state.MinDamage < 0
+            || state.MaxDamage < state.MinDamage
+            || state.ArmorClass < 0
+            || state.Charges < 0
+            || state.MaxCharges < state.Charges
+            || state.Durability < 0
+            || state.MaxDurability < state.Durability
+            || state.FireMinDamage < 0
+            || state.FireMaxDamage < state.FireMinDamage
+            || state.LightningMinDamage < 0
+            || state.LightningMaxDamage < state.LightningMinDamage) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains impossible item state ranges.");
         }
     }
 

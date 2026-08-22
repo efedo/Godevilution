@@ -63,6 +63,8 @@ scaled hit points), not only the client's difficulty label.
   grid before presentation layout can silently relocate or clamp them.
 - Godot also rejects duplicate nonzero player item seeds across inventory,
   belt, equipment, stash, and held-item projections.
+- Godot now rejects impossible core item value, damage, armor, charge,
+  durability, and elemental-damage ranges before presentation consumes them.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
