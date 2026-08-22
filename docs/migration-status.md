@@ -149,6 +149,8 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative held Rune Bomb and Cathedral Map interactions now route
   through projected server-owned dungeon objects; missing projections fail
   closed instead of opening local set pieces.
+- Native authoritative inventory Cathedral Maps now also fail closed when no
+  projected grave interaction is available, preventing legacy DoomFlag changes.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

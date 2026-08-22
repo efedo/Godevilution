@@ -2457,6 +2457,16 @@ bool UseInvItem(int cii)
 		return true;
 	}
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected() && item->_iMiscId == IMISC_MAPOFDOOM) {
+		// A Cathedral Map may only affect the authoritative grave object. If the
+		// adjacent-object path above did not route it, fail closed instead of
+		// setting the legacy local DoomFlag.
+		LogError("Server-backed Cathedral Map use has no authoritative grave interaction.");
+		return true;
+	}
+#endif
+
 	if (item->_iMiscId == IMISC_ARENAPOT && !player.isOnArenaLevel()) {
 		player.Say(HeroSpeech::ThatWontWorkHere);
 		return true;
