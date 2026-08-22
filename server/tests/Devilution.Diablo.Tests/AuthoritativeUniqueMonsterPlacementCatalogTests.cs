@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -116,6 +117,62 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
             [existing]));
     }
 
+    [Fact]
+    public void ComposedContentActivationMaterializesTheAuthoredPlacement()
+    {
+        var contentRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(contentRoot, "server", "content", "base"));
+        var uniqueTable = basePack.Tables.Single(
+            table => table.SourcePath == "unique_monsters.tsv");
+        var placementTable = basePack.Tables.Single(
+            table => table.SourcePath == "unique_monster_placements.tsv");
+        var uniqueHeader = uniqueTable.ToCanonicalTsv().Split('\n')[0];
+        var placementHeader = placementTable.ToCanonicalTsv().Split('\n')[0];
+        var overlay = new ContentPack(
+            "placement.test",
+            "0.1.0",
+            [
+                TsvTable.Parse(
+                    uniqueTable.SourcePath,
+                    uniqueHeader
+                        + "\n0\t1\tbase_monster\tGenerated Zombie\tZombie\tnone\t0\tnone\tnone\tnone\tnone"),
+                TsvTable.Parse(
+                    placementTable.SourcePath,
+                    placementHeader
+                        + "\n1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t2\t2\t99\t0\t0"),
+            ],
+            ["devilution.base"],
+            [
+                new ContentTableOverlay(
+                    "unique_monsters.tsv",
+                    ["identity"]),
+                new ContentTableOverlay(
+                    "unique_monster_placements.tsv",
+                    ["placement_id"]),
+            ],
+            DiabloContentSchema.Current);
+        var manifest = new ContentManifest(
+            "placement-test",
+            "1",
+            [basePack, overlay]);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(manifest),
+            randomSeed: 99);
+        var target = Assert.Single(
+            activation.Simulation.WorldState.CombatTargets.Values,
+            candidate => candidate.EntityId == 100);
+
+        Assert.True(target.IsUnique);
+        Assert.Equal("Generated Zombie", target.UniqueIdentity);
+        Assert.Equal((1U, 2, 2), (
+            target.LevelId,
+            target.PositionX,
+            target.PositionY));
+        Assert.Single(activation.UniqueMonsterPlacements!.Definitions);
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,
@@ -138,5 +195,17 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
             false,
             false,
             false);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null) {
+            if (File.Exists(Path.Combine(directory.FullName, "README.md"))
+                && Directory.Exists(Path.Combine(directory.FullName, ".git")))
+                return directory.FullName;
+            directory = directory.Parent;
+        }
+        throw new DirectoryNotFoundException("Could not locate the repository root.");
     }
 }
