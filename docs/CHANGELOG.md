@@ -3,6 +3,10 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Legacy `itemdat.tsv` miscellaneous symbols now resolve through a validated
+  external `native_item_misc.tsv` namespace during production content
+  activation, preserving the compatibility fallback for older direct callers
+  and advancing the Diablo content schema to `1.408.0`.
 - Legacy `itemdat.tsv` spell names now resolve through a validated external
   `native_spells.tsv` namespace during production content activation. The table
   preserves all 52 native ordinals, rejects duplicate or out-of-range entries,

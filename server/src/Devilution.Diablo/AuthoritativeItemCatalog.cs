@@ -1077,7 +1077,8 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
         AuthoritativeSpellCatalog? spellCatalog = null,
         AuthoritativeItemCursorCatalog? cursorCatalog = null,
-        AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null)
+        AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null,
+        AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
@@ -1103,7 +1104,9 @@ public sealed class AuthoritativeItemCatalog
                     MaxArmorClass = armorMax,
                     EquipLocation = ParseLegacyEquipLocation(row.Required("equipType")),
                     ItemClass = ParseLegacyItemClass(row.Required("class")),
-                    MiscId = ParseLegacyMiscId(OptionalText(row, "miscId")),
+                    MiscId = ParseLegacyMiscId(
+                        OptionalText(row, "miscId"),
+                        nativeMiscCatalog),
                     SpellId = ParseLegacySpellId(
                         OptionalText(row, "spell"),
                         spellCatalog,
@@ -1113,10 +1116,14 @@ public sealed class AuthoritativeItemCatalog
                     MinimumMagic = row.OptionalInt32("minMagic"),
                     MinimumDexterity = row.OptionalInt32("minDexterity"),
                     NativeItemIndex = index,
-                    Charges = ParseLegacyMiscId(OptionalText(row, "miscId")) == 24
+                    Charges = ParseLegacyMiscId(
+                        OptionalText(row, "miscId"),
+                        nativeMiscCatalog) == 24
                         ? 40
                         : 0,
-                    MaxCharges = ParseLegacyMiscId(OptionalText(row, "miscId")) == 24
+                    MaxCharges = ParseLegacyMiscId(
+                        OptionalText(row, "miscId"),
+                        nativeMiscCatalog) == 24
                         ? 40
                         : 0,
                     Name = OptionalText(row, "name"),
@@ -1258,8 +1265,14 @@ public sealed class AuthoritativeItemCatalog
         };
     }
 
-    private static int ParseLegacyMiscId(string value)
+    private static int ParseLegacyMiscId(
+        string value,
+        AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null)
     {
+        if (nativeMiscCatalog is not null)
+            return nativeMiscCatalog.TryGetId(value, out var nativeMiscId)
+                ? nativeMiscId
+                : 0;
         return value.ToUpperInvariant() switch {
             "STAFF" => 24,
             "BOOK" => 25,
