@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Authoritative quest snapshots now optionally carry validated native quest
+  ordinals, allowing connected native clients to hydrate legacy quest state
+  from server-owned data while older snapshots retain compatibility behavior.
 - Native authoritative object projection now prefers a compatibility object at
   the projected server position before falling back to type matching, reducing
   presentation misassociation when legacy levels contain duplicate object types.

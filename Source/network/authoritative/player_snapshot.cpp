@@ -12,6 +12,7 @@
 
 #include "devilution.pb.h"
 #include "game/players/players.hpp"
+#include "game/quests/quests.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "qol/floatingnumbers.h"
 #include "tables/textdat.h"
@@ -699,6 +700,52 @@ tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(const
 	return projected;
 }
 
+tl::expected<std::vector<ProjectedQuestSnapshot>, std::string> ProjectQuestSnapshots(const protocol::Snapshot &snapshot)
+{
+	if (auto validation = ValidateQuestSnapshots(snapshot); !validation.has_value())
+		return tl::make_unexpected(validation.error());
+
+	std::vector<ProjectedQuestSnapshot> projected;
+	projected.reserve(snapshot.quests_size());
+	for (const auto &source : snapshot.quests()) {
+		if (!source.has_native_quest_id())
+			continue;
+		projected.push_back({
+		    .nativeQuestId = source.native_quest_id(),
+		    .hasNativeQuestId = true,
+		    .completed = source.completed(),
+		    .unavailable = source.unavailable(),
+		    .initial = source.initial(),
+		    .logged = source.logged(),
+		    .variable1 = static_cast<uint8_t>(source.variable_1()),
+		    .variable2 = static_cast<uint8_t>(source.variable_2()),
+		    .messageId = static_cast<int16_t>(source.message_id()),
+		});
+	}
+	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) {
+		return left.nativeQuestId < right.nativeQuestId;
+	});
+	return projected;
+}
+
+void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &quests) noexcept
+{
+	for (const auto &snapshot : quests) {
+		if (!snapshot.hasNativeQuestId || snapshot.nativeQuestId >= MAXQUESTS)
+			continue;
+		Quest &quest = Quests[snapshot.nativeQuestId];
+		quest._qactive = snapshot.unavailable
+		    ? QUEST_NOTAVAIL
+		    : snapshot.completed
+		        ? QUEST_DONE
+		        : snapshot.initial ? QUEST_INIT : QUEST_ACTIVE;
+		quest._qlog = snapshot.logged;
+		quest._qvar1 = snapshot.variable1;
+		quest._qvar2 = snapshot.variable2;
+		quest._qmsg = static_cast<_speech_id>(snapshot.messageId);
+	}
+}
+
 tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLevelGeometrySnapshots(const protocol::Snapshot &snapshot)
 {
 	if (auto validation = ValidateLevelGeometrySnapshots(snapshot); !validation.has_value())
@@ -755,8 +802,12 @@ tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot 
 		return tl::make_unexpected("Server-backed snapshot contains too many quests.");
 	std::unordered_set<uint32_t> questIds;
 	questIds.reserve(snapshot.quests_size());
+	std::unordered_set<uint32_t> nativeQuestIds;
+	nativeQuestIds.reserve(snapshot.quests_size());
 	for (const auto &quest : snapshot.quests()) {
 		if (quest.quest_id() == 0 || !questIds.insert(quest.quest_id()).second
+		    || (quest.has_native_quest_id()
+		        && (quest.native_quest_id() >= MAXQUESTS || !nativeQuestIds.insert(quest.native_quest_id()).second))
 		    || quest.required_progress() == 0 || quest.progress() > quest.required_progress()
 		    || (quest.unavailable() && (quest.completed() || quest.progress() != 0))
 		    || quest.variable_1() < 0 || quest.variable_1() > 255

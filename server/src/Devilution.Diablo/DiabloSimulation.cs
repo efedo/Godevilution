@@ -281,6 +281,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Items,
             options.Difficulty,
             options.MonsterTypes,
+            options.QuestTypes,
             options.SpellBooks,
             options.QuestTownerInteractions,
             options.QuestDialogueStages,
@@ -334,6 +335,7 @@ public sealed partial class DiabloSimulation
         AuthoritativeItemCatalog? items = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
+        AuthoritativeQuestTypeCatalog? questTypes = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
@@ -363,6 +365,7 @@ public sealed partial class DiabloSimulation
             : throw new ArgumentOutOfRangeException(nameof(difficulty));
         Items = items;
         this.monsterTypes = monsterTypes;
+        QuestTypes = questTypes;
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
         QuestDialogueStages = questDialogueStages;
@@ -387,6 +390,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated native dynamic spell-book metadata used for presentation names. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; }
+
+    /** Validated native quest identity mapping used by compatibility projections. */
+    public AuthoritativeQuestTypeCatalog? QuestTypes { get; }
 
     /** Validated repeatable quest/towner interactions projected to clients. */
     public AuthoritativeQuestTownerInteractionCatalog? QuestTownerInteractions { get; }

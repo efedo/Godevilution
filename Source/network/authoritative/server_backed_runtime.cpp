@@ -1007,6 +1007,7 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 			CancelInventoryItemDrag();
 		}
 	}
+	ApplyServerBackedQuestSnapshots(session_->QuestState());
 	if (auto result = worldProjection_.Apply(session_->MonsterState(), session_->WorldItemState(), session_->ObjectState(), session_->ProjectileState(), session_->LevelGeometryState(), snapshot->levelId); !result.has_value())
 		return result;
 	if (auto result = worldPresentation_.Apply(

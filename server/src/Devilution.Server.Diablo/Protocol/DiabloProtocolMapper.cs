@@ -220,6 +220,8 @@ internal static class DiabloProtocolMapper
             if (quest.TurnInVariable1 >= 0)
                 projectedQuest.TurnInVariable1 = quest.TurnInVariable1;
             projectedQuest.TurnInProgressOnly = quest.TurnInProgressOnly;
+            if (quest.NativeQuestId.HasValue)
+                projectedQuest.NativeQuestId = quest.NativeQuestId.Value;
             if (quest.TurnInBlockedVisitedLevel != 0)
                 projectedQuest.TurnInBlockedVisitedLevel = quest.TurnInBlockedVisitedLevel;
             snapshot.Quests.Add(projectedQuest);

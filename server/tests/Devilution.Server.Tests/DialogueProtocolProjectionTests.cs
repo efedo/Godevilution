@@ -77,7 +77,7 @@ public sealed class DialogueProtocolProjectionTests
             [],
             [],
             [],
-            [new DiabloQuestState(3017, 0, 0, 1, true)],
+            [new DiabloQuestState(3017, 0, 0, 1, true) { NativeQuestId = 16 }],
             [],
             null);
         var warp = new AuthoritativeWarpTarget(
@@ -110,6 +110,37 @@ public sealed class DialogueProtocolProjectionTests
         Assert.True(trigger.RequiredQuestCompleted);
         Assert.True(trigger.Available);
         Assert.Equal("grave_matters_dungeon", trigger.StableSymbol);
+        Assert.Equal(16U, Assert.Single(snapshot.Quests).NativeQuestId);
+    }
+
+    [Fact]
+    public void OmitsNativeQuestOrdinalWhenNoContentMappingExists()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) { EntityId = 1 };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [new DiabloQuestState(3017, 0, 0, 1, false)],
+            [],
+            null);
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        Assert.False(Assert.Single(snapshot.Quests).HasNativeQuestId);
     }
 
     [Fact]

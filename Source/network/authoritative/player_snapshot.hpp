@@ -238,6 +238,19 @@ struct ProjectedSessionMetadata {
 	std::vector<uint32_t> activeWorldMutationIds;
 };
 
+/** Server-owned native quest state used by the compatibility presentation. */
+struct ProjectedQuestSnapshot {
+	uint32_t nativeQuestId = 0;
+	bool hasNativeQuestId = false;
+	bool completed = false;
+	bool unavailable = false;
+	bool initial = false;
+	bool logged = false;
+	uint8_t variable1 = 0;
+	uint8_t variable2 = 0;
+	int16_t messageId = 0;
+};
+
 struct ProjectedWarpTriggerSnapshot {
 	uint32_t warpId = 0;
 	int32_t triggerX = 0;
@@ -370,6 +383,11 @@ struct ProjectedPlayerSnapshot {
 /** Projects server-owned session metadata without enabling local simulation. */
 [[nodiscard]] tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(
     const ::devilution::protocol::v1::Snapshot &snapshot);
+/** Projects server-owned native quest state for compatibility presentation. */
+[[nodiscard]] tl::expected<std::vector<ProjectedQuestSnapshot>, std::string> ProjectQuestSnapshots(
+	const ::devilution::protocol::v1::Snapshot &snapshot);
+/** Applies projected quest state without emitting legacy quest network messages. */
+void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &quests) noexcept;
 /** Projects server-owned effective level geometry in stable level-ID order. */
 [[nodiscard]] tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLevelGeometrySnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);

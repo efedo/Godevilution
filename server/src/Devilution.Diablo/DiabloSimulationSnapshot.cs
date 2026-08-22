@@ -315,7 +315,11 @@ public sealed record DiabloQuestState(
     int TurnInRequiredVariable1 = -1,
     int TurnInVariable1 = -1,
     bool TurnInProgressOnly = false,
-    uint TurnInBlockedVisitedLevel = 0);
+    uint TurnInBlockedVisitedLevel = 0)
+{
+    /** Native quest ordinal used by compatibility clients; zero is a valid ordinal. */
+    public uint? NativeQuestId { get; init; }
+}
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -689,7 +693,12 @@ public sealed partial class DiabloSimulation
                     quest.TurnInRequiredVariable1,
                     quest.TurnInVariable1,
                     quest.TurnInProgressOnly,
-                    quest.TurnInBlockedVisitedLevel))
+                    quest.TurnInBlockedVisitedLevel) {
+                    NativeQuestId = QuestTypes is not null
+                        && QuestTypes.TryGet(quest.QuestId, out var definition)
+                        ? definition.NativeQuestId
+                        : null,
+                })
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)

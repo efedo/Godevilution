@@ -546,6 +546,9 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	auto corpses = ProjectCorpseSnapshots(snapshot);
 	if (!corpses.has_value())
 		return tl::make_unexpected(corpses.error());
+	auto quests = ProjectQuestSnapshots(snapshot);
+	if (!quests.has_value())
+		return tl::make_unexpected(quests.error());
 	std::optional<ProjectedVendorSnapshot> vendor;
 	if (snapshot.has_active_store()) {
 		auto projectedVendor = ProjectVendorSnapshot(snapshot);
@@ -574,6 +577,7 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	projectileState_ = std::move(*projectiles);
 	portalState_ = std::move(*portals);
 	corpseState_ = std::move(*corpses);
+	questState_ = std::move(*quests);
 	sessionMetadata_ = std::move(*sessionMetadata);
 	levelGeometryState_ = std::move(*levelGeometry);
 	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());

@@ -884,6 +884,9 @@ message QuestSnapshot {
 	bool turn_in_progress_only = 26;
 	// Optional native _pLvlVisited level that suppresses the towner turn-in.
 	optional uint32 turn_in_blocked_visited_level = 27;
+	// Optional native quest ordinal used by compatibility clients to hydrate their
+	// legacy quest record without deriving identity from a content-specific ID.
+	optional uint32 native_quest_id = 28;
 }
 
 message QuestTownerInteractionSnapshot {

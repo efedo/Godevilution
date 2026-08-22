@@ -49,6 +49,7 @@ public:
 	[[nodiscard]] const std::vector<ProjectedProjectileSnapshot> &ProjectileState() const noexcept { return projectileState_; }
 	[[nodiscard]] const std::vector<ProjectedPortalSnapshot> &PortalState() const noexcept { return portalState_; }
 	[[nodiscard]] const std::vector<ProjectedCorpseSnapshot> &CorpseState() const noexcept { return corpseState_; }
+	[[nodiscard]] const std::vector<ProjectedQuestSnapshot> &QuestState() const noexcept { return questState_; }
 	[[nodiscard]] const ProjectedSessionMetadata &SessionMetadata() const noexcept { return sessionMetadata_; }
 	[[nodiscard]] const std::vector<ProjectedLevelGeometrySnapshot> &LevelGeometryState() const noexcept { return levelGeometryState_; }
 	[[nodiscard]] const ServerBackedVendorState &VendorState() const noexcept { return vendorState_; }
@@ -156,6 +157,7 @@ private:
 	std::vector<ProjectedProjectileSnapshot> projectileState_;
 	std::vector<ProjectedPortalSnapshot> portalState_;
 	std::vector<ProjectedCorpseSnapshot> corpseState_;
+	std::vector<ProjectedQuestSnapshot> questState_;
 	ProjectedSessionMetadata sessionMetadata_;
 	std::vector<ProjectedLevelGeometrySnapshot> levelGeometryState_;
 	std::vector<protocol::QuestSnapshot> questStates_;

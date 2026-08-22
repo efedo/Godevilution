@@ -36,6 +36,9 @@ Native authoritative object projection now prefers a local compatibility object
 at the server-projected position before falling back to object-type matching;
 ordinary local objects remain presentation-only until their authored replacements
 are available.
+Connected native clients now hydrate legacy quest availability, completion,
+log, variables, and speech fields from optional server-projected native quest
+ordinals; snapshots without the additive mapping retain compatibility behavior.
 
 ## Current state
 

@@ -269,6 +269,10 @@ Windows toolchain command.
   `_qvar1` gate, marker, and progress-only flag. The server consumes the
   authored item and reward while retaining the quest's active/completion state;
   absent fields preserve the completing-turn-in behavior.
+- `QuestSnapshot.native_quest_id` field 28 optionally carries the validated
+  native quest ordinal. Compatibility clients use it to hydrate legacy quest
+  records without deriving an ordinal from a stable content ID; older snapshots
+  omit it and retain their local compatibility state.
 - `ItemStateSnapshot.base_name`, `identified_name`, and optional
   `native_cursor_graphic` fields 59-61 carry runtime-authored presentation for
   dynamic items such as PvP ears. A dynamic identity is complete only when
