@@ -36,6 +36,8 @@ All notable changes to this fork are documented below.
   derived player state remains snapshot-owned.
 - Guard direct connected native inventory, belt, and equipment removal and
   automatic-placement helpers before legacy local item mutation.
+- Preserve non-persisting automatic-placement probes for connected vendor and
+  inventory capacity checks while rejecting legacy writes.
 - Guard direct connected equipment replacement, cursor swaps, gold placement,
   inventory synchronization, and staff-charge consumption before legacy item
   state mutation.

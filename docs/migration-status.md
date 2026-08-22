@@ -71,6 +71,8 @@ Connected native inventory, belt, and equipment removal helpers now also fail
 closed at their direct entry points. Legacy automatic placement helpers use the
 same boundary, while stable-reference inventory, belt, stash, and equipment
 commands remain the connected mutation path.
+Non-persisting automatic-placement probes remain available for capacity checks;
+only connected legacy writes fail closed.
 
 Connected native equipment replacement, inventory/belt cursor swaps, gold
 placement, and staff-charge consumption helpers now fail closed at their direct
