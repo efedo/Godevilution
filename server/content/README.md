@@ -14,7 +14,8 @@ migrated incrementally.
 
 The optional `unique_monster_placements.tsv` table owns generated unique
 encounter placement. Rows are validated against unique identities, monster
-types, level geometry, entity IDs, and deterministic seeds before activation;
+types, level geometry, reserved warp/portal/object cells, entity IDs, and
+deterministic seeds before activation;
 the checked-in table is currently empty until native set-piece coordinates are
 authored.
 

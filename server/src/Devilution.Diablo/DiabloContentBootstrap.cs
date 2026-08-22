@@ -926,7 +926,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 world,
                 monsterTypes,
                 uniqueMonsters,
-                combatTargets);
+                combatTargets,
+                uniqueMonsterPlacements.Definitions
+                    .SelectMany(definition => GetReservedPositions(
+                            definition.LevelId,
+                            world,
+                            portals,
+                            objects)
+                        .Select(position => (
+                            definition.LevelId,
+                            position.X,
+                            position.Y))));
             var authoredTargets = uniqueMonsterPlacements.Materialize(
                 monsterSpawnPlanner,
                 uniqueMonsters,

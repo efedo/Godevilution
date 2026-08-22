@@ -118,6 +118,34 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
     }
 
     [Fact]
+    public void RejectsPlacementOnAReservedWorldCell()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([CreateType(2, 1, 1)]);
+        var uniqueMonsters = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 2, "Generated Defiler"),
+        ]);
+        var placements = new AuthoritativeUniqueMonsterPlacementCatalog([
+            new AuthoritativeUniqueMonsterPlacementDefinition(
+                1,
+                "Generated Defiler",
+                2,
+                1,
+                77,
+                1,
+                1,
+                99),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => placements.Validate(
+            world,
+            monsterTypes,
+            uniqueMonsters,
+            reservedPositions: [(1U, 1, 1)]));
+    }
+
+    [Fact]
     public void ComposedContentActivationMaterializesTheAuthoredPlacement()
     {
         var contentRoot = FindRepositoryRoot();
@@ -140,7 +168,7 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
                 TsvTable.Parse(
                     placementTable.SourcePath,
                     placementHeader
-                        + "\n1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t2\t2\t99\t0\t0"),
+                        + "\n1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t10\t10\t99\t0\t0"),
             ],
             ["devilution.base"],
             [
@@ -166,7 +194,7 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
 
         Assert.True(target.IsUnique);
         Assert.Equal("Generated Zombie", target.UniqueIdentity);
-        Assert.Equal((1U, 2, 2), (
+        Assert.Equal((1U, 10, 10), (
             target.LevelId,
             target.PositionX,
             target.PositionY));

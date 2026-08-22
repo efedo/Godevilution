@@ -59,15 +59,19 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
         AuthoritativeWorld world,
         AuthoritativeMonsterTypeCatalog monsterTypes,
         AuthoritativeUniqueMonsterCatalog uniqueMonsters,
-        IEnumerable<AuthoritativeCombatTarget>? existingTargets = null)
+        IEnumerable<AuthoritativeCombatTarget>? existingTargets = null,
+        IEnumerable<(uint LevelId, int X, int Y)>? reservedPositions = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(monsterTypes);
         ArgumentNullException.ThrowIfNull(uniqueMonsters);
-        var occupied = (existingTargets ?? [])
-            .Select(target => (target.LevelId, target.PositionX, target.PositionY))
+        var targets = (existingTargets ?? []).ToArray();
+        var occupied = (reservedPositions ?? [])
+            .Select(position => (position.LevelId, position.X, position.Y))
             .ToHashSet();
-        var entityIds = (existingTargets ?? [])
+        occupied.UnionWith(
+            targets.Select(target => (target.LevelId, target.PositionX, target.PositionY)));
+        var entityIds = targets
             .Select(target => target.EntityId)
             .ToHashSet();
         foreach (var placement in Definitions) {
