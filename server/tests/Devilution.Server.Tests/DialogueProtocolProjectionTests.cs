@@ -576,6 +576,57 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsWorldItemsOutsideProjectedPositionBounds()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        void AssertRejected(DiabloWorldItemState item, IReadOnlyList<AuthoritativeLevel>? levels = null)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(
+                    source with { WorldItems = [item] },
+                    levelGeometry: levels));
+        }
+
+        var validItem = new DiabloWorldItemState(
+            2,
+            1,
+            4,
+            5,
+            7,
+            0,
+            AuthoritativeItemState.Empty);
+        AssertRejected(validItem with { PositionX = -1 });
+        AssertRejected(validItem with { PositionY = byte.MaxValue + 1 });
+        AssertRejected(
+            validItem with { PositionX = 10 },
+            [new AuthoritativeLevel(1, 10, 10)]);
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

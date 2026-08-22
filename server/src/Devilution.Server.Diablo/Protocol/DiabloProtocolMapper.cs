@@ -18,6 +18,7 @@ internal static class DiabloProtocolMapper
     {
         ArgumentNullException.ThrowIfNull(source);
         ValidateProjectedStoreState(source);
+        ValidateProjectedWorldItemPositions(source.WorldItems, levelGeometry);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -410,6 +411,24 @@ internal static class DiabloProtocolMapper
                     || source.ActiveStore.StoreId != activeStoreId)) {
             throw new InvalidDataException(
                 "Authoritative active-store state does not match the local player projection.");
+        }
+    }
+
+    private static void ValidateProjectedWorldItemPositions(
+        IReadOnlyList<DiabloWorldItemState> worldItems,
+        IReadOnlyList<AuthoritativeLevel>? levelGeometry)
+    {
+        var levels = levelGeometry?.ToDictionary(level => level.LevelId)
+            ?? new Dictionary<uint, AuthoritativeLevel>();
+        foreach (var item in worldItems) {
+            if (item.PositionX is < 0 or > byte.MaxValue
+                || item.PositionY is < 0 or > byte.MaxValue
+                || levels.TryGetValue(item.LevelId, out var level)
+                    && (item.PositionX >= level.Width
+                        || item.PositionY >= level.Height)) {
+                throw new InvalidDataException(
+                    "Authoritative world-item position is outside the projected level geometry.");
+            }
         }
     }
 
