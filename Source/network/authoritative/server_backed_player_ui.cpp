@@ -105,6 +105,11 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		if (visitedLevelId >= NUMLEVELS || !visitedLevelIds.insert(visitedLevelId).second)
 			return tl::make_unexpected("Server-backed visited levels contain an invalid or duplicate native level.");
 	}
+	if (!snapshot.visitedLevelIds.empty()
+	    && std::find(snapshot.visitedLevelIds.begin(), snapshot.visitedLevelIds.end(), snapshot.levelId)
+	        == snapshot.visitedLevelIds.end()) {
+		return tl::make_unexpected("Server-backed visited levels omit the player's current native level.");
+	}
 	std::set<uint32_t> memorizedSpellIds;
 	for (const auto &spell : snapshot.memorizedSpells) {
 		if (spell.spellId == 0 || spell.spellId > static_cast<uint32_t>(SpellID::LAST)

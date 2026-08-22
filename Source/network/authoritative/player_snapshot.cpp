@@ -62,6 +62,11 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		if (!visitedLevelIds.insert(levelId).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate visited levels.");
 	}
+	if (player->visited_level_ids_size() > 0
+	    && std::find(player->visited_level_ids().begin(), player->visited_level_ids().end(), player->level_id())
+	        == player->visited_level_ids().end()) {
+		return tl::make_unexpected("Server-backed snapshot omits the player's current visited level.");
+	}
 	if (player->reflect_charges() > std::numeric_limits<uint16_t>::max())
 		return tl::make_unexpected("Server-backed snapshot contains Reflect charges outside the native range.");
 	if (player->stash_size() > StashPageCount * StashCellCount)

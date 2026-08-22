@@ -55,6 +55,8 @@ All notable changes to this fork are documented below.
   before the presentation HUD consumes authoritative character state.
 - Godot now rejects undefined selected-ability targeting enums while preserving
   the additive unspecified default for older snapshots.
+- The native authoritative projection now rejects non-empty visited-level sets
+  that omit the player’s current level, matching the server and Godot boundary.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

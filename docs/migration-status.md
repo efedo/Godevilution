@@ -96,6 +96,8 @@ scaled hit points), not only the client's difficulty label.
   the additive attribute message is present.
 - Godot now validates the selected ability targeting enum while retaining its
   compatibility-safe unspecified default.
+- Native authoritative projection now validates that non-empty visited-level
+  state includes the player’s current level before applying native quest gates.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

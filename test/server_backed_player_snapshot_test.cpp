@@ -37,6 +37,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_diablo_kill_level(2);
 	player->set_reflect_charges(17);
 	player->add_visited_level_ids(4);
+	player->add_visited_level_ids(7);
 	player->add_visited_level_ids(21);
 	player->set_character_class_id(3);
 	player->set_character_name("Dead-RogueDM");
@@ -113,7 +114,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->gold, 125U);
 	EXPECT_EQ(projected->diabloKillLevel, 2U);
 	EXPECT_EQ(projected->reflectCharges, 17U);
-	EXPECT_EQ(projected->visitedLevelIds, std::vector<uint32_t>({ 4, 21 }));
+	EXPECT_EQ(projected->visitedLevelIds, std::vector<uint32_t>({ 4, 7, 21 }));
 	EXPECT_EQ(projected->characterLevel, 3U);
 	EXPECT_EQ(projected->characterClassId, 3U);
 	EXPECT_EQ(projected->characterName, "Dead-RogueDM");
@@ -305,6 +306,10 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 	auto *invalidPlayer = invalidNativeState.add_players();
 	invalidPlayer->set_entity_id(7);
 	invalidPlayer->add_visited_level_ids(NUMLEVELS);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
+	invalidPlayer->clear_visited_level_ids();
+	invalidPlayer->set_level_id(7);
+	invalidPlayer->add_visited_level_ids(4);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
 	invalidPlayer->clear_visited_level_ids();
 	invalidPlayer->set_reflect_charges(static_cast<uint32_t>(std::numeric_limits<uint16_t>::max()) + 1);
@@ -1359,7 +1364,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	snapshot.characterLevel = 4;
 	snapshot.diabloKillLevel = 2;
 	snapshot.reflectCharges = 17;
-	snapshot.visitedLevelIds = { 4, 21 };
+	snapshot.visitedLevelIds = { 0, 4, 21 };
 	snapshot.characterClassId = static_cast<uint32_t>(HeroClass::Monk);
 	snapshot.characterName = "Dead-Monk";
 	snapshot.manaShieldActive = true;
@@ -1603,6 +1608,13 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidVisitedLevelWithoutMutation)
 
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_TRUE(player._pLvlVisited[4]);
+
+	ProjectedPlayerSnapshot missingCurrent;
+	missingCurrent.entityId = 7;
+	missingCurrent.levelId = 0;
+	missingCurrent.visitedLevelIds = { 4 };
+	missingCurrent.inventoryGrid.assign(InventoryGridCells, -1);
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, missingCurrent).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsDuplicateEquipmentSlots)

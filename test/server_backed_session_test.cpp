@@ -46,6 +46,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		protocol::Envelope initial;
 		auto *initialPlayer = initial.mutable_snapshot()->add_players();
 		initialPlayer->set_entity_id(7);
+		initialPlayer->add_visited_level_ids(0);
 		initialPlayer->add_visited_level_ids(4);
 		initialPlayer->add_visited_level_ids(21);
 		auto *activeQuest = initial.mutable_snapshot()->add_quests();
