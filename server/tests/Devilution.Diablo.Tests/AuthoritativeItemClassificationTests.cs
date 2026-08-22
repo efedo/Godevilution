@@ -159,6 +159,15 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void NonMatchingSubtypeTagsOverrideConflictingLegacyItemTypes()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Misc"])
+            with { ItemType = 5 };
+
+        Assert.False(AuthoritativeItemClassification.IsShield(definition));
+    }
+
+    [Fact]
     public void GoldTagsOverrideConflictingNativeGoldIdentity()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

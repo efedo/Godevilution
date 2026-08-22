@@ -301,11 +301,9 @@ public static class AuthoritativeItemClassification
         int legacyItemType)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        if (definition.GenerationTags.Contains(tag))
-            return true;
-        if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-            return false;
-        return definition.ItemType == legacyItemType;
+        return definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains(tag, StringComparer.OrdinalIgnoreCase)
+            : definition.ItemType == legacyItemType;
     }
 
     private static bool HasSubtype(
@@ -327,11 +325,9 @@ public static class AuthoritativeItemClassification
         int legacyItemType)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        if (definition.GenerationTags.Contains(tag))
-            return true;
-        if (HasExplicitArmorSubtype(definition.GenerationTags))
-            return false;
-        return definition.ItemType == legacyItemType;
+        return definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains(tag, StringComparer.OrdinalIgnoreCase)
+            : definition.ItemType == legacyItemType;
     }
 
     private static bool HasArmorSubtype(
