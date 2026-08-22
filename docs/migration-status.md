@@ -41,6 +41,9 @@ log, variables, and speech fields from optional server-projected native quest
 ordinals; snapshots without the additive mapping retain compatibility behavior.
 Quest content activation also rejects duplicate native ordinal mappings before
 they can make a connected snapshot ambiguous.
+Connected native towner clicks now bypass legacy quest checks when opening
+supported store menus and fail closed when no authored server interaction or
+safe presentation menu exists.
 
 ## Current state
 

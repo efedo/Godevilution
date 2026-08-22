@@ -835,6 +835,47 @@ void ProcessTowners()
 	}
 }
 
+/** Opens a connected towner's menu without running legacy quest mutation code. */
+bool StartServerBackedTownerMenu(_talker_id type)
+{
+	switch (type) {
+	case TOWN_SMITH:
+		TownerTalk(TEXT_GRISWOLD1);
+		CurrentStoreManager.StartStore(TalkID::Smith);
+		return true;
+	case TOWN_WITCH:
+		TownerTalk(TEXT_ADRIA1);
+		CurrentStoreManager.StartStore(TalkID::Witch);
+		return true;
+	case TOWN_PEGBOY:
+		TownerTalk(TEXT_WIRT1);
+		CurrentStoreManager.StartStore(TalkID::Boy);
+		return true;
+	case TOWN_HEALER:
+		TownerTalk(TEXT_PEPIN1);
+		CurrentStoreManager.StartStore(TalkID::Healer);
+		return true;
+	case TOWN_STORY:
+		TownerTalk(TEXT_STORY1);
+		CurrentStoreManager.StartStore(TalkID::Storyteller);
+		return true;
+	case TOWN_TAVERN:
+		TownerTalk(TEXT_OGDEN1);
+		CurrentStoreManager.StartStore(TalkID::Tavern);
+		return true;
+	case TOWN_BMAID:
+		TownerTalk(TEXT_GILLIAN1);
+		CurrentStoreManager.StartStore(TalkID::Barmaid);
+		return true;
+	case TOWN_DRUNK:
+		TownerTalk(TEXT_FARNHAM1);
+		CurrentStoreManager.StartStore(TalkID::Drunk);
+		return true;
+	default:
+		return false;
+	}
+}
+
 void TalkToTowner(Player &player, int t)
 {
 	auto &towner = Towners[t];
@@ -861,6 +902,10 @@ void TalkToTowner(Player &player, int t)
 			}
 			return;
 		}
+		if (StartServerBackedTownerMenu(towner._ttype))
+			return;
+		LogError("No authoritative interaction is available for towner {}.", static_cast<unsigned>(towner._ttype));
+		return;
 	}
 #endif
 

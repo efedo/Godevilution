@@ -3,6 +3,10 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native towner clicks now enter supported store menus through a
+  presentation-only path and fail closed for unsupported towners, preventing
+  legacy quest handlers from mutating local state when no server interaction
+  is available.
 - The authoritative quest catalog extension preserves the existing
   `DiabloSimulation` positional constructor argument order for compatibility.
 - Quest content activation now rejects duplicate native quest ordinals before
