@@ -241,6 +241,8 @@ TEST(ServerBackedCompatibility, ConnectedLegacyWorldStateMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyWorldStateMessage(false));
 	EXPECT_FALSE(ShouldProcessLegacyWorldStateMessage(true));
+	EXPECT_TRUE(ShouldProcessLegacyObjectSynchronization(false));
+	EXPECT_FALSE(ShouldProcessLegacyObjectSynchronization(true));
 }
 
 TEST(ServerBackedCompatibility, ConnectedLegacyQuestResyncFailsClosed)

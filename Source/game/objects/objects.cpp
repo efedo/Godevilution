@@ -4618,6 +4618,11 @@ void OperateObject(Player &player, Object &object)
 
 void DeltaSyncOpObject(Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyObjectSynchronization(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	switch (object._otype) {
 	case OBJ_L1LDOOR:
 	case OBJ_L1RDOOR:
@@ -4703,6 +4708,11 @@ void DeltaSyncOpObject(Object &object)
 
 void DeltaSyncCloseObj(Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyObjectSynchronization(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	// Object was closed.
 	// That means it was opened once, so all traps have been activated.
 	object._oTrapFlag = false;
@@ -4710,6 +4720,11 @@ void DeltaSyncCloseObj(Object &object)
 
 void SyncOpObject(Player &player, int cmd, Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyObjectSynchronization(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	const bool sendmsg = &player == MyPlayer;
 
 	switch (object._otype) {
@@ -4834,6 +4849,11 @@ void BreakObject(const Player &player, Object &object)
 
 void DeltaSyncBreakObj(Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyObjectSynchronization(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (!object.IsBreakable() || !object.canInteractWith())
 		return;
 
@@ -4853,6 +4873,11 @@ void DeltaSyncBreakObj(Object &object)
 
 void SyncBreakObj(const Player &player, Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyObjectSynchronization(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (object.IsBarrel()) {
 		BreakBarrel(player, object, true, false);
 	} else if (object.IsCrux()) {

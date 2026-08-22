@@ -11,6 +11,12 @@ constexpr bool ShouldProcessLegacyWorldStateMessage(bool serverConnected) noexce
 	return !serverConnected;
 }
 
+/** Legacy object synchronization mutates native object state and is offline-only. */
+constexpr bool ShouldProcessLegacyObjectSynchronization(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyWorldStateMessage(serverConnected);
+}
+
 /**
  * Legacy per-tick quest checks can create portals, mutate quest variables, and
  * start level transitions, so they are offline-only for server-backed games.

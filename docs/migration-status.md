@@ -11,6 +11,10 @@ Connected native missile presentation no longer clears legacy missile and wall
 tile flags for server-owned projectiles; only locally simulated missiles update
 that native gameplay bookkeeping.
 
+Connected native object synchronization helpers now fail closed at their public
+entry points as well as at protocol dispatch, preventing direct legacy delta,
+operate, close, and break callbacks from mutating server-owned object state.
+
 Engine verification now includes a 64-generation ruleset replacement pressure
 fixture that holds every prior generation under lease and drains them only
 after all leases release.
