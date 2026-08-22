@@ -52,6 +52,11 @@ direct entry points, while monster damage callbacks do the same; authoritative
 combat and death presentation remain server-owned and offline sessions retain
 the legacy lifecycle.
 
+Connected native resource restoration, experience/level advancement, and direct
+attribute or hit-point mutation helpers now fail closed as well. Authoritative
+snapshot projection retains its dedicated level and field-assignment paths;
+offline sessions retain the legacy player-state lifecycle.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

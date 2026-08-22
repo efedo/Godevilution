@@ -108,6 +108,15 @@ bool LegacyEquipmentDamageAllowed() noexcept
 #endif
 }
 
+bool LegacyPlayerStateMutationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 struct DirectionSettings {
 	Direction dir;
 	PLR_MODE walkMode;
@@ -1984,12 +1993,18 @@ int Player::GetManaShieldDamageReduction()
 
 void Player::RestoreFullLife()
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	life.current = life.maximum;
 	life.base = life.maximumBase;
 }
 
 void Player::RestorePartialLife()
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	const int wholeHitpoints = life.maximum >> 6;
 	int l = ((wholeHitpoints / 8) + GenerateRnd(wholeHitpoints / 4)) << 6;
 	if (IsAnyOf(_pClass, HeroClass::Warrior, HeroClass::Barbarian))
@@ -2002,6 +2017,9 @@ void Player::RestorePartialLife()
 
 void Player::RestoreFullMana()
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	if (HasNoneOf(_pIFlags, ItemSpecialEffect::NoMana)) {
 		mana.current = mana.maximum;
 		mana.base = mana.maximumBase;
@@ -2010,6 +2028,9 @@ void Player::RestoreFullMana()
 
 void Player::RestorePartialMana()
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	const int wholeManaPoints = mana.maximum >> 6;
 	int l = ((wholeManaPoints / 8) + GenerateRnd(wholeManaPoints / 4)) << 6;
 	if (_pClass == HeroClass::Sorcerer)
@@ -2667,6 +2688,9 @@ int Player::calculateStatDifference()
 
 void Player::advanceLevel()
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	player.setCharacterLevel(player.getCharacterLevel() + 1);
 
@@ -2712,6 +2736,9 @@ void Player::advanceLevel()
 
 void Player::_addExperience(uint32_t experience, int levelDelta)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	if (this != MyPlayer || hasNoLife())
 		return;
 
@@ -3864,6 +3891,9 @@ void Player::checkStats()
 
 void Player::modifyStrength(int l)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	l = std::clamp(l, 0 - player.attributes.strength.base, player.GetMaximumAttributeValue(CharacterAttribute::Strength) - player.attributes.strength.base);
 
@@ -3879,6 +3909,9 @@ void Player::modifyStrength(int l)
 
 void Player::modifyMagic(int l)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	l = std::clamp(l, 0 - player.attributes.magic.base, player.GetMaximumAttributeValue(CharacterAttribute::Magic) - player.attributes.magic.base);
 
@@ -3904,6 +3937,9 @@ void Player::modifyMagic(int l)
 
 void Player::modifyDexterity(int l)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	l = std::clamp(l, 0 - player.attributes.dexterity.base, player.GetMaximumAttributeValue(CharacterAttribute::Dexterity) - player.attributes.dexterity.base);
 
@@ -3918,6 +3954,9 @@ void Player::modifyDexterity(int l)
 
 void Player::modifyVitality(int l)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	l = std::clamp(l, 0 - player.attributes.vitality.base, player.GetMaximumAttributeValue(CharacterAttribute::Vitality) - player.attributes.vitality.base);
 
@@ -3941,6 +3980,9 @@ void Player::modifyVitality(int l)
 
 void Player::setHitPoints(int val)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	player.life.current = val;
 	player.life.base = val + player.life.maximumBase - player.life.maximum;
@@ -3952,6 +3994,9 @@ void Player::setHitPoints(int val)
 
 void Player::setStrength(int v)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	player.attributes.strength.base = v;
 	CalcPlrInv(player, true);
@@ -3959,6 +4004,9 @@ void Player::setStrength(int v)
 
 void Player::setMagic(int v)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	player.attributes.magic.base = v;
 
@@ -3972,6 +4020,9 @@ void Player::setMagic(int v)
 
 void Player::setDexterity(int v)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	player.attributes.dexterity.base = v;
 	CalcPlrInv(player, true);
@@ -3979,6 +4030,9 @@ void Player::setDexterity(int v)
 
 void Player::setVitality(int v)
 {
+	if (!LegacyPlayerStateMutationAllowed())
+		return;
+
 	Player &player = *this;
 	player.attributes.vitality.base = v;
 
