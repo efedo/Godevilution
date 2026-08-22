@@ -7,6 +7,23 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeCombatRulesTests
 {
     [Fact]
+    public void ValidatesUniqueMonsterExperienceMultiplier()
+    {
+        var rules = new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            uniqueExperienceMultiplier: 3);
+
+        Assert.Equal(3, rules.UniqueExperienceMultiplier);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            uniqueExperienceMultiplier: 0));
+    }
+
+    [Fact]
     public void LoadsExternalCombatConstants()
     {
         var rules = AuthoritativeCombatRules.LoadTsv(

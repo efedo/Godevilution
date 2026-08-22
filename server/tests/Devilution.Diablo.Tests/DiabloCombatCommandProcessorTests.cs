@@ -3656,24 +3656,29 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             8,
             armorClass: 2,
-            experienceReward: 37);
+            experienceReward: 37,
+            unique: true);
         var world = new DiabloWorldState(combatTargets: [target]);
         var processor = CreateProcessor(
             world,
-            rules: new AuthoritativeCombatRules(10, 1, 100));
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                uniqueExperienceMultiplier: 3));
         var player = CreatePlayer(entityId: 7);
 
         var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
         Assert.True(result.Succeeded);
-        Assert.Equal(37U, player.Experience);
+        Assert.Equal(111U, player.Experience);
         Assert.Contains(
             result.Events,
             gameplayEvent => gameplayEvent == new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Experience,
                 7,
                 7,
-                37));
+                111));
     }
 
     [Fact]

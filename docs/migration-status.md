@@ -49,6 +49,10 @@ scaled hit points), not only the client's difficulty label.
   `spells.tsv`; the shipped Flash row carries the native level-times-two rule
   while older packs retain the compatibility fallback.
 
+- Schema 1.397 externalizes the native unique-monster experience multiplier
+  through `combat.tsv`; the shipped combat row carries the native two-times
+  reward rule while older mappings retain the compatibility fallback.
+
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
   conversations therefore preserve their current dialogue target across

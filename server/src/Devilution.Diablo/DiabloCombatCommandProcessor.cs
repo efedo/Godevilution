@@ -274,7 +274,7 @@ public sealed class DiabloCombatCommandProcessor
             : checked(
                 (baseReward + rules.DifficultyRules.ExperienceBonus) * (uint)multiplier);
         return monster.IsUnique
-            ? checked(difficultyReward * 2U)
+            ? checked(difficultyReward * (uint)rules.UniqueExperienceMultiplier)
             : difficultyReward;
     }
 

@@ -105,7 +105,8 @@ public sealed class AuthoritativeCombatRules
         int? rangedAttackFrameSkipWithFirstFrame = null,
         int? rangedAttackFrameSkipWithoutFirstFrame = null,
         int? rangedFastAttackFrameSkipBonus = null,
-        uint townLevelId = AuthoritativePortalRules.TownLevelId)
+        uint townLevelId = AuthoritativePortalRules.TownLevelId,
+        int uniqueExperienceMultiplier = 2)
     {
         var resolvedRangedAttackFrameSkipWithFirstFrame = rangedAttackFrameSkipWithFirstFrame
             ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
@@ -208,6 +209,9 @@ public sealed class AuthoritativeCombatRules
         if (tripleDemonDamageMultiplier is < 1 or > 100) {
             throw new InvalidDataException("Triple Demon damage tuning is invalid.");
         }
+        if (uniqueExperienceMultiplier is < 1 or > 100) {
+            throw new InvalidDataException("Unique-monster experience tuning is invalid.");
+        }
         if (pvpBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("PvP block level tuning is invalid.");
         }
@@ -284,6 +288,7 @@ public sealed class AuthoritativeCombatRules
         BaseAttackDamage = baseAttackDamage;
         MinimumDamage = minimumDamage;
         DefeatExperience = defeatExperience;
+        UniqueExperienceMultiplier = uniqueExperienceMultiplier;
         HitChancePercent = hitChancePercent;
         CriticalChancePercent = criticalChancePercent;
         CriticalMultiplier = criticalMultiplier;
@@ -380,6 +385,9 @@ public sealed class AuthoritativeCombatRules
     public int MinimumDamage { get; }
 
     public uint DefeatExperience { get; }
+
+    /** Native multiplier applied to experience awarded by unique monsters. */
+    public int UniqueExperienceMultiplier { get; }
 
     public int HitChancePercent { get; }
 
@@ -1010,7 +1018,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("ranged_attack_frame_skip_with_first_frame", 1),
             row.OptionalInt32("ranged_attack_frame_skip_without_first_frame"),
             row.OptionalInt32("ranged_fast_attack_frame_skip_bonus", 1),
-            townLevelId);
+            townLevelId,
+            row.OptionalInt32("unique_experience_multiplier", 2));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

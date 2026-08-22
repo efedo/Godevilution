@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native unique-monster experience multiplier through
+  `combat.tsv`, preserving the native two-times fallback for older packs and
+  advancing the Diablo content schema to 1.397.
+
 - Externalize the native monster Flash damage multiplier through `spells.tsv`,
   preserving the level-times-two fallback for older packs and advancing the
   Diablo content schema to 1.396.
