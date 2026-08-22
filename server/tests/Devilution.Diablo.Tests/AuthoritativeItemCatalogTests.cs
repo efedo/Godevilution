@@ -164,6 +164,9 @@ public sealed class AuthoritativeItemCatalogTests
                 SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
                 MaxCharges = 12,
                 ItemActionKind = DiabloItemActionKind.IncreaseStrength,
+                Name = "Charged Item",
+                IdentifiedName = "Identified Charged Item",
+                NativeCursorGraphic = 19,
             },
         ]);
 
@@ -177,6 +180,34 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(3, resolved.SpellId);
         Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, resolved.SpellSourceKind);
         Assert.Equal(DiabloItemActionKind.IncreaseStrength, resolved.ItemActionKind);
+        Assert.Equal("Charged Item", resolved.BaseName);
+        Assert.Equal("Identified Charged Item", resolved.IdentifiedName);
+        Assert.Equal(19, resolved.NativeCursorGraphic);
+    }
+
+    [Fact]
+    public void AuthoredPresentationHydrationPreservesExplicitOverrides()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                Name = "Base Item",
+                IdentifiedName = "Identified Base Item",
+                NativeCursorGraphic = 19,
+            },
+        ]);
+
+        var resolved = catalog.ResolveAuthoredMetadata(
+            AuthoritativeItemState.Empty with {
+                StableItemId = 7,
+                UniqueId = 4,
+                BaseName = "Unique Item",
+                IdentifiedName = "Unique Item",
+                NativeCursorGraphic = 23,
+            });
+
+        Assert.Equal("Unique Item", resolved.BaseName);
+        Assert.Equal("Unique Item", resolved.IdentifiedName);
+        Assert.Equal(23, resolved.NativeCursorGraphic);
     }
 
     [Fact]

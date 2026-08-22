@@ -51,6 +51,9 @@ scaled hit points), not only the client's difficulty label.
 - The native debug console now stays script-free in authoritative mode, using
   only the registered native command list and retaining the legacy console
   behavior for explicit compatibility launches.
+- Snapshot and live world-item hydration now also restores omitted authored
+  presentation names and native cursor graphics without replacing explicit
+  unique-item overrides.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

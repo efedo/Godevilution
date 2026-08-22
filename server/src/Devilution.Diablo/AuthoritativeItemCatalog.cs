@@ -270,6 +270,31 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves presentation metadata only when every matching misc-ID row agrees. */
+    private bool TryGetPresentationDefinitionByMiscId(
+        int miscId,
+        out AuthoritativeItemDefinition definition)
+    {
+        definition = null!;
+        if (miscId <= 0)
+            return false;
+
+        var matches = definitions.Values
+            .Where(item => item.MiscId == miscId)
+            .ToArray();
+        if (matches.Length == 0)
+            return false;
+
+        var first = matches[0];
+        if (matches.Any(match => !string.Equals(match.Name, first.Name, StringComparison.Ordinal)
+                || !string.Equals(match.IdentifiedName, first.IdentifiedName, StringComparison.Ordinal)
+                || match.NativeCursorGraphic != first.NativeCursorGraphic))
+            return false;
+
+        definition = first;
+        return true;
+    }
+
     /** Resolves an unambiguous content-owned spell-source kind by misc ID. */
     public bool TryGetSpellSourceKindByMiscId(
         int miscId,
@@ -559,7 +584,24 @@ public sealed class AuthoritativeItemCatalog
     {
         ArgumentNullException.ThrowIfNull(state);
         var result = ResolveInventoryDimensions(state);
-        if (TryGetByState(state, out var definition)) {
+        var hasIdentityDefinition = TryGetByState(state, out var definition);
+        var hasPresentationDefinition = hasIdentityDefinition
+            || TryGetPresentationDefinitionByMiscId(result.MiscId, out definition);
+        if (hasPresentationDefinition) {
+            if (result.UniqueId == 0) {
+                if (string.IsNullOrEmpty(result.BaseName) && !string.IsNullOrEmpty(definition.Name))
+                    result = result with { BaseName = definition.Name };
+                if (string.IsNullOrEmpty(result.IdentifiedName))
+                    result = result with {
+                        IdentifiedName = string.IsNullOrEmpty(definition.IdentifiedName)
+                            ? definition.Name
+                            : definition.IdentifiedName,
+                    };
+            }
+            if (!result.NativeCursorGraphic.HasValue && definition.NativeCursorGraphic is { } cursorGraphic)
+                result = result with { NativeCursorGraphic = cursorGraphic };
+        }
+        if (hasIdentityDefinition) {
             if (result.Value == 0)
                 result = result with { Value = definition.Value };
             if (result.IdentifiedValue == 0)
