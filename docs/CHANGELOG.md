@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native missile processing now retains authoritative presentation
+  missiles for animation but discards stale legacy missiles before their
+  native gameplay callbacks can run; offline sessions retain legacy missiles.
 - Public native simulation helpers now fail closed while connected so
   movement, combat, lifecycle, trap, door, and other world mutation cannot
   bypass the server-owned game loop; offline sessions retain the legacy

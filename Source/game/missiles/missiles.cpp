@@ -43,6 +43,7 @@
 #include "game/levels/dungeon_common_defs.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/players/players.hpp"
 #include "engine/audio/sound_effect_enums.h"
@@ -4231,6 +4232,7 @@ void ProcessManaShield()
 void ProcessMissiles()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	const bool serverConnected = authoritative::GetServerBackedRuntime().IsConnected();
 	if (MyPlayer->_pmode == PM_STAND && authoritative::GetServerBackedRuntime().IsConnected()) {
 		auto &runtime = authoritative::GetServerBackedRuntime();
 		if (auto result = runtime.UsePortalAt(MyPlayer->position.tile.x, MyPlayer->position.tile.y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
@@ -4240,6 +4242,8 @@ void ProcessMissiles()
 			MyPlayer->_pmode = PM_NEWLVL;
 		}
 	}
+#else
+	constexpr bool serverConnected = false;
 #endif
 
 	for (auto &missile : Missiles) {
@@ -4269,6 +4273,15 @@ void ProcessMissiles()
 						missile._miAnimFrame = missile._miAnimLen;
 				}
 			}
+			continue;
+		}
+		if (!ShouldProcessLegacySimulation(serverConnected)) {
+			// Connected sessions may still contain a stale legacy missile after a
+			// reconnect or an older caller bypasses the authoritative cast route.
+			// Remove it without allowing its native process function to mutate
+			// server-owned gameplay. Authoritative presentation missiles took the
+			// branch above and remain available for rendering.
+			missile._miDelFlag = true;
 			continue;
 		}
 		if (missileData.processFn != nullptr)

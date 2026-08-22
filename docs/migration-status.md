@@ -2,6 +2,10 @@
 
 Status date: 2026-08-22
 
+Connected native missile processing now keeps server-projected missiles on the
+presentation path while discarding stale legacy missiles before their native
+gameplay callbacks can run; offline sessions retain the legacy projectile
+simulation.
 Public native simulation helpers now fail closed while connected, closing the
 direct-call seams around the existing authoritative game-loop gate; offline
 sessions retain the legacy movement, combat, lifecycle, trap, door, and other
