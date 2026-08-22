@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   by stable or native item identity when compatibility state omits those fields.
 - Recharge validation and pricing now resolve authored maximum charges and spell
   identity through stable or native item metadata when state omits those fields.
+- Death-gold classification now treats active non-empty item tags as authoritative
+  instead of allowing a conflicting native type/index to override them.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

@@ -102,6 +102,8 @@ scaled hit points), not only the client's difficulty label.
 - Recharge validation and pricing now resolve authored maximum charges and spell
   identity through stable or native item metadata when compatibility state omits
   those fields.
+- Death-gold classification now honors active non-empty item tags before the
+  native type/index fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

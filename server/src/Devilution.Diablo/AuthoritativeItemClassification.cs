@@ -142,10 +142,11 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(rules);
-        if (items is not null
-            && items.TryGetByState(state, out var definition)
-            && IsGold(definition)) {
-            return true;
+        if (items is not null && items.TryGetByState(state, out var definition)) {
+            if (definition.GenerationTags.Count > 0)
+                return IsGold(definition);
+            if (IsGold(definition))
+                return true;
         }
         return state.ItemType == rules.DeathGoldItemType
             && state.ItemIndex == rules.DeathGoldItemIndex;

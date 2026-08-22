@@ -169,6 +169,21 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void NonGoldTagsOverrideConflictingNativeGoldIdentity()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var definition = CreateDefinition(itemClass: 0, tags: ["Misc"])
+            with {
+                ItemType = rules.DeathGoldItemType,
+                NativeItemIndex = rules.DeathGoldItemIndex,
+            };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = definition.Generate(42);
+
+        Assert.False(AuthoritativeItemClassification.IsGold(state, rules, catalog));
+    }
+
+    [Fact]
     public void ExplicitBeltTagOverridesConflictingLegacyPlacementMetadata()
     {
         var definition = CreateDefinition(itemClass: 0, tags: ["Belt"])
