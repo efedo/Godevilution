@@ -29,4 +29,13 @@ constexpr bool ShouldProcessNativeDrainLife(bool serverConnected) noexcept
 	return !serverConnected;
 }
 
+/**
+ * Native status lifecycle messages are offline-only while the authoritative
+ * server owns connected level-transition state.
+ */
+constexpr bool ShouldProcessLegacyStatusLifecycle(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 } // namespace devilution

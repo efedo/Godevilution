@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native level-transition presentation no longer clears or
+  rebroadcasts server-owned Mana Shield and Reflect state after an authoritative
+  restart or transition; disconnected sessions retain the legacy lifecycle.
 - Native authoritative snapshots now accept protocol-defined Etherealize status
   effects and project the native Etherealize spell flag for local and remote
   player presentation.

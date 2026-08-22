@@ -374,17 +374,26 @@ void DropHalfPlayersGold(Player &player)
 void InitLevelChange(Player &player)
 {
 	const Player &myPlayer = *MyPlayer;
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	const bool serverConnected = authoritative::GetServerBackedRuntime().IsConnected();
+	#else
+	const bool serverConnected = false;
+	#endif
 
 	RemoveEnemyReferences(player);
 	player.removeMissiles();
-	player.pManaShield = false;
-	player.wReflections = 0;
+	const bool processLegacyStatusLifecycle = ShouldProcessLegacyStatusLifecycle(serverConnected);
+	if (processLegacyStatusLifecycle)
+		player.pManaShield = false;
+	if (processLegacyStatusLifecycle)
+		player.wReflections = 0;
 	if (&player != MyPlayer) {
 		// share info about your manashield when another player joins the level
-		if (myPlayer.pManaShield)
+		if (processLegacyStatusLifecycle && myPlayer.pManaShield)
 			NetSendCmd(true, CMD_SETSHIELD);
 		// share info about your reflect charges when another player joins the level
-		NetSendCmdParam1(true, CMD_SETREFLECT, myPlayer.wReflections);
+		if (processLegacyStatusLifecycle)
+			NetSendCmdParam1(true, CMD_SETREFLECT, myPlayer.wReflections);
 	} else if (qtextflag) {
 		qtextflag = false;
 		stream_stop();

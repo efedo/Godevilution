@@ -101,6 +101,12 @@ TEST(ServerBackedCompatibility, ConnectedReflectUsesServerLifecycle)
 	EXPECT_FALSE(ShouldProcessNativeReflect(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLevelTransitionsPreserveNativeStatusState)
+{
+	EXPECT_TRUE(ShouldProcessLegacyStatusLifecycle(false));
+	EXPECT_FALSE(ShouldProcessLegacyStatusLifecycle(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedInventorySortFailsClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyInventorySort(false));
