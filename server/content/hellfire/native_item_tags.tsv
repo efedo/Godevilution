@@ -1,0 +1,15 @@
+item_type	tags
+sword	Weapon
+axe	Weapon
+mace	Weapon
+bow	Bow
+staff	Staff
+shield	Shield
+armor	Armor
+helm	Armor
+light armor	Armor
+medium armor	Armor
+heavy armor	Armor
+misc	Misc
+ring	Misc,Ring
+amulet	Misc,Amulet

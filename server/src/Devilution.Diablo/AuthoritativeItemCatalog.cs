@@ -1084,7 +1084,8 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null,
         AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null,
         AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null,
-        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null,
+        AuthoritativeNativeItemTagCatalog? nativeItemTagCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
@@ -1107,7 +1108,9 @@ public sealed class AuthoritativeItemCatalog
                 1,
                 1,
                 false) {
-                    GenerationTags = LegacyTags(row.Required("itemType")),
+                    GenerationTags = LegacyTags(
+                        row.Required("itemType"),
+                        nativeItemTagCatalog),
                     MinArmorClass = armorMin,
                     MaxArmorClass = armorMax,
                     EquipLocation = ParseLegacyEquipLocation(
@@ -1498,8 +1501,14 @@ public sealed class AuthoritativeItemCatalog
         return flags;
     }
 
-    private static IReadOnlySet<string> LegacyTags(string itemType)
+    private static IReadOnlySet<string> LegacyTags(
+        string itemType,
+        AuthoritativeNativeItemTagCatalog? nativeItemTagCatalog = null)
     {
+        if (nativeItemTagCatalog is not null)
+            return nativeItemTagCatalog.TryGetTags(itemType, out var externalTags)
+                ? new HashSet<string>(externalTags, StringComparer.OrdinalIgnoreCase)
+                : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         switch (itemType.ToLowerInvariant()) {
         case "sword":

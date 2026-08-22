@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.411.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.412.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -1997,7 +1997,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.411.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.412.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -4658,6 +4658,11 @@ public sealed class ShippedContentTests
             File.ReadAllText(Path.Combine(contentRoot, "native_item_hellfire_effects.tsv")));
         Assert.Equal(9, nativeItemHellfireEffects.Definitions.Count);
         Assert.Equal(32, nativeItemHellfireEffects.GetRequiredFlag("ACDEMON"));
+        var nativeItemTags = AuthoritativeNativeItemTagCatalog.LoadTsv(
+            "native_item_tags.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "native_item_tags.tsv")));
+        Assert.Equal(14, nativeItemTags.Definitions.Count);
+        Assert.Contains("Weapon", nativeItemTags.GetRequiredTags("SWORD"));
         Assert.Equal(5U, stableIds.Resolve("ability", "identify"));
         Assert.Equal(26U, stableIds.Resolve("ability", "repair"));
         Assert.Equal(27U, stableIds.Resolve("ability", "recharge"));

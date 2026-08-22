@@ -3,6 +3,10 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Legacy item-type generation tags now resolve through validated external
+  `native_item_tags.tsv` data during content activation, advancing the Diablo
+  content schema to `1.412.0` while retaining direct-loader compatibility
+  fallback.
 - Normalized Hellfire item-effect symbols now resolve through validated external
   `native_item_hellfire_effects.tsv` data during content activation, advancing
   the Diablo content schema to `1.411.0` while retaining direct-loader
