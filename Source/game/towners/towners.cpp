@@ -21,6 +21,7 @@
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
+#include "network/protocol/legacy_player_state_policy.hpp"
 #include "tables/textdat.h"
 #include "tables/townerdat.hpp"
 #include "utils/is_of.hpp"
@@ -807,6 +808,11 @@ void FreeTownerGFX()
 
 void ProcessTowners()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	// BUGFIX: should be `i < numtowners`, was `i < NUM_TOWNERS`
 	for (auto &towner : Towners) {
 		if (towner._ttype == TOWN_DEADGUY) {
