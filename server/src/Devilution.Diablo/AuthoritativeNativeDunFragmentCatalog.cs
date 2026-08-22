@@ -119,6 +119,7 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         var objectsById = objects.ToDictionary(@object => @object.EntityId);
         var targets = (combatTargets ?? []).ToArray();
         var occupiedMegaCells = new HashSet<(uint LevelId, int X, int Y)>();
+        var stagedLevels = new Dictionary<uint, AuthoritativeLevel>();
         foreach (var definition in definitions) {
             if (!world.ContainsLevel(definition.LevelId))
                 throw new InvalidDataException(
@@ -131,7 +132,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 throw new InvalidDataException(
                     $"Native DUN fragment {definition.FragmentId} anchor is on level {anchorLevelId}, expected {definition.LevelId}.");
 
-            var level = world.Levels.Single(candidate => candidate.LevelId == definition.LevelId);
+            if (!stagedLevels.TryGetValue(definition.LevelId, out var level))
+                level = world.Levels.Single(candidate => candidate.LevelId == definition.LevelId);
             var map = AuthoritativeDunMapAsset.Load(
                 definition.AssetPath,
                 content.GetRequiredAsset(definition.AssetPath).Contents);
@@ -246,7 +248,7 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 }
             }
 
-            world.ReplaceLevel(new AuthoritativeLevel(
+            stagedLevels[definition.LevelId] = new AuthoritativeLevel(
                 level.LevelId,
                 level.Width,
                 level.Height,
@@ -262,8 +264,10 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 nativePieceCollisionCells,
                 nativePieceMissileBlockedCells) {
                 StableSymbol = level.StableSymbol,
-            });
+            };
         }
+        foreach (var level in stagedLevels.Values.OrderBy(level => level.LevelId))
+            world.ReplaceLevel(level);
     }
 
     public static AuthoritativeNativeDunFragmentCatalog LoadTsv(

@@ -338,6 +338,34 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         Assert.Contains("even d-piece origin", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PublishesMultipleFragmentReplacementsAtomically()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(1, 24, "fragment.dun", 9, -2, -2),
+            new AuthoritativeNativeDunFragmentDefinition(2, 24, "fragment.dun", 10, -1, -2),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        Assert.Throws<InvalidDataException>(() => catalog.Apply(
+            content,
+            world,
+            [
+                new AuthoritativeWorldObject(9, 6003, 24, 4, 4),
+                new AuthoritativeWorldObject(10, 6004, 24, 4, 4),
+            ]));
+
+        var level = Assert.Single(world.Levels);
+        Assert.Empty(level.NativeMegaTileLayer);
+        Assert.Empty(level.NativeObjectLayer);
+    }
+
     private static byte[] CreateDun(ushort tileId)
     {
         var words = new ushort[19];

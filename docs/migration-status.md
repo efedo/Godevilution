@@ -41,6 +41,9 @@ metadata-only; rows with the pair now retain effective d-piece collision
 provenance for later authoritative mutations.
 Native DUN level activation prepares every replacement before publishing any
 of them, so malformed later assets cannot leave a partially composed world.
+Native DUN fragment activation now uses the same staged publication boundary,
+while retaining ordered composition for multiple non-overlapping fragments on
+one level.
 
 Native `.til`/`.sol` fragment collision provenance now remains attached to
 authoritative d-piece layers, so later `piece_layer_rects` mutations update
