@@ -143,6 +143,53 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidPlayerEnumsBeforeProjection()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        void AssertRejected(Func<StorePlayerSnapshot, StorePlayerSnapshot> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Player = mutate(player),
+                }));
+        }
+
+        AssertRejected(value => value with {
+            AbilityKind = (DiabloPlayerAbilityKind)99,
+        });
+        AssertRejected(value => value with {
+            FacingDirection = (DiabloPlayerDirection)99,
+        });
+        AssertRejected(value => value with {
+            CombatMode = (DiabloPlayerCombatMode)99,
+        });
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(

@@ -403,6 +403,12 @@ internal static class DiabloProtocolMapper
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks)
     {
+        if (!Enum.IsDefined(state.AbilityKind)
+            || !Enum.IsDefined(state.FacingDirection)
+            || !Enum.IsDefined(state.CombatMode)) {
+            throw new InvalidDataException(
+                "Authoritative player projection contains an invalid enum value.");
+        }
         if (state.Attributes.Strength.Base < 0
             || state.Attributes.Strength.Current < 0
             || state.Attributes.Magic.Base < 0

@@ -15,6 +15,8 @@ All notable changes to this fork are documented below.
   boundary, matching client-side resource validation.
 - Reject live authoritative player projections with negative primary attributes,
   matching the save and Godot snapshot validation boundaries.
+- Reject live authoritative player projections with invalid ability, facing, or
+  combat-mode enum values before casting them into the wire schema.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
