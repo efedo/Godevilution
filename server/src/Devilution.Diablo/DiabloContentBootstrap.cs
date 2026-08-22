@@ -685,12 +685,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
             }
         }
-        if (nativeDunFragments is not null) {
-            if (world is null || objects is null)
-                throw new InvalidDataException(
-                    "Native DUN fragments require a world and authored anchor objects.");
-            nativeDunFragments.Apply(content, world, objects);
-        }
         if (world is not null && worldMutations is not null)
             worldMutations.ValidateWorld(world, objects);
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
@@ -902,6 +896,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     world,
                     portals,
                     objects));
+        }
+        if (nativeDunFragments is not null) {
+            if (world is null || objects is null)
+                throw new InvalidDataException(
+                    "Native DUN fragments require a world and authored anchors.");
+            nativeDunFragments.Apply(content, world, objects, combatTargets);
         }
 
         var rules = new DiabloStoreRules(pricing, itemCatalog);

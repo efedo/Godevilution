@@ -11,15 +11,20 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     int AnchorOffsetX,
     int AnchorOffsetY,
     string? TileAssetPath = null,
-    string? SolAssetPath = null)
+    string? SolAssetPath = null,
+    string AnchorUniqueIdentity = "")
 {
     /** Stable level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
 
     public AuthoritativeNativeDunFragmentDefinition Validate()
     {
+        var uniqueIdentity = AnchorUniqueIdentity.Trim();
+        var hasUniqueAnchor = uniqueIdentity.Length != 0;
         if (FragmentId == 0
-            || AnchorEntityId == 0
+            || AnchorEntityId != 0 && hasUniqueAnchor
+            || AnchorEntityId == 0 && !hasUniqueAnchor
+            || uniqueIdentity.Length > 128
             || !IsRelativeDunAssetPath(AssetPath)) {
             throw new InvalidDataException(
                 $"Native DUN fragment {FragmentId} contains invalid identity or asset metadata.");
@@ -32,7 +37,9 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
             throw new InvalidDataException(
                 $"Native DUN fragment {FragmentId} must declare a safe .til/.sol asset pair.");
         }
-        return this;
+        return uniqueIdentity == AnchorUniqueIdentity
+            ? this
+            : this with { AnchorUniqueIdentity = uniqueIdentity };
     }
 
     private static bool IsRelativeDunAssetPath(string path)
@@ -82,30 +89,33 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
     public void Apply(
         ComposedContent content,
         AuthoritativeWorld world,
-        IEnumerable<AuthoritativeWorldObject> objects)
+        IEnumerable<AuthoritativeWorldObject> objects,
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(objects);
         var objectsById = objects.ToDictionary(@object => @object.EntityId);
+        var targets = (combatTargets ?? []).ToArray();
         var occupiedMegaCells = new HashSet<(uint LevelId, int X, int Y)>();
         foreach (var definition in definitions) {
             if (!world.ContainsLevel(definition.LevelId))
                 throw new InvalidDataException(
                     $"Native DUN fragment {definition.FragmentId} references unknown level {definition.LevelId}.");
-            if (!objectsById.TryGetValue(definition.AnchorEntityId, out var anchor))
+            var (anchorX, anchorY, anchorLevelId) = ResolveAnchor(
+                definition,
+                objectsById,
+                targets);
+            if (anchorLevelId != definition.LevelId)
                 throw new InvalidDataException(
-                    $"Native DUN fragment {definition.FragmentId} references missing anchor entity {definition.AnchorEntityId}.");
-            if (anchor.LevelId != definition.LevelId)
-                throw new InvalidDataException(
-                    $"Native DUN fragment {definition.FragmentId} anchor entity {definition.AnchorEntityId} is on level {anchor.LevelId}, expected {definition.LevelId}.");
+                    $"Native DUN fragment {definition.FragmentId} anchor is on level {anchorLevelId}, expected {definition.LevelId}.");
 
             var level = world.Levels.Single(candidate => candidate.LevelId == definition.LevelId);
             var map = AuthoritativeDunMapAsset.Load(
                 definition.AssetPath,
                 content.GetRequiredAsset(definition.AssetPath).Contents);
-            var originX = checked(anchor.PositionX + definition.AnchorOffsetX);
-            var originY = checked(anchor.PositionY + definition.AnchorOffsetY);
+            var originX = checked(anchorX + definition.AnchorOffsetX);
+            var originY = checked(anchorY + definition.AnchorOffsetY);
             if (originX % 2 != 0 || originY % 2 != 0)
                 throw new InvalidDataException(
                     $"Native DUN fragment {definition.FragmentId} must have an even d-piece origin.");
@@ -214,13 +224,42 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 row.RequiredUInt32("fragment_id"),
                 AuthoritativeLevelIdentity.Resolve(row, stableIds),
                 row.Required("asset_path"),
-                row.RequiredUInt32("anchor_entity_id"),
+                row.OptionalUInt32("anchor_entity_id"),
                 row.RequiredInt32("anchor_offset_x"),
                 row.RequiredInt32("anchor_offset_y"),
                 OptionalAssetPath(row, "tile_asset_path"),
-                OptionalAssetPath(row, "sol_asset_path")) {
+                OptionalAssetPath(row, "sol_asset_path"),
+                row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
+                    ? anchorUniqueIdentity
+                    : string.Empty) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
             }));
+    }
+
+    private static (int X, int Y, uint LevelId) ResolveAnchor(
+        AuthoritativeNativeDunFragmentDefinition definition,
+        IReadOnlyDictionary<uint, AuthoritativeWorldObject> objects,
+        IReadOnlyList<AuthoritativeCombatTarget> combatTargets)
+    {
+        if (definition.AnchorEntityId != 0) {
+            if (!objects.TryGetValue(definition.AnchorEntityId, out var objectAnchor))
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} references missing anchor entity {definition.AnchorEntityId}.");
+            return (objectAnchor.PositionX, objectAnchor.PositionY, objectAnchor.LevelId);
+        }
+
+        var matches = combatTargets
+            .Where(target => target.IsUnique
+                && string.Equals(
+                    target.UniqueIdentity,
+                    definition.AnchorUniqueIdentity,
+                    StringComparison.Ordinal))
+            .ToArray();
+        if (matches.Length != 1)
+            throw new InvalidDataException(
+                $"Native DUN fragment {definition.FragmentId} unique anchor '{definition.AnchorUniqueIdentity}' "
+                + $"must match exactly one encounter; found {matches.Length}.");
+        return (matches[0].PositionX, matches[0].PositionY, matches[0].LevelId);
     }
 
     private static string? OptionalAssetPath(TsvRow row, string column)

@@ -647,6 +647,11 @@ scaled hit points), not only the client's difficulty label.
   deterministic origin for future set-piece transitions; fixed-object anchors
   remain backward compatible.
 
+- Native DUN fragments now accept the same optional unique-identity anchor. The
+  content bootstrap applies those fragments after generated encounter planning,
+  allowing a future authored quest fragment to follow a generated unique target
+  without checking proprietary map assets into the repository.
+
 - Schema 1.372 adds the composite
   `GrantSpellLevelAndSpawnProjectile` object effect. One validated server-owned
   interaction can now grant a spell level and create its Phasing or Guardian

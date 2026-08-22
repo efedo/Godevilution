@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   encounter by identity, removing the fixed-object-anchor limitation for future
   generated set-piece transitions while preserving existing object anchors.
 
+- Extend native DUN fragment composition with validated unique-encounter anchors;
+  generated anchored fragments are now applied after encounter planning while
+  existing fixed-object fragments remain unchanged.
+
 - Refresh the migration verification baseline to record the current Diablo
   module result: 1,452 of 1,452 focused module tests pass.
 
