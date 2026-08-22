@@ -3527,7 +3527,8 @@ public sealed class DiabloSimulationTests
             lifeMaximum: 1,
             characterLevel: 1,
             levelId: 0,
-            armorClass: 0));
+            armorClass: 0,
+            inventory: []));
         Assert.Contains("invalid inventory-grid reference", gridException.Message, StringComparison.Ordinal);
 
         var spellException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
@@ -3548,60 +3549,6 @@ public sealed class DiabloSimulationTests
             armorClass: 0,
             memorizedSpells: [new MemorizedSpellState(1, 1), new MemorizedSpellState(1, 2)]));
         Assert.Contains("invalid memorized-spell state", spellException.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void PlayerTemplateRejectsInvalidAndOverlappingStashPlacement()
-    {
-        var rangeException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
-            gold: 0,
-            experience: 0,
-            life: 1,
-            mana: 0,
-            manaMaximum: 0,
-            attributes: PlayerAttributesState.Zero,
-            equipment: [],
-            inventoryGrid: [],
-            belt: [],
-            positionX: 0,
-            positionY: 0,
-            lifeMaximum: 1,
-            characterLevel: 1,
-            levelId: 0,
-            armorClass: 0,
-            stash: [new StashStoreItem(
-                DiabloStashLayout.PageCount,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                AuthoritativeItemState.Empty)]));
-        Assert.Contains("invalid stash placement", rangeException.Message, StringComparison.Ordinal);
-
-        var state = AuthoritativeItemState.Empty with { InventoryWidth = 2 };
-        var overlapException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
-            gold: 0,
-            experience: 0,
-            life: 1,
-            mana: 0,
-            manaMaximum: 0,
-            attributes: PlayerAttributesState.Zero,
-            equipment: [],
-            inventoryGrid: [],
-            belt: [],
-            positionX: 0,
-            positionY: 0,
-            lifeMaximum: 1,
-            characterLevel: 1,
-            levelId: 0,
-            armorClass: 0,
-            stash: [
-                new StashStoreItem(0, 0, 0, 0, 1, 0, 0, state),
-                new StashStoreItem(0, 1, 0, 1, 2, 0, 0, state),
-            ]));
-        Assert.Contains("overlapping or out-of-range stash item", overlapException.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -3834,6 +3781,57 @@ public sealed class DiabloSimulationTests
             armorClass: 0,
             inventory: [new OwnedStoreItem(0, 0, 42, 0, 0, state)]));
         Assert.Contains("duplicate item identity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PlayerTemplateRejectsInvalidItemIdentityMetadata()
+    {
+        var emptyIdentityException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [0],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            inventory: [new OwnedStoreItem(0, 0, 0, 0, 0, AuthoritativeItemState.Empty)]));
+        Assert.Contains("invalid item identity metadata", emptyIdentityException.Message, StringComparison.Ordinal);
+
+        var presentationException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [0],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            inventory: [new OwnedStoreItem(
+                0,
+                0,
+                1,
+                0,
+                0,
+                AuthoritativeItemState.Empty with {
+                    BaseName = "Valid",
+                    NativeCursorGraphic = 256,
+                })]));
+        Assert.Contains("invalid item identity metadata", presentationException.Message, StringComparison.Ordinal);
     }
 
     private static GameplayModuleContext CreateContext()

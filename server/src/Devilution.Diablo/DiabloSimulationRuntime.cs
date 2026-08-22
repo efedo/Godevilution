@@ -113,15 +113,19 @@ public sealed class DiabloPlayerTemplate
         ValidateSlotRange(belt, item => item.Slot, 8, "belt");
         ValidateUniqueSlots(equipment, item => item.Slot, "equipment");
         ValidateUniqueSlots(belt, item => item.Slot, "belt");
-        ValidateInventoryGrid(inventoryGrid, inventory?.Count ?? 0);
+        ValidateInventoryGrid(inventoryGrid, inventory);
         ValidateMemorizedSpells(memorizedSpells);
-        ValidateStashPlacement(stash);
         var itemIdentities = new HashSet<(uint Seed, uint CreateInfo, int ItemIndex)>();
         ValidateItemIdentities(inventory, item => item.ItemSeed, item => item.State, itemIdentities);
         ValidateItemIdentities(equipment, item => item.ItemSeed, item => item.State, itemIdentities);
         ValidateItemIdentities(belt, item => item.ItemSeed, item => item.State, itemIdentities);
         ValidateItemIdentities(stash, item => item.ItemSeed, item => item.State, itemIdentities);
         ValidateItemIdentity(heldItem, itemIdentities);
+        ValidateCollectionItemMetadata(inventory, item => item.ItemSeed, item => item.State, items);
+        ValidateCollectionItemMetadata(equipment, item => item.ItemSeed, item => item.State, items);
+        ValidateCollectionItemMetadata(belt, item => item.ItemSeed, item => item.State, items);
+        ValidateCollectionItemMetadata(stash, item => item.ItemSeed, item => item.State, items);
+        ValidateOwnedItemMetadata(heldItem, item => item.ItemSeed, item => item.State, items);
         Gold = gold;
         Experience = experience;
         Life = life;
@@ -318,9 +322,11 @@ public sealed class DiabloPlayerTemplate
 
         static void ValidateInventoryGrid(
             IReadOnlyList<int>? grid,
-            int inventoryCount)
+            IReadOnlyList<OwnedStoreItem>? inventory)
         {
-            if (grid is not null && grid.Any(cell => cell < -1 || cell >= inventoryCount))
+            if (grid is not null
+                && inventory is not null
+                && grid.Any(cell => cell < -1 || cell >= inventory.Count))
                 throw new InvalidDataException(
                     "Player template contains an invalid inventory-grid reference.");
         }
@@ -339,43 +345,6 @@ public sealed class DiabloPlayerTemplate
                     .Count() != spells.Count) {
                 throw new InvalidDataException(
                     "Player template contains invalid memorized-spell state.");
-            }
-        }
-
-        static void ValidateStashPlacement(IReadOnlyList<StashStoreItem>? stash)
-        {
-            if (stash is null)
-                return;
-
-            var pages = new Dictionary<uint, int[]>();
-            foreach (var item in stash) {
-                if (item is null
-                    || item.Page >= DiabloStashLayout.PageCount
-                    || item.Cell >= DiabloStashLayout.CellCount
-                    || item.State is null) {
-                    throw new InvalidDataException(
-                        "Player template contains an invalid stash placement.");
-                }
-
-                if (!pages.TryGetValue(item.Page, out var page)) {
-                    page = DiabloStashLayout.CreateEmptyPage();
-                    pages.Add(item.Page, page);
-                }
-
-                if (!DiabloStashLayout.CanPlace(
-                        page,
-                        item.Cell,
-                        item.State.InventoryWidth,
-                        item.State.InventoryHeight)) {
-                    throw new InvalidDataException(
-                        "Player template contains an overlapping or out-of-range stash item.");
-                }
-
-                DiabloStashLayout.Fill(
-                    page,
-                    item.Cell,
-                    item.State.InventoryWidth,
-                    item.State.InventoryHeight);
             }
         }
 
@@ -414,6 +383,63 @@ public sealed class DiabloPlayerTemplate
             var state = stateSelector(item);
             return state is not null
                 && identities.Add((seedSelector(item), state.CreateInfo, state.ItemIndex));
+        }
+
+        static void ValidateCollectionItemMetadata<T>(
+            IReadOnlyList<T>? values,
+            Func<T, uint> seedSelector,
+            Func<T, AuthoritativeItemState?> stateSelector,
+            AuthoritativeItemCatalog? items)
+        {
+            if (values is null)
+                return;
+            foreach (var item in values)
+                ValidateItemIdentityMetadata(seedSelector(item), stateSelector(item), items);
+        }
+
+        static void ValidateOwnedItemMetadata(
+            OwnedStoreItem? item,
+            Func<OwnedStoreItem, uint> seedSelector,
+            Func<OwnedStoreItem, AuthoritativeItemState?> stateSelector,
+            AuthoritativeItemCatalog? items)
+        {
+            if (item is not null)
+                ValidateItemIdentityMetadata(seedSelector(item), stateSelector(item), items);
+        }
+
+        static void ValidateItemIdentityMetadata(
+            uint itemSeed,
+            AuthoritativeItemState? state,
+            AuthoritativeItemCatalog? items)
+        {
+            if (state is null
+                || (state.StableItemId != 0
+                    && items is not null
+                    && !items.TryGet(state.StableItemId, out _))
+                || !HasValidItemIdentity(itemSeed, state)) {
+                throw new InvalidDataException(
+                    "Player template contains invalid item identity metadata.");
+            }
+        }
+
+        static bool HasValidItemIdentity(
+            uint itemSeed,
+            AuthoritativeItemState state)
+        {
+            var hasPresentation = !string.IsNullOrEmpty(state.BaseName)
+                || !string.IsNullOrEmpty(state.IdentifiedName)
+                || state.NativeCursorGraphic.HasValue;
+            if (!hasPresentation)
+                return itemSeed != 0;
+            var hasValidNames = !string.IsNullOrEmpty(state.BaseName)
+                && !string.IsNullOrEmpty(state.IdentifiedName)
+                && !state.BaseName.Contains('\0')
+                && !state.IdentifiedName.Contains('\0')
+                && System.Text.Encoding.UTF8.GetByteCount(state.BaseName) < 64
+                && System.Text.Encoding.UTF8.GetByteCount(state.IdentifiedName) < 64;
+            return hasValidNames
+                && (!state.NativeCursorGraphic.HasValue
+                    || state.NativeCursorGraphic is >= 0 and <= byte.MaxValue);
         }
     }
 
