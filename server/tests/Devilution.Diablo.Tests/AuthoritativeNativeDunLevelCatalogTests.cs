@@ -111,6 +111,30 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
     }
 
     [Fact]
+    public void PublishesMultipleLevelReplacementsAtomically()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(2, 2, 2));
+        world.AddLevel(new AuthoritativeLevel(3, 2, 2));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("level2.dun", CreateDun([1, 0, 0, 0])),
+                new ContentAsset("level3.dun", CreateDun(
+                    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])),
+            ]),
+        ]));
+        var catalog = new AuthoritativeNativeDunLevelCatalog([
+            new AuthoritativeNativeDunLevelDefinition(2, "level2.dun"),
+            new AuthoritativeNativeDunLevelDefinition(3, "level3.dun"),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => catalog.Apply(content, world));
+
+        Assert.Empty(world.Levels.Single(level => level.LevelId == 2).NativeObjectLayer);
+        Assert.Empty(world.Levels.Single(level => level.LevelId == 3).NativeObjectLayer);
+    }
+
+    [Fact]
     public void RejectsNativeObjectLayerDimensionsThatDoNotMatchLevel()
     {
         var world = new AuthoritativeWorld();

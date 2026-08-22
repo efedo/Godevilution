@@ -39,6 +39,8 @@ Schema 1.416 extends ordinary `native_dun_levels.tsv` rows with optional
 validated `.til`/`.sol` collision assets. Legacy rows remain object/mega-tile
 metadata-only; rows with the pair now retain effective d-piece collision
 provenance for later authoritative mutations.
+Native DUN level activation prepares every replacement before publishing any
+of them, so malformed later assets cannot leave a partially composed world.
 
 Native `.til`/`.sol` fragment collision provenance now remains attached to
 authoritative d-piece layers, so later `piece_layer_rects` mutations update

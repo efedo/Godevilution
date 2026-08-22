@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
 - Extend ordinary native-DUN level rows with optional validated `.til`/`.sol`
   collision assets, advancing the Diablo content schema to `1.416.0` while
   preserving metadata-only behavior for legacy rows.
+- Publish ordinary native-DUN level replacements only after the complete
+  catalog validates, preventing partial world composition on activation errors.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining

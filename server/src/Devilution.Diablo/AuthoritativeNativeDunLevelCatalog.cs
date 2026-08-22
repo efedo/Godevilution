@@ -88,6 +88,7 @@ public sealed class AuthoritativeNativeDunLevelCatalog
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(world);
         ValidateWorld(world);
+        var replacements = new List<AuthoritativeLevel>(definitions.Count);
         foreach (var definition in definitions) {
             var level = world.Levels.Single(candidate => candidate.LevelId == definition.LevelId);
             var map = AuthoritativeDunMapAsset.Load(
@@ -99,7 +100,7 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                     + $"do not match level {level.Width}x{level.Height}.");
             }
             var nativeGeometry = LoadOptionalGeometry(content, definition, map);
-            world.ReplaceLevel(new AuthoritativeLevel(
+            replacements.Add(new AuthoritativeLevel(
                 level.LevelId,
                 level.Width,
                 level.Height,
@@ -119,6 +120,8 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                     : definition.LevelSymbol,
             });
         }
+        foreach (var replacement in replacements)
+            world.ReplaceLevel(replacement);
     }
 
     private static AuthoritativeLevel? LoadOptionalGeometry(
