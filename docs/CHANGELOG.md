@@ -36,6 +36,8 @@ All notable changes to this fork are documented below.
   character levels outside the native-compatible projection ranges.
 - Godot now rejects malformed authoritative projectile identity, effect ranges,
   lifecycle codes, and presentation metadata before combat presentation.
+- Godot now rejects malformed authoritative monster combat ranges, resistances,
+  hit chances, death timelines, and bounded native scalar state.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

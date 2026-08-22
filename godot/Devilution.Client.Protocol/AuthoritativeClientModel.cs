@@ -15,6 +15,11 @@ public sealed class AuthoritativeClientModel
     private const int MaximumProjectileDamageType = 4;
     private const int MaximumProjectileBehavior = 59;
     private const int MaximumProjectilePhase = 1;
+    private const int MaximumNativeMonsterDirection = 7;
+    private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
+    private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
+    private const int MaximumNativeMonsterToHit = 255;
+    private const int MaximumNativeMonsterIntelligence = 255;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
@@ -134,6 +139,7 @@ public sealed class AuthoritativeClientModel
             foreach (var monster in message.Snapshot.Monsters) {
                 ValidateEntityId(entityIds, monster.EntityId);
                 ValidateMonsterVitality(monster);
+                ValidateMonsterCombatState(monster);
             }
             foreach (var item in message.Snapshot.WorldItems) {
                 ValidateEntityId(entityIds, item.EntityId);
@@ -865,6 +871,36 @@ public sealed class AuthoritativeClientModel
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid visited-level state.");
+        }
+    }
+
+    private static void ValidateMonsterCombatState(MonsterSnapshot monster)
+    {
+        if (monster.AttackDamage < 0
+            || monster.MinDamage < 0
+            || monster.MaxDamage < 0
+            || monster.MaxDamage < monster.MinDamage
+            || monster.MinDamageSpecial < 0
+            || monster.MaxDamageSpecial < 0
+            || monster.MaxDamageSpecial < monster.MinDamageSpecial
+            || monster.AggroRange < 0
+            || monster.MonsterLevel < 0
+            || monster.DeathAnimationTicks is < 0 or > MaximumNativeMonsterDeathAnimationTicks
+            || monster.DeathTicksRemaining < 0
+            || monster.DeathTicksRemaining > monster.DeathAnimationTicks
+            || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
+            || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
+            || monster.ToHit is < 0 or > MaximumNativeMonsterToHit
+            || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
+            || monster.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
+            || monster.Direction is < 0 or > MaximumNativeMonsterDirection
+            || monster.FireResistance is < -100 or > 100
+            || monster.LightningResistance is < -100 or > 100
+            || monster.MagicResistance is < -100 or > 100
+            || monster.AcidResistance is < -100 or > 100
+            || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid monster combat state.");
         }
     }
 

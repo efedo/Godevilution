@@ -1625,6 +1625,58 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedAuthoritativeMonsterCombatState()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    HitPoints = 3,
+                    MaxHitPoints = 5,
+                    HitPointsQ6 = 192,
+                    MaxHitPointsQ6 = 320,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.AttackDamage = -1,
+            monster => monster.MinDamage = 5,
+            monster => monster.MaxDamage = -1,
+            monster => monster.MinDamageSpecial = 5,
+            monster => monster.MaxDamageSpecial = -1,
+            monster => monster.AggroRange = -1,
+            monster => monster.MonsterLevel = -1,
+            monster => monster.DeathAnimationTicks = 1025,
+            monster => monster.DeathTicksRemaining = -1,
+            monster => monster.ExperienceReward = 1_000_001,
+            monster => monster.ToHit = 256,
+            monster => monster.ToHitSpecial = -1,
+            monster => monster.Intelligence = 256,
+            monster => monster.Direction = 8,
+            monster => monster.FireResistance = -101,
+            monster => monster.LightningResistance = 101,
+            monster => monster.MagicResistance = -101,
+            monster => monster.AcidResistance = 101,
+            monster => monster.OwnerPlayerId = 11,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+
+        var invalidDeathTimeline = valid.Clone();
+        invalidDeathTimeline.Monsters[0].DeathAnimationTicks = 5;
+        invalidDeathTimeline.Monsters[0].DeathTicksRemaining = 1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidDeathTimeline)));
+    }
+
+    [Fact]
     public void ValidatesAndRetainsAuthoritativePlayerFacing()
     {
         var model = new AuthoritativeClientModel();

@@ -78,6 +78,8 @@ scaled hit points), not only the client's difficulty label.
   resource-base, and character-level ranges while retaining zero defaults.
 - Godot now validates projectile source/lifetime identity, damage channels,
   dynamic damage ranges, lifecycle codes, and typed visual identities.
+- Godot now validates monster damage ranges, resistances, hit chances,
+  death-timer relationships, ownership, and bounded native combat metadata.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
