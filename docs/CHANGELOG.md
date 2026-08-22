@@ -59,6 +59,8 @@ All notable changes to this fork are documented below.
   spell, and item targeting enums before converting them to native state.
 - Native and Godot authoritative item projections now reject unsigned prices
   that cannot be represented by the legacy native integer price field.
+- The authoritative Diablo save boundary now rejects the same out-of-range item
+  prices before restoring player, world, or active-store state.
 - The native authoritative projection now rejects non-empty visited-level sets
   that omit the player’s current level, matching the server and Godot boundary.
 - Use content-owned `Book` item tags for spell-book template generation,

@@ -2869,6 +2869,65 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRejectsUnrepresentablePlayerAndWorldItemPrices()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+        var source = CreatePlayer();
+        var playerSnapshot = simulation.CaptureSnapshot(source, 1) with {
+            Player = simulation.CapturePlayerState(source) with {
+                Inventory = [new OwnedStoreItem(
+                    0,
+                    0,
+                    42,
+                    uint.MaxValue,
+                    0,
+                    AuthoritativeItemState.Empty with {
+                        ItemType = 1,
+                        ItemIndex = 1,
+                    })],
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), playerSnapshot));
+
+        var worldSnapshot = simulation.CaptureSnapshot(source, 1) with {
+            WorldItems = [new DiabloWorldItemState(
+                20,
+                0,
+                1,
+                0,
+                42,
+                uint.MaxValue,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemIndex = 1,
+                })],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), worldSnapshot));
+
+        var storeCatalog = new StoreCatalog();
+        storeCatalog.AddStore(1, [new StoreItem(0, 42, 10)]);
+        var storeSimulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                storeCatalog,
+                DiabloModule.Instance.Rules));
+        var storeSource = CreatePlayer();
+        storeSource.ActiveStoreId = 1;
+        var storeSnapshot = storeSimulation.CaptureSnapshot(storeSource, 1);
+        var invalidStore = storeSnapshot with {
+            ActiveStore = storeSnapshot.ActiveStore! with {
+                Items = [storeSnapshot.ActiveStore.Items[0] with { Price = uint.MaxValue }],
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            storeSimulation.RestoreSnapshot(CreatePlayer(), invalidStore));
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsUnknownStableItemIdWhenCatalogIsActive()
     {
         var items = new AuthoritativeItemCatalog([

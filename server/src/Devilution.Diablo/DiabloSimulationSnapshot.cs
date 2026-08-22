@@ -892,6 +892,7 @@ public sealed partial class DiabloSimulation
 
         var restoredWorldItems = snapshot.WorldItems.Select(item => {
             if (item.State is null
+                || !IsNativeItemPrice(item.Price)
                 || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || !WorldState.IsWalkable(item.LevelId, item.PositionX, item.PositionY)
@@ -1782,6 +1783,7 @@ public sealed partial class DiabloSimulation
             || !storeCatalog.ContainsStore(store.StoreId)
             || store.Items.Any(item => item is null
                 || item.State is null
+                || !IsNativeItemPrice(item.Price)
                 || !HasKnownStableItemIdentity(item.State))
             || store.Items.Select(item => item.StoreSlot).Distinct().Count() != store.Items.Count) {
             throw new InvalidDataException(
@@ -2496,6 +2498,7 @@ public sealed partial class DiabloSimulation
         foreach (var item in source.Inventory) {
             if (item is null
                 || item.State is null
+                || !IsNativeItemPrice(item.Price)
                 || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || !InventoryGridLayout.HasValidDimensions(
@@ -2562,6 +2565,7 @@ public sealed partial class DiabloSimulation
                 || item.Page >= DiabloStashLayout.PageCount
                 || item.Cell >= DiabloStashLayout.CellCount
                 || item.State is null
+                || !IsNativeItemPrice(item.Price)
                 || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || !InventoryGridLayout.HasValidDimensions(
@@ -2593,7 +2597,8 @@ public sealed partial class DiabloSimulation
                 item.State.InventoryHeight);
         }
         if (source.HeldItem is { } heldItem
-            && (heldItem.State is null
+            && (!IsNativeItemPrice(heldItem.Price)
+                || heldItem.State is null
                 || !HasKnownStableItemIdentity(heldItem.State)
                 || !HasValidItemIdentity(heldItem.ItemSeed, heldItem.State)
                 || !InventoryGridLayout.HasValidDimensions(
@@ -2655,6 +2660,8 @@ public sealed partial class DiabloSimulation
             && (!state.NativeCursorGraphic.HasValue
                 || state.NativeCursorGraphic is >= 0 and <= byte.MaxValue);
     }
+
+    private static bool IsNativeItemPrice(uint price) => price <= int.MaxValue;
 
     private bool HasKnownStableItemIdentity(AuthoritativeItemState state)
     {
