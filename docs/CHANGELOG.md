@@ -42,6 +42,8 @@ All notable changes to this fork are documented below.
   offline multiplayer retains the legacy commands.
 - Connected native clients now ignore legacy item protocol messages;
   authoritative world-item and inventory commands remain server-owned.
+- Connected native clients now ignore legacy `CMD_ADD*` attribute messages;
+  character-panel allocation remains server-owned.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

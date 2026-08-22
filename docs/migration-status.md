@@ -177,6 +177,8 @@ scaled hit points), not only the client's difficulty label.
   offline multiplayer retains the legacy commands.
 - Connected native clients now ignore legacy item protocol messages;
   authoritative world-item and inventory commands remain server-owned.
+- Connected native clients now ignore legacy `CMD_ADD*` attribute messages;
+  character-panel allocation remains server-owned.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

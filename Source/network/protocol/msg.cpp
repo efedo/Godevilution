@@ -45,6 +45,7 @@
 #include "game/items/item_pool.hpp"
 #include "game/monsters/validation.hpp"
 #include "network/protocol/network_ticks.h"
+#include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
@@ -1229,6 +1230,10 @@ size_t OnWalk(const TCmdLoc &message, Player &player)
 
 size_t OnAddStrength(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyAttributeMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &message, sizeof(message));
 	else if (message.wParam1 <= 256)
@@ -1239,6 +1244,10 @@ size_t OnAddStrength(const TCmdParam1 &message, Player &player)
 
 size_t OnAddMagic(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyAttributeMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &message, sizeof(message));
 	else if (message.wParam1 <= 256)
@@ -1249,6 +1258,10 @@ size_t OnAddMagic(const TCmdParam1 &message, Player &player)
 
 size_t OnAddDexterity(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyAttributeMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &message, sizeof(message));
 	else if (message.wParam1 <= 256)
@@ -1259,6 +1272,10 @@ size_t OnAddDexterity(const TCmdParam1 &message, Player &player)
 
 size_t OnAddVitality(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyAttributeMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &message, sizeof(message));
 	else if (message.wParam1 <= 256)
