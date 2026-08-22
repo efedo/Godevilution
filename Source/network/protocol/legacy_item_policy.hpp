@@ -20,6 +20,12 @@ constexpr bool ShouldProcessLegacyInventoryMutation(bool serverConnected) noexce
 	return !serverConnected;
 }
 
+/** Direct legacy identify, repair, recharge, and oil callbacks are offline-only. */
+constexpr bool ShouldProcessLegacyItemServiceMutation(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 /**
  * Legacy item-use handlers remain available offline. Connected scroll and rune
  * casts are the only legacy item-use shape that is still allowed to continue

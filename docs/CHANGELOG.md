@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Guard direct connected identify, repair, recharge, and oil cursor callbacks;
+  stable-reference item-service commands remain the connected mutation path.
 - Guard direct connected town-opening helpers before legacy hive or grave
   commands can mutate local town state; authoritative object operations remain
   the connected route.

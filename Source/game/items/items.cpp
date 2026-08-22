@@ -4051,6 +4051,11 @@ void GetItemStr(Item &item)
 
 void CheckIdentify(Player &player, int cii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Item *pi;
 
 	if (cii >= NUM_INVLOC)
@@ -4064,6 +4069,11 @@ void CheckIdentify(Player &player, int cii)
 
 void DoRepair(Player &player, int cii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Item *pi;
 
 	PlaySfxLoc(SfxID::SpellRepair, player.position.tile);
@@ -4080,6 +4090,11 @@ void DoRepair(Player &player, int cii)
 
 void DoRecharge(Player &player, int cii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Item *pi;
 
 	if (cii >= NUM_INVLOC) {
@@ -4094,6 +4109,11 @@ void DoRecharge(Player &player, int cii)
 
 bool DoOil(Player &player, int cii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+	#endif
+
 	Item *pi;
 	if (cii >= NUM_INVLOC) {
 		pi = &player.InvList[cii - NUM_INVLOC];

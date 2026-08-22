@@ -183,6 +183,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyInventoryMutationsFailClosed)
 	EXPECT_FALSE(ShouldProcessLegacyInventoryMutation(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyItemServicesFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyItemServiceMutation(false));
+	EXPECT_FALSE(ShouldProcessLegacyItemServiceMutation(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyStoreMutationsFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyStoreMutation(false));
