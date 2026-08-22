@@ -388,6 +388,43 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsDuplicateActiveStoreSlots()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            12,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            new DiabloStoreState(
+                12,
+                [
+                    new StoreItem(1, 7, 0),
+                    new StoreItem(1, 8, 0),
+                ]));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void RejectsInvalidCharacterNameBeforeProjection()
     {
         var player = new StorePlayerSnapshot(

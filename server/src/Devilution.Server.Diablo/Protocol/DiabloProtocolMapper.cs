@@ -18,6 +18,15 @@ internal static class DiabloProtocolMapper
     {
         ArgumentNullException.ThrowIfNull(source);
         ValidateProjectedStoreState(source);
+        if (source.ActiveStore is not null) {
+            var storeSlots = new HashSet<uint>();
+            foreach (var item in source.ActiveStore.Items) {
+                if (!storeSlots.Add(item.StoreSlot)) {
+                    throw new InvalidDataException(
+                        "Authoritative active-store stock contains duplicate slots.");
+                }
+            }
+        }
         if (source.WorldItems.Any(item => item.Price > int.MaxValue)
             || source.ActiveStore?.Items.Any(item => item.Price > int.MaxValue) == true) {
             throw new InvalidDataException(
