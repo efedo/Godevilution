@@ -1103,6 +1103,56 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsPlayerValuesOutsideNativeRanges()
+    {
+        var model = new AuthoritativeClientModel();
+        var invalidGold = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Gold = uint.MaxValue,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidGold)));
+
+        var invalidStashGold = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    StashGold = uint.MaxValue,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidStashGold)));
+
+        var invalidReflectCharges = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    ReflectCharges = ushort.MaxValue + 1U,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidReflectCharges)));
+
+        var invalidProgression = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    CharacterLevel = 51,
+                    StatPoints = uint.MaxValue,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidProgression)));
+    }
+
+    [Fact]
     public void RejectsImpossibleCoreItemStateRanges()
     {
         var model = new AuthoritativeClientModel();

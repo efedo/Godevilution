@@ -10,6 +10,8 @@ public sealed class AuthoritativeClientModel
     private const uint MaximumStableSpellId = byte.MaxValue;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
+    private const uint MaximumNativeCharacterLevel = 50;
+    private const uint MaximumNativeReflectCharges = ushort.MaxValue;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
@@ -559,7 +561,14 @@ public sealed class AuthoritativeClientModel
             || player.LifeMaximum > 0 && player.Life > player.LifeMaximum
             || player.Mana < 0
             || player.ManaMaximum < 0
-            || player.ManaMaximum > 0 && player.Mana > player.ManaMaximum) {
+            || player.ManaMaximum > 0 && player.Mana > player.ManaMaximum
+            || player.BaseLifeMaximum < 0
+            || player.BaseManaMaximum < 0
+            || player.Gold > int.MaxValue
+            || player.StashGold > int.MaxValue
+            || player.StatPoints > int.MaxValue
+            || player.ReflectCharges > MaximumNativeReflectCharges
+            || player.CharacterLevel > MaximumNativeCharacterLevel) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid player resources.");
         }
