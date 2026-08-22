@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- The native debug towner command now fails closed in authoritative mode,
+  preventing direct legacy quest and store mutation through debug entry points.
 - Connected native unique-monster conversations now fail closed when no
   authored server quest dialogue is available instead of entering legacy quest
   mutation handlers.

@@ -933,6 +933,11 @@ void UpdateCowFarmerAnimAfterQuestComplete()
 #ifdef _DEBUG
 bool DebugTalkToTowner(_talker_id type)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode())
+		return false;
+	#endif
+
 	if (!IsTownerPresent(type))
 		return false;
 	// cows have an init function that differs from the rest and isn't compatible with this code, skip them :(

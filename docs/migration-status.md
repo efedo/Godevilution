@@ -47,6 +47,8 @@ safe presentation menu exists.
 Connected native unique-monster conversations now also fail closed when a
 projected monster has no authored server dialogue, preventing legacy quest
 activation, item consumption, and reward mutation.
+The native debug towner entry point also fails closed in authoritative mode;
+legacy debug interaction remains available only to offline sessions.
 
 ## Current state
 
