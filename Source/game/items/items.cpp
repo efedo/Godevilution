@@ -64,6 +64,7 @@
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
@@ -3983,6 +3984,11 @@ void DeleteItem(int i)
 
 void ProcessItems()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	for (int i = 0; i < ActiveItemCount; i++) {
 		const int ii = ActiveItems[i];
 		auto &item = Items[ii];

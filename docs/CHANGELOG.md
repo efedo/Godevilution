@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
 - Connected native towner processing now fails closed at its public helper so
   local quest-derived towner state cannot bypass server-owned presentation;
   offline sessions retain legacy towner animation and lifecycle behavior.
+- Connected native item processing now fails closed at its public helper so
+  legacy item animation and multiplayer tile cleanup cannot mutate
+  server-owned world-item state; offline sessions retain the legacy path.
 - Public native simulation helpers now fail closed while connected so
   movement, combat, lifecycle, trap, door, and other world mutation cannot
   bypass the server-owned game loop; offline sessions retain the legacy

@@ -9,6 +9,9 @@ simulation.
 Connected native towner processing now fails closed at its public helper so
 local quest-derived towner state cannot bypass server-owned presentation;
 offline sessions retain legacy towner animation and lifecycle behavior.
+Connected native item processing now fails closed at its public helper so
+legacy item animation and multiplayer tile cleanup cannot mutate server-owned
+world-item state; offline sessions retain the legacy path.
 Public native simulation helpers now fail closed while connected, closing the
 direct-call seams around the existing authoritative game-loop gate; offline
 sessions retain the legacy movement, combat, lifecycle, trap, door, and other
