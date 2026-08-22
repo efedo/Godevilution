@@ -715,13 +715,7 @@ public sealed class DiabloStoreCommandProcessor
     }
 
     private bool IsArmor(AuthoritativeItemState state)
-    {
-        if (state.ItemClass == 2)
-            return true;
-        return items is not null
-            && items.TryGetByState(state, out var definition)
-            && definition.GenerationTags.Contains("Armor");
-    }
+        => AuthoritativeItemClassification.IsArmor(state, items);
 
     private void RestorePartialMana(AuthoritativePlayerState player)
     {

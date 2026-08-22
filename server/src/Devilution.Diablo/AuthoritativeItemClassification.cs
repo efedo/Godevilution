@@ -144,6 +144,29 @@ public static class AuthoritativeItemClassification
             && state.ItemIndex == rules.DeathGoldItemIndex;
     }
 
+    public static bool IsArmor(AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains("Armor", StringComparer.OrdinalIgnoreCase)
+            : definition.ItemClass == 2;
+    }
+
+    public static bool IsArmor(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition))
+                return IsArmor(definition);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return tags.Contains("Armor", StringComparer.OrdinalIgnoreCase);
+        }
+        return state.ItemClass == 2;
+    }
+
     public static bool IsBelt(AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);

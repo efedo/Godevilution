@@ -231,6 +231,39 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void ArmorTagsOverrideConflictingLegacyItemClass()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Armor"]);
+
+        Assert.True(AuthoritativeItemClassification.IsArmor(definition));
+    }
+
+    [Fact]
+    public void NonArmorTagsOverrideConflictingLegacyItemClass()
+    {
+        var definition = CreateDefinition(itemClass: 2, tags: ["Misc"]);
+
+        Assert.False(AuthoritativeItemClassification.IsArmor(definition));
+    }
+
+    [Fact]
+    public void ArmorTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Armor"]) with {
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemClass = 0,
+            ItemIndex = 999,
+            MiscId = 121,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsArmor(state, catalog));
+    }
+
+    [Fact]
     public void ExplicitBeltTagOverridesConflictingLegacyPlacementMetadata()
     {
         var definition = CreateDefinition(itemClass: 0, tags: ["Belt"])

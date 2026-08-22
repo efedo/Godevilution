@@ -116,6 +116,8 @@ scaled hit points), not only the client's difficulty label.
   tags before the native item-type fallback.
 - Weapon and armor subtype state classification also resolves unambiguous
   content tags by misc ID when native item-index lookup is unavailable.
+- Store armor-target validation now treats active armor tags as authoritative,
+  including misc-ID resolution when native item-index lookup is unavailable.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
