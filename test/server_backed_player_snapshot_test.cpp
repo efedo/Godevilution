@@ -555,6 +555,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidStashFootprintsAndSessionConflict
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 {
 	protocol::Snapshot snapshot;
+	snapshot.add_quests()->set_quest_id(30);
 	auto *second = snapshot.add_objects();
 	second->set_entity_id(20);
 	second->set_object_id(2);
@@ -566,8 +567,11 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	second->set_effect_kind(static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
 	second->set_effect_amount(2);
 	second->set_quest_transition_kind(6);
+	second->set_quest_transition_amount(2);
 	second->set_reward_kind(2);
+	second->set_reward_id(1);
 	second->set_quest_sequence_follow_up_kind(1);
+	second->set_quest_sequence_follow_up_amount(1);
 	second->set_breakable(true);
 	second->set_destroyed(true);
 	auto *first = snapshot.add_objects();
@@ -1369,6 +1373,35 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_object_id(1);
 	invalidFlags->set_destroyed(true);
 	EXPECT_FALSE(ProjectObjectSnapshots(destroyedUnbreakable).has_value());
+
+	protocol::Snapshot invalidEffect;
+	invalidFlags = invalidEffect.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(1);
+	invalidFlags->set_effect_kind(10);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidEffect).has_value());
+
+	protocol::Snapshot invalidPresentation;
+	invalidFlags = invalidPresentation.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(1);
+	invalidFlags->set_presentation_kind(static_cast<protocol::ObjectPresentationKind>(99));
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidPresentation).has_value());
+
+	protocol::Snapshot invalidReward;
+	invalidFlags = invalidReward.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(1);
+	invalidFlags->set_reward_kind(1);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidReward).has_value());
+
+	protocol::Snapshot invalidFollowUp;
+	invalidFlags = invalidFollowUp.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(1);
+	invalidFlags->set_quest_sequence_follow_up_kind(1);
+	invalidFlags->set_quest_sequence_follow_up_amount(1);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidFollowUp).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)

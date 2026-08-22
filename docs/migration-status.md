@@ -106,6 +106,9 @@ scaled hit points), not only the client's difficulty label.
   metadata before converting or applying inventory, equipment, or belt state.
 - Native item conversion now rejects invalid damage, armor, charge, durability,
   typed metadata, and NUL-containing spell-display ranges before narrowing.
+- Native authoritative object projection now mirrors the Godot object boundary,
+  rejecting invalid effect and presentation kinds, quest-transition and reward
+  metadata, projectile offsets and sources, and quest-sequence follow-ups.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

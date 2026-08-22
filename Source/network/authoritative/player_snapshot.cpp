@@ -42,6 +42,21 @@ bool IsValidSpellTargetingKind(uint32_t value)
 	return value <= static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY);
 }
 
+bool IsValidObjectPresentationKind(protocol::ObjectPresentationKind value)
+{
+	switch (value) {
+	case protocol::OBJECT_PRESENTATION_KIND_UNSPECIFIED:
+	case protocol::OBJECT_PRESENTATION_KIND_GENERIC:
+	case protocol::OBJECT_PRESENTATION_KIND_SHRINE:
+	case protocol::OBJECT_PRESENTATION_KIND_QUEST:
+	case protocol::OBJECT_PRESENTATION_KIND_BREAKABLE:
+	case protocol::OBJECT_PRESENTATION_KIND_TRAP:
+		return true;
+	default:
+		return false;
+	}
+}
+
 } // namespace
 
 tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const protocol::Snapshot &snapshot, uint32_t entityId)
@@ -454,11 +469,67 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 {
 	std::vector<ProjectedObjectSnapshot> projected;
 	projected.reserve(snapshot.objects_size());
+	std::unordered_set<uint32_t> questIds;
+	questIds.reserve(snapshot.quests_size());
+	for (const auto &quest : snapshot.quests())
+		questIds.insert(quest.quest_id());
 	for (const auto &source : snapshot.objects()) {
 		if (source.entity_id() == 0 || source.object_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains an object with an invalid entity or object ID.");
+		const bool transitionSetsVariable = source.quest_transition_kind() >= 3 && source.quest_transition_kind() <= 8;
+		const bool transitionValid = source.quest_transition_kind() == 0
+		    || (source.quest_id() != 0
+		        && questIds.find(source.quest_id()) != questIds.end()
+		        && (transitionSetsVariable ? source.quest_transition_amount() > 0 : source.quest_transition_amount() == 0));
+		const bool rewardValid = source.reward_kind() == 0
+		    ? source.reward_id() == 0 && source.reward_item_level() == 0 && source.reward_offset_x() == 0 && source.reward_offset_y() == 0
+		    : source.reward_id() != 0;
+		const bool producesProjectile = source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::SpawnSpellProjectile)
+		    || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::GrantSpellLevelAndSpawnProjectile)
+		    || source.quest_sequence_follow_up_kind() == 2;
+		const bool followUpValid = source.quest_sequence_follow_up_kind() == 0
+		    ? source.quest_sequence_follow_up_amount() == 0
+		        && source.quest_sequence_follow_up_offset_x() == 0
+		        && source.quest_sequence_follow_up_offset_y() == 0
+		    : source.quest_sequence_follow_up_kind() == 1
+		        ? source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		            && source.quest_sequence_follow_up_amount() != 0
+		            && source.quest_sequence_follow_up_offset_x() == 0
+		            && source.quest_sequence_follow_up_offset_y() == 0
+		        : source.quest_sequence_follow_up_kind() == 2
+		            ? (source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		                || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation))
+		                && source.quest_sequence_follow_up_amount() != 0
+		            : source.quest_sequence_follow_up_kind() == 3
+		                && source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		                && source.quest_sequence_follow_up_amount() != 0;
 		if ((source.breakable() && source.missile_passable()) || (source.destroyed() && !source.breakable()))
 			return tl::make_unexpected("Server-backed snapshot contains an object with invalid missile-collision state.");
+		if (source.effect_amount() < 0
+		    || source.effect_kind() < static_cast<int32_t>(ProjectedObjectEffectKind::None)
+		    || source.effect_kind() > static_cast<int32_t>(ProjectedObjectEffectKind::GrantSpellLevelAndSpawnProjectile)
+		    || !IsValidObjectPresentationKind(source.presentation_kind())
+		    || (source.quest_id() != 0 && questIds.find(source.quest_id()) == questIds.end())
+		    || source.quest_transition_kind() < 0 || source.quest_transition_kind() > 8
+		    || source.quest_transition_amount() < 0 || source.quest_transition_amount() > 255
+		    || source.quest_transition_required_variable1() < -1 || source.quest_transition_required_variable1() > 255
+		    || source.quest_transition_required_variable2() < -1 || source.quest_transition_required_variable2() > 255
+		    || !transitionValid
+		    || source.reward_kind() < 0 || source.reward_kind() > 2
+		    || source.reward_item_level() > 255
+		    || source.reward_offset_x() < -16 || source.reward_offset_x() > 16
+		    || source.reward_offset_y() < -16 || source.reward_offset_y() > 16
+		    || !rewardValid
+		    || source.projectile_target_offset_x() < -32 || source.projectile_target_offset_x() > 32
+		    || source.projectile_target_offset_y() < -32 || source.projectile_target_offset_y() > 32
+		    || (!producesProjectile && (source.projectile_target_offset_x() != 0 || source.projectile_target_offset_y() != 0))
+		    || source.quest_sequence_follow_up_kind() < 0 || source.quest_sequence_follow_up_kind() > 3
+		    || source.quest_sequence_follow_up_offset_x() < -32 || source.quest_sequence_follow_up_offset_x() > 32
+		    || source.quest_sequence_follow_up_offset_y() < -32 || source.quest_sequence_follow_up_offset_y() > 32
+		    || !followUpValid
+		    || source.projectile_source_kind() < 0 || source.projectile_source_kind() > 1
+		    || (!producesProjectile && source.projectile_source_kind() != 0))
+			return tl::make_unexpected("Server-backed snapshot contains invalid object effect metadata.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate object entity IDs.");
 		projected.push_back({

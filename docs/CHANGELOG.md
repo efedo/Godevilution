@@ -65,6 +65,9 @@ All notable changes to this fork are documented below.
   metadata before converting or applying inventory, equipment, or belt state.
 - Native item conversion now rejects invalid damage, armor, charge, durability,
   typed metadata, and NUL-containing spell-display ranges before narrowing.
+- Native authoritative object projection now rejects invalid effect and
+  presentation kinds, quest-transition and reward metadata, projectile offsets
+  and sources, and quest-sequence follow-ups before native conversion.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - The native authoritative projection now rejects non-empty visited-level sets
