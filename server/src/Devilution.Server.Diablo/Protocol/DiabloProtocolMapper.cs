@@ -420,6 +420,7 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative player attributes contain negative values.");
         }
+        ValidateProjectedPlayerAction(state);
         if (state.Life < 0
             || state.LifeMaximum < 0
             || state.LifeMaximum > 0 && state.Life > state.LifeMaximum
@@ -542,6 +543,82 @@ internal static class DiabloProtocolMapper
         player.StashGold = state.StashGold;
         player.StashOpen = state.StashOpen;
         return player;
+    }
+
+    private static void ValidateProjectedPlayerAction(StorePlayerSnapshot state)
+    {
+        var action = state.CurrentAction;
+        if (action is null)
+            return;
+        if (!Enum.IsDefined(action.Kind)
+            || action.EffectTick < action.StartedAtTick
+            || action.ReadyTick < action.EffectTick
+            || action.ReadyTick > action.EndTick
+            || action.EndTick != state.CombatModeEndTick) {
+            throw new InvalidDataException(
+                "Authoritative player action timing is invalid.");
+        }
+
+        var valid = action.Kind switch {
+            DiabloPlayerActionKind.Move =>
+                state.CombatMode is DiabloPlayerCombatMode.WalkNorthwards
+                    or DiabloPlayerCombatMode.WalkSouthwards
+                    or DiabloPlayerCombatMode.WalkSideways
+                && action.DirectionX is >= -1 and <= 1
+                && action.DirectionY is >= -1 and <= 1
+                && (action.DirectionX != 0 || action.DirectionY != 0)
+                && action.TargetEntityId == 0
+                && action.CastIntent is null,
+            DiabloPlayerActionKind.Attack =>
+                state.CombatMode is DiabloPlayerCombatMode.Attack
+                    or DiabloPlayerCombatMode.RangedAttack
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.TargetEntityId != 0
+                && action.CastIntent is null,
+            DiabloPlayerActionKind.Cast =>
+                state.CombatMode == DiabloPlayerCombatMode.Spell
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.CastIntent is not null
+                && action.CastIntent.SpellId != 0
+                && action.TargetEntityId == action.CastIntent.TargetEntityId
+                && Enum.IsDefined(action.CastIntent.Source)
+                && (!action.CastIntent.SourceItem.HasValue
+                    || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
+            DiabloPlayerActionKind.Death =>
+                state.CombatMode == DiabloPlayerCombatMode.Death
+                && state.Life == 0
+                && action.EffectApplied
+                && action.EffectTick == action.StartedAtTick
+                && action.ReadyTick == action.EndTick
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.CastIntent is null,
+            DiabloPlayerActionKind.LevelTransition =>
+                state.CombatMode == DiabloPlayerCombatMode.NewLevel
+                && state.Life > 0
+                && action.EffectApplied
+                && action.EffectTick == action.StartedAtTick
+                && action.ReadyTick == action.EndTick
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.TargetEntityId != 0
+                && action.CastIntent is null,
+            DiabloPlayerActionKind.RestartTown =>
+                state.CombatMode == DiabloPlayerCombatMode.NewLevel
+                && state.Life > 0
+                && action.EffectApplied
+                && action.EffectTick == action.StartedAtTick
+                && action.ReadyTick == action.EndTick
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.TargetEntityId == 0
+                && action.CastIntent is null,
+            _ => false,
+        };
+        if (!valid)
+            throw new InvalidDataException("Authoritative player action is invalid.");
     }
 
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)

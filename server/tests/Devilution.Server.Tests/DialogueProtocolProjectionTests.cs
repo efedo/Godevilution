@@ -190,6 +190,63 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidPlayerActionBeforeProjection()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+            CombatMode = DiabloPlayerCombatMode.Attack,
+            CombatModeEndTick = 5,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    CurrentAction = new AuthoritativePlayerActionState(
+                        DiabloPlayerActionKind.Attack,
+                        3,
+                        2,
+                        4,
+                        5) {
+                        TargetEntityId = 2,
+                    },
+                },
+            }));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    CurrentAction = new AuthoritativePlayerActionState(
+                        (DiabloPlayerActionKind)99,
+                        1,
+                        2,
+                        3,
+                        5),
+                },
+            }));
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(
