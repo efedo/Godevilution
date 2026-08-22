@@ -55,6 +55,7 @@ internal static class DiabloProtocolMapper
                 .ToArray();
         ValidateProjectedPlayerPositions(projectedParticipants, projectedLevels);
         ValidateProjectedMonsterPositions(source.Monsters, projectedLevels);
+        ValidateProjectedMonsterStates(source.Monsters);
         ValidateProjectedCorpsePositions(source.Corpses, projectedLevels);
         ValidateProjectedPortalPositions(source.Portals, projectedLevels);
 
@@ -535,6 +536,60 @@ internal static class DiabloProtocolMapper
                     monster.FuturePositionY,
                     levels,
                     "monster future");
+            }
+        }
+    }
+
+    private static void ValidateProjectedMonsterStates(
+        IReadOnlyList<DiabloMonsterState> monsters)
+    {
+        foreach (var monster in monsters) {
+            if (monster.HitPoints < 0
+                || monster.MaxHitPoints < 0
+                || monster.MaxHitPoints > 0 && monster.HitPoints > monster.MaxHitPoints
+                || monster.HitPointsQ6 < 0
+                || monster.MaxHitPointsQ6 < 0
+                || monster.MaxHitPointsQ6 > 0
+                    && monster.HitPointsQ6 > monster.MaxHitPointsQ6
+                || monster.DialogueMessageId < 0
+                || monster.DialogueMessageId > short.MaxValue
+                || monster.DialogueMessageId != 0 && !monster.IsUnique
+                || monster.AttackDamage < 0
+                || monster.MinDamage < 0
+                || monster.MaxDamage < 0
+                || monster.MaxDamage < monster.MinDamage
+                || monster.MinDamageSpecial < 0
+                || monster.MaxDamageSpecial < 0
+                || monster.MaxDamageSpecial < monster.MinDamageSpecial
+                || monster.AggroRange < 0
+                || monster.MonsterLevel < 0
+                || monster.DeathAnimationTicks is < 0 or > 1024
+                || monster.DeathTicksRemaining < 0
+                || monster.DeathTicksRemaining > monster.DeathAnimationTicks
+                || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
+                || monster.ExperienceReward > 1_000_000
+                || monster.ToHit is < 0 or > byte.MaxValue
+                || monster.ToHitSpecial is < 0 or > byte.MaxValue
+                || monster.Intelligence is < 0 or > byte.MaxValue
+                || monster.Direction is < 0 or > 7
+                || monster.FireResistance is < -100 or > 100
+                || monster.LightningResistance is < -100 or > 100
+                || monster.MagicResistance is < -100 or > 100
+                || monster.AcidResistance is < -100 or > 100
+                || !monster.IsPlayerMinion && monster.OwnerPlayerId != 0) {
+                throw new InvalidDataException(
+                    "Authoritative monster state is outside the shared protocol range.");
+            }
+
+            var futureDeltaX = Math.Abs((long)monster.FuturePositionX - monster.PositionX);
+            var futureDeltaY = Math.Abs((long)monster.FuturePositionY - monster.PositionY);
+            if (monster.Moving
+                    && Math.Max(futureDeltaX, futureDeltaY) != 1
+                || !monster.Moving
+                    && (monster.FuturePositionX != monster.PositionX
+                        || monster.FuturePositionY != monster.PositionY)) {
+                throw new InvalidDataException(
+                    "Authoritative monster movement state is outside the shared protocol range.");
             }
         }
     }

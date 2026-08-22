@@ -50,6 +50,8 @@ All notable changes to this fork are documented below.
   enum, coordinate, or spell/behavior combinations.
 - Reject projected player, moving-monster future, corpse, and portal endpoint
   coordinates outside the native tile range or supplied level geometry.
+- Reject projected monster vitality, combat, dialogue, ownership, death-timing,
+  and movement-occupancy states outside the shared native protocol range.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.

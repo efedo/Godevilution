@@ -823,6 +823,96 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedMonsterState()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var monster = new DiabloMonsterState(
+            2,
+            4,
+            1,
+            4,
+            5,
+            10,
+            20,
+            0,
+            1,
+            2,
+            0,
+            0,
+            0) {
+            FuturePositionX = 4,
+            FuturePositionY = 5,
+            MinDamage = 1,
+            MaxDamage = 2,
+            MinDamageSpecial = 1,
+            MaxDamageSpecial = 2,
+            DeathAnimationTicks = 4,
+            ToHit = 1,
+            ToHitSpecial = 1,
+            Intelligence = 1,
+        };
+
+        void AssertRejected(Func<DiabloMonsterState, DiabloMonsterState> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Monsters = [mutate(monster)],
+                }));
+        }
+
+        AssertRejected(value => value with { HitPoints = -1 });
+        AssertRejected(value => value with { HitPoints = 21 });
+        AssertRejected(value => value with { HitPointsQ6 = -1 });
+        AssertRejected(value => value with { MaxHitPointsQ6 = 1, HitPointsQ6 = 2 });
+        AssertRejected(value => value with { DialogueMessageId = 1 });
+        AssertRejected(value => value with { AttackDamage = -1 });
+        AssertRejected(value => value with { MaxDamage = 0 });
+        AssertRejected(value => value with { MinDamageSpecial = 3, MaxDamageSpecial = 2 });
+        AssertRejected(value => value with { AggroRange = -1 });
+        AssertRejected(value => value with { MonsterLevel = -1 });
+        AssertRejected(value => value with { DeathAnimationTicks = 1025 });
+        AssertRejected(value => value with { DeathAnimationTicks = 1, DeathTicksRemaining = 2 });
+        AssertRejected(value => value with { HitPointsQ6 = 1, DeathTicksRemaining = 1 });
+        AssertRejected(value => value with { ExperienceReward = 1_000_001 });
+        AssertRejected(value => value with { ToHit = 256 });
+        AssertRejected(value => value with { ToHitSpecial = 256 });
+        AssertRejected(value => value with { Intelligence = 256 });
+        AssertRejected(value => value with { Direction = 8 });
+        AssertRejected(value => value with { FireResistance = 101 });
+        AssertRejected(value => value with { LightningResistance = -101 });
+        AssertRejected(value => value with { MagicResistance = 101 });
+        AssertRejected(value => value with { AcidResistance = -101 });
+        AssertRejected(value => value with { OwnerPlayerId = 7 });
+        AssertRejected(value => value with { Moving = true });
+        AssertRejected(value => value with { FuturePositionX = 4, FuturePositionY = 6 });
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(
