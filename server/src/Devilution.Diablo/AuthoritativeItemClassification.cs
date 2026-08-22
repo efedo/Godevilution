@@ -178,8 +178,9 @@ public static class AuthoritativeItemClassification
     public static bool IsTwoHanded(AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        return definition.GenerationTags.Contains("TwoHanded")
-            || definition.EquipLocation == 2;
+        return definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains("TwoHanded", StringComparer.OrdinalIgnoreCase)
+            : definition.EquipLocation == 2;
     }
 
     public static bool IsTwoHanded(
@@ -191,10 +192,8 @@ public static class AuthoritativeItemClassification
             if (items.TryGetByState(state, out var definition))
                 return IsTwoHanded(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
-                if (tags.Contains("TwoHanded"))
-                    return true;
-                if (HasExplicitEquipmentSubtype(tags))
-                    return false;
+                if (tags.Count > 0)
+                    return tags.Contains("TwoHanded", StringComparer.OrdinalIgnoreCase);
             }
         }
         return state.EquipLocation == 2;
@@ -216,6 +215,8 @@ public static class AuthoritativeItemClassification
             return DiabloEquipmentSlotKind.Ring;
         if (definition.GenerationTags.Contains("Amulet"))
             return DiabloEquipmentSlotKind.Amulet;
+        if (definition.GenerationTags.Count > 0)
+            return DiabloEquipmentSlotKind.Unknown;
         return definition.EquipLocation switch {
             1 => DiabloEquipmentSlotKind.Hand,
             2 => DiabloEquipmentSlotKind.TwoHanded,
@@ -265,6 +266,8 @@ public static class AuthoritativeItemClassification
             return DiabloEquipmentSlotKind.Ring;
         if (tags.Contains("Amulet"))
             return DiabloEquipmentSlotKind.Amulet;
+        if (tags.Count > 0)
+            return DiabloEquipmentSlotKind.Unknown;
         return fallbackEquipLocation switch {
             1 => DiabloEquipmentSlotKind.Hand,
             2 => DiabloEquipmentSlotKind.TwoHanded,

@@ -263,6 +263,15 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void NonTwoHandedTagsOverrideConflictingLegacyEquipmentLocation()
+    {
+        var definition = CreateDefinition(itemClass: 1, tags: ["Weapon", "OneHanded"])
+            with { EquipLocation = 2 };
+
+        Assert.False(AuthoritativeItemClassification.IsTwoHanded(definition));
+    }
+
+    [Fact]
     public void ExplicitEquipmentSlotTagsOverrideConflictingLegacyLocation()
     {
         var definition = CreateDefinition(itemClass: 2, tags: ["Armor", "BodyArmor"])
@@ -292,6 +301,17 @@ public sealed class AuthoritativeItemClassificationTests
 
         Assert.Equal(
             DiabloEquipmentSlotKind.Ring,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(definition));
+    }
+
+    [Fact]
+    public void NonSlotTagsOverrideConflictingLegacyEquipmentLocation()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Misc"])
+            with { EquipLocation = 2 };
+
+        Assert.Equal(
+            DiabloEquipmentSlotKind.Unknown,
             AuthoritativeItemClassification.GetEquipmentSlotKind(definition));
     }
 

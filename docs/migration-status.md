@@ -106,6 +106,8 @@ scaled hit points), not only the client's difficulty label.
   native type/index fallback.
 - Belt classification now honors active non-empty item tags before the native
   equip-location/item-class fallback.
+- Two-handed and equipment-slot classification now honors active non-empty slot
+  tags before the native equipment-location fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

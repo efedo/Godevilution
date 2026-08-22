@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative
   instead of allowing conflicting native placement metadata to override them.
+- Two-handed and equipment-slot classification now treats active non-empty slot
+  tags as authoritative before using native equipment-location fallback.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for
