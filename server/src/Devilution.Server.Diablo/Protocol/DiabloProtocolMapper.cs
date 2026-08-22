@@ -403,6 +403,17 @@ internal static class DiabloProtocolMapper
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks)
     {
+        if (state.Attributes.Strength.Base < 0
+            || state.Attributes.Strength.Current < 0
+            || state.Attributes.Magic.Base < 0
+            || state.Attributes.Magic.Current < 0
+            || state.Attributes.Dexterity.Base < 0
+            || state.Attributes.Dexterity.Current < 0
+            || state.Attributes.Vitality.Base < 0
+            || state.Attributes.Vitality.Current < 0) {
+            throw new InvalidDataException(
+                "Authoritative player attributes contain negative values.");
+        }
         if (state.Life < 0
             || state.LifeMaximum < 0
             || state.LifeMaximum > 0 && state.Life > state.LifeMaximum
