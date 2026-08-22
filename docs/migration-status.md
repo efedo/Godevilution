@@ -68,6 +68,9 @@ remain server-owned and arrive through authoritative projections.
 Connected native player processing also suppresses the legacy periodic
 `DRAINLIFE` equipment damage tick; the server-owned combat tick remains the
 sole source of that damage and any resulting death.
+Connected native Mana Shield creation and removal likewise remain offline-only;
+connected shield state is applied from authoritative snapshots without legacy
+`CMD_SETSHIELD` or `CMD_REMSHIELD` lifecycle commands.
 
 ## Current state
 

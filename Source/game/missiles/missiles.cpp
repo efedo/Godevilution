@@ -2158,6 +2158,11 @@ void AddManaShield(Missile &missile, AddMissileParameter &parameter)
 {
 	missile._miDelFlag = true;
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessNativeManaShield(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Player &player = Players[missile._misource];
 
 	if (player.pManaShield) {

@@ -3152,8 +3152,14 @@ void Player::applyDamage(DamageType damageType, int dam, int minHP, int frac, De
 			}
 			player.mana.current = 0;
 			player.mana.base = player.mana.maximumBase - player.mana.maximum;
-			if (&player == MyPlayer)
-				NetSendCmd(true, CMD_REMSHIELD);
+			if (&player == MyPlayer) {
+				bool processLegacyManaShieldCommand = true;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				processLegacyManaShieldCommand = ShouldProcessNativeManaShield(authoritative::GetServerBackedRuntime().IsConnected());
+#endif
+				if (processLegacyManaShieldCommand)
+					NetSendCmd(true, CMD_REMSHIELD);
+			}
 		}
 	}
 
@@ -3309,8 +3315,11 @@ void ProcessPlayers()
 	assert(MyPlayer != nullptr);
 	Player &myPlayer = *MyPlayer;
 	bool processNativeDrainLife = true;
+	bool processNativeManaShield = true;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	processNativeDrainLife = ShouldProcessNativeDrainLife(authoritative::GetServerBackedRuntime().IsConnected());
+	const bool serverConnected = authoritative::GetServerBackedRuntime().IsConnected();
+	processNativeDrainLife = ShouldProcessNativeDrainLife(serverConnected);
+	processNativeManaShield = ShouldProcessNativeManaShield(serverConnected);
 #endif
 
 	if (myPlayer.pLvlLoad > 0) {
@@ -3353,7 +3362,7 @@ void ProcessPlayers()
 				    && levelType() != DTYPE_TOWN) {
 					player.applyDamage(DamageType::Physical, 0, 0, 4);
 				}
-				if (player.pManaShield && HasAnyOf(player._pIFlags, ItemSpecialEffect::NoMana)) {
+				if (processNativeManaShield && player.pManaShield && HasAnyOf(player._pIFlags, ItemSpecialEffect::NoMana)) {
 					NetSendCmd(true, CMD_REMSHIELD);
 				}
 			}

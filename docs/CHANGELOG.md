@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native sessions no longer create or remove Mana Shield through
+  legacy local lifecycle commands; shield state is server-owned and projected
+  from authoritative snapshots.
 - Connected native sessions no longer apply the legacy periodic `DRAINLIFE`
   equipment tick; the authoritative server owns that damage and its death
   consequences.
