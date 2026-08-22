@@ -56,6 +56,8 @@ All notable changes to this fork are documented below.
   before applying potion, elixir, or oil effects.
 - Consumable Identify admission now resolves authored action metadata by stable,
   native, or `misc_id` identity and enforces authored usability.
+- Sorcerer Staff Recharge execution now resolves omitted spell and charge
+  metadata through the active charged-item catalog, including `misc_id`.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

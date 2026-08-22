@@ -58,6 +58,71 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void SorcererRechargeAbilityResolvesChargedMetadataByMiscId()
+    {
+        const uint rechargeSpellId = 27;
+        var definition = new AuthoritativeItemDefinition(
+            2304,
+            0,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 124,
+            NativeItemIndex = 104,
+            SpellId = 30,
+            SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            MaxCharges = 10,
+            GenerationTags = new HashSet<string>(["Staff"], StringComparer.OrdinalIgnoreCase),
+        };
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            2304,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 124,
+                Charges = 1,
+                MaxCharges = 0,
+                SpellId = 0,
+            });
+        var player = CreatePlayer(gold: 0, inventory: [item]);
+        player.AbilitySpellId = rechargeSpellId;
+        player.CharacterLevel = 10;
+        var random = new DiabloRandom(1);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: random,
+            rechargeAbilitySpellId: rechargeSpellId,
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) { StaffLevel = 1 },
+            ]),
+            items: new AuthoritativeItemCatalog([definition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloRechargeItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ClassAbility),
+            1);
+
+        Assert.True(result.Succeeded);
+        var recharged = Assert.Single(player.Inventory);
+        Assert.Equal(8, recharged.State.Charges);
+        Assert.Equal(8, recharged.State.MaxCharges);
+        Assert.Equal(22695478U, random.State);
+    }
+
+    [Fact]
     public void SemanticRechargeRoleAuthorizesAConfiguredCustomSpellIdentity()
     {
         var item = new OwnedStoreItem(

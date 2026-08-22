@@ -140,6 +140,8 @@ scaled hit points), not only the client's difficulty label.
   before applying potion, elixir, or oil effects.
 - Consumable Identify admission now resolves authored action metadata by stable,
   native, or `misc_id` identity and enforces authored usability.
+- Sorcerer Staff Recharge execution now resolves omitted spell and charge
+  metadata through the active charged-item catalog, including `misc_id`.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

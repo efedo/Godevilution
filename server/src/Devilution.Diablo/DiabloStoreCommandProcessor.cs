@@ -375,19 +375,20 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (item.State.Deleted)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        var spellId = ResolveChargedSpellId(item.State);
+        var maximumCharges = ResolveChargedMaximumCharges(item.State);
         if (!IsStaff(item.State)
-            || item.State.SpellId <= 0
+            || spellId <= 0
             || spells is null
-            || !spells.TryGet(checked((uint)item.State.SpellId), out var spell)
+            || !spells.TryGet(checked((uint)spellId), out var spell)
             || spell.StaffLevel <= 0
-            || item.State.Charges == item.State.MaxCharges) {
+            || item.State.Charges == maximumCharges) {
             return DiabloIntentResult.Accepted;
         }
 
         var rechargeStrength = checked(
             1 + random.GenerateRnd(checked((int)player.CharacterLevel) / spell.StaffLevel));
         var charges = item.State.Charges;
-        var maximumCharges = item.State.MaxCharges;
         do {
             maximumCharges--;
             if (maximumCharges == 0) {
@@ -418,6 +419,42 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsStaff(AuthoritativeItemState state)
         => AuthoritativeItemClassification.IsStaff(state, items);
+
+    private int ResolveChargedSpellId(AuthoritativeItemState state)
+    {
+        if (state.SpellId != 0)
+            return state.SpellId;
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem
+                && definition.SpellId > 0)
+                return definition.SpellId;
+            if (items.TryGetChargedItemMetadataByMiscId(
+                    state.MiscId,
+                    out _,
+                    out var spellId))
+                return spellId;
+        }
+        return 0;
+    }
+
+    private int ResolveChargedMaximumCharges(AuthoritativeItemState state)
+    {
+        if (state.MaxCharges != 0)
+            return state.MaxCharges;
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem
+                && definition.MaxCharges > 0)
+                return definition.MaxCharges;
+            if (items.TryGetChargedItemMetadataByMiscId(
+                    state.MiscId,
+                    out var maximumCharges,
+                    out _))
+                return maximumCharges;
+        }
+        return 0;
+    }
 
     private DiabloIntentResult ReadBook(
         AuthoritativePlayerState player,
