@@ -73,8 +73,13 @@ public sealed class DiabloWorldState
             RegisterEntityId(target.EntityId);
             CombatTargets.Add(target.EntityId, target);
         }
-        foreach (var portal in portals ?? [])
-            Portals.Add(portal.PortalId, portal);
+        foreach (var portal in portals ?? []) {
+            if (portal.PortalId == 0)
+                throw new InvalidDataException("Portal identity cannot be zero.");
+            if (!Portals.TryAdd(portal.PortalId, portal))
+                throw new InvalidDataException(
+                    $"Portal {portal.PortalId} is registered more than once.");
+        }
         foreach (var item in worldItems ?? []) {
             RegisterEntityId(item.EntityId);
             WorldItems.Add(item.EntityId, item);

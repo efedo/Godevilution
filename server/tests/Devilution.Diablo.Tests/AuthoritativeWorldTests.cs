@@ -345,6 +345,21 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RuntimeWorldStateRejectsInvalidPortalIdentities()
+    {
+        var zeroException = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            portals: [new AuthoritativePortal(0, 1, 1, 1, 2, 2, 2)]));
+        Assert.Contains("Portal identity cannot be zero", zeroException.Message, StringComparison.Ordinal);
+
+        var duplicateException = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            portals: [
+                new AuthoritativePortal(4, 1, 1, 1, 2, 2, 2),
+                new AuthoritativePortal(4, 1, 0, 0, 2, 1, 1),
+            ]));
+        Assert.Contains("Portal 4 is registered more than once", duplicateException.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(

@@ -142,6 +142,9 @@ Authoritative portal catalogs now revalidate zero and duplicate portal IDs at
 the world-validation boundary, including direct callers that do not originate
 from TSV loading.
 
+Runtime world construction now applies the same zero-and-duplicate portal
+identity boundary before portal state can be published into a live session.
+
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility
 fallback remains available to older direct callers.
