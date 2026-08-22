@@ -21,6 +21,8 @@ All notable changes to this fork are documented below.
   action-kind state before serializing the native/Godot action snapshot.
 - Reject live authoritative player projections with invalid or duplicate
   memorized spells and status effects before serialization.
+- Reject live authoritative player projections with oversized, duplicate, or
+  current-level-missing visited-level state before serialization.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.

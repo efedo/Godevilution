@@ -420,6 +420,7 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative player attributes contain negative values.");
         }
+        ValidateProjectedVisitedLevels(state);
         ValidateProjectedPlayerSpells(state);
         ValidateProjectedStatusEffects(state);
         ValidateProjectedPlayerAction(state);
@@ -545,6 +546,18 @@ internal static class DiabloProtocolMapper
         player.StashGold = state.StashGold;
         player.StashOpen = state.StashOpen;
         return player;
+    }
+
+    private static void ValidateProjectedVisitedLevels(StorePlayerSnapshot state)
+    {
+        if (state.VisitedLevelIds is null
+            || state.VisitedLevelIds.Count > 256
+            || state.VisitedLevelIds.Count > 0
+                && !state.VisitedLevelIds.Contains(state.LevelId)
+            || state.VisitedLevelIds.Distinct().Count() != state.VisitedLevelIds.Count) {
+            throw new InvalidDataException(
+                "Authoritative player visited-level state is invalid or duplicated.");
+        }
     }
 
     private static void ValidateProjectedPlayerSpells(StorePlayerSnapshot state)

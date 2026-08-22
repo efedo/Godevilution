@@ -303,6 +303,48 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidVisitedLevelProjections()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+            VisitedLevelIds = [1],
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        void AssertRejected(IReadOnlyList<uint> visitedLevelIds)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Player = player with { VisitedLevelIds = visitedLevelIds },
+                }));
+        }
+
+        AssertRejected([1, 1]);
+        AssertRejected([2]);
+        AssertRejected(Enumerable.Range(0, 257).Select(value => (uint)value).ToArray());
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(
