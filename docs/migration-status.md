@@ -45,6 +45,10 @@ scaled hit points), not only the client's difficulty label.
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
   tuning and older packs retain the compatibility fallback.
 
+- Schema 1.396 externalizes the native monster Flash damage multiplier through
+  `spells.tsv`; the shipped Flash row carries the native level-times-two rule
+  while older packs retain the compatibility fallback.
+
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
   conversations therefore preserve their current dialogue target across

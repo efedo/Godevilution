@@ -9048,7 +9048,10 @@ public sealed class DiabloCombatCommandProcessorTests
         var processor = CreateProcessor(
             world,
             spells: new AuthoritativeSpellCatalog([
-                CreateFlashSpell() with { SpellId = flashSpellId },
+                CreateFlashSpell() with {
+                    SpellId = flashSpellId,
+                    FlashMonsterDamageLevelScale = 3,
+                },
             ]),
             rules: new AuthoritativeCombatRules(
                 10,
@@ -9068,7 +9071,10 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(1, [player]);
 
         Assert.Equal(2, world.Projectiles.Count);
-        Assert.All(world.Projectiles.Values, projectile => Assert.Equal(flashSpellId, projectile.SpellId));
+        Assert.All(world.Projectiles.Values, projectile => {
+            Assert.Equal(flashSpellId, projectile.SpellId);
+            Assert.Equal(15, projectile.Damage);
+        });
     }
 
     [Fact]

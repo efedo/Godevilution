@@ -288,6 +288,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Adds this percentage of scaled damage after spell-level scaling. */
     public int PostScaleDamagePercent { get; init; }
 
+    /** Native monster Flash damage multiplier applied to the effective monster level. */
+    public int FlashMonsterDamageLevelScale { get; init; } = 2;
+
     /** Exclusive upper bound for Healing's initial native random roll. */
     public int RandomHealingRange { get; init; }
 
@@ -1271,9 +1274,15 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.CharacterLevelDamageDivisor == 0
                     || definition.SpellEffectScaleDivisor == 0
                     || definition.PostScaleDamagePercent == 0
-                    || definition.DamageScale != 1)) {
+                    || definition.DamageScale != 1
+                    || definition.FlashMonsterDamageLevelScale <= 0)) {
                 throw new InvalidDataException(
-                    "Flash behavior requires two stationary, repeated random-damage layers with native scaling.");
+                    "Flash behavior requires two stationary, repeated random-damage layers with native scaling and a positive monster damage multiplier.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Flash
+                && definition.FlashMonsterDamageLevelScale != 2) {
+                throw new InvalidDataException(
+                    "Flash monster damage tuning requires Flash projectile behavior.");
             }
             if (definition.ProjectileBehavior is AuthoritativeProjectileBehavior.FlashBottom
                 or AuthoritativeProjectileBehavior.FlashTop) {
@@ -2229,6 +2238,9 @@ public sealed class AuthoritativeSpellCatalog
                 "spell_effect_scale_divisor"),
             PostScaleDamagePercent = row.OptionalInt32(
                 "post_scale_damage_percent"),
+            FlashMonsterDamageLevelScale = row.OptionalInt32(
+                "flash_monster_damage_level_scale",
+                2),
             RandomHealingRange = row.OptionalInt32("random_healing_range"),
             CharacterLevelRandomHealingRange = row.OptionalInt32(
                 "character_level_random_healing_range"),

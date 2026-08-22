@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native monster Flash damage multiplier through `spells.tsv`,
+  preserving the level-times-two fallback for older packs and advancing the
+  Diablo content schema to 1.396.
+
 - Externalize Counselor's adjacent Flash-admission chance band through
   `monster_types.tsv`, preserving the native 20/2 fallback for older packs and
   advancing the Diablo content schema to 1.395.

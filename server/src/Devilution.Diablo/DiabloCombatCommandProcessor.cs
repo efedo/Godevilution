@@ -4179,7 +4179,10 @@ public sealed class DiabloCombatCommandProcessor
         var lifetime = hasFlashSpell && flashSpell.ProjectileLifetime > 0
             ? flashSpell.ProjectileLifetime
             : 19;
-        var damage = checked(GetEffectiveMonsterLevel(monster) * 2);
+        var monsterDamageLevelScale = hasFlashSpell
+            ? flashSpell.FlashMonsterDamageLevelScale
+            : 2;
+        var damage = checked(GetEffectiveMonsterLevel(monster) * monsterDamageLevelScale);
 
         foreach (var behavior in new[] {
                      AuthoritativeProjectileBehavior.FlashBottom,

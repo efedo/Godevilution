@@ -926,6 +926,7 @@ public sealed class AuthoritativeSpellCatalogTests
             flash.ProjectileCount,
             flash.AreaRadius,
             flash.ResistantDamageDivisor));
+        Assert.Equal(2, flash.FlashMonsterDamageLevelScale);
         Assert.Equal((20, 1, 1, 1, 1, 8, 50), (
             flash.RandomDamageRange,
             flash.DamageBonus,
@@ -955,6 +956,10 @@ public sealed class AuthoritativeSpellCatalogTests
                 flash with {
                     FlashTopOffsets = [(-1, -1), (0, -1), (2, -1)],
                 },
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                flash with { FlashMonsterDamageLevelScale = 0 },
             ]));
     }
 
