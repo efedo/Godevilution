@@ -1870,6 +1870,52 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMovementIntoProjectedBlockedCell()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 2,
+                    Width = 4,
+                    Height = 4,
+                    BlockedCells = { 1 * 4 + 2 },
+                },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 2,
+                    PositionX = 1,
+                    PositionY = 1,
+                    CombatMode = PlayerCombatMode.WalkSideways,
+                    CombatModeEndTick = 18,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 10,
+                        EffectTick = 18,
+                        ReadyTick = 18,
+                        EndTick = 18,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+
+        snapshot.LevelGeometry[0].BlockedCells.Clear();
+        snapshot.Players[0].PositionX = 3;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+
+        snapshot.Players[0].PositionX = 1;
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+        Assert.Equal(PlayerActionKind.Move, model.Snapshot!.Players[0].CurrentAction.Kind);
+    }
+
+    [Fact]
     public void BoundsUnacknowledgedMovementPrediction()
     {
         var model = new AuthoritativeClientModel();

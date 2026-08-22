@@ -88,6 +88,8 @@ scaled hit points), not only the client's difficulty label.
   presentation/source/action/targeting metadata before pickup or HUD routing.
 - Godot now validates native tile-coordinate representability for all projected
   entities even when optional level geometry is absent.
+- Godot now validates projected player movement destinations against supplied
+  level bounds and blocked cells, while retaining older geometry-free snapshots.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

@@ -46,6 +46,9 @@ All notable changes to this fork are documented below.
   metadata, and NUL-containing item spell display names.
 - Godot now rejects projected entity coordinates outside the native tile range,
   including legacy snapshots that omit level geometry.
+- Godot now rejects projected player movement actions whose reserved destination
+  is outside the supplied level bounds or occupies a server-declared blocked cell,
+  while retaining compatibility for snapshots without level geometry.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

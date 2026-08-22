@@ -134,7 +134,7 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid held item.");
                 }
                 ValidateStatusEffects(player);
-                ValidatePlayerAction(player);
+                ValidatePlayerAction(message.Snapshot, player);
             }
             ValidateActiveStore(message.Snapshot);
             foreach (var monster in message.Snapshot.Monsters) {
@@ -293,7 +293,7 @@ public sealed class AuthoritativeClientModel
         PredictedPlayerPosition = IsCorrectingPosition ? new ClientPosition(x, y) : null;
     }
 
-    private static void ValidatePlayerAction(PlayerSnapshot player)
+    private static void ValidatePlayerAction(Snapshot snapshot, PlayerSnapshot player)
     {
         var action = player.CurrentAction;
         if (action is null)
@@ -317,7 +317,8 @@ public sealed class AuthoritativeClientModel
                 && action.DirectionY is >= -1 and <= 1
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
-                && action.Cast is null,
+                && action.Cast is null
+                && IsProjectedMoveWalkable(snapshot, player, action),
             PlayerActionKind.Attack =>
                 player.CombatMode is PlayerCombatMode.Attack
                     or PlayerCombatMode.RangedAttack
@@ -370,6 +371,30 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 "The authoritative snapshot contains an invalid player action.");
         }
+    }
+
+    private static bool IsProjectedMoveWalkable(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        PlayerActionSnapshot action)
+    {
+        var level = snapshot.LevelGeometry
+            .FirstOrDefault(candidate => candidate.LevelId == player.LevelId);
+        if (level is null || level.Width == 0 || level.Height == 0)
+            return true;
+
+        var targetX = (long)player.PositionX + action.DirectionX;
+        var targetY = (long)player.PositionY + action.DirectionY;
+        if (targetX < 0
+            || targetY < 0
+            || targetX >= level.Width
+            || targetY >= level.Height) {
+            return false;
+        }
+
+        var targetCell = targetY * level.Width + targetX;
+        return targetCell <= int.MaxValue
+            && !level.BlockedCells.Contains((int)targetCell);
     }
 
     private static void ValidateStatusEffects(PlayerSnapshot player)
