@@ -100,6 +100,7 @@ public sealed class AuthoritativeClientModel
                 ValidatePlayerResources(player);
                 ValidateVisitedLevels(player);
                 ValidateStash(player);
+                ValidateInventoryTopology(player);
                 ValidatePlayerItemFootprints(player);
                 if (!Enum.IsDefined(player.CombatMode)
                     || (player.CombatMode == PlayerCombatMode.Stand
@@ -386,6 +387,80 @@ public sealed class AuthoritativeClientModel
                 "The authoritative snapshot contains an invalid stash page.");
         foreach (var page in pages)
             _ = StashLayout.Build(player.Stash, page);
+    }
+
+    private static void ValidateInventoryTopology(PlayerSnapshot player)
+    {
+        if (player.Inventory.Count > 40
+            || player.Belt.Count > 8
+            || player.InventoryGrid.Count != 0 && player.InventoryGrid.Count != 40
+            || player.InventoryGrid.Any(cell => cell < -1 || cell >= player.Inventory.Count)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid inventory topology.");
+        }
+
+        var equipmentSlots = new HashSet<uint>();
+        foreach (var item in player.Equipment) {
+            if (item is null || item.Slot >= 7 || !equipmentSlots.Add(item.Slot)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate equipment slots.");
+            }
+        }
+
+        var beltSlots = new HashSet<uint>();
+        foreach (var item in player.Belt) {
+            if (item is null || item.Slot >= 8 || !beltSlots.Add(item.Slot)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate belt slots.");
+            }
+        }
+
+        if (player.InventoryGrid.Count == 0)
+            return;
+
+        var expected = Enumerable.Repeat(-1, player.InventoryGrid.Count).ToArray();
+        for (var itemIndex = 0; itemIndex < player.Inventory.Count; itemIndex++) {
+            var anchor = player.InventoryGrid.IndexOf(itemIndex);
+            var state = player.Inventory[itemIndex]?.State;
+            var width = (int)Math.Clamp(state?.InventoryWidth ?? 1U, 1U, 10U);
+            var height = (int)Math.Clamp(state?.InventoryHeight ?? 1U, 1U, 4U);
+            if (anchor < 0
+                || !HasExactInventoryFootprint(
+                    expected,
+                    anchor,
+                    itemIndex,
+                    width,
+                    height)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid inventory footprint topology.");
+            }
+        }
+        if (!player.InventoryGrid.SequenceEqual(expected)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid inventory-grid projection.");
+        }
+    }
+
+    private static bool HasExactInventoryFootprint(
+        int[] expected,
+        int anchor,
+        int itemIndex,
+        int width,
+        int height)
+    {
+        var column = anchor % 10;
+        var row = anchor / 10;
+        if (column + width > 10 || row + height > 4)
+            return false;
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var cell = (row + y) * 10 + column + x;
+                if (expected[cell] >= 0)
+                    return false;
+                expected[cell] = itemIndex;
+            }
+        }
+        return true;
     }
 
     private static void ValidateActiveStore(Snapshot snapshot)

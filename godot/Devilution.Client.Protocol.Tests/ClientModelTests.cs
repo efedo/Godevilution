@@ -963,6 +963,86 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedInventoryTopology()
+    {
+        var model = new AuthoritativeClientModel();
+        var invalidBeltSlot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Belt = {
+                        new BeltItemSnapshot {
+                            Slot = 8,
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidBeltSlot)));
+
+        var duplicateEquipmentSlot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Equipment = {
+                        new EquippedItemSnapshot {
+                            Slot = 4,
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot(),
+                        },
+                        new EquippedItemSnapshot {
+                            Slot = 4,
+                            ItemSeed = 43,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateEquipmentSlot)));
+
+        var invalidGridReference = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                    InventoryGrid = { -1, 1 },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidGridReference)));
+
+        var invalidGridFootprint = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot {
+                                InventoryWidth = 2,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        invalidGridFootprint.Players[0].InventoryGrid.Add(Enumerable.Repeat(-1, 40));
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidGridFootprint)));
+    }
+
+    [Fact]
     public void RejectsImpossibleCoreItemStateRanges()
     {
         var model = new AuthoritativeClientModel();

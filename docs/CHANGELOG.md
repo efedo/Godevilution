@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
 - The Godot protocol boundary now cross-validates active vendor state, rejecting
   inconsistent session IDs, duplicate stock slots, unsupported prices, and
   invalid stock item identities before presentation consumes them.
+- Godot now rejects malformed native inventory topology, including invalid or
+  duplicate belt/equipment slots and inconsistent inventory-grid footprints.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
