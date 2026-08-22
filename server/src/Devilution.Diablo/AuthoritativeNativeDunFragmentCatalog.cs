@@ -9,7 +9,9 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     string AssetPath,
     uint AnchorEntityId,
     int AnchorOffsetX,
-    int AnchorOffsetY)
+    int AnchorOffsetY,
+    string? TileAssetPath = null,
+    string? SolAssetPath = null)
 {
     /** Stable level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
@@ -22,6 +24,14 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
             throw new InvalidDataException(
                 $"Native DUN fragment {FragmentId} contains invalid identity or asset metadata.");
         }
+        var hasTileAsset = !string.IsNullOrWhiteSpace(TileAssetPath);
+        var hasSolAsset = !string.IsNullOrWhiteSpace(SolAssetPath);
+        if (hasTileAsset != hasSolAsset
+            || hasTileAsset && !IsRelativeNativeAssetPath(TileAssetPath!, ".til")
+            || hasSolAsset && !IsRelativeNativeAssetPath(SolAssetPath!, ".sol")) {
+            throw new InvalidDataException(
+                $"Native DUN fragment {FragmentId} must declare a safe .til/.sol asset pair.");
+        }
         return this;
     }
 
@@ -30,6 +40,16 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
         return !string.IsNullOrWhiteSpace(path)
             && !Path.IsPathRooted(path)
             && path.EndsWith(".dun", StringComparison.OrdinalIgnoreCase)
+            && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(segment => segment is not "." and not "..")
+            && !path.Contains(':', StringComparison.Ordinal);
+    }
+
+    private static bool IsRelativeNativeAssetPath(string path, string extension)
+    {
+        return !string.IsNullOrWhiteSpace(path)
+            && !Path.IsPathRooted(path)
+            && path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
             && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
                 .All(segment => segment is not "." and not "..")
             && !path.Contains(':', StringComparison.Ordinal);
@@ -140,12 +160,39 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 }
             }
 
+            var blockedCells = level.BlockedCells.ToHashSet();
+            var missileBlockedCells = level.MissileBlockedCells.ToHashSet();
+            if (!string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                && !string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
+                var pieces = AuthoritativeDunPieceCatalog.LoadTil(
+                    definition.TileAssetPath,
+                    content.GetRequiredAsset(definition.TileAssetPath).Contents);
+                var tileProperties = AuthoritativeDunTilePropertyCatalog.LoadSol(
+                    definition.SolAssetPath,
+                    content.GetRequiredAsset(definition.SolAssetPath).Contents);
+                var fragmentGeometry = AuthoritativeDunGeometryMaterializer.Materialize(
+                    definition.LevelId,
+                    map,
+                    pieces,
+                    tileProperties);
+                foreach (var cell in fragmentGeometry.BlockedCells) {
+                    var localX = cell % map.TileWidth;
+                    var localY = cell / map.TileWidth;
+                    blockedCells.Add((originY + localY) * level.Width + originX + localX);
+                }
+                foreach (var cell in fragmentGeometry.MissileBlockedCells) {
+                    var localX = cell % map.TileWidth;
+                    var localY = cell / map.TileWidth;
+                    missileBlockedCells.Add((originY + localY) * level.Width + originX + localX);
+                }
+            }
+
             world.ReplaceLevel(new AuthoritativeLevel(
                 level.LevelId,
                 level.Width,
                 level.Height,
-                level.BlockedCells,
-                level.MissileBlockedCells,
+                blockedCells,
+                missileBlockedCells,
                 level.IsDefaultStart,
                 level.SuppressMultiplayerDeathDrops,
                 transparency,
@@ -169,8 +216,19 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 row.Required("asset_path"),
                 row.RequiredUInt32("anchor_entity_id"),
                 row.RequiredInt32("anchor_offset_x"),
-                row.RequiredInt32("anchor_offset_y")) {
+                row.RequiredInt32("anchor_offset_y"),
+                OptionalAssetPath(row, "tile_asset_path"),
+                OptionalAssetPath(row, "sol_asset_path")) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
             }));
+    }
+
+    private static string? OptionalAssetPath(TsvRow row, string column)
+    {
+        return row.TryGet(column, out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)
+            ? value
+            : null;
     }
 }

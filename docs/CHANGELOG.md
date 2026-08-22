@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add optional validated `.til`/`.sol` collision composition to native DUN
+  fragments. External tile definitions now expand fragment mega-tiles into
+  anchor-relative solid and missile-blocked cells without hard-coded gameplay
+  assumptions; the checked-in Hellfire fragment remains presentation-only until
+  licensed `l5.til`/`l5.sol` assets are supplied.
+
 - Externalize the Hellfire Na-Krul completion's four native room-opening
   object-layer assignments as a validated mutation anchored to the authored
   encounter object. The server applies the room mutation together with the

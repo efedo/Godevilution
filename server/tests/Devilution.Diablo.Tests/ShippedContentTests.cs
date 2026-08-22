@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.386.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.387.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -445,9 +445,9 @@ public sealed class ShippedContentTests
                 + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t5\n");
         var objectTable = TsvTable.Parse(
             "objects.tsv",
-            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\n"
-                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\n"
-                + "9002\t41\t\t\t\t\t\t0\t0\t\tWorldMutation\t9100\t\t0\t0\t0\t0\t1\n");
+            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\n"
+                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\n"
+                + "9002\t41\t\t\t\t\t\t0\t0\t\tWorldMutation\t9100\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\n");
         var placementTable = TsvTable.Parse(
             "set_level_objects.tsv",
             "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\ttemplate_entity_id\n"
@@ -455,8 +455,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            "mutation_id\tset_level_id\tset_level_symbol\tactive_map\tblocked_cells_add\n"
-                + "9100\t1\tSL_SKELKING\t1\t4\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t4\t\t\t\t\t\t\t\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -466,6 +466,7 @@ public sealed class ShippedContentTests
                 new ContentTableOverlay("set_level_maps.tsv", ["set_level_id"]),
                 new ContentTableOverlay("objects.tsv", ["entity_id"]),
                 new ContentTableOverlay("set_level_objects.tsv", ["placement_id"]),
+                new ContentTableOverlay("world_mutations.tsv", ["mutation_id"]),
             ],
             assets: [
                 new ContentAsset("fixture/pre.dun", CreateSyntheticDun()),
@@ -1183,7 +1184,7 @@ public sealed class ShippedContentTests
         var questLinkedObjects = TsvTable.Parse(
             objects.SourcePath,
             objects.ToCanonicalTsv()
-                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\t0\n");
+                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\t0\tNone\t0\t\t0\t0\t0\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -1950,7 +1951,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.386.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.387.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
