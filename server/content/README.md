@@ -53,8 +53,9 @@ used by the legacy item-table fallback.
 equipment-location symbols used for compatibility placement and classification.
 `native_item_effects.tsv` covers the native special-effect symbols and bit flags
 used by both normalized and legacy item loading.
-Unique-item powers with matching ordinary effect symbols, including the
-level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock
+Unique-item powers with matching ordinary effect symbols, including elemental
+arrow/damage channel mappings and the level-dependent StealMana, StealLife,
+FastAttack, FastRecover, and FastBlock
 flags, use the same validated namespace during generation; direct catalogs
 retain native flag fallbacks when the table is not supplied.
 `native_item_hellfire_effects.tsv` covers the native Hellfire item-effect

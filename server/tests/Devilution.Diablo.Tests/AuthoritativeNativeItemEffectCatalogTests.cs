@@ -130,9 +130,27 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
                 new("FASTATTACK", 4, 4),
                 new("FASTRECOVER", 4, 4),
             ]),
+            new AuthoritativeUniqueItemDefinition(1007, "Arrow Ward", 7, 1, 1, [
+                new("ADDACLIFE", 2, 4),
+            ]),
+            new AuthoritativeUniqueItemDefinition(1008, "Mana Ward", 7, 1, 1, [
+                new("ADDMANAAC", 2, 4),
+            ]),
+            new AuthoritativeUniqueItemDefinition(1009, "Fire Edge", 8, 1, 1, [
+                new("FIREDAM", 2, 4),
+            ]),
+            new AuthoritativeUniqueItemDefinition(1010, "Lightning Edge", 9, 1, 1, [
+                new("LIGHTDAM", 2, 4),
+            ]),
         ], nativeItemEffectCatalog: effects);
         var items = new AuthoritativeItemCatalog([
             new AuthoritativeItemDefinition(7, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true),
+            new AuthoritativeItemDefinition(8, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true) {
+                Flags = 16384U,
+            },
+            new AuthoritativeItemDefinition(9, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true) {
+                Flags = 4096U,
+            },
         ]);
 
         Assert.Equal(2U | 4U | 8U | 16U | 32U | 64U, uniques.Generate(items, 1001, 42, 1).Flags);
@@ -141,5 +159,37 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
         Assert.Equal(2048U | 8192U, uniques.Generate(items, 1004, 42, 1).Flags);
         Assert.Equal(32768U | 131072U | 524288U | 8388608U | 67108864U, uniques.Generate(items, 1005, 42, 1).Flags);
         Assert.Equal(65536U | 262144U | 4194304U | 33554432U, uniques.Generate(items, 1006, 42, 1).Flags);
+        Assert.Equal(2048U | 8192U, uniques.Generate(items, 1007, 42, 1).Flags);
+        Assert.Equal(4096U | 16384U, uniques.Generate(items, 1008, 42, 1).Flags);
+        Assert.Equal(4096U, uniques.Generate(items, 1009, 42, 1).Flags);
+        Assert.Equal(16384U, uniques.Generate(items, 1010, 42, 1).Flags);
+    }
+
+    [Fact]
+    public void UniqueElementalPowersRetainNativeFallbackWithoutCatalog()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(2001, "Fire Edge", 7, 1, 1, [
+                new("FIREDAM", 2, 4),
+            ]),
+            new AuthoritativeUniqueItemDefinition(2002, "Lightning Edge", 8, 1, 1, [
+                new("LIGHTDAM", 2, 4),
+            ]),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true) {
+                Flags = AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+            },
+            new AuthoritativeItemDefinition(8, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true) {
+                Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+            },
+        ]);
+
+        Assert.Equal(
+            AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+            uniques.Generate(items, 2001, 42, 1).Flags);
+        Assert.Equal(
+            AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+            uniques.Generate(items, 2002, 42, 1).Flags);
     }
 }

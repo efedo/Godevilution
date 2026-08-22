@@ -387,8 +387,12 @@ public sealed class AuthoritativeUniqueItemCatalog
             },
             "ADDACLIFE" => state with {
                 Flags = state.Flags
-                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
-                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
+                    | ResolveItemEffectFlag(
+                        "LightningArrows",
+                        AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag)
+                    | ResolveItemEffectFlag(
+                        "FireArrows",
+                        AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag),
                 FireMinDamage = power.Value1,
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 1,
@@ -396,8 +400,12 @@ public sealed class AuthoritativeUniqueItemCatalog
             },
             "ADDMANAAC" => state with {
                 Flags = state.Flags
-                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag
-                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                    | ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
+                    | ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag),
                 FireMinDamage = power.Value1,
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 2,
@@ -411,16 +419,24 @@ public sealed class AuthoritativeUniqueItemCatalog
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 0,
                 LightningMaxDamage = 0,
-                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
-                    & ~AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                Flags = (state.Flags | ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag))
+                    & ~ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag),
             },
             "LIGHTDAM" => state with {
                 LightningMinDamage = power.Value1,
                 LightningMaxDamage = power.Value2,
                 FireMinDamage = 0,
                 FireMaxDamage = 0,
-                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
-                    & ~AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                Flags = (state.Flags | ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag))
+                    & ~ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag),
             },
             "FIRERES_CURSE" => state with { PlusFireResistance = state.PlusFireResistance - value },
             "LIGHTRES_CURSE" => state with { PlusLightningResistance = state.PlusLightningResistance - value },
