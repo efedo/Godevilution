@@ -31,6 +31,13 @@ public:
 		std::vector<ProjectedObjectSnapshot> objects,
 		std::vector<ProjectedProjectileSnapshot> projectiles,
 		uint32_t levelId);
+	[[nodiscard]] tl::expected<void, std::string> Apply(
+		std::vector<ProjectedMonsterSnapshot> monsters,
+		std::vector<ProjectedWorldItemSnapshot> worldItems,
+		std::vector<ProjectedObjectSnapshot> objects,
+		std::vector<ProjectedProjectileSnapshot> projectiles,
+		std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
+		uint32_t levelId);
 
 	void Clear() noexcept;
 
@@ -39,6 +46,15 @@ public:
 	[[nodiscard]] const std::vector<ProjectedWorldItemSnapshot> &WorldItems() const noexcept { return worldItems_; }
 	[[nodiscard]] const std::vector<ProjectedObjectSnapshot> &Objects() const noexcept { return objects_; }
 	[[nodiscard]] const std::vector<ProjectedProjectileSnapshot> &Projectiles() const noexcept { return projectiles_; }
+	[[nodiscard]] const std::vector<ProjectedLevelGeometrySnapshot> &LevelGeometry() const noexcept { return levelGeometry_; }
+	/** Returns effective geometry for one authoritative level, if supplied. */
+	[[nodiscard]] const ProjectedLevelGeometrySnapshot *LevelGeometryAt(uint32_t levelId) const noexcept;
+	/** Returns effective geometry for the currently projected level, if supplied. */
+	[[nodiscard]] const ProjectedLevelGeometrySnapshot *CurrentLevelGeometry() const noexcept { return LevelGeometryAt(levelId_); }
+	/** Returns the authoritative blocked-cell result, or no value when geometry is unavailable/out of bounds. */
+	[[nodiscard]] std::optional<bool> IsBlocked(int32_t positionX, int32_t positionY) const noexcept;
+	/** Returns the authoritative missile-blocked result, or no value when geometry is unavailable/out of bounds. */
+	[[nodiscard]] std::optional<bool> IsMissileBlocked(int32_t positionX, int32_t positionY) const noexcept;
 
 	[[nodiscard]] std::optional<uint32_t> WorldItemAt(int32_t positionX, int32_t positionY) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> MonsterAt(int32_t positionX, int32_t positionY) const noexcept;
@@ -53,6 +69,7 @@ private:
 	std::vector<ProjectedWorldItemSnapshot> worldItems_;
 	std::vector<ProjectedObjectSnapshot> objects_;
 	std::vector<ProjectedProjectileSnapshot> projectiles_;
+	std::vector<ProjectedLevelGeometrySnapshot> levelGeometry_;
 	uint32_t levelId_ = 0;
 };
 

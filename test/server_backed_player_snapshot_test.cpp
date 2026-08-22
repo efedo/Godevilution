@@ -1179,6 +1179,34 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 	EXPECT_TRUE(projection.Projectiles().empty());
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries)
+{
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 3;
+	geometry.height = 2;
+	geometry.blockedCells = { 4 };
+	geometry.missileBlockedCells = { 1 };
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.CurrentLevelGeometry() != nullptr);
+	EXPECT_EQ(projection.LevelGeometryAt(1), projection.CurrentLevelGeometry());
+	ASSERT_TRUE(projection.IsBlocked(1, 1).has_value());
+	EXPECT_TRUE(*projection.IsBlocked(1, 1));
+	EXPECT_FALSE(*projection.IsBlocked(0, 0));
+	EXPECT_TRUE(*projection.IsMissileBlocked(1, 0));
+	EXPECT_FALSE(projection.IsBlocked(3, 0).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)
+{
+	ProjectedLevelGeometrySnapshot first;
+	first.levelId = 1;
+	ProjectedLevelGeometrySnapshot duplicate = first;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { }, { first, duplicate }, 1).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjectiles)
 {
 	ProjectedProjectileSnapshot second;

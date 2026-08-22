@@ -11,7 +11,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	std::vector<ProjectedObjectSnapshot> objects,
 	uint32_t levelId)
 {
-	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), {}, levelId);
+	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), {}, {}, levelId);
 }
 
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
@@ -19,6 +19,17 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	std::vector<ProjectedWorldItemSnapshot> worldItems,
 	std::vector<ProjectedObjectSnapshot> objects,
 	std::vector<ProjectedProjectileSnapshot> projectiles,
+	uint32_t levelId)
+{
+	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), std::move(projectiles), {}, levelId);
+}
+
+tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
+	std::vector<ProjectedMonsterSnapshot> monsters,
+	std::vector<ProjectedWorldItemSnapshot> worldItems,
+	std::vector<ProjectedObjectSnapshot> objects,
+	std::vector<ProjectedProjectileSnapshot> projectiles,
+	std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
 	uint32_t levelId)
 {
 	if (std::any_of(projectiles.begin(), projectiles.end(), [](const auto &projectile) {
@@ -39,10 +50,19 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 		}) != projectiles.end()) {
 		return tl::make_unexpected("Authoritative projectile projection contains duplicate entity IDs.");
 	}
+	std::sort(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
+		return left.levelId < right.levelId;
+	});
+	if (std::adjacent_find(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
+			return left.levelId == right.levelId;
+		}) != levelGeometry.end()) {
+		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
+	}
 	monsters_ = std::move(monsters);
 	worldItems_ = std::move(worldItems);
 	objects_ = std::move(objects);
 	projectiles_ = std::move(projectiles);
+	levelGeometry_ = std::move(levelGeometry);
 	levelId_ = levelId;
 	return { };
 }
@@ -53,7 +73,36 @@ void ServerBackedWorldProjection::Clear() noexcept
 	worldItems_.clear();
 	objects_.clear();
 	projectiles_.clear();
+	levelGeometry_.clear();
 	levelId_ = 0;
+}
+
+const ProjectedLevelGeometrySnapshot *ServerBackedWorldProjection::LevelGeometryAt(uint32_t levelId) const noexcept
+{
+	const auto geometry = std::find_if(levelGeometry_.begin(), levelGeometry_.end(), [levelId](const auto &candidate) {
+		return candidate.levelId == levelId;
+	});
+	return geometry == levelGeometry_.end() ? nullptr : &*geometry;
+}
+
+std::optional<bool> ServerBackedWorldProjection::IsBlocked(int32_t positionX, int32_t positionY) const noexcept
+{
+	const auto *geometry = CurrentLevelGeometry();
+	if (geometry == nullptr || geometry->width <= 0 || geometry->height <= 0
+	    || positionX < 0 || positionY < 0 || positionX >= geometry->width || positionY >= geometry->height)
+		return std::nullopt;
+	const auto cell = positionY * geometry->width + positionX;
+	return std::find(geometry->blockedCells.begin(), geometry->blockedCells.end(), cell) != geometry->blockedCells.end();
+}
+
+std::optional<bool> ServerBackedWorldProjection::IsMissileBlocked(int32_t positionX, int32_t positionY) const noexcept
+{
+	const auto *geometry = CurrentLevelGeometry();
+	if (geometry == nullptr || geometry->width <= 0 || geometry->height <= 0
+	    || positionX < 0 || positionY < 0 || positionX >= geometry->width || positionY >= geometry->height)
+		return std::nullopt;
+	const auto cell = positionY * geometry->width + positionX;
+	return std::find(geometry->missileBlockedCells.begin(), geometry->missileBlockedCells.end(), cell) != geometry->missileBlockedCells.end();
 }
 
 std::optional<uint32_t> ServerBackedWorldProjection::WorldItemAt(int32_t positionX, int32_t positionY) const noexcept
