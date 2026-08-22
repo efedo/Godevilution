@@ -184,7 +184,8 @@ public sealed class AuthoritativeLevel
         bool isDefaultStart = false,
         bool suppressMultiplayerDeathDrops = false,
         IEnumerable<ushort>? nativeTransparency = null,
-        IEnumerable<ushort>? nativeObjectLayer = null)
+        IEnumerable<ushort>? nativeObjectLayer = null,
+        IEnumerable<ushort>? nativeMegaTileLayer = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -216,6 +217,13 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains a native object layer with an invalid length.");
         NativeObjectLayer = Array.AsReadOnly(objects);
+        var megaTiles = (nativeMegaTileLayer ?? []).ToArray();
+        var megaWidth = (width + 1) / 2;
+        var megaHeight = (height + 1) / 2;
+        if (megaTiles.Length != 0 && megaTiles.Length != megaWidth * megaHeight)
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native mega-tile layer with an invalid length.");
+        NativeMegaTileLayer = Array.AsReadOnly(megaTiles);
     }
 
     public uint LevelId { get; }
@@ -238,6 +246,9 @@ public sealed class AuthoritativeLevel
 
     /** Native DUN object-layer values retained for explicit content mapping. */
     public IReadOnlyList<ushort> NativeObjectLayer { get; }
+
+    /** Native DUN mega-tile IDs retained for external set-piece presentation. */
+    public IReadOnlyList<ushort> NativeMegaTileLayer { get; }
 
     public bool IsDefaultStart { get; }
 

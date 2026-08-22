@@ -87,7 +87,8 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                 level.IsDefaultStart,
                 level.SuppressMultiplayerDeathDrops,
                 level.NativeTransparency,
-                map.ObjectLayer) {
+                map.ObjectLayer,
+                map.TileLayer) {
                 StableSymbol = string.IsNullOrWhiteSpace(definition.LevelSymbol)
                     ? level.StableSymbol
                     : definition.LevelSymbol,

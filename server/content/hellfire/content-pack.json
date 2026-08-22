@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.385.0"
+    "version": "1.386.0"
   },
   "dependencyConstraints": [
     {
@@ -58,6 +58,11 @@
     {
       "table": "world_mutations.tsv",
       "keys": ["mutation_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "native_dun_fragments.tsv",
+      "keys": ["fragment_id"],
       "mode": "upsert"
     },
     {

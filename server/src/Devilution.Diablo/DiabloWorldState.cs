@@ -287,6 +287,7 @@ public sealed class DiabloWorldState
             var missileBlocked = baseLevel.MissileBlockedCells.ToHashSet();
             var transparency = baseLevel.NativeTransparency.ToArray();
             var objectLayer = baseLevel.NativeObjectLayer.ToArray();
+            var megaTileLayer = baseLevel.NativeMegaTileLayer.ToArray();
             foreach (var mutationId in activeWorldMutationIds.OrderBy(id => id)) {
                 if (WorldMutations?.TryGet(mutationId, out var mutation) != true
                     || mutation.LevelId != baseLevel.LevelId) {
@@ -356,7 +357,8 @@ public sealed class DiabloWorldState
                     baseLevel.IsDefaultStart,
                     baseLevel.SuppressMultiplayerDeathDrops,
                     transparency,
-                    objectLayer) {
+                    objectLayer,
+                    megaTileLayer) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

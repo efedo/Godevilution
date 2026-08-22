@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.385.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.386.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1950,7 +1950,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.385.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.386.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2237,6 +2237,24 @@ public sealed class ShippedContentTests
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
         Assert.Equal(23, activation.Simulation.WorldState.Quests.Count);
+        var nakrulFragment = Assert.Single(activation.NativeDunFragments!.Definitions);
+        Assert.Equal((1U, 24U, 2403U, -6, -8), (
+            nakrulFragment.FragmentId,
+            nakrulFragment.LevelId,
+            nakrulFragment.AnchorEntityId,
+            nakrulFragment.AnchorOffsetX,
+            nakrulFragment.AnchorOffsetY));
+        var uberroom = AuthoritativeDunMapAsset.Load(
+            nakrulFragment.AssetPath,
+            composed.GetRequiredAsset(nakrulFragment.AssetPath).Contents);
+        var hellfireLevel = activation.Simulation.WorldState.World!.Levels
+            .Single(level => level.LevelId == 24);
+        Assert.Equal(20 * 20, hellfireLevel.NativeMegaTileLayer.Count);
+        Assert.Equal(uberroom.TileLayer[0], hellfireLevel.NativeMegaTileLayer[6 * 20 + 9]);
+        Assert.Equal(
+            uberroom.TileLayer[^1],
+            hellfireLevel.NativeMegaTileLayer[(6 + uberroom.MegaHeight - 1) * 20
+                + 9 + uberroom.MegaWidth - 1]);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

@@ -158,6 +158,7 @@ public sealed class ClientModelTests
                         Width = 2,
                         Height = 2,
                         NativeObjectLayer = { 0, 297, 300, 299 },
+                        NativeMegaTileLayer = { 115 },
                     },
                 },
             }));
@@ -165,6 +166,9 @@ public sealed class ClientModelTests
         Assert.Equal(
             [0U, 297U, 300U, 299U],
             Assert.Single(model.Snapshot!.LevelGeometry).NativeObjectLayer);
+        Assert.Equal(
+            [115U],
+            Assert.Single(model.Snapshot.LevelGeometry).NativeMegaTileLayer);
     }
 
     [Fact]

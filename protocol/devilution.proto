@@ -442,6 +442,8 @@ message LevelGeometrySnapshot {
 	repeated WarpTriggerSnapshot warp_triggers = 7;
 	// Native object-layer values after authoritative world mutations.
 	repeated uint32 native_object_layer = 8;
+	// Native mega-tile IDs after authoritative content composition.
+	repeated uint32 native_mega_tile_layer = 9;
 }
 
 message WarpTriggerSnapshot {

@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
   deterministic Na-Krul spawn, persists it through active mutation state, and
   projects the resulting native object layer through the authoritative geometry
   protocol.
+- Compose the Hellfire `uberroom.dun` set-piece as a validated native fragment
+  relative to the Na-Krul encounter anchor, retaining its native mega-tile
+  layer and projecting the resulting tile data through level geometry.
 
 - Externalize the Hellfire Na-Krul tome completion's server-owned native
   monster materialization. The validated content pack now binds the Na-Krul

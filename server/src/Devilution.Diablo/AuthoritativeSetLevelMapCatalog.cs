@@ -172,7 +172,8 @@ public sealed class AuthoritativeSetLevelMapCatalog
                     activeMap.IsDefaultStart,
                     activeMap.SuppressMultiplayerDeathDrops,
                     transparency.TransparencyLayer,
-                    activeMap.NativeObjectLayer) {
+                    activeMap.NativeObjectLayer,
+                    activeMap.NativeMegaTileLayer) {
                     StableSymbol = activeMap.StableSymbol,
                 };
             }
