@@ -39,6 +39,7 @@
 #include "engine/hwcursor.hpp"
 #include "persistence/loadsave.h"
 #include "network/protocol/multi.h"
+#include "persistence/save_policy.hpp"
 #include "persistence/save_file.h"
 #include "ui/player_messages.h"
 #include "utils/log.hpp"
@@ -48,6 +49,10 @@
 
 #ifndef USE_SDL1
 #include "controls/touch/renderers.h"
+#endif
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
 #endif
 
 #ifdef __DJGPP__
@@ -75,6 +80,15 @@ const int BarPos[3][2] = { { 53, 37 }, { 53, 421 }, { 53, 37 } };
 OptionalOwnedClxSpriteList ArtCutsceneWidescreen;
 
 SdlEventType CustomEventType = SDL_EVENT_USER;
+
+bool LegacyLevelSaveAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldUseLegacyLocalSave(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
 
 Cutscenes GetCutSceneFromLevelType(dungeon_type type)
 {
@@ -337,7 +351,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABNEXTLVL:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -351,7 +365,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABPREVLVL:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -373,7 +387,7 @@ void DoLoad(interface_mode uMsg)
 		ReturnLevelType = GetLevelType(ReturnLevel);
 		ReturnLvlPosition = GetMapReturnPosition();
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -390,7 +404,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABRTNLVL:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -407,7 +421,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABWARPLVL:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -421,7 +435,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABTOWNWARP:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -435,7 +449,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABTWARPUP:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();
@@ -449,7 +463,7 @@ void DoLoad(interface_mode uMsg)
 		break;
 	case WM_DIABRETOWN:
 		IncProgress();
-		if (!gbIsMultiplayer) {
+		if (!gbIsMultiplayer && LegacyLevelSaveAllowed()) {
 			pfile_save_level();
 		} else {
 			DeltaSaveLevel();

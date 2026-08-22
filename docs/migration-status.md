@@ -29,6 +29,9 @@ the authoritative snapshot.
 Connected single-player level transitions now bypass legacy visited-level
 `LoadLevel()` restoration in dungeon, town, and set-level branches; local flags no
 longer select a second gameplay state while the server-backed runtime is active.
+Connected single-player transition progress no longer writes legacy per-level save
+files before a server-owned move; multiplayer delta saves remain protected by the
+existing delta-state policy.
 
 ## Current state
 

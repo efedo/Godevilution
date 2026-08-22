@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected single-player transition progress no longer writes legacy per-level
+  save files before server-owned moves; multiplayer delta saves remain protected by
+  the existing delta-state policy.
 - Connected single-player level transitions now bypass legacy visited-level
   `LoadLevel()` restoration in dungeon, town, and set-level branches, keeping
   the server-backed runtime on authoritative state.
