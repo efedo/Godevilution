@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native authoritative snapshot application now rejects player, moving-monster,
+  world-item, object, projectile, corpse, and portal positions outside native
+  coordinate limits or supplied level geometry, matching the Godot boundary.
 - The native debug console now stays native-only in authoritative mode: it
   skips script prelude loading, autocomplete, module help, and interpreter
   fallback while exposing the registered server-compatible command list.

@@ -329,6 +329,10 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<void, std::string> ValidateLevelGeometrySnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates projected entity positions against native coordinates and supplied geometry. */
+[[nodiscard]] tl::expected<void, std::string> ValidateEntityPositionSnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

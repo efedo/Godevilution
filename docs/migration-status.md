@@ -118,6 +118,9 @@ scaled hit points), not only the client's difficulty label.
   IDs, quest references, messages, ranges, and geometry positions before routing.
 - Native authoritative geometry validation now rejects malformed dimensions,
   cells, layers, duplicate levels, and warp-trigger routes before projection.
+- Native authoritative snapshot application now rejects player, moving-monster,
+  world-item, object, projectile, corpse, and portal positions outside native
+  coordinate limits or supplied level geometry, matching the Godot boundary.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

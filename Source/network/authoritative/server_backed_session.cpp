@@ -488,6 +488,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 {
 	if (auto geometry = ValidateLevelGeometrySnapshots(snapshot); !geometry.has_value())
 		return tl::make_unexpected(geometry.error());
+	if (auto positions = ValidateEntityPositionSnapshots(snapshot); !positions.has_value())
+		return tl::make_unexpected(positions.error());
 	if (auto quests = ValidateQuestSnapshots(snapshot); !quests.has_value())
 		return tl::make_unexpected(quests.error());
 	if (auto interactions = ValidateQuestTownerInteractions(snapshot); !interactions.has_value())

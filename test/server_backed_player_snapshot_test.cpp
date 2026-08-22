@@ -869,6 +869,68 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidSymbol).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)
+{
+	const auto withLevel = [](protocol::Snapshot &snapshot) {
+		auto *level = snapshot.add_level_geometry();
+		level->set_level_id(1);
+		level->set_width(4);
+		level->set_height(4);
+	};
+
+	protocol::Snapshot playerOutside;
+	withLevel(playerOutside);
+	auto *player = playerOutside.add_players();
+	player->set_level_id(1);
+	player->set_position_x(4);
+	player->set_position_y(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(playerOutside).has_value());
+
+	protocol::Snapshot movingMonsterOutside;
+	withLevel(movingMonsterOutside);
+	auto *monster = movingMonsterOutside.add_monsters();
+	monster->set_level_id(1);
+	monster->set_position_x(2);
+	monster->set_position_y(2);
+	monster->set_moving(true);
+	monster->set_future_position_x(4);
+	monster->set_future_position_y(2);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(movingMonsterOutside).has_value());
+
+	protocol::Snapshot worldEntitiesOutside;
+	withLevel(worldEntitiesOutside);
+	worldEntitiesOutside.add_world_items()->set_position_x(-1);
+	worldEntitiesOutside.mutable_world_items(0)->set_level_id(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	worldEntitiesOutside.clear_world_items();
+	worldEntitiesOutside.add_objects()->set_position_y(4);
+	worldEntitiesOutside.mutable_objects(0)->set_level_id(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	worldEntitiesOutside.clear_objects();
+	worldEntitiesOutside.add_projectiles()->set_position_x(256);
+	worldEntitiesOutside.mutable_projectiles(0)->set_level_id(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	worldEntitiesOutside.clear_projectiles();
+	worldEntitiesOutside.add_corpses()->set_position_y(4);
+	worldEntitiesOutside.mutable_corpses(0)->set_level_id(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+
+	protocol::Snapshot portalOutside;
+	withLevel(portalOutside);
+	auto *portal = portalOutside.add_portals();
+	portal->set_source_level_id(1);
+	portal->set_source_position_x(1);
+	portal->set_source_position_y(1);
+	portal->set_destination_level_id(1);
+	portal->set_destination_position_x(4);
+	portal->set_destination_position_y(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(portalOutside).has_value());
+
+	protocol::Snapshot nativeRangeOutside;
+	nativeRangeOutside.add_players()->set_position_x(256);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(nativeRangeOutside).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

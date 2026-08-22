@@ -770,6 +770,54 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 	return {};
 }
 
+tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::Snapshot &snapshot)
+{
+	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;
+	levels.reserve(snapshot.level_geometry_size());
+	for (const auto &level : snapshot.level_geometry()) {
+		if (!levels.emplace(level.level_id(), &level).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
+	}
+	const auto isInBounds = [&](uint32_t levelId, int32_t x, int32_t y) {
+		if (!IsValidNativeTileCoordinate(x, y))
+			return false;
+		const auto level = levels.find(levelId);
+		if (level == levels.end() || level->second->width() == 0 || level->second->height() == 0)
+			return true;
+		return x < level->second->width() && y < level->second->height();
+	};
+	const auto isValidMonster = [&](const protocol::MonsterSnapshot &monster) {
+		return isInBounds(monster.level_id(), monster.position_x(), monster.position_y())
+		    && (!monster.moving()
+		        || isInBounds(monster.level_id(), monster.future_position_x(), monster.future_position_y()));
+	};
+	const auto invalidPlayer = std::any_of(snapshot.players().begin(), snapshot.players().end(), [&](const auto &player) {
+		return !isInBounds(player.level_id(), player.position_x(), player.position_y());
+	});
+	const auto invalidMonster = std::any_of(snapshot.monsters().begin(), snapshot.monsters().end(), [&](const auto &monster) {
+		return !isValidMonster(monster);
+	});
+	const auto invalidWorldItem = std::any_of(snapshot.world_items().begin(), snapshot.world_items().end(), [&](const auto &item) {
+		return !isInBounds(item.level_id(), item.position_x(), item.position_y());
+	});
+	const auto invalidObject = std::any_of(snapshot.objects().begin(), snapshot.objects().end(), [&](const auto &object) {
+		return !isInBounds(object.level_id(), object.position_x(), object.position_y());
+	});
+	const auto invalidProjectile = std::any_of(snapshot.projectiles().begin(), snapshot.projectiles().end(), [&](const auto &projectile) {
+		return !isInBounds(projectile.level_id(), projectile.position_x(), projectile.position_y());
+	});
+	const auto invalidCorpse = std::any_of(snapshot.corpses().begin(), snapshot.corpses().end(), [&](const auto &corpse) {
+		return !isInBounds(corpse.level_id(), corpse.position_x(), corpse.position_y());
+	});
+	const auto invalidPortal = std::any_of(snapshot.portals().begin(), snapshot.portals().end(), [&](const auto &portal) {
+		return !isInBounds(portal.source_level_id(), portal.source_position_x(), portal.source_position_y())
+		    || !isInBounds(portal.destination_level_id(), portal.destination_position_x(), portal.destination_position_y());
+	});
+	if (invalidPlayer || invalidMonster || invalidWorldItem || invalidObject || invalidProjectile || invalidCorpse || invalidPortal)
+		return tl::make_unexpected("Server-backed snapshot contains an entity outside projected level geometry.");
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {
