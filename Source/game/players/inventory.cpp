@@ -44,6 +44,7 @@
 #include "qol/visual_store.h"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
+#include "network/protocol/legacy_item_policy.hpp"
 #include "utils/display.h"
 #include "utils/string/format_int.hpp"
 #include "utils/is_of.hpp"
@@ -2540,6 +2541,14 @@ bool UseInvItem(int cii)
 		return true;
 	}
 #endif
+
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()
+	    && !ShouldProcessLegacyItemUse(true, item->isScroll() || item->isRune())) {
+		LogError("Refusing to apply an unsupported legacy inventory item use in a server-backed session.");
+		return true;
+	}
+	#endif
 
 	if (item->_iMiscId == IMISC_BOOK)
 		PlaySFX(SfxID::ReadBook);

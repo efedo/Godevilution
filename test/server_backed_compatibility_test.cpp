@@ -145,6 +145,13 @@ TEST(ServerBackedCompatibility, ConnectedLegacyItemProtocolFailsClosed)
 	EXPECT_FALSE(ShouldProcessLegacyItemProtocol(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyItemUseFailsClosedExceptServerRoutedCasts)
+{
+	EXPECT_TRUE(ShouldProcessLegacyItemUse(false, false));
+	EXPECT_FALSE(ShouldProcessLegacyItemUse(true, false));
+	EXPECT_TRUE(ShouldProcessLegacyItemUse(true, true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyAttributeMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyAttributeMessage(false));

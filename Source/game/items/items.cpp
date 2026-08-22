@@ -63,6 +63,7 @@
 #include "game/monsters/monsters.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
@@ -4452,6 +4453,16 @@ bool TryServerBackedConsumableCast(Player &player, int spellFrom)
 
 void UseItem(Player &player, item_misc_id mid, SpellID spellID, int spellFrom)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	const bool serverRoutedCast = mid == IMISC_SCROLL
+	    || mid == IMISC_SCROLLT
+	    || (mid > IMISC_RUNEFIRST && mid < IMISC_RUNELAST);
+	if (!ShouldProcessLegacyItemUse(authoritative::GetServerBackedRuntime().IsConnected(), serverRoutedCast)) {
+		LogError("Refusing to apply an unsupported legacy item use in a server-backed session.");
+		return;
+	}
+	#endif
+
 	std::optional<SpellID> prepareSpellID;
 
 	switch (mid) {

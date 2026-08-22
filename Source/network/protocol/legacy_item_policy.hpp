@@ -11,4 +11,14 @@ constexpr bool ShouldProcessLegacyItemProtocol(bool serverConnected) noexcept
 	return !serverConnected;
 }
 
+/**
+ * Legacy item-use handlers remain available offline. Connected scroll and rune
+ * casts are the only legacy item-use shape that is still allowed to continue
+ * because UseItem immediately submits the authoritative cast intent.
+ */
+constexpr bool ShouldProcessLegacyItemUse(bool serverConnected, bool serverRoutedCast) noexcept
+{
+	return !serverConnected || serverRoutedCast;
+}
+
 } // namespace devilution
