@@ -18,6 +18,11 @@
 #include "ui/gamemenu.h"
 #include "game/players/inventory.hpp"
 #include "game/missiles/missiles.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_combat_policy.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -146,6 +151,11 @@ int GetManaAmount(const Player &player, SpellID sn)
 
 void ConsumeSpell(Player &player, SpellID sn)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	switch (player.executedSpell.spellType) {
 	case SpellType::Skill:
 	case SpellType::Invalid:
@@ -247,6 +257,11 @@ void SpawnResurrectBeam(Player &caster, Player &target)
 
 void ApplyResurrect(Player &target)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (&target == MyPlayer) {
 		MyPlayerIsDead = false;
 		gamemenu_off();
@@ -280,6 +295,11 @@ void ApplyResurrect(Player &target)
 
 void DoHealOther(const Player &caster, Player &target)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (target.hasNoLife()) {
 		return;
 	}

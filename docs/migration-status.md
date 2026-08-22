@@ -57,6 +57,12 @@ attribute or hit-point mutation helpers now fail closed as well. Authoritative
 snapshot projection retains its dedicated level and field-assignment paths;
 offline sessions retain the legacy player-state lifecycle.
 
+Connected native missile creation now fails closed at `AddMissile` before any
+legacy effect initializer can mutate player or world state. Direct native
+resurrection, Heal Other, spell-consumption, and healer callbacks likewise stay
+offline-only; authoritative projectiles, healing, resurrection, and resources
+continue through snapshot and event projection.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

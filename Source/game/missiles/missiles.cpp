@@ -2815,6 +2815,12 @@ Missile *AddMissile(WorldTilePosition src, WorldTilePosition dst, Direction midi
     mienemy_type micaster, int id, int midam, int spllvl,
     Missile *parent, std::optional<SfxID> lSFX)
 {
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected())
+		return nullptr;
+#endif
+
 	if (Missiles.size() >= Missiles.max_size()) {
 		return nullptr;
 	}

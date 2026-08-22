@@ -29,6 +29,7 @@
 #include "ui/minitext.h"
 #include "ui/player_messages.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -995,6 +996,11 @@ void SStartBoyBuy()
 
 void HealPlayer()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Player &myPlayer = *MyPlayer;
 
 	if (myPlayer.life.current != myPlayer.life.maximum) {

@@ -30,6 +30,8 @@ All notable changes to this fork are documented below.
   native combat state or death lifecycle mutation.
 - Guard direct connected native resource, progression, attribute, and hit-point
   mutation helpers while preserving the authoritative snapshot projection path.
+- Guard connected native missile creation and direct spell/healer effect
+  callbacks before legacy projectile or player-state mutation.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an
