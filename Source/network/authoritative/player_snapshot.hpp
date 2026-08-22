@@ -317,6 +317,10 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates server-owned quest state before native interaction gates consume it. */
+[[nodiscard]] tl::expected<void, std::string> ValidateQuestSnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

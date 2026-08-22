@@ -640,6 +640,32 @@ tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSna
 	return projected;
 }
 
+tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot &snapshot)
+{
+	if (snapshot.quests_size() > 4096)
+		return tl::make_unexpected("Server-backed snapshot contains too many quests.");
+	std::unordered_set<uint32_t> questIds;
+	questIds.reserve(snapshot.quests_size());
+	for (const auto &quest : snapshot.quests()) {
+		if (quest.quest_id() == 0 || !questIds.insert(quest.quest_id()).second
+		    || quest.required_progress() == 0 || quest.progress() > quest.required_progress()
+		    || (quest.unavailable() && (quest.completed() || quest.progress() != 0))
+		    || quest.variable_1() < 0 || quest.variable_1() > 255
+		    || quest.variable_2() < 0 || quest.variable_2() > 255
+		    || quest.message_id() < 0 || quest.message_id() > std::numeric_limits<int16_t>::max()
+		    || quest.turn_in_towner_id() < -1 || quest.turn_in_towner_id() > 255
+		    || quest.turn_in_alternate_message_id() < 0 || quest.turn_in_alternate_message_id() > std::numeric_limits<int16_t>::max()
+		    || quest.turn_in_completion_variable2() < -1 || quest.turn_in_completion_variable2() > 255
+		    || quest.turn_in_completion_required_variable1() < -1 || quest.turn_in_completion_required_variable1() > 255
+		    || quest.turn_in_completion_variable1() < -1 || quest.turn_in_completion_variable1() > 255
+		    || quest.turn_in_required_variable1() < -1 || quest.turn_in_required_variable1() > 255
+		    || quest.turn_in_variable1() < -1 || quest.turn_in_variable1() > 255
+		    || quest.completion_unique_identity().size() > 128)
+			return tl::make_unexpected("Server-backed snapshot contains invalid quest state.");
+	}
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {

@@ -486,6 +486,8 @@ void ServerBackedSession::Close() noexcept
 
 tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protocol::Snapshot &snapshot)
 {
+	if (auto quests = ValidateQuestSnapshots(snapshot); !quests.has_value())
+		return tl::make_unexpected(quests.error());
 	if (entityId_ == 0) {
 		if (snapshot.players_size() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains no player entity.");

@@ -726,6 +726,49 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPortalRouteState)
 	EXPECT_FALSE(ProjectPortalSnapshots(oversizedCoordinate).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestState)
+{
+	protocol::Snapshot missingId;
+	missingId.add_quests()->set_required_progress(1);
+	EXPECT_FALSE(ValidateQuestSnapshots(missingId).has_value());
+
+	protocol::Snapshot duplicate;
+	duplicate.add_quests()->set_quest_id(1);
+	duplicate.mutable_quests(0)->set_required_progress(1);
+	duplicate.add_quests()->set_quest_id(1);
+	duplicate.mutable_quests(1)->set_required_progress(1);
+	EXPECT_FALSE(ValidateQuestSnapshots(duplicate).has_value());
+
+	protocol::Snapshot impossibleProgress;
+	auto *quest = impossibleProgress.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(2);
+	quest->set_progress(3);
+	EXPECT_FALSE(ValidateQuestSnapshots(impossibleProgress).has_value());
+
+	protocol::Snapshot unavailableProgress;
+	quest = unavailableProgress.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(1);
+	quest->set_unavailable(true);
+	quest->set_progress(1);
+	EXPECT_FALSE(ValidateQuestSnapshots(unavailableProgress).has_value());
+
+	protocol::Snapshot invalidMetadata;
+	quest = invalidMetadata.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(1);
+	quest->set_variable_1(256);
+	EXPECT_FALSE(ValidateQuestSnapshots(invalidMetadata).has_value());
+
+	protocol::Snapshot oversizedIdentity;
+	quest = oversizedIdentity.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(1);
+	quest->set_completion_unique_identity(std::string(129, 'x'));
+	EXPECT_FALSE(ValidateQuestSnapshots(oversizedIdentity).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;
