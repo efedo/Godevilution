@@ -143,6 +143,43 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AuthoredMetadataHydrationPreservesOmittedCurrentCharges()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                7,
+                1,
+                75,
+                100,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                true) {
+                MiscId = 121,
+                SpellId = 3,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+                MaxCharges = 12,
+                ItemActionKind = DiabloItemActionKind.IncreaseStrength,
+            },
+        ]);
+
+        var resolved = catalog.ResolveAuthoredMetadata(
+            AuthoritativeItemState.Empty with { ItemIndex = 999, MiscId = 121 });
+
+        Assert.Equal(75, resolved.Value);
+        Assert.Equal(100, resolved.IdentifiedValue);
+        Assert.Equal(12, resolved.MaxCharges);
+        Assert.Equal(0, resolved.Charges);
+        Assert.Equal(3, resolved.SpellId);
+        Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, resolved.SpellSourceKind);
+        Assert.Equal(DiabloItemActionKind.IncreaseStrength, resolved.ItemActionKind);
+    }
+
+    [Fact]
     public void RejectsMalformedNormalizedBooleanMetadata()
     {
         Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(

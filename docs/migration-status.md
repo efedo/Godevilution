@@ -41,6 +41,12 @@ scaled hit points), not only the client's difficulty label.
 
 ## Implemented authoritative systems
 
+- Snapshot restore now hydrates omitted authored item values, base damage,
+  durability, maximum charges, spell sources, and item actions across inventory,
+  equipment, belt, stash, held, world-item, and store state without changing
+  stable or native item identity; zero current charges remain preserved as a
+  legitimate depleted-item state.
+
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
   tuning and older packs retain the compatibility fallback.

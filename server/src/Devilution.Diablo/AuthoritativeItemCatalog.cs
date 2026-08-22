@@ -554,6 +554,103 @@ public sealed class AuthoritativeItemCatalog
         };
     }
 
+    /** Resolves omitted persisted gameplay metadata without changing item identity. */
+    public AuthoritativeItemState ResolveAuthoredMetadata(AuthoritativeItemState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var result = ResolveInventoryDimensions(state);
+        if (TryGetByState(state, out var definition)) {
+            if (result.Value == 0)
+                result = result with { Value = definition.Value };
+            if (result.IdentifiedValue == 0)
+                result = result with { IdentifiedValue = definition.IdentifiedValue };
+            if (result.MaxDamage == 0 && definition.MaxDamage > 0)
+                result = result with {
+                    MinDamage = definition.MinDamage,
+                    MaxDamage = definition.MaxDamage,
+                };
+            if (result.ArmorClass == 0
+                && definition.MinArmorClass >= 0
+                && definition.MinArmorClass == definition.MaxArmorClass)
+                result = result with { ArmorClass = definition.MinArmorClass };
+            if (result.MaxDurability == 0 && definition.MaxDurability > 0)
+                result = result with {
+                    Durability = result.Durability == 0
+                        ? definition.Durability
+                        : result.Durability,
+                    MaxDurability = definition.MaxDurability,
+                };
+            if (result.MaxCharges == 0 && definition.MaxCharges > 0)
+                result = result with { MaxCharges = definition.MaxCharges };
+            if (result.SpellId == 0 && definition.SpellId > 0)
+                result = result with { SpellId = definition.SpellId };
+            if (result.SpellSourceKind is null && definition.SpellSourceKind is { } sourceKind)
+                result = result with { SpellSourceKind = sourceKind };
+            if (result.ItemActionKind == DiabloItemActionKind.None
+                && definition.ItemActionKind != DiabloItemActionKind.None)
+                result = result with { ItemActionKind = definition.ItemActionKind };
+            return result;
+        }
+
+        if (result.Value == 0 || result.IdentifiedValue == 0) {
+            if (TryGetValueMetadataByMiscId(
+                    result.MiscId,
+                    out var value,
+                    out var identifiedValue)) {
+                if (result.Value == 0)
+                    result = result with { Value = value };
+                if (result.IdentifiedValue == 0)
+                    result = result with { IdentifiedValue = identifiedValue };
+            }
+        }
+        if (result.MaxDamage == 0
+            && TryGetBaseDamageByMiscId(
+                result.MiscId,
+                out var minimumDamage,
+                out var maximumDamage))
+            result = result with {
+                MinDamage = minimumDamage,
+                MaxDamage = maximumDamage,
+            };
+        if (result.ArmorClass == 0
+            && TryGetFixedArmorClassByMiscId(result.MiscId, out var armorClass))
+            result = result with { ArmorClass = armorClass };
+        if (result.MaxDurability == 0
+            && TryGetDurabilityMetadataByMiscId(
+                result.MiscId,
+                out var durability,
+                out var maximumDurability))
+            result = result with {
+                Durability = result.Durability == 0 ? durability : result.Durability,
+                MaxDurability = maximumDurability,
+            };
+        if (result.MaxCharges == 0
+            && TryGetChargedItemMetadataByMiscId(
+                result.MiscId,
+                out var maximumCharges,
+                out _))
+            result = result with { MaxCharges = maximumCharges };
+        if (result.SpellId == 0
+            && TryGetChargedItemMetadataByMiscId(
+                result.MiscId,
+                out _,
+                out var chargedSpellId))
+            result = result with { SpellId = chargedSpellId };
+        if (result.SpellId == 0
+            && TryGetConsumableItemSpellIdByMiscId(result.MiscId, out var consumableSpellId))
+            result = result with { SpellId = consumableSpellId };
+        if (result.SpellSourceKind is null
+            && TryGetSpellSourceKindByMiscId(result.MiscId, out var miscSourceKind))
+            result = result with { SpellSourceKind = miscSourceKind };
+        if (result.ItemActionKind == DiabloItemActionKind.None
+            && TryGetItemActionMetadataByMiscId(
+                result.MiscId,
+                out var actionKind,
+                out _))
+            result = result with { ItemActionKind = actionKind };
+        return result;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,

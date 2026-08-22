@@ -2095,18 +2095,18 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
-    public void SnapshotRestoreHydratesAuthoredInventoryFootprintsByMiscId()
+    public void SnapshotRestoreHydratesOmittedAuthoredItemMetadataByMiscId()
     {
         var definition = new AuthoritativeItemDefinition(
             7,
             1,
             100,
-            100,
+            150,
+            3,
+            7,
             0,
-            0,
-            0,
-            0,
-            0,
+            20,
+            40,
             2,
             1,
             true) {
@@ -2175,15 +2175,33 @@ public sealed class DiabloSimulationTests
         var restoredInventoryItem = Assert.Single(destination.Inventory);
         Assert.Equal(2, restoredInventoryItem.State.InventoryWidth);
         Assert.Equal(1, restoredInventoryItem.State.InventoryHeight);
+        Assert.Equal(100, restoredInventoryItem.State.Value);
+        Assert.Equal(150, restoredInventoryItem.State.IdentifiedValue);
+        Assert.Equal(3, restoredInventoryItem.State.MinDamage);
+        Assert.Equal(7, restoredInventoryItem.State.MaxDamage);
+        Assert.Equal(20, restoredInventoryItem.State.Durability);
+        Assert.Equal(40, restoredInventoryItem.State.MaxDurability);
         Assert.Equal([0, 0], destination.InventoryGrid.Take(2));
         var restoredWorldItem = Assert.Single(replacement.WorldState.WorldItems).Value;
         Assert.Equal(2, restoredWorldItem.State.InventoryWidth);
         Assert.Equal(1, restoredWorldItem.State.InventoryHeight);
+        Assert.Equal(100, restoredWorldItem.State.Value);
+        Assert.Equal(150, restoredWorldItem.State.IdentifiedValue);
+        Assert.Equal(3, restoredWorldItem.State.MinDamage);
+        Assert.Equal(7, restoredWorldItem.State.MaxDamage);
+        Assert.Equal(20, restoredWorldItem.State.Durability);
+        Assert.Equal(40, restoredWorldItem.State.MaxDurability);
         var restoredSnapshot = replacement.CaptureSnapshot(destination, 2);
         Assert.NotNull(restoredSnapshot.ActiveStore);
         var restoredStore = restoredSnapshot.ActiveStore!;
         Assert.Equal(2, restoredStore.Items[0].State.InventoryWidth);
         Assert.Equal(1, restoredStore.Items[0].State.InventoryHeight);
+        Assert.Equal(100, restoredStore.Items[0].State.Value);
+        Assert.Equal(150, restoredStore.Items[0].State.IdentifiedValue);
+        Assert.Equal(3, restoredStore.Items[0].State.MinDamage);
+        Assert.Equal(7, restoredStore.Items[0].State.MaxDamage);
+        Assert.Equal(20, restoredStore.Items[0].State.Durability);
+        Assert.Equal(40, restoredStore.Items[0].State.MaxDurability);
     }
 
     [Fact]

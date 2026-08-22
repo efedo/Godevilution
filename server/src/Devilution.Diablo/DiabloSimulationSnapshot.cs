@@ -1708,7 +1708,7 @@ public sealed partial class DiabloSimulation
 
     private AuthoritativeItemState ResolveItemState(AuthoritativeItemState state)
     {
-        return Items?.ResolveInventoryDimensions(state) ?? state;
+        return Items?.ResolveAuthoredMetadata(state) ?? state;
     }
 
     private AuthoritativeItemState ResolveWorldItemState(AuthoritativeWorldItem item)
