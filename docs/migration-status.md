@@ -69,6 +69,9 @@ scaled hit points), not only the client's difficulty label.
   stock slots, prices outside the native range, and invalid stock identities.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
+- The live Godot authoritative-server fixture manifests now use the shipped
+  `devilution.diablo@1.406.0` schema, keeping overlay startup coverage aligned
+  with the active base and Hellfire packs.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

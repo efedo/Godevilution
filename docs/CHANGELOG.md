@@ -27,6 +27,9 @@ All notable changes to this fork are documented below.
   invalid stock item identities before presentation consumes them.
 - Godot now rejects malformed native inventory topology, including invalid or
   duplicate belt/equipment slots and inconsistent inventory-grid footprints.
+- Live Godot authoritative-server overlay fixtures now track the shipped
+  content schema so the complete focused live class starts against compatible
+  base and overlay packs.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
