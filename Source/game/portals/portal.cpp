@@ -73,6 +73,11 @@ void AddPortalMissile(const Player &player, Point position, bool sync)
 
 void SyncPortals()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyDeltaState(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	for (int i = 0; i < MAXPORTAL; i++) {
 		if (!Portals[i].open)
 			continue;

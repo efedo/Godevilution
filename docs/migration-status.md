@@ -31,6 +31,10 @@ Connected native level loading also skips legacy charger cleanup, preserving
 server-owned monster combat modes while still retaining the cleanup for
 offline level loads.
 
+Connected native level loading also skips legacy portal resynchronization, so
+stale native portal records cannot create presentation missiles outside the
+authoritative portal projection.
+
 Connected native missile presentation no longer clears legacy missile and wall
 tile flags for server-owned projectiles; only locally simulated missiles update
 that native gameplay bookkeeping.

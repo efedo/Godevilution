@@ -5,6 +5,8 @@ All notable changes to this fork are documented below.
 ## Unreleased
 - Keep connected native level loading from resetting server-owned charging
   monsters; legacy charger cleanup remains offline-only.
+- Keep connected native level loading from resynchronizing stale legacy portal
+  records; authoritative portal projection remains the connected source.
 - Preserve the server-selected player tile during connected native level
   loading; the legacy nearby-tile placement fallback remains offline-only.
 - Keep connected native player initialization from replacing the authoritative
