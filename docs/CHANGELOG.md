@@ -33,6 +33,8 @@ All notable changes to this fork are documented below.
   embedded NULs, or out-of-range native cursor graphics.
 - Reject unrepresentable live item prices across player, active-store, and
   world-item projections before they cross the shared protocol.
+- Reject live item projections that have neither a nonzero item seed nor a
+  complete presentation identity, matching the client identity boundary.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.

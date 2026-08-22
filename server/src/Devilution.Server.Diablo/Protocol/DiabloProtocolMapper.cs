@@ -147,7 +147,7 @@ internal static class DiabloProtocolMapper
                 PositionY = item.PositionY,
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
-                State = ToProtocolItemState(item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
             });
         }
         foreach (var @object in source.Objects) {
@@ -381,7 +381,7 @@ internal static class DiabloProtocolMapper
                     StoreSlot = item.StoreSlot,
                     ItemSeed = item.ItemSeed,
                     Price = item.Price,
-                    State = ToProtocolItemState(item.State, spells, spellBooks),
+                    State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
                 });
             }
             snapshot.ActiveStore = store;
@@ -534,7 +534,7 @@ internal static class DiabloProtocolMapper
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
                 PurchasedAtTick = item.PurchasedAtTick,
-                State = ToProtocolItemState(item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
             });
         }
         if (state.HeldItem is { } heldItem) {
@@ -544,21 +544,21 @@ internal static class DiabloProtocolMapper
                 ItemSeed = heldItem.ItemSeed,
                 Price = heldItem.Price,
                 PurchasedAtTick = heldItem.PurchasedAtTick,
-                State = ToProtocolItemState(heldItem.State, spells, spellBooks),
+                State = ToProtocolItemState(heldItem.ItemSeed, heldItem.State, spells, spellBooks),
             };
         }
         foreach (var item in state.Equipment) {
             player.Equipment.Add(new EquippedItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
             });
         }
         foreach (var item in state.Belt) {
             player.Belt.Add(new BeltItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
             });
         }
         player.InventoryGrid.Add(state.InventoryGrid);
@@ -572,7 +572,7 @@ internal static class DiabloProtocolMapper
                     ItemSeed = item.ItemSeed,
                     Price = item.Price,
                     PurchasedAtTick = item.PurchasedAtTick,
-                    State = ToProtocolItemState(item.State, spells, spellBooks),
+                    State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
                 },
             });
         }
@@ -1416,11 +1416,12 @@ internal static class DiabloProtocolMapper
     }
 
     private static ItemStateSnapshot ToProtocolItemState(
+        uint itemSeed,
         AuthoritativeItemState state,
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks)
     {
-        ValidateProjectedItemState(state, spells);
+        ValidateProjectedItemState(itemSeed, state, spells);
         var snapshot = new ItemStateSnapshot {
             CreateInfo = state.CreateInfo,
             ItemType = state.ItemType,
@@ -1502,6 +1503,7 @@ internal static class DiabloProtocolMapper
     }
 
     private static void ValidateProjectedItemState(
+        uint itemSeed,
         AuthoritativeItemState state,
         AuthoritativeSpellCatalog? spells)
     {
@@ -1510,7 +1512,8 @@ internal static class DiabloProtocolMapper
         var hasPresentation = !string.IsNullOrEmpty(state.BaseName)
             || !string.IsNullOrEmpty(state.IdentifiedName)
             || state.NativeCursorGraphic.HasValue;
-        if (state.Value < 0
+        if (!hasPresentation && itemSeed == 0
+            || state.Value < 0
             || state.IdentifiedValue < 0
             || state.MinDamage < 0
             || state.MaxDamage < state.MinDamage
