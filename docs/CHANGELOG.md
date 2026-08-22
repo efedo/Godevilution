@@ -8,6 +8,7 @@ All notable changes to this fork are documented below.
 - Validate participant-template equipment/belt slots, item dimensions, and inventory footprints before runtime creation.
 - Validate participant-template scalar resources, ability IDs, reflect charges, and combat-mode timing before runtime creation.
 - Validate participant-template attribute references and non-negative base/current values before runtime creation.
+- Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
 - Keep connected native level loading from resetting server-owned charging
   monsters; legacy charger cleanup remains offline-only.
 - Keep connected native level loading from resynchronizing stale legacy portal

@@ -116,6 +116,12 @@ public sealed class DiabloPlayerTemplate
         ValidateInventoryGrid(inventoryGrid, inventory?.Count ?? 0);
         ValidateMemorizedSpells(memorizedSpells);
         ValidateStashPlacement(stash);
+        var itemIdentities = new HashSet<(uint Seed, uint CreateInfo, int ItemIndex)>();
+        ValidateItemIdentities(inventory, item => item.ItemSeed, item => item.State, itemIdentities);
+        ValidateItemIdentities(equipment, item => item.ItemSeed, item => item.State, itemIdentities);
+        ValidateItemIdentities(belt, item => item.ItemSeed, item => item.State, itemIdentities);
+        ValidateItemIdentities(stash, item => item.ItemSeed, item => item.State, itemIdentities);
+        ValidateItemIdentity(heldItem, itemIdentities);
         Gold = gold;
         Experience = experience;
         Life = life;
@@ -371,6 +377,43 @@ public sealed class DiabloPlayerTemplate
                     item.State.InventoryWidth,
                     item.State.InventoryHeight);
             }
+        }
+
+        static void ValidateItemIdentities<T>(
+            IReadOnlyList<T>? values,
+            Func<T, uint> seedSelector,
+            Func<T, AuthoritativeItemState?> stateSelector,
+            ISet<(uint Seed, uint CreateInfo, int ItemIndex)> identities)
+        {
+            if (values is null)
+                return;
+            foreach (var item in values) {
+                if (item is null || !TryAddItemIdentity(item, seedSelector, stateSelector, identities))
+                    throw new InvalidDataException(
+                        "Player template contains a duplicate item identity.");
+            }
+        }
+
+        static void ValidateItemIdentity(
+            OwnedStoreItem? item,
+            ISet<(uint Seed, uint CreateInfo, int ItemIndex)> identities)
+        {
+            if (item is not null
+                && !TryAddItemIdentity(item, value => value.ItemSeed, value => value.State, identities)) {
+                throw new InvalidDataException(
+                    "Player template contains a duplicate item identity.");
+            }
+        }
+
+        static bool TryAddItemIdentity<T>(
+            T item,
+            Func<T, uint> seedSelector,
+            Func<T, AuthoritativeItemState?> stateSelector,
+            ISet<(uint Seed, uint CreateInfo, int ItemIndex)> identities)
+        {
+            var state = stateSelector(item);
+            return state is not null
+                && identities.Add((seedSelector(item), state.CreateInfo, state.ItemIndex));
         }
     }
 

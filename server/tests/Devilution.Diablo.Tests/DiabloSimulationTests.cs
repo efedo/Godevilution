@@ -3812,6 +3812,30 @@ public sealed class DiabloSimulationTests
         Assert.Contains("invalid attribute state", nullException.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsDuplicateItemIdentitiesAcrossCollections()
+    {
+        var state = AuthoritativeItemState.Empty;
+        var exception = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [new EquippedStoreItem(0, 42, state)],
+            inventoryGrid: [0],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            inventory: [new OwnedStoreItem(0, 0, 42, 0, 0, state)]));
+        Assert.Contains("duplicate item identity", exception.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(
