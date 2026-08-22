@@ -22,6 +22,7 @@ internal static class DiabloProtocolMapper
             ?? new Dictionary<uint, AuthoritativeLevel>();
         ValidateProjectedWorldItemPositions(source.WorldItems, projectedLevels);
         ValidateProjectedObjectPositions(source.Objects, projectedLevels);
+        ValidateProjectedProjectileStates(source.Projectiles, projectedLevels);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -458,6 +459,43 @@ internal static class DiabloProtocolMapper
                 && (positionX >= level.Width || positionY >= level.Height)) {
             throw new InvalidDataException(
                 $"Authoritative {entityKind} position is outside the projected level geometry.");
+        }
+    }
+
+    private static void ValidateProjectedProjectileStates(
+        IReadOnlyList<DiabloProjectileState> projectiles,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var projectile in projectiles) {
+            ValidateProjectedEntityPosition(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY,
+                levels,
+                "projectile");
+            if (projectile.SourceEntityId == 0
+                || projectile.SpellId == 0
+                    && projectile.Behavior is not (AuthoritativeProjectileBehavior.WeaponArrow
+                        or AuthoritativeProjectileBehavior.MonsterArrow)
+                || projectile.RemainingTicks == 0
+                || projectile.Damage < 0
+                || projectile.AreaRadius < 0
+                || projectile.DamageMinimum < 0
+                || projectile.DamageMaximum < projectile.DamageMinimum
+                || projectile.DamageQ6 < 0
+                || projectile.ElementalFireDamage < 0
+                || projectile.ElementalLightningDamage < 0
+                || projectile.PerilSelfDamageQ6 < 0
+                || projectile.EffectiveSpellLevel < 0
+                || projectile.DamageType is < AuthoritativeDamageType.Physical
+                    or > AuthoritativeDamageType.Acid
+                || projectile.Behavior is < AuthoritativeProjectileBehavior.Targeted
+                    or > AuthoritativeProjectileBehavior.MonsterArrow
+                || projectile.Phase is < AuthoritativeProjectilePhase.Travel
+                    or > AuthoritativeProjectilePhase.Impact) {
+                throw new InvalidDataException(
+                    "Authoritative projectile state is outside the shared protocol range.");
+            }
         }
     }
 

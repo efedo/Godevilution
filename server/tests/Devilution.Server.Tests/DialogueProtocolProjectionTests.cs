@@ -680,6 +680,79 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedProjectileState()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var projectile = new DiabloProjectileState(
+            2,
+            1,
+            0,
+            2,
+            1,
+            4,
+            5,
+            6,
+            5,
+            1,
+            AuthoritativeDamageType.Physical,
+            0,
+            1);
+
+        void AssertRejected(
+            Func<DiabloProjectileState, DiabloProjectileState> mutate,
+            IReadOnlyList<AuthoritativeLevel>? levels = null)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(
+                    source with { Projectiles = [mutate(projectile)] },
+                    levelGeometry: levels));
+        }
+
+        AssertRejected(value => value with { SourceEntityId = 0 });
+        AssertRejected(value => value with { SpellId = 0 });
+        AssertRejected(value => value with { RemainingTicks = 0 });
+        AssertRejected(value => value with { Damage = -1 });
+        AssertRejected(value => value with { AreaRadius = -1 });
+        AssertRejected(value => value with { DamageMinimum = -1 });
+        AssertRejected(value => value with { DamageMaximum = -1 });
+        AssertRejected(value => value with { DamageQ6 = -1 });
+        AssertRejected(value => value with { ElementalFireDamage = -1 });
+        AssertRejected(value => value with { ElementalLightningDamage = -1 });
+        AssertRejected(value => value with { PerilSelfDamageQ6 = -1 });
+        AssertRejected(value => value with { EffectiveSpellLevel = -1 });
+        AssertRejected(value => value with { DamageType = (AuthoritativeDamageType)99 });
+        AssertRejected(value => value with { Behavior = (AuthoritativeProjectileBehavior)99 });
+        AssertRejected(value => value with { Phase = (AuthoritativeProjectilePhase)99 });
+        AssertRejected(value => value with { PositionX = -1 });
+        AssertRejected(
+            value => value with { PositionY = 10 },
+            [new AuthoritativeLevel(1, 10, 10)]);
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(
