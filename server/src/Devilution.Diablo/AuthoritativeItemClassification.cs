@@ -155,8 +155,9 @@ public static class AuthoritativeItemClassification
     public static bool IsBelt(AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        return definition.GenerationTags.Contains("Belt")
-            || (definition.EquipLocation == 7 && definition.ItemClass == 3);
+        return definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains("Belt", StringComparer.OrdinalIgnoreCase)
+            : definition.EquipLocation == 7 && definition.ItemClass == 3;
     }
 
     public static bool IsBelt(

@@ -206,6 +206,15 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void NonBeltTagsOverrideConflictingLegacyPlacement()
+    {
+        var definition = CreateDefinition(itemClass: 3, tags: ["Misc"])
+            with { EquipLocation = 7 };
+
+        Assert.False(AuthoritativeItemClassification.IsBelt(definition));
+    }
+
+    [Fact]
     public void BeltTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
     {
         var definition = CreateDefinition(itemClass: 0, tags: ["Misc", "Belt"]) with {

@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
   identity through stable or native item metadata when state omits those fields.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
+- Belt classification now treats active non-empty item tags as authoritative
+  instead of allowing conflicting native placement metadata to override them.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for
