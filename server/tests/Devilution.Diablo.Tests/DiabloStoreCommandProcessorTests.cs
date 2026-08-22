@@ -750,6 +750,57 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ExplicitArenaAdmissionOverridesLegacyMiscIdFallback()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2300,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            StableSymbol = "non_arena_misc",
+            MiscId = 55,
+            ItemActionKind = DiabloItemActionKind.RestoreFullLifeAndMana,
+            ArenaOnly = false,
+            Usable = true,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            2300,
+            100,
+            0,
+            definition.Generate(2301));
+        var player = CreatePlayer(
+            mana: 64,
+            manaMaximum: 640,
+            inventory: [item]);
+        player.Life = 64;
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 2300)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Inventory);
+        Assert.Equal(640, player.Life);
+        Assert.Equal(640, player.Mana);
+    }
+
+    [Fact]
     public void ArenaPotionRestoresAndConsumesOnAnActiveArena()
     {
         var potion = new OwnedStoreItem(

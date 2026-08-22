@@ -663,11 +663,15 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsArenaOnlyItem(AuthoritativeItemState state)
     {
+        if (items is not null && items.TryGetByState(state, out var definition)) {
+            if (definition.ArenaOnly.HasValue)
+                return definition.ArenaOnly.Value;
+            if (string.Equals(definition.StableSymbol, "arena_potion", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
         if (state.MiscId == 55)
             return true;
-        return items is not null
-            && items.TryGetByState(state, out var definition)
-            && string.Equals(definition.StableSymbol, "arena_potion", StringComparison.OrdinalIgnoreCase);
+        return false;
     }
 
     private bool IsOilTargetClass(AuthoritativeItemState state)

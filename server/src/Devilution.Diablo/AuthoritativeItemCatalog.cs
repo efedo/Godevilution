@@ -86,6 +86,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Optional native iUsable flag for cursor-consumable item actions. */
     public bool? Usable { get; init; }
 
+    /** Optional content-owned arena-only admission; null preserves native fallback. */
+    public bool? ArenaOnly { get; init; }
+
     public AuthoritativeItemState Generate(uint itemSeed)
     {
         return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
@@ -520,6 +523,7 @@ public sealed class AuthoritativeItemCatalog
                 BookTemplateMinimumItemLevel = row.OptionalInt32("book_template_minimum_item_level", -1),
                 DropRate = row.OptionalInt32("drop_rate"),
                 Usable = row.OptionalNullableBoolean("usable"),
+                ArenaOnly = row.OptionalNullableBoolean("arena_only"),
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);

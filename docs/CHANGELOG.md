@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Arena Potion admission through the optional `arena_only` Boolean
+  field in `items.tsv`, preserving the native misc-ID compatibility fallback for
+  older packs and advancing the Diablo content schema to 1.406.
+
 - Externalize the native Multiple Arrows perpendicular spread distance through
   the optional `multiple_arrows_spread_distance` field in `combat.tsv`,
   preserving the one-cell compatibility fallback for older packs and advancing
