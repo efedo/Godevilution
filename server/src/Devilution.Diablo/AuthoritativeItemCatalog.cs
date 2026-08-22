@@ -1078,12 +1078,15 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeSpellCatalog? spellCatalog = null,
         AuthoritativeItemCursorCatalog? cursorCatalog = null,
         AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null,
-        AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null)
+        AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null,
+        AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
         var definitions = rows.Select((row, index) => {
-            var itemType = ParseLegacyItemType(row.Required("itemType"));
+            var itemType = ParseLegacyItemType(
+                row.Required("itemType"),
+                nativeTopologyCatalog);
             var armorMin = row.OptionalInt32("minArmor");
             var armorMax = row.OptionalInt32("maxArmor", armorMin);
             return new AuthoritativeItemDefinition(
@@ -1102,8 +1105,12 @@ public sealed class AuthoritativeItemCatalog
                     GenerationTags = LegacyTags(row.Required("itemType")),
                     MinArmorClass = armorMin,
                     MaxArmorClass = armorMax,
-                    EquipLocation = ParseLegacyEquipLocation(row.Required("equipType")),
-                    ItemClass = ParseLegacyItemClass(row.Required("class")),
+                    EquipLocation = ParseLegacyEquipLocation(
+                        row.Required("equipType"),
+                        nativeTopologyCatalog),
+                    ItemClass = ParseLegacyItemClass(
+                        row.Required("class"),
+                        nativeTopologyCatalog),
                     MiscId = ParseLegacyMiscId(
                         OptionalText(row, "miscId"),
                         nativeMiscCatalog),
@@ -1156,8 +1163,17 @@ public sealed class AuthoritativeItemCatalog
         return catalog;
     }
 
-    private static int ParseLegacyItemType(string value)
+    private static int ParseLegacyItemType(
+        string value,
+        AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null)
     {
+        if (nativeTopologyCatalog is not null)
+            return nativeTopologyCatalog.TryGetId(
+                    AuthoritativeNativeItemTopologyKind.ItemType,
+                    value,
+                    out var nativeId)
+                ? nativeId
+                : -1;
         return value.ToLowerInvariant() switch {
             "misc" => 0,
             "weapon" or "sword" => 1,
@@ -1238,8 +1254,17 @@ public sealed class AuthoritativeItemCatalog
             : cursorCatalog.Resolve(symbol);
     }
 
-    private static int ParseLegacyItemClass(string value)
+    private static int ParseLegacyItemClass(
+        string value,
+        AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null)
     {
+        if (nativeTopologyCatalog is not null)
+            return nativeTopologyCatalog.TryGetId(
+                    AuthoritativeNativeItemTopologyKind.ItemClass,
+                    value,
+                    out var nativeId)
+                ? nativeId
+                : 0;
         return value.ToLowerInvariant() switch {
             "weapon" => 1,
             "armor" => 2,
@@ -1250,8 +1275,23 @@ public sealed class AuthoritativeItemCatalog
         };
     }
 
-    private static int ParseLegacyEquipLocation(string value)
+    private static int ParseLegacyEquipLocation(
+        string value,
+        AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null)
     {
+        if (nativeTopologyCatalog is not null) {
+            var normalized = value.Equals("one-handed", StringComparison.OrdinalIgnoreCase)
+                ? "one-handed"
+                : value.Equals("two-handed", StringComparison.OrdinalIgnoreCase)
+                    ? "two-handed"
+                    : value;
+            return nativeTopologyCatalog.TryGetId(
+                    AuthoritativeNativeItemTopologyKind.EquipLocation,
+                    normalized,
+                    out var nativeId)
+                ? nativeId
+                : 0;
+        }
         return value.ToLowerInvariant() switch {
             "one-handed" or "onehanded" => 1,
             "two-handed" or "twohanded" => 2,

@@ -244,6 +244,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeMiscTable.SourcePath,
                 nativeMiscTable.ToCanonicalTsv())
             : null;
+        var nativeTopology = content.TryGetTable(
+            "native_item_topology.tsv",
+            out var nativeTopologyTable)
+            ? AuthoritativeNativeItemTopologyCatalog.LoadTsv(
+                nativeTopologyTable.SourcePath,
+                nativeTopologyTable.ToCanonicalTsv())
+            : null;
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
             out var legacyPrefixTable);
@@ -290,6 +297,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (nativeMisc is null)
                 throw new InvalidDataException(
                     "Legacy itemdat.tsv content requires a validated native_item_misc.tsv catalog.");
+            if (nativeTopology is null)
+                throw new InvalidDataException(
+                    "Legacy itemdat.tsv content requires a validated native_item_topology.tsv catalog.");
             itemCatalog = AuthoritativeItemCatalog.LoadLegacyTsv(
                 legacyItemTable.SourcePath,
                 legacyItemTable.ToCanonicalTsv(),
@@ -298,7 +308,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 spells,
                 cursorCatalog,
                 nativeSpells,
-                nativeMisc);
+                nativeMisc,
+                nativeTopology);
         }
         if (itemCatalog is null) {
             throw new InvalidDataException(

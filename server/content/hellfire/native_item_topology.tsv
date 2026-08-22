@@ -1,0 +1,34 @@
+kind	symbol	native_id
+ItemType	misc	0
+ItemType	weapon	1
+ItemType	sword	1
+ItemType	axe	2
+ItemType	bow	3
+ItemType	mace	4
+ItemType	shield	5
+ItemType	lightarmor	6
+ItemType	light armor	6
+ItemType	helm	7
+ItemType	mediumarmor	8
+ItemType	medium armor	8
+ItemType	heavyarmor	9
+ItemType	heavy armor	9
+ItemType	staff	10
+ItemType	gold	11
+ItemType	ring	12
+ItemType	amulet	13
+ItemClass	weapon	1
+ItemClass	armor	2
+ItemClass	misc	3
+ItemClass	gold	4
+ItemClass	quest	5
+EquipLocation	one-handed	1
+EquipLocation	onehanded	1
+EquipLocation	two-handed	2
+EquipLocation	twohanded	2
+EquipLocation	armor	3
+EquipLocation	helm	4
+EquipLocation	ring	5
+EquipLocation	amulet	6
+EquipLocation	belt	8
+EquipLocation	unequippable	7
