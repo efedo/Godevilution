@@ -36,6 +36,11 @@ bool HasValidItemIdentity(uint32_t itemSeed, const protocol::ItemStateSnapshot &
 	    && state.has_native_cursor_graphic();
 }
 
+bool IsValidSpellTargetingKind(uint32_t value)
+{
+	return value <= static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY);
+}
+
 } // namespace
 
 tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const protocol::Snapshot &snapshot, uint32_t entityId)
@@ -75,6 +80,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		return tl::make_unexpected("Server-backed snapshot contains stash gold outside the native range.");
 	if (player->stash_open() && player->active_store_id() != 0)
 		return tl::make_unexpected("Server-backed snapshot opens both a stash and a vendor.");
+	if (!IsValidSpellTargetingKind(static_cast<uint32_t>(player->ability_targeting_kind())))
+		return tl::make_unexpected("Server-backed snapshot contains an invalid ability targeting kind.");
 
 	ProjectedPlayerSnapshot projected {
 		.entityId = player->entity_id(),
@@ -140,12 +147,15 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		projected.currentAction = projectedAction;
 	}
 	projected.memorizedSpells.reserve(player->memorized_spells_size());
-	for (const auto &spell : player->memorized_spells())
+	for (const auto &spell : player->memorized_spells()) {
+		if (!IsValidSpellTargetingKind(static_cast<uint32_t>(spell.targeting_kind())))
+			return tl::make_unexpected("Server-backed snapshot contains an invalid memorized-spell targeting kind.");
 		projected.memorizedSpells.push_back({
 		    .spellId = spell.spell_id(),
 		    .level = spell.level(),
 		    .targetingKind = static_cast<ProjectedSpellTargetingKind>(spell.targeting_kind()),
 		});
+	}
 	projected.statusEffects.reserve(player->status_effects_size());
 	for (const auto &effect : player->status_effects())
 		projected.statusEffects.push_back({ effect.effect_id(), effect.remaining_ticks(), effect.magnitude(), static_cast<uint32_t>(effect.behavior()) });

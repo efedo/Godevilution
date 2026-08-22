@@ -187,6 +187,23 @@ TEST(ServerBackedPlayerSnapshot, ResolvesTargetingKindAcrossAuthoritativeSources
 	EXPECT_FALSE(ProjectedSpellTargetingKindForSpell(snapshot, 99).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataDuringProjection)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_ability_targeting_kind(static_cast<protocol::SpellTargetingKind>(99));
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	player->set_ability_targeting_kind(protocol::SPELL_TARGETING_KIND_UNSPECIFIED);
+	player->add_memorized_spells()->set_targeting_kind(static_cast<protocol::SpellTargetingKind>(99));
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	player->clear_memorized_spells();
+	player->add_inventory()->mutable_state()->set_spell_targeting_kind(static_cast<protocol::SpellTargetingKind>(99));
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)
 {
 	Player player;
@@ -1653,6 +1670,28 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidMemorizedSpellWithoutMutation)
 	player._pRSpell = SpellID::Healing;
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_EQ(player._pRSpell, SpellID::Healing);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterLevel = 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+
+	Player player;
+	player._pRSpell = SpellID::Healing;
+	snapshot.abilitySpellTargetingKind = static_cast<ProjectedSpellTargetingKind>(99);
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player._pRSpell, SpellID::Healing);
+
+	snapshot.abilitySpellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
+	snapshot.memorizedSpells.push_back({ static_cast<uint32_t>(SpellID::Firebolt), 1, static_cast<ProjectedSpellTargetingKind>(99) });
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+
+	snapshot.memorizedSpells.clear();
+	snapshot.inventory.push_back({ .spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(99) });
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidOrDuplicateStatusEffectsWithoutMutation)

@@ -96,6 +96,8 @@ scaled hit points), not only the client's difficulty label.
   the additive attribute message is present.
 - Godot now validates the selected ability targeting enum while retaining its
   compatibility-safe unspecified default.
+- Native authoritative projection and UI validation now reject undefined
+  ability, memorized-spell, and item targeting enums before native conversion.
 - Native authoritative projection now validates that non-empty visited-level
   state includes the player’s current level before applying native quest gates.
 

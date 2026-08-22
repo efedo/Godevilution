@@ -30,6 +30,8 @@ bool AssignIfRepresentable(Target &target, Source source)
 
 tl::expected<Item, std::string> ProjectNativeItem(const protocol::ItemStateSnapshot &state, uint32_t itemSeed, uint32_t price)
 {
+	if (static_cast<uint32_t>(state.spell_targeting_kind()) > static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY))
+		return tl::make_unexpected("Server-backed item contains an invalid spell targeting kind.");
 	if (state.base_name().size() >= ItemNameLength
 	    || state.identified_name().size() >= ItemNameLength
 	    || state.base_name().find('\0') != std::string::npos

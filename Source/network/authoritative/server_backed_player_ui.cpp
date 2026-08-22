@@ -17,6 +17,11 @@
 namespace devilution::authoritative {
 namespace {
 
+bool IsValidSpellTargetingKind(ProjectedSpellTargetingKind value)
+{
+	return static_cast<uint32_t>(value) <= static_cast<uint32_t>(ProjectedSpellTargetingKind::WorldEntity);
+}
+
 tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &snapshot)
 {
 	if (snapshot.entityId == 0)
@@ -100,6 +105,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	}
 	if (snapshot.abilitySpellId > static_cast<uint32_t>(SpellID::LAST))
 		return tl::make_unexpected("Server-backed player ability is outside the native spell range.");
+	if (!IsValidSpellTargetingKind(snapshot.abilitySpellTargetingKind))
+		return tl::make_unexpected("Server-backed player ability contains an invalid targeting kind.");
 	std::set<uint32_t> visitedLevelIds;
 	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds) {
 		if (visitedLevelId >= NUMLEVELS || !visitedLevelIds.insert(visitedLevelId).second)
@@ -114,6 +121,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	for (const auto &spell : snapshot.memorizedSpells) {
 		if (spell.spellId == 0 || spell.spellId > static_cast<uint32_t>(SpellID::LAST)
 		    || spell.level == 0 || spell.level > MaxSpellLevel
+		    || !IsValidSpellTargetingKind(spell.targetingKind)
 		    || !memorizedSpellIds.insert(spell.spellId).second) {
 			return tl::make_unexpected("Server-backed memorized spells contain invalid or duplicate state.");
 		}
@@ -129,9 +137,15 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	if (snapshot.belt.size() > MaxBeltItems)
 		return tl::make_unexpected("Server-backed belt exceeds the native belt capacity.");
 	for (const auto &beltItem : snapshot.belt) {
-		if (beltItem.slot >= MaxBeltItems)
+		if (beltItem.slot >= MaxBeltItems || !IsValidSpellTargetingKind(beltItem.spellTargetingKind))
 			return tl::make_unexpected("Server-backed belt contains an invalid slot.");
 	}
+	for (const auto &inventoryItem : snapshot.inventory) {
+		if (!IsValidSpellTargetingKind(inventoryItem.spellTargetingKind))
+			return tl::make_unexpected("Server-backed inventory contains an invalid spell targeting kind.");
+	}
+	if (snapshot.heldItem.has_value() && !IsValidSpellTargetingKind(snapshot.heldItem->spellTargetingKind))
+		return tl::make_unexpected("Server-backed held item contains an invalid spell targeting kind.");
 	if (snapshot.inventory.size() > InventoryGridCells || snapshot.inventoryGrid.size() != InventoryGridCells)
 		return tl::make_unexpected("Server-backed inventory does not fit the native inventory layout.");
 	if (snapshot.heldItem.has_value()
@@ -144,13 +158,15 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 
 	std::set<uint32_t> equipmentSlots;
 	for (const auto &equipment : snapshot.equipment) {
-		if (equipment.slot >= NUM_INVLOC || !equipmentSlots.insert(equipment.slot).second)
+		if (equipment.slot >= NUM_INVLOC || !IsValidSpellTargetingKind(equipment.spellTargetingKind)
+		    || !equipmentSlots.insert(equipment.slot).second)
 			return tl::make_unexpected("Server-backed equipment contains a duplicate or invalid slot.");
 	}
 	std::array<bool, 100 * 100> occupied { };
 	for (const auto &stashItem : snapshot.stash) {
 		if (stashItem.page >= 100 || stashItem.cell >= 100
 		    || stashItem.width == 0 || stashItem.height == 0
+		    || !IsValidSpellTargetingKind(stashItem.spellTargetingKind)
 		    || stashItem.width > 10 || stashItem.height > 10
 		    || stashItem.cell % 10 + stashItem.width > 10
 		    || stashItem.cell / 10 + stashItem.height > 10) {
