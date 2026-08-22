@@ -166,6 +166,8 @@ scaled hit points), not only the client's difficulty label.
 - Connected native inventory sorting now fails closed because the legacy
   reorder mutates local placement and has no authoritative command equivalent;
   disconnected clients retain the legacy sort.
+- Connected native quick save/load now fail closed because server-backed
+  sessions own persistence; legacy local binary saves remain offline-only.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

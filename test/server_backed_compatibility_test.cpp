@@ -15,6 +15,7 @@
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/vendor_snapshot.hpp"
 #include "network/authoritative/server_backed_vendor_state.hpp"
+#include "ui/gamemenu.h"
 
 namespace devilution::authoritative {
 namespace {
@@ -87,6 +88,12 @@ TEST(ServerBackedCompatibility, ConnectedInventorySortFailsClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyInventorySort(false));
 	EXPECT_FALSE(ShouldProcessLegacyInventorySort(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedSessionsDoNotUseLegacySaves)
+{
+	EXPECT_TRUE(ShouldUseLegacyLocalSave(false));
+	EXPECT_FALSE(ShouldUseLegacyLocalSave(true));
 }
 
 } // namespace

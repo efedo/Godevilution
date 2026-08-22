@@ -25,6 +25,11 @@
 #include "persistence/save_file.h"
 #include "qol/floatingnumbers.h"
 #include "utils/language.h"
+#include "utils/log.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 #ifndef USE_SDL1
 #include "controls/touch/renderers.h"
@@ -296,6 +301,13 @@ void gamemenu_quit_game(bool bActivate)
 
 void gamemenu_load_game(bool /*bActivate*/)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldUseLegacyLocalSave(authoritative::GetServerBackedRuntime().IsConnected())) {
+		LogError("Server-backed sessions do not load the legacy local save.");
+		gamemenu_off();
+		return;
+	}
+#endif
 	EventHandler saveProc = SetEventHandler(DisableInputEventHandler);
 	gamemenu_off();
 	ClearFloatingNumbers();
@@ -334,6 +346,13 @@ void gamemenu_load_game(bool /*bActivate*/)
 
 void gamemenu_save_game(bool /*bActivate*/)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldUseLegacyLocalSave(authoritative::GetServerBackedRuntime().IsConnected())) {
+		LogError("Server-backed sessions do not save the legacy local save.");
+		gamemenu_off();
+		return;
+	}
+#endif
 	if (pcurs != CURSOR_HAND) {
 		return;
 	}

@@ -31,6 +31,8 @@ All notable changes to this fork are documented below.
 - Connected native inventory sorting now fails closed because the legacy
   reorder mutates local placement and has no authoritative command equivalent;
   disconnected clients retain the legacy sort.
+- Connected native quick save/load now fail closed because server-backed
+  sessions own persistence; legacy local binary saves remain offline-only.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.
