@@ -122,6 +122,8 @@ scaled hit points), not only the client's difficulty label.
   authoritative before falling back to native item-class values.
 - Auto-equip hand selection now compares content-first weapon classification,
   preserving native `ItemClass` behavior only for tagless compatibility states.
+- `ReadBook` admission now resolves authored `Book` tags by unambiguous `misc_id`
+  when a compatibility state has no stable or native item identity.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

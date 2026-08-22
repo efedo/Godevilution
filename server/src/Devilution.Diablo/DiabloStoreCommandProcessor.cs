@@ -485,10 +485,14 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsBookItem(AuthoritativeItemState state)
     {
-        if (items is not null
-            && items.TryGetByState(state, out var definition)
-            && definition.GenerationTags.Count > 0)
-            return definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase);
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.GenerationTags.Count > 0)
+                return definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return tags.Contains("Book", StringComparer.OrdinalIgnoreCase);
+        }
         return state.MiscId == 25;
     }
 
