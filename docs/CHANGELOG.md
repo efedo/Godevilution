@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- The public native player-simulation helper now fails closed while connected
+  so movement, combat, and player lifecycle mutation cannot bypass the
+  server-owned game loop; offline sessions retain the legacy simulation.
 - Connected native Telekinesis now fails closed at the public legacy command
   helper; authoritative target interaction remains server-owned.
 - Connected native automatic pickup now fails closed at the legacy item-command

@@ -58,6 +58,7 @@
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
@@ -3321,6 +3322,11 @@ void StartWarpLvl(Player &player, size_t pidx)
 
 void ProcessPlayers()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerSimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	assert(MyPlayer != nullptr);
 	Player &myPlayer = *MyPlayer;
 	bool processNativeDrainLife = true;
