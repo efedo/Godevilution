@@ -800,6 +800,20 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
+        var previousWorldMutationIds = WorldState.ActiveWorldMutationIds.ToArray();
+        try {
+            RestoreSnapshotCore(destination, snapshot);
+        }
+        catch {
+            WorldState.RestoreWorldMutations(previousWorldMutationIds);
+            throw;
+        }
+    }
+
+    private void RestoreSnapshotCore(
+        AuthoritativePlayerState destination,
+        DiabloSimulationSnapshot snapshot)
+    {
         if (!Enum.IsDefined(snapshot.Difficulty)
             || snapshot.Difficulty != Difficulty) {
             throw new InvalidDataException(

@@ -2869,6 +2869,52 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreFailurePreservesPreviousWorldMutationProjection()
+    {
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                0,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(1, 1, 1, 1)]),
+            new AuthoritativeWorldMutation(
+                8,
+                0,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(2, 2, 1, 1)]),
+        ]);
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n0\t4\t4\tnone\n");
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                WorldMutations = mutations,
+            });
+        var destination = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                WorldMutations = mutations,
+            });
+        Assert.True(source.WorldState.ApplyWorldMutation(7));
+        Assert.True(destination.WorldState.ApplyWorldMutation(8));
+
+        var sourcePlayer = CreatePlayer();
+        var snapshot = source.CaptureSnapshot(sourcePlayer, 1) with {
+            Player = source.CapturePlayerState(sourcePlayer) with {
+                Attributes = PlayerAttributesState.Zero with {
+                    Strength = new PlayerAttributeState(-1, 0),
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            destination.RestoreSnapshot(CreatePlayer(), snapshot));
+
+        Assert.Equal([8U], destination.WorldState.ActiveWorldMutationIds);
+        Assert.True(destination.WorldState.IsWalkable(0, 1, 1));
+        Assert.False(destination.WorldState.IsWalkable(0, 2, 2));
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsUnrepresentablePlayerAndWorldItemPrices()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(
