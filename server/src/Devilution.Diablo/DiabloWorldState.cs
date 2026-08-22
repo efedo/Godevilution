@@ -61,26 +61,40 @@ public sealed class DiabloWorldState
                 "Starting missile-blocked cells must be inside the configured world bounds.");
         }
 
-        foreach (var target in combatTargets ?? [])
+        var entityIds = new HashSet<uint>();
+        void RegisterEntityId(uint entityId)
+        {
+            if (!entityIds.Add(entityId))
+                throw new InvalidDataException(
+                    $"Entity {entityId} is registered more than once across world-state categories.");
+        }
+
+        foreach (var target in combatTargets ?? []) {
+            RegisterEntityId(target.EntityId);
             CombatTargets.Add(target.EntityId, target);
+        }
         foreach (var portal in portals ?? [])
             Portals.Add(portal.PortalId, portal);
-        foreach (var item in worldItems ?? [])
+        foreach (var item in worldItems ?? []) {
+            RegisterEntityId(item.EntityId);
             WorldItems.Add(item.EntityId, item);
+        }
         foreach (var @object in objects ?? []) {
-            if (!Objects.TryAdd(@object.EntityId, @object)) {
-                throw new InvalidDataException(
-                    $"Object entity {@object.EntityId} is registered more than once.");
-            }
+            RegisterEntityId(@object.EntityId);
+            Objects.Add(@object.EntityId, @object);
         }
         foreach (var quest in quests ?? []) {
             if (!Quests.TryAdd(quest.QuestId, quest))
                 throw new InvalidDataException($"Quest {quest.QuestId} is registered more than once.");
         }
-        foreach (var projectile in projectiles ?? [])
+        foreach (var projectile in projectiles ?? []) {
+            RegisterEntityId(projectile.EntityId);
             Projectiles.Add(projectile.EntityId, projectile);
-        foreach (var corpse in corpses ?? [])
+        }
+        foreach (var corpse in corpses ?? []) {
+            RegisterEntityId(corpse.EntityId);
             Corpses.Add(corpse.EntityId, corpse);
+        }
         if (World is not null)
             WorldMutations?.ValidateWorld(World, Objects.Values, CombatTargets.Values);
         RebuildProjectedGeometry();

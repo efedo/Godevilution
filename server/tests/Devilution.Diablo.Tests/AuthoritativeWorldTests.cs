@@ -509,6 +509,49 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void WorldStateRejectsCrossCategoryEntityIdCollisions()
+    {
+        var target = new AuthoritativeCombatTarget(10, 1, 0, 5);
+        var worldItem = new AuthoritativeWorldItem(
+            10,
+            0,
+            1,
+            0,
+            42,
+            75,
+            AuthoritativeItemState.Empty);
+        var worldObject = new AuthoritativeWorldObject(10, 4, 0, 1, 0);
+        var projectile = new AuthoritativeProjectile(
+            10,
+            11,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            AuthoritativeDamageType.Physical,
+            0,
+            1);
+        var corpse = new AuthoritativeCorpse(10, 0, 1, 0);
+
+        Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            combatTargets: [target],
+            worldItems: [worldItem]));
+        Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            combatTargets: [target],
+            objects: [worldObject]));
+        Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]));
+        Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            combatTargets: [target],
+            corpses: [corpse]));
+    }
+
+    [Fact]
     public void LineOfSightRejectsBlockedIntermediateCells()
     {
         var level = new AuthoritativeLevel(1, 5, 3, [1 * 5 + 2]);

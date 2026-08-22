@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject cross-category world entity-ID collisions during authoritative world
+  construction, matching the save/snapshot identity invariant before runtime
+  commands can observe ambiguous targets.
+
 - Add the optional `unique_monster_placements.tsv` contract for validated,
   content-owned placement of generated unique encounters. Placements resolve
   unique identity selectors, monster types, level geometry, stable entity IDs,
