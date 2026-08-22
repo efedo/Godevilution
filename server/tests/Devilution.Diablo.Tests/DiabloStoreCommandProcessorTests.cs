@@ -2297,6 +2297,52 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void InventoryMoveHydratesFootprintByMiscIdWhenStateOmitsDimensions()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            7,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            1,
+            true) {
+            NativeItemIndex = 101,
+            MiscId = 121,
+        };
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+        };
+        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+        inventoryGrid[0] = 0;
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 1234, 77, 0, state)],
+            inventoryGrid: inventoryGrid);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: new AuthoritativeItemCatalog([definition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveInventoryItemIntent(0, 2),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var moved = Assert.Single(player.Inventory);
+        Assert.Equal(2, moved.State.InventoryWidth);
+        Assert.Equal(1, moved.State.InventoryHeight);
+        Assert.Equal(-1, player.InventoryGrid[0]);
+        Assert.Equal(0, player.InventoryGrid[2]);
+        Assert.Equal(0, player.InventoryGrid[3]);
+    }
+
+    [Fact]
     public void StashMoveRejectsOverlappingFootprintAndPreservesState()
     {
         var firstState = AuthoritativeItemState.Empty with {

@@ -30,6 +30,8 @@ All notable changes to this fork are documented below.
   rolled value.
 - `ReadBook` now resolves omitted spell and minimum-magic fields from
   unambiguous authored book metadata keyed by `misc_id`.
+- Store intent processing now hydrates omitted inventory footprints from
+  unambiguous authored item dimensions before relocation and stash moves.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative

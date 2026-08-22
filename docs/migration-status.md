@@ -160,6 +160,8 @@ scaled hit points), not only the client's difficulty label.
   rolled value.
 - `ReadBook` now resolves omitted spell and minimum-magic fields from
   unambiguous authored book metadata keyed by `misc_id`.
+- Store intent processing now hydrates omitted inventory footprints from
+  unambiguous authored item dimensions before relocation and stash moves.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

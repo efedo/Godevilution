@@ -55,6 +55,7 @@ public sealed class DiabloStoreCommandProcessor
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(intent);
+        HydrateInventoryDimensions(player);
 
         return intent switch {
             DiabloOpenStoreIntent open => OpenStore(player, open.StoreId),
@@ -79,6 +80,77 @@ public sealed class DiabloStoreCommandProcessor
             DiabloMoveItemIntent move => MoveItem(player, move),
             DiabloAutoEquipItemIntent autoEquip => AutoEquipItem(player, autoEquip),
             _ => DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed),
+        };
+    }
+
+    private void HydrateInventoryDimensions(AuthoritativePlayerState player)
+    {
+        if (items is null)
+            return;
+
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            var item = player.Inventory[index];
+            var state = ResolveInventoryDimensions(item.State);
+            if (!ReferenceEquals(state, item.State))
+                player.Inventory[index] = item with { State = state };
+        }
+        for (var index = 0; index < player.Belt.Count; index++) {
+            var item = player.Belt[index];
+            var state = ResolveInventoryDimensions(item.State);
+            if (!ReferenceEquals(state, item.State))
+                player.Belt[index] = item with { State = state };
+        }
+        for (var index = 0; index < player.Equipment.Count; index++) {
+            var item = player.Equipment[index];
+            var state = ResolveInventoryDimensions(item.State);
+            if (!ReferenceEquals(state, item.State))
+                player.Equipment[index] = item with { State = state };
+        }
+        for (var index = 0; index < player.Stash.Count; index++) {
+            var item = player.Stash[index];
+            var state = ResolveInventoryDimensions(item.State);
+            if (!ReferenceEquals(state, item.State))
+                player.Stash[index] = item with { State = state };
+        }
+        if (player.HeldItem is { } heldItem) {
+            var state = ResolveInventoryDimensions(heldItem.State);
+            if (!ReferenceEquals(state, heldItem.State))
+                player.HeldItem = heldItem with { State = state };
+        }
+    }
+
+    private AuthoritativeItemState ResolveInventoryDimensions(AuthoritativeItemState state)
+    {
+        var width = 0;
+        var height = 0;
+        if (items!.TryGetByState(state, out var definition)) {
+            width = definition.InventoryWidth;
+            height = definition.InventoryHeight;
+        } else if (items.TryGetInventoryDimensionsByMiscId(
+                state.MiscId,
+                out var contentWidth,
+                out var contentHeight)) {
+            width = contentWidth;
+            height = contentHeight;
+        }
+        if (width <= 0 || height <= 0)
+            return state;
+
+        if (state.InventoryWidth > 0
+            && state.InventoryHeight > 0
+            && (state.InventoryWidth != 1
+                || state.InventoryHeight != 1
+                || (width <= 1 && height <= 1)))
+            return state;
+
+        if (state.InventoryWidth == 1
+            && state.InventoryHeight == 1
+            && (width > 1 || height > 1))
+            return state with { InventoryWidth = width, InventoryHeight = height };
+
+        return state with {
+            InventoryWidth = state.InventoryWidth > 0 ? state.InventoryWidth : width,
+            InventoryHeight = state.InventoryHeight > 0 ? state.InventoryHeight : height,
         };
     }
 

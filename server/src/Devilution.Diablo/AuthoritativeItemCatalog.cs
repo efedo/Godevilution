@@ -493,6 +493,30 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous authored inventory dimensions by misc ID. */
+    public bool TryGetInventoryDimensionsByMiscId(
+        int miscId,
+        out int width,
+        out int height)
+    {
+        width = 0;
+        height = 0;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .Select(definition => (definition.InventoryWidth, definition.InventoryHeight))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1)
+            return false;
+
+        width = values[0].InventoryWidth;
+        height = values[0].InventoryHeight;
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,
