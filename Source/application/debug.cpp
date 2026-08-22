@@ -632,6 +632,8 @@ std::string DebugCmdMapHide()
 
 std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Level reset"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	if (level > (gbIsHellfire ? 24 : 16))
 		return StrCat("Level ", level, " does not exist!");
@@ -651,6 +653,8 @@ std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed)
 
 std::string DebugCmdWarpToDungeonLevel(uint8_t level)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Dungeon warp"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	if (level > (gbIsHellfire ? 24 : 16))
 		return StrCat("Level ", level, " does not exist!");
@@ -663,6 +667,8 @@ std::string DebugCmdWarpToDungeonLevel(uint8_t level)
 
 std::string DebugCmdWarpToQuestLevel(uint8_t level)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Quest warp"); error.has_value())
+		return *error;
 	if (level < 1)
 		return StrCat("Quest level number must be 1 or higher!");
 	if (isSetLevel() && setLevelNumber() == level)
@@ -683,6 +689,8 @@ std::string DebugCmdWarpToQuestLevel(uint8_t level)
 
 std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, int y)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Custom-map warp"); error.has_value())
+		return *error;
 	if (path.empty()) return "path is required";
 	if (dunType < DTYPE_CATHEDRAL || dunType > DTYPE_LAST) return "invalid dunType";
 

@@ -56,6 +56,8 @@ attribute, level, gold, and spell-level adjustments) are likewise offline-only;
 their deterministic policy is covered by the native compatibility suite.
 Native debug quest activation is also offline-only; connected quest diagnostics
 remain read-only over the server-projected quest state.
+Native debug level reset and dungeon, quest, and custom-map warps are likewise
+offline-only so connected transitions remain server-owned.
 
 ## Current state
 

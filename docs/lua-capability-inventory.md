@@ -75,16 +75,20 @@ implemented by native debug handlers while the Lua names remain compatibility
 aliases.
 The `dev.level.reset` helper now delegates to `debug.level.reset <level> [seed]`;
 native reset validation, visited-state clearing, delta clearing, and optional
-seed selection remain behaviorally compatible with the Lua helper.
+seed selection remain behaviorally compatible with the Lua helper. The command
+is offline-only in authoritative mode.
 The `dev.level.warp.dungeon` helper now delegates to
 `debug.level.warp.dungeon <level>`; native level validation, already-there
-handling, and the legacy level-transition mode remain compatibility behavior.
+handling, and the legacy level-transition mode remain compatibility behavior;
+the command is offline-only in authoritative mode.
 The `dev.level.warp.quest` helper now delegates to
 `debug.level.warp.quest <level>`; quest lookup, set-level type selection, and
-legacy transition behavior remain native-owned compatibility behavior.
+legacy transition behavior remain native-owned compatibility behavior; the
+command is offline-only in authoritative mode.
 The `dev.level.warp.map` helper now delegates to
 `debug.level.warp.map <path> <dunType> <x> <y>`; native path, dungeon-type,
-spawn-bound, and transition validation remain compatibility behavior.
+spawn-bound, and transition validation remain compatibility behavior; the
+command is offline-only in authoritative mode.
 The `dev.items.info` diagnostic now delegates to `debug.items.info`; selected
 item lookup and network-pack validation are native-owned while Lua retains the
 legacy name as a compatibility alias.

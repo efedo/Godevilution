@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native debug level reset, dungeon warp, quest warp, and custom-map warp
+  commands now fail closed in authoritative mode instead of changing local
+  level, seed, or visited-state data.
 - Native debug quest activation now fails closed in authoritative mode;
   read-only quest diagnostics remain available against projected state.
 - Native player-mutating debug commands now fail closed in authoritative mode,
