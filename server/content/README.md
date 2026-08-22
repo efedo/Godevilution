@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.388.0` schema in
+It declares its identity and `devilution.diablo@1.389.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1764,6 +1764,13 @@ existing authored object and move it by a validated offset from an anchor
 entity belonging to the referenced fragment. Anchors use their original
 positions, and all resulting positions are bounds-checked before activation.
 
+Schema 1.389 adds the optional `quest_sequence_variants.tsv` table. Each
+content-declared variant assigns a complete permutation of ordered steps to a
+fixed set of authored quest objects. Activation selects one variant per quest
+with the same native-compatible deterministic RNG, before simulation state is
+created; incomplete permutations, mismatched object sets, and unknown quest or
+object references reject the content pack.
+
 Schema 1.387 adds optional native tile-definition paths to
 `native_dun_fragments.tsv`. When a fragment supplies both `tile_asset_path` and
 `sol_asset_path`, the server expands its `.dun` mega-tiles through the external
@@ -2546,6 +2553,7 @@ the complete target header even when they upsert only one row.
 | `native_dun_levels.tsv` | `level_id`, `asset_path` | Optional ordinary-level native `.dun` object-layer assets. Stable `level_symbol` values cross-check the active level catalog; missing assets, unknown levels, invalid paths, malformed DUN data, and dimension mismatches reject activation. Collision geometry remains owned by the level or procedural catalog. |
 | `native_dun_fragments.tsv` | `fragment_id` | Optional native `.dun` set-piece fragments targeting an ordinary level and a validated `anchor_entity_id`; `anchor_offset_x`/`anchor_offset_y` are d-piece offsets and must produce an even in-bounds origin. Fragment mega-tile cells may not overlap another fragment; native tile, transparency, and object-layer values are composed before simulation activation. Optional `tile_asset_path` and `sol_asset_path` form a required pair of relative `.til`/`.sol` assets; when present, their validated collision properties are composed into the authoritative blocked and missile-blocked geometry. |
 | `native_dun_fragment_objects.tsv` | `placement_id`, `fragment_id`, `entity_id` | Optional anchor-relative placement for existing authored objects. `offset_x`/`offset_y` are validated relative to the referenced fragment's `anchor_entity_id`; each object may be targeted once and resulting positions must remain in bounds. |
+| `quest_sequence_variants.tsv` | `variant_id`, `slot_index` | Optional complete permutations for ordered quest-object layouts. Each variant uses the same quest and object slots, and activation selects one variant per quest with the native-compatible deterministic RNG before simulation creation. |
 | `set_level_maps.tsv` | `set_level_id`, `pre_map_asset`, `active_map_asset` | Validated native set-level map asset paths, optional shared `til_asset`/`sol_asset` geometry inputs, optional `transparency_asset`, dungeon type, and entry spawn positions. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; map and transparency paths are relative `.dun` assets, geometry paths are relative `.til`/`.sol` assets, and traversal is rejected. |
 | Native binary assets (`.dun`, `.til`, `.sol`) | relative asset path | Immutable native map, mega-tile, and d-piece property bytes carried beside TSV tables. Asset bytes are included in the content manifest identity; identical inherited copies are accepted and conflicting copies reject composition. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional first/subsequent dialogue and completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional route-entry `_qvar1` marker in `route_activation_variable1`, optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, content-owned towner turn-ins with optional item-consuming `turn_in_activation_only` rows and `turn_in_activation_variable1` markers, active staged item turn-ins gated by `turn_in_required_variable1` and advancing `turn_in_variable1` with `turn_in_progress_only`, one-shot `turn_in_on_completion` stages with optional required/marker `_qvar1` fields, non-consuming item-gated `turn_in_dialogue_only` stages optionally suppressed after `turn_in_blocked_visited_level`, and alternate-item interactions, and unique-monster dialogue definitions with optional item hand-ins, relative unique/normal rewards, and one-time `dialogue_reward_on_activation` rewards. |
@@ -2588,7 +2596,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.388.0"
+    "version": "1.389.0"
   },
   "dependencyConstraints": [
     {
@@ -2620,7 +2628,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.388.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.389.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

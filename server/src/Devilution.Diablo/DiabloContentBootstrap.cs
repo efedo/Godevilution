@@ -41,7 +41,8 @@ public sealed record DiabloContentActivation
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
-        AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null)
+        AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
+        AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -69,6 +70,7 @@ public sealed record DiabloContentActivation
         NativeDunObjects = nativeDunObjects;
         NativeDunFragments = nativeDunFragments;
         NativeDunFragmentObjects = nativeDunFragmentObjects;
+        QuestSequenceVariants = questSequenceVariants;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -127,6 +129,9 @@ public sealed record DiabloContentActivation
 
     /** Validated anchor-relative authored objects for native DUN fragments. */
     public AuthoritativeNativeDunFragmentObjectCatalog? NativeDunFragmentObjects { get; }
+
+    /** Validated native ordered-quest layout alternatives selected at activation. */
+    public AuthoritativeQuestSequenceVariantCatalog? QuestSequenceVariants { get; }
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
@@ -418,6 +423,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
                 nativeDunFragmentObjectsTable.SourcePath,
                 nativeDunFragmentObjectsTable.ToCanonicalTsv())
+            : null;
+        var questSequenceVariants = content.TryGetTable(
+                "quest_sequence_variants.tsv",
+                out var questSequenceVariantsTable)
+            ? AuthoritativeQuestSequenceVariantCatalog.LoadTsv(
+                questSequenceVariantsTable.SourcePath,
+                questSequenceVariantsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         var levelGeneration = content.TryGetTable(
             "level_generation.tsv",
@@ -828,6 +841,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "Quest dialogue stages require an active quest catalog.");
         }
+        if (questSequenceVariants is not null && !questSequenceVariants.IsEmpty) {
+            if (objects is null || quests is null)
+                throw new InvalidDataException(
+                    "Quest-sequence variants require authored objects and quests.");
+            questSequenceVariants.Apply(objects, quests, randomSeed);
+        }
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null
             && questPools is not null) {
@@ -948,7 +967,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             setLevelMaps,
             nativeDunObjects,
             nativeDunFragments,
-            nativeDunFragmentObjects);
+            nativeDunFragmentObjects,
+            questSequenceVariants);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

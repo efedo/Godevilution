@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add `quest_sequence_variants.tsv` for complete content-declared native
+  ordered-quest permutations. Hellfire Na-Krul tome slots now select one of
+  the six native layouts with the authoritative Diablo RNG before simulation
+  state is created.
+
 - Add `native_dun_fragment_objects.tsv` for validated anchor-relative
   placement of existing authored objects. The Hellfire Na-Krul tome rows now
   follow the encounter anchor instead of duplicating absolute coordinates.

@@ -42,6 +42,11 @@ scaled hit points), not only the client's difficulty label.
   their behavior remains authored once in `objects.tsv` while placement is
   externalized with the room fragment.
 
+- Hellfire Na-Krul tome slots now use the validated
+  `quest_sequence_variants.tsv` contract. Activation selects one of the six
+  native step permutations with the same deterministic RNG and applies it to
+  the anchored authored objects before the simulation is created.
+
 - Native server-backed input, polling, portal, store, quest, and ability
   requests now timestamp the compatibility boundary with the shared
   demo-aware timer; the adapter no longer reintroduces direct SDL timing for
