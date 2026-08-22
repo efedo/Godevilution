@@ -156,6 +156,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyQuestResyncFailsClosed)
 	EXPECT_FALSE(ShouldProcessLegacyQuestResync(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyLevelLoadMutationsFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyLevelLoadMutation(false));
+	EXPECT_FALSE(ShouldProcessLegacyLevelLoadMutation(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyPlayerStateMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyPlayerStateMessage(false));

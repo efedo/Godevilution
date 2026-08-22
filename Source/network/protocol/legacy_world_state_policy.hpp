@@ -20,4 +20,13 @@ constexpr bool ShouldProcessLegacyQuestResync(bool serverConnected) noexcept
 	return ShouldProcessLegacyWorldStateMessage(serverConnected);
 }
 
+/**
+ * Legacy level-load quest mutations are offline-only while connected
+ * sessions use authoritative quest and transition state.
+ */
+constexpr bool ShouldProcessLegacyLevelLoadMutation(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyWorldStateMessage(serverConnected);
+}
+
 } // namespace devilution

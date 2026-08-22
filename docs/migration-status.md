@@ -8,6 +8,7 @@ authoritative snapshots remain the only connected-client source of truth.
 Legacy quest resynchronization during level loads is likewise disabled for
 connected sessions so quest-driven local world mutations cannot compete with
 authoritative projections.
+The return-level Betrayer marker also remains offline-only for the same reason.
 
 ## Current state
 

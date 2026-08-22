@@ -85,6 +85,7 @@
 #include "ui/movie.h"
 #include "network/protocol/multi.h"
 #include "network/protocol/network_ticks.h"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -3822,6 +3823,11 @@ void LoadGameLevelLightVision()
 
 void LoadGameLevelReturn()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	viewPosition() = GetMapReturnPosition();
 	if (Quests[Q_BETRAYER]._qactive == QUEST_DONE)
 		Quests[Q_BETRAYER]._qvar2 = 2;
