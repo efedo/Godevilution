@@ -488,6 +488,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 {
 	if (auto quests = ValidateQuestSnapshots(snapshot); !quests.has_value())
 		return tl::make_unexpected(quests.error());
+	if (auto interactions = ValidateQuestTownerInteractions(snapshot); !interactions.has_value())
+		return tl::make_unexpected(interactions.error());
 	if (entityId_ == 0) {
 		if (snapshot.players_size() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains no player entity.");

@@ -114,6 +114,8 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative quest-state validation now rejects duplicate or missing
   quest identities, impossible progress, unavailable progress, and invalid
   native quest metadata before interaction gates consume the snapshot.
+- Native authoritative quest/towner interaction validation now rejects invalid
+  IDs, quest references, messages, ranges, and geometry positions before routing.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

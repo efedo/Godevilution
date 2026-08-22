@@ -321,6 +321,10 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<void, std::string> ValidateQuestSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates authored quest/towner interaction records before native routing consumes them. */
+[[nodiscard]] tl::expected<void, std::string> ValidateQuestTownerInteractions(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

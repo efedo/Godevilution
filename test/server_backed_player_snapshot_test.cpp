@@ -769,6 +769,60 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestState)
 	EXPECT_FALSE(ValidateQuestSnapshots(oversizedIdentity).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestTownerInteractions)
+{
+	protocol::Snapshot missingId;
+	missingId.add_quests()->set_quest_id(1);
+	missingId.mutable_quests(0)->set_required_progress(1);
+	auto *interaction = missingId.add_quest_towner_interactions();
+	interaction->set_quest_id(1);
+	interaction->set_message_id(1);
+	EXPECT_FALSE(ValidateQuestTownerInteractions(missingId).has_value());
+
+	protocol::Snapshot unknownQuest;
+	interaction = unknownQuest.add_quest_towner_interactions();
+	interaction->set_interaction_id(1);
+	interaction->set_quest_id(2);
+	interaction->set_message_id(1);
+	EXPECT_FALSE(ValidateQuestTownerInteractions(unknownQuest).has_value());
+
+	protocol::Snapshot duplicate;
+	duplicate.add_quests()->set_quest_id(1);
+	duplicate.mutable_quests(0)->set_required_progress(1);
+	interaction = duplicate.add_quest_towner_interactions();
+	interaction->set_interaction_id(1);
+	interaction->set_quest_id(1);
+	interaction->set_message_id(1);
+	interaction = duplicate.add_quest_towner_interactions();
+	interaction->set_interaction_id(1);
+	interaction->set_quest_id(1);
+	interaction->set_message_id(1);
+	EXPECT_FALSE(ValidateQuestTownerInteractions(duplicate).has_value());
+
+	protocol::Snapshot invalidMessage;
+	invalidMessage.add_quests()->set_quest_id(1);
+	invalidMessage.mutable_quests(0)->set_required_progress(1);
+	interaction = invalidMessage.add_quest_towner_interactions();
+	interaction->set_interaction_id(1);
+	interaction->set_quest_id(1);
+	EXPECT_FALSE(ValidateQuestTownerInteractions(invalidMessage).has_value());
+
+	protocol::Snapshot outsideGeometry;
+	outsideGeometry.add_quests()->set_quest_id(1);
+	outsideGeometry.mutable_quests(0)->set_required_progress(1);
+	auto *level = outsideGeometry.add_level_geometry();
+	level->set_level_id(2);
+	level->set_width(10);
+	level->set_height(10);
+	interaction = outsideGeometry.add_quest_towner_interactions();
+	interaction->set_interaction_id(1);
+	interaction->set_quest_id(1);
+	interaction->set_level_id(2);
+	interaction->set_position_x(10);
+	interaction->set_message_id(1);
+	EXPECT_FALSE(ValidateQuestTownerInteractions(outsideGeometry).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

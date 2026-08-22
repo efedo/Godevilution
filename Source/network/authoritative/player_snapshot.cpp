@@ -666,6 +666,46 @@ tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot 
 	return {};
 }
 
+tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::Snapshot &snapshot)
+{
+	if (snapshot.quest_towner_interactions_size() > 1024)
+		return tl::make_unexpected("Server-backed snapshot contains too many quest/towner interactions.");
+	std::unordered_set<uint32_t> questIds;
+	questIds.reserve(snapshot.quests_size());
+	for (const auto &quest : snapshot.quests())
+		questIds.insert(quest.quest_id());
+	std::unordered_set<uint32_t> interactionIds;
+	interactionIds.reserve(snapshot.quest_towner_interactions_size());
+	const bool hasLevelGeometry = snapshot.level_geometry_size() > 0;
+	for (const auto &interaction : snapshot.quest_towner_interactions()) {
+		const auto level = std::find_if(snapshot.level_geometry().begin(), snapshot.level_geometry().end(), [&](const auto &candidate) {
+			return candidate.level_id() == interaction.level_id();
+		});
+		if (interaction.interaction_id() == 0
+		    || !interactionIds.insert(interaction.interaction_id()).second
+		    || interaction.quest_id() == 0
+		    || questIds.find(interaction.quest_id()) == questIds.end()
+		    || (hasLevelGeometry
+		        && (level == snapshot.level_geometry().end()
+	            || (level->width() > 0 && interaction.position_x() >= level->width())
+	            || (level->height() > 0 && interaction.position_y() >= level->height())))
+		    || interaction.towner_id() < 0 || interaction.towner_id() > 255
+		    || interaction.level_id() > std::numeric_limits<uint16_t>::max()
+		    || interaction.required_visited_level1() > std::numeric_limits<uint16_t>::max()
+		    || interaction.required_visited_level2() > std::numeric_limits<uint16_t>::max()
+		    || interaction.position_x() < 0 || interaction.position_y() < 0
+		    || interaction.kind() < 0 || interaction.kind() > 3
+		    || !interaction.has_message_id()
+		    || interaction.message_id() <= 0 || interaction.message_id() > std::numeric_limits<int16_t>::max()
+		    || (interaction.has_required_variable1() && (interaction.required_variable1() < 0 || interaction.required_variable1() > 255))
+		    || (interaction.has_required_variable2() && (interaction.required_variable2() < 0 || interaction.required_variable2() > 255))
+		    || (interaction.has_variable1() && (interaction.variable1() < 0 || interaction.variable1() > 255))
+		    || (interaction.has_variable2() && (interaction.variable2() < 0 || interaction.variable2() > 255)))
+			return tl::make_unexpected("Server-backed snapshot contains an invalid quest/towner interaction.");
+	}
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {
