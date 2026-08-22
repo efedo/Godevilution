@@ -56,6 +56,9 @@ All notable changes to this fork are documented below.
   talk, and object-action messages; typed server intents own simulation.
 - Connected native clients now ignore legacy monster-delta synchronization and
   debug-experience mutation messages; authoritative snapshots own progression.
+- Connected native clients now bypass legacy delta state helpers for monsters,
+  items, objects, portals, level save/load, and legacy delta transport; the
+  authoritative session remains the only connected-client source of truth.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

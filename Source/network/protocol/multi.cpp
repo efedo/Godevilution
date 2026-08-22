@@ -32,6 +32,7 @@
 #include "game/monsters/monsters.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/network_ticks.h"
+#include "network/protocol/legacy_sync_policy.hpp"
 #include "persistence/options.h"
 #include "persistence/save_file.h"
 #include "game/players/players.hpp"
@@ -47,6 +48,10 @@
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -691,6 +696,11 @@ void multi_net_ping()
 
 bool multi_handle_delta()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyDeltaState(authoritative::GetServerBackedRuntime().IsConnected()))
+		return true;
+#endif
+
 	if (gbGameDestroyed) {
 		gbRunGame = false;
 		return false;

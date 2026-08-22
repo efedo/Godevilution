@@ -168,5 +168,11 @@ TEST(ServerBackedCompatibility, ConnectedLegacySyncMessagesFailClosed)
 	EXPECT_FALSE(ShouldProcessLegacySyncMessage(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyDeltaStateFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyDeltaState(false));
+	EXPECT_FALSE(ShouldProcessLegacyDeltaState(true));
+}
+
 } // namespace
 } // namespace devilution::authoritative

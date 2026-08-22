@@ -124,6 +124,15 @@ int dwRecCount;
 
 namespace {
 
+bool LegacyDeltaStateAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyDeltaState(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 #ifdef LOG_RECEIVED_MESSAGES
 std::string_view CmdIdString(_cmd_id cmd)
 {
@@ -795,6 +804,9 @@ uint32_t CompressData(std::byte *buffer, std::byte *end)
 
 void DeltaImportData(_cmd_id cmd, uint32_t recvOffset, int pnum)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	size_t deltaSize = recvOffset;
 
 #ifdef USE_PKWARE
@@ -1033,7 +1045,7 @@ size_t OnLevelData(const TCmdPlrInfoHdr &message, size_t maxCmdSize, const Playe
 
 void DeltaLeaveSync(uint8_t bLevel)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 	if (levelType() == DTYPE_TOWN) {
 		DungeonSeeds[0] = GenerateSeed();
@@ -1062,7 +1074,7 @@ void DeltaLeaveSync(uint8_t bLevel)
 
 void DeltaSyncObject(WorldTilePosition position, _cmd_id bCmd, const Player &player)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	auto &objectDeltas = GetDeltaLevel(player).object;
@@ -1073,6 +1085,8 @@ bool DeltaGetItem(const TCmdGItem &message, uint8_t bLevel)
 {
 	if (!gbIsMultiplayer)
 		return true;
+	if (!LegacyDeltaStateAllowed())
+		return false;
 
 	DLevel &deltaLevel = GetDeltaLevel(bLevel);
 
@@ -1131,7 +1145,7 @@ bool DeltaGetItem(const TCmdGItem &message, uint8_t bLevel)
 
 void DeltaPutItem(const TCmdPItem &message, Point position, const Player &player)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	DLevel &deltaLevel = GetDeltaLevel(player);
@@ -1163,6 +1177,9 @@ void DeltaPutItem(const TCmdPItem &message, Point position, const Player &player
 
 void DeltaOpenPortal(size_t pnum, Point position, uint8_t bLevel, dungeon_type bLType, bool bSetLvl)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	sgJunk.portal[pnum].x = position.x;
 	sgJunk.portal[pnum].y = position.y;
 	sgJunk.portal[pnum].level = bLevel;
@@ -3024,6 +3041,9 @@ void msg_send_drop_pkt(uint8_t pnum, leaveinfo_t reason)
 
 bool msg_wait_resync()
 {
+	if (!LegacyDeltaStateAllowed())
+		return true;
+
 	bool success;
 
 	GetNextPacket();
@@ -3056,7 +3076,7 @@ bool msg_wait_resync()
 
 void run_delta_info()
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	gbBufferMsgs = 2;
@@ -3067,6 +3087,9 @@ void run_delta_info()
 
 void DeltaExportData(uint8_t pnum)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (const auto &[levelNum, deltaLevel] : DeltaLevels) {
 		const size_t bufferSize = 1U                                                              /* marker byte, always 0 */
 		    + sizeof(uint8_t)                                                                     /* level id */
@@ -3108,13 +3131,16 @@ void delta_init()
 
 void DeltaClearLevel(uint8_t level)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	DeltaLevels.erase(level);
 	LocalLevels.erase(level);
 }
 
 void delta_kill_monster(const Monster &monster, Point position, const Player &player)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	DMonsterStr *pD = &GetDeltaLevel(player).monster[monster.getId()];
@@ -3124,7 +3150,7 @@ void delta_kill_monster(const Monster &monster, Point position, const Player &pl
 
 void delta_monster_hp(const Monster &monster, const Player &player)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	DMonsterStr *pD = &GetDeltaLevel(player).monster[monster.getId()];
@@ -3134,7 +3160,7 @@ void delta_monster_hp(const Monster &monster, const Player &player)
 
 void delta_sync_monster(const TSyncMonster &monsterSync, uint8_t level)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	assert(level <= MaxMultiplayerLevels);
@@ -3153,6 +3179,9 @@ void delta_sync_monster(const TSyncMonster &monsterSync, uint8_t level)
 
 void DeltaSyncJunk()
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (int i = 0; i < MAXPORTAL; i++) {
 		if (sgJunk.portal[i].x == 0xFF) {
 			SetPortalStats(i, false, { 0, 0 }, 0, DTYPE_TOWN, false);
@@ -3185,7 +3214,7 @@ void DeltaSyncJunk()
 
 void DeltaAddItem(int ii)
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	const uint8_t localLevel = GetLevelForMultiplayer(*MyPlayer);
@@ -3215,7 +3244,7 @@ void DeltaAddItem(int ii)
 
 void DeltaSaveLevel()
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	for (Player &player : Players) {
@@ -3252,7 +3281,7 @@ bool IsValidLevel(uint8_t level, bool isSetLevel)
 
 void DeltaLoadLevel()
 {
-	if (!gbIsMultiplayer)
+	if (!gbIsMultiplayer || !LegacyDeltaStateAllowed())
 		return;
 
 	const uint8_t localLevel = GetLevelForMultiplayer(*MyPlayer);
@@ -3619,6 +3648,9 @@ void NetSendCmdString(uint32_t pmask, const char *pszStr)
 
 void delta_close_portal(const Player &player)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	memset(&sgJunk.portal[player.getId()], 0xFF, sizeof(sgJunk.portal[player.getId()]));
 }
 
