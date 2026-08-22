@@ -152,6 +152,11 @@ server-backed client now projects local authoritative damage, healing, and
 experience events directly through its floating-number renderer; Lua no longer
 defines that server-backed presentation path.
 
+The active base and Hellfire content packs contain no Lua assets or manifest
+references; the server boundary suite enforces that removal gate. Legacy Lua
+files remain available only outside those packs for explicit native
+compatibility launches.
+
 ## Freeze Rules
 
 1. Preserve existing Lua names and payloads until a characterized replacement

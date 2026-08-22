@@ -142,6 +142,30 @@ public sealed class ServerAssemblyBoundaryTests
     }
 
     [Fact]
+    public void ActiveContentPacksContainNoLuaAssetsOrManifestReferences()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var activePackRoots = new[] {
+            Path.Combine(repositoryRoot, "server", "content", "base"),
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"),
+        };
+        var luaFiles = activePackRoots
+            .SelectMany(root => Directory.EnumerateFiles(root, "*.lua", SearchOption.AllDirectories))
+            .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        var manifestReferences = activePackRoots
+            .SelectMany(root => Directory.EnumerateFiles(root, "content-pack.json", SearchOption.TopDirectoryOnly))
+            .Where(path => File.ReadAllText(path).Contains(".lua", StringComparison.OrdinalIgnoreCase))
+            .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Empty(luaFiles);
+        Assert.Empty(manifestReferences);
+    }
+
+    [Fact]
     public void AuthoritativeNativeClientKeepsLuaBehindTheLegacyModeGuard()
     {
         var source = File.ReadAllText(Path.Combine(

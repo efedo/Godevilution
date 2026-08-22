@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- The server boundary suite now rejects Lua assets or manifest references in
+  the active base and Hellfire content packs, while legacy compatibility files
+  remain outside those packs.
 - Server boundary tests now explicitly enforce that the Diablo game module
   depends only on Domain, Data, and Engine.
 - Production content activation now rejects unique and affix power symbols
