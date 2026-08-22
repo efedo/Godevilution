@@ -100,6 +100,8 @@ All notable changes to this fork are documented below.
   creation.
 - Reject duplicate equipment and belt slot assignments in participant templates
   before runtime creation.
+- Validate participant-template inventory-grid references and memorized-spell
+  IDs/levels, including duplicate spell identities.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

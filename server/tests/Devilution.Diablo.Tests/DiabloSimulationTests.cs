@@ -3509,6 +3509,47 @@ public sealed class DiabloSimulationTests
         Assert.Contains("duplicate belt slots", beltException.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsInvalidInventoryGridAndMemorizedSpells()
+    {
+        var gridException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [0],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("invalid inventory-grid reference", gridException.Message, StringComparison.Ordinal);
+
+        var spellException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            memorizedSpells: [new MemorizedSpellState(1, 1), new MemorizedSpellState(1, 2)]));
+        Assert.Contains("invalid memorized-spell state", spellException.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(

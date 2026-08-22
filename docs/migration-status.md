@@ -160,6 +160,8 @@ Participant templates now reject oversized native-compatible inventory,
 equipment, belt, inventory-grid, memorized-spell, and stash collections before
 runtime creation.
 They also reject duplicate equipment and belt slot assignments.
+Inventory-grid references and memorized-spell IDs/levels are validated at the
+same participant-template boundary.
 
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility

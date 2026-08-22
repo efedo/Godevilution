@@ -93,6 +93,8 @@ public sealed class DiabloPlayerTemplate
         ValidateCount(stash, DiabloStashLayout.MaximumItems, "stash");
         ValidateUniqueSlots(equipment, item => item.Slot, "equipment");
         ValidateUniqueSlots(belt, item => item.Slot, "belt");
+        ValidateInventoryGrid(inventoryGrid, inventory?.Count ?? 0);
+        ValidateMemorizedSpells(memorizedSpells);
         Gold = gold;
         Experience = experience;
         Life = life;
@@ -160,6 +162,32 @@ public sealed class DiabloPlayerTemplate
                 && values.Select(slotSelector).Distinct().Count() != values.Count) {
                 throw new InvalidDataException(
                     $"Player template contains duplicate {category} slots.");
+            }
+        }
+
+        static void ValidateInventoryGrid(
+            IReadOnlyList<int>? grid,
+            int inventoryCount)
+        {
+            if (grid is not null && grid.Any(cell => cell < -1 || cell >= inventoryCount))
+                throw new InvalidDataException(
+                    "Player template contains an invalid inventory-grid reference.");
+        }
+
+        static void ValidateMemorizedSpells(IReadOnlyList<MemorizedSpellState>? spells)
+        {
+            if (spells is null)
+                return;
+            if (spells.Any(spell =>
+                    spell is null
+                    || spell.SpellId is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
+                    || spell.Level is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
+                || spells.Where(spell => spell is not null)
+                    .Select(spell => spell.SpellId)
+                    .Distinct()
+                    .Count() != spells.Count) {
+                throw new InvalidDataException(
+                    "Player template contains invalid memorized-spell state.");
             }
         }
     }
