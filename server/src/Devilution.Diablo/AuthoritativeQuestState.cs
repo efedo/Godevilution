@@ -143,7 +143,8 @@ public sealed class AuthoritativeQuestState
         int turnInVariable1 = -1,
         bool turnInProgressOnly = false,
         int dialogueCompletionVariable1 = -1,
-        uint turnInBlockedVisitedLevel = 0)
+        uint turnInBlockedVisitedLevel = 0,
+        bool dialogueCompletionDefeatsTarget = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -201,6 +202,11 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(dialogueCompletionMessageId));
+        if (dialogueCompletionDefeatsTarget
+            && (dialogueItemId == 0 || string.IsNullOrWhiteSpace(completionUniqueIdentity)))
+            throw new ArgumentException(
+                "A dialogue completion defeat requires an item hand-in and unique encounter identity.",
+                nameof(dialogueCompletionDefeatsTarget));
         if (completionUniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
@@ -266,6 +272,7 @@ public sealed class AuthoritativeQuestState
         TurnInProgressOnly = turnInProgressOnly;
         DialogueCompletionVariable1 = dialogueCompletionVariable1;
         TurnInBlockedVisitedLevel = turnInBlockedVisitedLevel;
+        DialogueCompletionDefeatsTarget = dialogueCompletionDefeatsTarget;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -381,6 +388,8 @@ public sealed class AuthoritativeQuestState
     public uint DialogueRewardItemId { get; }
     /** Whether the authored dialogue reward is generated on first conversation rather than hand-in. */
     public bool DialogueRewardOnActivation { get; }
+    /** Whether a successful item-gated dialogue completion defeats its unique target. */
+    public bool DialogueCompletionDefeatsTarget { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -529,7 +538,9 @@ public static class AuthoritativeQuestCatalog
                     "dialogue_completion_variable1",
                     -1),
                 turnInBlockedVisitedLevel: row.OptionalUInt32(
-                    "turn_in_blocked_visited_level")) {
+                    "turn_in_blocked_visited_level"),
+                dialogueCompletionDefeatsTarget: row.OptionalBoolean(
+                    "dialogue_completion_defeats_target")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -703,7 +714,8 @@ public static class AuthoritativeQuestCatalog
         foreach (var quest in quests.Where(quest => quest.DialogueItemId != 0
                                                     || quest.DialogueRewardUniqueId != 0
                                                     || quest.DialogueRewardItemId != 0
-                                                    || quest.DialogueRewardOnActivation)) {
+                                                    || quest.DialogueRewardOnActivation
+                                                    || quest.DialogueCompletionDefeatsTarget)) {
             if (!quest.DialogueRewardOnActivation
                 && (quest.DialogueItemId == 0
                     || !items.TryGet(quest.DialogueItemId, out _)))

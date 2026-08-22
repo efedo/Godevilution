@@ -1883,7 +1883,8 @@ public sealed class DiabloWorldCommandProcessorTests
             dialogueRewardUniqueId: 1008,
             dialogueRewardItemLevel: 1,
             dialogueRewardOffsetY: 1,
-            dialogueCompletionMessageId: 83);
+            dialogueCompletionMessageId: 83,
+            dialogueCompletionDefeatsTarget: true);
         var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
         var processor = new DiabloWorldCommandProcessor(world, items: items);
         var player = CreatePlayer(
@@ -1921,6 +1922,8 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Empty(player.Inventory);
         Assert.Equal(83, Assert.Single(completed.Events).MessageId);
         Assert.Equal(83, target.DialogueMessageId);
+        Assert.Equal(0, target.HitPoints);
+        Assert.Equal(target.DeathAnimationTicks, target.DeathTicksRemaining);
         var reward = Assert.Single(world.WorldItems.Values);
         Assert.Equal(1008, reward.State.UniqueId);
         Assert.Equal((20, 21), (reward.PositionX, reward.PositionY));

@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.389.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.390.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1951,7 +1951,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.389.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.390.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2362,14 +2362,15 @@ public sealed class ShippedContentTests
             activation.Simulation.WorldState.Quests[3016].TurnInCompletionRequiredVariable1,
             activation.Simulation.WorldState.Quests[3016].TurnInCompletionVariable1,
             activation.Simulation.WorldState.Quests[3016].TurnInCompletionMessageId));
-        Assert.Equal((81, 2137U, 1008U, 1, 0, 1, 83), (
+        Assert.Equal((81, 2137U, 1008U, 1, 0, 1, 83, true), (
             activation.Simulation.WorldState.Quests[3005].MessageId,
             activation.Simulation.WorldState.Quests[3005].DialogueItemId,
             activation.Simulation.WorldState.Quests[3005].DialogueRewardUniqueId,
             activation.Simulation.WorldState.Quests[3005].DialogueRewardItemLevel,
             activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetX,
             activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetY,
-            activation.Simulation.WorldState.Quests[3005].DialogueCompletionMessageId));
+            activation.Simulation.WorldState.Quests[3005].DialogueCompletionMessageId,
+            activation.Simulation.WorldState.Quests[3005].DialogueCompletionDefeatsTarget));
         Assert.Equal((2203U, 8, 1, 1, true), (
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemId,
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemLevel,

@@ -563,6 +563,16 @@ public sealed class AuthoritativeCombatTarget
         DeathTicksRemaining = DeathAnimationTicks;
     }
 
+    /** Applies a content-authored encounter defeat without combat rewards. */
+    internal void DefeatForDialogue()
+    {
+        if (hitPointsQ6 == 0)
+            return;
+        hitPointsQ6 = 0;
+        CancelMovement();
+        BeginDeathAnimation();
+    }
+
     internal bool AdvanceDeathAnimation()
     {
         if (DeathTicksRemaining == 0)

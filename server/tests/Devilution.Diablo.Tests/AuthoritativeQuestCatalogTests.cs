@@ -462,18 +462,19 @@ public sealed class AuthoritativeQuestCatalogTests
         ]);
         var quest = Assert.Single(AuthoritativeQuestCatalog.LoadTsv(
             "quest_states.tsv",
-            "quest_id\tlevel_id\trequired_progress\tcompletion_unique_identity\tdialogue_item_id\tdialogue_item_symbol\tdialogue_reward_unique_id\tdialogue_reward_unique_symbol\tdialogue_reward_item_level\tdialogue_reward_offset_x\tdialogue_reward_offset_y\tdialogue_completion_message_id\n"
-                + "3005\t14\t1\tLachdanan\t2137\tgolden_elixir\t1008\tveil_of_steel\t1\t0\t1\t83\n",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_unique_identity\tdialogue_item_id\tdialogue_item_symbol\tdialogue_reward_unique_id\tdialogue_reward_unique_symbol\tdialogue_reward_item_level\tdialogue_reward_offset_x\tdialogue_reward_offset_y\tdialogue_completion_message_id\tdialogue_completion_defeats_target\n"
+                + "3005\t14\t1\tLachdanan\t2137\tgolden_elixir\t1008\tveil_of_steel\t1\t0\t1\t83\ttrue\n",
             stableIds: stableIds));
 
         Assert.Equal("Lachdanan", quest.CompletionUniqueIdentity);
-        Assert.Equal((2137U, 1008U, 1, 0, 1, 83), (
+        Assert.Equal((2137U, 1008U, 1, 0, 1, 83, true), (
             quest.DialogueItemId,
             quest.DialogueRewardUniqueId,
             quest.DialogueRewardItemLevel,
             quest.DialogueRewardOffsetX,
             quest.DialogueRewardOffsetY,
-            quest.DialogueCompletionMessageId));
+            quest.DialogueCompletionMessageId,
+            quest.DialogueCompletionDefeatsTarget));
     }
 
     [Fact]

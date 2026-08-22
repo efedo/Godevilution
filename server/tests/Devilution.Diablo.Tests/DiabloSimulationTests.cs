@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.389.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.390.0"),
             DiabloContentSchema.Current);
     }
 
@@ -397,7 +397,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.389.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.390.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -534,7 +534,10 @@ public sealed class DiabloSimulationTests
             experienceReward: 77,
             toHit: 61,
             toHitSpecial: 43,
-            nativeAi: "SkeletonRanged");
+            nativeAi: "SkeletonRanged",
+            unique: true,
+            uniqueIdentity: "Lachdanan",
+            dialogueMessageId: 83);
         var simulation = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(
                 new StoreCatalog(),
@@ -555,7 +558,10 @@ public sealed class DiabloSimulationTests
             experienceReward: 77,
             toHit: 61,
             toHitSpecial: 43,
-            nativeAi: "SkeletonRanged");
+            nativeAi: "SkeletonRanged",
+            unique: true,
+            uniqueIdentity: "Lachdanan",
+            dialogueMessageId: 83);
         var replacement = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(
                 new StoreCatalog(),
@@ -571,6 +577,7 @@ public sealed class DiabloSimulationTests
         Assert.Equal("SkeletonRanged", restored.NativeAi);
         Assert.Equal(2, restored.DeathTicksRemaining);
         Assert.Equal(0, restored.HitPoints);
+        Assert.Equal(83, restored.DialogueMessageId);
     }
 
     [Fact]

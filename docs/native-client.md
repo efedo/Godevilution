@@ -318,6 +318,9 @@ explicit migration seams, not server-authority claims:
 - Warlord's staged unique-monster conversation now uses authored messages and
   `_qvar1` transitions through `TalkToQuestRequested`, while its native AI-driven
   speech completion and encounter-state presentation remain local fallbacks.
+- Lachdanan's item-gated dialogue hand-in now uses the authored server transition
+  for its completion message, Veil of Steel reward, and post-dialogue defeat;
+  native presentation still supplies the legacy speech/audio timing fallback.
 - `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Vile
   Betrayer, Halls of the Blind, and Blood-goal book branches. These require
   authored set-level placement plus projectile/map effects. Set-level rows can

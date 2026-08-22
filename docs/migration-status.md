@@ -44,9 +44,10 @@ scaled hit points), not only the client's difficulty label.
   existing native AI compatibility behavior remains unchanged.
 
 - Legacy unique-monster item hand-ins now retain their authored initial and
-  completion dialogue identities on the same server-owned target state. This
-  covers the existing Lachdanan hand-in without changing its native reward or
-  encounter timing fallback.
+  completion dialogue identities on the same server-owned target state. The
+  Hellfire Lachdanan row also declares the native post-hand-in defeat boundary;
+  the server consumes the Golden Elixir, creates Veil of Steel, and carries the
+  dead target through authoritative snapshots and saves.
 
 - Hellfire Na-Krul tome objects now use the validated
   `native_dun_fragment_objects.tsv` contract to follow the encounter anchor;

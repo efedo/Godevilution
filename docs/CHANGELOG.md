@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native Lachdanan dialogue completion boundary. The Hellfire
+  quest row now declares that a successful Golden Elixir hand-in defeats the
+  unique target after its Veil of Steel reward, preserving the target's dead
+  state through authoritative snapshots and saves.
+
 - Extend authoritative unique-encounter dialogue projection to legacy
   item-gated hand-ins such as Lachdanan. Initial and completion message
   identities now remain on the target across snapshots instead of being

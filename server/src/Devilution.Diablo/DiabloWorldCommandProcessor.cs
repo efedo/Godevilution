@@ -1849,6 +1849,8 @@ public sealed class DiabloWorldCommandProcessor
             }
 
             SpawnDialogueReward(quest, target, player);
+            if (quest.DialogueCompletionDefeatsTarget)
+                target.DefeatForDialogue();
 
             return quest.DialogueCompletionMessageId == 0
                 ? DiabloWorldIntentResult.Accepted
