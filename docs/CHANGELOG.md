@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 - Route connected native object commands through the authoritative-only object
   projection, keeping presentation-only objects out of OperateObject,
   DisarmTrap, and object-targeted Telekinesis submissions.
+- Keep server-owned presentation missiles from clearing legacy missile and
+  wall tile flags; only locally simulated missiles update that bookkeeping.
 - Route native stair, town-warp, and quest-entrance trigger checks through an
   explicit connected-session legacy-world policy, with compatibility coverage
   proving that connected clients cannot emit legacy level-transition commands.

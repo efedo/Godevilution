@@ -48,4 +48,13 @@ constexpr bool ShouldProcessLegacyLevelLoadMutation(bool serverConnected) noexce
 	return ShouldProcessLegacyWorldStateMessage(serverConnected);
 }
 
+/**
+ * Legacy missile tile flags belong to locally simulated missiles; authoritative
+ * presentation missiles must not rewrite that native gameplay bookkeeping.
+ */
+constexpr bool ShouldClearLegacyMissileTileFlags(bool authoritativePresentation) noexcept
+{
+	return !authoritativePresentation;
+}
+
 } // namespace devilution

@@ -91,6 +91,12 @@ TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTarget
 	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t> { 17 });
 }
 
+TEST(ServerBackedCompatibility, AuthoritativeMissilesDoNotOwnLegacyTileFlags)
+{
+	EXPECT_TRUE(ShouldClearLegacyMissileTileFlags(false));
+	EXPECT_FALSE(ShouldClearLegacyMissileTileFlags(true));
+}
+
 TEST(ServerBackedCompatibility, MissingMonsterProjectionFailsClosed)
 {
 	using Route = ServerBackedMonsterInteractionRoute;

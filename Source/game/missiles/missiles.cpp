@@ -44,6 +44,7 @@
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
 #include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/players/players.hpp"
 #include "engine/audio/sound_effect_enums.h"
@@ -4248,11 +4249,12 @@ void ProcessMissiles()
 
 	for (auto &missile : Missiles) {
 		const auto &position = missile.position.tile;
-		if (InDungeonBounds(position)) {
-			tileAt(position).removeFlags(DungeonFlag::Missile | DungeonFlag::MissileFireWall | DungeonFlag::MissileLightningWall);
-		} else {
+		if (!InDungeonBounds(position)) {
 			missile._miDelFlag = true;
+			continue;
 		}
+		if (ShouldClearLegacyMissileTileFlags(missile._miAuthoritativeEntityId != 0))
+			tileAt(position).removeFlags(DungeonFlag::Missile | DungeonFlag::MissileFireWall | DungeonFlag::MissileLightningWall);
 	}
 
 	DeleteMissiles();
