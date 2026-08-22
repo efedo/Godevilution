@@ -2,6 +2,10 @@
 
 Status date: 2026-08-22
 
+Set-level native geometry now preflights partial binary bundles before
+materialization, preserving metadata-only behavior when no bundle assets are
+present.
+
 Set-level map definitions now reject incomplete `.til`/`.sol` collision pairs,
 while legacy metadata-only rows remain valid when neither asset is present.
 

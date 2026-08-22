@@ -113,6 +113,21 @@ public sealed class AuthoritativeSetLevelMapCatalog
         return false;
     }
 
+    /** Validates any partially supplied native set-level bundle before activation. */
+    public void ValidateAssets(ComposedContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        foreach (var definition in definitions) {
+            var paths = GetNativeAssetPaths(definition);
+            if (paths.Length == 0)
+                continue;
+            var present = paths.Count(path => content.TryGetAsset(path, out _));
+            if (present != 0 && present != paths.Length)
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle.");
+        }
+    }
+
     /**
      * Materializes every complete native bundle supplied by the active pack.
      * Legacy packs may declare paths before shipping the binary files; those
@@ -121,27 +136,16 @@ public sealed class AuthoritativeSetLevelMapCatalog
     public IReadOnlyList<AuthoritativeLevel> LoadAvailableGeometry(ComposedContent content)
     {
         ArgumentNullException.ThrowIfNull(content);
+        ValidateAssets(content);
         var levels = new List<AuthoritativeLevel>();
         foreach (var definition in definitions) {
-            if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
-                || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
+            var paths = GetNativeAssetPaths(definition);
+            if (paths.Length == 0) {
                 continue;
             }
-            var paths = new[] {
-                definition.PreMapAssetPath,
-                definition.ActiveMapAssetPath,
-                definition.TileAssetPath,
-                definition.SolAssetPath,
-            };
-            if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath))
-                paths = [.. paths, definition.TransparencyAssetPath];
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (present == 0)
                 continue;
-            if (present != paths.Length) {
-                throw new InvalidDataException(
-                    $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle.");
-            }
             var preMap = AuthoritativeNativeDunGeometryLoader.Load(
                 content,
                 definition,
@@ -188,6 +192,23 @@ public sealed class AuthoritativeSetLevelMapCatalog
             levels.Add(activeMap);
         }
         return levels;
+    }
+
+    private static string[] GetNativeAssetPaths(
+        AuthoritativeSetLevelMapDefinition definition)
+    {
+        if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
+            || string.IsNullOrWhiteSpace(definition.SolAssetPath))
+            return [];
+        var paths = new[] {
+            definition.PreMapAssetPath,
+            definition.ActiveMapAssetPath,
+            definition.TileAssetPath,
+            definition.SolAssetPath,
+        };
+        return string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)
+            ? paths
+            : [.. paths, definition.TransparencyAssetPath];
     }
 
     public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)

@@ -305,6 +305,26 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void SetLevelCatalogPreflightsPartiallySuppliedNativeBundles()
+    {
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(1, "pre.dun", "active.dun", "Cathedral", 1, 1) {
+                TileAssetPath = "map.til",
+                SolAssetPath = "map.sol",
+            },
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("pre.dun", new byte[] { 1 }),
+            ]),
+        ]));
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.ValidateAssets(content));
+
+        Assert.Contains("incomplete native asset bundle", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SetLevelCatalogRejectsBlockedActiveMapSpawnPoint()
     {
         var dun = CreateDun(1, 1, [0]);

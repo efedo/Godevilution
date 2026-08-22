@@ -751,6 +751,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 throw new InvalidDataException(
                     "Set-level map definitions require set_level_names.tsv.");
             setLevelMaps.ValidateSetLevels(setLevelNames);
+            setLevelMaps.ValidateAssets(content);
             if (world is not null) {
                 foreach (var level in setLevelMaps.LoadAvailableGeometry(content))
                     world.AddLevel(level);
