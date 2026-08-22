@@ -230,6 +230,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             : null;
         if (spells is not null)
             pricing.ValidateSpellReferences(spells);
+        var nativeSpells = content.TryGetTable(
+            "native_spells.tsv",
+            out var nativeSpellsTable)
+            ? AuthoritativeNativeSpellCatalog.LoadTsv(
+                nativeSpellsTable.SourcePath,
+                nativeSpellsTable.ToCanonicalTsv())
+            : null;
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
             out var legacyPrefixTable);
@@ -270,13 +277,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         // and intentionally derives compatibility IDs from its own row order.
         if (itemCatalog is null
             && content.TryGetTable("itemdat.tsv", out var legacyItemTable)) {
+            if (nativeSpells is null)
+                throw new InvalidDataException(
+                    "Legacy itemdat.tsv content requires a validated native_spells.tsv catalog.");
             itemCatalog = AuthoritativeItemCatalog.LoadLegacyTsv(
                 legacyItemTable.SourcePath,
                 legacyItemTable.ToCanonicalTsv(),
                 affixes,
                 null,
                 spells,
-                cursorCatalog);
+                cursorCatalog,
+                nativeSpells);
         }
         if (itemCatalog is null) {
             throw new InvalidDataException(

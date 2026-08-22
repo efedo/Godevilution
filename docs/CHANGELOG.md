@@ -3,6 +3,11 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Legacy `itemdat.tsv` spell names now resolve through a validated external
+  `native_spells.tsv` namespace during production content activation. The table
+  preserves all 52 native ordinals, rejects duplicate or out-of-range entries,
+  and advances the Diablo content schema to `1.407.0`; older direct callers
+  retain the compatibility fallback.
 - Connected native missile processing now retains authoritative presentation
   missiles for animation but discards stale legacy missiles before their
   native gameplay callbacks can run; offline sessions retain legacy missiles.

@@ -1076,7 +1076,8 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeItemAffixCatalog? affixes = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
         AuthoritativeSpellCatalog? spellCatalog = null,
-        AuthoritativeItemCursorCatalog? cursorCatalog = null)
+        AuthoritativeItemCursorCatalog? cursorCatalog = null,
+        AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
@@ -1103,7 +1104,10 @@ public sealed class AuthoritativeItemCatalog
                     EquipLocation = ParseLegacyEquipLocation(row.Required("equipType")),
                     ItemClass = ParseLegacyItemClass(row.Required("class")),
                     MiscId = ParseLegacyMiscId(OptionalText(row, "miscId")),
-                    SpellId = ParseLegacySpellId(OptionalText(row, "spell"), spellCatalog),
+                    SpellId = ParseLegacySpellId(
+                        OptionalText(row, "spell"),
+                        spellCatalog,
+                        nativeSpellCatalog),
                     Flags = ParseLegacyFlags(OptionalText(row, "specialEffects")),
                     MinimumStrength = row.OptionalInt32("minStrength"),
                     MinimumMagic = row.OptionalInt32("minMagic"),
@@ -1285,10 +1289,36 @@ public sealed class AuthoritativeItemCatalog
 
     private static int ParseLegacySpellId(
         string value,
-        AuthoritativeSpellCatalog? spellCatalog = null)
+        AuthoritativeSpellCatalog? spellCatalog = null,
+        AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Equals("Null", StringComparison.OrdinalIgnoreCase))
             return 0;
+        uint nativeSpellId;
+        if (nativeSpellCatalog is not null) {
+            if (!nativeSpellCatalog.TryGetId(value, out nativeSpellId))
+                return 0;
+        } else {
+            nativeSpellId = ParseLegacyCompatibilitySpellId(value);
+            if (nativeSpellId == uint.MaxValue)
+                return 0;
+        }
+        if (spellCatalog is not null
+            && spellCatalog.TryGetByNativeId(nativeSpellId, out var definition)) {
+            return checked((int)definition.SpellId);
+        }
+        if (spellCatalog is not null) {
+            throw new InvalidDataException(
+                $"Legacy spell '{value}' (native spell ID {nativeSpellId}) is not mapped by the active spell catalog.");
+        }
+        return checked((int)nativeSpellId);
+    }
+
+    // Kept only for callers that have not yet supplied the external native
+    // namespace. Production content activation always passes its validated
+    // native_spells.tsv catalog.
+    private static uint ParseLegacyCompatibilitySpellId(string value)
+    {
         var nativeSpellNames = new[] {
             "Null", "Firebolt", "Healing", "Lightning", "Flash", "Identify", "FireWall", "TownPortal",
             "StoneCurse", "Infravision", "Phasing", "ManaShield", "Fireball", "Guardian", "ChainLightning",
@@ -1301,17 +1331,7 @@ public sealed class AuthoritativeItemCatalog
         var nativeSpellId = Array.FindIndex(
             nativeSpellNames,
             spell => spell.Equals(value, StringComparison.OrdinalIgnoreCase));
-        if (nativeSpellId < 0)
-            return 0;
-        if (spellCatalog is not null
-            && spellCatalog.TryGetByNativeId(checked((uint)nativeSpellId), out var definition)) {
-            return checked((int)definition.SpellId);
-        }
-        if (spellCatalog is not null) {
-            throw new InvalidDataException(
-                $"Legacy spell '{value}' (native spell ID {nativeSpellId}) is not mapped by the active spell catalog.");
-        }
-        return nativeSpellId;
+        return nativeSpellId < 0 ? uint.MaxValue : checked((uint)nativeSpellId);
     }
 
     private static uint ParseNormalizedFlags(TsvRow row)
