@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.399.0"
+    "version": "1.400.0"
   },
   "overlays": []
 }

@@ -118,6 +118,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
 
     /** Optional native initial travel advance in velocity quanta. */
     public int InitialTravelQuanta { get; init; }
+
+    /** Optional number of projectiles emitted by one native missile admission. */
+    public int ProjectileCount { get; init; }
 }
 
 /** Externalized native monster missile identities used by server-owned AI. */
@@ -141,6 +144,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.AvoidanceProbabilityPercent is < 1 or > 100
                 || definition.ProjectileSpeed < 0
                 || definition.InitialTravelQuanta is < 0 or > 16
+                || definition.ProjectileCount is < 0 or > 32
                 || definition.ProjectileLifetime < 0
                 || definition.ProjectileLifetimeBase < 0
                 || definition.ProjectileLifetimeIntelligenceScale < 0
@@ -521,6 +525,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     "ranged_avoidance_adjacent_attack_chance_divisor"),
                 IsPostMeleeMissile = row.OptionalBoolean("post_melee_missile"),
                 InitialTravelQuanta = row.OptionalInt32("initial_travel_quanta"),
+                ProjectileCount = row.OptionalInt32("projectile_count"),
             };
         }));
     }

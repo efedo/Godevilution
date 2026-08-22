@@ -46,6 +46,17 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsOptionalProjectileCount()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tprojectile_count\n"
+                + "Counselor\tChargedBolt\tMonsterChargedBolt\t3\n");
+
+        Assert.Equal(3, Assert.Single(catalog.Definitions).ProjectileCount);
+    }
+
+    [Fact]
     public void LoadsValidatedAdjacentAttackBand()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
@@ -713,6 +724,20 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     "MagmaBall",
                     AuthoritativeProjectileBehavior.MonsterMagic) {
                     InitialTravelQuanta = 17,
+                },
+            ]));
+    }
+
+    [Fact]
+    public void RejectsInvalidProjectileCount()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "ChargedBolt",
+                    AuthoritativeProjectileBehavior.MonsterChargedBolt) {
+                    ProjectileCount = 33,
                 },
             ]));
     }

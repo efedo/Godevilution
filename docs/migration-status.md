@@ -58,6 +58,9 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.399 externalizes the native MagmaBall initial launch advance through
   `monster_missiles.tsv`; the shipped row carries three velocity quanta while
   older mappings retain the compatibility fallback.
+- Schema 1.400 externalizes the native Counselor Charged Bolt projectile count
+  through `monster_missiles.tsv`; the shipped row carries three projectiles
+  while older mappings retain the compatibility fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

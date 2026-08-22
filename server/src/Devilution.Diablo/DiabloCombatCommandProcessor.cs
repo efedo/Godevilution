@@ -7891,7 +7891,7 @@ public sealed class DiabloCombatCommandProcessor
             speed);
         var projectileCount = missile.ProjectileBehavior
             == AuthoritativeProjectileBehavior.MonsterChargedBolt
-            ? 3
+            ? missile.ProjectileCount > 0 ? missile.ProjectileCount : 3
             : 1;
         var projectileDamage = missile.ProjectileDamage > 0
             ? missile.ProjectileDamage
