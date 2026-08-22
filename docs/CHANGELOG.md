@@ -17,6 +17,9 @@ All notable changes to this fork are documented below.
 - Retain native `.til`/`.sol` collision provenance through fragment composition
   so authoritative d-piece mutations recompute native-owned movement and missile
   cells without disturbing authored geometry.
+- Extend ordinary native-DUN level rows with optional validated `.til`/`.sol`
+  collision assets, advancing the Diablo content schema to `1.416.0` while
+  preserving metadata-only behavior for legacy rows.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining

@@ -33,7 +33,12 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.415.0` for these table contracts.
+The Diablo content schema is now `1.416.0` for these table contracts.
+
+Schema 1.416 extends ordinary `native_dun_levels.tsv` rows with optional
+validated `.til`/`.sol` collision assets. Legacy rows remain object/mega-tile
+metadata-only; rows with the pair now retain effective d-piece collision
+provenance for later authoritative mutations.
 
 Native `.til`/`.sol` fragment collision provenance now remains attached to
 authoritative d-piece layers, so later `piece_layer_rects` mutations update
@@ -231,7 +236,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.415.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.416.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.

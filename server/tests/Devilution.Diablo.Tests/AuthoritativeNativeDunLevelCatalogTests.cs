@@ -21,6 +21,19 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
     }
 
     [Fact]
+    public void TsvLoaderParsesOptionalCollisionAssets()
+    {
+        var catalog = AuthoritativeNativeDunLevelCatalog.LoadTsv(
+            "native_dun_levels.tsv",
+            "level_id\tlevel_symbol\tasset_path\ttile_asset_path\tsol_asset_path\n"
+                + "2\tcatacombs\tlevels/catacombs.dun\tlevels/l2data/l2.til\tlevels/l2data/l2.sol\n");
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal("levels/l2data/l2.til", definition.TileAssetPath);
+        Assert.Equal("levels/l2data/l2.sol", definition.SolAssetPath);
+    }
+
+    [Fact]
     public void AppliesNativeObjectLayerWithoutReplacingCollisionGeometry()
     {
         var world = new AuthoritativeWorld();
@@ -48,6 +61,53 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
         Assert.Equal([0, 1], level.MissileBlockedCells);
         Assert.Equal([0, 17, 0, 19], level.NativeObjectLayer);
         Assert.Equal("catacombs", level.StableSymbol);
+    }
+
+    [Fact]
+    public void AppliesOptionalCollisionAssetsAsEffectiveDPieceGeometry()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            2,
+            2,
+            2,
+            blockedCells: [3],
+            missileBlockedCells: [3]) {
+            StableSymbol = "catacombs",
+        });
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        sol[1] = (byte)AuthoritativeDunTileFlags.Solid;
+        sol[2] = (byte)AuthoritativeDunTileFlags.BlockMissile;
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("level.dun", CreateDun([0, 0, 0, 0])),
+                new ContentAsset("level.til", CreateTil([1, 2, 3, 4])),
+                new ContentAsset("level.sol", sol),
+            ]),
+        ]));
+        var catalog = new AuthoritativeNativeDunLevelCatalog([
+            new AuthoritativeNativeDunLevelDefinition(2, "level.dun", "level.til", "level.sol"),
+        ]);
+
+        catalog.Apply(content, world);
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal([0], level.BlockedCells);
+        Assert.Equal([1], level.MissileBlockedCells);
+        Assert.Equal([1, 2, 3, 4], level.NativePieceLayer);
+        Assert.Equal([0], level.NativePieceCollisionCells);
+        Assert.Equal([1], level.NativePieceMissileBlockedCells);
+    }
+
+    [Fact]
+    public void RejectsIncompleteCollisionAssetPair()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeNativeDunLevelCatalog([
+                new AuthoritativeNativeDunLevelDefinition(2, "level.dun", "level.til"),
+            ]));
+
+        Assert.Contains(".til/.sol asset pair", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -86,6 +146,16 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
                 bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
                 words[index]);
         }
+        return bytes;
+    }
+
+    private static byte[] CreateTil(ushort[] pieces)
+    {
+        var bytes = new byte[pieces.Length * sizeof(ushort)];
+        for (var index = 0; index < pieces.Length; index++)
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
+                pieces[index]);
         return bytes;
     }
 }

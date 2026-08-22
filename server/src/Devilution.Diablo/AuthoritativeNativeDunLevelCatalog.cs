@@ -2,10 +2,12 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
-/** Explicit native DUN object-layer asset for one ordinary runtime level. */
+/** Explicit native DUN asset bundle for one ordinary runtime level. */
 public sealed record AuthoritativeNativeDunLevelDefinition(
     uint LevelId,
-    string AssetPath)
+    string AssetPath,
+    string? TileAssetPath = null,
+    string? SolAssetPath = null)
 {
     /** Stable ordinary-level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
@@ -15,6 +17,14 @@ public sealed record AuthoritativeNativeDunLevelDefinition(
         if (!IsRelativeDunAssetPath(AssetPath))
             throw new InvalidDataException(
                 $"Native DUN level {LevelId} contains an invalid asset path.");
+        var hasTileAsset = !string.IsNullOrWhiteSpace(TileAssetPath);
+        var hasSolAsset = !string.IsNullOrWhiteSpace(SolAssetPath);
+        if (hasTileAsset != hasSolAsset
+            || hasTileAsset && !IsRelativeNativeAssetPath(TileAssetPath!, ".til")
+            || hasSolAsset && !IsRelativeNativeAssetPath(SolAssetPath!, ".sol")) {
+            throw new InvalidDataException(
+                $"Native DUN level {LevelId} must declare a safe .til/.sol asset pair.");
+        }
         return this;
     }
 
@@ -27,9 +37,19 @@ public sealed record AuthoritativeNativeDunLevelDefinition(
                 .All(segment => segment is not "." and not "..")
             && !path.Contains(':', StringComparison.Ordinal);
     }
+
+    private static bool IsRelativeNativeAssetPath(string path, string extension)
+    {
+        return !string.IsNullOrWhiteSpace(path)
+            && !Path.IsPathRooted(path)
+            && path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
+            && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(segment => segment is not "." and not "..")
+            && !path.Contains(':', StringComparison.Ordinal);
+    }
 }
 
-/** Validated native DUN object layers for ordinary runtime levels. */
+/** Validated native DUN layers for ordinary runtime levels. */
 public sealed class AuthoritativeNativeDunLevelCatalog
 {
     private readonly IReadOnlyList<AuthoritativeNativeDunLevelDefinition> definitions;
@@ -62,7 +82,7 @@ public sealed class AuthoritativeNativeDunLevelCatalog
         }
     }
 
-    /** Applies each native DUN object's layer without inferring collision behavior. */
+    /** Applies each native DUN object's layer and optional external collision geometry. */
     public void Apply(ComposedContent content, AuthoritativeWorld world)
     {
         ArgumentNullException.ThrowIfNull(content);
@@ -78,26 +98,48 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                     $"Native DUN level {definition.LevelId} dimensions {map.TileWidth}x{map.TileHeight} "
                     + $"do not match level {level.Width}x{level.Height}.");
             }
+            var nativeGeometry = LoadOptionalGeometry(content, definition, map);
             world.ReplaceLevel(new AuthoritativeLevel(
                 level.LevelId,
                 level.Width,
                 level.Height,
-                level.BlockedCells,
-                level.MissileBlockedCells,
+                nativeGeometry?.BlockedCells ?? level.BlockedCells,
+                nativeGeometry?.MissileBlockedCells ?? level.MissileBlockedCells,
                 level.IsDefaultStart,
                 level.SuppressMultiplayerDeathDrops,
                 level.NativeTransparency,
                 map.ObjectLayer,
                 map.TileLayer,
-                level.NativePieceLayer,
-                level.NativePieceProperties,
-                level.NativePieceCollisionCells,
-                level.NativePieceMissileBlockedCells) {
+                nativeGeometry?.NativePieceLayer ?? level.NativePieceLayer,
+                nativeGeometry?.NativePieceProperties ?? level.NativePieceProperties,
+                nativeGeometry?.NativePieceCollisionCells ?? level.NativePieceCollisionCells,
+                nativeGeometry?.NativePieceMissileBlockedCells ?? level.NativePieceMissileBlockedCells) {
                 StableSymbol = string.IsNullOrWhiteSpace(definition.LevelSymbol)
                     ? level.StableSymbol
                     : definition.LevelSymbol,
             });
         }
+    }
+
+    private static AuthoritativeLevel? LoadOptionalGeometry(
+        ComposedContent content,
+        AuthoritativeNativeDunLevelDefinition definition,
+        AuthoritativeDunMapAsset map)
+    {
+        if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
+            || string.IsNullOrWhiteSpace(definition.SolAssetPath))
+            return null;
+        var pieces = AuthoritativeDunPieceCatalog.LoadTil(
+            definition.TileAssetPath,
+            content.GetRequiredAsset(definition.TileAssetPath).Contents);
+        var tileProperties = AuthoritativeDunTilePropertyCatalog.LoadSol(
+            definition.SolAssetPath,
+            content.GetRequiredAsset(definition.SolAssetPath).Contents);
+        return AuthoritativeDunGeometryMaterializer.Materialize(
+            definition.LevelId,
+            map,
+            pieces,
+            tileProperties);
     }
 
     public static AuthoritativeNativeDunLevelCatalog LoadTsv(
@@ -109,8 +151,19 @@ public sealed class AuthoritativeNativeDunLevelCatalog
         return new AuthoritativeNativeDunLevelCatalog(table.Rows.Select(row =>
             new AuthoritativeNativeDunLevelDefinition(
                 AuthoritativeLevelIdentity.Resolve(row, stableIds),
-                row.Required("asset_path")) {
+                row.Required("asset_path"),
+                OptionalAssetPath(row, "tile_asset_path"),
+                OptionalAssetPath(row, "sol_asset_path")) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
             }));
+    }
+
+    private static string? OptionalAssetPath(TsvRow row, string column)
+    {
+        return row.TryGet(column, out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)
+            ? value
+            : null;
     }
 }
