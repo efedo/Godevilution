@@ -1020,7 +1020,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 100,
                 friendlyFire: true,
                 multipleArrowsCount: 2,
-                multipleArrowsDelayTicks: 1));
+                multipleArrowsDelayTicks: 1,
+                multipleArrowsSpreadDistance: 0));
         var attacker = CreatePlayer(
             entityId: 7,
             equipment: [new EquippedStoreItem(4, 42, bow)]);
@@ -1044,6 +1045,9 @@ public sealed class DiabloCombatCommandProcessorTests
                 .OrderBy(projectile => projectile.EntityId)
                 .Select(projectile => projectile.ActivationDelayTicks)
                 .ToArray());
+        Assert.All(
+            world.Projectiles.Values,
+            projectile => Assert.Equal((0, 0), (projectile.PositionX, projectile.PositionY)));
     }
 
     [Fact]
@@ -1494,7 +1498,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 1,
                 100,
                 multipleArrowsCount: 2,
-                multipleArrowsDelayTicks: 1));
+                multipleArrowsDelayTicks: 1,
+                multipleArrowsSpreadDistance: 0));
 
         var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
@@ -1506,6 +1511,9 @@ public sealed class DiabloCombatCommandProcessorTests
                 .OrderBy(projectile => projectile.EntityId)
                 .Select(projectile => projectile.ActivationDelayTicks)
                 .ToArray());
+        Assert.All(
+            world.Projectiles.Values,
+            projectile => Assert.Equal((5, 5), (projectile.PositionX, projectile.PositionY)));
     }
 
     [Fact]

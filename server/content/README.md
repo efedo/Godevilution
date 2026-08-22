@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.404.0` schema in
+It declares its identity and `devilution.diablo@1.405.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1866,6 +1866,10 @@ Schema 1.404 adds the optional `multiple_arrows_delay_ticks` column to
 `combat.tsv`. The shipped combat row declares the native two-tick follow-up
 delay; older mappings retain that compatibility fallback.
 
+Schema 1.405 adds the optional `multiple_arrows_spread_distance` column to
+`combat.tsv`. The shipped combat row declares the native one-cell perpendicular
+offset; older mappings retain that compatibility fallback.
+
 Schema 1.387 adds optional native tile-definition paths to
 `native_dun_fragments.tsv`. When a fragment supplies both `tile_asset_path` and
 `sol_asset_path`, the server expands its `.dun` mega-tiles through the external
@@ -2628,7 +2632,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with optional stable `item_symbol` cross-checks. |
-| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, Multiple Arrows count and follow-up delay, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection with optional `pvp_ear_item_symbol`. |
+| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, Multiple Arrows count, follow-up delay, and perpendicular spread distance, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection with optional `pvp_ear_item_symbol`. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, unique-item, quest, class capabilities such as `ability:trap_disarm`, world objects, stores, set levels, spells, levels, and portals are declared separately from runtime projections and validated against their active catalogs during activation. |
 | `item_combinations.tsv` | `result_item_id`, `required_item_ids` | Validated server-owned item-combination recipes with optional result and input item symbols. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
@@ -2691,7 +2695,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.404.0"
+    "version": "1.405.0"
   },
   "dependencyConstraints": [
     {
@@ -2723,7 +2727,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.404.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.405.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

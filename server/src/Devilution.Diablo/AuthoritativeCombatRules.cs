@@ -108,7 +108,8 @@ public sealed class AuthoritativeCombatRules
         uint townLevelId = AuthoritativePortalRules.TownLevelId,
         int uniqueExperienceMultiplier = 2,
         int multipleArrowsCount = 3,
-        int multipleArrowsDelayTicks = 2)
+        int multipleArrowsDelayTicks = 2,
+        int multipleArrowsSpreadDistance = 1)
     {
         var resolvedRangedAttackFrameSkipWithFirstFrame = rangedAttackFrameSkipWithFirstFrame
             ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
@@ -220,6 +221,9 @@ public sealed class AuthoritativeCombatRules
         if (multipleArrowsDelayTicks is < 0 or > 2) {
             throw new InvalidDataException("Multiple Arrows delay tuning is invalid.");
         }
+        if (multipleArrowsSpreadDistance is < 0 or > 8) {
+            throw new InvalidDataException("Multiple Arrows spread tuning is invalid.");
+        }
         if (pvpBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("PvP block level tuning is invalid.");
         }
@@ -299,6 +303,7 @@ public sealed class AuthoritativeCombatRules
         UniqueExperienceMultiplier = uniqueExperienceMultiplier;
         MultipleArrowsCount = multipleArrowsCount;
         MultipleArrowsDelayTicks = multipleArrowsDelayTicks;
+        MultipleArrowsSpreadDistance = multipleArrowsSpreadDistance;
         HitChancePercent = hitChancePercent;
         CriticalChancePercent = criticalChancePercent;
         CriticalMultiplier = criticalMultiplier;
@@ -404,6 +409,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native delay before each follow-up Multiple Arrows missile begins travel. */
     public int MultipleArrowsDelayTicks { get; }
+
+    /** Native perpendicular cell offset applied to follow-up Multiple Arrows missiles. */
+    public int MultipleArrowsSpreadDistance { get; }
 
     public int HitChancePercent { get; }
 
@@ -1037,7 +1045,8 @@ public sealed class AuthoritativeCombatRules
             townLevelId,
             row.OptionalInt32("unique_experience_multiplier", 2),
             row.OptionalInt32("multiple_arrows_count", 3),
-            row.OptionalInt32("multiple_arrows_delay_ticks", 2));
+            row.OptionalInt32("multiple_arrows_delay_ticks", 2),
+            row.OptionalInt32("multiple_arrows_spread_distance", 1));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

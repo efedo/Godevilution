@@ -824,8 +824,14 @@ public sealed class DiabloCombatCommandProcessor
                 : default;
             var spread = arrowCount == 1 || arrowIndex == 0
                 ? (X: 0, Y: 0)
-                : (X: checked(perpendicular.Item1 * (arrowIndex == 1 ? -1 : 1)),
-                    Y: checked(perpendicular.Item2 * (arrowIndex == 1 ? -1 : 1)));
+                : (X: checked(
+                    perpendicular.Item1
+                    * (arrowIndex == 1 ? -1 : 1)
+                    * rules.MultipleArrowsSpreadDistance),
+                    Y: checked(
+                        perpendicular.Item2
+                        * (arrowIndex == 1 ? -1 : 1)
+                        * rules.MultipleArrowsSpreadDistance));
             var arrowPositionX = checked(player.PositionX + spread.X);
             var arrowPositionY = checked(player.PositionY + spread.Y);
             if (!world.ContainsPosition(player.LevelId, arrowPositionX, arrowPositionY)) {
@@ -980,8 +986,8 @@ public sealed class DiabloCombatCommandProcessor
     /**
      * Emits server-owned bow missiles. Multiple Arrows uses the validated
      * content count; the first starts on the attack effect frame and subsequent
-     * spread arrows begin after the configured delay, matching DoRangeAttack's
-     * second firing window.
+     * spread arrows begin after the configured delay and use the configured
+     * perpendicular offset, matching DoRangeAttack's second firing window.
      */
     private DiabloCombatIntentResult ResolveWeaponArrowVolley(
         AuthoritativePlayerState player,
@@ -1020,8 +1026,14 @@ public sealed class DiabloCombatCommandProcessor
                 : default;
             var spread = arrowCount == 1 || arrowIndex == 0
                 ? (X: 0, Y: 0)
-                : (X: checked(perpendicular.Item1 * (arrowIndex == 1 ? -1 : 1)),
-                    Y: checked(perpendicular.Item2 * (arrowIndex == 1 ? -1 : 1)));
+                : (X: checked(
+                    perpendicular.Item1
+                    * (arrowIndex == 1 ? -1 : 1)
+                    * rules.MultipleArrowsSpreadDistance),
+                    Y: checked(
+                        perpendicular.Item2
+                        * (arrowIndex == 1 ? -1 : 1)
+                        * rules.MultipleArrowsSpreadDistance));
             var arrowPositionX = checked(player.PositionX + spread.X);
             var arrowPositionY = checked(player.PositionY + spread.Y);
             if (!world.ContainsPosition(player.LevelId, arrowPositionX, arrowPositionY)) {

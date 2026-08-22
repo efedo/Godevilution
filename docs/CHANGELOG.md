@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native Multiple Arrows perpendicular spread distance through
+  the optional `multiple_arrows_spread_distance` field in `combat.tsv`,
+  preserving the one-cell compatibility fallback for older packs and advancing
+  the Diablo content schema to 1.405.
+
 - Externalize the native Multiple Arrows follow-up delay through the optional
   `multiple_arrows_delay_ticks` field in `combat.tsv`, preserving the two-tick
   compatibility fallback for older packs and advancing the Diablo content
