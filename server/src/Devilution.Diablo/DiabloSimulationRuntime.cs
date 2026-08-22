@@ -95,6 +95,7 @@ public sealed class DiabloPlayerTemplate
         ValidateUniqueSlots(belt, item => item.Slot, "belt");
         ValidateInventoryGrid(inventoryGrid, inventory?.Count ?? 0);
         ValidateMemorizedSpells(memorizedSpells);
+        ValidateStashPlacement(stash);
         Gold = gold;
         Experience = experience;
         Life = life;
@@ -188,6 +189,43 @@ public sealed class DiabloPlayerTemplate
                     .Count() != spells.Count) {
                 throw new InvalidDataException(
                     "Player template contains invalid memorized-spell state.");
+            }
+        }
+
+        static void ValidateStashPlacement(IReadOnlyList<StashStoreItem>? stash)
+        {
+            if (stash is null)
+                return;
+
+            var pages = new Dictionary<uint, int[]>();
+            foreach (var item in stash) {
+                if (item is null
+                    || item.Page >= DiabloStashLayout.PageCount
+                    || item.Cell >= DiabloStashLayout.CellCount
+                    || item.State is null) {
+                    throw new InvalidDataException(
+                        "Player template contains an invalid stash placement.");
+                }
+
+                if (!pages.TryGetValue(item.Page, out var page)) {
+                    page = DiabloStashLayout.CreateEmptyPage();
+                    pages.Add(item.Page, page);
+                }
+
+                if (!DiabloStashLayout.CanPlace(
+                        page,
+                        item.Cell,
+                        item.State.InventoryWidth,
+                        item.State.InventoryHeight)) {
+                    throw new InvalidDataException(
+                        "Player template contains an overlapping or out-of-range stash item.");
+                }
+
+                DiabloStashLayout.Fill(
+                    page,
+                    item.Cell,
+                    item.State.InventoryWidth,
+                    item.State.InventoryHeight);
             }
         }
     }

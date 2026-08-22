@@ -3550,6 +3550,60 @@ public sealed class DiabloSimulationTests
         Assert.Contains("invalid memorized-spell state", spellException.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsInvalidAndOverlappingStashPlacement()
+    {
+        var rangeException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            stash: [new StashStoreItem(
+                DiabloStashLayout.PageCount,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                AuthoritativeItemState.Empty)]));
+        Assert.Contains("invalid stash placement", rangeException.Message, StringComparison.Ordinal);
+
+        var state = AuthoritativeItemState.Empty with { InventoryWidth = 2 };
+        var overlapException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            stash: [
+                new StashStoreItem(0, 0, 0, 0, 1, 0, 0, state),
+                new StashStoreItem(0, 1, 0, 1, 2, 0, 0, state),
+            ]));
+        Assert.Contains("overlapping or out-of-range stash item", overlapException.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(
