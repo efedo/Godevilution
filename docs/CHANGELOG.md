@@ -32,6 +32,8 @@ All notable changes to this fork are documented below.
   unambiguous authored book metadata keyed by `misc_id`.
 - Store intent processing now hydrates omitted inventory footprints from
   unambiguous authored item dimensions before relocation and stash moves.
+- World-item pickup now resolves omitted/default inventory footprints from
+  authored item dimensions before placement.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative

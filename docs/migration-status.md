@@ -163,6 +163,9 @@ scaled hit points), not only the client's difficulty label.
 - Store intent processing now hydrates omitted inventory footprints from
   unambiguous authored item dimensions before relocation and stash moves.
 
+- World-item pickup now resolves omitted/default inventory footprints from
+  authored item dimensions before placement.
+
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
   conversations therefore preserve their current dialogue target across

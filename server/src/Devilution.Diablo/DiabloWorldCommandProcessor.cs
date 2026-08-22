@@ -725,16 +725,17 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (player.HeldItem is not null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        var itemState = items?.ResolveInventoryDimensions(item.State) ?? item.State;
 
         if (DiabloGoldInventory.HasGoldIdentity(
-                item.State,
+                itemState,
                 combatRules,
                 player.Items)) {
-            if (item.State.Value <= 0
-                || item.State.Value > combatRules.DeathGoldMaximumStack
-                || item.State.IdentifiedValue != item.State.Value
-                || item.Price != checked((uint)item.State.Value)
-                || !item.State.StatFlag
+            if (itemState.Value <= 0
+                || itemState.Value > combatRules.DeathGoldMaximumStack
+                || itemState.IdentifiedValue != itemState.Value
+                || item.Price != checked((uint)itemState.Value)
+                || !itemState.StatFlag
                 || uint.MaxValue - player.Gold < item.Price) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
             }
@@ -766,7 +767,7 @@ public sealed class DiabloWorldCommandProcessor
                         item.ItemSeed,
                         remainder,
                         appliedTick,
-                        item.State with {
+                        itemState with {
                             Value = checked((int)remainder),
                             IdentifiedValue = checked((int)remainder),
                         });
@@ -782,8 +783,8 @@ public sealed class DiabloWorldCommandProcessor
 
         var targetCell = InventoryGridLayout.FindFirstPlacement(
             player.InventoryGrid,
-            item.State.InventoryWidth,
-            item.State.InventoryHeight);
+            itemState.InventoryWidth,
+            itemState.InventoryHeight);
         if (targetCell < 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (!applyEffects)
@@ -796,15 +797,15 @@ public sealed class DiabloWorldCommandProcessor
             item.ItemSeed,
             item.Price,
             appliedTick,
-            item.State));
+            itemState));
         InventoryGridLayout.Fill(
             player.InventoryGrid,
             targetCell,
             inventoryIndex,
-            item.State.InventoryWidth,
-            item.State.InventoryHeight);
+            itemState.InventoryWidth,
+            itemState.InventoryHeight);
         world.WorldItems.Remove(itemEntityId);
-        ApplyItemQuestEffects(item.State);
+        ApplyItemQuestEffects(itemState);
         ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
     }

@@ -517,6 +517,43 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves omitted/default inventory dimensions through authored identity. */
+    public AuthoritativeItemState ResolveInventoryDimensions(AuthoritativeItemState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var width = 0;
+        var height = 0;
+        if (TryGetByState(state, out var definition)) {
+            width = definition.InventoryWidth;
+            height = definition.InventoryHeight;
+        } else if (TryGetInventoryDimensionsByMiscId(
+                state.MiscId,
+                out var contentWidth,
+                out var contentHeight)) {
+            width = contentWidth;
+            height = contentHeight;
+        }
+        if (width <= 0 || height <= 0)
+            return state;
+
+        if (state.InventoryWidth > 0
+            && state.InventoryHeight > 0
+            && (state.InventoryWidth != 1
+                || state.InventoryHeight != 1
+                || (width <= 1 && height <= 1)))
+            return state;
+
+        if (state.InventoryWidth == 1
+            && state.InventoryHeight == 1
+            && (width > 1 || height > 1))
+            return state with { InventoryWidth = width, InventoryHeight = height };
+
+        return state with {
+            InventoryWidth = state.InventoryWidth > 0 ? state.InventoryWidth : width,
+            InventoryHeight = state.InventoryHeight > 0 ? state.InventoryHeight : height,
+        };
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,

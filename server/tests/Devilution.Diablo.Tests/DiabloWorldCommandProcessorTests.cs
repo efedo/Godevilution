@@ -522,6 +522,50 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void PickupResolvesFootprintByMiscIdWhenWorldStateUsesDefaultDimensions()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            7,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            1,
+            true) {
+            NativeItemIndex = 101,
+            MiscId = 121,
+        };
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+        };
+        var item = new AuthoritativeWorldItem(20, 0, 1, 0, 42, 75, itemState);
+        var world = new DiabloWorldState(worldItems: [item]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: new AuthoritativeItemCatalog([definition]));
+        var player = CreatePlayer(entityId: 1);
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(20),
+            27,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        var ownedItem = Assert.Single(player.Inventory);
+        Assert.Equal(2, ownedItem.State.InventoryWidth);
+        Assert.Equal(1, ownedItem.State.InventoryHeight);
+        Assert.Equal(0, player.InventoryGrid[0]);
+        Assert.Equal(0, player.InventoryGrid[1]);
+    }
+
+    [Fact]
     public void PickupGoldBypassesInventorySpaceAndRestoresServerOwnedBalance()
     {
         var item = new AuthoritativeWorldItem(

@@ -121,37 +121,7 @@ public sealed class DiabloStoreCommandProcessor
 
     private AuthoritativeItemState ResolveInventoryDimensions(AuthoritativeItemState state)
     {
-        var width = 0;
-        var height = 0;
-        if (items!.TryGetByState(state, out var definition)) {
-            width = definition.InventoryWidth;
-            height = definition.InventoryHeight;
-        } else if (items.TryGetInventoryDimensionsByMiscId(
-                state.MiscId,
-                out var contentWidth,
-                out var contentHeight)) {
-            width = contentWidth;
-            height = contentHeight;
-        }
-        if (width <= 0 || height <= 0)
-            return state;
-
-        if (state.InventoryWidth > 0
-            && state.InventoryHeight > 0
-            && (state.InventoryWidth != 1
-                || state.InventoryHeight != 1
-                || (width <= 1 && height <= 1)))
-            return state;
-
-        if (state.InventoryWidth == 1
-            && state.InventoryHeight == 1
-            && (width > 1 || height > 1))
-            return state with { InventoryWidth = width, InventoryHeight = height };
-
-        return state with {
-            InventoryWidth = state.InventoryWidth > 0 ? state.InventoryWidth : width,
-            InventoryHeight = state.InventoryHeight > 0 ? state.InventoryHeight : height,
-        };
+        return items!.ResolveInventoryDimensions(state);
     }
 
     private DiabloIntentResult OpenStore(AuthoritativePlayerState player, uint storeId)
