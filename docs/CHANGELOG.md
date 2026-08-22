@@ -55,6 +55,9 @@ All notable changes to this fork are documented below.
   the connected world.
 - Connected native return-level loading no longer mutates the legacy Betrayer
   quest marker; the server owns quest progression in connected sessions.
+- Connected native set-piece and crypt level loading no longer mutates legacy
+  quest markers or Na-Krul room geometry; authoritative world projections own
+  those connected-state changes.
 - Connected native clients now ignore legacy player-info, level, and remote
   attribute synchronization messages; authoritative snapshots own presentation.
 - Connected native clients now ignore legacy movement, targeting, attack, spell,

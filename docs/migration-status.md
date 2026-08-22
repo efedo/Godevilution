@@ -9,6 +9,8 @@ Legacy quest resynchronization during level loads is likewise disabled for
 connected sessions so quest-driven local world mutations cannot compete with
 authoritative projections.
 The return-level Betrayer marker also remains offline-only for the same reason.
+Set-piece quest activation and Na-Krul room reconstruction are also offline-only
+during connected level loads.
 
 ## Current state
 

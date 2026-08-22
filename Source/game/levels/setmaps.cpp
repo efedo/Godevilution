@@ -23,12 +23,26 @@
 #include "network/protocol/msg.h"
 #include "game/objects/objects.hpp"
 #include "game/quests/quests.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "tables/objdat.h"
 #include "utils/language.h"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
 namespace {
+
+bool LegacyLevelLoadMutationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
 
 void AddSKingObjs()
 {
@@ -103,7 +117,7 @@ void LoadSetMap()
 {
 	switch (setLevelNumber()) {
 	case SL_SKELKING:
-		if (Quests[Q_SKELKING]._qactive == QUEST_INIT) {
+		if (LegacyLevelLoadMutationAllowed() && Quests[Q_SKELKING]._qactive == QUEST_INIT) {
 			Quests[Q_SKELKING]._qactive = QUEST_ACTIVE;
 			Quests[Q_SKELKING]._qvar1 = 1;
 			NetSendCmdQuest(true, Quests[Q_SKELKING]);
@@ -126,17 +140,19 @@ void LoadSetMap()
 	case SL_MAZE:
 		break;
 	case SL_POISONWATER:
-		if (Quests[Q_PWATER]._qactive == QUEST_INIT)
+		if (LegacyLevelLoadMutationAllowed() && Quests[Q_PWATER]._qactive == QUEST_INIT)
 			Quests[Q_PWATER]._qactive = QUEST_ACTIVE;
 		LoadL3Dungeon("levels\\l3data\\foulwatr.dun", { 31, 83 });
 		LoadPaletteAndInitBlending("levels\\l3data\\l3pfoul.pal");
 		InitPWaterTriggers();
 		break;
 	case SL_VILEBETRAYER:
-		if (Quests[Q_BETRAYER]._qactive == QUEST_DONE) {
-			Quests[Q_BETRAYER]._qvar2 = 4;
-		} else if (Quests[Q_BETRAYER]._qactive == QUEST_ACTIVE) {
-			Quests[Q_BETRAYER]._qvar2 = 3;
+		if (LegacyLevelLoadMutationAllowed()) {
+			if (Quests[Q_BETRAYER]._qactive == QUEST_DONE) {
+				Quests[Q_BETRAYER]._qvar2 = 4;
+			} else if (Quests[Q_BETRAYER]._qactive == QUEST_ACTIVE) {
+				Quests[Q_BETRAYER]._qvar2 = 3;
+			}
 		}
 		LoadPreL1Dungeon("levels\\l1data\\vile1.dun");
 		LoadL1Dungeon("levels\\l1data\\vile2.dun", { 35, 36 });

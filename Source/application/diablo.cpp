@@ -190,6 +190,15 @@ bool was_archives_init = false;
 bool was_window_init = false;
 bool was_ui_init = false;
 
+bool LegacyLevelLoadMutationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 void StartGame(interface_mode uMsg)
 {
 	CalcViewportGeometry();
@@ -3823,10 +3832,8 @@ void LoadGameLevelLightVision()
 
 void LoadGameLevelReturn()
 {
-#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (!ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+	if (!LegacyLevelLoadMutationAllowed())
 		return;
-#endif
 
 	viewPosition() = GetMapReturnPosition();
 	if (Quests[Q_BETRAYER]._qactive == QUEST_DONE)
@@ -3999,7 +4006,8 @@ void LoadGameLevelCrypt()
 	if (CornerStone.isAvailable()) {
 		CornerstoneLoad(CornerStone.position);
 	}
-	if (Quests[Q_NAKRUL]._qactive == QUEST_DONE && currentLevelNumber() == 24) {
+	if (LegacyLevelLoadMutationAllowed()
+	    && Quests[Q_NAKRUL]._qactive == QUEST_DONE && currentLevelNumber() == 24) {
 		SyncNakrulRoom();
 	}
 }
