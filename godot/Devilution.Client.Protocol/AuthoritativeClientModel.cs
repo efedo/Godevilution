@@ -12,6 +12,9 @@ public sealed class AuthoritativeClientModel
     private const int MaximumMemorizedSpellCount = 51;
     private const uint MaximumNativeCharacterLevel = 50;
     private const uint MaximumNativeReflectCharges = ushort.MaxValue;
+    private const int MaximumProjectileDamageType = 4;
+    private const int MaximumProjectileBehavior = 59;
+    private const int MaximumProjectilePhase = 1;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
@@ -148,8 +151,10 @@ public sealed class AuthoritativeClientModel
                 ValidateEntityId(entityIds, @object.EntityId);
                 ValidateObject(@object, questIds);
             }
-            foreach (var projectile in message.Snapshot.Projectiles)
+            foreach (var projectile in message.Snapshot.Projectiles) {
                 ValidateEntityId(entityIds, projectile.EntityId);
+                ValidateProjectile(projectile);
+            }
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
             ValidateWarpTriggers(message.Snapshot);
@@ -884,6 +889,30 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid or duplicate memorized spells.");
             }
+        }
+    }
+
+    private static void ValidateProjectile(ProjectileSnapshot projectile)
+    {
+        if (projectile.SourceEntityId == 0
+            || (projectile.SpellId == 0 && projectile.Behavior is not (58 or 59))
+            || projectile.RemainingTicks == 0
+            || projectile.Damage < 0
+            || projectile.AreaRadius < 0
+            || projectile.DamageMinimum < 0
+            || projectile.DamageMaximum < projectile.DamageMinimum
+            || projectile.DamageQ6 < 0
+            || projectile.ElementalFireDamage < 0
+            || projectile.ElementalLightningDamage < 0
+            || projectile.PerilSelfDamageQ6 < 0
+            || projectile.EffectiveSpellLevel < 0
+            || projectile.DamageType is < 0 or > MaximumProjectileDamageType
+            || projectile.Behavior is < 0 or > MaximumProjectileBehavior
+            || projectile.Phase is < 0 or > MaximumProjectilePhase
+            || !Enum.IsDefined(projectile.PresentationKind)
+            || !Enum.IsDefined(projectile.NativeVisual)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid projectile state.");
         }
     }
 

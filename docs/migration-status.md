@@ -76,6 +76,8 @@ scaled hit points), not only the client's difficulty label.
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.
 - Godot now validates native-compatible gold, stash-gold, stat-point, Reflect,
   resource-base, and character-level ranges while retaining zero defaults.
+- Godot now validates projectile source/lifetime identity, damage channels,
+  dynamic damage ranges, lifecycle codes, and typed visual identities.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

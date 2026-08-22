@@ -34,6 +34,8 @@ All notable changes to this fork are documented below.
   and memorized-spell projections before spell presentation consumes them.
 - Godot now rejects player gold, stash gold, stat points, Reflect charges, and
   character levels outside the native-compatible projection ranges.
+- Godot now rejects malformed authoritative projectile identity, effect ranges,
+  lifecycle codes, and presentation metadata before combat presentation.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

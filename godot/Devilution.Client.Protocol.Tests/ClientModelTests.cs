@@ -766,7 +766,14 @@ public sealed class ClientModelTests
                 },
             },
             Objects = { new ObjectSnapshot { EntityId = 10 } },
-            Projectiles = { new ProjectileSnapshot { EntityId = 11 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 11,
+                    SourceEntityId = 13,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                },
+            },
             Corpses = { new CorpseSnapshot { EntityId = 12 } },
         };
         model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
@@ -1150,6 +1157,57 @@ public sealed class ClientModelTests
         };
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidProgression)));
+    }
+
+    [Fact]
+    public void RejectsMalformedAuthoritativeProjectiles()
+    {
+        var model = new AuthoritativeClientModel();
+        var invalidIdentity = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 10,
+                    RemainingTicks = 1,
+                    SpellId = 1,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidIdentity)));
+
+        var invalidEffects = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 10,
+                    SourceEntityId = 11,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                    Damage = -1,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidEffects)));
+
+        var invalidCodes = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 10,
+                    SourceEntityId = 11,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                    DamageType = 5,
+                    Behavior = 60,
+                    Phase = 2,
+                    PresentationKind = (Devilution.Protocol.V1.ProjectilePresentationKind)99,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidCodes)));
     }
 
     [Fact]
