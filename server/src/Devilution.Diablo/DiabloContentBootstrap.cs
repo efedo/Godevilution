@@ -42,7 +42,8 @@ public sealed record DiabloContentActivation
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
-        AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null)
+        AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null,
+        AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -71,6 +72,7 @@ public sealed record DiabloContentActivation
         NativeDunFragments = nativeDunFragments;
         NativeDunFragmentObjects = nativeDunFragmentObjects;
         QuestSequenceVariants = questSequenceVariants;
+        UniqueMonsterPlacements = uniqueMonsterPlacements;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -132,6 +134,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native ordered-quest layout alternatives selected at activation. */
     public AuthoritativeQuestSequenceVariantCatalog? QuestSequenceVariants { get; }
+
+    /** Validated content-owned placements for generated unique encounters. */
+    public AuthoritativeUniqueMonsterPlacementCatalog? UniqueMonsterPlacements { get; }
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
@@ -519,6 +524,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     "Unique monster identities require a monsters.tsv table.");
             uniqueMonsters.ApplyTo(monsters.Targets);
         }
+        var uniqueMonsterPlacements = content.TryGetTable(
+            "unique_monster_placements.tsv",
+            out var uniqueMonsterPlacementsTable)
+            ? AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
+                uniqueMonsterPlacementsTable.SourcePath,
+                uniqueMonsterPlacementsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
         var portals = content.TryGetTable("portals.tsv", out var portalsTable)
             ? AuthoritativePortalCatalog.LoadTsv(
                 portalsTable.SourcePath,
@@ -897,6 +910,31 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     portals,
                     objects));
         }
+        if (uniqueMonsterPlacements is not null
+            && !uniqueMonsterPlacements.Definitions.Any()) {
+            uniqueMonsterPlacements = null;
+        }
+        if (uniqueMonsterPlacements is not null) {
+            if (world is null
+                || monsterTypes is null
+                || uniqueMonsters is null
+                || monsterSpawnPlanner is null) {
+                throw new InvalidDataException(
+                    "Unique monster placements require world, monster types, unique identities, and a spawn planner.");
+            }
+            uniqueMonsterPlacements.Validate(
+                world,
+                monsterTypes,
+                uniqueMonsters,
+                combatTargets);
+            var authoredTargets = uniqueMonsterPlacements.Materialize(
+                monsterSpawnPlanner,
+                uniqueMonsters,
+                gameMode == DiabloGameMode.Multiplayer);
+            combatTargets = (combatTargets ?? [])
+                .Concat(authoredTargets)
+                .ToArray();
+        }
         if (nativeDunFragments is not null) {
             if (world is null || objects is null)
                 throw new InvalidDataException(
@@ -973,7 +1011,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeDunObjects,
             nativeDunFragments,
             nativeDunFragmentObjects,
-            questSequenceVariants);
+            questSequenceVariants,
+            uniqueMonsterPlacements);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -63,6 +63,13 @@ scaled hit points), not only the client's difficulty label.
   native step permutations with the same deterministic RNG and applies it to
   the anchored authored objects before the simulation is created.
 
+- Schema 1.394 adds optional `unique_monster_placements.tsv` rows for validated,
+  content-owned generated unique placement. The contract checks identity and
+  monster selectors, level geometry, collision cells, stable entity IDs, and
+  deterministic seeds before materializing targets through the authoritative
+  spawn planner; the shipped base table remains empty until native set-piece
+  coordinates are authored.
+
 - Schema 1.393 adds optional authored next-message identities to staged unique-
   monster dialogue. Snotspill now preserves the native intermediate banner
   prompt after its opening conversation instead of jumping directly to hand-in.

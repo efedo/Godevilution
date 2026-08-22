@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.393.0"
+    "version": "1.394.0"
   },
   "dependencyConstraints": [
     {
@@ -108,6 +108,11 @@
     {
       "table": "unique_monsters.tsv",
       "keys": ["identity"],
+      "mode": "upsert"
+    },
+    {
+      "table": "unique_monster_placements.tsv",
+      "keys": ["placement_id"],
       "mode": "upsert"
     },
     {

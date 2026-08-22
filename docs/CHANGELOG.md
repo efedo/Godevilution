@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the optional `unique_monster_placements.tsv` contract for validated,
+  content-owned placement of generated unique encounters. Placements resolve
+  unique identity selectors, monster types, level geometry, stable entity IDs,
+  and deterministic spawn seeds before materializing through the authoritative
+  planner; shipped packs declare the empty table until native set-piece
+  coordinates are authored.
+
 - Defer unique-anchored native DUN fragments until the matching generated
   encounter is materialized; fixed-object fragments still apply during content
   activation, and deferred fragments now compose into the same authoritative

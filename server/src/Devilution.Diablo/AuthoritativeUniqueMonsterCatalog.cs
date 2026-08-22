@@ -153,6 +153,41 @@ public sealed class AuthoritativeUniqueMonsterCatalog
         }
     }
 
+    /** Applies one explicitly authored generated-placement identity. */
+    public void ApplyToExplicit(
+        AuthoritativeCombatTarget target,
+        string identity)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity);
+        var definition = Definitions.SingleOrDefault(candidate =>
+            string.Equals(candidate.Identity, identity, StringComparison.Ordinal));
+        if (definition is null)
+            throw new InvalidDataException(
+                $"Unique monster identity '{identity}' is not defined.");
+        if (definition.EntityId != 0)
+            throw new InvalidDataException(
+                $"Unique monster identity '{identity}' is not a generated selector.");
+        if (!target.IsUnique
+            || (definition.MonsterId != 0 && target.MonsterId != definition.MonsterId)
+            || (definition.NativeAi.Length != 0
+                && !string.Equals(
+                    target.NativeAi,
+                    definition.NativeAi,
+                    StringComparison.Ordinal))) {
+            throw new InvalidDataException(
+                $"Unique monster identity '{identity}' does not match its authored target.");
+        }
+        if (target.UniqueIdentity.Length != 0) {
+            if (!string.Equals(target.UniqueIdentity, identity, StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    $"Unique monster target {target.EntityId} already has a conflicting identity.");
+            return;
+        }
+        target.UniqueIdentity = identity;
+        ApplySpawnModifiers(target, definition);
+    }
+
     private static void ApplySpawnModifiers(
         AuthoritativeCombatTarget target,
         AuthoritativeUniqueMonsterDefinition definition)
