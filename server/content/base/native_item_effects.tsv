@@ -14,3 +14,15 @@ NoMana	134217728
 HalfTrapDamage	268435456
 TripleDemonDamage	1073741824
 ZeroResistance	2147483648
+StealMana3Percent	8192
+StealMana5Percent	16384
+StealLife3Percent	32768
+StealLife5Percent	65536
+FastAttack1	131072
+FastAttack2	262144
+FastAttack3	524288
+FastAttack4	1048576
+FastRecover1	2097152
+FastRecover2	4194304
+FastRecover3	8388608
+FastBlock	16777216

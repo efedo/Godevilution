@@ -82,6 +82,18 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
             new("FireDamage", 4096),
             new("LightningArrows", 8192),
             new("LightningDamage", 16384),
+            new("StealMana3Percent", 32768),
+            new("StealMana5Percent", 65536),
+            new("StealLife3Percent", 131072),
+            new("StealLife5Percent", 262144),
+            new("FastAttack1", 524288),
+            new("FastAttack2", 1048576),
+            new("FastAttack3", 2097152),
+            new("FastAttack4", 4194304),
+            new("FastRecover1", 8388608),
+            new("FastRecover2", 16777216),
+            new("FastRecover3", 33554432),
+            new("FastBlock", 67108864),
         ]);
         var uniques = new AuthoritativeUniqueItemCatalog([
             new AuthoritativeUniqueItemDefinition(1001, "Flags One", 7, 1, 1, [
@@ -105,6 +117,19 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
             new AuthoritativeUniqueItemDefinition(1004, "Fireball Bow", 7, 1, 1, [
                 new("FIREBALL", 15, 20),
             ]),
+            new AuthoritativeUniqueItemDefinition(1005, "Fast Ward", 7, 1, 1, [
+                new("STEALMANA", 3, 3),
+                new("STEALLIFE", 3, 3),
+                new("FASTATTACK", 1, 1),
+                new("FASTRECOVER", 1, 1),
+                new("FASTBLOCK", 0, 0),
+            ]),
+            new AuthoritativeUniqueItemDefinition(1006, "Faster Ward", 7, 1, 1, [
+                new("STEALMANA", 5, 5),
+                new("STEALLIFE", 5, 5),
+                new("FASTATTACK", 4, 4),
+                new("FASTRECOVER", 4, 4),
+            ]),
         ], nativeItemEffectCatalog: effects);
         var items = new AuthoritativeItemCatalog([
             new AuthoritativeItemDefinition(7, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true),
@@ -114,5 +139,7 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
         Assert.Equal(128U | 256U | 512U | 1024U, uniques.Generate(items, 1002, 42, 1).Flags);
         Assert.Equal(4096U | 8192U | 16384U, uniques.Generate(items, 1003, 42, 1).Flags);
         Assert.Equal(2048U | 8192U, uniques.Generate(items, 1004, 42, 1).Flags);
+        Assert.Equal(32768U | 131072U | 524288U | 8388608U | 67108864U, uniques.Generate(items, 1005, 42, 1).Flags);
+        Assert.Equal(65536U | 262144U | 4194304U | 33554432U, uniques.Generate(items, 1006, 42, 1).Flags);
     }
 }

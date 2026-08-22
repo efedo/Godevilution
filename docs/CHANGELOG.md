@@ -5,7 +5,9 @@ All notable changes to this fork are documented below.
 ## Unreleased
 - Unique-item powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
-  fallbacks for direct catalogs without the namespace.
+  fallbacks for direct catalogs without the namespace; the remaining
+  level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock
+  flags are now covered by the same catalog.
 - Hellfire unique-item powers now resolve through the
   validated `native_item_hellfire_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace.

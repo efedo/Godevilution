@@ -53,9 +53,10 @@ used by the legacy item-table fallback.
 equipment-location symbols used for compatibility placement and classification.
 `native_item_effects.tsv` covers the native special-effect symbols and bit flags
 used by both normalized and legacy item loading.
-Unique-item powers with matching ordinary effect symbols use the same validated
-namespace during generation; direct catalogs retain native flag fallbacks when
-the table is not supplied.
+Unique-item powers with matching ordinary effect symbols, including the
+level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock
+flags, use the same validated namespace during generation; direct catalogs
+retain native flag fallbacks when the table is not supplied.
 `native_item_hellfire_effects.tsv` covers the native Hellfire item-effect
 symbols and bit flags used by normalized item loading.
 
@@ -2209,6 +2210,9 @@ Schema `1.410.0` adds `native_item_effects.tsv`, the validated native item
 special-effect symbol and bit-flag mapping used by normalized and legacy item
 loading. Production activation requires this table whenever legacy
 `itemdat.tsv` is active; older direct loader callers retain the legacy fallback.
+The same catalog also supplies the remaining level-dependent ordinary
+unique-item effect flags; adding symbols does not change the table contract or
+schema version.
 
 Schema `1.411.0` adds `native_item_hellfire_effects.tsv`, the validated native
 Hellfire item-effect symbol and bit-flag mapping used by normalized item
@@ -2724,7 +2728,7 @@ the complete target header even when they upsert only one row.
 | `native_spells.tsv` | `native_spell_id` | Complete native spell-name namespace retained for legacy `itemdat.tsv` compatibility. IDs are bounded to the native 0–51 range and symbols must be unique. |
 | `native_item_misc.tsv` | `native_misc_id` | Validated native miscellaneous-item symbols and compatibility IDs used by legacy `itemdat.tsv`; IDs and symbols must be unique and IDs remain in the native signed-byte range. |
 | `native_item_topology.tsv` | `kind`, `symbol` | Validated native item-type, item-class, and equipment-location symbols and IDs used by legacy `itemdat.tsv`; symbols are unique within each kind and IDs remain in the native signed-byte range. |
-| `native_item_effects.tsv` | `symbol` | Validated native item special-effect symbols and bit flags shared by normalized and legacy item loaders; symbols are unique and flags are non-zero. |
+| `native_item_effects.tsv` | `symbol` | Validated native item special-effect symbols and bit flags shared by normalized, legacy, and unique-item loaders; symbols are unique and flags are non-zero. |
 | `native_item_hellfire_effects.tsv` | `symbol` | Validated native Hellfire item-effect symbols and bit flags used by normalized item loaders; symbols are unique and flags remain in the native seven-bit range. |
 | `native_item_tags.tsv` | `item_type` | Validated native item-type generation tags used by legacy `itemdat.tsv`; item types are unique and each mapping has at least one tag. |
 | `spell_books.tsv` | `spell_id` | Validated metadata for native bookable spells: display name, book level/cost, magic school, minimum intelligence, optional `cursor_symbol` resolved through `item_cursor_graphics.tsv`, and optional `single_player_excluded` admission; activation resolves spell symbols and applies the metadata through the server-owned, game-mode-aware dynamic-book generator, whose random selection follows the validated native spell-table order, derives omitted single-player exclusions from `Resurrection`/`HealOther` spell behavior, and retains native-ID fallback for older packs while stores, drops, and quest rewards retain their supplied native book-template identity. |
@@ -2733,7 +2737,7 @@ the complete target header even when they upsert only one row.
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
-| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects; Hellfire powers resolve through `native_item_hellfire_effects.tsv`. |
+| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects; ordinary and Hellfire effect powers resolve through their validated native effect catalogs. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional stable `store_symbol`, `item_symbol`, `unique_item_symbol`, and `spell_symbol` cross-checks validated against active store, item, unique-item, and spell catalogs. Book-template rows use `spell_books.tsv` to generate a deterministic random book unless an explicit `spell_id`/`spell_symbol` is supplied. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |

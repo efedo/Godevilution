@@ -531,8 +531,16 @@ public sealed class AuthoritativeUniqueItemCatalog
                     "RandomStealLife",
                     AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag),
             },
-            "STEALMANA" => state with { Flags = state.Flags | (power.Value1 == 3 ? 0x00002000U : 0x00004000U) },
-            "STEALLIFE" => state with { Flags = state.Flags | (power.Value1 == 3 ? 0x00008000U : 0x00010000U) },
+            "STEALMANA" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    power.Value1 == 3 ? "StealMana3Percent" : "StealMana5Percent",
+                    power.Value1 == 3 ? 0x00002000U : 0x00004000U),
+            },
+            "STEALLIFE" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    power.Value1 == 3 ? "StealLife3Percent" : "StealLife5Percent",
+                    power.Value1 == 3 ? 0x00008000U : 0x00010000U),
+            },
             "DRAINLIFE" => state with {
                 Flags = state.Flags | ResolveItemEffectFlag(
                     "DrainLife",
@@ -543,9 +551,37 @@ public sealed class AuthoritativeUniqueItemCatalog
                     "NoMana",
                     AuthoritativeEquipmentAttackEffectRules.NoManaFlag),
             },
-            "FASTATTACK" => state with { Flags = state.Flags | (power.Value1 switch { 1 => 0x00020000U, 2 => 0x00040000U, 3 => 0x00080000U, _ => 0x00100000U }) },
-            "FASTRECOVER" => state with { Flags = state.Flags | (power.Value1 switch { 1 => 0x00200000U, 2 => 0x00400000U, _ => 0x00800000U }) },
-            "FASTBLOCK" => state with { Flags = state.Flags | 0x01000000U },
+            "FASTATTACK" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    power.Value1 switch {
+                        1 => "FastAttack1",
+                        2 => "FastAttack2",
+                        3 => "FastAttack3",
+                        _ => "FastAttack4",
+                    },
+                    power.Value1 switch {
+                        1 => 0x00020000U,
+                        2 => 0x00040000U,
+                        3 => 0x00080000U,
+                        _ => 0x00100000U,
+                    }),
+            },
+            "FASTRECOVER" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    power.Value1 switch {
+                        1 => "FastRecover1",
+                        2 => "FastRecover2",
+                        _ => "FastRecover3",
+                    },
+                    power.Value1 switch {
+                        1 => 0x00200000U,
+                        2 => 0x00400000U,
+                        _ => 0x00800000U,
+                    }),
+            },
+            "FASTBLOCK" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag("FastBlock", 0x01000000U),
+            },
             "KNOCKBACK" => state with {
                 Flags = state.Flags | ResolveItemEffectFlag(
                     "Knockback",
