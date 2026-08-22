@@ -420,6 +420,8 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative player attributes contain negative values.");
         }
+        ValidateProjectedPlayerSpells(state);
+        ValidateProjectedStatusEffects(state);
         ValidateProjectedPlayerAction(state);
         if (state.Life < 0
             || state.LifeMaximum < 0
@@ -543,6 +545,44 @@ internal static class DiabloProtocolMapper
         player.StashGold = state.StashGold;
         player.StashOpen = state.StashOpen;
         return player;
+    }
+
+    private static void ValidateProjectedPlayerSpells(StorePlayerSnapshot state)
+    {
+        if (state.MemorizedSpells is null
+            || state.AbilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
+            || state.MemorizedSpells.Count > AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount
+            || state.MemorizedSpells.Any(spell =>
+                spell is null
+                || spell.SpellId == 0
+                || spell.SpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
+                || spell.Level == 0
+                || spell.Level > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
+            || state.MemorizedSpells.Select(spell => spell.SpellId).Distinct().Count()
+                != state.MemorizedSpells.Count) {
+            throw new InvalidDataException(
+                "Authoritative player spell state is invalid or duplicated.");
+        }
+    }
+
+    private static void ValidateProjectedStatusEffects(StorePlayerSnapshot state)
+    {
+        if (state.StatusEffects is null
+            || state.StatusEffects.Count > 128
+            || state.StatusEffects.Any(effect =>
+                effect is null
+                || effect.EffectId == 0
+                || effect.RemainingTicks == 0
+                || !Enum.IsDefined(effect.Behavior)
+                || ((effect.Behavior is AuthoritativeStatusEffectBehavior.Infravision
+                        or AuthoritativeStatusEffectBehavior.Search
+                        or AuthoritativeStatusEffectBehavior.Etherealize)
+                    && effect.Magnitude != 0))
+            || state.StatusEffects.Select(effect => effect.EffectId).Distinct().Count()
+                != state.StatusEffects.Count) {
+            throw new InvalidDataException(
+                "Authoritative player status-effect state is invalid or duplicated.");
+        }
     }
 
     private static void ValidateProjectedPlayerAction(StorePlayerSnapshot state)
