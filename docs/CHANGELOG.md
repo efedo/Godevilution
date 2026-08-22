@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   for older packs.
 - Recharge admission now treats active non-empty item tags as authoritative,
   preventing legacy staff misc IDs from overriding authored non-staff metadata.
+- Consumable action magnitudes now resolve through stable or native item
+  catalog identity before using the legacy Spectral Elixir fallback.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

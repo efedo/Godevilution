@@ -589,12 +589,11 @@ public sealed class DiabloStoreCommandProcessor
         DiabloItemActionKind action)
     {
         if (items is not null
-            && state.StableItemId != 0
-            && items.TryGet(state.StableItemId, out var definition))
+            && items.TryGetByState(state, out var definition))
             return definition.ItemActionAmount;
 
-        // Preserve the native Spectral Elixir behavior for legacy states that
-        // predate stable content identities and cannot resolve a catalog row.
+        // Preserve the native Spectral Elixir behavior for states that cannot
+        // resolve a stable or native content identity.
         return action == DiabloItemActionKind.IncreaseAllAttributes ? 3 : 1;
     }
 

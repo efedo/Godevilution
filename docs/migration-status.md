@@ -92,6 +92,9 @@ scaled hit points), not only the client's difficulty label.
 - Recharge admission now honors active item spell-source metadata and non-empty
   staff tags before considering legacy staff misc IDs; tag-less mappings retain
   the native fallback.
+- Consumable action magnitudes now resolve through stable or native item
+  catalog identity, preserving the legacy Spectral Elixir amount only when no
+  content definition can be resolved.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

@@ -1022,6 +1022,53 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ItemActionAmountResolvesThroughNativeItemIndex()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            47,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
+                ItemIndex = 20,
+            });
+        var player = CreatePlayer(
+            playerClass: LoadClass("warrior"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            inventory: [elixir]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2142, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 20,
+                ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
+                ItemActionAmount = 2,
+                GenerationTags = new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(32, player.Attributes.Strength.Base);
+        Assert.Equal(12, player.Attributes.Magic.Base);
+        Assert.Equal(22, player.Attributes.Dexterity.Base);
+        Assert.Equal(27, player.Attributes.Vitality.Base);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
     public void HellfireElixirOfMagicIncreasesResourcesAndRestoresMana()
     {
         var elixir = new OwnedStoreItem(
