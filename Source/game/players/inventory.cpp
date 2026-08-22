@@ -283,6 +283,11 @@ bool CanEquip(Player &player, const Item &item, inv_body_loc bodyLocation)
 
 void ChangeEquipment(Player &player, inv_body_loc bodyLocation, const Item &item, bool sendNetworkMessage)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	player.InvBody[bodyLocation] = item;
 
 	if (sendNetworkMessage) {
@@ -473,6 +478,11 @@ int8_t GetPrevItemId(int slot, const Player &player, const Size &itemSize)
 
 bool ChangeInvItem(Player &player, int slot, Size itemSize)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+	#endif
+
 	int8_t prevItemId = GetPrevItemId(slot, player, itemSize);
 	if (prevItemId < 0) return false;
 
@@ -533,6 +543,11 @@ bool ChangeInvItem(Player &player, int slot, Size itemSize)
 
 void ChangeBeltItem(Player &player, int slot)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	const int ii = slot - SLOTXY_BELT_FIRST;
 	if (player.SpdList[ii].isEmpty()) {
 		player.SpdList[ii] = player.HoldItem.pop();
@@ -1729,6 +1744,11 @@ int RoomForGold()
 
 int AddGoldToInventory(Player &player, int value)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return value;
+	#endif
+
 	// Top off existing piles
 	for (int i = 0; i < player._pNumInv && value > 0; i++) {
 		Item &goldItem = player.InvList[i];
@@ -1765,6 +1785,11 @@ int AddGoldToInventory(Player &player, int value)
 
 bool GoldAutoPlace(Player &player, Item &goldStack)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+	#endif
+
 	goldStack._ivalue = AddGoldToInventory(player, goldStack._ivalue);
 	SetPlrHandGoldCurs(goldStack);
 
@@ -1775,6 +1800,11 @@ bool GoldAutoPlace(Player &player, Item &goldStack)
 
 void CheckInvSwap(Player &player, inv_body_loc bLoc)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	const Item &item = player.InvBody[bLoc];
 
 	if (bLoc == INVLOC_HAND_LEFT && player.GetItemLocation(item) == ILOC_TWOHAND) {
@@ -1788,6 +1818,11 @@ void CheckInvSwap(Player &player, inv_body_loc bLoc)
 
 void inv_update_rem_item(Player &player, inv_body_loc iv)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	player.InvBody[iv].clear();
 
 	CalcPlrInv(player, player._pmode != PM_DEATH);
@@ -1795,6 +1830,11 @@ void inv_update_rem_item(Player &player, inv_body_loc iv)
 
 void CheckInvSwap(Player &player, const Item &item, int invGridIndex)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Size itemSize = GetInventorySize(item);
 
 	const int pitch = 10;
@@ -2307,6 +2347,11 @@ bool CanUseScroll(Player &player, SpellID spell)
 
 void ConsumeStaffCharge(Player &player)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Item &staff = player.InvBody[INVLOC_HAND_LEFT];
 
 	if (!CanUseStaff(staff, player.executedSpell.spellId))

@@ -36,6 +36,9 @@ All notable changes to this fork are documented below.
   derived player state remains snapshot-owned.
 - Guard direct connected native inventory, belt, and equipment removal and
   automatic-placement helpers before legacy local item mutation.
+- Guard direct connected equipment replacement, cursor swaps, gold placement,
+  inventory synchronization, and staff-charge consumption before legacy item
+  state mutation.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

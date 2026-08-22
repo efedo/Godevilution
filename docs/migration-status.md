@@ -72,6 +72,11 @@ closed at their direct entry points. Legacy automatic placement helpers use the
 same boundary, while stable-reference inventory, belt, stash, and equipment
 commands remain the connected mutation path.
 
+Connected native equipment replacement, inventory/belt cursor swaps, gold
+placement, and staff-charge consumption helpers now fail closed at their direct
+entry points as well. Authoritative item snapshots and item commands remain the
+only connected source for those mutations.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.
