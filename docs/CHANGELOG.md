@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
 - Guard direct connected equipment replacement, cursor swaps, gold placement,
   inventory synchronization, and staff-charge consumption before legacy item
   state mutation.
+- Guard direct connected native store purchase, sale, repair, recharge,
+  identify, currency, and automatic-placement mutations while preserving
+  read-only vendor room checks.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

@@ -23,6 +23,7 @@
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_store_policy.hpp"
 #include "network/protocol/legacy_sync_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
@@ -180,6 +181,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyInventoryMutationsFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyInventoryMutation(false));
 	EXPECT_FALSE(ShouldProcessLegacyInventoryMutation(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyStoreMutationsFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyStoreMutation(false));
+	EXPECT_FALSE(ShouldProcessLegacyStoreMutation(true));
 }
 
 TEST(ServerBackedCompatibility, ConnectedLegacyItemUseFailsClosedExceptServerRoutedCasts)

@@ -79,6 +79,11 @@ placement, and staff-charge consumption helpers now fail closed at their direct
 entry points as well. Authoritative item snapshots and item commands remain the
 only connected source for those mutations.
 
+Connected native store purchase, sale, repair, recharge, identify, currency,
+and automatic-store-placement entry points now fail closed before legacy vendor
+state can diverge from authoritative store commands. Read-only room checks
+remain available to preserve connected vendor UI behavior.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.
