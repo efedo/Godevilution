@@ -133,7 +133,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	}
 	std::set<uint32_t> statusEffectIds;
 	for (const auto &effect : snapshot.statusEffects) {
-		if (effect.effectId == 0 || effect.remainingTicks == 0 || effect.behavior > 2
+		if (effect.effectId == 0 || effect.remainingTicks == 0 || effect.behavior > 3
 		    || ((effect.behavior == 1 || effect.behavior == 2) && effect.magnitude != 0)
 		    || !statusEffectIds.insert(effect.effectId).second) {
 			return tl::make_unexpected("Server-backed status effects contain invalid or duplicate state.");
@@ -280,6 +280,12 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player._pInfraFlag = std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
 		return effect.behavior == 1;
 	});
+	player._pSpellFlags &= ~SpellFlag::Etherealize;
+	if (std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
+			return effect.behavior == 3;
+		})) {
+		player._pSpellFlags |= SpellFlag::Etherealize;
+	}
 	CurrentAutomapManager.SetAutoMapShowItems(std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
 		return effect.behavior == 2;
 	}));

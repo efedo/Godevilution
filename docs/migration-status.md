@@ -2,6 +2,9 @@
 
 Status date: 2026-08-22
 
+Native player projections now accept protocol behavior `3` (Etherealize) status
+effects and hydrate the native `SpellFlag::Etherealize` bit for local and remote
+presentation; valid server snapshots no longer fail closed on this effect.
 Connected native sessions now bypass the remaining legacy delta-state helpers
 for monster, item, object, portal, level save/load, and delta transport paths;
 authoritative snapshots remain the only connected-client source of truth.

@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native authoritative snapshots now accept protocol-defined Etherealize status
+  effects and project the native Etherealize spell flag for local and remote
+  player presentation.
 - Connected native sessions no longer mutate or broadcast legacy Reflect
   charges; authoritative snapshots own the connected status effect.
 - Connected native sessions no longer create or remove Mana Shield through

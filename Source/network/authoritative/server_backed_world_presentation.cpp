@@ -263,6 +263,12 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player._pInfraFlag = std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
 		return effect.behavior == 1;
 	});
+	player._pSpellFlags &= ~SpellFlag::Etherealize;
+	if (std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
+			return effect.behavior == 3;
+		})) {
+		player._pSpellFlags |= SpellFlag::Etherealize;
+	}
 	std::fill(std::begin(player._pLvlVisited), std::end(player._pLvlVisited), false);
 	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds) {
 		if (visitedLevelId < NUMLEVELS)

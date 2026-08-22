@@ -1991,6 +1991,11 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	    .remainingTicks = 255,
 	    .behavior = 2,
 	});
+	snapshot.statusEffects.push_back({
+	    .effectId = 53,
+	    .remainingTicks = UINT32_MAX,
+	    .behavior = 3,
+	});
 	snapshot.friendlyMode = false;
 	snapshot.combatMode = static_cast<uint32_t>(PM_BLOCK);
 	snapshot.combatModeEndTick = 9;
@@ -2033,6 +2038,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_STREQ(player._pName, "Dead-Monk");
 	EXPECT_TRUE(player.pManaShield);
 	EXPECT_TRUE(player._pInfraFlag);
+	EXPECT_TRUE(HasAnyOf(player._pSpellFlags, SpellFlag::Etherealize));
 	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
 	EXPECT_FALSE(player.friendlyMode);
 	EXPECT_EQ(player._pmode, PM_BLOCK);
@@ -2064,6 +2070,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_TRUE(player.HoldItem.isEmpty());
 	EXPECT_FALSE(player._pInfraFlag);
+	EXPECT_FALSE(HasAnyOf(player._pSpellFlags, SpellFlag::Etherealize));
 	EXPECT_FALSE(CurrentAutomapManager.GetAutoMapShowItems());
 	EXPECT_EQ(pcurs, CURSOR_HAND);
 }
