@@ -204,6 +204,22 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataDuringProjection
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsUnrepresentableItemPricesDuringProjection)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	auto *inventory = player->add_inventory();
+	inventory->set_price(std::numeric_limits<uint32_t>::max());
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	protocol::Snapshot worldSnapshot;
+	auto *worldItem = worldSnapshot.add_world_items();
+	worldItem->set_entity_id(9);
+	worldItem->set_price(std::numeric_limits<uint32_t>::max());
+	EXPECT_FALSE(ProjectWorldItemSnapshots(worldSnapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)
 {
 	Player player;
@@ -1691,6 +1707,10 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataWithoutMutation)
 
 	snapshot.memorizedSpells.clear();
 	snapshot.inventory.push_back({ .spellTargetingKind = static_cast<ProjectedSpellTargetingKind>(99) });
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+
+	snapshot.inventory.clear();
+	snapshot.inventory.push_back({ .price = std::numeric_limits<uint32_t>::max() });
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 }
 

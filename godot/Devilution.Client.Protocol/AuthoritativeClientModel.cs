@@ -544,17 +544,32 @@ public sealed class AuthoritativeClientModel
     private static void ValidatePlayerItemFootprints(PlayerSnapshot player)
     {
         var itemSeeds = new HashSet<uint>();
-        foreach (var item in player.Inventory)
+        foreach (var item in player.Inventory) {
+            ValidatePlayerItemPrice(item?.Price ?? 0);
             ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
-        foreach (var item in player.Belt)
+        }
+        foreach (var item in player.Belt) {
             ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
-        foreach (var item in player.Equipment)
+        }
+        foreach (var item in player.Equipment) {
             ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
+        }
         foreach (var item in player.Stash)
-            if (item?.Item is { } stashItem)
+            if (item?.Item is { } stashItem) {
+                ValidatePlayerItemPrice(stashItem.Price);
                 ValidatePlayerItem(stashItem.ItemSeed, stashItem.State, itemSeeds);
-        if (player.HeldItem is { } heldItem)
+            }
+        if (player.HeldItem is { } heldItem) {
+            ValidatePlayerItemPrice(heldItem.Price);
             ValidatePlayerItem(heldItem.ItemSeed, heldItem.State, itemSeeds);
+        }
+    }
+
+    private static void ValidatePlayerItemPrice(uint price)
+    {
+        if (price > int.MaxValue)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains a player-item price outside the native range.");
     }
 
     private static void ValidatePlayerItem(

@@ -1054,6 +1054,33 @@ public sealed class ClientModelTests
         oversized.Players[0].HeldItem.State.InventoryWidth = 11;
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: oversized)));
+        var invalidPrice = snapshot.Clone();
+        invalidPrice.Players[0].HeldItem.Price = uint.MaxValue;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidPrice)));
+    }
+
+    [Fact]
+    public void RejectsOversizedPlayerItemPrices()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 42,
+                            Price = uint.MaxValue,
+                            State = new ItemStateSnapshot { InventoryWidth = 1, InventoryHeight = 1 },
+                        },
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
     }
 
     [Fact]

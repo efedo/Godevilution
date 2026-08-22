@@ -141,7 +141,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 			return tl::make_unexpected("Server-backed belt contains an invalid slot.");
 	}
 	for (const auto &inventoryItem : snapshot.inventory) {
-		if (!IsValidSpellTargetingKind(inventoryItem.spellTargetingKind))
+		if (!IsValidSpellTargetingKind(inventoryItem.spellTargetingKind)
+		    || inventoryItem.price > static_cast<uint32_t>(INT_MAX))
 			return tl::make_unexpected("Server-backed inventory contains an invalid spell targeting kind.");
 	}
 	if (snapshot.heldItem.has_value() && !IsValidSpellTargetingKind(snapshot.heldItem->spellTargetingKind))
@@ -167,6 +168,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		if (stashItem.page >= 100 || stashItem.cell >= 100
 		    || stashItem.width == 0 || stashItem.height == 0
 		    || !IsValidSpellTargetingKind(stashItem.spellTargetingKind)
+		    || stashItem.price > static_cast<uint32_t>(INT_MAX)
 		    || stashItem.width > 10 || stashItem.height > 10
 		    || stashItem.cell % 10 + stashItem.width > 10
 		    || stashItem.cell / 10 + stashItem.height > 10) {

@@ -98,6 +98,8 @@ scaled hit points), not only the client's difficulty label.
   compatibility-safe unspecified default.
 - Native authoritative projection and UI validation now reject undefined
   ability, memorized-spell, and item targeting enums before native conversion.
+- Native and Godot authoritative item projections now reject unsigned prices
+  outside the legacy native integer range before applying player or world state.
 - Native authoritative projection now validates that non-empty visited-level
   state includes the player’s current level before applying native quest gates.
 
