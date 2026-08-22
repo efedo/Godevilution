@@ -4,8 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Use content-owned `Book` item tags for spell-book template generation and
-  `ReadBook` admission, retaining the native misc-ID fallback for older packs.
+- Use content-owned `Book` item tags for spell-book template generation,
+  random-drop eligibility, and `ReadBook` admission, retaining the native
+  misc-ID fallback for older packs.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

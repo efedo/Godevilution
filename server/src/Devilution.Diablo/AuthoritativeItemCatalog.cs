@@ -441,11 +441,16 @@ public sealed class AuthoritativeItemCatalog
         const int goldItemType = 11;
         const int bookMiscId = 25;
         var candidates = Definitions
-            .Where(definition => definition.DropRate > 0
-                && definition.ItemType != goldItemType
-                && (definition.ItemType == 0 && definition.MiscId == bookMiscId
-                    || definition.ItemType != 0
-                        && definition.MinimumMonsterLevel <= monsterLevel))
+            .Where(definition => {
+                var isBookTemplate = spellBooks is not null
+                    ? spellBooks.IsBookTemplate(this, definition.ItemId)
+                    : definition.ItemType == 0 && definition.MiscId == bookMiscId;
+                return definition.DropRate > 0
+                    && definition.ItemType != goldItemType
+                    && (isBookTemplate
+                        || definition.ItemType != 0
+                            && definition.MinimumMonsterLevel <= monsterLevel);
+            })
             .ToArray();
         if (candidates.Length == 0)
             throw new InvalidDataException(

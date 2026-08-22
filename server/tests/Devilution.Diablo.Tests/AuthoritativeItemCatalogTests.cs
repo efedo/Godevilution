@@ -525,6 +525,35 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void RandomUniqueMonsterDropUsesContentBookAdmissionWhenCatalogIsPresent()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 0, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 99,
+                DropRate = 1,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+
+        var state = items.GenerateRandomUniqueMonsterDrop(
+            42,
+            monsterLevel: 1,
+            spellBooks: books);
+
+        Assert.Equal(114U, state.StableItemId);
+        Assert.Equal(7, state.SpellId);
+    }
+
+    [Fact]
     public void GeneratesDynamicSpellBookWhenAWorldDropReferencesABookTemplate()
     {
         var items = new AuthoritativeItemCatalog([
