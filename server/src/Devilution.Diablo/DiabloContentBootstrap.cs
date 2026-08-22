@@ -295,6 +295,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     nativeItemEffectCatalog: nativeItemEffects,
                     nativeItemHellfireEffectCatalog: nativeItemHellfireEffects)
                 : null;
+        affixes?.ValidatePowers();
         var cursorCatalog = content.TryGetTable(
             "item_cursor_graphics.tsv",
             out var cursorTable)
@@ -422,6 +423,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     nativeItemHellfireEffects,
                     nativeItemEffects)
                 : null;
+        uniqueItems?.ValidatePowers();
         if (itemCatalog is not null && uniqueItems is not null)
             itemCatalog.AttachUniqueCatalog(uniqueItems);
         if (uniqueItems is not null)

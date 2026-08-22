@@ -70,6 +70,21 @@ public sealed record AuthoritativeItemAffix(
 /** External affix tables and deterministic modifier application for generated items. */
 public sealed class AuthoritativeItemAffixCatalog
 {
+    private static readonly IReadOnlySet<string> SupportedPowerNames =
+        new HashSet<string>(StringComparer.Ordinal) {
+            "DAM", "DAMP", "DAMP_CURSE", "DAMMOD", "TOHIT", "TOHIT_CURSE", "TOHIT_DAMP",
+            "TOHIT_DAMP_CURSE", "ACP", "ACP_CURSE", "AC_CURSE", "SETAC", "STR", "MAG",
+            "DEX", "VIT", "STR_CURSE", "MAG_CURSE", "DEX_CURSE", "VIT_CURSE", "ATTRIBS",
+            "ATTRIBS_CURSE", "FIRERES", "LIGHTRES", "MAGICRES", "FIRERES_CURSE",
+            "LIGHTRES_CURSE", "MAGICRES_CURSE", "ALLRES", "LIFE", "LIFE_CURSE", "MANA",
+            "MANA_CURSE", "GETHIT", "GETHIT_CURSE", "LIGHT", "LIGHT_CURSE", "SPLLVLADD",
+            "CHARGES", "SPELL", "DUR", "DUR_CURSE", "FIREDAM", "LIGHTDAM", "DEVASTATION",
+            "PERIL", "JESTERS", "DOPPELGANGER", "DECAY", "INDESTRUCTIBLE", "FIRE_ARROWS",
+            "LIGHT_ARROWS", "MULT_ARROWS", "THORNS", "NOMANA", "ABSHALFTRAP", "KNOCKBACK",
+            "3XDAMVDEM", "ALLRESZERO", "STEALMANA", "STEALLIFE", "TARGAC", "FASTATTACK",
+            "FASTRECOVER", "FASTBLOCK", "RNDARROWVEL", "SETDAM", "SETDUR", "NOMINSTR",
+            "ONEHAND", "DRAINLIFE", "RNDSTEALLIFE", "ADDACLIFE", "ADDMANAAC",
+        };
     private readonly IReadOnlyList<AuthoritativeItemAffix> prefixes;
     private readonly IReadOnlyList<AuthoritativeItemAffix> suffixes;
     private readonly AuthoritativeItemGenerationRules generationRules;
@@ -97,6 +112,16 @@ public sealed class AuthoritativeItemAffixCatalog
     public IReadOnlyList<AuthoritativeItemAffix> Prefixes => prefixes;
     public IReadOnlyList<AuthoritativeItemAffix> Suffixes => suffixes;
     public AuthoritativeItemGenerationRules GenerationRules => generationRules;
+
+    /** Rejects affix powers that have no authoritative C# application handler. */
+    public void ValidatePowers()
+    {
+        foreach (var affix in prefixes.Concat(suffixes)) {
+            if (!SupportedPowerNames.Contains(affix.Power))
+                throw new InvalidDataException(
+                    $"Affix '{affix.Name}' uses unsupported power '{affix.Power}'.");
+        }
+    }
 
     public AuthoritativeItemState Apply(
         AuthoritativeItemState state,

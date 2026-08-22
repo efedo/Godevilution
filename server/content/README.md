@@ -59,6 +59,8 @@ FastAttack, FastRecover, and FastBlock
 flags, use the same validated namespace during generation and legacy affix
 application; direct catalogs
 retain native flag fallbacks when the table is not supplied.
+Production activation also rejects unique or affix power symbols without an
+authoritative C# handler; direct catalogs remain permissive for compatibility.
 `native_item_hellfire_effects.tsv` covers the native Hellfire item-effect
 symbols and bit flags used by normalized item loading and Hellfire affix
 generation.
@@ -2740,7 +2742,7 @@ the complete target header even when they upsert only one row.
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
-| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects; ordinary and Hellfire effect powers resolve through their validated native effect catalogs. |
+| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects; production activation rejects unsupported power symbols, while ordinary and Hellfire effect powers resolve through their validated native effect catalogs. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional stable `store_symbol`, `item_symbol`, `unique_item_symbol`, and `spell_symbol` cross-checks validated against active store, item, unique-item, and spell catalogs. Book-template rows use `spell_books.tsv` to generate a deterministic random book unless an explicit `spell_id`/`spell_symbol` is supplied. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |

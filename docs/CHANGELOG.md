@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Production content activation now rejects unique and affix power symbols
+  without an authoritative C# handler, while direct catalogs retain their
+  compatibility behavior.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining

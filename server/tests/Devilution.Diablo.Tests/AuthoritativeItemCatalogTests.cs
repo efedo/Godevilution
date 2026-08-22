@@ -869,6 +869,32 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void ProductionUniquePowerValidationRejectsUnsupportedSymbols()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Invalid", 7, 1, 1, [
+                new AuthoritativeUniqueItemPower("NOT_A_POWER", 0, 0),
+            ]),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(uniques.ValidatePowers);
+
+        Assert.Contains("unsupported power 'NOT_A_POWER'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ProductionAffixPowerValidationRejectsUnsupportedSymbols()
+    {
+        var affixes = new AuthoritativeItemAffixCatalog(
+            [new AuthoritativeItemAffix("Invalid", "NOT_A_POWER", 0, 0, 0, new HashSet<string>(), 1, true)],
+            []);
+
+        var exception = Assert.Throws<InvalidDataException>(affixes.ValidatePowers);
+
+        Assert.Contains("Affix 'Invalid' uses unsupported power 'NOT_A_POWER'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ExternalHellfireItemPowersMapAllNativeDamageArmorFlags()
     {
         var items = new AuthoritativeItemCatalog([

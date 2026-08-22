@@ -46,6 +46,23 @@ public sealed record AuthoritativeUniqueItemDefinition(
 /** Deterministic unique item generation backed by the authoritative base catalog. */
 public sealed class AuthoritativeUniqueItemCatalog
 {
+    private static readonly IReadOnlySet<string> SupportedPowerNames =
+        new HashSet<string>(StringComparer.Ordinal) {
+            "DAM", "DAMP", "DAMMOD", "TOHIT_DAMP", "TOHIT_DAMP_CURSE", "SETDAM",
+            "TOHIT_CURSE", "DAMP_CURSE", "TOHIT", "ACP", "SETAC", "ACP_CURSE",
+            "AC_CURSE", "STR", "STR_CURSE", "MAG", "MAG_CURSE", "DEX", "DEX_CURSE",
+            "VIT", "VIT_CURSE", "ATTRIBS", "ATTRIBS_CURSE", "LIFE", "LIFE_CURSE",
+            "MANA", "MANA_CURSE", "MANATOLIFE", "LIFETOMANA", "GETHIT", "GETHIT_CURSE",
+            "FIRERES", "LIGHTRES", "MAGICRES", "ALLRES", "ADDACLIFE", "ADDMANAAC",
+            "LIGHT", "LIGHT_CURSE", "TARGAC", "FIREDAM", "LIGHTDAM", "FIRERES_CURSE",
+            "LIGHTRES_CURSE", "MAGICRES_CURSE", "DEVASTATION", "PERIL", "JESTERS",
+            "DOPPELGANGER", "DECAY", "FIREBALL", "SPLLVLADD", "DUR", "SETDUR",
+            "INDESTRUCTIBLE", "SPELL", "FIRE_ARROWS", "LIGHT_ARROWS", "MULT_ARROWS",
+            "RNDARROWVEL", "RNDSTEALLIFE", "STEALMANA", "STEALLIFE", "DRAINLIFE",
+            "NOMANA", "FASTATTACK", "FASTRECOVER", "FASTBLOCK", "KNOCKBACK", "THORNS",
+            "3XDAMVDEM", "ABSHALFTRAP", "ALLRESZERO", "ACDEMON", "ACUNDEAD", "NOMINSTR",
+            "ONEHAND",
+        };
     private readonly Dictionary<uint, AuthoritativeUniqueItemDefinition> definitions;
     private readonly AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog;
     private readonly AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog;
@@ -76,6 +93,18 @@ public sealed class AuthoritativeUniqueItemCatalog
     }
 
     public IReadOnlyList<AuthoritativeUniqueItemDefinition> Definitions => definitions.Values.OrderBy(definition => definition.UniqueId).ToArray();
+
+    /** Rejects unique powers that have no authoritative C# application handler. */
+    public void ValidatePowers()
+    {
+        foreach (var definition in Definitions) {
+            foreach (var power in definition.Powers) {
+                if (!SupportedPowerNames.Contains(power.Power))
+                    throw new InvalidDataException(
+                        $"Unique item {definition.UniqueId} uses unsupported power '{power.Power}'.");
+            }
+        }
+    }
 
     public bool TryGet(uint uniqueId, out AuthoritativeUniqueItemDefinition definition) => definitions.TryGetValue(uniqueId, out definition!);
 
