@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Spell-book rows can now author single-player admission through the validated
+  `single_player_excluded` field, advancing the Diablo content schema to
+  `1.414.0` while retaining native behavior and ID fallbacks for older rows.
 - Spell-book rows can now author their native cursor projection through the
   validated `item_cursor_graphics.tsv` catalog, advancing the Diablo content
   schema to `1.413.0` while retaining the native magic-school fallback.

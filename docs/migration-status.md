@@ -17,7 +17,10 @@ Legacy item-type generation tags now resolve through the validated external
 `native_item_tags.tsv` namespace as well.
 Spell-book cursor projections now resolve through the validated item cursor
 catalog when authored by `cursor_symbol`.
-The Diablo content schema is now `1.413.0` for these table contracts.
+Spell-book single-player exclusions now resolve through authored
+`single_player_excluded` metadata when supplied, retaining native fallbacks for
+older rows.
+The Diablo content schema is now `1.414.0` for these table contracts.
 
 Connected native missile processing now keeps server-projected missiles on the
 presentation path while discarding stale legacy missiles before their native
@@ -208,7 +211,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.413.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.414.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.

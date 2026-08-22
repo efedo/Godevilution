@@ -1,24 +1,24 @@
-spell_id	spell_symbol	display_name	book_level	book_cost	magic_type	minimum_magic	cursor_symbol
-1	firebolt	Firebolt	1	1000	Fire	15	BOOK_RED
-2	healing	Healing	1	1000	Magic	17	BOOK_GREY
-3	lightning	Lightning	4	3000	Lightning	20	BOOK_BLUE
-4	flash	Flash	5	7500	Lightning	33	BOOK_BLUE
-6	fire_wall	Fire Wall	3	6000	Fire	27	BOOK_RED
-39	town_portal	Town Portal	3	3000	Magic	20	BOOK_GREY
-8	stone_curse	Stone Curse	6	12000	Magic	51	BOOK_GREY
-10	phasing	Phasing	7	3500	Magic	39	BOOK_GREY
-11	mana_shield	Mana Shield	6	16000	Magic	25	BOOK_GREY
-12	fireball	Fireball	8	8000	Fire	48	BOOK_RED
-7	guardian	Guardian	9	14000	Fire	61	BOOK_RED
-16	chain_lightning	Chain Lightning	8	11000	Lightning	54	BOOK_BLUE
-15	flame_wave	Flame Wave	9	10000	Fire	54	BOOK_RED
-21	inferno	Inferno	3	2000	Fire	20	BOOK_RED
-52	golem	Golem	11	18000	Fire	81	BOOK_RED
-23	teleport	Teleport	14	20000	Magic	105	BOOK_GREY
-31	elemental	Elemental	8	10500	Fire	68	BOOK_RED
-30	charged_bolt	Charged Bolt	1	1000	Lightning	25	BOOK_BLUE
-5	holy_bolt	Holy Bolt	1	1000	Magic	20	BOOK_GREY
-33	telekinesis	Telekinesis	2	2500	Magic	33	BOOK_GREY
-34	heal_other	Heal Other	1	1000	Magic	17	BOOK_GREY
-36	blood_star	Blood Star	14	27500	Magic	70	BOOK_GREY
-38	bone_spirit	Bone Spirit	9	11500	Magic	34	BOOK_GREY
+spell_id	spell_symbol	display_name	book_level	book_cost	magic_type	minimum_magic	cursor_symbol	single_player_excluded
+1	firebolt	Firebolt	1	1000	Fire	15	BOOK_RED	0
+2	healing	Healing	1	1000	Magic	17	BOOK_GREY	0
+3	lightning	Lightning	4	3000	Lightning	20	BOOK_BLUE	0
+4	flash	Flash	5	7500	Lightning	33	BOOK_BLUE	0
+6	fire_wall	Fire Wall	3	6000	Fire	27	BOOK_RED	0
+39	town_portal	Town Portal	3	3000	Magic	20	BOOK_GREY	0
+8	stone_curse	Stone Curse	6	12000	Magic	51	BOOK_GREY	0
+10	phasing	Phasing	7	3500	Magic	39	BOOK_GREY	0
+11	mana_shield	Mana Shield	6	16000	Magic	25	BOOK_GREY	0
+12	fireball	Fireball	8	8000	Fire	48	BOOK_RED	0
+7	guardian	Guardian	9	14000	Fire	61	BOOK_RED	0
+16	chain_lightning	Chain Lightning	8	11000	Lightning	54	BOOK_BLUE	0
+15	flame_wave	Flame Wave	9	10000	Fire	54	BOOK_RED	0
+21	inferno	Inferno	3	2000	Fire	20	BOOK_RED	0
+52	golem	Golem	11	18000	Fire	81	BOOK_RED	0
+23	teleport	Teleport	14	20000	Magic	105	BOOK_GREY	0
+31	elemental	Elemental	8	10500	Fire	68	BOOK_RED	0
+30	charged_bolt	Charged Bolt	1	1000	Lightning	25	BOOK_BLUE	0
+5	holy_bolt	Holy Bolt	1	1000	Magic	20	BOOK_GREY	0
+33	telekinesis	Telekinesis	2	2500	Magic	33	BOOK_GREY	0
+34	heal_other	Heal Other	1	1000	Magic	17	BOOK_GREY	1
+36	blood_star	Blood Star	14	27500	Magic	70	BOOK_GREY	0
+38	bone_spirit	Bone Spirit	9	11500	Magic	34	BOOK_GREY	0

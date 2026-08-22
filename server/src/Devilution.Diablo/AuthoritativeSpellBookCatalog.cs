@@ -26,6 +26,9 @@ public sealed record AuthoritativeSpellBookDefinition(
         AuthoritativeSpellBookMagicType.Lightning => 88,
         _ => throw new InvalidOperationException(),
     };
+
+    /** Optional content-owned single-player book exclusion. */
+    public bool? SinglePlayerExcluded { get; init; }
 }
 
 /** Validated external spell-book metadata and deterministic item projection. */
@@ -241,6 +244,8 @@ public sealed class AuthoritativeSpellBookCatalog
     {
         if (gameMode == DiabloGameMode.Multiplayer)
             return true;
+        if (definition.SinglePlayerExcluded is { } singlePlayerExcluded)
+            return !singlePlayerExcluded;
         if (singlePlayerExcludedSpellIds.Contains(definition.SpellId))
             return false;
         return !nativeSpellIdsByStableId.TryGetValue(definition.SpellId, out var nativeSpellId)
@@ -284,7 +289,9 @@ public sealed class AuthoritativeSpellBookCatalog
                 row.RequiredInt32("book_level"),
                 row.RequiredInt32("book_cost"),
                 magicType,
-                row.RequiredInt32("minimum_magic"));
+                row.RequiredInt32("minimum_magic")) {
+                SinglePlayerExcluded = ParseOptionalSinglePlayerExcluded(row),
+            };
             if (cursorCatalog is not null
                 && row.TryGet("cursor_symbol", out var cursorSymbol)
                 && !string.IsNullOrWhiteSpace(cursorSymbol)) {
@@ -331,6 +338,14 @@ public sealed class AuthoritativeSpellBookCatalog
             return result;
         throw new InvalidDataException(
             $"Spell-book row {row.LineNumber} contains unknown magic type '{value}'.");
+    }
+
+    private static bool? ParseOptionalSinglePlayerExcluded(TsvRow row)
+    {
+        if (!row.TryGet("single_player_excluded", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return null;
+        return row.OptionalBoolean("single_player_excluded");
     }
 
     private static bool IsBookTemplate(AuthoritativeItemDefinition definition)

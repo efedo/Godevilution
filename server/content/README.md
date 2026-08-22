@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.413.0` schema in
+It declares its identity and `devilution.diablo@1.414.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -2220,6 +2220,10 @@ Schema `1.413.0` adds the optional `cursor_symbol` column to `spell_books.tsv`.
 Production activation resolves it through `item_cursor_graphics.tsv`; older
 direct loader callers retain the native magic-school fallback.
 
+Schema `1.414.0` adds the optional `single_player_excluded` column to
+`spell_books.tsv`. When authored, it controls single-player dynamic-book
+admission before the native behavior and ID compatibility fallbacks.
+
 Schema 0.26 requires stable `spell:identify` ID `5` for the Bard's declared
 class skill. Identify remains a cursor-driven item service rather than a row in
 `spells.tsv`: the module resolves that stable identity at activation, validates
@@ -2715,7 +2719,7 @@ the complete target header even when they upsert only one row.
 | `native_item_effects.tsv` | `symbol` | Validated native item special-effect symbols and bit flags shared by normalized and legacy item loaders; symbols are unique and flags are non-zero. |
 | `native_item_hellfire_effects.tsv` | `symbol` | Validated native Hellfire item-effect symbols and bit flags used by normalized item loaders; symbols are unique and flags remain in the native seven-bit range. |
 | `native_item_tags.tsv` | `item_type` | Validated native item-type generation tags used by legacy `itemdat.tsv`; item types are unique and each mapping has at least one tag. |
-| `spell_books.tsv` | `spell_id` | Validated metadata for native bookable spells: display name, book level/cost, magic school, minimum intelligence, and optional `cursor_symbol` resolved through `item_cursor_graphics.tsv`; activation resolves spell symbols and applies the metadata through the server-owned, game-mode-aware dynamic-book generator, whose random selection follows the validated native spell-table order, derives single-player exclusions from `Resurrection`/`HealOther` spell behavior, and retains native-ID fallback for older packs while stores, drops, and quest rewards retain their supplied native book-template identity. |
+| `spell_books.tsv` | `spell_id` | Validated metadata for native bookable spells: display name, book level/cost, magic school, minimum intelligence, optional `cursor_symbol` resolved through `item_cursor_graphics.tsv`, and optional `single_player_excluded` admission; activation resolves spell symbols and applies the metadata through the server-owned, game-mode-aware dynamic-book generator, whose random selection follows the validated native spell-table order, derives omitted single-player exclusions from `Resurrection`/`HealOther` spell behavior, and retains native-ID fallback for older packs while stores, drops, and quest rewards retain their supplied native book-template identity. |
 | `items.tsv` | `item_id` | Normalized item identity with optional stable `item_symbol` (required by shipped base and Hellfire definitions and validated against `content_ids.tsv`), explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, optional arena-only admission, semantic item-action kind and optional positive action magnitude, optional spell-book template item-level eligibility, and generation inputs. |
 | `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, with optional `item_symbol`, `quest_symbol`, and `required_variable1` precondition, including native quest activation, completion, and `_qvar1` updates. |
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
@@ -2746,7 +2750,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.413.0"
+    "version": "1.414.0"
   },
   "dependencyConstraints": [
     {
@@ -2778,7 +2782,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.413.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.414.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

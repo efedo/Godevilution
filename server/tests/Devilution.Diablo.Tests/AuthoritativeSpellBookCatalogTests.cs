@@ -21,6 +21,30 @@ public sealed class AuthoritativeSpellBookCatalogTests
     }
 
     [Fact]
+    public void AuthoredSinglePlayerExclusionOverridesNativeCompatibilityFallback()
+    {
+        var items = CreateBookTemplateCatalog();
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0) { NativeSpellId = 32 },
+        ]);
+        var books = AuthoritativeSpellBookCatalog.LoadTsv(
+            "spell_books.tsv",
+            "spell_id\tdisplay_name\tbook_level\tbook_cost\tmagic_type\tminimum_magic\tsingle_player_excluded\n"
+                + "1\tResurrect\t1\t10\tMagic\t1\t0\n");
+
+        books.Validate(spells, items);
+
+        for (uint seed = 1; seed <= 16; seed++) {
+            var generated = books.GenerateRandom(
+                items,
+                seed,
+                itemLevel: 1,
+                gameMode: DiabloGameMode.SinglePlayer);
+            Assert.Equal(1, generated.SpellId);
+        }
+    }
+
+    [Fact]
     public void RandomBookSelectionWalksNativeSpellIdsInsteadOfStableIds()
     {
         var items = CreateBookTemplateCatalog();
