@@ -1839,6 +1839,7 @@ public sealed class DiabloWorldCommandProcessor
             quest.Logged = true;
             quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
             quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
+            target.DialogueMessageId = quest.DialogueCompletionMessageId;
 
             if (quest.CompletionActivateQuestId != 0
                 && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var nextQuest)
@@ -1872,6 +1873,7 @@ public sealed class DiabloWorldCommandProcessor
         }
         quest.Variable1 = Math.Max(quest.Variable1, dialogueVariable1);
         quest.Variable2 = Math.Max(quest.Variable2, quest.DialogueVariable2);
+        target.DialogueMessageId = quest.MessageId;
         if (rewardOnActivation)
             SpawnDialogueReward(quest, target, player);
         return DiabloWorldIntentResult.AcceptedWith(

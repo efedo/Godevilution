@@ -1903,6 +1903,7 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(quest.Active);
         Assert.False(quest.Completed);
         Assert.Equal(81, Assert.Single(initial.Events).MessageId);
+        Assert.Equal(81, target.DialogueMessageId);
 
         var elixir = items.Generate(2137, 42);
         player.Inventory.Add(new OwnedStoreItem(0, 0, elixir.CreateInfo, 0, 0, elixir));
@@ -1919,6 +1920,7 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.False(quest.Active);
         Assert.Empty(player.Inventory);
         Assert.Equal(83, Assert.Single(completed.Events).MessageId);
+        Assert.Equal(83, target.DialogueMessageId);
         var reward = Assert.Single(world.WorldItems.Values);
         Assert.Equal(1008, reward.State.UniqueId);
         Assert.Equal((20, 21), (reward.PositionX, reward.PositionY));

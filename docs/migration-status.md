@@ -43,6 +43,11 @@ scaled hit points), not only the client's difficulty label.
   snapshot/reconnect boundaries; terminal stages clear the identity while the
   existing native AI compatibility behavior remains unchanged.
 
+- Legacy unique-monster item hand-ins now retain their authored initial and
+  completion dialogue identities on the same server-owned target state. This
+  covers the existing Lachdanan hand-in without changing its native reward or
+  encounter timing fallback.
+
 - Hellfire Na-Krul tome objects now use the validated
   `native_dun_fragment_objects.tsv` contract to follow the encounter anchor;
   their behavior remains authored once in `objects.tsv` while placement is

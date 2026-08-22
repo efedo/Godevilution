@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authoritative unique-encounter dialogue projection to legacy
+  item-gated hand-ins such as Lachdanan. Initial and completion message
+  identities now remain on the target across snapshots instead of being
+  presentation-only event data.
+
 - Preserve the current staged unique-monster dialogue identity in the
   authoritative monster snapshot and protocol. Accepted dialogue stages now
   advance the target to the next authored message (or clear it at the terminal
