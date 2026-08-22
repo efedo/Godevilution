@@ -5,6 +5,7 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Validate participant-template stash page/cell bounds and footprint overlap before runtime creation.
+- Validate participant-template equipment/belt slots, item dimensions, and inventory footprints before runtime creation.
 - Keep connected native level loading from resetting server-owned charging
   monsters; legacy charger cleanup remains offline-only.
 - Keep connected native level loading from resynchronizing stale legacy portal

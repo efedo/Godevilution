@@ -3604,6 +3604,91 @@ public sealed class DiabloSimulationTests
         Assert.Contains("overlapping or out-of-range stash item", overlapException.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsInvalidItemSlotsAndInventoryFootprints()
+    {
+        var equipmentException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [new EquippedStoreItem(7, 1)],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("invalid equipment slot", equipmentException.Message, StringComparison.Ordinal);
+
+        var beltException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [new BeltStoreItem(8, 1)],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("invalid belt slot", beltException.Message, StringComparison.Ordinal);
+
+        var itemState = AuthoritativeItemState.Empty with { InventoryWidth = 2 };
+        var footprintException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [0, -1],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            inventory: [new OwnedStoreItem(0, 0, 1, 0, 0, itemState)]));
+        Assert.Contains("invalid inventory footprint", footprintException.Message, StringComparison.Ordinal);
+
+        var dimensionException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            inventory: [new OwnedStoreItem(
+                0,
+                0,
+                1,
+                0,
+                0,
+                AuthoritativeItemState.Empty with { InventoryWidth = 0 })]));
+        Assert.Contains("invalid inventory item state", dimensionException.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(

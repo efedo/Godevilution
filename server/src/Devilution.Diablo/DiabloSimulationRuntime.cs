@@ -1,4 +1,5 @@
 using Devilution.Engine;
+using Devilution.Domain.Inventory;
 
 namespace Devilution.Diablo;
 
@@ -91,6 +92,13 @@ public sealed class DiabloPlayerTemplate
         ValidateCount(inventory, MaximumInventoryCount, "inventory");
         ValidateCount(memorizedSpells, AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount, "memorized-spell");
         ValidateCount(stash, DiabloStashLayout.MaximumItems, "stash");
+        ValidateItemStates(equipment, item => item.State, "equipment");
+        ValidateItemStates(inventory, item => item.State, "inventory");
+        ValidateItemStates(belt, item => item.State, "belt");
+        ValidateHeldItem(heldItem);
+        ValidateInventoryFootprints(inventoryGrid, inventory);
+        ValidateSlotRange(equipment, item => item.Slot, 7, "equipment");
+        ValidateSlotRange(belt, item => item.Slot, 8, "belt");
         ValidateUniqueSlots(equipment, item => item.Slot, "equipment");
         ValidateUniqueSlots(belt, item => item.Slot, "belt");
         ValidateInventoryGrid(inventoryGrid, inventory?.Count ?? 0);
@@ -164,6 +172,74 @@ public sealed class DiabloPlayerTemplate
                 throw new InvalidDataException(
                     $"Player template contains duplicate {category} slots.");
             }
+        }
+
+        static void ValidateItemStates<T>(
+            IReadOnlyList<T>? values,
+            Func<T, AuthoritativeItemState?> stateSelector,
+            string category)
+        {
+            if (values is not null
+                && values.Any(item => item is null
+                    || !HasValidItemDimensions(stateSelector(item)))) {
+                throw new InvalidDataException(
+                    $"Player template contains an invalid {category} item state.");
+            }
+        }
+
+        static void ValidateHeldItem(OwnedStoreItem? item)
+        {
+            if (item is not null && !HasValidItemDimensions(item.State)) {
+                throw new InvalidDataException(
+                    "Player template contains an invalid held-item state.");
+            }
+        }
+
+        static void ValidateSlotRange<T>(
+            IReadOnlyList<T>? values,
+            Func<T, uint> slotSelector,
+            uint slotCount,
+            string category)
+        {
+            if (values is not null && values.Any(item => slotSelector(item) >= slotCount)) {
+                throw new InvalidDataException(
+                    $"Player template contains an invalid {category} slot.");
+            }
+        }
+
+        static void ValidateInventoryFootprints(
+            IReadOnlyList<int>? grid,
+            IReadOnlyList<OwnedStoreItem>? inventory)
+        {
+            if (grid is null || inventory is null)
+                return;
+            for (var inventoryIndex = 0; inventoryIndex < inventory.Count; inventoryIndex++) {
+                var anchor = -1;
+                for (var cell = 0; cell < grid.Count; cell++) {
+                    if (grid[cell] == inventoryIndex) {
+                        anchor = cell;
+                        break;
+                    }
+                }
+                if (anchor >= 0
+                    && !InventoryGridLayout.HasExactFootprint(
+                        grid,
+                        anchor,
+                        inventoryIndex,
+                        inventory[inventoryIndex].State.InventoryWidth,
+                        inventory[inventoryIndex].State.InventoryHeight)) {
+                    throw new InvalidDataException(
+                        "Player template contains an invalid inventory footprint.");
+                }
+            }
+        }
+
+        static bool HasValidItemDimensions(AuthoritativeItemState? state)
+        {
+            return state is not null
+                && InventoryGridLayout.HasValidDimensions(
+                    state.InventoryWidth,
+                    state.InventoryHeight);
         }
 
         static void ValidateInventoryGrid(
