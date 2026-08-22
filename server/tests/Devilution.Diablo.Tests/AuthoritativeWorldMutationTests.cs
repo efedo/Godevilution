@@ -178,6 +178,33 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void LoadsAndProjectsNativePieceLayerRectangles()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tpiece_layer_rects\n"
+                + "7\t1\t1,1,2,1,299\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        var rectangle = Assert.Single(mutation.PieceLayerRectangles);
+        Assert.Equal((1, 1, 2, 1, (ushort)299), (
+            rectangle.X,
+            rectangle.Y,
+            rectangle.Width,
+            rectangle.Height,
+            rectangle.PieceId));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)299, level.NativePieceLayer[5]);
+        Assert.Equal((ushort)299, level.NativePieceLayer[6]);
+        Assert.Equal((ushort)0, level.NativePieceLayer[4]);
+    }
+
+    [Fact]
     public void AnchoredObjectLayerMutationUsesRuntimeObjectPosition()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(

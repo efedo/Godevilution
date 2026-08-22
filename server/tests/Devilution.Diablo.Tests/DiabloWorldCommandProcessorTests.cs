@@ -56,7 +56,11 @@ public sealed class DiabloWorldCommandProcessorTests
     public void QuestSequenceFollowUpMaterializesDeterministicUniqueMonster()
     {
         var world = new AuthoritativeWorld();
-        world.AddLevel(new AuthoritativeLevel(24, 40, 40));
+        world.AddLevel(new AuthoritativeLevel(
+            24,
+            40,
+            40,
+            nativePieceLayer: Enumerable.Repeat<ushort>(0, 40 * 40)));
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
             new AuthoritativeMonsterTypeDefinition(
                 139,
@@ -123,8 +127,8 @@ public sealed class DiabloWorldCommandProcessorTests
                     7,
                     24,
                     anchorEntityId: @object.EntityId,
-                    objectLayerRectangles: [
-                        new AuthoritativeWorldMutationObjectRectangle(0, 0, 1, 1, 297),
+                    pieceLayerRectangles: [
+                        new AuthoritativeWorldMutationPieceRectangle(0, 0, 1, 1, 297),
                     ]),
             ]));
         var processor = new DiabloWorldCommandProcessor(
@@ -148,7 +152,7 @@ public sealed class DiabloWorldCommandProcessorTests
             target.EntityId);
         Assert.Equal(("Na-Krul", 666, 75), (target.UniqueIdentity, target.MaxHitPoints, target.ArmorClass));
         Assert.True(quest.Completed);
-        Assert.Equal((ushort)297, worldState.LevelGeometry.Single().NativeObjectLayer[10 * 40 + 10]);
+        Assert.Equal((ushort)297, worldState.LevelGeometry.Single().NativePieceLayer[10 * 40 + 10]);
     }
 
     [Fact]

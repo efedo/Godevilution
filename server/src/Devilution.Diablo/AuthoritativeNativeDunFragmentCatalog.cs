@@ -178,6 +178,19 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 }
             }
 
+            var nativePieces = level.NativePieceLayer.ToArray();
+            if (nativePieces.Length == 0 && map.ReservedLayer.Count != 0)
+                nativePieces = new ushort[checked(level.Width * level.Height)];
+            if (map.ReservedLayer.Any(value => value != 0)) {
+                for (var y = 0; y < map.TileHeight; y++) {
+                    for (var x = 0; x < map.TileWidth; x++) {
+                        var value = map.ReservedLayer[y * map.TileWidth + x];
+                        if (value != 0)
+                            nativePieces[(originY + y) * level.Width + originX + x] = value;
+                    }
+                }
+            }
+
             var objectLayer = level.NativeObjectLayer.ToArray();
             if (map.ObjectLayer.Any(value => value != 0)) {
                 if (objectLayer.Length == 0)
@@ -228,7 +241,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 level.SuppressMultiplayerDeathDrops,
                 transparency,
                 objectLayer,
-                megaTiles) {
+                megaTiles,
+                nativePieces) {
                 StableSymbol = level.StableSymbol,
             });
         }

@@ -444,6 +444,8 @@ message LevelGeometrySnapshot {
 	repeated uint32 native_object_layer = 8;
 	// Native mega-tile IDs after authoritative content composition.
 	repeated uint32 native_mega_tile_layer = 9;
+	// Native d-piece IDs after authoritative world mutations.
+	repeated uint32 native_piece_layer = 10;
 }
 
 message WarpTriggerSnapshot {

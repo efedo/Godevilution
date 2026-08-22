@@ -770,6 +770,9 @@ tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLe
 		level.nativeMegaTileLayer.reserve(source.native_mega_tile_layer_size());
 		for (const uint32_t value : source.native_mega_tile_layer())
 			level.nativeMegaTileLayer.push_back(static_cast<uint16_t>(value));
+		level.nativePieceLayer.reserve(source.native_piece_layer_size());
+		for (const uint32_t value : source.native_piece_layer())
+			level.nativePieceLayer.push_back(static_cast<uint16_t>(value));
 		level.warpTriggers.reserve(source.warp_triggers_size());
 		for (const auto &warp : source.warp_triggers()) {
 			level.warpTriggers.push_back({
@@ -880,6 +883,9 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			})
 		    || !std::all_of(level.native_mega_tile_layer().begin(), level.native_mega_tile_layer().end(), [](uint32_t value) {
 				return value <= std::numeric_limits<uint16_t>::max();
+			})
+		    || !std::all_of(level.native_piece_layer().begin(), level.native_piece_layer().end(), [](uint32_t value) {
+				return value <= std::numeric_limits<uint16_t>::max();
 			}))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry dimensions.");
 		if (!levels.emplace(level.level_id(), &level).second)
@@ -902,7 +908,9 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 		    || (level.native_object_layer_size() != 0 && static_cast<uint64_t>(level.native_object_layer_size()) != cellCount)
 		    || (level.native_mega_tile_layer_size() != 0
 		        && static_cast<uint64_t>(level.native_mega_tile_layer_size())
-		            != (static_cast<uint64_t>(level.width()) + 1) / 2 * ((static_cast<uint64_t>(level.height()) + 1) / 2)))
+		            != (static_cast<uint64_t>(level.width()) + 1) / 2 * ((static_cast<uint64_t>(level.height()) + 1) / 2))
+		    || (level.native_piece_layer_size() != 0
+		        && static_cast<uint64_t>(level.native_piece_layer_size()) != cellCount))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry cells.");
 	}
 	std::unordered_set<uint32_t> warpIds;

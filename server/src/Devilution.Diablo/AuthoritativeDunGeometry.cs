@@ -229,7 +229,8 @@ public static class AuthoritativeDunGeometryMaterializer
             missileBlocked,
             suppressMultiplayerDeathDrops: suppressMultiplayerDeathDrops,
             nativeObjectLayer: asset.ObjectLayer,
-            nativeMegaTileLayer: asset.TileLayer) {
+            nativeMegaTileLayer: asset.TileLayer,
+            nativePieceLayer: asset.ReservedLayer) {
             StableSymbol = stableSymbol,
         };
 

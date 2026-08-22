@@ -313,6 +313,7 @@ public sealed class DiabloWorldState
             var transparency = baseLevel.NativeTransparency.ToArray();
             var objectLayer = baseLevel.NativeObjectLayer.ToArray();
             var megaTileLayer = baseLevel.NativeMegaTileLayer.ToArray();
+            var pieceLayer = baseLevel.NativePieceLayer.ToArray();
             foreach (var mutationId in activeWorldMutationIds.OrderBy(id => id)) {
                 if (WorldMutations?.TryGet(mutationId, out var mutation) != true
                     || mutation.LevelId != baseLevel.LevelId) {
@@ -363,6 +364,19 @@ public sealed class DiabloWorldState
                             $"World mutation {mutation.MutationId} requires a native object layer.");
                     objectLayer[cell] = objectId;
                 }
+                var pieceLayerCells = mutation.GetPieceLayerCells(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY);
+                if (pieceLayerCells.Count > 0 && pieceLayer.Length == 0)
+                    pieceLayer = new ushort[checked(baseLevel.Width * baseLevel.Height)];
+                foreach (var (cell, pieceId) in pieceLayerCells) {
+                    if (pieceLayer.Length == 0)
+                        throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} requires a native d-piece layer.");
+                    pieceLayer[cell] = pieceId;
+                }
             }
             projectedLevels.Add(
                 baseLevel.LevelId,
@@ -376,7 +390,8 @@ public sealed class DiabloWorldState
                     baseLevel.SuppressMultiplayerDeathDrops,
                     transparency,
                     objectLayer,
-                    megaTileLayer) {
+                    megaTileLayer,
+                    pieceLayer) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

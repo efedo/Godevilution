@@ -275,6 +275,7 @@ struct ProjectedLevelGeometrySnapshot {
 	std::vector<ProjectedWarpTriggerSnapshot> warpTriggers;
 	std::vector<uint16_t> nativeObjectLayer;
 	std::vector<uint16_t> nativeMegaTileLayer;
+	std::vector<uint16_t> nativePieceLayer;
 };
 
 struct ProjectedPlayerActionSnapshot {

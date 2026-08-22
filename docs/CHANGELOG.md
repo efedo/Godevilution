@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Production content activation now rejects unique and affix power symbols
   without an authoritative C# handler, while direct catalogs retain their
   compatibility behavior.
+- Externalize native d-piece mutations through `piece_layer_rects`, preserving
+  the Hellfire Na-Krul `ObjSetMicro` room-opening layer in authoritative state,
+  snapshots, and the content schema `1.415.0`.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining
@@ -5029,4 +5032,4 @@ All notable changes to this fork are documented below.
   attribute, light, recovery, and trap-resistance powers through keyed item and
   unique-item overlays.
 - Add a three-cycle server reconnect soak that preserves a resumed participant's
-  identity and complete self-first multiplayer snapshot while another session remains connected.
+  identity and complete self-first multiplayer snapshot while another session remains connected.

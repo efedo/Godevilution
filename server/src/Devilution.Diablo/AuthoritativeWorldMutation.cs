@@ -82,6 +82,24 @@ public sealed class AuthoritativeWorldMutationObjectRectangle
     public ushort ObjectId { get; }
 }
 
+/** A native d-piece value applied to every cell in an authored rectangle. */
+public sealed class AuthoritativeWorldMutationPieceRectangle
+    : AuthoritativeWorldMutationRectangle
+{
+    public AuthoritativeWorldMutationPieceRectangle(
+        int x,
+        int y,
+        int width,
+        int height,
+        ushort pieceId)
+        : base(x, y, width, height)
+    {
+        PieceId = pieceId;
+    }
+
+    public ushort PieceId { get; }
+}
+
 /** One deterministic cell overlay applied by an authored world interaction. */
 public sealed class AuthoritativeWorldMutation
 {
@@ -97,7 +115,8 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationTransparencyRectangle>? transparencyRectangles = null,
         IEnumerable<AuthoritativeWorldMutationObjectRectangle>? objectLayerRectangles = null,
         uint anchorEntityId = 0,
-        string anchorUniqueIdentity = "")
+        string anchorUniqueIdentity = "",
+        IEnumerable<AuthoritativeWorldMutationPieceRectangle>? pieceLayerRectangles = null)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -114,6 +133,7 @@ public sealed class AuthoritativeWorldMutation
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
         TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
         ObjectLayerRectangles = NormalizeObjectLayerRectangles(objectLayerRectangles);
+        PieceLayerRectangles = NormalizePieceLayerRectangles(pieceLayerRectangles);
         BlockedCellsAdd = Normalize(blockedCellsAdd);
         BlockedCellsRemove = Normalize(blockedCellsRemove);
         MissileBlockedCellsAdd = Normalize(missileBlockedCellsAdd);
@@ -160,6 +180,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Native object-layer assignments retained for explicit object mapping. */
     public IReadOnlyList<AuthoritativeWorldMutationObjectRectangle> ObjectLayerRectangles { get; }
+
+    /** Native d-piece assignments retained for exact set-piece mutations. */
+    public IReadOnlyList<AuthoritativeWorldMutationPieceRectangle> PieceLayerRectangles { get; }
 
     public IReadOnlyList<int> GetBlockedCells(
         int levelWidth,
@@ -235,6 +258,17 @@ public sealed class AuthoritativeWorldMutation
                 .Select(cell => (cell, rectangle.ObjectId)))
             .ToArray();
 
+    public IReadOnlyList<(int Cell, ushort PieceId)> GetPieceLayerCells(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
+        => PieceLayerRectangles
+            .SelectMany(rectangle => rectangle
+                .EnumerateCells(levelWidth, levelHeight, originX, originY)
+                .Select(cell => (cell, rectangle.PieceId)))
+            .ToArray();
+
     private static IReadOnlyList<int> Normalize(IEnumerable<int>? cells)
         => (cells ?? [])
             .Distinct()
@@ -273,6 +307,18 @@ public sealed class AuthoritativeWorldMutation
             .ThenBy(rectangle => rectangle.Width)
             .ThenBy(rectangle => rectangle.Height)
             .ThenBy(rectangle => rectangle.ObjectId)
+            .ToArray();
+
+    private static IReadOnlyList<AuthoritativeWorldMutationPieceRectangle>
+        NormalizePieceLayerRectangles(
+            IEnumerable<AuthoritativeWorldMutationPieceRectangle>? rectangles)
+        => (rectangles ?? [])
+            .Where(rectangle => rectangle is not null)
+            .OrderBy(rectangle => rectangle.X)
+            .ThenBy(rectangle => rectangle.Y)
+            .ThenBy(rectangle => rectangle.Width)
+            .ThenBy(rectangle => rectangle.Height)
+            .ThenBy(rectangle => rectangle.PieceId)
             .ToArray();
 
     private static IReadOnlyList<int> MergeCells(
@@ -352,6 +398,7 @@ public sealed class AuthoritativeWorldMutationCatalog
             IReadOnlyList<int> missileBlockedRemove;
             IReadOnlyList<(int Cell, ushort Value)> transparencyCells;
             IReadOnlyList<(int Cell, ushort ObjectId)> objectLayerCells;
+            IReadOnlyList<(int Cell, ushort PieceId)> pieceLayerCells;
             try {
                 blockedAdd = mutation.GetBlockedCells(
                     level.Width,
@@ -371,14 +418,19 @@ public sealed class AuthoritativeWorldMutationCatalog
                 missileBlockedRemove = mutation.GetMissileBlockedCellsToRemove(
                     level.Width,
                     level.Height,
-                        anchor?.X ?? 0,
-                        anchor?.Y ?? 0);
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
                 transparencyCells = mutation.GetTransparencyCells(
                     level.Width,
                     level.Height,
                     anchor?.X ?? 0,
                     anchor?.Y ?? 0);
                 objectLayerCells = mutation.GetObjectLayerCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
+                pieceLayerCells = mutation.GetPieceLayerCells(
                     level.Width,
                     level.Height,
                     anchor?.X ?? 0,
@@ -403,6 +455,9 @@ public sealed class AuthoritativeWorldMutationCatalog
             if (objectLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns an object layer value more than once to a cell.");
+            if (pieceLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} assigns a d-piece value more than once to a cell.");
             foreach (var cell in blockedAdd
                          .Concat(blockedRemove)
                          .Concat(missileBlockedAdd)
@@ -435,7 +490,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 row.OptionalUInt32("anchor_entity_id"),
                 row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
                     ? anchorUniqueIdentity
-                    : string.Empty)));
+                    : string.Empty,
+                ParsePieceLayerRectangles(row))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -679,6 +735,47 @@ public sealed class AuthoritativeWorldMutationCatalog
                         width,
                         height,
                         objectId);
+                } catch (ArgumentOutOfRangeException exception) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",
+                        exception);
+                }
+            })
+            .ToArray();
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationPieceRectangle>
+        ParsePieceLayerRectangles(TsvRow row)
+    {
+        const string column = "piece_layer_rects";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return [];
+        }
+        return value.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(rectangle => {
+                var fields = rectangle.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (fields.Length != 5
+                    || !int.TryParse(fields[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x)
+                    || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y)
+                    || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var width)
+                    || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var height)
+                    || !ushort.TryParse(fields[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out var pieceId)) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.");
+                }
+                try {
+                    return new AuthoritativeWorldMutationPieceRectangle(
+                        x,
+                        y,
+                        width,
+                        height,
+                        pieceId);
                 } catch (ArgumentOutOfRangeException exception) {
                     throw new InvalidDataException(
                         $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",

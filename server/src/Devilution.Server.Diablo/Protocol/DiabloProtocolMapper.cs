@@ -349,6 +349,7 @@ internal static class DiabloProtocolMapper
             geometry.NativeTransparency.Add(level.NativeTransparency.Select(value => (uint)value));
             geometry.NativeObjectLayer.Add(level.NativeObjectLayer.Select(value => (uint)value));
             geometry.NativeMegaTileLayer.Add(level.NativeMegaTileLayer.Select(value => (uint)value));
+            geometry.NativePieceLayer.Add(level.NativePieceLayer.Select(value => (uint)value));
             foreach (var warp in (warpTargets ?? [])
                          .Where(warp => warp.SourceLevelId == level.LevelId)
                          .OrderBy(warp => warp.WarpId)) {

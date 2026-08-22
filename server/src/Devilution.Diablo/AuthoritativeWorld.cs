@@ -185,7 +185,8 @@ public sealed class AuthoritativeLevel
         bool suppressMultiplayerDeathDrops = false,
         IEnumerable<ushort>? nativeTransparency = null,
         IEnumerable<ushort>? nativeObjectLayer = null,
-        IEnumerable<ushort>? nativeMegaTileLayer = null)
+        IEnumerable<ushort>? nativeMegaTileLayer = null,
+        IEnumerable<ushort>? nativePieceLayer = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -224,6 +225,11 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains a native mega-tile layer with an invalid length.");
         NativeMegaTileLayer = Array.AsReadOnly(megaTiles);
+        var pieces = (nativePieceLayer ?? []).ToArray();
+        if (pieces.Length != 0 && pieces.Length != width * height)
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native d-piece layer with an invalid length.");
+        NativePieceLayer = Array.AsReadOnly(pieces);
     }
 
     public uint LevelId { get; }
@@ -249,6 +255,9 @@ public sealed class AuthoritativeLevel
 
     /** Native DUN mega-tile IDs retained for external set-piece presentation. */
     public IReadOnlyList<ushort> NativeMegaTileLayer { get; }
+
+    /** Native DUN d-piece IDs retained for authoritative set-piece mutations. */
+    public IReadOnlyList<ushort> NativePieceLayer { get; }
 
     public bool IsDefaultStart { get; }
 

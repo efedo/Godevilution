@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.414.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.415.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -490,8 +490,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -1997,7 +1997,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.414.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.415.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -2359,8 +2359,8 @@ public sealed class ShippedContentTests
             [(22, 20, (ushort)299), (23, 20, (ushort)300),
              (24, 20, (ushort)297), (25, 20, (ushort)298)],
             nakrulRoomMutation
-                .GetObjectLayerCells(40, 40, finalNakrulTome.PositionX, finalNakrulTome.PositionY)
-                .Select(entry => (entry.Cell % 40, entry.Cell / 40, entry.ObjectId)));
+                .GetPieceLayerCells(40, 40, finalNakrulTome.PositionX, finalNakrulTome.PositionY)
+                .Select(entry => (entry.Cell % 40, entry.Cell / 40, entry.PieceId)));
         var graveObject = Assert.Single(
             activation.Simulation.WorldState.Objects.Values,
             @object => @object.ObjectId == 6004);
@@ -4651,7 +4651,7 @@ public sealed class ShippedContentTests
         var nativeItemEffects = AuthoritativeNativeItemEffectCatalog.LoadTsv(
             "native_item_effects.tsv",
             File.ReadAllText(Path.Combine(contentRoot, "native_item_effects.tsv")));
-        Assert.Equal(15, nativeItemEffects.Definitions.Count);
+        Assert.Equal(27, nativeItemEffects.Definitions.Count);
         Assert.Equal(512U, nativeItemEffects.GetRequiredFlag("MULTIPLE ARROWS"));
         var nativeItemHellfireEffects = AuthoritativeNativeItemHellfireEffectCatalog.LoadTsv(
             "native_item_hellfire_effects.tsv",

@@ -853,7 +853,15 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->set_width(1);
 	level->set_height(1);
 	level->add_native_transparency(65536);
+	level->add_native_piece_layer(65536);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidLayer).has_value());
+
+	protocol::Snapshot invalidPieceSize;
+	level = invalidPieceSize.add_level_geometry();
+	level->set_width(2);
+	level->set_height(2);
+	level->add_native_piece_layer(297);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidPieceSize).has_value());
 
 	protocol::Snapshot missingTarget;
 	level = missingTarget.add_level_geometry();
@@ -1146,6 +1154,10 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	second->add_native_object_layer(7);
 	second->add_native_object_layer(8);
 	second->add_native_mega_tile_layer(42);
+	second->add_native_piece_layer(297);
+	second->add_native_piece_layer(300);
+	second->add_native_piece_layer(299);
+	second->add_native_piece_layer(298);
 	auto *warp = second->add_warp_triggers();
 	warp->set_warp_id(200);
 	warp->set_trigger_x(1);
@@ -1169,6 +1181,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	EXPECT_EQ(projected->back().warpTriggers.front().stableSymbol, "stairs-down");
 	EXPECT_EQ(projected->back().nativeTransparency[2], 0x9ABCU);
 	EXPECT_EQ(projected->back().nativeMegaTileLayer.front(), 42U);
+	EXPECT_EQ(projected->back().nativePieceLayer[0], 297U);
+	EXPECT_EQ(projected->back().nativePieceLayer[3], 298U);
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
