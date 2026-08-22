@@ -630,6 +630,17 @@ public sealed class DiabloWorldState
         }
         foreach (var entry in Projectiles) {
             ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "projectile");
+            var projectile = entry.Value;
+            if (projectile.SourceEntityId == 0
+                || projectile.RemainingTicks == 0
+                || !Enum.IsDefined(projectile.DamageType)
+                || !Enum.IsDefined(projectile.Behavior)
+                || !Enum.IsDefined(projectile.Phase)
+                || !ContainsPosition(projectile.LevelId, projectile.PositionX, projectile.PositionY)
+                || !ContainsPosition(projectile.LevelId, projectile.TargetX, projectile.TargetY)) {
+                throw new InvalidDataException(
+                    $"Projectile {projectile.EntityId} has invalid initial state.");
+            }
             if (!entityIds.Add(entry.Value.EntityId))
                 throw new InvalidDataException(
                     $"Entity {entry.Value.EntityId} is registered more than once.");

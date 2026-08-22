@@ -91,6 +91,8 @@ All notable changes to this fork are documented below.
   initial-position gate before publishing a session.
 - Revalidate mutable world-entity dictionary keys, including projectiles, against
   their server-owned entity identities before publishing a session.
+- Reject invalid mutable projectile lifetime, enum, and endpoint state at the
+  live initial-position gate.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

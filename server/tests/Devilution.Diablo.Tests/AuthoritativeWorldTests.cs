@@ -444,6 +444,52 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void InitialWorldValidationRejectsInvalidProjectileState()
+    {
+        var outOfBoundsProjectile = new AuthoritativeProjectile(
+            30,
+            10,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            AuthoritativeDamageType.Magic,
+            0,
+            1) {
+            PositionX = 40,
+        };
+        var outOfBoundsWorld = new DiabloWorldState(projectiles: [outOfBoundsProjectile]);
+        var positionException = Assert.Throws<InvalidDataException>(() =>
+            outOfBoundsWorld.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("Projectile 30 has invalid initial state", positionException.Message, StringComparison.Ordinal);
+
+        var expiredProjectile = new AuthoritativeProjectile(
+            31,
+            10,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            AuthoritativeDamageType.Magic,
+            0,
+            1) {
+            RemainingTicks = 0,
+        };
+        var expiredWorld = new DiabloWorldState(projectiles: [expiredProjectile]);
+        var lifetimeException = Assert.Throws<InvalidDataException>(() =>
+            expiredWorld.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("Projectile 31 has invalid initial state", lifetimeException.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(

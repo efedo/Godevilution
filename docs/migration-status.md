@@ -152,6 +152,8 @@ The runtime initial-position gate also revalidates mutable portal dictionary
 keys and metadata before a session can publish its starting state.
 The same gate now checks all mutable entity-map keys, including projectiles,
 against their server-owned entity identities.
+It also rejects mutable projectiles with invalid lifetime, enum, or endpoint
+state before the authoritative session starts.
 
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility
