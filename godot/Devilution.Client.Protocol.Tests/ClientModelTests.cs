@@ -199,6 +199,51 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsEntityCoordinatesOutsideNativeTileRangeWithoutGeometry()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = { new MonsterSnapshot { EntityId = 8 } },
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 9,
+                    ItemSeed = 42,
+                    State = new ItemStateSnapshot(),
+                },
+            },
+            Objects = {
+                new ObjectSnapshot { EntityId = 10, ObjectId = 4 },
+            },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 11,
+                    SourceEntityId = 7,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                },
+            },
+            Corpses = { new CorpseSnapshot { EntityId = 12 } },
+            Portals = { new PortalSnapshot { PortalId = 13 } },
+        };
+
+        foreach (var mutate in new Action<Snapshot>[] {
+            snapshot => snapshot.Players[0].PositionX = 256,
+            snapshot => snapshot.Monsters[0].PositionY = 256,
+            snapshot => snapshot.WorldItems[0].PositionX = 256,
+            snapshot => snapshot.Objects[0].PositionY = 256,
+            snapshot => snapshot.Projectiles[0].PositionX = 256,
+            snapshot => snapshot.Corpses[0].PositionY = 256,
+            snapshot => snapshot.Portals[0].SourcePositionX = 256,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void RejectsPortalEndpointsOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

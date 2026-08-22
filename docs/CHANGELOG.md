@@ -44,6 +44,8 @@ All notable changes to this fork are documented below.
   kinds, and contradictory breakable/collision state before interaction routing.
 - Godot now rejects unrepresentable world-item prices, undefined typed item
   metadata, and NUL-containing item spell display names.
+- Godot now rejects projected entity coordinates outside the native tile range,
+  including legacy snapshots that omit level geometry.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

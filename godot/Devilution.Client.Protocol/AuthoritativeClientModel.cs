@@ -772,8 +772,14 @@ public sealed class AuthoritativeClientModel
     private static void ValidateEntityPositions(Snapshot snapshot)
     {
         var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        bool IsNativePosition(int x, int y)
+            => x is >= 0 and <= byte.MaxValue
+                && y is >= 0 and <= byte.MaxValue;
+
         bool IsInBounds(uint levelId, int x, int y)
         {
+            if (!IsNativePosition(x, y))
+                return false;
             if (!levels.TryGetValue(levelId, out var level)
                 || level.Width == 0
                 || level.Height == 0) {
