@@ -420,23 +420,33 @@ public sealed class AuthoritativeUniqueItemCatalog
             "MAGICRES_CURSE" => state with { PlusMagicResistance = state.PlusMagicResistance - value },
             "DEVASTATION" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+                    | ResolveHellfireEffectFlag(
+                        "DEVASTATION",
+                        AuthoritativeEquipmentIncomingDamageRules.DevastationFlag),
             },
             "PERIL" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                    | ResolveHellfireEffectFlag(
+                        "PERIL",
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag),
             },
             "JESTERS" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+                    | ResolveHellfireEffectFlag(
+                        "JESTERS",
+                        AuthoritativeEquipmentIncomingDamageRules.JestersFlag),
             },
             "DOPPELGANGER" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+                    | ResolveHellfireEffectFlag(
+                        "DOPPELGANGER",
+                        AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag),
             },
             "DECAY" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                    | ResolveHellfireEffectFlag(
+                        "DECAY",
+                        AuthoritativeEquipmentIncomingDamageRules.DecayFlag),
                 PlusDamage = state.PlusDamage + value,
             },
             // Native Hellfire IPL_FIREBALL marks both arrow channels so the bow
