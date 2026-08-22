@@ -130,6 +130,8 @@ scaled hit points), not only the client's difficulty label.
   `misc_id`, with ambiguous mappings rejected rather than guessed.
 - Arena-only admission now resolves authored `arena_only` metadata by `misc_id`
   when compatibility state lacks stable/native item identity.
+- Gold classification now resolves authored `Gold` and `Currency` tags by
+  `misc_id` before applying the native type/index fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

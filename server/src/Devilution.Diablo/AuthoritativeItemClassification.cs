@@ -134,11 +134,14 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(rules);
-        if (items is not null && items.TryGetByState(state, out var definition)) {
-            if (definition.GenerationTags.Count > 0)
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.GenerationTags.Count > 0)
                 return IsGold(definition);
-            if (IsGold(definition))
-                return true;
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return tags.Contains("Gold", StringComparer.OrdinalIgnoreCase)
+                    || tags.Contains("Currency", StringComparer.OrdinalIgnoreCase);
         }
         return state.ItemType == rules.DeathGoldItemType
             && state.ItemIndex == rules.DeathGoldItemIndex;

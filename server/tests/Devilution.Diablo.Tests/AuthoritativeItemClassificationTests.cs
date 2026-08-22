@@ -231,6 +231,44 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void GoldTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var definition = CreateDefinition(itemClass: 0, tags: ["Gold"]) with {
+            ItemType = 99,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemType = 99,
+            ItemIndex = 999,
+            MiscId = 121,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsGold(state, rules, catalog));
+    }
+
+    [Fact]
+    public void NonGoldTagsByMiscIdOverrideConflictingNativeGoldIdentity()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var definition = CreateDefinition(itemClass: 0, tags: ["Misc"]) with {
+            ItemType = rules.DeathGoldItemType,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemType = rules.DeathGoldItemType,
+            ItemIndex = 999,
+            MiscId = 121,
+        };
+
+        Assert.False(AuthoritativeItemClassification.IsGold(state, rules, catalog));
+    }
+
+    [Fact]
     public void ArmorTagsOverrideConflictingLegacyItemClass()
     {
         var definition = CreateDefinition(itemClass: 0, tags: ["Armor"]);
