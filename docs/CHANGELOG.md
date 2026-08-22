@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   coordinate limits or supplied level geometry, matching the Godot boundary.
 - Native authoritative snapshots now enforce one nonzero entity-ID namespace
   across players, monsters, world items, objects, projectiles, and corpses.
+- Native authoritative snapshot application now rejects malformed player action
+  timing, combat-mode combinations, casts, deaths, transitions, and blocked moves.
 - The native debug console now stays native-only in authoritative mode: it
   skips script prelude loading, autocomplete, module help, and interpreter
   fallback while exposing the registered server-compatible command list.

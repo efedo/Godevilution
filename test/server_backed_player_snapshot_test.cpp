@@ -948,6 +948,58 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicateEntityIdsAcrossSnapshotCollecti
 	EXPECT_FALSE(ValidateEntityIdentitySnapshots(duplicateCorpses).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
+{
+	protocol::Snapshot invalidTiming;
+	auto *player = invalidTiming.add_players();
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_ATTACK);
+	player->set_combat_mode_end_tick(4);
+	auto *action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_ATTACK);
+	action->set_started_at_tick(3);
+	action->set_effect_tick(2);
+	action->set_ready_tick(4);
+	action->set_end_tick(4);
+	action->set_target_entity_id(9);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidTiming).has_value());
+
+	protocol::Snapshot blockedMove;
+	player = blockedMove.add_players();
+	player->set_level_id(1);
+	player->set_position_x(0);
+	player->set_position_y(0);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_WALK_SIDEWAYS);
+	player->set_combat_mode_end_tick(4);
+	action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_MOVE);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(2);
+	action->set_ready_tick(3);
+	action->set_end_tick(4);
+	action->set_direction_x(1);
+	auto *level = blockedMove.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(2);
+	level->set_height(2);
+	level->add_blocked_cells(1);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(blockedMove).has_value());
+
+	protocol::Snapshot invalidCast;
+	player = invalidCast.add_players();
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);
+	player->set_combat_mode_end_tick(4);
+	action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_CAST);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(2);
+	action->set_ready_tick(3);
+	action->set_end_tick(4);
+	action->set_target_entity_id(9);
+	action->mutable_cast()->set_spell_id(1);
+	action->mutable_cast()->set_target_entity_id(10);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidCast).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

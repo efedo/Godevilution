@@ -838,6 +838,91 @@ tl::expected<void, std::string> ValidateEntityIdentitySnapshots(const protocol::
 	return {};
 }
 
+tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Snapshot &snapshot)
+{
+	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;
+	levels.reserve(snapshot.level_geometry_size());
+	for (const auto &level : snapshot.level_geometry()) {
+		if (!levels.emplace(level.level_id(), &level).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
+	}
+	const auto isProjectedMoveWalkable = [&](const protocol::PlayerSnapshot &player, const protocol::PlayerActionSnapshot &action) {
+		const auto level = levels.find(player.level_id());
+		if (level == levels.end() || level->second->width() == 0 || level->second->height() == 0)
+			return true;
+		const int64_t targetX = static_cast<int64_t>(player.position_x()) + action.direction_x();
+		const int64_t targetY = static_cast<int64_t>(player.position_y()) + action.direction_y();
+		if (targetX < 0 || targetY < 0 || targetX >= level->second->width() || targetY >= level->second->height())
+			return false;
+		const int64_t targetCell = targetY * level->second->width() + targetX;
+		if (targetCell > std::numeric_limits<int32_t>::max())
+			return false;
+		return std::find(level->second->blocked_cells().begin(), level->second->blocked_cells().end(), static_cast<int32_t>(targetCell))
+		    == level->second->blocked_cells().end();
+	};
+	for (const auto &player : snapshot.players()) {
+		if (!player.has_current_action())
+			continue;
+		const auto &action = player.current_action();
+		const int32_t kind = static_cast<int32_t>(action.kind());
+		const int32_t combatMode = static_cast<int32_t>(player.combat_mode());
+		const bool timingIsValid = kind >= 1 && kind <= 6
+		    && action.effect_tick() >= action.started_at_tick()
+		    && action.ready_tick() >= action.effect_tick()
+		    && action.ready_tick() <= action.end_tick()
+		    && action.end_tick() == player.combat_mode_end_tick();
+		const bool moveIsValid = kind == 1
+		    && (combatMode == protocol::PLAYER_COMBAT_MODE_WALK_NORTHWARDS
+		        || combatMode == protocol::PLAYER_COMBAT_MODE_WALK_SOUTHWARDS
+		        || combatMode == protocol::PLAYER_COMBAT_MODE_WALK_SIDEWAYS)
+		    && action.direction_x() >= -1 && action.direction_x() <= 1
+		    && action.direction_y() >= -1 && action.direction_y() <= 1
+		    && (action.direction_x() != 0 || action.direction_y() != 0)
+		    && action.target_entity_id() == 0
+		    && !action.has_cast()
+		    && isProjectedMoveWalkable(player, action);
+		const bool attackIsValid = kind == 2
+		    && (combatMode == protocol::PLAYER_COMBAT_MODE_ATTACK
+		        || combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK)
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_entity_id() != 0 && !action.has_cast();
+		const bool castIsValid = kind == 3
+		    && combatMode == protocol::PLAYER_COMBAT_MODE_SPELL
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.has_cast() && action.cast().spell_id() != 0
+		    && action.target_entity_id() == action.cast().target_entity_id()
+		    && static_cast<int32_t>(action.cast().source()) >= protocol::CAST_SOURCE_KIND_UNSPECIFIED
+		    && static_cast<int32_t>(action.cast().source()) <= protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM
+		    && (!action.cast().has_source_item()
+		        || (static_cast<int32_t>(action.cast().source_item().location()) >= protocol::PLAYER_ITEM_LOCATION_INVENTORY
+		            && static_cast<int32_t>(action.cast().source_item().location()) <= protocol::PLAYER_ITEM_LOCATION_STASH));
+		const bool deathIsValid = kind == 4
+		    && combatMode == protocol::PLAYER_COMBAT_MODE_DEATH
+		    && player.life() == 0 && action.effect_applied()
+		    && action.effect_tick() == action.started_at_tick()
+		    && action.ready_tick() == action.end_tick()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && !action.has_cast();
+		const bool transitionIsValid = kind == 5
+		    && combatMode == protocol::PLAYER_COMBAT_MODE_NEW_LEVEL
+		    && player.life() > 0 && action.effect_applied()
+		    && action.effect_tick() == action.started_at_tick()
+		    && action.ready_tick() == action.end_tick()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_entity_id() != 0 && !action.has_cast();
+		const bool restartTownIsValid = kind == 6
+		    && combatMode == protocol::PLAYER_COMBAT_MODE_NEW_LEVEL
+		    && player.life() > 0 && action.effect_applied()
+		    && action.effect_tick() == action.started_at_tick()
+		    && action.ready_tick() == action.end_tick()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_entity_id() == 0 && !action.has_cast();
+		if (!timingIsValid || (!moveIsValid && !attackIsValid && !castIsValid && !deathIsValid && !transitionIsValid && !restartTownIsValid))
+			return tl::make_unexpected("Server-backed snapshot contains an invalid player action.");
+	}
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {

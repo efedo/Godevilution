@@ -123,6 +123,8 @@ scaled hit points), not only the client's difficulty label.
   coordinate limits or supplied level geometry, matching the Godot boundary.
 - Native authoritative snapshots now enforce one nonzero entity-ID namespace
   across players, monsters, world items, objects, projectiles, and corpses.
+- Native authoritative snapshot application now rejects malformed player action
+  timing, combat-mode combinations, casts, deaths, transitions, and blocked moves.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level
