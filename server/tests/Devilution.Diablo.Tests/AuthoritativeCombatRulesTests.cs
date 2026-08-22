@@ -16,11 +16,22 @@ public sealed class AuthoritativeCombatRulesTests
             uniqueExperienceMultiplier: 3);
 
         Assert.Equal(3, rules.UniqueExperienceMultiplier);
+        Assert.Equal(3, rules.MultipleArrowsCount);
         Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
             10,
             1,
             100,
             uniqueExperienceMultiplier: 0));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            multipleArrowsCount: 0));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            multipleArrowsCount: 4));
     }
 
     [Fact]
@@ -65,6 +76,18 @@ public sealed class AuthoritativeCombatRulesTests
             rules.PlayerMagicMaximumHitChance));
         Assert.Equal(2, rules.MonsterRegenerationLevelDivisor);
         Assert.Equal(2, rules.MonsterPlayerBlockLevelScale);
+        Assert.Equal(3, rules.MultipleArrowsCount);
+    }
+
+    [Fact]
+    public void LoadsConfiguredMultipleArrowsCount()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmultiple_arrows_count\n"
+            + "10\t1\t100\t2\n");
+
+        Assert.Equal(2, rules.MultipleArrowsCount);
     }
 
     [Fact]

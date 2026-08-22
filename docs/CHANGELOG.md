@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native Multiple Arrows count through the optional
+  `multiple_arrows_count` field in `combat.tsv`, preserving the three-arrow
+  compatibility fallback for older packs and advancing the Diablo content
+  schema to 1.403.
+
 - Externalize Skeleton King summon candidate selection through the optional
   `skeleton_summon_candidate` field in `monster_types.tsv`, preserving the
   native-AI and complete-tuning compatibility fallback for older packs and

@@ -649,7 +649,7 @@ public sealed class DiabloCombatCommandProcessor
             var arrowCount = HasUsableEquipmentFlag(
                 player,
                 AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)
-                ? 3
+                ? rules.MultipleArrowsCount
                 : 1;
             return ResolveWeaponArrowVolley(
                 player,
@@ -803,7 +803,7 @@ public sealed class DiabloCombatCommandProcessor
         var arrowCount = HasUsableEquipmentFlag(
             player,
             AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)
-            ? 3
+            ? rules.MultipleArrowsCount
             : 1;
         for (var arrowIndex = 0; arrowIndex < arrowCount; arrowIndex++) {
             var damageQ6 = ResolvePlayerAttackDamageQ6(
@@ -976,9 +976,10 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /**
-     * Emits a server-owned bow missile. Multiple Arrows uses three missiles;
-     * the first starts on the attack effect frame and the two spread arrows
-     * begin two frames later, matching DoRangeAttack's second firing window.
+     * Emits server-owned bow missiles. Multiple Arrows uses the validated
+     * content count; the first starts on the attack effect frame and subsequent
+     * spread arrows begin two frames later, matching DoRangeAttack's second
+     * firing window.
      */
     private DiabloCombatIntentResult ResolveWeaponArrowVolley(
         AuthoritativePlayerState player,
@@ -986,7 +987,7 @@ public sealed class DiabloCombatCommandProcessor
         ulong appliedTick,
         int arrowCount)
     {
-        if (arrowCount is not (1 or 3))
+        if (arrowCount is < 1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(arrowCount));
         var targetDistance = Math.Max(
             Math.Abs(target.PositionX - player.PositionX),

@@ -106,7 +106,8 @@ public sealed class AuthoritativeCombatRules
         int? rangedAttackFrameSkipWithoutFirstFrame = null,
         int? rangedFastAttackFrameSkipBonus = null,
         uint townLevelId = AuthoritativePortalRules.TownLevelId,
-        int uniqueExperienceMultiplier = 2)
+        int uniqueExperienceMultiplier = 2,
+        int multipleArrowsCount = 3)
     {
         var resolvedRangedAttackFrameSkipWithFirstFrame = rangedAttackFrameSkipWithFirstFrame
             ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
@@ -212,6 +213,9 @@ public sealed class AuthoritativeCombatRules
         if (uniqueExperienceMultiplier is < 1 or > 100) {
             throw new InvalidDataException("Unique-monster experience tuning is invalid.");
         }
+        if (multipleArrowsCount is < 1 or > 3) {
+            throw new InvalidDataException("Multiple Arrows count tuning is invalid.");
+        }
         if (pvpBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("PvP block level tuning is invalid.");
         }
@@ -289,6 +293,7 @@ public sealed class AuthoritativeCombatRules
         MinimumDamage = minimumDamage;
         DefeatExperience = defeatExperience;
         UniqueExperienceMultiplier = uniqueExperienceMultiplier;
+        MultipleArrowsCount = multipleArrowsCount;
         HitChancePercent = hitChancePercent;
         CriticalChancePercent = criticalChancePercent;
         CriticalMultiplier = criticalMultiplier;
@@ -388,6 +393,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native multiplier applied to experience awarded by unique monsters. */
     public int UniqueExperienceMultiplier { get; }
+
+    /** Native number of weapon arrows emitted by the Multiple Arrows effect. */
+    public int MultipleArrowsCount { get; }
 
     public int HitChancePercent { get; }
 
@@ -1019,7 +1027,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("ranged_attack_frame_skip_without_first_frame"),
             row.OptionalInt32("ranged_fast_attack_frame_skip_bonus", 1),
             townLevelId,
-            row.OptionalInt32("unique_experience_multiplier", 2));
+            row.OptionalInt32("unique_experience_multiplier", 2),
+            row.OptionalInt32("multiple_arrows_count", 3));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

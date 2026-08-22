@@ -1001,6 +1001,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultipleArrowsUsesConfiguredContentCountAgainstAPlayer()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+            Flags = AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag,
+        };
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: true,
+                multipleArrowsCount: 2));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.Equal(
+            [0U, 2U],
+            world.Projectiles.Values
+                .OrderBy(projectile => projectile.EntityId)
+                .Select(projectile => projectile.ActivationDelayTicks)
+                .ToArray());
+    }
+
+    [Fact]
     public void ShieldedPlayerTargetBlocksAnAuthoritativeBowImpact()
     {
         var bow = AuthoritativeItemState.Empty with {
@@ -1420,6 +1465,45 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(5, [player]);
         Assert.Empty(world.Projectiles);
         Assert.Equal(4970, target.HitPoints);
+    }
+
+    [Fact]
+    public void MultipleArrowsUsesConfiguredContentCount()
+    {
+        var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                multipleArrowsCount: 2));
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.Equal(
+            [0U, 2U],
+            world.Projectiles.Values
+                .OrderBy(projectile => projectile.EntityId)
+                .Select(projectile => projectile.ActivationDelayTicks)
+                .ToArray());
     }
 
     [Fact]

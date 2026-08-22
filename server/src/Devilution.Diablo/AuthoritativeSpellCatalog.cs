@@ -71,7 +71,7 @@ public enum AuthoritativeProjectileBehavior
     MonsterChargedBolt = 56,
     /** Native Hork Demon missile that creates a Hork Spawn on expiry. */
     HorkSpawn = 57,
-    /** Native player bow missile, including delayed Multiple Arrows shots. */
+    /** Native player bow missile, including configured delayed Multiple Arrows shots. */
     WeaponArrow = 58,
     /** Native monster Arrow missile emitted by GoatRanged and SkeletonRanged. */
     MonsterArrow = 59,
