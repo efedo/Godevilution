@@ -76,7 +76,8 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         ArgumentNullException.ThrowIfNull(state);
         if (state.Deleted)
             return DiabloRuleFailure.InvalidTarget;
-        if (state.MaxDurability <= state.Durability)
+        var maximumDurability = ResolveMaximumDurability(state);
+        if (maximumDurability <= state.Durability)
             return DiabloRuleFailure.NotAllowed;
         var price = GetRepairPrice(state);
         if (price == 0)
@@ -176,17 +177,18 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     public uint GetRepairPrice(AuthoritativeItemState state)
     {
         ArgumentNullException.ThrowIfNull(state);
-        var due = state.MaxDurability - state.Durability;
-        if (due <= 0 || state.MaxDurability <= 0)
+        var maximumDurability = ResolveMaximumDurability(state);
+        var due = maximumDurability - state.Durability;
+        if (due <= 0 || maximumDurability <= 0)
             return 0;
         if (state.Magical != 0 && state.Identified) {
             return (uint)Math.Max(
                 0,
                 Pricing.MagicalRepairPercent * state.IdentifiedValue * due
-                    / (state.MaxDurability * Pricing.MagicalRepairDivisor));
+                    / (maximumDurability * Pricing.MagicalRepairDivisor));
         }
         return (uint)Math.Max(
-            state.Value * due / (state.MaxDurability * Pricing.NormalRepairDivisor),
+            state.Value * due / (maximumDurability * Pricing.NormalRepairDivisor),
             1);
     }
 
@@ -194,6 +196,23 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     {
         ArgumentNullException.ThrowIfNull(item);
         return GetRepairPrice(item.State);
+    }
+
+    private int ResolveMaximumDurability(AuthoritativeItemState state)
+    {
+        if (state.MaxDurability != 0)
+            return state.MaxDurability;
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.MaxDurability > 0)
+                return definition.MaxDurability;
+            if (items.TryGetDurabilityMetadataByMiscId(
+                    state.MiscId,
+                    out _,
+                    out var maximumDurability))
+                return maximumDurability;
+        }
+        return 0;
     }
 
     public uint GetRechargePrice(AuthoritativeItemState state)

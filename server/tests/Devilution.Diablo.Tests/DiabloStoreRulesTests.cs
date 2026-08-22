@@ -226,6 +226,54 @@ public sealed class DiabloStoreRulesTests
     }
 
     [Fact]
+    public void RepairUsesContentDurabilityByMiscIdWhenNativeIdentityIsAbsent()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 20, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+            Durability = 1,
+            MaxDurability = 0,
+            Value = 100,
+        };
+
+        Assert.Null(rules.ValidateRepair(state, 100));
+        Assert.Equal(47U, rules.GetRepairPrice(state));
+    }
+
+    [Fact]
+    public void AmbiguousDurabilityMetadataByMiscIdFailsClosed()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 20, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+            },
+            new AuthoritativeItemDefinition(8, 1, 100, 100, 0, 0, 0, 30, 30, 1, 1, true) {
+                NativeItemIndex = 102,
+                MiscId = 121,
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+            Durability = 1,
+            MaxDurability = 0,
+            Value = 100,
+        };
+
+        Assert.Equal(DiabloRuleFailure.NotAllowed, rules.ValidateRepair(state, 100));
+        Assert.Equal(0U, rules.GetRepairPrice(state));
+    }
+
+    [Fact]
     public void AmbiguousChargedMetadataByMiscIdFailsClosed()
     {
         var items = new AuthoritativeItemCatalog([

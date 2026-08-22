@@ -272,11 +272,19 @@ public sealed class DiabloStoreCommandProcessor
 
         if (!TryResolveGoldTopology(player, out var hasGoldTopology))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        var maximumDurability = ResolveMaximumDurability(item.State);
         ReplaceItem(
             player,
             intent.Item,
             intent.LegacyInventoryIndex,
-            item with { State = item.State with { Durability = item.State.MaxDurability } });
+            item with {
+                State = item.State with {
+                    Durability = maximumDurability,
+                    MaxDurability = maximumDurability == 0
+                        ? item.State.MaxDurability
+                        : maximumDurability,
+                },
+            });
         if (!SpendGold(player, rules.GetRepairPrice(item), hasGoldTopology))
             throw new InvalidOperationException("Validated repair Gold could not be removed.");
         return DiabloIntentResult.Accepted;
@@ -288,7 +296,7 @@ public sealed class DiabloStoreCommandProcessor
         OwnedStoreItem item)
     {
         var durability = item.State.Durability;
-        var maximumDurability = item.State.MaxDurability;
+        var maximumDurability = ResolveMaximumDurability(item.State);
         if (durability == maximumDurability)
             return DiabloIntentResult.Accepted;
         if (maximumDurability <= 0) {
@@ -427,6 +435,23 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsStaff(AuthoritativeItemState state)
         => AuthoritativeItemClassification.IsStaff(state, items);
+
+    private int ResolveMaximumDurability(AuthoritativeItemState state)
+    {
+        if (state.MaxDurability != 0)
+            return state.MaxDurability;
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.MaxDurability > 0)
+                return definition.MaxDurability;
+            if (items.TryGetDurabilityMetadataByMiscId(
+                    state.MiscId,
+                    out _,
+                    out var maximumDurability))
+                return maximumDurability;
+        }
+        return 0;
+    }
 
     private int ResolveChargedSpellId(AuthoritativeItemState state)
     {

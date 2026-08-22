@@ -60,6 +60,8 @@ All notable changes to this fork are documented below.
   metadata through the active charged-item catalog, including `misc_id`.
 - Vendor Recharge now writes resolved authored maximum charges back into item
   state when compatibility state omitted that field.
+- Repair validation, pricing, and mutation now resolve authored maximum
+  durability through stable, native, or `misc_id` identity.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

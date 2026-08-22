@@ -430,6 +430,122 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void WarriorRepairAbilityResolvesMaximumDurabilityByMiscId()
+    {
+        const uint repairSpellId = 26;
+        var definition = new AuthoritativeItemDefinition(
+            2306,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            MiscId = 126,
+            NativeItemIndex = 106,
+        };
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            2306,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 126,
+                Durability = 1,
+                MaxDurability = 0,
+            });
+        var player = CreatePlayer(gold: 0, inventory: [item]);
+        player.AbilitySpellId = repairSpellId;
+        player.CharacterLevel = 10;
+        var random = new DiabloRandom(0);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: random,
+            repairAbilitySpellId: repairSpellId,
+            items: new AuthoritativeItemCatalog([definition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloRepairItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ClassAbility),
+            1);
+
+        Assert.True(result.Succeeded);
+        var repaired = Assert.Single(player.Inventory).State;
+        Assert.Equal(18, repaired.Durability);
+        Assert.Equal(18, repaired.MaxDurability);
+        Assert.Equal(22695478U, random.State);
+    }
+
+    [Fact]
+    public void VendorRepairMaterializesMaximumDurabilityByMiscId()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2307,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            MiscId = 127,
+            NativeItemIndex = 107,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            2307,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 127,
+                Durability = 1,
+                MaxDurability = 0,
+                Value = 100,
+            });
+        var player = CreatePlayer(
+            gold: 1000,
+            equipment: [new EquippedStoreItem(3, 2307, item.State)]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            rules: new DiabloStoreRules(items: items),
+            items: items);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            0).Succeeded);
+        var result = processor.Execute(
+            player,
+            new DiabloRepairItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 3),
+                0),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var repaired = Assert.Single(player.Equipment).State;
+        Assert.Equal(20, repaired.Durability);
+        Assert.Equal(20, repaired.MaxDurability);
+        Assert.Equal(953U, player.Gold);
+    }
+
+    [Fact]
     public void WarriorRepairAbilityUsesConfiguredDurabilityLevelOffset()
     {
         const uint repairSpellId = 26;

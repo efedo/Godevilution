@@ -361,6 +361,30 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous authored durability metadata by misc ID. */
+    public bool TryGetDurabilityMetadataByMiscId(
+        int miscId,
+        out int durability,
+        out int maximumDurability)
+    {
+        durability = 0;
+        maximumDurability = 0;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .Select(definition => (definition.Durability, definition.MaxDurability))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1 || values[0].MaxDurability <= 0)
+            return false;
+
+        durability = values[0].Durability;
+        maximumDurability = values[0].MaxDurability;
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,
