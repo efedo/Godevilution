@@ -154,6 +154,9 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative unique-monster quest lookup now includes eligible
   activation-stage quests, so conversations such as Zhar and Warlord cannot
   fall through to local quest activation or reward mutation.
+- Native authoritative unique-monster conversations now fail closed when the
+  native target has no authoritative monster projection, preventing stale
+  local targets from reaching legacy quest mutation.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

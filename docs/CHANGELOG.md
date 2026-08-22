@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
 - Native authoritative unique-monster quest lookup now includes eligible
   activation-stage quests, so conversations such as Zhar and Warlord cannot
   fall through to local quest activation or reward mutation.
+- Native authoritative unique-monster conversations now fail closed when the
+  native target has no authoritative monster projection, preventing stale
+  local targets from reaching legacy quest mutation.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

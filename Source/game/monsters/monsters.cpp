@@ -4671,13 +4671,22 @@ void TalktoMonster(Player &player, Monster &monster)
 	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
 		auto &runtime = authoritative::GetServerBackedRuntime();
 		const auto monsterEntityId = runtime.MonsterEntityIdAt(monster.position.tile.x, monster.position.tile.y);
-		if (monsterEntityId.has_value()) {
-			const auto questId = runtime.ActiveQuestForMonster(*monsterEntityId);
-			if (questId.has_value()) {
-				if (auto result = runtime.TalkToQuest(*questId, *monsterEntityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
-					LogError("Failed to submit the authoritative quest dialogue: {}", result.error());
-				return;
-			}
+		const auto questId = monsterEntityId.has_value()
+		    ? runtime.ActiveQuestForMonster(*monsterEntityId)
+		    : std::nullopt;
+		switch (ResolveServerBackedMonsterInteractionRoute(
+		    true,
+		    monsterEntityId.has_value(),
+		    questId.has_value())) {
+		case ServerBackedMonsterInteractionRoute::Submit:
+			if (auto result = runtime.TalkToQuest(*questId, *monsterEntityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Failed to submit the authoritative quest dialogue: {}", result.error());
+			return;
+		case ServerBackedMonsterInteractionRoute::FailClosed:
+			LogError("Server-backed monster target is not an authoritative entity.");
+			return;
+		case ServerBackedMonsterInteractionRoute::None:
+			break;
 		}
 	}
 #endif

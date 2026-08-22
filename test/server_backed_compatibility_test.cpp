@@ -4,6 +4,7 @@
 
 #include "devilution.pb.h"
 #include "controls/player_controls.h"
+#include "game/monsters/monsters.hpp"
 #include "network/authoritative/authoritative_client.hpp"
 #include "network/authoritative/runtime_configuration.hpp"
 #include "network/authoritative/store_snapshot.hpp"
@@ -54,6 +55,23 @@ TEST(ServerBackedCompatibility, StaleObjectHighlightsFailClosed)
 	    Route::FailClosed);
 	EXPECT_EQ(
 	    ResolveServerBackedObjectInteractionRoute(true, false, false),
+	    Route::None);
+}
+
+TEST(ServerBackedCompatibility, MissingMonsterProjectionFailsClosed)
+{
+	using Route = ServerBackedMonsterInteractionRoute;
+	EXPECT_EQ(
+	    ResolveServerBackedMonsterInteractionRoute(false, false, false),
+	    Route::None);
+	EXPECT_EQ(
+	    ResolveServerBackedMonsterInteractionRoute(true, false, false),
+	    Route::FailClosed);
+	EXPECT_EQ(
+	    ResolveServerBackedMonsterInteractionRoute(true, true, true),
+	    Route::Submit);
+	EXPECT_EQ(
+	    ResolveServerBackedMonsterInteractionRoute(true, true, false),
 	    Route::None);
 }
 

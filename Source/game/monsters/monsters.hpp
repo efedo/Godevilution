@@ -37,6 +37,35 @@ struct Player;
 
 constexpr size_t MaxMonsters = 200;
 
+/**
+ * Describes how a native unique-monster conversation may be handled while
+ * the server-backed client is connected.
+ */
+enum class ServerBackedMonsterInteractionRoute : uint8_t {
+	None,
+	Submit,
+	FailClosed,
+};
+
+/**
+ * Keeps a missing authoritative monster projection from falling through to
+ * local quest mutation while retaining compatibility for projected monsters
+ * whose quest behavior has not been externalized yet.
+ */
+constexpr ServerBackedMonsterInteractionRoute ResolveServerBackedMonsterInteractionRoute(
+	bool serverConnected,
+	bool projectedEntityAvailable,
+	bool questAvailable) noexcept
+{
+	if (!serverConnected)
+		return ServerBackedMonsterInteractionRoute::None;
+	if (!projectedEntityAvailable)
+		return ServerBackedMonsterInteractionRoute::FailClosed;
+	return questAvailable
+	    ? ServerBackedMonsterInteractionRoute::Submit
+	    : ServerBackedMonsterInteractionRoute::None;
+}
+
 enum monster_flag : uint16_t {
 	// clang-format off
 	MFLAG_HIDDEN          = 1 << 0,
