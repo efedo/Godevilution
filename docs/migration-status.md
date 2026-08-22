@@ -39,6 +39,10 @@ Connected native portal transition helpers now fail closed before legacy portal
 state can select a level or warp position; authoritative movement remains the
 only connected-session transition source.
 
+Connected native death-drop helpers now also fail closed at their direct entry
+points, covering item respawn, gold splitting, and top-gold overflow while the
+server owns inventory and world-item consequences.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

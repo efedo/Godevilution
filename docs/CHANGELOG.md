@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
   cannot publish local portal state outside authoritative snapshots.
 - Guard native portal level and position transition helpers before connected
   sessions can consume stale legacy portal state.
+- Guard direct native death-drop helpers for item respawn, gold splitting, and
+  top-gold overflow while connected sessions remain server-owned.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

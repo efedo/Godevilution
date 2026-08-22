@@ -90,6 +90,15 @@ bool LegacyTransitionAllowed() noexcept
 #endif
 }
 
+bool LegacyDeathDropsAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 struct DirectionSettings {
 	Direction dir;
 	PLR_MODE walkMode;
@@ -311,6 +320,9 @@ void StartSpell(Player &player, Direction d, WorldTileCoord cx, WorldTileCoord c
 
 void RespawnDeadItem(Item &&itm, Point target)
 {
+	if (!LegacyDeathDropsAllowed())
+		return;
+
 	if (!ItemPoolAdapter::HasFreeItemSlot())
 		return;
 
@@ -327,6 +339,9 @@ void RespawnDeadItem(Item &&itm, Point target)
 
 void DeadItem(Player &player, Item &&item, Displacement direction)
 {
+	if (!LegacyDeathDropsAllowed())
+		return;
+
 	if (item.isEmpty())
 		return;
 
@@ -347,6 +362,9 @@ void DeadItem(Player &player, Item &&item, Displacement direction)
 
 int DropGold(Player &player, int amount, bool skipFullStacks)
 {
+	if (!LegacyDeathDropsAllowed())
+		return amount;
+
 	for (int i = 0; i < player._pNumInv && amount > 0; i++) {
 		Item &item = player.InvList[i];
 
@@ -374,6 +392,9 @@ int DropGold(Player &player, int amount, bool skipFullStacks)
 
 void DropHalfPlayersGold(Player &player)
 {
+	if (!LegacyDeathDropsAllowed())
+		return;
+
 	const int remainingGold = DropGold(player, player._pGold / 2, true);
 	if (remainingGold > 0) {
 		DropGold(player, remainingGold, false);
@@ -3121,6 +3142,9 @@ Player::startKill(DeathReason deathReason)
 
 void StripTopGold(Player &player)
 {
+	if (!LegacyDeathDropsAllowed())
+		return;
+
 	for (Item &item : InventoryPlayerItemsRange { player }) {
 		if (item._itype != ItemType::Gold)
 			continue;
