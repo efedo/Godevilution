@@ -97,7 +97,7 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
             return DiabloRuleFailure.InvalidTarget;
         if (!IsRechargeable(state))
             return DiabloRuleFailure.InvalidTarget;
-        if (state.MaxCharges <= state.Charges)
+        if (ResolveMaximumCharges(state) <= state.Charges)
             return DiabloRuleFailure.NotAllowed;
         var price = GetRechargePrice(state);
         if (price == 0)
@@ -199,11 +199,34 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     public uint GetRechargePrice(AuthoritativeItemState state)
     {
         ArgumentNullException.ThrowIfNull(state);
-        var due = state.MaxCharges - state.Charges;
-        if (due <= 0 || state.MaxCharges <= 0)
+        var maximumCharges = ResolveMaximumCharges(state);
+        var due = maximumCharges - state.Charges;
+        if (due <= 0 || maximumCharges <= 0)
             return 0;
-        var baseValue = checked(state.Value + (int)Pricing.GetSpellStaffCost(state.SpellId));
-        return (uint)Math.Max(0, baseValue * due / (state.MaxCharges * Pricing.RechargeDivisor));
+        var spellId = ResolveSpellId(state);
+        var baseValue = checked(state.Value + (int)Pricing.GetSpellStaffCost(spellId));
+        return (uint)Math.Max(0, baseValue * due / (maximumCharges * Pricing.RechargeDivisor));
+    }
+
+    private int ResolveMaximumCharges(AuthoritativeItemState state)
+    {
+        if (state.MaxCharges != 0)
+            return state.MaxCharges;
+        if (items is not null
+            && items.TryGetByState(state, out var definition)
+            && definition.MaxCharges != 0)
+            return definition.MaxCharges;
+        return 0;
+    }
+
+    private int ResolveSpellId(AuthoritativeItemState state)
+    {
+        if (state.SpellId != 0)
+            return state.SpellId;
+        if (items is not null
+            && items.TryGetByState(state, out var definition))
+            return definition.SpellId;
+        return 0;
     }
 
     public uint GetRechargePrice(OwnedStoreItem item)

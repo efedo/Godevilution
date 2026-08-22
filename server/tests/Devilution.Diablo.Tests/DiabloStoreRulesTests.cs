@@ -174,4 +174,28 @@ public sealed class DiabloStoreRulesTests
             DiabloRuleFailure.InvalidTarget,
             rules.ValidateRecharge(nonStaff, 100));
     }
+
+    [Fact]
+    public void RechargeUsesContentCapacityAndSpellPricingWhenStateOmitsFields()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 101,
+                SpellId = 7,
+                MaxCharges = 10,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+        ]);
+        var pricing = new StoreServicePricing(
+            spellStaffCosts: new Dictionary<int, uint> { [7] = 100 });
+        var rules = new DiabloStoreRules(pricing, items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            Charges = 1,
+            Value = 100,
+        };
+
+        Assert.Null(rules.ValidateRecharge(state, 100));
+        Assert.Equal(90U, rules.GetRechargePrice(state));
+    }
 }
