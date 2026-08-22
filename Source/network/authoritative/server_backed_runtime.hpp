@@ -136,7 +136,7 @@ public:
 	[[nodiscard]] std::optional<uint32_t> MonsterEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the lowest-ID remote authoritative player at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> PlayerEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
-	/** Finds the lowest-ID authoritative object at a projected cell. */
+	/** Finds the lowest-ID projected object at a cell, including presentation-only objects. */
 	[[nodiscard]] std::optional<uint32_t> ObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the active content-owned quest object at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> QuestObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;

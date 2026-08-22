@@ -16,6 +16,7 @@
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/vendor_snapshot.hpp"
 #include "network/authoritative/server_backed_vendor_state.hpp"
+#include "network/authoritative/server_backed_world_projection.hpp"
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_debug_policy.hpp"
@@ -70,6 +71,24 @@ TEST(ServerBackedCompatibility, StaleObjectHighlightsFailClosed)
 	EXPECT_EQ(
 	    ResolveServerBackedObjectInteractionRoute(true, false, false),
 	    Route::None);
+}
+
+TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTargets)
+{
+	ServerBackedWorldProjection projection;
+	ProjectedObjectSnapshot presentationObject;
+	presentationObject.entityId = 17;
+	presentationObject.levelId = 1;
+	presentationObject.positionX = 4;
+	presentationObject.positionY = 5;
+
+	ASSERT_TRUE(projection.Apply({}, {}, { presentationObject }, 1).has_value());
+	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t> { 17 });
+	EXPECT_FALSE(projection.AuthoritativeObjectAt(4, 5).has_value());
+
+	presentationObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation);
+	ASSERT_TRUE(projection.Apply({}, {}, { presentationObject }, 1).has_value());
+	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t> { 17 });
 }
 
 TEST(ServerBackedCompatibility, MissingMonsterProjectionFailsClosed)

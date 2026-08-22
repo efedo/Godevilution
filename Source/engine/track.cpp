@@ -158,7 +158,7 @@ void RepeatPlayerAction()
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (ObjectUnderCursor == nullptr || ObjectUnderCursor->isDoor())
 				return;
-			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed repeated object target is not an authoritative entity.");
 			} else if (pcurs == CURSOR_DISARM) {

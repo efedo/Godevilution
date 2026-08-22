@@ -550,7 +550,7 @@ void Interact()
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 			return;
 		}
-		const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+		const auto objectEntityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 		switch (ResolveServerBackedObjectInteractionRoute(
 		    true,
 		    ObjectUnderCursor != nullptr,
@@ -646,7 +646,7 @@ void Interact()
 	if (ObjectUnderCursor != nullptr) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed controller object target is not an authoritative entity.");
 			} else if (pcurs == CURSOR_DISARM) {
@@ -2523,7 +2523,7 @@ bool TryDropItem()
 					const Point target = myPlayer.position.tile + dir;
 					if (!OpensHive(target))
 						continue;
-					if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y); entityId.has_value()) {
+					if (const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(target.x, target.y); entityId.has_value()) {
 						routed = true;
 						if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 							LogError("Server-backed Rune Bomb hive interaction failed: {}", result.error());
@@ -2548,7 +2548,7 @@ bool TryDropItem()
 					const Point target = myPlayer.position.tile + dir;
 					if (!OpensGrave(target))
 						continue;
-					if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y); entityId.has_value()) {
+					if (const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(target.x, target.y); entityId.has_value()) {
 						routed = true;
 						if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 							LogError("Server-backed Cathedral Map grave interaction failed: {}", result.error());
@@ -2732,7 +2732,7 @@ void PerformSecondaryAction()
 			LogError("Server-backed controller world-item target is not an authoritative entity.");
 			return;
 		}
-		if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value()) {
+		if (const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value()) {
 			if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed object interaction failed: {}", result.error());
 			LastPlayerAction = PlayerActionType::OperateObject;

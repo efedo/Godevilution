@@ -2,6 +2,11 @@
 
 Status date: 2026-08-22
 
+Connected native object-command routes now resolve only projected objects with
+authoritative behavior. Ordinary presentation-only objects remain available for
+rendering but fail closed before OperateObject, DisarmTrap, or object-targeted
+Telekinesis commands are submitted.
+
 Engine verification now includes a 64-generation ruleset replacement pressure
 fixture that holds every prior generation under lease and drains them only
 after all leases release.

@@ -336,7 +336,7 @@ void LeftMouseCmd(bool bShift)
 	} else if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled() && (!bShift || (bNear && ObjectUnderCursor->_oBreak == 1))) {
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed object target is not an authoritative entity.");
 			} else if (pcurs == CURSOR_DISARM) {
@@ -497,7 +497,7 @@ bool TryOpenDungeonWithMouse()
 	if (holdItem.IDidx == IDI_RUNEBOMB && OpensHive(cursPosition)) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value())
 				LogError("Server-backed Rune Bomb use found no authoritative hive object.");
 			else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
@@ -510,7 +510,7 @@ bool TryOpenDungeonWithMouse()
 	} else if (holdItem.IDidx == IDI_MAPOFDOOM && OpensGrave(cursPosition)) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value())
 				LogError("Server-backed Cathedral Map use found no authoritative grave object.");
 			else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
@@ -3297,7 +3297,7 @@ bool TryIconCurs()
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			uint32_t targetEntityId = 0;
 			if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled()) {
-				if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+				if (const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
 					targetEntityId = *entityId;
 			} else if (pcursitem != -1) {
 				if (const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
@@ -3521,7 +3521,7 @@ bool TryIconCurs()
 	if (pcurs == CURSOR_DISARM && ObjectUnderCursor != nullptr) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
 				LogError("Server-backed trap target is not an authoritative entity.");
 			} else if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value()) {

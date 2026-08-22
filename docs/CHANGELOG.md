@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Route connected native object commands through the authoritative-only object
+  projection, keeping presentation-only objects out of OperateObject,
+  DisarmTrap, and object-targeted Telekinesis submissions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an
   explicit connected-session legacy-world policy, with compatibility coverage
   proving that connected clients cannot emit legacy level-transition commands.

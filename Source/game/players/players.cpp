@@ -1313,7 +1313,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 				} else {
 				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
-						const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(object->position.x, object->position.y);
+						const auto objectEntityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(object->position.x, object->position.y);
 						switch (ResolveServerBackedObjectInteractionRoute(
 						    true,
 						    true,

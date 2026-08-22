@@ -2391,7 +2391,7 @@ bool UseInvItem(int cii)
 				}
 				bool foundObject = false;
 				const auto tryHiveObject = [&](Point target) {
-					const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y);
+					const auto objectEntityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(target.x, target.y);
 					if (!objectEntityId.has_value())
 						return false;
 					foundObject = true;
@@ -2427,7 +2427,7 @@ bool UseInvItem(int cii)
 				bool foundObject = false;
 				for (auto dir : PathDirs) {
 					const Point target = player.position.tile + dir;
-					const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y);
+					const auto objectEntityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(target.x, target.y);
 					if (!objectEntityId.has_value())
 						continue;
 					foundObject = true;
