@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   current-level-missing visited-level state before serialization.
 - Reject live authoritative snapshots whose active-store and stash-session
   state cannot be represented consistently by the shared client projection.
+- Reject malformed live authoritative character names before native/Godot
+  projection, including names outside the native printable length rules.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.

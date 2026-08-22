@@ -388,6 +388,44 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidCharacterNameBeforeProjection()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { CharacterName = "Invalid Name" },
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { CharacterName = new string('A', 32) },
+            }));
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(

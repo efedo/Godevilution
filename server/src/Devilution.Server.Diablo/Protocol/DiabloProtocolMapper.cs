@@ -420,6 +420,11 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative player projection opens a stash and store simultaneously.");
         }
+        if (!string.IsNullOrEmpty(state.CharacterName)
+            && !DiabloPlayerName.IsValid(state.CharacterName)) {
+            throw new InvalidDataException(
+                "Authoritative player projection contains an invalid character name.");
+        }
         if (!Enum.IsDefined(state.AbilityKind)
             || !Enum.IsDefined(state.FacingDirection)
             || !Enum.IsDefined(state.CombatMode)) {
