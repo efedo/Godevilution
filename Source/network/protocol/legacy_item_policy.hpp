@@ -33,4 +33,10 @@ constexpr bool ShouldProcessLegacyStashInventoryTransfer(bool serverConnected) n
 	return !serverConnected;
 }
 
+/** Automatic legacy pickup commands are offline-only while world items are server-owned. */
+constexpr bool ShouldProcessLegacyAutoPickup(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 } // namespace devilution

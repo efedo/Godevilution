@@ -170,6 +170,12 @@ TEST(ServerBackedCompatibility, ConnectedCtrlClickStashTransferUsesAuthoritative
 	EXPECT_FALSE(ShouldProcessLegacyStashInventoryTransfer(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedAutoPickupUsesAuthoritativeWorldItems)
+{
+	EXPECT_TRUE(ShouldProcessLegacyAutoPickup(false));
+	EXPECT_FALSE(ShouldProcessLegacyAutoPickup(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyAttributeMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyAttributeMessage(false));

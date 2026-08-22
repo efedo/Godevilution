@@ -2,6 +2,9 @@
 
 Status date: 2026-08-22
 
+Connected native automatic pickup now fails closed at its legacy command
+boundary; authoritative world-item pickup remains server-owned even if a
+future caller reaches the legacy helper.
 Connected native unique-monster conversations now avoid the legacy local
 monster-mode mutation before authoritative dialogue routing; offline
 conversations retain the native mode change.

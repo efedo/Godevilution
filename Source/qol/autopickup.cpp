@@ -11,7 +11,12 @@
 #include "game/levels/dungeon_common.h"
 #include "persistence/options.h"
 #include "game/players/players.hpp"
+#include "network/protocol/legacy_item_policy.hpp"
 #include "utils/algorithm/container.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 namespace {
@@ -93,6 +98,11 @@ bool DoPickup(Item item)
 
 void AutoPickup(const Player &player)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyAutoPickup(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	if (&player != MyPlayer)
 		return;
 	if (levelType() == DTYPE_TOWN && !*GetOptions().Gameplay.autoPickupInTown)
