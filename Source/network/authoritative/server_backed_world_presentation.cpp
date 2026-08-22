@@ -653,6 +653,21 @@ void RemoveMappedMonster(unsigned monsterSlot)
 	}
 }
 
+void RemoveUnclaimedMonsterSlots(const std::unordered_set<unsigned> &claimedSlots)
+{
+	for (int activeIndex = static_cast<int>(MonsterPoolAdapter::ActiveMonsterCountValue()) - 1; activeIndex >= 0; --activeIndex) {
+		const unsigned monsterSlot = MonsterPoolAdapter::ActiveMonsterIds()[static_cast<size_t>(activeIndex)];
+		if (claimedSlots.contains(monsterSlot))
+			continue;
+
+		const Monster &monster = Monsters[monsterSlot];
+		ClearMonsterTile(monsterSlot, monster.position.tile);
+		if (monster.position.future != monster.position.tile)
+			ClearMonsterTile(monsterSlot, monster.position.future);
+		DeleteMonsterAtActiveIndex(static_cast<size_t>(activeIndex));
+	}
+}
+
 void RemoveMappedObject(int objectSlot)
 {
 	if (const int activeIndex = FindActiveObjectListIndex(objectSlot); activeIndex >= 0) {
@@ -729,6 +744,11 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		monsterSlots_[snapshot.entityId] = slot;
 		ApplyMonsterSnapshot(Monsters[slot], snapshot);
 	}
+	// Native level loading still creates compatibility-pool monsters so their
+	// presentation data is available. They are not authoritative, however, and
+	// any slot not claimed by this snapshot must be removed before interaction or
+	// rendering can observe a local ghost.
+	RemoveUnclaimedMonsterSlots(claimedMonsterSlots);
 
 	for (const auto &snapshot : projection.WorldItems()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))

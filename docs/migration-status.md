@@ -17,6 +17,9 @@ Connected native level loads now skip legacy random and quest-item generation.
 Authoritative world-item projections remain the only connected-session source of
 world-item state, and projected Cornerstone items no longer trigger the legacy
 local quest-completion side effect.
+The native authoritative world bridge now removes unclaimed local monster
+presentation slots after each snapshot, so legacy level-load monsters cannot
+remain visible or occupy tiles after server state is applied.
 
 ## Current state
 
