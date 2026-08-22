@@ -753,6 +753,76 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsRemainingProjectedEntityPositionsOutsideBounds()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var levels = new[] { new AuthoritativeLevel(1, 10, 10) };
+
+        void AssertRejected(DiabloSimulationSnapshot value)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(value, levelGeometry: levels));
+        }
+
+        AssertRejected(source with {
+            Player = player with { PositionX = -1 },
+        });
+
+        var monster = new DiabloMonsterState(
+            2,
+            4,
+            1,
+            4,
+            5,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0) {
+            Moving = true,
+            FuturePositionX = 10,
+            FuturePositionY = 5,
+        };
+        AssertRejected(source with { Monsters = [monster] });
+
+        AssertRejected(source with {
+            Corpses = [new DiabloCorpseState(3, 1, 4, 10)],
+        });
+
+        AssertRejected(source with {
+            Portals = [new DiabloPortalState(4, 1, 4, 5, 1, 10, 5)],
+        });
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

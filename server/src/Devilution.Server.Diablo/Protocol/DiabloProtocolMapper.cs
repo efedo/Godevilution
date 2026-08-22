@@ -53,6 +53,10 @@ internal static class DiabloProtocolMapper
                     .Where(player => player.EntityId != source.Player.EntityId)
                     .OrderBy(player => player.EntityId))
                 .ToArray();
+        ValidateProjectedPlayerPositions(projectedParticipants, projectedLevels);
+        ValidateProjectedMonsterPositions(source.Monsters, projectedLevels);
+        ValidateProjectedCorpsePositions(source.Corpses, projectedLevels);
+        ValidateProjectedPortalPositions(source.Portals, projectedLevels);
 
         var snapshot = new Snapshot {
             Tick = source.Tick,
@@ -496,6 +500,76 @@ internal static class DiabloProtocolMapper
                 throw new InvalidDataException(
                     "Authoritative projectile state is outside the shared protocol range.");
             }
+        }
+    }
+
+    private static void ValidateProjectedPlayerPositions(
+        IEnumerable<StorePlayerSnapshot> players,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var player in players) {
+            ValidateProjectedEntityPosition(
+                player.LevelId,
+                player.PositionX,
+                player.PositionY,
+                levels,
+                "player");
+        }
+    }
+
+    private static void ValidateProjectedMonsterPositions(
+        IReadOnlyList<DiabloMonsterState> monsters,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var monster in monsters) {
+            ValidateProjectedEntityPosition(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                levels,
+                "monster");
+            if (monster.Moving) {
+                ValidateProjectedEntityPosition(
+                    monster.LevelId,
+                    monster.FuturePositionX,
+                    monster.FuturePositionY,
+                    levels,
+                    "monster future");
+            }
+        }
+    }
+
+    private static void ValidateProjectedCorpsePositions(
+        IReadOnlyList<DiabloCorpseState> corpses,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var corpse in corpses) {
+            ValidateProjectedEntityPosition(
+                corpse.LevelId,
+                corpse.PositionX,
+                corpse.PositionY,
+                levels,
+                "corpse");
+        }
+    }
+
+    private static void ValidateProjectedPortalPositions(
+        IReadOnlyList<DiabloPortalState> portals,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var portal in portals) {
+            ValidateProjectedEntityPosition(
+                portal.SourceLevelId,
+                portal.SourcePositionX,
+                portal.SourcePositionY,
+                levels,
+                "portal source");
+            ValidateProjectedEntityPosition(
+                portal.DestinationLevelId,
+                portal.DestinationPositionX,
+                portal.DestinationPositionY,
+                levels,
+                "portal destination");
         }
     }
 
