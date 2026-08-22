@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native MagmaBall initial launch advance through
+  `monster_missiles.tsv`, preserving the three-quanta fallback for older packs
+  and advancing the Diablo content schema to 1.399.
+
 - Externalize native spell-book template item-level eligibility through
   `items.tsv`, preserving the legacy fallback for older packs and advancing the
   Diablo content schema to 1.398.

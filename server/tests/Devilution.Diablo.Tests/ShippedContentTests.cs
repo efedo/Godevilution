@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.398.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.399.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -1817,6 +1817,7 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Magma", out var magma));
         Assert.Equal("MagmaBall", magma.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, magma.ProjectileBehavior);
+        Assert.Equal(3, magma.InitialTravelQuanta);
         Assert.True(activation.MonsterMissiles.TryGet("Mega", out var mega));
         Assert.Equal("InfernoControl", mega.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.InfernoController, mega.ProjectileBehavior);
@@ -1964,7 +1965,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.398.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.399.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

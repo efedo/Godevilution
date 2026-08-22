@@ -7956,11 +7956,14 @@ public sealed class DiabloCombatCommandProcessor
                 // Native AddChargedBolt also rolls a presentation frame.
                 _ = random.RandomIntBetween(1, 8);
             }
-            if (missile.MissileId == "MagmaBall") {
-                // Native AddMagmaBall advances by three velocity quanta before
-                // the first ProcessMagmaBall tick.
-                projectile.TraveledX = checked(projectile.VelocityX * 3);
-                projectile.TraveledY = checked(projectile.VelocityY * 3);
+            var initialTravelQuanta = missile.InitialTravelQuanta > 0
+                ? missile.InitialTravelQuanta
+                : missile.MissileId == "MagmaBall" ? 3 : 0;
+            if (initialTravelQuanta > 0) {
+                // Older mappings retain the native MagmaBall compatibility fallback;
+                // shipped rows declare the same advance through content.
+                projectile.TraveledX = checked(projectile.VelocityX * initialTravelQuanta);
+                projectile.TraveledY = checked(projectile.VelocityY * initialTravelQuanta);
                 var initialTile = CalculateMissileTile(
                     projectile.StartX,
                     projectile.StartY,

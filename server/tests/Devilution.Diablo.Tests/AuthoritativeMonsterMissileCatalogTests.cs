@@ -35,6 +35,17 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsOptionalInitialTravelQuanta()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tinitial_travel_quanta\n"
+                + "Magma\tMagmaBall\tMonsterMagic\t3\n");
+
+        Assert.Equal(3, Assert.Single(catalog.Definitions).InitialTravelQuanta);
+    }
+
+    [Fact]
     public void LoadsValidatedAdjacentAttackBand()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
@@ -689,6 +700,20 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     "DiabloApocalypse",
                     AuthoritativeProjectileBehavior.ApocalypseController,
                 ProjectileDamage: -1),
+            ]));
+    }
+
+    [Fact]
+    public void RejectsInvalidInitialTravelQuanta()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic) {
+                    InitialTravelQuanta = 17,
+                },
             ]));
     }
 

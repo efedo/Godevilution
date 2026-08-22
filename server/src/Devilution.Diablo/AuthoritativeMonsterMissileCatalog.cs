@@ -115,6 +115,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
 
     /** Optional AiRangedAvoidance fresh-mode movement chance bonus. */
     public int RangedAvoidanceMovementFreshChanceBonus { get; init; }
+
+    /** Optional native initial travel advance in velocity quanta. */
+    public int InitialTravelQuanta { get; init; }
 }
 
 /** Externalized native monster missile identities used by server-owned AI. */
@@ -137,6 +140,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     && !Enum.IsDefined(definition.DamageType.Value)
                 || definition.AvoidanceProbabilityPercent is < 1 or > 100
                 || definition.ProjectileSpeed < 0
+                || definition.InitialTravelQuanta is < 0 or > 16
                 || definition.ProjectileLifetime < 0
                 || definition.ProjectileLifetimeBase < 0
                 || definition.ProjectileLifetimeIntelligenceScale < 0
@@ -516,6 +520,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 RangedAvoidanceAdjacentAttackChanceDivisor = row.OptionalInt32(
                     "ranged_avoidance_adjacent_attack_chance_divisor"),
                 IsPostMeleeMissile = row.OptionalBoolean("post_melee_missile"),
+                InitialTravelQuanta = row.OptionalInt32("initial_travel_quanta"),
             };
         }));
     }
