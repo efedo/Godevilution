@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-21
+Status date: 2026-08-22
 
 ## Current state
 
@@ -64,6 +64,10 @@ scaled hit points), not only the client's difficulty label.
 - The shipped Counselor Charged Bolt missile row now declares its native
   fifteen-point payload through the existing validated `projectile_damage`
   field; older rows retain the server fallback.
+- Schema 1.401 externalizes the native class-specific ranged-arrow speed bonus
+  through `classes.tsv`; shipped Rogue, Warrior, and Bard rows declare their
+  native level divisors while older class tables retain the compatibility
+  fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

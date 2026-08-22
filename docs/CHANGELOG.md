@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native class-specific ranged-arrow speed level divisor
+  through `classes.tsv`, preserving symbol-based compatibility for older class
+  tables and advancing the Diablo content schema to 1.401.
+
 - Declare the native fifteen-point Counselor Charged Bolt monster payload in
   shipped `monster_missiles.tsv` content while retaining the legacy fallback.
 

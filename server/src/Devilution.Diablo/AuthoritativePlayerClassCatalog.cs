@@ -110,6 +110,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native staff FastBlock frame skip. */
     public int FastBlockFrameSkip { get; init; } = 2;
 
+    /** Native ranged-arrow speed bonus divisor per character level. */
+    public int RangedArrowSpeedLevelDivisor { get; init; }
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -302,6 +305,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "fast_block_frame_skip",
     ];
 
+    private static readonly IReadOnlyList<string> ClassProjectileTuningColumns = [
+        ..ClassDefenseTuningColumns,
+        "ranged_arrow_speed_level_divisor",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -382,9 +390,13 @@ public sealed class AuthoritativePlayerClassCatalog
         StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var hasClassProjectileTuning = table.Columns.SequenceEqual(
+            ClassProjectileTuningColumns,
+            StringComparer.Ordinal);
         var hasClassDefenseTuning = table.Columns.SequenceEqual(
             ClassDefenseTuningColumns,
-            StringComparer.Ordinal);
+            StringComparer.Ordinal)
+            || hasClassProjectileTuning;
         var hasDefenseTuning = table.Columns.SequenceEqual(
             DefenseTuningColumns,
             StringComparer.Ordinal)
@@ -508,7 +520,19 @@ public sealed class AuthoritativePlayerClassCatalog
                 FastBlockFrameSkip = hasClassDefenseTuning
                     ? row.RequiredInt32("fast_block_frame_skip")
                     : 2,
+                RangedArrowSpeedLevelDivisor = hasClassProjectileTuning
+                    ? row.RequiredInt32("ranged_arrow_speed_level_divisor")
+                    : InferLegacyRangedArrowSpeedLevelDivisor(row.Required("symbol")),
             }));
+    }
+
+    private static int InferLegacyRangedArrowSpeedLevelDivisor(string symbol)
+    {
+        return symbol switch {
+            "rogue" => 4,
+            "warrior" or "bard" => 8,
+            _ => 0,
+        };
     }
 
     private static void Validate(AuthoritativePlayerClassDefinition definition)
@@ -563,6 +587,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.NaturalResistancePerLevelPercent is < 0 or > 100
             || definition.HeavyHitThresholdBonusPercent is < 0 or > 100
             || definition.FastBlockFrameSkip is < 0 or > 10
+            || definition.RangedArrowSpeedLevelDivisor is < 0 or > 100
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.400.0` schema in
+It declares its identity and `devilution.diablo@1.401.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -65,6 +65,10 @@ native HeavyHitThreshold stun threshold bonus; omitted values retain the native
 chance level-difference scale; omitted values retain the native scale of two.
 `fast_block_frame_skip` externalizes the native FastBlock staff timing value;
 omitted values retain the native two-frame compatibility default.
+`ranged_arrow_speed_level_divisor` externalizes the native class-specific
+arrow-speed level bonus; shipped Rogue, Warrior, and Bard rows carry divisors
+four, eight, and eight respectively, while older class tables retain the
+symbol-based compatibility fallback.
 `equipment_fast_block_frame_skip` externalizes the native equipment FastBlock
 timing value; omitted values retain the native two-frame compatibility default.
 The `fast_hit_recovery_frame_skip`, `faster_hit_recovery_frame_skip`, and
@@ -1844,6 +1848,11 @@ Schema 1.400 adds the optional `projectile_count` column to
 native three-projectile emission; older mappings retain that compatibility
 fallback.
 
+Schema 1.401 adds the optional `ranged_arrow_speed_level_divisor` column to
+`classes.tsv`. Shipped Warrior and Bard rows declare the native level-over-eight
+arrow-speed bonus and Rogue declares the level-over-four bonus; older class
+tables retain the symbol-based compatibility fallback.
+
 Schema 1.387 adds optional native tile-definition paths to
 `native_dun_fragments.tsv`. When a fragment supplies both `tile_asset_path` and
 `sol_asset_path`, the server expands its `.dun` mega-tiles through the external
@@ -2602,7 +2611,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, and FastBlock timing. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, FastBlock timing, and class-specific ranged-arrow speed tuning. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with optional stable `item_symbol` cross-checks. |
@@ -2669,7 +2678,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.400.0"
+    "version": "1.401.0"
   },
   "dependencyConstraints": [
     {
@@ -2701,7 +2710,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.400.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.401.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

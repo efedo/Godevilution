@@ -1073,10 +1073,10 @@ public sealed class DiabloCombatCommandProcessor
 
         var playerClass = GetPlayerClass(player);
         var level = checked((int)player.CharacterLevel);
-        if (playerClass?.Symbol is "rogue")
-            speed = checked(speed + Math.Max(0, level - 1) / 4);
-        else if (playerClass?.Symbol is "warrior" or "bard")
-            speed = checked(speed + Math.Max(0, level - 1) / 8);
+        if (playerClass?.RangedArrowSpeedLevelDivisor > 0)
+            speed = checked(
+                speed
+                + Math.Max(0, level - 1) / playerClass.RangedArrowSpeedLevelDivisor);
 
         if (rules.GameVariant == DiabloGameVariant.Hellfire) {
             var flags = GetUsableEquipmentFlags(player);

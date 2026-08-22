@@ -1292,6 +1292,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ArrowVelocityUsesConfiguredClassSpeedDivisor()
+    {
+        var target = new AuthoritativeCombatTarget(9, 15, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            characterClassId: 1,
+            characterLevel: 12,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var shippedClasses = LoadShippedPlayerClasses();
+        var configuredClasses = new AuthoritativePlayerClassCatalog(
+            shippedClasses.Definitions.Select(definition =>
+                definition.Symbol == "rogue"
+                    ? definition with { RangedArrowSpeedLevelDivisor = 2 }
+                    : definition));
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire),
+            playerClasses: configuredClasses);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(37, Assert.Single(world.Projectiles.Values).Speed);
+    }
+
+    [Fact]
     public void PlayerArrowBreaksABlockingObjectBeforeRemoval()
     {
         var blocker = new AuthoritativeWorldObject(
