@@ -57,6 +57,13 @@ bool IsValidObjectPresentationKind(protocol::ObjectPresentationKind value)
 	}
 }
 
+bool IsValidNativeTileCoordinate(int32_t x, int32_t y)
+{
+	return x >= 0 && y >= 0
+	    && x <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max())
+	    && y <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max());
+}
+
 } // namespace
 
 tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const protocol::Snapshot &snapshot, uint32_t entityId)
@@ -609,6 +616,11 @@ tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSna
 	for (const auto &source : snapshot.portals()) {
 		if (source.portal_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains a portal with an invalid portal ID.");
+		if (!IsValidNativeTileCoordinate(source.source_position_x(), source.source_position_y())
+		    || !IsValidNativeTileCoordinate(source.destination_position_x(), source.destination_position_y())
+		    || (source.bidirectional() && (source.owner_entity_id() == 0 || source.remaining_ticks() == 0))
+		    || (!source.bidirectional() && (source.owner_entity_id() != 0 || source.remaining_ticks() != 0)))
+			return tl::make_unexpected("Server-backed snapshot contains an invalid portal route state.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.portalId == source.portal_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate portal IDs.");
 		projected.push_back({

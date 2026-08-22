@@ -109,6 +109,8 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative object projection now mirrors the Godot object boundary,
   rejecting invalid effect and presentation kinds, quest-transition and reward
   metadata, projectile offsets and sources, and quest-sequence follow-ups.
+- Native authoritative portal projection now rejects non-native endpoint
+  coordinates and inconsistent owned-portal lifetime or owner state.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

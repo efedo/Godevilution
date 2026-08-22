@@ -691,6 +691,41 @@ TEST(ServerBackedPlayerSnapshot, ProjectsPortalsInStableOrderAndRejectsDuplicate
 	EXPECT_FALSE(ProjectPortalSnapshots(snapshot).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedPortalRouteState)
+{
+	protocol::Snapshot invalidOwner;
+	auto *portal = invalidOwner.add_portals();
+	portal->set_portal_id(1);
+	portal->set_bidirectional(true);
+	portal->set_remaining_ticks(5);
+	EXPECT_FALSE(ProjectPortalSnapshots(invalidOwner).has_value());
+
+	protocol::Snapshot invalidLifetime;
+	portal = invalidLifetime.add_portals();
+	portal->set_portal_id(1);
+	portal->set_bidirectional(true);
+	portal->set_owner_entity_id(2);
+	EXPECT_FALSE(ProjectPortalSnapshots(invalidLifetime).has_value());
+
+	protocol::Snapshot oneWayState;
+	portal = oneWayState.add_portals();
+	portal->set_portal_id(1);
+	portal->set_owner_entity_id(2);
+	EXPECT_FALSE(ProjectPortalSnapshots(oneWayState).has_value());
+
+	protocol::Snapshot invalidCoordinate;
+	portal = invalidCoordinate.add_portals();
+	portal->set_portal_id(1);
+	portal->set_source_position_x(-1);
+	EXPECT_FALSE(ProjectPortalSnapshots(invalidCoordinate).has_value());
+
+	protocol::Snapshot oversizedCoordinate;
+	portal = oversizedCoordinate.add_portals();
+	portal->set_portal_id(1);
+	portal->set_destination_position_y(256);
+	EXPECT_FALSE(ProjectPortalSnapshots(oversizedCoordinate).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

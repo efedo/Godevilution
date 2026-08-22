@@ -68,6 +68,8 @@ All notable changes to this fork are documented below.
 - Native authoritative object projection now rejects invalid effect and
   presentation kinds, quest-transition and reward metadata, projectile offsets
   and sources, and quest-sequence follow-ups before native conversion.
+- Native authoritative portal projection now rejects non-native endpoint
+  coordinates and inconsistent owned-portal lifetime or owner state.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - The native authoritative projection now rejects non-empty visited-level sets
