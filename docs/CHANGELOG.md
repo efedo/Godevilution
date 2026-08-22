@@ -87,6 +87,8 @@ All notable changes to this fork are documented below.
   metadata during live authoritative world construction.
 - Bound direct initial world-state collections to the same 4,096-entry
   per-category limit enforced during authoritative save restoration.
+- Revalidate mutable portal dictionary keys and lifecycle metadata at the live
+  initial-position gate before publishing a session.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

@@ -389,6 +389,28 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void InitialWorldValidationRejectsMutatedPortalDictionaryEntries()
+    {
+        var mismatchedKeyWorld = new DiabloWorldState();
+        mismatchedKeyWorld.Portals.Add(
+            7,
+            new AuthoritativePortal(8, 0, 0, 0, 0, 1, 1));
+        var keyException = Assert.Throws<InvalidDataException>(() =>
+            mismatchedKeyWorld.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("Portal dictionary key 7 does not match portal identity 8", keyException.Message, StringComparison.Ordinal);
+
+        var invalidMetadataWorld = new DiabloWorldState();
+        invalidMetadataWorld.Portals.Add(
+            9,
+            new AuthoritativePortal(9, 0, 0, 0, 0, 1, 1) {
+                OwnerEntityId = 3,
+            });
+        var metadataException = Assert.Throws<InvalidDataException>(() =>
+            invalidMetadataWorld.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("Portal 9 has invalid ownership or lifetime metadata", metadataException.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(

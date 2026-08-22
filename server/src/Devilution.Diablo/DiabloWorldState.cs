@@ -83,14 +83,7 @@ public sealed class DiabloWorldState
             CombatTargets.Add(target.EntityId, target);
         }
         foreach (var portal in portals ?? []) {
-            if (portal.PortalId == 0)
-                throw new InvalidDataException("Portal identity cannot be zero.");
-            if (portal.Bidirectional
-                ? portal.OwnerEntityId == 0 || portal.RemainingTicks == 0
-                : portal.OwnerEntityId != 0 || portal.RemainingTicks != 0) {
-                throw new InvalidDataException(
-                    $"Portal {portal.PortalId} has invalid ownership or lifetime metadata.");
-            }
+            ValidatePortalState(portal);
             if (!Portals.TryAdd(portal.PortalId, portal))
                 throw new InvalidDataException(
                     $"Portal {portal.PortalId} is registered more than once.");
@@ -627,7 +620,13 @@ public sealed class DiabloWorldState
                     $"Entity {@object.EntityId} is registered more than once.");
             }
         }
-        foreach (var portal in Portals.Values) {
+        var portalIds = new HashSet<uint>();
+        foreach (var entry in Portals) {
+            ValidatePortalState(entry.Value, entry.Key);
+            if (!portalIds.Add(entry.Value.PortalId))
+                throw new InvalidDataException(
+                    $"Portal {entry.Value.PortalId} is registered more than once.");
+            var portal = entry.Value;
             ValidatePosition(
                 portal.SourceLevelId,
                 portal.SourcePositionX,
@@ -656,6 +655,24 @@ public sealed class DiabloWorldState
             Objects.Values
                 .Where(@object => !@object.Activated && !@object.Destroyed)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY)));
+    }
+
+    private static void ValidatePortalState(
+        AuthoritativePortal portal,
+        uint? expectedPortalId = null)
+    {
+        ArgumentNullException.ThrowIfNull(portal);
+        if (portal.PortalId == 0)
+            throw new InvalidDataException("Portal identity cannot be zero.");
+        if (expectedPortalId is uint dictionaryKey && dictionaryKey != portal.PortalId)
+            throw new InvalidDataException(
+                $"Portal dictionary key {dictionaryKey} does not match portal identity {portal.PortalId}.");
+        if (portal.Bidirectional
+            ? portal.OwnerEntityId == 0 || portal.RemainingTicks == 0
+            : portal.OwnerEntityId != 0 || portal.RemainingTicks != 0) {
+            throw new InvalidDataException(
+                $"Portal {portal.PortalId} has invalid ownership or lifetime metadata.");
+        }
     }
 
     private void ValidatePosition(uint levelId, int positionX, int positionY, string entityKind)
