@@ -48,6 +48,7 @@ public:
 	[[nodiscard]] const std::vector<ProjectedObjectSnapshot> &ObjectState() const noexcept { return objectState_; }
 	[[nodiscard]] const std::vector<ProjectedProjectileSnapshot> &ProjectileState() const noexcept { return projectileState_; }
 	[[nodiscard]] const std::vector<ProjectedPortalSnapshot> &PortalState() const noexcept { return portalState_; }
+	[[nodiscard]] const std::vector<ProjectedCorpseSnapshot> &CorpseState() const noexcept { return corpseState_; }
 	[[nodiscard]] const ServerBackedVendorState &VendorState() const noexcept { return vendorState_; }
 	/** Takes event batches received with the latest authoritative snapshot. */
 	std::vector<protocol::EventBatch> TakePendingEventBatches() { return client_->TakePendingEventBatches(); }
@@ -152,6 +153,7 @@ private:
 	std::vector<ProjectedObjectSnapshot> objectState_;
 	std::vector<ProjectedProjectileSnapshot> projectileState_;
 	std::vector<ProjectedPortalSnapshot> portalState_;
+	std::vector<ProjectedCorpseSnapshot> corpseState_;
 	std::vector<protocol::QuestSnapshot> questStates_;
 	std::vector<protocol::QuestTownerInteractionSnapshot> questTownerInteractions_;
 	ServerBackedVendorState vendorState_;

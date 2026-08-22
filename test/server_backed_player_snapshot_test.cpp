@@ -1065,6 +1065,29 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	EXPECT_TRUE(ValidateProjectileSnapshots(zeroSpellArrow).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeCorpses)
+{
+	protocol::Snapshot snapshot;
+	auto *second = snapshot.add_corpses();
+	second->set_entity_id(20);
+	second->set_level_id(3);
+	second->set_position_x(8);
+	second->set_position_y(9);
+	auto *first = snapshot.add_corpses();
+	first->set_entity_id(10);
+	first->set_level_id(2);
+	first->set_position_x(4);
+	first->set_position_y(5);
+
+	auto projected = ProjectCorpseSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 2U);
+	EXPECT_EQ(projected->front().entityId, 10U);
+	EXPECT_EQ(projected->front().levelId, 2U);
+	EXPECT_EQ(projected->back().entityId, 20U);
+	EXPECT_EQ(projected->back().positionY, 9);
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

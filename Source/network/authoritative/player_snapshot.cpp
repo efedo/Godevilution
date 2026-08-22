@@ -643,6 +643,26 @@ tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSna
 	return projected;
 }
 
+tl::expected<std::vector<ProjectedCorpseSnapshot>, std::string> ProjectCorpseSnapshots(const protocol::Snapshot &snapshot)
+{
+	std::vector<ProjectedCorpseSnapshot> projected;
+	projected.reserve(snapshot.corpses_size());
+	for (const auto &source : snapshot.corpses()) {
+		if (source.entity_id() == 0 || !IsValidNativeTileCoordinate(source.position_x(), source.position_y()))
+			return tl::make_unexpected("Server-backed snapshot contains a corpse with an invalid identity or position.");
+		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
+			return tl::make_unexpected("Server-backed snapshot contains duplicate corpse entity IDs.");
+		projected.push_back({
+		    .entityId = source.entity_id(),
+		    .levelId = source.level_id(),
+		    .positionX = source.position_x(),
+		    .positionY = source.position_y(),
+		});
+	}
+	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) { return left.entityId < right.entityId; });
+	return projected;
+}
+
 tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot &snapshot)
 {
 	if (snapshot.quests_size() > 4096)

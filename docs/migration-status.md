@@ -129,6 +129,8 @@ scaled hit points), not only the client's difficulty label.
   resistances, hit chances, death timelines, ownership, and dialogue identity.
 - Native authoritative projectile snapshots now reject invalid damage channels,
   lifecycle ranges, behavior/phase values, and typed presentation identities.
+- Native authoritative sessions now retain sorted server-owned corpse positions
+  without attempting to synthesize missing native corpse visual metadata.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

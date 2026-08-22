@@ -546,6 +546,10 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	if (!portals.has_value())
 		return tl::make_unexpected(portals.error());
 	portalState_ = std::move(*portals);
+	auto corpses = ProjectCorpseSnapshots(snapshot);
+	if (!corpses.has_value())
+		return tl::make_unexpected(corpses.error());
+	corpseState_ = std::move(*corpses);
 	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());
 	questTownerInteractions_.assign(
 		snapshot.quest_towner_interactions().begin(),
