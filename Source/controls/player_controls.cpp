@@ -2516,11 +2516,51 @@ bool TryDropItem()
 
 	if (levelType() == DTYPE_TOWN) {
 		if (UseItemOpensHive(myPlayer.HoldItem, myPlayer.position.tile)) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				bool routed = false;
+				for (const auto dir : PathDirs) {
+					const Point target = myPlayer.position.tile + dir;
+					if (!OpensHive(target))
+						continue;
+					if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y); entityId.has_value()) {
+						routed = true;
+						if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+							LogError("Server-backed Rune Bomb hive interaction failed: {}", result.error());
+						break;
+					}
+				}
+				if (!routed)
+					LogError("Server-backed Rune Bomb use found no authoritative hive object.");
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			OpenHive();
 			NewCursor(CURSOR_HAND);
 			return true;
 		}
 		if (UseItemOpensGrave(myPlayer.HoldItem, myPlayer.position.tile)) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				bool routed = false;
+				for (const auto dir : PathDirs) {
+					const Point target = myPlayer.position.tile + dir;
+					if (!OpensGrave(target))
+						continue;
+					if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y); entityId.has_value()) {
+						routed = true;
+						if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+							LogError("Server-backed Cathedral Map grave interaction failed: {}", result.error());
+						break;
+					}
+				}
+				if (!routed)
+					LogError("Server-backed Cathedral Map use found no authoritative grave object.");
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			OpenGrave();
 			NewCursor(CURSOR_HAND);
 			return true;

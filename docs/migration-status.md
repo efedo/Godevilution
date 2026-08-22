@@ -146,6 +146,9 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative stash item use now routes spell books, supported
   consumables, and oils through stable server-owned item intents; unsupported
   stash actions fail closed instead of invoking legacy local gameplay.
+- Native authoritative held Rune Bomb and Cathedral Map interactions now route
+  through projected server-owned dungeon objects; missing projections fail
+  closed instead of opening local set pieces.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

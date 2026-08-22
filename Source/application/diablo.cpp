@@ -484,11 +484,33 @@ bool TryOpenDungeonWithMouse()
 		return false;
 
 	const Item &holdItem = MyPlayer->HoldItem;
-	if (holdItem.IDidx == IDI_RUNEBOMB && OpensHive(cursPosition))
+	if (holdItem.IDidx == IDI_RUNEBOMB && OpensHive(cursPosition)) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value())
+				LogError("Server-backed Rune Bomb use found no authoritative hive object.");
+			else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Server-backed Rune Bomb hive interaction failed: {}", result.error());
+			NewCursor(CURSOR_HAND);
+			return true;
+		}
+#endif
 		OpenHive();
-	else if (holdItem.IDidx == IDI_MAPOFDOOM && OpensGrave(cursPosition))
+	} else if (holdItem.IDidx == IDI_MAPOFDOOM && OpensGrave(cursPosition)) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value())
+				LogError("Server-backed Cathedral Map use found no authoritative grave object.");
+			else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Server-backed Cathedral Map grave interaction failed: {}", result.error());
+			NewCursor(CURSOR_HAND);
+			return true;
+		}
+#endif
 		OpenGrave();
-	else
+	} else
 		return false;
 
 	NewCursor(CURSOR_HAND);
