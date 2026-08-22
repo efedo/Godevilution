@@ -41,6 +41,10 @@
 #include "utils/string/str_split.hpp"
 #include "utils/string/utf8.hpp"
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
+
 #ifdef UNPACKED_SAVES
 #include "utils/file/file_util.h"
 #else
@@ -57,6 +61,15 @@ namespace devilution {
 bool gbValidSaveFile;
 
 namespace {
+
+bool LegacyPersistenceAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldUseLegacyLocalSave(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
 
 /** List of character names for the character selection screen. */
 char hero_names[MAX_CHARACTERS][PlayerNameLength];
@@ -625,6 +638,8 @@ std::string_view pfile_get_password()
 
 void pfile_write_hero(bool writeGameData)
 {
+	if (!LegacyPersistenceAllowed())
+		return;
 	SaveWriter saveWriter = GetSaveWriter(gSaveNumber, /*carryForward=*/writeGameData);
 	pfile_write_hero(saveWriter, writeGameData);
 }
@@ -658,6 +673,8 @@ HeroCompareResult pfile_compare_hero_demo(int demo, bool logDetails)
 
 void sfile_write_stash()
 {
+	if (!LegacyPersistenceAllowed())
+		return;
 	if (!Stash.dirty)
 		return;
 
@@ -781,18 +798,24 @@ void pfile_read_player_from_save(uint32_t saveNum, Player &player)
 
 void pfile_save_level()
 {
+	if (!LegacyPersistenceAllowed())
+		return;
 	SaveWriter saveWriter = GetSaveWriter(gSaveNumber);
 	SaveLevel(saveWriter);
 }
 
 tl::expected<void, std::string> pfile_convert_levels()
 {
+	if (!LegacyPersistenceAllowed())
+		return tl::make_unexpected("Server-backed sessions do not convert legacy local levels.");
 	SaveWriter saveWriter = GetSaveWriter(gSaveNumber);
 	return ConvertLevels(saveWriter);
 }
 
 void pfile_remove_temp_files()
 {
+	if (!LegacyPersistenceAllowed())
+		return;
 	if (gbIsMultiplayer)
 		return;
 
@@ -804,6 +827,8 @@ void pfile_update(bool forceSave)
 {
 	static Uint32 prevTick;
 
+	if (!LegacyPersistenceAllowed())
+		return;
 	if (!gbIsMultiplayer)
 		return;
 

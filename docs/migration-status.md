@@ -166,9 +166,9 @@ scaled hit points), not only the client's difficulty label.
 - Connected native inventory sorting now fails closed because the legacy
   reorder mutates local placement and has no authoritative command equivalent;
   disconnected clients retain the legacy sort.
-- Connected native local save/load entry points now fail closed because
-  server-backed sessions own persistence; legacy local binary saves remain
-  offline-only.
+- Connected native local save/load entry points and legacy persistence writers
+  now fail closed because server-backed sessions own persistence; legacy local
+  binary saves remain offline-only.
 - Connected classic store dialogs now fail closed for premium Griswold
   purchases because no authoritative command exists; offline clients retain
   the legacy premium purchase path.
