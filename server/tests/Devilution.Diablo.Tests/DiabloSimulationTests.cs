@@ -3689,6 +3689,85 @@ public sealed class DiabloSimulationTests
         Assert.Contains("invalid inventory item state", dimensionException.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsInvalidScalarState()
+    {
+        var resourceException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: -1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("out-of-range resource state", resourceException.Message, StringComparison.Ordinal);
+
+        var abilityException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            abilitySpellId: AuthoritativePlayerLoadoutCatalog.MaximumSpellId + 1));
+        Assert.Contains("out-of-range ability spell", abilityException.Message, StringComparison.Ordinal);
+
+        var reflectException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            reflectCharges: ushort.MaxValue + 1U));
+        Assert.Contains("out-of-range reflect charges", reflectException.Message, StringComparison.Ordinal);
+
+        var timingException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            combatModeEndTick: 1));
+        Assert.Contains("invalid combat-mode timing", timingException.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(

@@ -92,6 +92,17 @@ public sealed class DiabloPlayerTemplate
         ValidateCount(inventory, MaximumInventoryCount, "inventory");
         ValidateCount(memorizedSpells, AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount, "memorized-spell");
         ValidateCount(stash, DiabloStashLayout.MaximumItems, "stash");
+        ValidateScalarState(
+            life,
+            mana,
+            manaMaximum,
+            lifeMaximum,
+            baseLifeMaximum,
+            baseManaMaximum,
+            abilitySpellId,
+            reflectCharges,
+            combatMode,
+            combatModeEndTick);
         ValidateItemStates(equipment, item => item.State, "equipment");
         ValidateItemStates(inventory, item => item.State, "inventory");
         ValidateItemStates(belt, item => item.State, "belt");
@@ -160,6 +171,41 @@ public sealed class DiabloPlayerTemplate
             if (values is not null && values.Count > maximum)
                 throw new InvalidDataException(
                     $"Player template contains too many {category} entries.");
+        }
+
+        static void ValidateScalarState(
+            int life,
+            int mana,
+            int manaMaximum,
+            int lifeMaximum,
+            int baseLifeMaximum,
+            int baseManaMaximum,
+            uint abilitySpellId,
+            uint reflectCharges,
+            DiabloPlayerCombatMode combatMode,
+            ulong combatModeEndTick)
+        {
+            if (life < 0
+                || mana < 0
+                || manaMaximum < 0
+                || lifeMaximum < 0
+                || baseLifeMaximum < -1
+                || baseManaMaximum < -1) {
+                throw new InvalidDataException(
+                    "Player template contains out-of-range resource state.");
+            }
+            if (abilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId)
+                throw new InvalidDataException(
+                    "Player template contains an out-of-range ability spell.");
+            if (reflectCharges > ushort.MaxValue)
+                throw new InvalidDataException(
+                    "Player template contains out-of-range reflect charges.");
+            if ((combatMode == DiabloPlayerCombatMode.Stand && combatModeEndTick != 0)
+                || (combatMode is DiabloPlayerCombatMode.Block or DiabloPlayerCombatMode.GotHit
+                    && combatModeEndTick == 0)) {
+                throw new InvalidDataException(
+                    "Player template contains invalid combat-mode timing.");
+            }
         }
 
         static void ValidateUniqueSlots<T>(
