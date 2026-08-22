@@ -98,6 +98,8 @@ All notable changes to this fork are documented below.
 - Reject oversized participant-template inventory, equipment, belt,
   memorized-spell, inventory-grid, and stash collections before runtime
   creation.
+- Reject duplicate equipment and belt slot assignments in participant templates
+  before runtime creation.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

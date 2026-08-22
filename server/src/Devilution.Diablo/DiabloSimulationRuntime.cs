@@ -91,6 +91,8 @@ public sealed class DiabloPlayerTemplate
         ValidateCount(inventory, MaximumInventoryCount, "inventory");
         ValidateCount(memorizedSpells, AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount, "memorized-spell");
         ValidateCount(stash, DiabloStashLayout.MaximumItems, "stash");
+        ValidateUniqueSlots(equipment, item => item.Slot, "equipment");
+        ValidateUniqueSlots(belt, item => item.Slot, "belt");
         Gold = gold;
         Experience = experience;
         Life = life;
@@ -147,6 +149,18 @@ public sealed class DiabloPlayerTemplate
             if (values is not null && values.Count > maximum)
                 throw new InvalidDataException(
                     $"Player template contains too many {category} entries.");
+        }
+
+        static void ValidateUniqueSlots<T>(
+            IReadOnlyList<T>? values,
+            Func<T, uint> slotSelector,
+            string category)
+        {
+            if (values is not null
+                && values.Select(slotSelector).Distinct().Count() != values.Count) {
+                throw new InvalidDataException(
+                    $"Player template contains duplicate {category} slots.");
+            }
         }
     }
 

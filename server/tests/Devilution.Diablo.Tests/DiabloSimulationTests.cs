@@ -3469,6 +3469,46 @@ public sealed class DiabloSimulationTests
         Assert.Contains("too many inventory-grid entries", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsDuplicateEquipmentAndBeltSlots()
+    {
+        var equipmentException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [new EquippedStoreItem(1, 1), new EquippedStoreItem(1, 2)],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("duplicate equipment slots", equipmentException.Message, StringComparison.Ordinal);
+
+        var beltException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: [],
+            belt: [new BeltStoreItem(2, 1), new BeltStoreItem(2, 2)],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("duplicate belt slots", beltException.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(
