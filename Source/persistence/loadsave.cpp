@@ -2451,6 +2451,10 @@ void RemoveEmptyInventory(Player &player)
 
 tl::expected<void, std::string> LoadGame(bool firstflag)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldUseLegacyLocalSave(authoritative::GetServerBackedRuntime().IsConnected()))
+		return tl::make_unexpected(std::string(_("Server-backed sessions do not load the legacy local save.")));
+#endif
 	FreeGameMem();
 
 	LoadHelper file(OpenSaveArchive(gSaveNumber), "game");
