@@ -14,6 +14,8 @@ All notable changes to this fork are documented below.
   Na-Krul room callbacks, while preserving authoritative operate submission.
 - Guard connected native towner dialogue before legacy quest or store mutation,
   while preserving authoritative dialogue and menu submission.
+- Guard connected native monster dialogue before legacy quest handoffs, while
+  preserving authoritative quest-dialogue submission.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

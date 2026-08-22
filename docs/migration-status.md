@@ -23,6 +23,10 @@ Connected native towner dialogue now fails closed before legacy talk handlers
 can mutate local quest or store state; local authoritative dialogue and menu
 requests retain their server-backed route.
 
+Connected native monster dialogue now also fails closed before legacy quest
+handoffs can mutate local inventory, quest, or monster state; authoritative
+local dialogue retains the server-backed route.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.
