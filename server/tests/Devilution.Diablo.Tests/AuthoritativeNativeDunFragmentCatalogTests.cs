@@ -150,6 +150,109 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void AppliesDeferredUniqueFragmentAfterProceduralLevelEntrySpawn()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            1,
+            8,
+            8,
+            blockedCells: Enumerable.Range(0, 64)
+                .Where(cell => cell % 8 % 2 != 0 || cell / 8 % 2 != 0)));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2,
+                2,
+                "Skeleton",
+                1,
+                1,
+                1,
+                10,
+                10,
+                1,
+                1,
+                1,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "SkeletonMelee",
+            },
+        ]);
+        var monsterCatalog = new AuthoritativeMonsterCatalog(
+            [],
+            [new AuthoritativeMonsterDropDefinition(2, 0, 0, 0, false, true, false)]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            monsterTypes,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+            ]),
+            monsterCatalog: monsterCatalog,
+            uniqueMonsters: new AuthoritativeUniqueMonsterCatalog([
+                new AuthoritativeUniqueMonsterDefinition(0, 2, "Generated", "SkeletonMelee"),
+            ]));
+        var fragments = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                7,
+                1,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorUniqueIdentity: "Generated"),
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Content = content,
+                NativeDunFragments = fragments,
+                MonsterTypes = monsterTypes,
+                MonsterSpawnPlanner = planner,
+                ProceduralMonsterSpawns = new DiabloMonsterSpawnConfiguration(1, 1),
+            });
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            10,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            10,
+            1,
+            1,
+            0);
+
+        var result = simulation.Execute(
+            player,
+            new DiabloSetFriendlyModeIntent(true),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var target = Assert.Single(simulation.WorldState.CombatTargets.Values);
+        Assert.Equal("Generated", target.UniqueIdentity);
+        Assert.InRange(target.PositionX, 2, 7);
+        Assert.InRange(target.PositionY, 2, 7);
+        var level = Assert.Single(simulation.WorldState.World!.Levels);
+        var originX = target.PositionX - 2;
+        var originY = target.PositionY - 2;
+        var megaWidth = (level.Width + 1) / 2;
+        Assert.Equal((ushort)42, level.NativeMegaTileLayer[(originY / 2) * megaWidth + originX / 2]);
+    }
+
+    [Fact]
     public void RejectsAnIncompleteNativeCollisionAssetPair()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
