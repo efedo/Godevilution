@@ -1147,19 +1147,19 @@ public sealed class DiabloStoreCommandProcessor
         if (leftItem is null)
             return 4;
         if (rightItem is null) {
-            if (state.ItemClass == leftItem.State.ItemClass
+            if (IsSameHandClassification(state, leftItem.State)
                 || AuthoritativeItemClassification.IsTwoHanded(leftItem.State, items)) {
                 displacementSlots.Add(4);
                 return 4;
             }
             return 5;
         }
-        if (state.ItemClass == leftItem.State.ItemClass
+        if (IsSameHandClassification(state, leftItem.State)
             || AuthoritativeItemClassification.IsTwoHanded(leftItem.State, items)) {
             displacementSlots.Add(4);
             return 4;
         }
-        if (state.ItemClass == rightItem.State.ItemClass) {
+        if (IsSameHandClassification(state, rightItem.State)) {
             displacementSlots.Add(5);
             return 5;
         }
@@ -1190,10 +1190,10 @@ public sealed class DiabloStoreCommandProcessor
         var hasOther = TryGetEquipment(player, otherSlot, out var otherItem);
         var dualWield = player.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.DualWield) == true;
         var pasteIntoSelected = !hasOther
-            || otherItem!.State.ItemClass != state.ItemClass
+            || !IsSameHandClassification(otherItem!.State, state)
             || (dualWield
-                && otherItem.State.ItemClass == 1
-                && state.ItemClass == 1);
+                && AuthoritativeItemClassification.IsWeapon(otherItem.State, items)
+                && AuthoritativeItemClassification.IsWeapon(state, items));
         var dequipTwoHanded = hasOther
             && AuthoritativeItemClassification.IsTwoHanded(otherItem!.State, items);
         var pasteSlot = pasteIntoSelected ? selectedSlot : otherSlot;
@@ -1201,6 +1201,14 @@ public sealed class DiabloStoreCommandProcessor
         if (TryGetEquipment(player, displacementSlot, out _))
             displacementSlots.Add(displacementSlot);
         return checked((int)pasteSlot);
+    }
+
+    private bool IsSameHandClassification(
+        AuthoritativeItemState left,
+        AuthoritativeItemState right)
+    {
+        return AuthoritativeItemClassification.IsWeapon(left, items)
+            == AuthoritativeItemClassification.IsWeapon(right, items);
     }
 
     private List<int>? PlanDisplacedInventoryCells(

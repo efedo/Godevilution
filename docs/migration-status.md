@@ -120,6 +120,8 @@ scaled hit points), not only the client's difficulty label.
   including misc-ID resolution when native item-index lookup is unavailable.
 - Oil-target validation now treats active `Misc`, `Gold`, and `Quest` tags as
   authoritative before falling back to native item-class values.
+- Auto-equip hand selection now compares content-first weapon classification,
+  preserving native `ItemClass` behavior only for tagless compatibility states.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

@@ -2417,6 +2417,66 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void RequestedEquipmentSlotUsesContentWeaponClassification()
+    {
+        var sourceDefinition = new AuthoritativeItemDefinition(
+            920,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            ItemClass = 1,
+            EquipLocation = 1,
+            NativeItemIndex = 920,
+            GenerationTags = new HashSet<string>(["Weapon", "OneHanded"], StringComparer.OrdinalIgnoreCase),
+        };
+        var otherDefinition = sourceDefinition with {
+            ItemId = 921,
+            ItemClass = 2,
+            NativeItemIndex = 921,
+        };
+        var items = new AuthoritativeItemCatalog([sourceDefinition, otherDefinition]);
+        var source = new OwnedStoreItem(
+            0,
+            0,
+            55,
+            0,
+            0,
+            sourceDefinition.Generate(55) with { StatFlag = true });
+        var other = new EquippedStoreItem(
+            4,
+            56,
+            otherDefinition.Generate(56) with { StatFlag = true });
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(
+            inventory: [source],
+            inventoryGrid: grid,
+            equipment: [other]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAutoEquipItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 920),
+                EquipmentSlot: 5),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure.ToString());
+        Assert.Equal(55U, player.Equipment.Single(item => item.Slot == 4).ItemSeed);
+        Assert.Equal(56U, Assert.Single(player.Inventory).ItemSeed);
+    }
+
+    [Fact]
     public void RequestedEquipmentSlotRejectsIncompatibleTopology()
     {
         var sourceState = AuthoritativeItemState.Empty with {
