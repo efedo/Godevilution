@@ -185,6 +185,8 @@ scaled hit points), not only the client's difficulty label.
   shield, reflection, and monster-spawn messages; the server owns those effects.
 - Connected native clients now ignore legacy quest, spell-level, object,
   set-piece, and friendly-mode synchronization messages; the server owns them.
+- Connected native clients now ignore legacy player-info, level, and remote
+  attribute synchronization messages; authoritative snapshots own presentation.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

@@ -48,6 +48,7 @@
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
@@ -975,6 +976,10 @@ void DeltaLoadItems(const DLevel &deltaLevel)
 
 size_t OnLevelData(const TCmdPlrInfoHdr &message, size_t maxCmdSize, const Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return maxCmdSize;
+#endif
 	const uint16_t wBytes = Swap16LE(message.wBytes);
 	const uint16_t wOffset = Swap16LE(message.wOffset);
 
@@ -2383,6 +2388,10 @@ size_t OnDeleteBeltItems(const TCmdParam1 &message, Player &player)
 
 size_t OnPlayerLevel(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t playerLevel = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1) {
@@ -2435,6 +2444,11 @@ size_t OnSendPlayerInfo(const TCmdPlrInfoHdr &header, size_t maxCmdSize, Player 
 
 	if (!ValidateCmdSize(wBytes + sizeof(header), maxCmdSize, player.getId()))
 		return maxCmdSize;
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return wBytes + sizeof(header);
+#endif
 
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &header, wBytes + sizeof(header));
@@ -2583,6 +2597,10 @@ size_t OnRestartTown(const TCmd &cmd, Player &player)
 
 size_t OnSetStrength(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t value = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1) {
@@ -2597,6 +2615,10 @@ size_t OnSetStrength(const TCmdParam1 &message, Player &player)
 
 size_t OnSetDexterity(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t value = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1) {
@@ -2611,6 +2633,10 @@ size_t OnSetDexterity(const TCmdParam1 &message, Player &player)
 
 size_t OnSetMagic(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t value = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1) {
@@ -2625,6 +2651,10 @@ size_t OnSetMagic(const TCmdParam1 &message, Player &player)
 
 size_t OnSetVitality(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t value = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1) {
