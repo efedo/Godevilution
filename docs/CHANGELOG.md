@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native player-mutating debug commands now fail closed in authoritative mode,
+  including god mode, arrow effects, resource adjustments, attributes, level,
+  gold, and spell-level changes.
 - The native debug towner-travel command now fails closed in authoritative
   mode instead of teleporting the local player through legacy spell logic.
 - The native debug towner command now fails closed in authoritative mode,

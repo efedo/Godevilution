@@ -53,6 +53,7 @@
 #include "game/monsters/monster_pool.hpp"
 #include "game/towners/towners.hpp"
 #include "network/protocol/msg.h"
+#include "network/protocol/legacy_debug_policy.hpp"
 #include "persistence/pack.h"
 #include "tables/spelldat.h"
 #include "ui/load_screens.h"
@@ -285,22 +286,39 @@ void PrintDebugMonster(const Monster &monster)
 	EventPlrMsg(StrCat("Active List = ", bActive ? 1 : 0, ", Squelch = ", monster.activeForTicks), UiFlags::ColorWhite);
 }
 
+std::optional<std::string> RejectAuthoritativeDebugMutation(std::string_view command)
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyDebugMutation(authoritative::GetServerBackedRuntime().IsAuthoritativeMode()))
+		return StrCat(command, " is unavailable in authoritative mode.");
+#else
+	(void)command;
+#endif
+	return std::nullopt;
+}
+
 } // namespace
 
 std::string DebugCmdGodMode(std::optional<bool> on)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("God mode"); error.has_value())
+		return *error;
 	DebugGodMode = on.value_or(!DebugGodMode);
 	return StrCat("God mode: ", DebugGodMode ? "On" : "Off");
 }
 
 std::string DebugCmdInvisible(std::optional<bool> on)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Invisibility"); error.has_value())
+		return *error;
 	DebugInvisible = on.value_or(!DebugInvisible);
 	return StrCat("Invisible: ", DebugInvisible ? "On" : "Off");
 }
 
 std::string DebugCmdArrow(std::string_view effect)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Arrow effects"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 
 	myPlayer._pIFlags &= ~ItemSpecialEffect::FireArrows;
@@ -340,6 +358,8 @@ std::string DebugCmdPlayerInfo(std::optional<uint8_t> id)
 
 std::string DebugCmdRejuvenate()
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Player rejuvenation"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	myPlayer.RestoreFullLife();
 	myPlayer.RestoreFullMana();
@@ -350,6 +370,8 @@ std::string DebugCmdRejuvenate()
 
 std::string DebugCmdChangeHealth(int change)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Player health adjustment"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	if (change == 0)
 		return StrCat("Enter a value not equal to 0 to change life!");
@@ -364,6 +386,8 @@ std::string DebugCmdChangeHealth(int change)
 
 std::string DebugCmdChangeMana(int change)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Player mana adjustment"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	if (change == 0)
 		return StrCat("Enter a value not equal to 0 to change mana!");
@@ -377,6 +401,8 @@ std::string DebugCmdChangeMana(int change)
 
 std::string DebugCmdMaxStats()
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Maximum attributes"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	myPlayer.modifyStrength(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Strength) - myPlayer.attributes.strength.base);
 	myPlayer.modifyMagic(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Magic) - myPlayer.attributes.magic.base);
@@ -387,6 +413,8 @@ std::string DebugCmdMaxStats()
 
 std::string DebugCmdMinStats()
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Minimum attributes"); error.has_value())
+		return *error;
 	Player &myPlayer = *MyPlayer;
 	myPlayer.modifyStrength(-myPlayer.attributes.strength.base);
 	myPlayer.modifyMagic(-myPlayer.attributes.magic.base);
@@ -397,6 +425,8 @@ std::string DebugCmdMinStats()
 
 std::string DebugCmdLevelUp(int levels)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Level-up"); error.has_value())
+		return *error;
 	if (levels <= 0)
 		return "amount must be positive";
 	Player &myPlayer = *MyPlayer;
@@ -407,6 +437,8 @@ std::string DebugCmdLevelUp(int levels)
 
 std::string DebugCmdGiveGoldCheat(int amount)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Gold adjustment"); error.has_value())
+		return *error;
 	if (amount <= 0)
 		return "amount must be positive";
 	Player &myPlayer = *MyPlayer;
@@ -444,6 +476,8 @@ std::string DebugCmdGiveGoldCheat(int amount)
 
 std::string DebugCmdTakeGoldCheat(int amount)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Gold adjustment"); error.has_value())
+		return *error;
 	if (amount <= 0)
 		return "amount must be positive";
 	Player &myPlayer = *MyPlayer;
@@ -475,6 +509,8 @@ std::string DebugCmdTakeGoldCheat(int amount)
 
 std::string DebugCmdSetSpellsLevel(uint8_t level)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Spell-level adjustment"); error.has_value())
+		return *error;
 	for (auto i = static_cast<uint8_t>(SpellID::Firebolt); i < SpellsData.size(); i++) {
 		if (GetSpellBookLevel(static_cast<SpellID>(i)) != -1)
 			NetSendCmdParam2(true, CMD_CHANGE_SPELL_LEVEL, i, level);

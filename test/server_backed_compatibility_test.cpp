@@ -18,6 +18,7 @@
 #include "network/authoritative/server_backed_vendor_state.hpp"
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
+#include "network/protocol/legacy_debug_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
@@ -118,6 +119,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyChatMutationsFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyChatMutation(false));
 	EXPECT_FALSE(ShouldProcessLegacyChatMutation(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyDebugMutationsFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyDebugMutation(false));
+	EXPECT_FALSE(ShouldProcessLegacyDebugMutation(true));
 }
 
 TEST(ServerBackedCompatibility, ConnectedLegacyItemProtocolFailsClosed)

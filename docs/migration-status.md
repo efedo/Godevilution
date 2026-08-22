@@ -51,6 +51,9 @@ The native debug towner entry point also fails closed in authoritative mode;
 legacy debug interaction remains available only to offline sessions.
 Native debug towner travel likewise remains offline-only so it cannot mutate
 authoritative movement through a local teleport spell.
+Native player-mutating debug commands (god mode, arrow effects, resource,
+attribute, level, gold, and spell-level adjustments) are likewise offline-only;
+their deterministic policy is covered by the native compatibility suite.
 
 ## Current state
 
