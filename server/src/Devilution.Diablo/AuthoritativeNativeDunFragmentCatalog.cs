@@ -106,7 +106,7 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         }
     }
 
-    /** Applies each fragment's tile, transparency, and object layers atomically. */
+    /** Applies each fragment's native layers and optional collision metadata atomically. */
     public void Apply(
         ComposedContent content,
         AuthoritativeWorld world,
@@ -179,17 +179,6 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
             }
 
             var nativePieces = level.NativePieceLayer.ToArray();
-            if (nativePieces.Length == 0 && map.ReservedLayer.Count != 0)
-                nativePieces = new ushort[checked(level.Width * level.Height)];
-            if (map.ReservedLayer.Any(value => value != 0)) {
-                for (var y = 0; y < map.TileHeight; y++) {
-                    for (var x = 0; x < map.TileWidth; x++) {
-                        var value = map.ReservedLayer[y * map.TileWidth + x];
-                        if (value != 0)
-                            nativePieces[(originY + y) * level.Width + originX + x] = value;
-                    }
-                }
-            }
 
             var objectLayer = level.NativeObjectLayer.ToArray();
             if (map.ObjectLayer.Any(value => value != 0)) {
@@ -206,6 +195,11 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
 
             var blockedCells = level.BlockedCells.ToHashSet();
             var missileBlockedCells = level.MissileBlockedCells.ToHashSet();
+            var nativePieceCollisionCells = level.NativePieceCollisionCells.ToHashSet();
+            var nativePieceMissileBlockedCells = level.NativePieceMissileBlockedCells.ToHashSet();
+            var nativePieceProperties = level.NativePieceProperties.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value);
             if (!string.IsNullOrWhiteSpace(definition.TileAssetPath)
                 && !string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
                 var pieces = AuthoritativeDunPieceCatalog.LoadTil(
@@ -219,15 +213,36 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                     map,
                     pieces,
                     tileProperties);
+                if (nativePieces.Length == 0)
+                    nativePieces = new ushort[checked(level.Width * level.Height)];
+                for (var y = 0; y < map.TileHeight; y++) {
+                    for (var x = 0; x < map.TileWidth; x++) {
+                        nativePieces[(originY + y) * level.Width + originX + x]
+                            = fragmentGeometry.NativePieceLayer[y * map.TileWidth + x];
+                    }
+                }
+                foreach (var property in tileProperties.Definitions) {
+                    var pieceId = checked((ushort)property.PieceId);
+                    if (nativePieceProperties.TryGetValue(pieceId, out var existingFlags)
+                        && existingFlags != property.Flags) {
+                        throw new InvalidDataException(
+                            $"Native DUN fragment {definition.FragmentId} redefines d-piece {pieceId} with different collision flags.");
+                    }
+                    nativePieceProperties[pieceId] = property.Flags;
+                }
                 foreach (var cell in fragmentGeometry.BlockedCells) {
                     var localX = cell % map.TileWidth;
                     var localY = cell / map.TileWidth;
-                    blockedCells.Add((originY + localY) * level.Width + originX + localX);
+                    var worldCell = (originY + localY) * level.Width + originX + localX;
+                    blockedCells.Add(worldCell);
+                    nativePieceCollisionCells.Add(worldCell);
                 }
                 foreach (var cell in fragmentGeometry.MissileBlockedCells) {
                     var localX = cell % map.TileWidth;
                     var localY = cell / map.TileWidth;
-                    missileBlockedCells.Add((originY + localY) * level.Width + originX + localX);
+                    var worldCell = (originY + localY) * level.Width + originX + localX;
+                    missileBlockedCells.Add(worldCell);
+                    nativePieceMissileBlockedCells.Add(worldCell);
                 }
             }
 
@@ -242,7 +257,10 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 transparency,
                 objectLayer,
                 megaTiles,
-                nativePieces) {
+                nativePieces,
+                nativePieceProperties,
+                nativePieceCollisionCells,
+                nativePieceMissileBlockedCells) {
                 StableSymbol = level.StableSymbol,
             });
         }

@@ -209,6 +209,7 @@ public static class AuthoritativeDunGeometryMaterializer
         ArgumentNullException.ThrowIfNull(tileProperties);
         var blocked = new List<int>();
         var missileBlocked = new List<int>();
+        var nativePieceLayer = new ushort[checked(asset.TileWidth * asset.TileHeight)];
         for (var megaY = 0; megaY < asset.MegaHeight; megaY++) {
             for (var megaX = 0; megaX < asset.MegaWidth; megaX++) {
                 var megaTileId = asset.TileLayer[megaY * asset.MegaWidth + megaX];
@@ -230,7 +231,12 @@ public static class AuthoritativeDunGeometryMaterializer
             suppressMultiplayerDeathDrops: suppressMultiplayerDeathDrops,
             nativeObjectLayer: asset.ObjectLayer,
             nativeMegaTileLayer: asset.TileLayer,
-            nativePieceLayer: asset.ReservedLayer) {
+            nativePieceLayer: nativePieceLayer,
+            nativePieceProperties: tileProperties.Definitions.ToDictionary(
+                property => checked((ushort)property.PieceId),
+                property => property.Flags),
+            nativePieceCollisionCells: blocked,
+            nativePieceMissileBlockedCells: missileBlocked) {
             StableSymbol = stableSymbol,
         };
 
@@ -240,6 +246,7 @@ public static class AuthoritativeDunGeometryMaterializer
                 throw new InvalidDataException(
                     $"Native .dun asset '{asset.SourcePath}' references d-piece {pieceId} without .sol properties.");
             var cell = positionY * asset.TileWidth + positionX;
+            nativePieceLayer[cell] = checked((ushort)pieceId);
             if (flags.HasFlag(AuthoritativeDunTileFlags.Solid))
                 blocked.Add(cell);
             if (flags.HasFlag(AuthoritativeDunTileFlags.BlockMissile))

@@ -314,6 +314,8 @@ public sealed class DiabloWorldState
             var objectLayer = baseLevel.NativeObjectLayer.ToArray();
             var megaTileLayer = baseLevel.NativeMegaTileLayer.ToArray();
             var pieceLayer = baseLevel.NativePieceLayer.ToArray();
+            var nativePieceCollisionCells = baseLevel.NativePieceCollisionCells.ToHashSet();
+            var nativePieceMissileBlockedCells = baseLevel.NativePieceMissileBlockedCells.ToHashSet();
             foreach (var mutationId in activeWorldMutationIds.OrderBy(id => id)) {
                 if (WorldMutations?.TryGet(mutationId, out var mutation) != true
                     || mutation.LevelId != baseLevel.LevelId) {
@@ -375,7 +377,23 @@ public sealed class DiabloWorldState
                     if (pieceLayer.Length == 0)
                         throw new InvalidDataException(
                             $"World mutation {mutation.MutationId} requires a native d-piece layer.");
+                    if (nativePieceCollisionCells.Remove(cell))
+                        blocked.Remove(cell);
+                    if (nativePieceMissileBlockedCells.Remove(cell))
+                        missileBlocked.Remove(cell);
                     pieceLayer[cell] = pieceId;
+                    if (baseLevel.NativePieceProperties.TryGetValue(
+                            pieceId,
+                            out var pieceFlags)) {
+                        if (pieceFlags.HasFlag(AuthoritativeDunTileFlags.Solid)) {
+                            blocked.Add(cell);
+                            nativePieceCollisionCells.Add(cell);
+                        }
+                        if (pieceFlags.HasFlag(AuthoritativeDunTileFlags.BlockMissile)) {
+                            missileBlocked.Add(cell);
+                            nativePieceMissileBlockedCells.Add(cell);
+                        }
+                    }
                 }
             }
             projectedLevels.Add(
@@ -391,7 +409,10 @@ public sealed class DiabloWorldState
                     transparency,
                     objectLayer,
                     megaTileLayer,
-                    pieceLayer) {
+                    pieceLayer,
+                    baseLevel.NativePieceProperties,
+                    nativePieceCollisionCells,
+                    nativePieceMissileBlockedCells) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

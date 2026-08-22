@@ -89,7 +89,10 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                 level.NativeTransparency,
                 map.ObjectLayer,
                 map.TileLayer,
-                map.ReservedLayer) {
+                level.NativePieceLayer,
+                level.NativePieceProperties,
+                level.NativePieceCollisionCells,
+                level.NativePieceMissileBlockedCells) {
                 StableSymbol = string.IsNullOrWhiteSpace(definition.LevelSymbol)
                     ? level.StableSymbol
                     : definition.LevelSymbol,

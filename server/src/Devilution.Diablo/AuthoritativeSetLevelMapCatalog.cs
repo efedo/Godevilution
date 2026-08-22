@@ -174,7 +174,10 @@ public sealed class AuthoritativeSetLevelMapCatalog
                     transparency.TransparencyLayer,
                     activeMap.NativeObjectLayer,
                     activeMap.NativeMegaTileLayer,
-                    activeMap.NativePieceLayer) {
+                    activeMap.NativePieceLayer,
+                    activeMap.NativePieceProperties,
+                    activeMap.NativePieceCollisionCells,
+                    activeMap.NativePieceMissileBlockedCells) {
                     StableSymbol = activeMap.StableSymbol,
                 };
             }

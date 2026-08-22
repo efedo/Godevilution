@@ -14,6 +14,9 @@ All notable changes to this fork are documented below.
 - Externalize native d-piece mutations through `piece_layer_rects`, preserving
   the Hellfire Na-Krul `ObjSetMicro` room-opening layer in authoritative state,
   snapshots, and the content schema `1.415.0`.
+- Retain native `.til`/`.sol` collision provenance through fragment composition
+  so authoritative d-piece mutations recompute native-owned movement and missile
+  cells without disturbing authored geometry.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining

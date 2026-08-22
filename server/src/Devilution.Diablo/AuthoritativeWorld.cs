@@ -1,6 +1,7 @@
 namespace Devilution.Diablo;
 
 using Devilution.Data;
+using System.Collections.ObjectModel;
 using System.Globalization;
 
 /** Immutable level geometry used by authoritative movement and transitions. */
@@ -186,7 +187,10 @@ public sealed class AuthoritativeLevel
         IEnumerable<ushort>? nativeTransparency = null,
         IEnumerable<ushort>? nativeObjectLayer = null,
         IEnumerable<ushort>? nativeMegaTileLayer = null,
-        IEnumerable<ushort>? nativePieceLayer = null)
+        IEnumerable<ushort>? nativePieceLayer = null,
+        IReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>? nativePieceProperties = null,
+        IEnumerable<int>? nativePieceCollisionCells = null,
+        IEnumerable<int>? nativePieceMissileBlockedCells = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -230,6 +234,25 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains a native d-piece layer with an invalid length.");
         NativePieceLayer = Array.AsReadOnly(pieces);
+        var pieceProperties = (nativePieceProperties ?? new Dictionary<ushort, AuthoritativeDunTileFlags>())
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
+        NativePieceProperties = new ReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>(pieceProperties);
+        var pieceCollisionCells = (nativePieceCollisionCells ?? [])
+            .Distinct()
+            .OrderBy(cell => cell)
+            .ToArray();
+        if (pieceCollisionCells.Any(cell => cell < 0 || cell >= width * height))
+            throw new InvalidDataException(
+                $"Level {levelId} contains an out-of-range native d-piece collision cell.");
+        NativePieceCollisionCells = Array.AsReadOnly(pieceCollisionCells);
+        var pieceMissileBlockedCells = (nativePieceMissileBlockedCells ?? [])
+            .Distinct()
+            .OrderBy(cell => cell)
+            .ToArray();
+        if (pieceMissileBlockedCells.Any(cell => cell < 0 || cell >= width * height))
+            throw new InvalidDataException(
+                $"Level {levelId} contains an out-of-range native d-piece missile cell.");
+        NativePieceMissileBlockedCells = Array.AsReadOnly(pieceMissileBlockedCells);
     }
 
     public uint LevelId { get; }
@@ -256,8 +279,17 @@ public sealed class AuthoritativeLevel
     /** Native DUN mega-tile IDs retained for external set-piece presentation. */
     public IReadOnlyList<ushort> NativeMegaTileLayer { get; }
 
-    /** Native DUN d-piece IDs retained for authoritative set-piece mutations. */
+    /** Effective native DUN d-piece IDs retained for authoritative set-piece mutations. */
     public IReadOnlyList<ushort> NativePieceLayer { get; }
+
+    /** Native d-piece flags retained for collision-aware authoritative mutations. */
+    public IReadOnlyDictionary<ushort, AuthoritativeDunTileFlags> NativePieceProperties { get; }
+
+    /** Cells whose blocked state was materialized from native d-piece flags. */
+    public IReadOnlyList<int> NativePieceCollisionCells { get; }
+
+    /** Cells whose missile state was materialized from native d-piece flags. */
+    public IReadOnlyList<int> NativePieceMissileBlockedCells { get; }
 
     public bool IsDefaultStart { get; }
 

@@ -205,6 +205,44 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void RecomputesNativeCollisionWhenAProjectedDPieceChanges()
+    {
+        var catalog = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                pieceLayerRectangles: [
+                    new AuthoritativeWorldMutationPieceRectangle(0, 0, 1, 1, 13),
+                    new AuthoritativeWorldMutationPieceRectangle(1, 0, 1, 1, 12),
+                    new AuthoritativeWorldMutationPieceRectangle(0, 1, 1, 1, 13),
+                ]),
+        ]);
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            blockedCells: [0, 3],
+            missileBlockedCells: [1, 2, 3],
+            nativePieceLayer: [10, 11, 12, 13],
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [10] = AuthoritativeDunTileFlags.Solid,
+                [11] = AuthoritativeDunTileFlags.BlockMissile,
+                [12] = AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile,
+                [13] = AuthoritativeDunTileFlags.None,
+            },
+            nativePieceCollisionCells: [0, 2],
+            nativePieceMissileBlockedCells: [1, 2]));
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal([1, 3], level.BlockedCells);
+        Assert.Equal([1, 3], level.MissileBlockedCells);
+        Assert.Equal([13, 12, 13, 13], level.NativePieceLayer);
+    }
+
+    [Fact]
     public void AnchoredObjectLayerMutationUsesRuntimeObjectPosition()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(

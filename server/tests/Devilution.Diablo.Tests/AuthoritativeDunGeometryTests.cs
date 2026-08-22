@@ -32,6 +32,12 @@ public sealed class AuthoritativeDunGeometryTests
         Assert.Equal(2, level.Height);
         Assert.Equal([0, 2], level.BlockedCells);
         Assert.Equal([1, 2], level.MissileBlockedCells);
+        Assert.Equal(
+            AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile,
+            level.NativePieceProperties[12]);
+        Assert.Equal([10, 11, 12, 13], level.NativePieceLayer);
+        Assert.Equal([0, 2], level.NativePieceCollisionCells);
+        Assert.Equal([1, 2], level.NativePieceMissileBlockedCells);
         Assert.Equal("SL_SYNTHETIC", level.StableSymbol);
     }
 
