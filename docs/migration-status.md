@@ -15,6 +15,10 @@ Connected native object synchronization helpers now fail closed at their public
 entry points as well as at protocol dispatch, preventing direct legacy delta,
 operate, close, and break callbacks from mutating server-owned object state.
 
+Connected native object interaction facades now also fail closed for direct
+operate, break, trap, and Na-Krul room callbacks; local authoritative operate
+requests still route through the server projection.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

@@ -4266,6 +4266,11 @@ Object *AddObject(_object_id objType, Point objPos)
 
 bool UpdateTrapState(Object &trap)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+#endif
+
 	if (trap._oVar4 != 0)
 		return false;
 
@@ -4596,13 +4601,15 @@ void RegisterObjectBehaviors()
 void OperateObject(Player &player, Object &object)
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
-		auto &runtime = authoritative::GetServerBackedRuntime();
-		if (const auto entityId = runtime.AuthoritativeObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
-			if (auto result = runtime.OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
-				LogError("Failed to submit the authoritative quest object operation: {}", result.error());
-		} else {
-			LogError("Refusing to operate an object without an authoritative projection.");
+	auto &runtime = authoritative::GetServerBackedRuntime();
+	if (runtime.IsConnected()) {
+		if (&player == MyPlayer && runtime.IsAuthoritativeMode()) {
+			if (const auto entityId = runtime.AuthoritativeObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
+				if (auto result = runtime.OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+					LogError("Failed to submit the authoritative quest object operation: {}", result.error());
+			} else {
+				LogError("Refusing to operate an object without an authoritative projection.");
+			}
 		}
 		return;
 	}
@@ -4835,11 +4842,21 @@ void SyncOpObject(Player &player, int cmd, Object &object)
 
 void BreakObjectMissile(Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (object.IsCrux())
 		BreakCrux(object, true);
 }
 void BreakObject(const Player &player, Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (object.IsBarrel()) {
 		BreakBarrel(player, object, false, true);
 	} else if (object.IsCrux()) {
@@ -5075,6 +5092,11 @@ void GetObjectStr(const Object &object)
 
 void SyncNakrulRoom()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	ObjSetMicro({ uberRow(), uberCol() }, 297);
 	ObjSetMicro({ uberRow(), uberCol() - 1 }, 300);
 	ObjSetMicro({ uberRow(), uberCol() - 2 }, 299);
