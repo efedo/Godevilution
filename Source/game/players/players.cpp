@@ -59,6 +59,7 @@
 #include "game/towners/towners.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_transition_policy.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
@@ -79,6 +80,15 @@ Player *InspectPlayer;
 bool MyPlayerIsDead;
 
 namespace {
+
+bool LegacyTransitionAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
 
 struct DirectionSettings {
 	Direction dir;
@@ -3222,6 +3232,9 @@ __attribute__((no_sanitize("shift-base")))
 void
 StartNewLvl(Player &player, interface_mode fom, int lvl)
 {
+	if (!LegacyTransitionAllowed())
+		return;
+
 	InitLevelChange(player);
 
 	switch (fom) {
@@ -3260,6 +3273,9 @@ StartNewLvl(Player &player, interface_mode fom, int lvl)
 
 void RestartTownLvl(Player &player)
 {
+	if (!LegacyTransitionAllowed())
+		return;
+
 	InitLevelChange(player);
 
 	player.setLevel(0);
@@ -3297,6 +3313,9 @@ void PresentRestartTown(Player &player)
 
 void StartWarpLvl(Player &player, size_t pidx)
 {
+	if (!LegacyTransitionAllowed())
+		return;
+
 	InitLevelChange(player);
 
 	if (gbIsMultiplayer) {

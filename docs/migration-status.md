@@ -21,6 +21,9 @@ state and world mutations remain server-owned.
 Connected native monster spawn, golem, and death lifecycle helpers now fail
 closed at their public entry points too; server-owned monster snapshots cannot
 be bypassed by a direct legacy callback.
+Connected native legacy level-transition helpers now fail closed at their
+public entry points; authoritative movement and restart presentation continue
+through the dedicated server-backed runtime path.
 Public native simulation helpers now fail closed while connected, closing the
 direct-call seams around the existing authoritative game-loop gate; offline
 sessions retain the legacy movement, combat, lifecycle, trap, door, and other

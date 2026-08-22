@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Connected native monster spawn, golem, and death lifecycle helpers now fail
   closed at their public entry points too; server-owned monster snapshots
   cannot be bypassed by a direct legacy callback.
+- Connected native legacy level-transition helpers now fail closed at their
+  public entry points; authoritative movement and restart presentation continue
+  through the dedicated server-backed runtime path.
 - Public native simulation helpers now fail closed while connected so
   movement, combat, lifecycle, trap, door, and other world mutation cannot
   bypass the server-owned game loop; offline sessions retain the legacy
