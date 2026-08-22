@@ -226,9 +226,11 @@ public sealed class AuthoritativeSpellBookCatalog
         AuthoritativeItemCatalog items,
         int itemLevel)
     {
-        var maximumNativeLevel = Math.Max(1, itemLevel) * 2;
+        var maximumItemLevel = Math.Max(1, itemLevel);
         return GetBookTemplates(items)
-            .Where(template => template.Definition.MinimumMonsterLevel <= maximumNativeLevel)
+            .Where(template => template.Definition.BookTemplateMinimumItemLevel >= 0
+                ? template.Definition.BookTemplateMinimumItemLevel <= maximumItemLevel
+                : template.Definition.MinimumMonsterLevel <= checked(maximumItemLevel * 2))
             .ToArray();
     }
 

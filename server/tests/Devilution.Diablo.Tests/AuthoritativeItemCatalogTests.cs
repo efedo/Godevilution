@@ -109,6 +109,15 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void RejectsInvalidSpellBookTemplateThreshold()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tbook_template_minimum_item_level\n"
+                + "2201\t6\t75\t75\t0\n"));
+    }
+
+    [Fact]
     public void StateDefinitionMatchingPrefersStableIdentityAndRetainsLegacyFallback()
     {
         var definition = new AuthoritativeItemDefinition(7, 1, 75, 100, 1, 2, 0, 0, 0, 1, 1, true) {

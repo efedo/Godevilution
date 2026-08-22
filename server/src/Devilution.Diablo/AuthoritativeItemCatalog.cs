@@ -77,6 +77,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Native minimum monster level for random item drops. */
     public int MinimumMonsterLevel { get; init; }
 
+    /** Optional native item-level threshold for spell-book templates; -1 retains the legacy fallback. */
+    public int BookTemplateMinimumItemLevel { get; init; } = -1;
+
     /** Native weighted drop rate; zero excludes the item from random selection. */
     public int DropRate { get; init; }
 
@@ -165,6 +168,7 @@ public sealed class AuthoritativeItemCatalog
                 || !IsValidPresentationText(definition.IdentifiedName)
                 || !IsValidCursorSymbol(definition.CursorGraphic)
                 || definition.MinimumMonsterLevel < 0
+                || definition.BookTemplateMinimumItemLevel is < -1 or 0 or > 255
                 || definition.DropRate is < 0 or > byte.MaxValue
                 || definition.HellfireDamageArmorFlags is < 0 or > 0x7F
                 || definition.MinArmorClass < -1
@@ -513,6 +517,7 @@ public sealed class AuthoritativeItemCatalog
                 IdentifiedName = OptionalPresentationText(row, "identified_name"),
                 CursorGraphic = OptionalPresentationText(row, "cursor_graphic"),
                 MinimumMonsterLevel = row.OptionalInt32("min_monster_level"),
+                BookTemplateMinimumItemLevel = row.OptionalInt32("book_template_minimum_item_level", -1),
                 DropRate = row.OptionalInt32("drop_rate"),
                 Usable = row.OptionalNullableBoolean("usable"),
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),

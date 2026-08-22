@@ -52,6 +52,9 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.397 externalizes the native unique-monster experience multiplier
   through `combat.tsv`; the shipped combat row carries the native two-times
   reward rule while older mappings retain the compatibility fallback.
+- Schema 1.398 externalizes native spell-book template item-level eligibility
+  through `items.tsv`; shipped templates carry explicit thresholds while older
+  mappings retain the native compatibility fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

@@ -188,6 +188,48 @@ public sealed class AuthoritativeSpellBookCatalogTests
         Assert.Equal(7, state.SpellId);
     }
 
+    [Fact]
+    public void UsesContentBookTemplateThresholdsBeforeLegacyFallback()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                MinimumMonsterLevel = 99,
+                BookTemplateMinimumItemLevel = 1,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+            new AuthoritativeItemDefinition(115, 6, 80, 80, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                MinimumMonsterLevel = 99,
+                BookTemplateMinimumItemLevel = 4,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+        books.Validate(
+            new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0),
+            ]),
+            items);
+
+        for (uint seed = 1; seed <= 32; seed++)
+            Assert.Equal(114U, books.GenerateRandom(items, seed, itemLevel: 2).StableItemId);
+
+        var higherLevelTemplates = Enumerable.Range(1, 128)
+            .Select(seed => books.GenerateRandom(items, (uint)seed, itemLevel: 4).StableItemId)
+            .ToHashSet();
+        Assert.Contains(114U, higherLevelTemplates);
+        Assert.Contains(115U, higherLevelTemplates);
+    }
+
     private static AuthoritativeItemCatalog CreateBookTemplateCatalog()
     {
         return new AuthoritativeItemCatalog([
