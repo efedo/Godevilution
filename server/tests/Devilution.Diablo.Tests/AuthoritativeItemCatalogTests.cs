@@ -554,6 +554,39 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void RandomUniqueMonsterDropUsesContentGoldClassificationWhenTagsArePresent()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(25, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                DropRate = 1,
+                GenerationTags = new HashSet<string>(["Gold"], StringComparer.OrdinalIgnoreCase),
+            },
+            new AuthoritativeItemDefinition(114, 0, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 99,
+                DropRate = 1,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+
+        for (uint seed = 1; seed <= 64; seed++) {
+            var state = items.GenerateRandomUniqueMonsterDrop(
+                seed,
+                monsterLevel: 1,
+                spellBooks: books);
+            Assert.Equal(114U, state.StableItemId);
+        }
+    }
+
+    [Fact]
     public void GeneratesDynamicSpellBookWhenAWorldDropReferencesABookTemplate()
     {
         var items = new AuthoritativeItemCatalog([

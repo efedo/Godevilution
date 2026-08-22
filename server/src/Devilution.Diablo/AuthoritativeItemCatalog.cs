@@ -445,8 +445,11 @@ public sealed class AuthoritativeItemCatalog
                 var isBookTemplate = spellBooks is not null
                     ? spellBooks.IsBookTemplate(this, definition.ItemId)
                     : definition.ItemType == 0 && definition.MiscId == bookMiscId;
+                var isGold = definition.GenerationTags.Count > 0
+                    ? AuthoritativeItemClassification.IsGold(definition)
+                    : definition.ItemType == goldItemType;
                 return definition.DropRate > 0
-                    && definition.ItemType != goldItemType
+                    && !isGold
                     && (isBookTemplate
                         || definition.ItemType != 0
                             && definition.MinimumMonsterLevel <= monsterLevel);

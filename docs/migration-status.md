@@ -86,6 +86,9 @@ scaled hit points), not only the client's difficulty label.
 - Spell-book template generation and `ReadBook` admission now honor the active
   content definition's `Book` item tag; mappings without item tags retain the
   native misc-ID fallback.
+- Unique-monster random-drop filtering now honors authored `Gold` and `Book`
+  item tags when active catalogs are present, while tag-less mappings retain
+  the native item-type and misc-ID fallbacks.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
