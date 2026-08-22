@@ -799,8 +799,8 @@ It also adds the normalized Undead Crown base item and unique definition
 (`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
 is a separate normalized row. The Empyrean Band (`unique_id=1004`) and its
 ring base item are also externalized with native attribute, light, recovery,
-and trap-resistance powers; the remaining Hellfire item catalog is still
-incremental.
+and trap-resistance powers; the broader Hellfire item and quest migration
+remains incremental.
 The Optic Amulet (`unique_id=1005`) and Ring of Truth (`unique_id=1006`) now
 cross the same boundary with their native base-item identities and unique
 light, resistance, get-hit, attribute, and life powers. Their normalized
