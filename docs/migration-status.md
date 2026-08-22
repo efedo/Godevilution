@@ -136,6 +136,8 @@ scaled hit points), not only the client's difficulty label.
   fields from unambiguous charged/consumable metadata keyed by `misc_id`.
 - Authored `usable=false` consumable metadata is now enforced by `misc_id` when
   native/stable item identity is unavailable.
+- Targetless consumable actions now enforce authored `usable=false` metadata
+  before applying potion, elixir, or oil effects.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

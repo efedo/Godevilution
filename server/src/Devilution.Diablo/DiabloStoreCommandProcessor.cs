@@ -519,6 +519,9 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
+        if (!IsConsumableUsable(item.State))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
         var action = ResolveItemActionKind(item.State);
         if (item.State.Deleted
             || action is not (DiabloItemActionKind.RestorePartialLife
@@ -727,6 +730,19 @@ public sealed class DiabloStoreCommandProcessor
         if (state.MiscId == 55)
             return true;
         return false;
+    }
+
+    /** Enforces authored iUsable metadata before applying a consumable action. */
+    private bool IsConsumableUsable(AuthoritativeItemState state)
+    {
+        if (items is null)
+            return true;
+
+        if (items.TryGetByState(state, out var definition))
+            return definition.Usable ?? true;
+        return items.TryGetUsableByMiscId(state.MiscId, out var usable)
+            ? usable
+            : true;
     }
 
     private bool IsOilTargetClass(AuthoritativeItemState state)

@@ -52,6 +52,8 @@ All notable changes to this fork are documented below.
   fields from unambiguous charged/consumable metadata keyed by `misc_id`.
 - Authored `usable=false` consumable metadata is now enforced by `misc_id` when
   native/stable item identity is unavailable.
+- Targetless consumable actions now enforce authored `usable=false` metadata
+  before applying potion, elixir, or oil effects.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

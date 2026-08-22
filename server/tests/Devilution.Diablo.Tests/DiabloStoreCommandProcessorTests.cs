@@ -984,6 +984,56 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ExplicitlyUnusableConsumablesCannotBeUsedByMiscId()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2302,
+            0,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 122,
+            NativeItemIndex = 102,
+            ItemActionKind = DiabloItemActionKind.RestoreFullLife,
+            Usable = false,
+        };
+        var potion = new OwnedStoreItem(
+            0,
+            0,
+            2302,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 122,
+                ItemActionKind = DiabloItemActionKind.RestoreFullLife,
+            });
+        var player = CreatePlayer(mana: 64, manaMaximum: 640, inventory: [potion]);
+        player.Life = 64;
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: new AuthoritativeItemCatalog([definition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Same(potion, Assert.Single(player.Inventory));
+        Assert.Equal(64, player.Life);
+    }
+
+    [Fact]
     public void ArenaPotionRestoresAndConsumesOnAnActiveArena()
     {
         var potion = new OwnedStoreItem(
