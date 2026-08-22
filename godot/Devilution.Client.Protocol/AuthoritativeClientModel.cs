@@ -140,6 +140,7 @@ public sealed class AuthoritativeClientModel
                 ValidateEntityId(entityIds, monster.EntityId);
                 ValidateMonsterVitality(monster);
                 ValidateMonsterCombatState(monster);
+                ValidateMonsterMovementState(monster);
             }
             foreach (var item in message.Snapshot.WorldItems) {
                 ValidateEntityId(entityIds, item.EntityId);
@@ -901,6 +902,20 @@ public sealed class AuthoritativeClientModel
             || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster combat state.");
+        }
+    }
+
+    private static void ValidateMonsterMovementState(MonsterSnapshot monster)
+    {
+        var futureDeltaX = Math.Abs(monster.FuturePositionX - monster.PositionX);
+        var futureDeltaY = Math.Abs(monster.FuturePositionY - monster.PositionY);
+        if ((monster.Moving
+                && Math.Max(futureDeltaX, futureDeltaY) != 1)
+            || (!monster.Moving
+                && (monster.FuturePositionX != monster.PositionX
+                    || monster.FuturePositionY != monster.PositionY))) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid monster occupancy state.");
         }
     }
 

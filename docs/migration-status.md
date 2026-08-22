@@ -80,6 +80,8 @@ scaled hit points), not only the client's difficulty label.
   dynamic damage ranges, lifecycle codes, and typed visual identities.
 - Godot now validates monster damage ranges, resistances, hit chances,
   death-timer relationships, ownership, and bounded native combat metadata.
+- Godot now validates adjacent monster movement destinations and stationary
+  future-cell retention before interpolation consumes the snapshot.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

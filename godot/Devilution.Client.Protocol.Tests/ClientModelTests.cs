@@ -1677,6 +1677,36 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedAuthoritativeMonsterMovementState()
+    {
+        var model = new AuthoritativeClientModel();
+        var moving = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    PositionX = 2,
+                    PositionY = 3,
+                    Moving = true,
+                    FuturePositionX = 3,
+                    FuturePositionY = 3,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: moving));
+
+        var invalidMoving = moving.Clone();
+        invalidMoving.Monsters[0].FuturePositionX = 5;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidMoving)));
+
+        var stationary = moving.Clone();
+        stationary.Monsters[0].Moving = false;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: stationary)));
+    }
+
+    [Fact]
     public void ValidatesAndRetainsAuthoritativePlayerFacing()
     {
         var model = new AuthoritativeClientModel();

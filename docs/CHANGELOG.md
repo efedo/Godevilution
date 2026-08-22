@@ -38,6 +38,8 @@ All notable changes to this fork are documented below.
   lifecycle codes, and presentation metadata before combat presentation.
 - Godot now rejects malformed authoritative monster combat ranges, resistances,
   hit chances, death timelines, and bounded native scalar state.
+- Godot now rejects malformed monster occupancy projections whose future cell is
+  not adjacent while moving or does not match the current cell while stationary.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
