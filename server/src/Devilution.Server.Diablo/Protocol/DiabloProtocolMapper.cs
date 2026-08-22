@@ -599,6 +599,31 @@ internal static class DiabloProtocolMapper
                 "Authoritative player item collections have invalid topology.");
         }
 
+        if (state.InventoryGrid.Count > 0) {
+            var expected = Enumerable.Repeat(-1, state.InventoryGrid.Count).ToArray();
+            var grid = state.InventoryGrid.ToArray();
+            for (var itemIndex = 0; itemIndex < state.Inventory.Count; itemIndex++) {
+                var anchor = Array.IndexOf(grid, itemIndex);
+                var itemState = state.Inventory[itemIndex].State;
+                var width = Math.Clamp(itemState.InventoryWidth, 1, 10);
+                var height = Math.Clamp(itemState.InventoryHeight, 1, 4);
+                if (anchor < 0
+                    || !HasExactProjectedInventoryFootprint(
+                        expected,
+                        anchor,
+                        itemIndex,
+                        width,
+                        height)) {
+                    throw new InvalidDataException(
+                        "Authoritative player inventory has an invalid footprint topology.");
+                }
+            }
+            if (!grid.SequenceEqual(expected)) {
+                throw new InvalidDataException(
+                    "Authoritative player inventory grid does not match item footprints.");
+            }
+        }
+
         var equipmentSlots = new HashSet<uint>();
         foreach (var item in state.Equipment) {
             if (item is null || item.State is null || item.Slot >= 7
@@ -644,6 +669,28 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative held-item reference is invalid or duplicated.");
         }
+    }
+
+    private static bool HasExactProjectedInventoryFootprint(
+        int[] expected,
+        int anchor,
+        int itemIndex,
+        int width,
+        int height)
+    {
+        var column = anchor % 10;
+        var row = anchor / 10;
+        if (column + width > 10 || row + height > 4)
+            return false;
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var cell = (row + y) * 10 + column + x;
+                if (expected[cell] >= 0)
+                    return false;
+                expected[cell] = itemIndex;
+            }
+        }
+        return true;
     }
 
     private static void ValidateProjectedVisitedLevels(StorePlayerSnapshot state)

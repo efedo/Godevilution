@@ -621,6 +621,18 @@ public sealed class DialogueProtocolProjectionTests
             DiabloProtocolMapper.ToProtocolSnapshot(source with {
                 Player = player with { InventoryGrid = [0, 1] },
             }));
+
+        var malformedGrid = Enumerable.Repeat(-1, 40).ToArray();
+        malformedGrid[0] = 0;
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Inventory = [item with {
+                        State = AuthoritativeItemState.Empty with { InventoryWidth = 2 },
+                    }],
+                    InventoryGrid = malformedGrid,
+                },
+            }));
     }
 
     [Fact]
