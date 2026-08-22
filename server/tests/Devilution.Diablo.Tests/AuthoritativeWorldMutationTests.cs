@@ -60,6 +60,29 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void RestoreWorldMutationsLeavesExistingStateWhenRequestedIdIsInvalid()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var world = new DiabloWorldState(
+            geometry,
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(
+                    7,
+                    1,
+                    geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(1, 1, 1, 1)]),
+            ]));
+        Assert.True(world.ApplyWorldMutation(7));
+        Assert.False(world.IsWalkable(1, 1, 1));
+
+        Assert.Throws<InvalidDataException>(() => world.RestoreWorldMutations([99]));
+
+        Assert.Equal([7U], world.ActiveWorldMutationIds);
+        Assert.False(world.IsWalkable(1, 1, 1));
+    }
+
+    [Fact]
     public void RejectsOutOfBoundsOrOverlappingGeometryRectangles()
     {
         var geometry = AuthoritativeWorld.LoadTsv(

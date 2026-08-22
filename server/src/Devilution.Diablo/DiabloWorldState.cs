@@ -149,15 +149,17 @@ public sealed class DiabloWorldState
     public void RestoreWorldMutations(IEnumerable<uint> mutationIds)
     {
         ArgumentNullException.ThrowIfNull(mutationIds);
-        activeWorldMutationIds.Clear();
+        var restoredMutationIds = new HashSet<uint>();
         foreach (var mutationId in mutationIds) {
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
                     $"Active world mutation {mutationId} is not supplied by the content catalog.");
-            if (!activeWorldMutationIds.Add(mutationId))
+            if (!restoredMutationIds.Add(mutationId))
                 throw new InvalidDataException(
                     $"Active world mutation {mutationId} is listed more than once.");
         }
+        activeWorldMutationIds.Clear();
+        activeWorldMutationIds.UnionWith(restoredMutationIds);
         RebuildProjectedGeometry();
     }
 
