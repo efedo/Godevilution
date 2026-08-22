@@ -2,6 +2,10 @@
 
 Status date: 2026-08-22
 
+Engine verification now includes a 64-generation ruleset replacement pressure
+fixture that holds every prior generation under lease and drains them only
+after all leases release.
+
 Set-level native geometry now preflights partial binary bundles before
 materialization, preserving metadata-only behavior when no bundle assets are
 present.

@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Add a 64-generation ruleset replacement pressure fixture proving that
+  pinned generations remain retired until every lease is released.
 - Set-level native geometry now has an explicit asset preflight before level
   materialization; partial bundles fail before any runtime geometry is published.
 - Set-level map definitions now require `.til` and `.sol` collision assets as

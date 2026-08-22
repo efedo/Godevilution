@@ -73,6 +73,45 @@ public sealed class GameplayRulesetRuntimeTests
     }
 
     [Fact]
+    public void SustainedReplacementPressureRetiresOnlyAfterAllGenerationLeasesRelease()
+    {
+        var runtime = CreateRuntime(
+            CreateManifest("0", "generation-0"),
+            new TestModule("rules", "0.0.0", "generation-0"));
+        var leases = new List<GameplayRulesetLease<TestActivation>>();
+        const int generationCount = 64;
+
+        try {
+            for (var generation = 1; generation <= generationCount; generation++) {
+                leases.Add(runtime.Acquire());
+                var result = runtime.TryReload(
+                    CreateManifest(
+                        generation.ToString(),
+                        $"generation-{generation}"),
+                    [new TestModule(
+                        "rules",
+                        $"{generation}.0.0",
+                        $"generation-{generation}")]);
+
+                Assert.True(result.Succeeded);
+                Assert.Equal(generation, runtime.RetiredActivationCount);
+            }
+
+            Assert.Empty(runtime.DrainRetired());
+            Assert.Equal(
+                $"generation-{generationCount}",
+                runtime.Active.Target.Value);
+        } finally {
+            foreach (var lease in leases)
+                lease.Dispose();
+        }
+
+        var drained = runtime.DrainRetired();
+        Assert.Equal(generationCount, drained.Count);
+        Assert.Equal(0, runtime.RetiredActivationCount);
+    }
+
+    [Fact]
     public void CandidatePreparationRunsBeforePublication()
     {
         var runtime = CreateRuntime(
