@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align Na-Krul's unique-spawn regression coverage with the native weakening
+  rule: both current and maximum health are reduced to 50 percent.
+
 - Externalize the native Lachdanan dialogue completion boundary. The Hellfire
   quest row now declares that a successful Golden Elixir hand-in defeats the
   unique target after its Veil of Steel reward, preserving the target's dead

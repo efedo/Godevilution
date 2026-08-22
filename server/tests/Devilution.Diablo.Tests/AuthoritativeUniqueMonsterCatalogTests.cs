@@ -162,7 +162,7 @@ public sealed class AuthoritativeUniqueMonsterCatalogTests
         catalog.ApplyToGenerated([target]);
 
         Assert.Equal("Na-Krul", target.UniqueIdentity);
-        Assert.Equal((666, 75), (target.MaxHitPoints, target.HitPoints));
+        Assert.Equal((666, 666), (target.MaxHitPoints, target.HitPoints));
         Assert.Equal(75, target.ArmorClass);
         Assert.Equal((0, 0, 0, 0), (
             target.FireResistance,
