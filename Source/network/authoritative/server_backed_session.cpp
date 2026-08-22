@@ -486,6 +486,8 @@ void ServerBackedSession::Close() noexcept
 
 tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protocol::Snapshot &snapshot)
 {
+	if (auto geometry = ValidateLevelGeometrySnapshots(snapshot); !geometry.has_value())
+		return tl::make_unexpected(geometry.error());
 	if (auto quests = ValidateQuestSnapshots(snapshot); !quests.has_value())
 		return tl::make_unexpected(quests.error());
 	if (auto interactions = ValidateQuestTownerInteractions(snapshot); !interactions.has_value())

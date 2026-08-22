@@ -4,6 +4,7 @@
 #include <limits>
 #include <set>
 #include <vector>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -702,6 +703,69 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		    || (interaction.has_variable1() && (interaction.variable1() < 0 || interaction.variable1() > 255))
 		    || (interaction.has_variable2() && (interaction.variable2() < 0 || interaction.variable2() > 255)))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid quest/towner interaction.");
+	}
+	return {};
+}
+
+tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::Snapshot &snapshot)
+{
+	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;
+	levels.reserve(snapshot.level_geometry_size());
+	for (const auto &level : snapshot.level_geometry()) {
+		if (level.width() < 0 || level.height() < 0
+		    || !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
+				return value <= std::numeric_limits<uint16_t>::max();
+			})
+		    || !std::all_of(level.native_object_layer().begin(), level.native_object_layer().end(), [](uint32_t value) {
+				return value <= std::numeric_limits<uint16_t>::max();
+			})
+		    || !std::all_of(level.native_mega_tile_layer().begin(), level.native_mega_tile_layer().end(), [](uint32_t value) {
+				return value <= std::numeric_limits<uint16_t>::max();
+			}))
+			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry dimensions.");
+		if (!levels.emplace(level.level_id(), &level).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
+		if (level.width() == 0 || level.height() == 0)
+			continue;
+		const auto cellCount = static_cast<uint64_t>(level.width()) * static_cast<uint64_t>(level.height());
+		const auto validateCells = [cellCount](const auto &cells) {
+			if (static_cast<uint64_t>(cells.size()) > cellCount)
+				return false;
+			std::unordered_set<int32_t> uniqueCells;
+			for (const auto cell : cells) {
+				if (cell < 0 || static_cast<uint64_t>(cell) >= cellCount || !uniqueCells.insert(cell).second)
+					return false;
+			}
+			return true;
+		};
+		if (!validateCells(level.blocked_cells()) || !validateCells(level.missile_blocked_cells())
+		    || (level.native_transparency_size() != 0 && static_cast<uint64_t>(level.native_transparency_size()) != cellCount)
+		    || (level.native_object_layer_size() != 0 && static_cast<uint64_t>(level.native_object_layer_size()) != cellCount)
+		    || (level.native_mega_tile_layer_size() != 0
+		        && static_cast<uint64_t>(level.native_mega_tile_layer_size())
+		            != (static_cast<uint64_t>(level.width()) + 1) / 2 * ((static_cast<uint64_t>(level.height()) + 1) / 2)))
+			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry cells.");
+	}
+	std::unordered_set<uint32_t> warpIds;
+	for (const auto &level : snapshot.level_geometry()) {
+		for (const auto &warp : level.warp_triggers()) {
+			const auto target = levels.find(warp.target_level_id());
+			if (warp.warp_id() == 0 || !warpIds.insert(warp.warp_id()).second
+			    || warp.trigger_x() < 0 || warp.trigger_y() < 0
+			    || (level.width() > 0 && warp.trigger_x() >= level.width())
+			    || (level.height() > 0 && warp.trigger_y() >= level.height())
+			    || target == levels.end()
+			    || warp.target_x() < 0 || warp.target_y() < 0
+			    || (target->second->width() > 0 && warp.target_x() >= target->second->width())
+			    || (target->second->height() > 0 && warp.target_y() >= target->second->height())
+			    || (warp.required_quest_id() == 0 && warp.required_quest_completed())
+			    || (warp.required_quest_id() == 0 && !warp.available())
+			    || !std::all_of(warp.stable_symbol().begin(), warp.stable_symbol().end(), [](char value) {
+					const auto character = static_cast<unsigned char>(value);
+					return character >= 0x21 && character <= 0x7E;
+				}))
+				return tl::make_unexpected("Server-backed snapshot contains an invalid warp trigger.");
+		}
 	}
 	return {};
 }

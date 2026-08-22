@@ -823,6 +823,52 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestTownerInteractions)
 	EXPECT_FALSE(ValidateQuestTownerInteractions(outsideGeometry).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
+{
+	protocol::Snapshot negativeDimensions;
+	negativeDimensions.add_level_geometry()->set_width(-1);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(negativeDimensions).has_value());
+
+	protocol::Snapshot duplicateLevels;
+	duplicateLevels.add_level_geometry()->set_level_id(1);
+	duplicateLevels.add_level_geometry()->set_level_id(1);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(duplicateLevels).has_value());
+
+	protocol::Snapshot invalidCells;
+	auto *level = invalidCells.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(2);
+	level->set_height(2);
+	level->add_blocked_cells(4);
+	level->add_blocked_cells(4);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidCells).has_value());
+
+	protocol::Snapshot invalidLayer;
+	level = invalidLayer.add_level_geometry();
+	level->set_width(1);
+	level->set_height(1);
+	level->add_native_transparency(65536);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidLayer).has_value());
+
+	protocol::Snapshot missingTarget;
+	level = missingTarget.add_level_geometry();
+	auto *warp = level->add_warp_triggers();
+	warp->set_warp_id(1);
+	warp->set_available(true);
+	warp->set_target_level_id(2);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(missingTarget).has_value());
+
+	protocol::Snapshot invalidSymbol;
+	level = invalidSymbol.add_level_geometry();
+	level->set_level_id(1);
+	warp = level->add_warp_triggers();
+	warp->set_warp_id(1);
+	warp->set_available(true);
+	warp->set_target_level_id(1);
+	warp->set_stable_symbol("bad symbol");
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidSymbol).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

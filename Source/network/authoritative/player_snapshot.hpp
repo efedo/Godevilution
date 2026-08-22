@@ -325,6 +325,10 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<void, std::string> ValidateQuestTownerInteractions(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates authoritative level geometry and warp-trigger metadata before projection use. */
+[[nodiscard]] tl::expected<void, std::string> ValidateLevelGeometrySnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

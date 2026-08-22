@@ -75,6 +75,8 @@ All notable changes to this fork are documented below.
   native quest metadata before interaction gates consume the snapshot.
 - Native authoritative quest/towner interaction validation now rejects invalid
   IDs, quest references, messages, ranges, and geometry positions before routing.
+- Native authoritative geometry validation now rejects malformed dimensions,
+  cells, layers, duplicate levels, and warp-trigger routes before projection.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - The native authoritative projection now rejects non-empty visited-level sets
