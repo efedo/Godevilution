@@ -39,9 +39,14 @@
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/string/utf8.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 
 #ifdef _DEBUG
 #include "application/debug.h"
+#endif
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
 #endif
 
 namespace devilution {
@@ -545,6 +550,11 @@ void UpdatePWaterPalette()
 
 void ResyncMPQuests()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyQuestResync(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (gbIsSpawn)
 		return;
 
@@ -593,6 +603,11 @@ void ResyncMPQuests()
 
 void ResyncQuests()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyQuestResync(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (gbIsSpawn)
 		return;
 

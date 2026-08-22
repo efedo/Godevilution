@@ -5,6 +5,9 @@ Status date: 2026-08-22
 Connected native sessions now bypass the remaining legacy delta-state helpers
 for monster, item, object, portal, level save/load, and delta transport paths;
 authoritative snapshots remain the only connected-client source of truth.
+Legacy quest resynchronization during level loads is likewise disabled for
+connected sessions so quest-driven local world mutations cannot compete with
+authoritative projections.
 
 ## Current state
 

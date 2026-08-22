@@ -50,6 +50,9 @@ All notable changes to this fork are documented below.
   shield, reflection, and monster-spawn messages; the server owns those effects.
 - Connected native clients now ignore legacy quest, spell-level, object,
   set-piece, and friendly-mode synchronization messages; the server owns them.
+- Connected native level loads now bypass legacy quest resynchronization that
+  mutates local quest, object, and monster state; authoritative projections own
+  the connected world.
 - Connected native clients now ignore legacy player-info, level, and remote
   attribute synchronization messages; authoritative snapshots own presentation.
 - Connected native clients now ignore legacy movement, targeting, attack, spell,

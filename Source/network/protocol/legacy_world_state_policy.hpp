@@ -11,4 +11,13 @@ constexpr bool ShouldProcessLegacyWorldStateMessage(bool serverConnected) noexce
 	return !serverConnected;
 }
 
+/**
+ * Legacy quest resynchronization rebuilds local quest-driven world state and
+ * is offline-only while connected sessions use authoritative projections.
+ */
+constexpr bool ShouldProcessLegacyQuestResync(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyWorldStateMessage(serverConnected);
+}
+
 } // namespace devilution

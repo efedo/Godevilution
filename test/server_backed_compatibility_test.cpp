@@ -150,6 +150,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyWorldStateMessagesFailClosed)
 	EXPECT_FALSE(ShouldProcessLegacyWorldStateMessage(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyQuestResyncFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyQuestResync(false));
+	EXPECT_FALSE(ShouldProcessLegacyQuestResync(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyPlayerStateMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyPlayerStateMessage(false));
