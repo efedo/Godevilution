@@ -2190,6 +2190,11 @@ uint8_t ClampMaxDam(const Item &item, uint8_t maxDam)
 
 int SyncDropItem(Point position, _item_indexes idx, uint16_t icreateinfo, int iseed, int id, int dur, int mdur, int ch, int mch, int ivalue, uint32_t ibuff, int toHit, int maxDam)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return -1;
+	#endif
+
 	if (!ItemPoolAdapter::HasFreeItemSlot())
 		return -1;
 
@@ -2212,6 +2217,11 @@ int SyncDropItem(Point position, _item_indexes idx, uint16_t icreateinfo, int is
 
 int SyncDropEar(Point position, uint16_t icreateinfo, uint32_t iseed, uint8_t cursval, std::string_view heroname)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return -1;
+	#endif
+
 	if (!ItemPoolAdapter::HasFreeItemSlot())
 		return -1;
 

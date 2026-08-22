@@ -87,6 +87,9 @@ remain available to preserve connected vendor UI behavior.
 Connected native manual and automatic world-item pickup actions now resolve the
 projected world-item entity and submit `PickupWorldItemRequested`; legacy pickup
 commands and direct inventory/world cleanup helpers remain offline-only.
+Legacy floor-item synchronization helpers likewise return without creating
+local world items while connected; authoritative world presentation still uses
+its dedicated projection allocation path.
 
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in

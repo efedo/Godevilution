@@ -47,6 +47,8 @@ All notable changes to this fork are documented below.
 - Route connected native manual and automatic world-item pickup through the
   authoritative projected entity command and guard direct legacy pickup and
   cleanup helpers.
+- Guard direct connected legacy floor-item synchronization while preserving
+  the dedicated authoritative world-presentation allocation path.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an
