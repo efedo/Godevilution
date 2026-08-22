@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   entity, session, geometry, quest, and vendor state before committing any
   session mutation; malformed snapshots therefore cannot leave partial player
   or world state behind.
+- Native authoritative stash item use now routes spell books, supported
+  consumables, and oils through stable server-owned item intents; unsupported
+  stash actions fail closed instead of invoking legacy local gameplay.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

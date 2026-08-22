@@ -143,6 +143,9 @@ scaled hit points), not only the client's difficulty label.
   world, metadata, quest, geometry, and vendor state transactionally, so a
   malformed later projection cannot leave earlier session state partially
   applied.
+- Native authoritative stash item use now routes spell books, supported
+  consumables, and oils through stable server-owned item intents; unsupported
+  stash actions fail closed instead of invoking legacy local gameplay.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

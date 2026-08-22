@@ -584,6 +584,65 @@ bool UseStashItem(uint16_t c)
 		return true;
 	}
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
+		if (!reference.has_value()) {
+			LogError("Server-backed stash item use has no authoritative item reference.");
+			return true;
+		}
+
+		if (item->_iMiscId == IMISC_BOOK) {
+			if (auto result = authoritative::GetServerBackedRuntime().ReadBook(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Server-backed stash spell-book use failed: {}", result.error());
+			else
+				PlaySFX(SfxID::ReadBook);
+			return true;
+		}
+
+		const bool isConsumable = IsAnyOf(item->_iMiscId,
+		    IMISC_HEAL,
+		    IMISC_FULLHEAL,
+		    IMISC_MANA,
+		    IMISC_FULLMANA,
+		    IMISC_REJUV,
+		    IMISC_FULLREJUV,
+		    IMISC_ARENAPOT,
+		    IMISC_ELIXSTR,
+		    IMISC_ELIXMAG,
+		    IMISC_ELIXDEX,
+		    IMISC_ELIXVIT,
+		    IMISC_SPECELIX);
+		if (isConsumable) {
+			if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Server-backed stash consumable use failed: {}", result.error());
+			else
+				PlaySFX(ItemInvSnds[ItemCAnimTbl[item->_iCurs]]);
+			return true;
+		}
+
+		if (item->_iMiscId > IMISC_OILFIRST && item->_iMiscId < IMISC_OILLAST) {
+			if (!authoritative::GetServerBackedRuntime().BeginOilUse(*reference)) {
+				LogError("Server-backed stash oil use could not arm its authoritative source.");
+				return true;
+			}
+			MyPlayer->_pOilType = item->_iMiscId;
+			if (SpellbookFlag)
+				SpellbookFlag = false;
+			if (!invflag)
+				invflag = true;
+			PlaySFX(ItemInvSnds[ItemCAnimTbl[item->_iCurs]]);
+			NewCursor(CURSOR_OIL);
+			return true;
+		}
+
+		// Do not allow map, rune, note, or other legacy stash actions to mutate
+		// local gameplay state while the server owns the item and its effects.
+		LogError("Server-backed stash item action is not supported for misc ID {}.", static_cast<int>(item->_iMiscId));
+		return true;
+	}
+#endif
+
 	if (item->_iMiscId == IMISC_BOOK)
 		PlaySFX(SfxID::ReadBook);
 	else

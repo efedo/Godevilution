@@ -71,6 +71,7 @@ if(DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
     server_backed_compatibility_test
     server_backed_player_snapshot_test
     server_backed_session_test
+    server_backed_stash_test
     server_backed_vendor_command_test
     server_backed_vendor_snapshot_test
     server_backed_vendor_state_test
@@ -118,7 +119,7 @@ foreach(test_target ${tests} ${standalone_tests} ${benchmarks})
 endforeach()
 
 if(DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
-  foreach(server_backed_test server_backed_client_test server_backed_configuration_test server_backed_compatibility_test server_backed_player_snapshot_test server_backed_session_test server_backed_vendor_command_test server_backed_vendor_snapshot_test server_backed_vendor_state_test server_backed_vendor_ui_test)
+  foreach(server_backed_test server_backed_client_test server_backed_configuration_test server_backed_compatibility_test server_backed_player_snapshot_test server_backed_session_test server_backed_stash_test server_backed_vendor_command_test server_backed_vendor_snapshot_test server_backed_vendor_state_test server_backed_vendor_ui_test)
     if(WIN32)
       target_compile_definitions(${server_backed_test} PRIVATE "DVL_PROTOBUF_EXPORT=__declspec(dllimport)")
     else()
