@@ -66,6 +66,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native MonsterAIID dispatch identity used by incremental authoritative AI ports. */
     public string NativeAi { get; init; } = "Zombie";
 
+    /** Optional content-owned eligibility for Skeleton King summon selection. */
+    public bool? SkeletonSummonCandidate { get; init; }
+
     /** Native intelligence value used by AI-specific probability bands. */
     public int Intelligence { get; init; }
 
@@ -952,6 +955,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && !string.IsNullOrWhiteSpace(nativeAi)
                     ? nativeAi
                     : "Zombie",
+                SkeletonSummonCandidate = row.OptionalNullableBoolean("skeleton_summon_candidate"),
                 Intelligence = row.OptionalInt32("intelligence"),
                 FallenFearRadius = row.OptionalInt32("fallen_fear_radius"),
                 FallenFearLevelOffset = row.OptionalInt32("fallen_fear_level_offset"),

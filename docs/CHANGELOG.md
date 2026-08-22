@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Skeleton King summon candidate selection through the optional
+  `skeleton_summon_candidate` field in `monster_types.tsv`, preserving the
+  native-AI and complete-tuning compatibility fallback for older packs and
+  advancing the Diablo content schema to 1.402.
+
 - Externalize the native class-specific ranged-arrow speed level divisor
   through `classes.tsv`, preserving symbol-based compatibility for older class
   tables and advancing the Diablo content schema to 1.401.

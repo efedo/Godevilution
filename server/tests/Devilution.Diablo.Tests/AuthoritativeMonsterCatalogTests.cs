@@ -336,6 +336,17 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsExplicitSkeletonSummonCandidateFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_summon_candidate\n"
+                + "2\t0\tSkeleton\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tZombie\t1\n");
+
+        Assert.True(Assert.Single(catalog.Definitions).SkeletonSummonCandidate);
+    }
+
+    [Fact]
     public void LoadsAvoidanceDelayTuningFromMonsterTypes()
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(

@@ -278,6 +278,38 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void UsesExplicitSkeletonSummonCandidateBeforeNativeAiFallback()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 4, 2, 2) with {
+                NativeAi = "SkeletonMelee",
+                SkeletonSummonCandidate = false,
+            },
+            CreateType(3, 1, 1, 4, 4, 3, 3) with {
+                NativeAi = "Zombie",
+                SkeletonSummonCandidate = true,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var summon = planner.CreateSkeletonSummon(
+            levelId: 1,
+            seed: 0,
+            positionX: 2,
+            positionY: 2,
+            entityId: 99);
+
+        Assert.NotNull(summon);
+        Assert.Equal(3U, summon!.MonsterId);
+        Assert.Equal("Zombie", summon.NativeAi);
+    }
+
+    [Fact]
     public void CreatesSummonsFromValidatedNativeMonsterIdentity()
     {
         var world = new AuthoritativeWorld();

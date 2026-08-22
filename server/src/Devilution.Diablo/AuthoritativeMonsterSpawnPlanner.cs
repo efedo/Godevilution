@@ -213,11 +213,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             return null;
 
         var definitions = monsterTypes.GetAvailableForDungeonLevel((int)levelId)
-            .Where(definition => definition.NativeAi == "SkeletonMelee"
-                || (definition.SkeletonMeleeDelayChanceBase > 0
-                    && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0
-                    && definition.SkeletonMeleeAttackChanceBase > 0
-                    && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0))
+            .Where(IsSkeletonSummonCandidate)
             .OrderBy(definition => definition.MonsterId)
             .ToArray();
         if (definitions.Length == 0)
@@ -245,6 +241,15 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             entityId,
             multiplayer);
     }
+
+    private static bool IsSkeletonSummonCandidate(
+        AuthoritativeMonsterTypeDefinition definition)
+        => definition.SkeletonSummonCandidate
+            ?? (definition.NativeAi == "SkeletonMelee"
+                || (definition.SkeletonMeleeDelayChanceBase > 0
+                    && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0
+                    && definition.SkeletonMeleeAttackChanceBase > 0
+                    && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0));
 
     private AuthoritativeCombatTarget CreateCombatTarget(
         AuthoritativeMonsterSpawn spawn,

@@ -68,6 +68,9 @@ scaled hit points), not only the client's difficulty label.
   through `classes.tsv`; shipped Rogue, Warrior, and Bard rows declare their
   native level divisors while older class tables retain the compatibility
   fallback.
+- Schema 1.402 externalizes Skeleton King summon candidate selection through
+  `monster_types.tsv`; shipped rows declare eligibility while older mappings
+  retain the native-AI and complete-tuning compatibility fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
