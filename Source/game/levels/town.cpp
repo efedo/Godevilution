@@ -20,7 +20,12 @@
 #include "network/protocol/multi.h"
 #include "game/players/players.hpp"
 #include "game/quests/quests.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "utils/endian/endian_swap.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -254,6 +259,11 @@ bool OpensGrave(Point position)
 
 void OpenHive()
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	NetSendCmd(false, CMD_OPENHIVE);
 	auto &quest = Quests[Q_FARMER];
 	quest._qactive = QUEST_DONE;
@@ -263,6 +273,11 @@ void OpenHive()
 
 void OpenGrave()
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	NetSendCmd(false, CMD_OPENGRAVE);
 	auto &quest = Quests[Q_GRAVE];
 	quest._qactive = QUEST_DONE;

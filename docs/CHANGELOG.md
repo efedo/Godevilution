@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Guard direct connected town-opening helpers before legacy hive or grave
+  commands can mutate local town state; authoritative object operations remain
+  the connected route.
 - Route connected native object commands through the authoritative-only object
   projection, keeping presentation-only objects out of OperateObject,
   DisarmTrap, and object-targeted Telekinesis submissions.

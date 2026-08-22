@@ -7,6 +7,10 @@ authoritative behavior. Ordinary presentation-only objects remain available for
 rendering but fail closed before OperateObject, DisarmTrap, or object-targeted
 Telekinesis commands are submitted.
 
+Connected native town-opening helpers now also fail closed before legacy hive or
+grave commands can mutate local town state; authoritative object operations
+remain the connected route.
+
 Connected native missile presentation no longer clears legacy missile and wall
 tile flags for server-owned projectiles; only locally simulated missiles update
 that native gameplay bookkeeping.
