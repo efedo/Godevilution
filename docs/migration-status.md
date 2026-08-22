@@ -31,6 +31,10 @@ Connected native trap-disarm callbacks now preserve cursor presentation but
 fail closed before legacy trap flags can mutate; authoritative disarm intent
 remains the only connected-session state transition.
 
+Connected native portal delta projection now also fails closed at the portal
+state setter, so a direct legacy delta callback cannot publish local portal
+state outside the authoritative snapshot path.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

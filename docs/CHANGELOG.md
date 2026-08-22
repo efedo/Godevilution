@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   preserving authoritative quest-dialogue submission.
 - Guard direct connected trap-disarm callbacks before legacy trap-state
   mutation; authoritative disarm intent remains unchanged.
+- Guard the native portal delta-state setter so connected legacy callbacks
+  cannot publish local portal state outside authoritative snapshots.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

@@ -9,6 +9,10 @@
 #include "engine/lighting.h"
 #include "game/missiles/missiles.hpp"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_sync_policy.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "game/players/players.hpp"
 #include "tables/misdat.h"
 
@@ -41,6 +45,11 @@ void InitPortals()
 
 void SetPortalStats(int i, bool o, Point position, int lvl, dungeon_type lvltype, bool isSetLevel)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyDeltaState(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Portals[i].open = o;
 	Portals[i].position = position;
 	Portals[i].level = lvl;
