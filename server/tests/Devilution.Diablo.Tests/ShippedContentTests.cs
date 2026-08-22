@@ -1822,6 +1822,10 @@ public sealed class ShippedContentTests
             .Single(definition => definition.NativeAi == "Counselor"
                 && definition.MissileId == "ChargedBolt")
             .ProjectileCount);
+        Assert.Equal(15, activation.MonsterMissiles.Definitions
+            .Single(definition => definition.NativeAi == "Counselor"
+                && definition.MissileId == "ChargedBolt")
+            .ProjectileDamage);
         Assert.True(activation.MonsterMissiles.TryGet("Mega", out var mega));
         Assert.Equal("InfernoControl", mega.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.InfernoController, mega.ProjectileBehavior);

@@ -20,7 +20,7 @@ Mega	InfernoControl	InfernoController	Ranged	100	0		21	inferno	0		Fire	32	256	0	
 Bat	Rhino	BatCharge	RangedAvoidance	100	42		1	firebolt	0		Physical	18	256	0	0	0	0	0	0	0	0	5	33	4	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1		0	0	5	10	0	0	0	0	0	0	0	0	0	0	0	0	4	50	10	30	0	0	0	6000	1000	1	false	0	0
 Bat	Lightning	MonsterMagic	Ranged	100	43		3	lightning	0		Lightning	16	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10	0	0	0	true	0	0
 Counselor	Firebolt	Firebolt	Ranged	100	107		1	firebolt	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	false	0	0
-Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108		30	charged_bolt	0		Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	false	0	3
+Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108		30	charged_bolt	0		Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	15	0	1		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	false	0	3
 Counselor	LightningControl	Lightning	Ranged	100	109		3	lightning	0		Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	false	0	0
 Counselor	Fireball	Fireball	Ranged	100	110		12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	false	0	0
 Counselor	Fireball	Fireball	Ranged	100	113		12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1		0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	false	0	0

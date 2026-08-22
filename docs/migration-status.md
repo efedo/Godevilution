@@ -61,6 +61,9 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.400 externalizes the native Counselor Charged Bolt projectile count
   through `monster_missiles.tsv`; the shipped row carries three projectiles
   while older mappings retain the compatibility fallback.
+- The shipped Counselor Charged Bolt missile row now declares its native
+  fifteen-point payload through the existing validated `projectile_damage`
+  field; older rows retain the server fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

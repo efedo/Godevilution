@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Declare the native fifteen-point Counselor Charged Bolt monster payload in
+  shipped `monster_missiles.tsv` content while retaining the legacy fallback.
+
 - Externalize the native Counselor Charged Bolt projectile count through
   `monster_missiles.tsv`, preserving the three-projectile fallback for older
   packs and advancing the Diablo content schema to 1.400.
