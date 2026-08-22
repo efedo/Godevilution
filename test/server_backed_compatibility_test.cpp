@@ -16,6 +16,7 @@
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/vendor_snapshot.hpp"
 #include "network/authoritative/server_backed_vendor_state.hpp"
+#include "network/protocol/legacy_item_policy.hpp"
 #include "persistence/save_policy.hpp"
 #include "ui/panel/control_chat_commands.hpp"
 
@@ -110,6 +111,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyChatMutationsFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyChatMutation(false));
 	EXPECT_FALSE(ShouldProcessLegacyChatMutation(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyItemProtocolFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyItemProtocol(false));
+	EXPECT_FALSE(ShouldProcessLegacyItemProtocol(true));
 }
 
 } // namespace

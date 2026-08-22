@@ -45,6 +45,7 @@
 #include "game/items/item_pool.hpp"
 #include "game/monsters/validation.hpp"
 #include "network/protocol/network_ticks.h"
+#include "network/protocol/legacy_item_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "persistence/options.h"
@@ -66,6 +67,10 @@
 #include "utils/string/str_cat.hpp"
 #include "utils/string/str_split.hpp"
 #include "utils/string/utf8.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 #define ValidateField(logValue, condition)                    \
 	do {                                                      \
@@ -1264,6 +1269,10 @@ size_t OnAddVitality(const TCmdParam1 &message, Player &player)
 
 size_t OnGotoGetItem(const TCmdLocParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && InDungeonBounds(position) && Swap16LE(message.wParam1) < MAXITEMS + 1) {
@@ -1433,6 +1442,10 @@ int SyncDropItem(const TCmdPItem &message)
 
 size_t OnRequestGetItem(const TCmdGItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1 || !player.isLevelOwnedByLocalClient() || !IsGItemValid(message))
 		return sizeof(message);
 
@@ -1475,6 +1488,10 @@ size_t OnRequestGetItem(const TCmdGItem &message, Player &player)
 
 size_t OnGetItem(const TCmdGItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 		return sizeof(message);
@@ -1515,6 +1532,10 @@ size_t OnGetItem(const TCmdGItem &message, Player &player)
 
 size_t OnGotoAutoGetItem(const TCmdLocParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	const uint16_t itemIdx = Swap16LE(message.wParam1);
@@ -1529,6 +1550,10 @@ size_t OnGotoAutoGetItem(const TCmdLocParam1 &message, Player &player)
 
 size_t OnRequestAutoGetItem(const TCmdGItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs != 1 && player.isLevelOwnedByLocalClient() && IsGItemValid(message)) {
 		const Point position { message.x, message.y };
 		const uint32_t dwSeed = Swap32LE(message.def.dwSeed);
@@ -1553,6 +1578,10 @@ size_t OnRequestAutoGetItem(const TCmdGItem &message, Player &player)
 
 size_t OnAutoGetItem(const TCmdGItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 		return sizeof(message);
@@ -1589,6 +1618,10 @@ size_t OnAutoGetItem(const TCmdGItem &message, Player &player)
 
 size_t OnItemExtra(const TCmdGItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else if (IsGItemValid(message)) {
@@ -1604,6 +1637,10 @@ size_t OnItemExtra(const TCmdGItem &message, Player &player)
 
 size_t OnPutItem(const TCmdPItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else if (IsPItemValid(message, player)) {
@@ -1641,6 +1678,10 @@ size_t OnPutItem(const TCmdPItem &message, Player &player)
 
 size_t OnSyncPutItem(const TCmdPItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &message, sizeof(message));
 	else if (IsPItemValid(message, player)) {
@@ -2145,6 +2186,10 @@ size_t OnBreakObject(const TCmdLoc &message, Player &player)
 
 size_t OnChangePlayerItems(const TCmdChItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (message.bLoc >= NUM_INVLOC)
 		return sizeof(message);
 
@@ -2166,6 +2211,10 @@ size_t OnChangePlayerItems(const TCmdChItem &message, Player &player)
 
 size_t OnDeletePlayerItems(const TCmdDelItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs != 1) {
 		if (&player != MyPlayer && message.bLoc < NUM_INVLOC)
 			inv_update_rem_item(player, static_cast<inv_body_loc>(message.bLoc));
@@ -2178,6 +2227,10 @@ size_t OnDeletePlayerItems(const TCmdDelItem &message, Player &player)
 
 size_t OnChangeInventoryItems(const TCmdChItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint8_t topLeft = message.bLoc;
 	if (topLeft >= InventoryGridCells)
 		return sizeof(message);
@@ -2204,6 +2257,10 @@ size_t OnChangeInventoryItems(const TCmdChItem &message, Player &player)
 
 size_t OnDeleteInventoryItems(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t invGridIndex = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs == 1) {
@@ -2217,6 +2274,10 @@ size_t OnDeleteInventoryItems(const TCmdParam1 &message, Player &player)
 
 size_t OnChangeBeltItems(const TCmdChItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (message.bLoc >= MaxBeltItems)
 		return sizeof(message);
 
@@ -2233,6 +2294,10 @@ size_t OnChangeBeltItems(const TCmdChItem &message, Player &player)
 
 size_t OnDeleteBeltItems(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t spdBarIndex = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs == 1) {
@@ -2260,6 +2325,10 @@ size_t OnPlayerLevel(const TCmdParam1 &message, Player &player)
 
 size_t OnDropItem(const TCmdPItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else if (IsPItemValid(message, player)) {
@@ -2271,6 +2340,10 @@ size_t OnDropItem(const TCmdPItem &message, Player &player)
 
 size_t OnSpawnItem(const TCmdPItem &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else if (IsPItemValid(message, player)) {
