@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native debug item and monster spawning now fails closed in authoritative
+  mode instead of mutating local inventory or monster pools.
 - Native debug level reset, dungeon warp, quest warp, and custom-map warp
   commands now fail closed in authoritative mode instead of changing local
   level, seed, or visited-state data.

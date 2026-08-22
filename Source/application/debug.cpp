@@ -775,6 +775,8 @@ std::string DebugCmdExportDun()
 
 std::string DebugCmdSpawnItem(std::string itemName)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Item spawning"); error.has_value())
+		return *error;
 	if (ActiveItemCount >= MAXITEMS) return "No space to generate the item!";
 
 	const int max_time = 3000;
@@ -823,6 +825,8 @@ std::string DebugCmdSpawnItem(std::string itemName)
 
 std::string DebugCmdSpawnUniqueItem(std::string itemName)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Unique-item spawning"); error.has_value())
+		return *error;
 	if (ActiveItemCount >= MAXITEMS) return "No space to generate the item!";
 
 	AsciiStrToLower(itemName);
@@ -901,6 +905,8 @@ std::string DebugCmdSpawnUniqueItem(std::string itemName)
 
 std::string DebugCmdSpawnUniqueMonster(std::string name, std::optional<unsigned> countOpt)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Unique-monster spawning"); error.has_value())
+		return *error;
 	if (levelType() == DTYPE_TOWN) return "Can't spawn monsters in town";
 	if (name.empty()) return "name is required";
 	const unsigned count = countOpt.value_or(1);
@@ -977,6 +983,8 @@ std::string DebugCmdSpawnUniqueMonster(std::string name, std::optional<unsigned>
 
 std::string DebugCmdSpawnMonster(std::string name, std::optional<unsigned> countOpt)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Monster spawning"); error.has_value())
+		return *error;
 	if (levelType() == DTYPE_TOWN) return "Can't spawn monsters in town";
 	if (name.empty()) return "name is required";
 	const unsigned count = countOpt.value_or(1);

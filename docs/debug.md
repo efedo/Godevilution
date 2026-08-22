@@ -70,6 +70,8 @@ connected authoritative quest state is server-owned.
 Level reset and dungeon, quest, and custom-map warp commands are also
 offline-only in authoritative sessions; connected transitions must use the
 server-backed movement and progression routes.
+Item and monster spawning commands are offline-only as well, because connected
+inventory and world entities are server-owned.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.

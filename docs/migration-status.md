@@ -58,6 +58,8 @@ Native debug quest activation is also offline-only; connected quest diagnostics
 remain read-only over the server-projected quest state.
 Native debug level reset and dungeon, quest, and custom-map warps are likewise
 offline-only so connected transitions remain server-owned.
+Native debug item and monster spawning is also offline-only; connected world
+items and monsters remain projections of server state.
 
 ## Current state
 

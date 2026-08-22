@@ -104,9 +104,11 @@ reintroduced by the native client adapter.
 The `dev.items.spawn` and `dev.items.spawnUnique` helpers now delegate to
 `debug.items.spawn` and `debug.items.spawnUnique`; item generation, placement,
 and network spawning remain native-owned while Lua retains the compatibility
-aliases. The `dev.monsters.spawn` and `dev.monsters.spawnUnique` helpers likewise
+aliases; the commands are offline-only in authoritative mode. The
+`dev.monsters.spawn` and `dev.monsters.spawnUnique` helpers likewise
 delegate to native commands, preserving town, ownership, name matching, crawl,
-and count behavior behind the compatibility aliases.
+and count behavior behind the compatibility aliases; the commands are
+offline-only in authoritative mode.
 The `dev.towners.talk` and `dev.towners.visit` helpers now delegate to native
 `debug.towners.talk` and `debug.towners.visit` commands; town-only checks,
 legacy aliases, teleportation, and talk-window dispatch remain native-owned.
