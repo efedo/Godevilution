@@ -3768,6 +3768,50 @@ public sealed class DiabloSimulationTests
         Assert.Contains("invalid combat-mode timing", timingException.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsInvalidAttributeState()
+    {
+        var negativeException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero with {
+                Strength = new PlayerAttributeState(-1, 0),
+            },
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("invalid attribute state", negativeException.Message, StringComparison.Ordinal);
+
+        var nullException = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero with {
+                Vitality = null!,
+            },
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+        Assert.Contains("invalid attribute state", nullException.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(

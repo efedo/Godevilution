@@ -103,6 +103,7 @@ public sealed class DiabloPlayerTemplate
             reflectCharges,
             combatMode,
             combatModeEndTick);
+        ValidateAttributes(attributes);
         ValidateItemStates(equipment, item => item.State, "equipment");
         ValidateItemStates(inventory, item => item.State, "inventory");
         ValidateItemStates(belt, item => item.State, "belt");
@@ -217,6 +218,27 @@ public sealed class DiabloPlayerTemplate
                 && values.Select(slotSelector).Distinct().Count() != values.Count) {
                 throw new InvalidDataException(
                     $"Player template contains duplicate {category} slots.");
+            }
+        }
+
+        static void ValidateAttributes(PlayerAttributesState? attributes)
+        {
+            if (attributes is null)
+                return;
+            if (attributes.Strength is null
+                || attributes.Magic is null
+                || attributes.Dexterity is null
+                || attributes.Vitality is null
+                || attributes.Strength.Base < 0
+                || attributes.Strength.Current < 0
+                || attributes.Magic.Base < 0
+                || attributes.Magic.Current < 0
+                || attributes.Dexterity.Base < 0
+                || attributes.Dexterity.Current < 0
+                || attributes.Vitality.Base < 0
+                || attributes.Vitality.Current < 0) {
+                throw new InvalidDataException(
+                    "Player template contains invalid attribute state.");
             }
         }
 
