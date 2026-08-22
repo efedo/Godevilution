@@ -931,6 +931,23 @@ TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)
 	EXPECT_FALSE(ValidateEntityPositionSnapshots(nativeRangeOutside).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsDuplicateEntityIdsAcrossSnapshotCollections)
+{
+	protocol::Snapshot duplicateAcrossCollections;
+	duplicateAcrossCollections.add_players()->set_entity_id(7);
+	duplicateAcrossCollections.add_monsters()->set_entity_id(7);
+	EXPECT_FALSE(ValidateEntityIdentitySnapshots(duplicateAcrossCollections).has_value());
+
+	protocol::Snapshot invalidCorpse;
+	invalidCorpse.add_corpses()->set_entity_id(0);
+	EXPECT_FALSE(ValidateEntityIdentitySnapshots(invalidCorpse).has_value());
+
+	protocol::Snapshot duplicateCorpses;
+	duplicateCorpses.add_corpses()->set_entity_id(8);
+	duplicateCorpses.add_corpses()->set_entity_id(8);
+	EXPECT_FALSE(ValidateEntityIdentitySnapshots(duplicateCorpses).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

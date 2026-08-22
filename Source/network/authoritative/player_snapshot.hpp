@@ -333,6 +333,10 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<void, std::string> ValidateEntityPositionSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates the shared nonzero entity-ID namespace across authoritative collections. */
+[[nodiscard]] tl::expected<void, std::string> ValidateEntityIdentitySnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

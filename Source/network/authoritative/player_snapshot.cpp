@@ -818,6 +818,26 @@ tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::
 	return {};
 }
 
+tl::expected<void, std::string> ValidateEntityIdentitySnapshots(const protocol::Snapshot &snapshot)
+{
+	std::unordered_set<uint32_t> entityIds;
+	const auto validate = [&entityIds](const auto &entities) {
+		for (const auto &entity : entities) {
+			if (entity.entity_id() == 0 || !entityIds.insert(entity.entity_id()).second)
+				return false;
+		}
+		return true;
+	};
+	if (!validate(snapshot.players())
+	    || !validate(snapshot.monsters())
+	    || !validate(snapshot.world_items())
+	    || !validate(snapshot.objects())
+	    || !validate(snapshot.projectiles())
+	    || !validate(snapshot.corpses()))
+		return tl::make_unexpected("Server-backed snapshot contains duplicate or zero entity IDs.");
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {
