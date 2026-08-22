@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native monster level setup no longer writes the legacy Zhar-unavailable quest
+  state while connected; monster presentation remains reconstructed from the
+  authoritative snapshot.
 - Connected native set-piece object initialization no longer rewrites Blind, Blood,
   or Warlord quest-message state or loads their legacy map fragments; authored
   server state remains authoritative for those connected sessions.

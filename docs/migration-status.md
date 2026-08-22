@@ -23,6 +23,9 @@ remain visible or occupy tiles after server state is applied.
 Connected native set-piece object initialization now leaves Blind, Blood,
 and Warlord quest-message and map-fragment mutations offline-only; connected
 sessions retain only presentation object setup until authored replacements exist.
+Native monster level setup now also leaves the legacy Zhar-unavailable fallback
+quest-state write offline-only; connected monster presentation is reconciled from
+the authoritative snapshot.
 
 ## Current state
 

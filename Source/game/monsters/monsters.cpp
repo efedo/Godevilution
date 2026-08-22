@@ -82,6 +82,7 @@
 #include "ui/movie.h"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -124,6 +125,15 @@ int MonsterKillCounts[NUM_MAX_MTYPES];
 bool sgbSaveSoundOn;
 
 namespace {
+
+bool LegacyLevelLoadMutationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
 
 constexpr int NightmareToHitBonus = 85;
 constexpr int HellToHitBonus = 120;
@@ -580,7 +590,8 @@ tl::expected<void, std::string> PlaceQuestMonsters()
 			RETURN_IF_ERROR(AddMonsterType(UniqueMonsterType::Lachdan, PLACE_SCATTER));
 		}
 		if (Quests[Q_ZHAR].IsAvailable() && zharlib() == -1) {
-			Quests[Q_ZHAR]._qactive = QUEST_NOTAVAIL;
+			if (LegacyLevelLoadMutationAllowed())
+				Quests[Q_ZHAR]._qactive = QUEST_NOTAVAIL;
 		}
 
 		if (currentLevelNumber() == Quests[Q_BETRAYER]._qlevel && UseMultiplayerQuests()) {
