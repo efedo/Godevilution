@@ -587,7 +587,9 @@ public sealed class DiabloWorldState
         }
 
         var entityIds = new HashSet<uint>();
-        foreach (var target in CombatTargets.Values) {
+        foreach (var entry in CombatTargets) {
+            ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "monster");
+            var target = entry.Value;
             ValidatePosition(target.LevelId, target.PositionX, target.PositionY, "monster");
             if (target.IsMoving) {
                 ValidatePosition(
@@ -603,22 +605,34 @@ public sealed class DiabloWorldState
                     $"Entity {target.Drop.EntityId} is registered more than once.");
             }
         }
-        foreach (var item in WorldItems.Values) {
+        foreach (var entry in WorldItems) {
+            ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "world item");
+            var item = entry.Value;
             ValidatePosition(item.LevelId, item.PositionX, item.PositionY, "world item");
             if (!entityIds.Add(item.EntityId))
                 throw new InvalidDataException($"Entity {item.EntityId} is registered more than once.");
         }
-        foreach (var corpse in Corpses.Values) {
+        foreach (var entry in Corpses) {
+            ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "corpse");
+            var corpse = entry.Value;
             ValidatePosition(corpse.LevelId, corpse.PositionX, corpse.PositionY, "corpse");
             if (!entityIds.Add(corpse.EntityId))
                 throw new InvalidDataException($"Entity {corpse.EntityId} is registered more than once.");
         }
-        foreach (var @object in Objects.Values) {
+        foreach (var entry in Objects) {
+            ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "object");
+            var @object = entry.Value;
             ValidatePosition(@object.LevelId, @object.PositionX, @object.PositionY, "object");
             if (!entityIds.Add(@object.EntityId)) {
                 throw new InvalidDataException(
                     $"Entity {@object.EntityId} is registered more than once.");
             }
+        }
+        foreach (var entry in Projectiles) {
+            ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "projectile");
+            if (!entityIds.Add(entry.Value.EntityId))
+                throw new InvalidDataException(
+                    $"Entity {entry.Value.EntityId} is registered more than once.");
         }
         var portalIds = new HashSet<uint>();
         foreach (var entry in Portals) {
@@ -673,6 +687,16 @@ public sealed class DiabloWorldState
             throw new InvalidDataException(
                 $"Portal {portal.PortalId} has invalid ownership or lifetime metadata.");
         }
+    }
+
+    private static void ValidateEntityDictionaryKey(
+        uint dictionaryKey,
+        uint entityId,
+        string entityKind)
+    {
+        if (dictionaryKey != entityId)
+            throw new InvalidDataException(
+                $"{entityKind} dictionary key {dictionaryKey} does not match entity identity {entityId}.");
     }
 
     private void ValidatePosition(uint levelId, int positionX, int positionY, string entityKind)

@@ -411,6 +411,39 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void InitialWorldValidationRejectsMutatedEntityDictionaryKeys()
+    {
+        var target = new AuthoritativeCombatTarget(10, 0, 0, 5);
+        var targetWorld = new DiabloWorldState(combatTargets: [target]);
+        targetWorld.CombatTargets.Clear();
+        targetWorld.CombatTargets.Add(11, target);
+        var targetException = Assert.Throws<InvalidDataException>(() =>
+            targetWorld.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("monster dictionary key 11 does not match entity identity 10", targetException.Message, StringComparison.Ordinal);
+
+        var projectile = new AuthoritativeProjectile(
+            20,
+            10,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            AuthoritativeDamageType.Magic,
+            0,
+            1);
+        var projectileWorld = new DiabloWorldState(projectiles: [projectile]);
+        projectileWorld.Projectiles.Clear();
+        projectileWorld.Projectiles.Add(21, projectile);
+        var projectileException = Assert.Throws<InvalidDataException>(() =>
+            projectileWorld.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("projectile dictionary key 21 does not match entity identity 20", projectileException.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(

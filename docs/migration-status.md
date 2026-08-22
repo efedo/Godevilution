@@ -150,6 +150,8 @@ Initial world-state collections now share the 4,096-entry per-category bound
 used by save restoration, preventing oversized direct activation inputs.
 The runtime initial-position gate also revalidates mutable portal dictionary
 keys and metadata before a session can publish its starting state.
+The same gate now checks all mutable entity-map keys, including projectiles,
+against their server-owned entity identities.
 
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility
