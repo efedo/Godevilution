@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.394.0` schema in
+It declares its identity and `devilution.diablo@1.395.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -399,6 +399,11 @@ The optional `counselor_attack_chance_base` and
 ranged-admission band. Shipped Counselor-family rows carry the native 50/5
 values, while older mappings retain the capped 50-plus-five-times-intelligence
 compatibility formula.
+The optional `counselor_adjacent_attack_chance_base` and
+`counselor_adjacent_attack_chance_intelligence_scale` columns externalize the
+adjacent Flash-admission band. Shipped Counselor-family rows carry the native
+20/2 values, while older mappings retain the native 20-plus-two-times-
+intelligence compatibility formula.
 The optional `gargoyle_safe_distance_base` and
 `gargoyle_safe_distance_intelligence_scale` columns externalize the Gargoyle
 wounded retreat/self-heal safety boundary. Legacy monster rows retain the
@@ -1804,6 +1809,18 @@ Schema 1.393 adds the optional `next_message_id` column to
 dialogue identity after its variable transition, as Snotspill's banner route
 does; omitted values retain the existing next-stage lookup behavior.
 
+Schema 1.394 adds optional `unique_monster_placements.tsv` rows for validated,
+content-owned generated unique placement. The contract validates selectors,
+level geometry, collision cells, stable entity IDs, reserved IDs, and
+deterministic seeds before materialization; the shipped tables remain empty
+until native set-piece coordinates are authored.
+
+Schema 1.395 adds optional `counselor_adjacent_attack_chance_base` and
+`counselor_adjacent_attack_chance_intelligence_scale` columns to
+`monster_types.tsv`. Shipped Counselor-family rows carry the native 20/2
+adjacent Flash-admission band, while older mappings retain the compatibility
+fallback.
+
 Schema 1.387 adds optional native tile-definition paths to
 `native_dun_fragments.tsv`. When a fragment supplies both `tile_asset_path` and
 `sol_asset_path`, the server expands its `.dun` mega-tiles through the external
@@ -2629,7 +2646,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.394.0"
+    "version": "1.395.0"
   },
   "dependencyConstraints": [
     {
@@ -2661,7 +2678,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.394.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.395.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

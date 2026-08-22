@@ -8965,6 +8965,71 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CounselorUsesValidatedAdjacentFlashAdmissionChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            maxHitPoints: 20,
+            monsterId: 1,
+            monsterLevel: 5,
+            aggroRange: 8,
+            levelId: 1,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Counselor",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Counselor",
+                CounselorAdjacentAttackChanceBase = 100,
+                CounselorAdjacentAttackChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            spells: new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 0,
+            levelId: 1,
+            life: 6_400,
+            lifeMaximum: 6_400);
+
+        // 60 ^ 9 ^ 7 = 50: the authored 100-percent band admits the Flash
+        // layers where the native 20-percent fallback would defer.
+        processor.AdvanceTick(60, [player]);
+
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.Equal(5, monster.CounselorDelayTicks);
+    }
+
+    [Fact]
     public void CounselorFlashLayersUseTheConfiguredStableSpellIdentity()
     {
         const uint flashSpellId = 99;

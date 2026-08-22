@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Counselor's adjacent Flash-admission chance band through
+  `monster_types.tsv`, preserving the native 20/2 fallback for older packs and
+  advancing the Diablo content schema to 1.395.
+
 - Reject cross-category world entity-ID collisions during authoritative world
   construction, matching the save/snapshot identity invariant before runtime
   commands can observe ambiguous targets.

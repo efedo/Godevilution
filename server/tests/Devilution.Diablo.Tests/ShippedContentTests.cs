@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.394.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.395.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -1963,9 +1963,21 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.394.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.395.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
+        var counselorCatalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
+        var counselorTypes = counselorCatalog.Definitions
+            .Where(definition => definition.NativeAi == "Counselor")
+            .ToArray();
+        Assert.NotEmpty(counselorTypes);
+        Assert.All(
+            counselorTypes,
+            definition => Assert.Equal((20, 2), (
+                definition.CounselorAdjacentAttackChanceBase,
+                definition.CounselorAdjacentAttackChanceIntelligenceScale)));
         var items = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
             composed.GetRequiredTable("items.tsv").ToCanonicalTsv());

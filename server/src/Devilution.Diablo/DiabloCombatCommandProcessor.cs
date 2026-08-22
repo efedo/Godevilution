@@ -5766,7 +5766,18 @@ public sealed class DiabloCombatCommandProcessor
         // Native CounselorAi uses its adjacent ranged attack to emit the two
         // stationary Flash layers; it never falls through to generic melee.
         var adjacentAttackSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        var adjacentAttackChance = Math.Min(100, 20 + (2 * monster.Intelligence));
+        var adjacentAttackChanceBase = 20;
+        var adjacentAttackChanceIntelligenceScale = 2;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var adjacentAttackDefinition) == true
+            && adjacentAttackDefinition.CounselorAdjacentAttackChanceBase > 0
+            && adjacentAttackDefinition.CounselorAdjacentAttackChanceIntelligenceScale > 0) {
+            adjacentAttackChanceBase = adjacentAttackDefinition.CounselorAdjacentAttackChanceBase;
+            adjacentAttackChanceIntelligenceScale = adjacentAttackDefinition.CounselorAdjacentAttackChanceIntelligenceScale;
+        }
+        var adjacentAttackChance = Math.Min(
+            100,
+            adjacentAttackChanceBase
+                + (adjacentAttackChanceIntelligenceScale * monster.Intelligence));
         if (adjacentAttackSeed % 100U < (uint)adjacentAttackChance) {
             CreateMonsterFlashLayers(monster);
             monster.StartCounselorDelay(

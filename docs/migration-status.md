@@ -41,6 +41,10 @@ scaled hit points), not only the client's difficulty label.
 
 ## Implemented authoritative systems
 
+- Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
+  through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
+  tuning and older packs retain the compatibility fallback.
+
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
   conversations therefore preserve their current dialogue target across
