@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- The native debug console now stays native-only in authoritative mode: it
+  skips script prelude loading, autocomplete, module help, and interpreter
+  fallback while exposing the registered server-compatible command list.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

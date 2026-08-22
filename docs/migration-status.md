@@ -48,6 +48,9 @@ scaled hit points), not only the client's difficulty label.
   legitimate depleted-item state.
 - Live world-item pickup now materializes the same authored metadata before
   mutating player state.
+- The native debug console now stays script-free in authoritative mode, using
+  only the registered native command list and retaining the legacy console
+  behavior for explicit compatibility launches.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

@@ -45,6 +45,9 @@
 #include "lua/autocomplete.hpp"
 #include "lua/metadoc.hpp"
 #include "lua/repl.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_configuration.hpp"
+#endif
 #include "utils/algorithm/container.hpp"
 #include "utils/display.h"
 #include "utils/sdl/sdl_compat.h"
@@ -492,6 +495,8 @@ void ClearConsole()
 
 } // namespace
 
+bool IsNativeOnlyConsole();
+
 bool IsConsoleOpen()
 {
 	return IsConsoleVisible;
@@ -642,6 +647,8 @@ void DrawConsole(const Surface &out)
 		WrappedInputText = WordWrapString(StrCat(Prompt, originalInputText), OuterRect.size.width - (2 * TextPaddingX), TextFontSize, TextSpacing);
 		if (CurrentInputTextState == InputTextState::RestoredFromHistory) {
 			AutocompleteSuggestions.clear();
+		} else if (IsNativeOnlyConsole()) {
+			AutocompleteSuggestions.clear();
 		} else {
 			GetLuaAutocompleteSuggestions(originalInputText, ConsoleInputCursor.position, GetLuaReplEnvironment(), /*maxSuggestions=*/MaxSuggestions, AutocompleteSuggestions);
 		}
@@ -703,6 +710,11 @@ void InitConsole()
 	if (!ConsoleLines.empty())
 		return;
 	RegisterNativeDebugCommands();
+	if (IsNativeOnlyConsole()) {
+		ConsolePrelude = std::nullopt;
+		AddInitialConsoleLines();
+		return;
+	}
 	ConsolePrelude = LoadAsset("lua\\repl_prelude.lua");
 	AddInitialConsoleLines();
 	if (ConsolePrelude->has_value())
@@ -729,6 +741,16 @@ std::optional<std::string_view> GetHelpQuery(std::string_view code)
 	code.remove_prefix(4);
 	code = TrimWhitespace(code);
 	return code;
+}
+
+bool IsNativeOnlyConsole()
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return authoritative::GetServerBackedRuntimeConfiguration().mode
+		== authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative;
+#else
+	return false;
+#endif
 }
 
 std::optional<sol::table> ResolveLuaModulePath(std::string_view modulePath)
@@ -797,7 +819,11 @@ void RunInConsole(std::string_view code)
 	AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Input, .text = StrCat(Prompt, code) });
 	if (const std::optional<std::string_view> helpQuery = GetHelpQuery(code); helpQuery.has_value()) {
 		if (helpQuery->empty()) {
-			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Help, .text = std::string(CommandHelpText) });
+			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Help, .text = IsNativeOnlyConsole()
+				? CurrentDebugCommandRegistry.HelpText()
+				: std::string(CommandHelpText) });
+		} else if (IsNativeOnlyConsole()) {
+			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Error, .text = "Module help is unavailable in native-only mode." });
 		} else {
 			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Help, .text = BuildModuleHelp(*helpQuery) });
 		}
@@ -806,6 +832,10 @@ void RunInConsole(std::string_view code)
 	if (const std::optional<std::string> result = CurrentDebugCommandRegistry.Execute(code); result.has_value()) {
 		if (!result->empty())
 			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Output, .text = *result });
+		return;
+	}
+	if (IsNativeOnlyConsole()) {
+		AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Error, .text = "Unknown native debug command." });
 		return;
 	}
 	tl::expected<std::string, std::string> result = RunLuaReplLine(code);

@@ -39,5 +39,18 @@ TEST(DebugCommandRegistry, ListsCommandsInOrdinalOrderAndLeavesUnknownCommandsUn
 	EXPECT_FALSE(registry.Execute("unknown").has_value());
 }
 
+TEST(DebugCommandRegistry, FormatsNativeHelpFromRegisteredCommands)
+{
+	DebugCommandRegistry registry;
+	ASSERT_TRUE(registry.Register("zeta", "Z command.", [](std::string_view) { return std::string {}; }));
+	ASSERT_TRUE(registry.Register("alpha", "A command.", [](std::string_view) { return std::string {}; }));
+
+	EXPECT_EQ(
+		registry.HelpText(),
+		"Native debug commands:\n"
+		"  alpha - A command.\n"
+		"  zeta - Z command.");
+}
+
 } // namespace
 } // namespace devilution

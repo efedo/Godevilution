@@ -58,4 +58,18 @@ std::vector<DebugCommandDefinition> DebugCommandRegistry::Definitions() const
 	return result;
 }
 
+std::string DebugCommandRegistry::HelpText() const
+{
+	std::string result = "Native debug commands:";
+	for (const DebugCommandDefinition &command : Definitions()) {
+		result.append("\n  ");
+		result.append(command.name);
+		if (!command.description.empty()) {
+			result.append(" - ");
+			result.append(command.description);
+		}
+	}
+	return result;
+}
+
 } // namespace devilution

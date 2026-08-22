@@ -33,6 +33,9 @@ public:
 	/** Returns registered commands in ordinal name order. */
 	[[nodiscard]] std::vector<DebugCommandDefinition> Definitions() const;
 
+	/** Formats the registered commands for the native debug console. */
+	[[nodiscard]] std::string HelpText() const;
+
 private:
 	struct RegisteredCommand {
 		std::string description;
