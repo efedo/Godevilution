@@ -894,23 +894,24 @@ void TalkToTowner(Player &player, int t)
 	}
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (&player == MyPlayer
-	    && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
-		const auto questId = authoritative::GetServerBackedRuntime().ActiveQuestForTowner(
-		    static_cast<uint32_t>(towner._ttype));
-		if (questId.has_value()) {
-			if (auto result = authoritative::GetServerBackedRuntime().TurnInQuest(
-			        *questId,
-			        static_cast<uint32_t>(towner._ttype),
-			        0,
-			        GetMillisecondsSinceStartup()); !result.has_value()) {
-				LogError("Failed to submit the authoritative quest turn-in: {}", result.error());
+	auto &runtime = authoritative::GetServerBackedRuntime();
+	if (runtime.IsConnected()) {
+		if (&player == MyPlayer && runtime.IsAuthoritativeMode()) {
+			const auto questId = runtime.ActiveQuestForTowner(static_cast<uint32_t>(towner._ttype));
+			if (questId.has_value()) {
+				if (auto result = runtime.TurnInQuest(
+				        *questId,
+				        static_cast<uint32_t>(towner._ttype),
+				        0,
+				        GetMillisecondsSinceStartup()); !result.has_value()) {
+					LogError("Failed to submit the authoritative quest turn-in: {}", result.error());
+				}
+				return;
 			}
-			return;
+			if (StartServerBackedTownerMenu(towner._ttype))
+				return;
+			LogError("No authoritative interaction is available for towner {}.", static_cast<unsigned>(towner._ttype));
 		}
-		if (StartServerBackedTownerMenu(towner._ttype))
-			return;
-		LogError("No authoritative interaction is available for towner {}.", static_cast<unsigned>(towner._ttype));
 		return;
 	}
 #endif

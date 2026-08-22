@@ -19,6 +19,10 @@ Connected native object interaction facades now also fail closed for direct
 operate, break, trap, and Na-Krul room callbacks; local authoritative operate
 requests still route through the server projection.
 
+Connected native towner dialogue now fails closed before legacy talk handlers
+can mutate local quest or store state; local authoritative dialogue and menu
+requests retain their server-backed route.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.
