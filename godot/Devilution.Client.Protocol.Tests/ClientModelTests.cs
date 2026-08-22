@@ -1648,6 +1648,10 @@ public sealed class ClientModelTests
         invalidSearch.Players[0].StatusEffects[1].Magnitude = 1;
         Assert.Throws<InvalidDataException>(() => model.Apply(
             new AuthoritativeClientMessage(Snapshot: invalidSearch)));
+        var invalidEtherealize = snapshot.Clone();
+        invalidEtherealize.Players[0].StatusEffects[2].Magnitude = 1;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidEtherealize)));
     }
 
     [Fact]

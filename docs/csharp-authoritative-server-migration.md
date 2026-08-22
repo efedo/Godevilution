@@ -458,8 +458,9 @@ Monk loadout's declared class ability executable. The module computes the
 native `245 + 2 * character level + 10 * effective spell level` duration from
 validated content, adds recast duration with the native signed-overflow guard,
 and owns tick expiry and level-transition cleanup. Protocol status behavior
-`2` drives only native automap and Godot item highlighting; clients do not
-advance or combine the effect.
+`2` drives only native automap and Godot item highlighting, while behavior `3`
+surfaces server-owned Etherealize immunity. Clients do not advance, combine, or
+resolve either effect.
 
 Schema 0.26 makes the Bard's content-declared spell-5 Identify skill executable
 as a typed item-service source. The module validates the selected ability and

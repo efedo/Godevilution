@@ -2401,7 +2401,8 @@ public sealed partial class DiabloSimulation
                 || effect.RemainingTicks == 0
                 || !Enum.IsDefined(effect.Behavior)
                 || ((effect.Behavior is AuthoritativeStatusEffectBehavior.Infravision
-                        or AuthoritativeStatusEffectBehavior.Search)
+                        or AuthoritativeStatusEffectBehavior.Search
+                        or AuthoritativeStatusEffectBehavior.Etherealize)
                     && effect.Magnitude != 0))
             || source.StatusEffects.Select(effect => effect.EffectId).Distinct().Count()
                 != source.StatusEffects.Count) {

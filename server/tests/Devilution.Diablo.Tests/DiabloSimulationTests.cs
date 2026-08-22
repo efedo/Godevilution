@@ -3043,8 +3043,17 @@ public sealed class DiabloSimulationTests
 
         Assert.Throws<InvalidDataException>(() =>
             simulation.RestoreSnapshot(CreatePlayer(), malformedMagnitude));
+        var malformedEtherealizeMagnitude = snapshot with {
+            Player = snapshot.Player with {
+                StatusEffects = [new AuthoritativeStatusEffect(53, uint.MaxValue, 1) {
+                    Behavior = AuthoritativeStatusEffectBehavior.Etherealize,
+                }],
+            },
+        };
         Assert.Throws<InvalidDataException>(() =>
             simulation.RestoreSnapshot(CreatePlayer(), duplicateIds));
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), malformedEtherealizeMagnitude));
     }
 
     [Fact]

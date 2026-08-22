@@ -2345,6 +2345,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidOrDuplicateStatusEffectsWithoutMu
 
 	snapshot.statusEffects[0] = { .effectId = 46, .remainingTicks = 10, .magnitude = 1, .behavior = 2 };
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+
+	snapshot.statusEffects[0] = { .effectId = 53, .remainingTicks = 10, .magnitude = 1, .behavior = 3 };
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidCombatModeWithoutMutation)

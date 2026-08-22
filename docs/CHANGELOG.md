@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native, Godot, and saved-state validation now require zero magnitude for all
+  typed status behaviors, including Etherealize, keeping malformed authoritative
+  snapshots fail-closed across clients and persistence.
 - Connected native level-transition presentation no longer clears or
   rebroadcasts server-owned Mana Shield and Reflect state after an authoritative
   restart or transition; disconnected sessions retain the legacy lifecycle.

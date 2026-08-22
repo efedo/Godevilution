@@ -414,7 +414,8 @@ public sealed class AuthoritativeClientModel
                 || effect.RemainingTicks == 0
                 || !Enum.IsDefined(effect.Behavior)
                 || ((effect.Behavior is StatusEffectBehavior.Infravision
-                        or StatusEffectBehavior.Search)
+                        or StatusEffectBehavior.Search
+                        or StatusEffectBehavior.Etherealize)
                     && effect.Magnitude != 0)
                 || !effectIds.Add(effect.EffectId)) {
                 throw new InvalidDataException(

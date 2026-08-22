@@ -868,14 +868,15 @@ monster `petrified` flag freezes presentation and movement; expiry or the
 dead-target shatter transition is resolved only by the server.
 
 `StatusEffectSnapshot.behavior` field 4 carries typed server-owned semantics for
-player statuses. Value `1` is Infravision and value `2` is Search. Clients
-use them only for presentation: native maps Search to the original automap item
-highlight and Godot outlines world items. Duration, Infravision recast union,
-Search additive recasts, expiry, and level-transition cleanup remain server
-decisions. Nonzero behavior adds the tagged
+player statuses. Value `1` is Infravision, value `2` is Search, and value `3` is
+Etherealize. Clients use them only for presentation: native maps Search to the
+original automap item highlight, native and Godot surface Etherealize as the
+server-owned immunity presentation, and Godot outlines world items. Duration,
+Infravision recast union, Search additive recasts, expiry, immunity, and
+level-transition cleanup remain server decisions. Nonzero behavior adds the tagged
 `godevilution-status-effect-behavior-v1` canonical-hash section after the legacy
 effect ID, duration, and magnitude, so an omitted value preserves prior hashes.
-Unknown behavior values and nonzero Infravision or Search magnitude are invalid
+Unknown behavior values and nonzero magnitude for any typed behavior are invalid
 complete snapshot state.
 
 `ObjectSnapshot` fields 10 through 12 carry native missile pass-through,
