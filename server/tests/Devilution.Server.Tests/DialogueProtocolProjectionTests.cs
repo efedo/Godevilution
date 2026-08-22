@@ -92,6 +92,16 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { Gold = (uint)int.MaxValue + 1U });
         AssertRejected(value => value with { StashGold = (uint)int.MaxValue + 1U });
         AssertRejected(value => value with { StatPoints = (uint)int.MaxValue + 1U });
+        AssertRejected(value => value with { Life = -1 });
+        AssertRejected(value => value with { LifeMaximum = -1 });
+        AssertRejected(value => value with { Life = 65, LifeMaximum = 64 });
+        AssertRejected(value => value with { Mana = -1 });
+        AssertRejected(value => value with { ManaMaximum = -1 });
+        AssertRejected(value => value with { Mana = 65, ManaMaximum = 64 });
+        AssertRejected(value => value with { BaseLifeMaximum = -1 });
+        AssertRejected(value => value with { BaseManaMaximum = -1 });
+        AssertRejected(value => value with { ReflectCharges = ushort.MaxValue + 1U });
+        AssertRejected(value => value with { CharacterLevel = 51 });
     }
 
     [Fact]

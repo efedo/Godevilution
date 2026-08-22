@@ -403,9 +403,19 @@ internal static class DiabloProtocolMapper
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks)
     {
-        if (state.Gold > int.MaxValue
+        if (state.Life < 0
+            || state.LifeMaximum < 0
+            || state.LifeMaximum > 0 && state.Life > state.LifeMaximum
+            || state.Mana < 0
+            || state.ManaMaximum < 0
+            || state.ManaMaximum > 0 && state.Mana > state.ManaMaximum
+            || state.BaseLifeMaximum < 0
+            || state.BaseManaMaximum < 0
+            || state.Gold > int.MaxValue
             || state.StashGold > int.MaxValue
-            || state.StatPoints > int.MaxValue) {
+            || state.StatPoints > int.MaxValue
+            || state.ReflectCharges > ushort.MaxValue
+            || state.CharacterLevel > 50) {
             throw new InvalidDataException(
                 "Authoritative player resources exceed the shared protocol range.");
         }
