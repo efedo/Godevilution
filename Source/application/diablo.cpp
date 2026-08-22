@@ -4003,7 +4003,7 @@ tl::expected<void, std::string> LoadGameLevelStandardLevel(bool firstflag, lvl_e
 
 void LoadGameLevelCrypt()
 {
-	if (CornerStone.isAvailable()) {
+	if (LegacyLevelLoadMutationAllowed() && CornerStone.isAvailable()) {
 		CornerstoneLoad(CornerStone.position);
 	}
 	if (LegacyLevelLoadMutationAllowed()

@@ -11,6 +11,8 @@ authoritative projections.
 The return-level Betrayer marker also remains offline-only for the same reason.
 Set-piece quest activation and Na-Krul room reconstruction are also offline-only
 during connected level loads.
+Legacy Cornerstone item restoration from local Hellfire options is offline-only
+as well.
 
 ## Current state
 

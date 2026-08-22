@@ -58,6 +58,8 @@ All notable changes to this fork are documented below.
 - Connected native set-piece and crypt level loading no longer mutates legacy
   quest markers or Na-Krul room geometry; authoritative world projections own
   those connected-state changes.
+- Connected native crypt loading no longer restores a legacy Cornerstone item
+  from local Hellfire options; item state remains server-owned.
 - Connected native clients now ignore legacy player-info, level, and remote
   attribute synchronization messages; authoritative snapshots own presentation.
 - Connected native clients now ignore legacy movement, targeting, attack, spell,
