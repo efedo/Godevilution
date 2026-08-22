@@ -26,6 +26,8 @@ All notable changes to this fork are documented below.
   tags as authoritative before using native equipment-location fallback.
 - Staff classification now treats active non-empty staff/non-staff tags as
   authoritative before using the native item-type fallback.
+- Weapon classification now treats active non-empty weapon/non-weapon tags as
+  authoritative before using the native item-class fallback.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

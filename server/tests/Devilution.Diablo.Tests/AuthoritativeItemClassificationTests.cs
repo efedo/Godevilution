@@ -29,6 +29,14 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void NonWeaponTagsOverrideConflictingLegacyItemClass()
+    {
+        var definition = CreateDefinition(itemClass: 1, tags: ["Misc"]);
+
+        Assert.False(AuthoritativeItemClassification.IsWeapon(definition));
+    }
+
+    [Fact]
     public void ExplicitStaffTagsOverrideConflictingLegacyItemType()
     {
         var definition = CreateDefinition(itemClass: 0, tags: ["Staff"]);

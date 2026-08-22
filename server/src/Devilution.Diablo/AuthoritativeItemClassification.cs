@@ -34,11 +34,9 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        if (HasWeaponSubtype(definition.GenerationTags))
-            return true;
-        if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-            return false;
-        return definition.ItemClass == 1;
+        return definition.GenerationTags.Count > 0
+            ? HasWeaponSubtype(definition.GenerationTags)
+            : definition.ItemClass == 1;
     }
 
     public static bool IsWeapon(
@@ -50,10 +48,8 @@ public static class AuthoritativeItemClassification
             if (items.TryGetByState(state, out var definition))
                 return IsWeapon(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
-                if (HasWeaponSubtype(tags))
-                    return true;
-                if (HasExplicitEquipmentSubtype(tags))
-                    return false;
+                if (tags.Count > 0)
+                    return HasWeaponSubtype(tags);
             }
         }
         return state.ItemClass == 1;
