@@ -1333,6 +1333,66 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void OilTargetTagsOverrideConflictingLegacyItemClassByMiscId()
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            78,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplyAccuracyOil,
+                ItemClass = 3,
+            });
+        var targetDefinition = new AuthoritativeItemDefinition(
+            910,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            ItemClass = 3,
+            MiscId = 121,
+            NativeItemIndex = 101,
+            GenerationTags = new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase),
+        };
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            79,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 3,
+                ItemIndex = 999,
+                MiscId = 121,
+                PlusToHit = 0,
+            });
+        var player = CreatePlayer(inventory: [oil, target]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: new DiabloRandom(0),
+            items: new AuthoritativeItemCatalog([targetDefinition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.InRange(Assert.Single(player.Inventory).State.PlusToHit, 1, 2);
+    }
+
+    [Fact]
     public void OilRejectsMissingOrIncompatibleTargetsWithoutConsumingTheSource()
     {
         var oil = new OwnedStoreItem(

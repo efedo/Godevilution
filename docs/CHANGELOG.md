@@ -34,6 +34,8 @@ All notable changes to this fork are documented below.
   content tags by misc ID when native item-index lookup is unavailable.
 - Store armor-target validation now treats active armor tags as authoritative,
   including misc-ID resolution when native item-index lookup is unavailable.
+- Oil-target validation now treats active `Misc`, `Gold`, and `Quest` tags as
+  authoritative before falling back to native item-class values.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

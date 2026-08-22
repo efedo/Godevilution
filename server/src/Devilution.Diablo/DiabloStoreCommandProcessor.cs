@@ -703,16 +703,21 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsOilTargetClass(AuthoritativeItemState state)
     {
-        if (state.ItemClass is 3 or 4 or 5)
-            return true;
-        if (items is not null
-            && items.TryGetByState(state, out var definition)) {
-            return definition.GenerationTags.Contains("Misc")
-                || definition.GenerationTags.Contains("Gold")
-                || definition.GenerationTags.Contains("Quest");
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.GenerationTags.Count > 0)
+                return HasOilTargetTag(definition.GenerationTags);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return HasOilTargetTag(tags);
         }
-        return false;
+        return state.ItemClass is 3 or 4 or 5;
     }
+
+    private static bool HasOilTargetTag(IReadOnlySet<string> tags)
+        => tags.Contains("Misc", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Gold", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Quest", StringComparer.OrdinalIgnoreCase);
 
     private bool IsArmor(AuthoritativeItemState state)
         => AuthoritativeItemClassification.IsArmor(state, items);
