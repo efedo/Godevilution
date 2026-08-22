@@ -18,6 +18,11 @@ internal static class DiabloProtocolMapper
     {
         ArgumentNullException.ThrowIfNull(source);
         ValidateProjectedStoreState(source);
+        if (source.WorldItems.Any(item => item.Price > int.MaxValue)
+            || source.ActiveStore?.Items.Any(item => item.Price > int.MaxValue) == true) {
+            throw new InvalidDataException(
+                "Authoritative item price exceeds the shared native protocol range.");
+        }
         var visibleParticipants = participants?
             .Where(player => player.EntityId != 0)
             .ToArray();
@@ -419,6 +424,12 @@ internal static class DiabloProtocolMapper
         if (state.StashOpen && state.ActiveStoreId is not null) {
             throw new InvalidDataException(
                 "Authoritative player projection opens a stash and store simultaneously.");
+        }
+        if (state.Inventory.Any(item => item.Price > int.MaxValue)
+            || state.HeldItem is { Price: > int.MaxValue }
+            || state.Stash.Any(item => item.Price > int.MaxValue)) {
+            throw new InvalidDataException(
+                "Authoritative item price exceeds the shared native protocol range.");
         }
         if (!string.IsNullOrEmpty(state.CharacterName)
             && !DiabloPlayerName.IsValid(state.CharacterName)) {

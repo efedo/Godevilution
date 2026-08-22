@@ -483,6 +483,62 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsUnrepresentableProjectedItemPrices()
+    {
+        const uint unrepresentablePrice = (uint)int.MaxValue + 1U;
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        var pricedItem = new OwnedStoreItem(0, 0, 7, unrepresentablePrice, 0);
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { Inventory = [pricedItem] },
+            }));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { ActiveStoreId = 12 },
+                ActiveStore = new DiabloStoreState(
+                    12,
+                    [new StoreItem(0, 7, unrepresentablePrice)]),
+            }));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                WorldItems = [new DiabloWorldItemState(
+                    2,
+                    0,
+                    0,
+                    0,
+                    7,
+                    unrepresentablePrice,
+                    AuthoritativeItemState.Empty)],
+            }));
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(
