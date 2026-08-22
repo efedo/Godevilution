@@ -4675,11 +4675,17 @@ Monster *PreSpawnSkeleton()
 
 void TalktoMonster(Player &player, Monster &monster)
 {
-	if (&player == MyPlayer)
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	const bool authoritativeMode = authoritative::GetServerBackedRuntime().IsAuthoritativeMode();
+#else
+	constexpr bool authoritativeMode = false;
+#endif
+
+	if (&player == MyPlayer && ShouldApplyLegacyMonsterConversationMutation(authoritativeMode))
 		monster.mode = MonsterMode::Talk;
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+	if (&player == MyPlayer && authoritativeMode) {
 		auto &runtime = authoritative::GetServerBackedRuntime();
 		const auto monsterEntityId = runtime.MonsterEntityIdAt(monster.position.tile.x, monster.position.tile.y);
 		const auto questId = monsterEntityId.has_value()

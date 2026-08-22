@@ -65,6 +65,15 @@ constexpr ServerBackedMonsterInteractionRoute ResolveServerBackedMonsterInteract
 	    : ServerBackedMonsterInteractionRoute::FailClosed;
 }
 
+/**
+ * Legacy monster dialogue changes the local monster mode only when the
+ * authoritative runtime is not owning the conversation.
+ */
+constexpr bool ShouldApplyLegacyMonsterConversationMutation(bool authoritativeMode) noexcept
+{
+	return !authoritativeMode;
+}
+
 enum monster_flag : uint16_t {
 	// clang-format off
 	MFLAG_HIDDEN          = 1 << 0,

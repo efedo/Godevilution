@@ -89,6 +89,12 @@ TEST(ServerBackedCompatibility, MissingMonsterProjectionFailsClosed)
 	    Route::FailClosed);
 }
 
+TEST(ServerBackedCompatibility, ConnectedMonsterConversationSkipsLegacyModeMutation)
+{
+	EXPECT_TRUE(ShouldApplyLegacyMonsterConversationMutation(false));
+	EXPECT_FALSE(ShouldApplyLegacyMonsterConversationMutation(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedManaShieldUsesServerLifecycle)
 {
 	EXPECT_TRUE(ShouldProcessNativeManaShield(false));

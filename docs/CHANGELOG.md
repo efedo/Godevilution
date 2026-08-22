@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native unique-monster conversations no longer mutate the local
+  monster mode before submitting an authoritative dialogue command; legacy
+  mode changes remain available offline.
 - Connected native Ctrl-click stash-to-inventory transfers now submit an
   authoritative stable-reference move instead of mutating the local inventory
   and stash directly.

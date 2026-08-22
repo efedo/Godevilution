@@ -2,6 +2,9 @@
 
 Status date: 2026-08-22
 
+Connected native unique-monster conversations now avoid the legacy local
+monster-mode mutation before authoritative dialogue routing; offline
+conversations retain the native mode change.
 Connected native Ctrl-click stash-to-inventory transfers now submit an
 authoritative stable-reference move; the legacy local transfer remains offline-
 only so the server owns both inventory and stash state.
