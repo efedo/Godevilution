@@ -46,6 +46,8 @@ All notable changes to this fork are documented below.
   character-panel allocation remains server-owned.
 - Connected native clients now ignore legacy level and portal transition
   messages; server-owned movement, portals, and level state remain authoritative.
+- Connected native clients now ignore legacy combat, damage, resurrection,
+  shield, reflection, and monster-spawn messages; the server owns those effects.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

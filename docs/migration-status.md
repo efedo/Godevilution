@@ -181,6 +181,8 @@ scaled hit points), not only the client's difficulty label.
   character-panel allocation remains server-owned.
 - Connected native clients now ignore legacy level and portal transition
   messages; server-owned movement, portals, and level state remain authoritative.
+- Connected native clients now ignore legacy combat, damage, resurrection,
+  shield, reflection, and monster-spawn messages; the server owns those effects.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

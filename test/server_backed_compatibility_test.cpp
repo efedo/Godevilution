@@ -17,6 +17,7 @@
 #include "network/authoritative/vendor_snapshot.hpp"
 #include "network/authoritative/server_backed_vendor_state.hpp"
 #include "network/protocol/legacy_attribute_policy.hpp"
+#include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "persistence/save_policy.hpp"
@@ -131,6 +132,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyTransitionMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyTransitionMessage(false));
 	EXPECT_FALSE(ShouldProcessLegacyTransitionMessage(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyCombatMessagesFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyCombatMessage(false));
+	EXPECT_FALSE(ShouldProcessLegacyCombatMessage(true));
 }
 
 } // namespace

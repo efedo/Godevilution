@@ -46,6 +46,7 @@
 #include "game/monsters/validation.hpp"
 #include "network/protocol/network_ticks.h"
 #include "network/protocol/legacy_attribute_policy.hpp"
+#include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "game/objects/objects.hpp"
@@ -1967,6 +1968,10 @@ size_t OnSpellPlayer(const TCmdParam4 &message, Player &player)
 
 size_t OnKnockback(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t monsterIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && monsterIdx < MaxMonsters) {
@@ -1980,6 +1985,10 @@ size_t OnKnockback(const TCmdParam1 &message, Player &player)
 
 size_t OnResurrect(const TCmdParam1 &message, Player &caster)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t playerIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs == 1) {
@@ -2003,6 +2012,10 @@ size_t OnResurrect(const TCmdParam1 &message, Player &caster)
 
 size_t OnPlayerAlive(const TCmd &message, Player &target)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(target, &message, sizeof(message));
 		return sizeof(message);
@@ -2015,6 +2028,10 @@ size_t OnPlayerAlive(const TCmd &message, Player &target)
 
 size_t OnHealOther(const TCmdParam1 &message, const Player &caster)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t playerIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1) {
@@ -2086,6 +2103,10 @@ size_t OnWarp(const TCmdParam1 &message, Player &player)
 
 size_t OnMonstDeath(const TCmdLocParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 	const uint16_t monsterIdx = Swap16LE(message.wParam1);
 
@@ -2105,6 +2126,10 @@ size_t OnMonstDeath(const TCmdLocParam1 &message, Player &player)
 
 size_t OnRequestSpawnGolem(const TCmdLocParam1 &message, const Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		return sizeof(message);
 
@@ -2118,6 +2143,10 @@ size_t OnRequestSpawnGolem(const TCmdLocParam1 &message, const Player &player)
 
 size_t OnMonstDamage(const TCmdMonDamage &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t monsterIdx = Swap16LE(message.wMon);
 
 	if (gbBufferMsgs != 1) {
@@ -2142,6 +2171,10 @@ size_t OnMonstDamage(const TCmdMonDamage &message, Player &player)
 
 size_t OnPlayerDeath(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const auto deathReason = static_cast<DeathReason>(Swap16LE(message.wParam1));
 
 	if (gbBufferMsgs != 1) {
@@ -2158,6 +2191,10 @@ size_t OnPlayerDeath(const TCmdParam1 &message, Player &player)
 
 size_t OnPlayerDamage(const TCmdDamage &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint32_t damage = Swap32LE(message.dwDam);
 
 	Player &target = Players[message.bPlr];
@@ -2664,6 +2701,10 @@ size_t OnDebug(const TCmd &pCmd)
 
 size_t OnSetShield(const TCmd &cmd, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs != 1)
 		player.pManaShield = true;
 
@@ -2672,6 +2713,10 @@ size_t OnSetShield(const TCmd &cmd, Player &player)
 
 size_t OnRemoveShield(const TCmd &cmd, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs != 1)
 		player.pManaShield = false;
 
@@ -2680,6 +2725,10 @@ size_t OnRemoveShield(const TCmd &cmd, Player &player)
 
 size_t OnSetReflect(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs != 1)
 		player.wReflections = Swap16LE(message.wParam1);
 
@@ -2724,6 +2773,10 @@ size_t OnOpenGrave(const TCmd &cmd)
 
 size_t OnSpawnMonster(const TCmdSpawnMonster &message, const Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		return sizeof(message);
 	if (player.plrlevel == 0)
