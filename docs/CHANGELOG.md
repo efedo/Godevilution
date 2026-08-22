@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native Ctrl-click stash-to-inventory transfers now submit an
+  authoritative stable-reference move instead of mutating the local inventory
+  and stash directly.
 - Connected native inventory actions now fail closed before the legacy item-use
   fallback can remove or mutate unsupported local items; scroll and rune uses
   retain only their immediate authoritative cast-intent route.

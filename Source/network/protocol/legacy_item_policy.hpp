@@ -27,4 +27,10 @@ constexpr bool ShouldProcessLegacyGoldDrop(bool serverConnected) noexcept
 	return !serverConnected;
 }
 
+/** Ctrl-click stash transfers must use the authoritative move command when connected. */
+constexpr bool ShouldProcessLegacyStashInventoryTransfer(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 } // namespace devilution

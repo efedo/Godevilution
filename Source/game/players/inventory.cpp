@@ -1323,6 +1323,11 @@ int CreateGoldItemInInventorySlot(Player &player, int slotIndex, int value)
 
 } // namespace
 
+std::optional<int> FindInventorySlotForItem(const Player &player, const Size &itemSize, int itemIndexToIgnore)
+{
+	return FindSlotForItem(player, itemSize, itemIndexToIgnore);
+}
+
 void InvDrawSlotBack(const Surface &out, Point targetPosition, Size size, item_quality itemQuality)
 {
 	SDL_Rect srcRect = MakeSdlRect(0, 0, size.width, size.height);

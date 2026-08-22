@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 
 #include "engine/gfx/palette.h"
 #include "engine/math/point.hpp"
@@ -122,6 +123,9 @@ bool AutoEquip(Player &player, const Item &item, bool persistItem = true, bool s
 
 // Checks whether the given item can be placed on the specified player's inventory.
 bool CanFitItemInInventory(const Player &player, const Item &item);
+
+// Returns the first native-compatible inventory slot for the given item.
+std::optional<int> FindInventorySlotForItem(const Player &player, const Size &itemSize, int itemIndexToIgnore = -1);
 
 /**
  * @brief Attempts to place the given item in the specified player's inventory.

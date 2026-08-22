@@ -42,6 +42,7 @@
 #include "utils/string/utf8.hpp"
 #include "utils/timer.hpp"
 #include "utils/log.hpp"
+#include "network/protocol/legacy_item_policy.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -378,6 +379,29 @@ void TransferItemToInventory(Player &player, uint16_t itemId)
 	if (item.isEmpty()) {
 		return;
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyStashInventoryTransfer(authoritative::GetServerBackedRuntime().IsConnected())) {
+		auto &runtime = authoritative::GetServerBackedRuntime();
+		const auto source = runtime.PlayerItemReferenceForSeed(item._iSeed);
+		const auto targetSlot = FindInventorySlotForItem(player, GetInventorySize(item));
+		if (!source.has_value() || !targetSlot.has_value()) {
+			if (!targetSlot.has_value())
+				player.SaySpecific(HeroSpeech::IHaveNoRoom);
+			else
+				LogError("Could not resolve the Ctrl-click stash source in the authoritative snapshot.");
+			return;
+		}
+
+		const authoritative::ServerBackedItemReference destination {
+			.location = authoritative::ServerBackedItemLocation::Inventory,
+			.slot = static_cast<uint32_t>(*targetSlot),
+		};
+		if (auto result = runtime.MoveItem(*source, destination, 0, GetMillisecondsSinceStartup()); !result.has_value())
+			LogError("Server-backed Ctrl-click stash-to-inventory transfer failed: {}", result.error());
+		return;
+	}
+#endif
 
 	if (!AutoPlaceItemInInventory(player, item)) {
 		player.SaySpecific(HeroSpeech::IHaveNoRoom);

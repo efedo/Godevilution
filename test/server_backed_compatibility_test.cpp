@@ -158,6 +158,12 @@ TEST(ServerBackedCompatibility, ConnectedGoldSplittingFailsClosed)
 	EXPECT_FALSE(ShouldProcessLegacyGoldDrop(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedCtrlClickStashTransferUsesAuthoritativeMove)
+{
+	EXPECT_TRUE(ShouldProcessLegacyStashInventoryTransfer(false));
+	EXPECT_FALSE(ShouldProcessLegacyStashInventoryTransfer(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyAttributeMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyAttributeMessage(false));

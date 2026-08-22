@@ -2,6 +2,9 @@
 
 Status date: 2026-08-22
 
+Connected native Ctrl-click stash-to-inventory transfers now submit an
+authoritative stable-reference move; the legacy local transfer remains offline-
+only so the server owns both inventory and stash state.
 Connected native inventory actions now fail closed before unsupported legacy
 item-use fallbacks can remove or mutate local state; scroll and rune items retain
 only their immediate authoritative cast-intent route.
