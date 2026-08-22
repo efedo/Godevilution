@@ -1563,9 +1563,10 @@ quest to a required `_qvar1` value, an optional exact `_qvar2` value (`-1`
 means wildcard), an authored message identity, and monotonic next variable
 values. The server emits the message and owns the transition; staged rows may
 not be combined with legacy dialogue hand-in or reward fields. Base Gharbad
-uses four rows for messages 144-147. Its random item reward and encounter-state
-presentation remain native compatibility fallbacks until their content
-contracts are added.
+uses four rows for messages 144-147. Its random item reward is content-owned
+through the validated `RandomUniqueMonsterDrop` contract; encounter-state
+presentation remains a native compatibility fallback until its content
+contract is added.
 
 Schema 1.355 adds optional `required_item_symbol`, `consume_item`, and
 `complete_quest` columns to `quest_dialogue_stages.tsv`. Item-gated stages
