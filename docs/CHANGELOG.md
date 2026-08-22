@@ -53,6 +53,8 @@ All notable changes to this fork are documented below.
   current level, matching the server-owned quest-gate state invariant.
 - Godot now rejects partially populated or negative player attribute projections
   before the presentation HUD consumes authoritative character state.
+- Godot now rejects undefined selected-ability targeting enums while preserving
+  the additive unspecified default for older snapshots.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

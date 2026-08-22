@@ -111,6 +111,10 @@ public sealed class AuthoritativeClientModel
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid player ability kind.");
                 }
+                if (!Enum.IsDefined(player.AbilityTargetingKind)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid ability targeting kind.");
+                }
                 ValidatePlayerResources(player);
                 ValidatePlayerAttributes(player);
                 ValidateVisitedLevels(player);

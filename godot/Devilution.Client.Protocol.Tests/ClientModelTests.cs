@@ -537,6 +537,26 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsUndefinedPlayerAbilityTargetingKind()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    AbilityTargetingKind = SpellTargetingKind.Tile,
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        snapshot.Players[0].AbilityTargetingKind = (SpellTargetingKind)99;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void SelectsUnloggedQuestTownerStageOnlyBeforeQuestIsLogged()
     {
         var snapshot = new Snapshot {

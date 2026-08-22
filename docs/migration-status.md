@@ -94,6 +94,8 @@ scaled hit points), not only the client's difficulty label.
   player’s current level before authored quest gates consume them.
 - Godot now validates complete, non-negative player attribute projections when
   the additive attribute message is present.
+- Godot now validates the selected ability targeting enum while retaining its
+  compatibility-safe unspecified default.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
