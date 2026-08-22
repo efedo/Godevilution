@@ -47,11 +47,16 @@ public sealed record AuthoritativeUniqueItemDefinition(
 public sealed class AuthoritativeUniqueItemCatalog
 {
     private readonly Dictionary<uint, AuthoritativeUniqueItemDefinition> definitions;
+    private readonly AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog;
     public bool UsesLegacyRandom { get; }
 
-    public AuthoritativeUniqueItemCatalog(IEnumerable<AuthoritativeUniqueItemDefinition> definitions, bool usesLegacyRandom = false)
+    public AuthoritativeUniqueItemCatalog(
+        IEnumerable<AuthoritativeUniqueItemDefinition> definitions,
+        bool usesLegacyRandom = false,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         ArgumentNullException.ThrowIfNull(definitions);
+        this.nativeItemHellfireEffectCatalog = nativeItemHellfireEffectCatalog;
         this.definitions = new Dictionary<uint, AuthoritativeUniqueItemDefinition>();
         foreach (var definition in definitions) {
             if (definition.UniqueId == 0 || !IsValidPresentationText(definition.Name) || definition.BaseItemId == 0
@@ -181,7 +186,8 @@ public sealed class AuthoritativeUniqueItemCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemCursorCatalog? cursorCatalog = null,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows
@@ -223,7 +229,9 @@ public sealed class AuthoritativeUniqueItemCatalog
                         NativeCursorGraphic = ParseOptionalCursorGraphic(first.Row, cursorCatalog),
                     };
             });
-        return new AuthoritativeUniqueItemCatalog(definitions);
+        return new AuthoritativeUniqueItemCatalog(
+            definitions,
+            nativeItemHellfireEffectCatalog: nativeItemHellfireEffectCatalog);
     }
 
     private static bool IsValidPresentationText(string value)
@@ -275,7 +283,8 @@ public sealed class AuthoritativeUniqueItemCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemCatalog items,
-        AuthoritativeItemCursorCatalog? cursorCatalog = null)
+        AuthoritativeItemCursorCatalog? cursorCatalog = null,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         ArgumentNullException.ThrowIfNull(items);
         var table = TsvTable.Parse(sourcePath, contents);
@@ -307,10 +316,16 @@ public sealed class AuthoritativeUniqueItemCatalog
                         : cursorCatalog.Resolve(cursorGraphic),
                 };
         }).ToArray();
-        return new AuthoritativeUniqueItemCatalog(definitions, usesLegacyRandom: true);
+        return new AuthoritativeUniqueItemCatalog(
+            definitions,
+            usesLegacyRandom: true,
+            nativeItemHellfireEffectCatalog: nativeItemHellfireEffectCatalog);
     }
 
-    private static AuthoritativeItemState ApplyPower(AuthoritativeItemState state, AuthoritativeUniqueItemPower power, int value)
+    private AuthoritativeItemState ApplyPower(
+        AuthoritativeItemState state,
+        AuthoritativeUniqueItemPower power,
+        int value)
     {
         return power.Power switch {
             "DAM" or "DAMP" => state with { PlusDamage = state.PlusDamage + value },
@@ -491,11 +506,25 @@ public sealed class AuthoritativeUniqueItemCatalog
                 Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
             },
             "ALLRESZERO" => state with { Flags = state.Flags | 0x80000000U },
-            "ACDEMON" => state with { HellfireDamageArmorFlags = state.HellfireDamageArmorFlags | (1 << 5) },
-            "ACUNDEAD" => state with { HellfireDamageArmorFlags = state.HellfireDamageArmorFlags | (1 << 6) },
+            "ACDEMON" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | ResolveHellfireEffectFlag("ACDEMON", 1 << 5),
+            },
+            "ACUNDEAD" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | ResolveHellfireEffectFlag("ACUNDEAD", 1 << 6),
+            },
             "NOMINSTR" => state with { MinimumStrength = 0 },
             "ONEHAND" => state with { EquipLocation = 1 },
             _ => state,
         };
+    }
+
+    private int ResolveHellfireEffectFlag(string symbol, int fallback)
+    {
+        return nativeItemHellfireEffectCatalog is not null
+            && nativeItemHellfireEffectCatalog.TryGetFlag(symbol, out var nativeFlag)
+            ? nativeFlag
+            : fallback;
     }
 }

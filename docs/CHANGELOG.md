@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Hellfire unique-item `ACDEMON` and `ACUNDEAD` powers now resolve through the
+  validated `native_item_hellfire_effects.tsv` namespace, retaining native flag
+  fallbacks for direct catalogs without the namespace.
 - Legacy charged-staff initialization now resolves the `STAFF` miscellaneous
   identity through validated `native_item_misc.tsv` content while retaining
   the native fallback for older callers.

@@ -49,4 +49,34 @@ public sealed class AuthoritativeNativeItemHellfireEffectCatalogTests
 
         Assert.Equal(8, items.GetRequired(7).HellfireDamageArmorFlags);
     }
+
+    [Fact]
+    public void UniqueItemHellfirePowersUseTheExternalEffectNamespaceWhenProvided()
+    {
+        var effects = new AuthoritativeNativeItemHellfireEffectCatalog([
+            new("ACDEMON", 2),
+            new("ACUNDEAD", 4),
+        ]);
+        var uniques = new AuthoritativeUniqueItemCatalog(
+            [
+                new AuthoritativeUniqueItemDefinition(
+                    1001,
+                    "Ward",
+                    7,
+                    1,
+                    1,
+                    [
+                        new AuthoritativeUniqueItemPower("ACDEMON", 0, 0),
+                        new AuthoritativeUniqueItemPower("ACUNDEAD", 0, 0),
+                    ]),
+            ],
+            nativeItemHellfireEffectCatalog: effects);
+        var items = new AuthoritativeItemCatalog(
+            [new AuthoritativeItemDefinition(7, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, true)],
+            uniqueItems: uniques);
+
+        var state = uniques.Generate(items, 1001, 42, 1);
+
+        Assert.Equal(6, state.HellfireDamageArmorFlags);
+    }
 }
