@@ -35,6 +35,10 @@ Connected native portal delta projection now also fails closed at the portal
 state setter, so a direct legacy delta callback cannot publish local portal
 state outside the authoritative snapshot path.
 
+Connected native portal transition helpers now fail closed before legacy portal
+state can select a level or warp position; authoritative movement remains the
+only connected-session transition source.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

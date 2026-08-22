@@ -10,6 +10,7 @@
 #include "game/missiles/missiles.hpp"
 #include "network/protocol/multi.h"
 #include "network/protocol/legacy_sync_policy.hpp"
+#include "network/protocol/legacy_transition_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -143,6 +144,11 @@ void SetCurrentPortal(size_t p)
 
 void GetPortalLevel()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (levelType() != DTYPE_TOWN) {
 		SwitchCurrentLevel(LevelId { 0, DTYPE_TOWN, false, SL_NONE });
 		MyPlayer->setLevel(0);
@@ -167,6 +173,11 @@ void GetPortalLevel()
 
 void GetPortalLvlPos()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (levelType() == DTYPE_TOWN) {
 		viewPosition() = PortalTownPosition[portalindex] + Displacement { 1, 1 };
 	} else {

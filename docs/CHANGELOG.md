@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
   mutation; authoritative disarm intent remains unchanged.
 - Guard the native portal delta-state setter so connected legacy callbacks
   cannot publish local portal state outside authoritative snapshots.
+- Guard native portal level and position transition helpers before connected
+  sessions can consume stale legacy portal state.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an
