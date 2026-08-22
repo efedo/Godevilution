@@ -120,6 +120,8 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
                     : 0;
             if (items.TryGetSpellSourceKindByMiscId(miscId, out contentKind))
                 return contentKind == DiabloItemSpellSourceKind.ChargedItem;
+            if (hasDefinition && definition.GenerationTags.Count > 0)
+                return definition.GenerationTags.Contains("Staff", StringComparer.OrdinalIgnoreCase);
         }
         return AuthoritativeItemClassification.IsStaff(state, items)
             || state.MiscId is 23 or 27;

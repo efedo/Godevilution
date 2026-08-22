@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
   for older packs.
+- Recharge admission now treats active non-empty item tags as authoritative,
+  preventing legacy staff misc IDs from overriding authored non-staff metadata.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

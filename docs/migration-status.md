@@ -89,6 +89,9 @@ scaled hit points), not only the client's difficulty label.
 - Unique-monster random-drop filtering now honors authored `Gold` and `Book`
   item tags when active catalogs are present, while tag-less mappings retain
   the native item-type and misc-ID fallbacks.
+- Recharge admission now honors active item spell-source metadata and non-empty
+  staff tags before considering legacy staff misc IDs; tag-less mappings retain
+  the native fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
