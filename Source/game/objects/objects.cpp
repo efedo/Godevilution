@@ -4595,8 +4595,10 @@ void OperateObject(Player &player, Object &object)
 		if (const auto entityId = runtime.AuthoritativeObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
 			if (auto result = runtime.OperateObject(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Failed to submit the authoritative quest object operation: {}", result.error());
-			return;
+		} else {
+			LogError("Refusing to operate an object without an authoritative projection.");
 		}
+		return;
 	}
 #endif
 	const bool sendmsg = &player == MyPlayer;

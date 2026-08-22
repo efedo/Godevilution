@@ -60,6 +60,8 @@ Native debug level reset and dungeon, quest, and custom-map warps are likewise
 offline-only so connected transitions remain server-owned.
 Native debug item and monster spawning is also offline-only; connected world
 items and monsters remain projections of server state.
+Native object operation now also fails closed when the selected local object
+has no matching authoritative projection instead of invoking legacy behavior.
 
 ## Current state
 

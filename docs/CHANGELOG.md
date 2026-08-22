@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native object operation now fails closed when an authoritative session has
+  no projected entity at the selected object position, preventing fallback to
+  legacy local object behavior.
 - Native debug item and monster spawning now fails closed in authoritative
   mode instead of mutating local inventory or monster pools.
 - Native debug level reset, dungeon warp, quest warp, and custom-map warp
