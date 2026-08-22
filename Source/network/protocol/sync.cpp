@@ -15,8 +15,13 @@
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/validation.hpp"
 #include "game/players/players.hpp"
+#include "network/protocol/legacy_sync_policy.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/is_of.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -283,6 +288,11 @@ size_t OnSyncData(const TSyncHeader &header, size_t maxCmdSize, const Player &pl
 
 	if (!ValidateCmdSize(wLen + sizeof(header), maxCmdSize, player.getId()))
 		return maxCmdSize;
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySyncMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return wLen + sizeof(header);
+#endif
 
 	assert(gbBufferMsgs != 2);
 

@@ -189,6 +189,8 @@ scaled hit points), not only the client's difficulty label.
   attribute synchronization messages; authoritative snapshots own presentation.
 - Connected native clients now ignore legacy movement, targeting, attack, spell,
   talk, and object-action messages; typed server intents own simulation.
+- Connected native clients now ignore legacy monster-delta synchronization and
+  debug-experience mutation messages; authoritative snapshots own progression.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

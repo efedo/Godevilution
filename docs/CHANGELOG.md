@@ -54,6 +54,8 @@ All notable changes to this fork are documented below.
   attribute synchronization messages; authoritative snapshots own presentation.
 - Connected native clients now ignore legacy movement, targeting, attack, spell,
   talk, and object-action messages; typed server intents own simulation.
+- Connected native clients now ignore legacy monster-delta synchronization and
+  debug-experience mutation messages; authoritative snapshots own progression.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

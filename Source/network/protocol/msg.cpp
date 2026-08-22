@@ -50,6 +50,7 @@
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_sync_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
@@ -2765,6 +2766,10 @@ size_t OnSyncQuest(const TCmdQuest &message, Player &player)
 
 size_t OnCheatExperience(const TCmd &cmd, Player &player) // NOLINT(misc-unused-parameters)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySyncMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 #ifdef _DEBUG
 	if (gbBufferMsgs == 1)
 		BufferMessage(player, &cmd, sizeof(cmd));

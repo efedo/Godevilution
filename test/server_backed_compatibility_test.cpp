@@ -21,6 +21,7 @@
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_sync_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "persistence/save_policy.hpp"
@@ -159,6 +160,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyInputMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyInputMessage(false));
 	EXPECT_FALSE(ShouldProcessLegacyInputMessage(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacySyncMessagesFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacySyncMessage(false));
+	EXPECT_FALSE(ShouldProcessLegacySyncMessage(true));
 }
 
 } // namespace
