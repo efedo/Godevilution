@@ -32,6 +32,8 @@ All notable changes to this fork are documented below.
   mutation helpers while preserving the authoritative snapshot projection path.
 - Guard connected native missile creation and direct spell/healer effect
   callbacks before legacy projectile or player-state mutation.
+- Guard connected native inventory/equipment stat-recalculation helpers so
+  derived player state remains snapshot-owned.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

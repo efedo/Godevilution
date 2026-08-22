@@ -2986,6 +2986,11 @@ void CalcPlrAuricBonus(Player &player)
 
 void CalcPlrItemVals(Player &player, bool loadgfx)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	int minDamage = 0;
 	int maxDamage = 0;
 	int ac = 0;
@@ -3097,6 +3102,11 @@ void CalcPlrItemVals(Player &player, bool loadgfx)
 
 void CalcPlrInv(Player &player, bool loadgfx)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyPlayerStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	// Determine the players current stats, this updates the statFlag on all equipped items that became unusable after
 	//  a change in equipment.
 	CalcSelfItems(player);

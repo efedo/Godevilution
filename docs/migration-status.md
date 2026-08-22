@@ -63,6 +63,10 @@ resurrection, Heal Other, spell-consumption, and healer callbacks likewise stay
 offline-only; authoritative projectiles, healing, resurrection, and resources
 continue through snapshot and event projection.
 
+Connected native inventory and equipment stat-recalculation helpers now also
+fail closed. Authoritative item stat flags, resources, and derived player state
+remain snapshot-owned while legacy recalculation remains available offline.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.
