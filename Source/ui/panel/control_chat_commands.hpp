@@ -11,6 +11,15 @@
 
 namespace devilution {
 
+/**
+ * Legacy chat commands that mutate gameplay are offline-only during the
+ * server-backed migration.
+ */
+constexpr bool ShouldProcessLegacyChatMutation(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 bool CheckChatCommand(std::string_view text);
 
 } // namespace devilution

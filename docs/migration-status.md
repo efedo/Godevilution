@@ -172,6 +172,9 @@ scaled hit points), not only the client's difficulty label.
 - Connected classic store dialogs now fail closed for premium Griswold
   purchases because no authoritative command exists; offline clients retain
   the legacy premium purchase path.
+- Connected native `/arena` and `/arenapot` chat commands now fail closed
+  because their legacy level/item mutations have no authoritative command;
+  offline multiplayer retains the legacy commands.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

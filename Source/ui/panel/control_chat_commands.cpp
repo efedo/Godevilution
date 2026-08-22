@@ -20,6 +20,10 @@
 #include "utils/string/str_case.hpp"
 #include "utils/string/str_cat.hpp"
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
+
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
@@ -276,6 +280,13 @@ bool CheckChatCommand(const std::string_view text)
 	}
 
 	const TextCmdItem &textCmd = *textCmdIterator;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyChatMutation(authoritative::GetServerBackedRuntime().IsConnected())
+		&& (textCmd.text == "/arena" || textCmd.text == "/arenapot")) {
+		InitDiabloMsg(_("This legacy gameplay command is unavailable in a server-backed session."));
+		return true;
+	}
+#endif
 	std::string_view parameter = "";
 	if (text.length() > (textCmd.text.length() + 1))
 		parameter = text.substr(textCmd.text.length() + 1);

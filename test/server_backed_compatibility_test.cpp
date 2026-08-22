@@ -17,6 +17,7 @@
 #include "network/authoritative/vendor_snapshot.hpp"
 #include "network/authoritative/server_backed_vendor_state.hpp"
 #include "persistence/save_policy.hpp"
+#include "ui/panel/control_chat_commands.hpp"
 
 namespace devilution::authoritative {
 namespace {
@@ -103,6 +104,12 @@ TEST(ServerBackedCompatibility, ConnectedPremiumStorePurchaseFailsClosed)
 	EXPECT_TRUE(HasServerBackedStoreAction(TalkID::SmithRepair));
 	EXPECT_TRUE(HasServerBackedStoreAction(TalkID::StorytellerIdentify));
 	EXPECT_FALSE(HasServerBackedStoreAction(TalkID::SmithPremiumBuy));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyChatMutationsFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyChatMutation(false));
+	EXPECT_FALSE(ShouldProcessLegacyChatMutation(true));
 }
 
 } // namespace

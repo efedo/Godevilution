@@ -37,6 +37,9 @@ All notable changes to this fork are documented below.
 - Connected classic store dialogs now fail closed for premium Griswold
   purchases because no authoritative command exists; offline clients retain
   the legacy premium purchase path.
+- Connected native `/arena` and `/arenapot` chat commands now fail closed
+  because their legacy level/item mutations have no authoritative command;
+  offline multiplayer retains the legacy commands.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.
