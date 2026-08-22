@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Unique-item powers with matching ordinary effect symbols now resolve through
+  the validated `native_item_effects.tsv` namespace, retaining native flag
+  fallbacks for direct catalogs without the namespace.
 - Hellfire unique-item powers now resolve through the
   validated `native_item_hellfire_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace.

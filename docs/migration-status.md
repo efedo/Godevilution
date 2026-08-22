@@ -13,6 +13,9 @@ callers.
 Normalized unique-item Hellfire powers now resolve through the validated
 Hellfire item-effect namespace, retaining native flag fallbacks for direct
 catalogs without that namespace.
+Unique-item powers with matching ordinary effect symbols now resolve through
+the validated `native_item_effects.tsv` namespace as well, retaining native
+flag fallbacks for direct catalogs without that namespace.
 Legacy item-table type, class, and equipment-location symbols now resolve
 through the validated external `native_item_topology.tsv` namespace as well.
 Legacy item-table special-effect symbols now resolve through the validated

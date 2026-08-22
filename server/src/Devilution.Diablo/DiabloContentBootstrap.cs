@@ -406,7 +406,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 uniqueTable.ToCanonicalTsv(),
                 cursorCatalog,
                 stableIds,
-                nativeItemHellfireEffects)
+                nativeItemHellfireEffects,
+                nativeItemEffects)
             : itemCatalog is not null
                 && content.TryGetTable("unique_itemdat.tsv", out var legacyUniqueTable)
                 ? AuthoritativeUniqueItemCatalog.LoadLegacyTsv(
@@ -414,7 +415,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     legacyUniqueTable.ToCanonicalTsv(),
                     itemCatalog,
                     cursorCatalog,
-                    nativeItemHellfireEffects)
+                    nativeItemHellfireEffects,
+                    nativeItemEffects)
                 : null;
         if (itemCatalog is not null && uniqueItems is not null)
             itemCatalog.AttachUniqueCatalog(uniqueItems);
