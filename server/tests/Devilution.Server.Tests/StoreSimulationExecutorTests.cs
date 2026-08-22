@@ -3297,6 +3297,31 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void AuthoritativeSaveRejectsUnrepresentablePlayerResources()
+    {
+        var source = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        var document = System.Text.Json.JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            source.ExportPlayerSave("player-a"))!;
+        var destination = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+
+        void AssertRejected(Action<PlayerSnapshot> mutate)
+        {
+            var snapshot = Snapshot.Parser.ParseFrom(Convert.FromBase64String(document.SnapshotBase64));
+            mutate(Assert.Single(snapshot.Players));
+            var invalidResources = document with {
+                SnapshotBase64 = Convert.ToBase64String(snapshot.ToByteArray()),
+            };
+            Assert.Throws<InvalidDataException>(() => destination.ImportPlayerSave(
+                "player-a",
+                System.Text.Json.JsonSerializer.Serialize(invalidResources)));
+        }
+
+        AssertRejected(player => player.Gold = (uint)int.MaxValue + 1U);
+        AssertRejected(player => player.StashGold = (uint)int.MaxValue + 1U);
+        AssertRejected(player => player.StatPoints = (uint)int.MaxValue + 1U);
+    }
+
+    [Fact]
     public void AuthoritativeSaveRejectsOverlappingStashFootprints()
     {
         var itemState = AuthoritativeItemState.Empty with {

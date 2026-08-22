@@ -2346,7 +2346,10 @@ public sealed partial class DiabloSimulation
                 source.Equipment,
                 playerClass)
             : (LifeQ6: -1, ManaQ6: -1);
-        if (source.Life < 0
+        if (source.Gold > int.MaxValue
+            || source.StashGold > int.MaxValue
+            || source.StatPoints > int.MaxValue
+            || source.Life < 0
             || source.BaseLifeMaximum < 0
             || source.BaseManaMaximum < 0
             || source.Inventory is null
