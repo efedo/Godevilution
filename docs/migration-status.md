@@ -27,6 +27,10 @@ Connected native monster dialogue now also fails closed before legacy quest
 handoffs can mutate local inventory, quest, or monster state; authoritative
 local dialogue retains the server-backed route.
 
+Connected native trap-disarm callbacks now preserve cursor presentation but
+fail closed before legacy trap flags can mutate; authoritative disarm intent
+remains the only connected-session state transition.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

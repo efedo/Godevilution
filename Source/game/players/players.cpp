@@ -1099,6 +1099,12 @@ void TryDisarm(const Player &player, Object &object)
 {
 	if (&player == MyPlayer)
 		NewCursor(CURSOR_HAND);
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (!object._oTrapFlag) {
 		return;
 	}
