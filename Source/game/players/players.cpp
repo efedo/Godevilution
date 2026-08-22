@@ -3041,6 +3041,12 @@ __attribute__((no_sanitize("shift-base")))
 void
 Player::startKill(DeathReason deathReason)
 {
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Player &player = *this;
 	if (player.hasNoLife() && player._pmode == PM_DEATH) {
 		return;
@@ -3200,6 +3206,12 @@ void StripTopGold(Player &player)
 
 void Player::applyDamage(DamageType damageType, int dam, int minHP, int frac, DeathReason deathReason)
 {
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Player &player = *this;
 	int totalDamage = (dam << 6) + frac;
 	if (&player == MyPlayer && !player.hasNoLife()) {
@@ -3255,6 +3267,12 @@ void Player::applyDamage(DamageType damageType, int dam, int minHP, int frac, De
 
 void Player::syncKill(DeathReason deathReason)
 {
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Player &player = *this;
 	player.setHitPoints(0);
 	player.startKill(deathReason);

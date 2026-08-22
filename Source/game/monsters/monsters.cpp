@@ -82,6 +82,7 @@
 #include "ui/movie.h"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -3827,6 +3828,12 @@ void Monster::addDoppelganger()
 
 void Monster::applyDamage(DamageType damageType, int damage)
 {
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	CurrentGameEventBus.MonsterTakeDamage(getId(), damage, static_cast<int>(damageType));
 
 	this->hitPoints -= damage;

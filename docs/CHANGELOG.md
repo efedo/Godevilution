@@ -26,6 +26,8 @@ All notable changes to this fork are documented below.
   top-gold overflow while connected sessions remain server-owned.
 - Guard direct native equipment-damage helpers before connected weapon decay,
   shield/staff durability loss, or armor damage.
+- Guard direct connected player damage/death and monster damage callbacks before
+  native combat state or death lifecycle mutation.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

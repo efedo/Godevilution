@@ -47,6 +47,11 @@ Connected native equipment-damage helpers now fail closed before weapon decay,
 shield/staff durability loss, or armor damage can mutate local inventory; the
 server remains the sole connected combat authority.
 
+Connected native player damage and death callbacks now also fail closed at their
+direct entry points, while monster damage callbacks do the same; authoritative
+combat and death presentation remain server-owned and offline sessions retain
+the legacy lifecycle.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.
