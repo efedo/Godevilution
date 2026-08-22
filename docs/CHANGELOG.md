@@ -52,6 +52,8 @@ All notable changes to this fork are documented below.
   set-piece, and friendly-mode synchronization messages; the server owns them.
 - Connected native clients now ignore legacy player-info, level, and remote
   attribute synchronization messages; authoritative snapshots own presentation.
+- Connected native clients now ignore legacy movement, targeting, attack, spell,
+  talk, and object-action messages; typed server intents own simulation.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

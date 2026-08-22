@@ -48,6 +48,7 @@
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
@@ -1225,6 +1226,10 @@ void NetSendCmdExtra(const TCmdGItem &item)
 
 size_t OnWalk(const TCmdLoc &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && InDungeonBounds(position)) {
@@ -1734,6 +1739,10 @@ size_t OnSyncPutItem(const TCmdPItem &message, Player &player)
 
 size_t OnStandingAttackTile(const TCmdLoc &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && InDungeonBounds(position)) {
@@ -1748,6 +1757,10 @@ size_t OnStandingAttackTile(const TCmdLoc &message, Player &player)
 
 size_t OnRangedAttackTile(const TCmdLoc &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && InDungeonBounds(position)) {
@@ -1796,6 +1809,10 @@ bool InitNewSpell(Player &player, uint16_t wParamSpellID, uint16_t wParamSpellTy
 
 size_t OnSpellWall(const TCmdLocParam4 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs == 1)
@@ -1823,6 +1840,10 @@ size_t OnSpellWall(const TCmdLocParam4 &message, Player &player)
 
 size_t OnSpellTile(const TCmdLocParam3 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs == 1)
@@ -1846,6 +1867,10 @@ size_t OnSpellTile(const TCmdLocParam3 &message, Player &player)
 
 size_t OnObjectTileAction(const TCmdLoc &message, Player &player, action_id action, bool pathToObject = true)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 	const Object *object = FindObjectAtPosition(position);
 
@@ -1876,6 +1901,10 @@ size_t OnObjectTileAction(const TCmdLoc &message, Player &player)
 
 size_t OnAttackMonster(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t monsterIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && monsterIdx < MaxMonsters) {
@@ -1891,6 +1920,10 @@ size_t OnAttackMonster(const TCmdParam1 &message, Player &player)
 
 size_t OnAttackPlayer(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t playerIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && playerIdx < Players.size()) {
@@ -1904,6 +1937,10 @@ size_t OnAttackPlayer(const TCmdParam1 &message, Player &player)
 
 size_t OnRangedAttackMonster(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t monsterIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && monsterIdx < MaxMonsters) {
@@ -1917,6 +1954,10 @@ size_t OnRangedAttackMonster(const TCmdParam1 &message, Player &player)
 
 size_t OnRangedAttackPlayer(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t playerIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs != 1 && player.isOnActiveLevel() && levelType() != DTYPE_TOWN && playerIdx < Players.size()) {
@@ -1930,6 +1971,10 @@ size_t OnRangedAttackPlayer(const TCmdParam1 &message, Player &player)
 
 size_t OnSpellMonster(const TCmdParam4 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		return sizeof(message);
 	if (!player.isOnActiveLevel())
@@ -1953,6 +1998,10 @@ size_t OnSpellMonster(const TCmdParam4 &message, Player &player)
 
 size_t OnSpellPlayer(const TCmdParam4 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1)
 		return sizeof(message);
 	if (!player.isOnActiveLevel())
@@ -2051,6 +2100,10 @@ size_t OnHealOther(const TCmdParam1 &message, const Player &caster)
 
 size_t OnTalkXY(const TCmdLocParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInputMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 	const uint16_t townerIdx = Swap16LE(message.wParam1);
 
