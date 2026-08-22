@@ -12,12 +12,18 @@ constexpr bool ShouldProcessLegacyPlayerStateMessage(bool serverConnected) noexc
 }
 
 /**
- * Legacy player simulation is offline-only while the authoritative server
- * owns connected movement, combat, and player lifecycle transitions.
+ * Legacy native simulation is offline-only while the authoritative server
+ * owns connected movement, combat, and world-state transitions.
  */
-constexpr bool ShouldProcessLegacyPlayerSimulation(bool serverConnected) noexcept
+constexpr bool ShouldProcessLegacySimulation(bool serverConnected) noexcept
 {
 	return !serverConnected;
+}
+
+/** Compatibility-named player simulation policy for existing callers. */
+constexpr bool ShouldProcessLegacyPlayerSimulation(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacySimulation(serverConnected);
 }
 
 } // namespace devilution

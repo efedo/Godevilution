@@ -2,9 +2,10 @@
 
 Status date: 2026-08-22
 
-The public native player-simulation helper now fails closed while connected,
-closing the direct-call seam around the existing authoritative game-loop gate;
-offline sessions retain the legacy movement, combat, and lifecycle simulation.
+Public native simulation helpers now fail closed while connected, closing the
+direct-call seams around the existing authoritative game-loop gate; offline
+sessions retain the legacy movement, combat, lifecycle, trap, door, and other
+world simulation.
 Connected native Telekinesis now fails closed at its public legacy command
 helper; authoritative target interaction remains server-owned even if a future
 caller bypasses the current cursor-routing branch.

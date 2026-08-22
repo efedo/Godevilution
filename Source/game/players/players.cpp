@@ -3323,7 +3323,7 @@ void StartWarpLvl(Player &player, size_t pidx)
 void ProcessPlayers()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (!ShouldProcessLegacyPlayerSimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+	if (!ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
 #endif
 

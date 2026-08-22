@@ -56,6 +56,7 @@
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
 #include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #include "engine/track.h"
 #include "utils/algorithm/container.hpp"
 #include "utils/endian/endian_swap.hpp"
@@ -4325,6 +4326,11 @@ void OperateTrap(Object &trap)
 
 void ProcessObjects()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	for (Object &object : ObjectPoolAdapter::ActiveObjectsRange()) {
 		switch (object._otype) {
 		case OBJ_L1LIGHT:

@@ -83,6 +83,7 @@
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
 #include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -4199,6 +4200,11 @@ void RemoveEnemyReferences(const Player &player)
 
 void ProcessMonsters()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	DeleteMonsterList();
 
 	assert(MonsterPoolAdapter::ActiveMonsterCountValue() <= MaxMonsters);
