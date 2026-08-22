@@ -145,6 +145,10 @@ public sealed class AuthoritativeClientModel
             }
             foreach (var item in message.Snapshot.WorldItems) {
                 ValidateEntityId(entityIds, item.EntityId);
+                if (item.Price > int.MaxValue) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an unrepresentable world-item price.");
+                }
                 ValidateItemState(item.State);
                 if (!HasValidItemIdentity(item.ItemSeed, item.State)) {
                     throw new InvalidDataException(
@@ -561,7 +565,12 @@ public sealed class AuthoritativeClientModel
             || state.FireMinDamage < 0
             || state.FireMaxDamage < state.FireMinDamage
             || state.LightningMinDamage < 0
-            || state.LightningMaxDamage < state.LightningMinDamage) {
+            || state.LightningMaxDamage < state.LightningMinDamage
+            || !Enum.IsDefined(state.PresentationKind)
+            || !Enum.IsDefined(state.SpellSourceKind)
+            || !Enum.IsDefined(state.ItemActionKind)
+            || !Enum.IsDefined(state.SpellTargetingKind)
+            || state.SpellDisplayName.Contains('\0')) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains impossible item state ranges.");
         }

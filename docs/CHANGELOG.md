@@ -42,6 +42,8 @@ All notable changes to this fork are documented below.
   not adjacent while moving or does not match the current cell while stationary.
 - Godot now rejects zero-identity objects, undefined object effect/presentation
   kinds, and contradictory breakable/collision state before interaction routing.
+- Godot now rejects unrepresentable world-item prices, undefined typed item
+  metadata, and NUL-containing item spell display names.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

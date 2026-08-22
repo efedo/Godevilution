@@ -1442,6 +1442,34 @@ public sealed class ClientModelTests
         missingDynamicName.WorldItems[0].State.IdentifiedName = "";
         Assert.Throws<InvalidDataException>(() => model.Apply(
             new AuthoritativeClientMessage(Snapshot: missingDynamicName)));
+        var invalidPrice = snapshot.Clone();
+        invalidPrice.WorldItems[0].Price = uint.MaxValue;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidPrice)));
+        var invalidPresentation = snapshot.Clone();
+        invalidPresentation.WorldItems[0].State.PresentationKind
+            = (Devilution.Protocol.V1.ItemPresentationKind)99;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidPresentation)));
+        var invalidSpellSource = snapshot.Clone();
+        invalidSpellSource.WorldItems[0].State.SpellSourceKind
+            = (Devilution.Protocol.V1.ItemSpellSourceKind)99;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidSpellSource)));
+        var invalidAction = snapshot.Clone();
+        invalidAction.WorldItems[0].State.ItemActionKind
+            = (Devilution.Protocol.V1.ItemActionKind)99;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidAction)));
+        var invalidTargeting = snapshot.Clone();
+        invalidTargeting.WorldItems[0].State.SpellTargetingKind
+            = (Devilution.Protocol.V1.SpellTargetingKind)99;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidTargeting)));
+        var invalidSpellName = snapshot.Clone();
+        invalidSpellName.WorldItems[0].State.SpellDisplayName = "bad\0name";
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidSpellName)));
         var invalidPlayerName = snapshot.Clone();
         invalidPlayerName.Players[0].CharacterName = "bad name";
         Assert.Throws<InvalidDataException>(() => model.Apply(

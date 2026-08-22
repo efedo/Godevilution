@@ -84,6 +84,8 @@ scaled hit points), not only the client's difficulty label.
   future-cell retention before interpolation consumes the snapshot.
 - Godot now validates object identity, typed effect/presentation kinds, and
   breakable/missile-passability/destroyed-state relationships.
+- Godot now validates signed-native world-item prices and typed item
+  presentation/source/action/targeting metadata before pickup or HUD routing.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
