@@ -38,6 +38,15 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void NonStaffTagsOverrideConflictingLegacyItemType()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Misc"])
+            with { ItemType = 10 };
+
+        Assert.False(AuthoritativeItemClassification.IsStaff(definition));
+    }
+
+    [Fact]
     public void StaffTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
     {
         var definition = CreateDefinition(itemClass: 0, tags: ["Staff"]) with {

@@ -24,6 +24,8 @@ All notable changes to this fork are documented below.
   instead of allowing conflicting native placement metadata to override them.
 - Two-handed and equipment-slot classification now treats active non-empty slot
   tags as authoritative before using native equipment-location fallback.
+- Staff classification now treats active non-empty staff/non-staff tags as
+  authoritative before using the native item-type fallback.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

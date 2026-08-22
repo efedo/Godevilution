@@ -63,11 +63,9 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        if (definition.GenerationTags.Contains("Staff"))
-            return true;
-        if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-            return false;
-        return definition.ItemType == 10;
+        return definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains("Staff", StringComparer.OrdinalIgnoreCase)
+            : definition.ItemType == 10;
     }
 
     public static bool IsStaff(
@@ -79,10 +77,8 @@ public static class AuthoritativeItemClassification
             if (items.TryGetByState(state, out var definition))
                 return IsStaff(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
-                if (tags.Contains("Staff"))
-                    return true;
-                if (HasExplicitEquipmentSubtype(tags))
-                    return false;
+                if (tags.Count > 0)
+                    return tags.Contains("Staff", StringComparer.OrdinalIgnoreCase);
             }
         }
         return state.ItemType == 10;
