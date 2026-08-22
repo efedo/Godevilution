@@ -118,6 +118,34 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
     }
 
     [Fact]
+    public void RejectsPlacementThatReusesAReservedEntityId()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([CreateType(2, 1, 1)]);
+        var uniqueMonsters = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 2, "Generated Defiler"),
+        ]);
+        var placements = new AuthoritativeUniqueMonsterPlacementCatalog([
+            new AuthoritativeUniqueMonsterPlacementDefinition(
+                1,
+                "Generated Defiler",
+                2,
+                1,
+                77,
+                1,
+                1,
+                99),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => placements.Validate(
+            world,
+            monsterTypes,
+            uniqueMonsters,
+            reservedEntityIds: [77U]));
+    }
+
+    [Fact]
     public void RejectsPlacementOnAReservedWorldCell()
     {
         var world = new AuthoritativeWorld();

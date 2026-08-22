@@ -936,7 +936,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                         .Select(position => (
                             definition.LevelId,
                             position.X,
-                            position.Y))));
+                            position.Y))),
+                reservedEntityIds: objects?.Select(@object => @object.EntityId));
             var authoredTargets = uniqueMonsterPlacements.Materialize(
                 monsterSpawnPlanner,
                 uniqueMonsters,

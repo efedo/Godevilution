@@ -60,7 +60,8 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
         AuthoritativeMonsterTypeCatalog monsterTypes,
         AuthoritativeUniqueMonsterCatalog uniqueMonsters,
         IEnumerable<AuthoritativeCombatTarget>? existingTargets = null,
-        IEnumerable<(uint LevelId, int X, int Y)>? reservedPositions = null)
+        IEnumerable<(uint LevelId, int X, int Y)>? reservedPositions = null,
+        IEnumerable<uint>? reservedEntityIds = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(monsterTypes);
@@ -71,13 +72,13 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
             .ToHashSet();
         occupied.UnionWith(
             targets.Select(target => (target.LevelId, target.PositionX, target.PositionY)));
-        var entityIds = targets
-            .Select(target => target.EntityId)
+        var entityIds = (reservedEntityIds ?? [])
             .ToHashSet();
+        entityIds.UnionWith(targets.Select(target => target.EntityId));
         foreach (var placement in Definitions) {
             if (!entityIds.Add(placement.EntityId))
                 throw new InvalidDataException(
-                    $"Unique placement {placement.PlacementId} reuses an existing monster entity ID.");
+                    $"Unique placement {placement.PlacementId} reuses an existing entity ID.");
             if (!world.ContainsLevel(placement.LevelId))
                 throw new InvalidDataException(
                     $"Unique placement {placement.PlacementId} references unknown level {placement.LevelId}.");

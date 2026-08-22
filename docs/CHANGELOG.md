@@ -7,6 +7,7 @@ All notable changes to this fork are documented below.
 - Add the optional `unique_monster_placements.tsv` contract for validated,
   content-owned placement of generated unique encounters. Placements resolve
   unique identity selectors, monster types, level geometry, stable entity IDs,
+  reserved entity IDs from existing monsters and authored world objects,
   reserved warp/portal/object cells, and deterministic spawn seeds before
   materializing through the authoritative planner; shipped packs declare the
   empty table until native set-piece coordinates are authored.
