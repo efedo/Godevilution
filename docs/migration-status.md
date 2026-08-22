@@ -72,6 +72,8 @@ scaled hit points), not only the client's difficulty label.
 - The live Godot authoritative-server fixture manifests now use the shipped
   `devilution.diablo@1.406.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
+- Godot now validates stable spell IDs, native spell levels, targeting enums,
+  display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

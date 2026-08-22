@@ -30,6 +30,8 @@ All notable changes to this fork are documented below.
 - Live Godot authoritative-server overlay fixtures now track the shipped
   content schema so the complete focused live class starts against compatible
   base and overlay packs.
+- Godot now rejects out-of-range, duplicate, or malformed server-owned ability
+  and memorized-spell projections before spell presentation consumes them.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

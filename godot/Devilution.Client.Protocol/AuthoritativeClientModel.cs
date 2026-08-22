@@ -7,6 +7,9 @@ public sealed class AuthoritativeClientModel
 {
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
+    private const uint MaximumStableSpellId = byte.MaxValue;
+    private const uint MaximumNativeSpellLevel = 15;
+    private const int MaximumMemorizedSpellCount = 51;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
@@ -99,6 +102,7 @@ public sealed class AuthoritativeClientModel
                 }
                 ValidatePlayerResources(player);
                 ValidateVisitedLevels(player);
+                ValidatePlayerSpells(player);
                 ValidateStash(player);
                 ValidateInventoryTopology(player);
                 ValidatePlayerItemFootprints(player);
@@ -847,6 +851,30 @@ public sealed class AuthoritativeClientModel
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid visited-level state.");
+        }
+    }
+
+    private static void ValidatePlayerSpells(PlayerSnapshot player)
+    {
+        if (player.AbilitySpellId > MaximumStableSpellId
+            || player.MemorizedSpells.Count > MaximumMemorizedSpellCount) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains out-of-range player spell state.");
+        }
+
+        var spellIds = new HashSet<uint>();
+        foreach (var spell in player.MemorizedSpells) {
+            if (spell is null
+                || spell.SpellId == 0
+                || spell.SpellId > MaximumStableSpellId
+                || spell.Level == 0
+                || spell.Level > MaximumNativeSpellLevel
+                || !Enum.IsDefined(spell.TargetingKind)
+                || spell.DisplayName.Contains('\0')
+                || !spellIds.Add(spell.SpellId)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate memorized spells.");
+            }
         }
     }
 

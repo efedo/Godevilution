@@ -1043,6 +1043,66 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedAuthoritativeSpellState()
+    {
+        var model = new AuthoritativeClientModel();
+        var invalidAbility = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    AbilitySpellId = 256,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidAbility)));
+
+        var invalidLevel = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 16 },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidLevel)));
+
+        var duplicateSpell = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 1 },
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 2 },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateSpell)));
+
+        var invalidTargeting = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot {
+                            SpellId = 1,
+                            Level = 1,
+                            TargetingKind = (SpellTargetingKind)99,
+                        },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidTargeting)));
+    }
+
+    [Fact]
     public void RejectsImpossibleCoreItemStateRanges()
     {
         var model = new AuthoritativeClientModel();
