@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native Telekinesis now fails closed at the public legacy command
+  helper; authoritative target interaction remains server-owned.
 - Connected native automatic pickup now fails closed at the legacy item-command
   boundary; authoritative world-item pickup remains server-owned.
 - Connected native unique-monster conversations no longer mutate the local

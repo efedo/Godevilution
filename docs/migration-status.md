@@ -2,6 +2,9 @@
 
 Status date: 2026-08-22
 
+Connected native Telekinesis now fails closed at its public legacy command
+helper; authoritative target interaction remains server-owned even if a future
+caller bypasses the current cursor-routing branch.
 Connected native automatic pickup now fails closed at its legacy command
 boundary; authoritative world-item pickup remains server-owned even if a
 future caller reaches the legacy helper.

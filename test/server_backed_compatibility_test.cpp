@@ -176,6 +176,12 @@ TEST(ServerBackedCompatibility, ConnectedAutoPickupUsesAuthoritativeWorldItems)
 	EXPECT_FALSE(ShouldProcessLegacyAutoPickup(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedTelekinesisUsesAuthoritativeInput)
+{
+	EXPECT_TRUE(ShouldProcessLegacyTelekinesis(false));
+	EXPECT_FALSE(ShouldProcessLegacyTelekinesis(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyAttributeMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyAttributeMessage(false));

@@ -44,6 +44,7 @@
 #include "qol/visual_store.h"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
+#include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "utils/display.h"
 #include "utils/string/format_int.hpp"
@@ -2652,6 +2653,11 @@ void CloseStash()
 
 void DoTelekinesis()
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTelekinesis(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled())
 		NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJT, cursPosition);
 	if (pcursitem != -1)

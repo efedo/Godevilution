@@ -11,4 +11,10 @@ constexpr bool ShouldProcessLegacyInputMessage(bool serverConnected) noexcept
 	return !serverConnected;
 }
 
+/** Legacy telekinesis command emission is offline-only while input is server-owned. */
+constexpr bool ShouldProcessLegacyTelekinesis(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 } // namespace devilution
