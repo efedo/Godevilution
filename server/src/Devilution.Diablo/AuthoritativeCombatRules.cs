@@ -107,7 +107,8 @@ public sealed class AuthoritativeCombatRules
         int? rangedFastAttackFrameSkipBonus = null,
         uint townLevelId = AuthoritativePortalRules.TownLevelId,
         int uniqueExperienceMultiplier = 2,
-        int multipleArrowsCount = 3)
+        int multipleArrowsCount = 3,
+        int multipleArrowsDelayTicks = 2)
     {
         var resolvedRangedAttackFrameSkipWithFirstFrame = rangedAttackFrameSkipWithFirstFrame
             ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
@@ -216,6 +217,9 @@ public sealed class AuthoritativeCombatRules
         if (multipleArrowsCount is < 1 or > 3) {
             throw new InvalidDataException("Multiple Arrows count tuning is invalid.");
         }
+        if (multipleArrowsDelayTicks is < 0 or > 2) {
+            throw new InvalidDataException("Multiple Arrows delay tuning is invalid.");
+        }
         if (pvpBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("PvP block level tuning is invalid.");
         }
@@ -294,6 +298,7 @@ public sealed class AuthoritativeCombatRules
         DefeatExperience = defeatExperience;
         UniqueExperienceMultiplier = uniqueExperienceMultiplier;
         MultipleArrowsCount = multipleArrowsCount;
+        MultipleArrowsDelayTicks = multipleArrowsDelayTicks;
         HitChancePercent = hitChancePercent;
         CriticalChancePercent = criticalChancePercent;
         CriticalMultiplier = criticalMultiplier;
@@ -396,6 +401,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native number of weapon arrows emitted by the Multiple Arrows effect. */
     public int MultipleArrowsCount { get; }
+
+    /** Native delay before each follow-up Multiple Arrows missile begins travel. */
+    public int MultipleArrowsDelayTicks { get; }
 
     public int HitChancePercent { get; }
 
@@ -1028,7 +1036,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("ranged_fast_attack_frame_skip_bonus", 1),
             townLevelId,
             row.OptionalInt32("unique_experience_multiplier", 2),
-            row.OptionalInt32("multiple_arrows_count", 3));
+            row.OptionalInt32("multiple_arrows_count", 3),
+            row.OptionalInt32("multiple_arrows_delay_ticks", 2));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

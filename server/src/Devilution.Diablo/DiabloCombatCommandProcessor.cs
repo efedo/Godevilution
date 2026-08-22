@@ -857,7 +857,9 @@ public sealed class DiabloCombatCommandProcessor
                 AttackHit = attackHit,
                 PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
                 DoppelgangerProc = doppelgangerProc,
-                ActivationDelayTicks = arrowIndex == 0 ? 0U : 2U,
+                ActivationDelayTicks = arrowIndex == 0
+                    ? 0U
+                    : checked((uint)rules.MultipleArrowsDelayTicks),
                 Speed = arrowSpeed,
             };
             world.Projectiles.Add(projectile.EntityId, projectile);
@@ -978,8 +980,8 @@ public sealed class DiabloCombatCommandProcessor
     /**
      * Emits server-owned bow missiles. Multiple Arrows uses the validated
      * content count; the first starts on the attack effect frame and subsequent
-     * spread arrows begin two frames later, matching DoRangeAttack's second
-     * firing window.
+     * spread arrows begin after the configured delay, matching DoRangeAttack's
+     * second firing window.
      */
     private DiabloCombatIntentResult ResolveWeaponArrowVolley(
         AuthoritativePlayerState player,
@@ -1051,7 +1053,9 @@ public sealed class DiabloCombatCommandProcessor
                 AttackHit = attackHit,
                 PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
                 DoppelgangerProc = doppelgangerProc,
-                ActivationDelayTicks = arrowIndex == 0 ? 0U : 2U,
+                ActivationDelayTicks = arrowIndex == 0
+                    ? 0U
+                    : checked((uint)rules.MultipleArrowsDelayTicks),
                 Speed = arrowSpeed,
             };
             world.Projectiles.Add(projectile.EntityId, projectile);

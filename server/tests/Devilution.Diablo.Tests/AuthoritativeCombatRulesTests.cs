@@ -17,6 +17,7 @@ public sealed class AuthoritativeCombatRulesTests
 
         Assert.Equal(3, rules.UniqueExperienceMultiplier);
         Assert.Equal(3, rules.MultipleArrowsCount);
+        Assert.Equal(2, rules.MultipleArrowsDelayTicks);
         Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
             10,
             1,
@@ -32,6 +33,11 @@ public sealed class AuthoritativeCombatRulesTests
             1,
             100,
             multipleArrowsCount: 4));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            multipleArrowsDelayTicks: 3));
     }
 
     [Fact]
@@ -77,17 +83,19 @@ public sealed class AuthoritativeCombatRulesTests
         Assert.Equal(2, rules.MonsterRegenerationLevelDivisor);
         Assert.Equal(2, rules.MonsterPlayerBlockLevelScale);
         Assert.Equal(3, rules.MultipleArrowsCount);
+        Assert.Equal(2, rules.MultipleArrowsDelayTicks);
     }
 
     [Fact]
-    public void LoadsConfiguredMultipleArrowsCount()
+    public void LoadsConfiguredMultipleArrowsRules()
     {
         var rules = AuthoritativeCombatRules.LoadTsv(
             "combat.tsv",
-            "base_attack_damage\tminimum_damage\tdefeat_experience\tmultiple_arrows_count\n"
-            + "10\t1\t100\t2\n");
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmultiple_arrows_count\tmultiple_arrows_delay_ticks\n"
+            + "10\t1\t100\t2\t1\n");
 
         Assert.Equal(2, rules.MultipleArrowsCount);
+        Assert.Equal(1, rules.MultipleArrowsDelayTicks);
     }
 
     [Fact]

@@ -74,6 +74,9 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.403 externalizes the native Multiple Arrows count through
   `combat.tsv`; the shipped combat row declares three arrows while older
   mappings retain the native compatibility fallback.
+- Schema 1.404 externalizes the native Multiple Arrows follow-up delay through
+  `combat.tsv`; the shipped combat row declares two ticks while older mappings
+  retain the native compatibility fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

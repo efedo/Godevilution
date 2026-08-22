@@ -1019,7 +1019,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 1,
                 100,
                 friendlyFire: true,
-                multipleArrowsCount: 2));
+                multipleArrowsCount: 2,
+                multipleArrowsDelayTicks: 1));
         var attacker = CreatePlayer(
             entityId: 7,
             equipment: [new EquippedStoreItem(4, 42, bow)]);
@@ -1038,7 +1039,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(result.Succeeded, result.Failure?.ToString());
         Assert.Equal(2, world.Projectiles.Count);
         Assert.Equal(
-            [0U, 2U],
+            [0U, 1U],
             world.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
                 .Select(projectile => projectile.ActivationDelayTicks)
@@ -1492,14 +1493,15 @@ public sealed class DiabloCombatCommandProcessorTests
                 10,
                 1,
                 100,
-                multipleArrowsCount: 2));
+                multipleArrowsCount: 2,
+                multipleArrowsDelayTicks: 1));
 
         var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
         Assert.True(result.Succeeded);
         Assert.Equal(2, world.Projectiles.Count);
         Assert.Equal(
-            [0U, 2U],
+            [0U, 1U],
             world.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
                 .Select(projectile => projectile.ActivationDelayTicks)

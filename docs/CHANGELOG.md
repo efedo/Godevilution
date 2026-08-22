@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native Multiple Arrows follow-up delay through the optional
+  `multiple_arrows_delay_ticks` field in `combat.tsv`, preserving the two-tick
+  compatibility fallback for older packs and advancing the Diablo content
+  schema to 1.404.
+
 - Externalize the native Multiple Arrows count through the optional
   `multiple_arrows_count` field in `combat.tsv`, preserving the three-arrow
   compatibility fallback for older packs and advancing the Diablo content
