@@ -82,6 +82,19 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void RejectsDuplicateNativeQuestOrdinals()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestTypeCatalog.LoadTsv(
+                "quest_types.tsv",
+                "quest_id\tnative_quest_id\tname\tsingle_player_level\tmultiplayer_level\tlevel_type\tset_level\tsingle_player_only\n"
+                    + "3001\t0\tThe Magic Rock\t5\t-1\t\t0\t1\n"
+                    + "3013\t0\tThe Curse of King Leoric\t3\t3\tDTYPE_CATHEDRAL\t1\t0\n"));
+
+        Assert.Contains("duplicate identities", exception.Message);
+    }
+
+    [Fact]
     public void QuestStateRowsCanRequireAnExternalQuestType()
     {
         var types = new AuthoritativeQuestTypeCatalog([

@@ -39,6 +39,8 @@ are available.
 Connected native clients now hydrate legacy quest availability, completion,
 log, variables, and speech fields from optional server-projected native quest
 ordinals; snapshots without the additive mapping retain compatibility behavior.
+Quest content activation also rejects duplicate native ordinal mappings before
+they can make a connected snapshot ambiguous.
 
 ## Current state
 

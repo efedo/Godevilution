@@ -27,6 +27,7 @@ public sealed class AuthoritativeQuestTypeCatalog
     {
         ArgumentNullException.ThrowIfNull(definitions);
         this.definitions = new Dictionary<uint, AuthoritativeQuestTypeDefinition>();
+        var nativeQuestIds = new HashSet<uint>();
         foreach (var definition in definitions) {
             if (definition.QuestId == 0
                 || definition.NativeQuestId > 23
@@ -34,6 +35,7 @@ public sealed class AuthoritativeQuestTypeCatalog
                 || definition.SinglePlayerLevel < -1
                 || definition.MultiplayerLevel < -1
                 || definition.SetLevel is < 0 or > 8
+                || !nativeQuestIds.Add(definition.NativeQuestId)
                 || !this.definitions.TryAdd(definition.QuestId, definition)) {
                 throw new InvalidDataException("Quest type definitions contain invalid or duplicate identities.");
             }
