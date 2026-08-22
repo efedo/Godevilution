@@ -54,6 +54,8 @@ All notable changes to this fork are documented below.
   native/stable item identity is unavailable.
 - Targetless consumable actions now enforce authored `usable=false` metadata
   before applying potion, elixir, or oil effects.
+- Consumable Identify admission now resolves authored action metadata by stable,
+  native, or `misc_id` identity and enforces authored usability.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

@@ -508,6 +508,66 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void IdentifyScrollResolvesAuthoredActionByMiscIdWhenNativeIdentityIsAbsent()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2303,
+            0,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 123,
+            NativeItemIndex = 103,
+            ItemActionKind = DiabloItemActionKind.Identify,
+            Usable = true,
+        };
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                Magical = 1,
+                Identified = false,
+            });
+        var scroll = new OwnedStoreItem(
+            0,
+            0,
+            2303,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 123,
+            });
+        var player = CreatePlayer(inventory: [target, scroll]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: new AuthoritativeItemCatalog([definition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloIdentifyItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(Assert.Single(player.Inventory).State.Identified);
+        Assert.Equal(42U, Assert.Single(player.Inventory).ItemSeed);
+    }
+
+    [Fact]
     public void IdentifyScrollRejectsNonActionSource()
     {
         var target = new OwnedStoreItem(0, 0, 42, 100, 0,

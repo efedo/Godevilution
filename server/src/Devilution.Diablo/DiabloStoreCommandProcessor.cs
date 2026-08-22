@@ -882,7 +882,8 @@ public sealed class DiabloStoreCommandProcessor
         if (intent.SourceItem is not { } sourceReference
             || !DiabloPlayerItemAccess.TryGet(player, sourceReference, out var source)
             || source.State.Deleted
-            || source.State.ItemActionKind != DiabloItemActionKind.Identify
+            || !IsConsumableUsable(source.State)
+            || ResolveItemActionKind(source.State) != DiabloItemActionKind.Identify
             || sourceReference.Location is not (DiabloPlayerItemLocation.Inventory
                 or DiabloPlayerItemLocation.Belt))
             return DiabloRuleFailure.NotAllowed;
