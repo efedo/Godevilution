@@ -910,6 +910,31 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsOversizedInventoryFootprintsInsteadOfClampingThem()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot {
+                                InventoryWidth = 11,
+                                InventoryHeight = 1,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void AppliesMultiplayerSnapshotsWithTheReceivingParticipantFirst()
     {
         var model = new AuthoritativeClientModel();

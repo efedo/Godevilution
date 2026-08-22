@@ -59,6 +59,8 @@ scaled hit points), not only the client's difficulty label.
   stable/native identity resolves, preserving nonzero runtime state.
 - Godot item descriptions now honor the authoritative identified flag and
   identified-name projection while retaining a safe fallback for older state.
+- Godot now rejects ordinary player-item footprints outside the native 10×4
+  grid before presentation layout can silently relocate or clamp them.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

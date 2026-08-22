@@ -100,6 +100,7 @@ public sealed class AuthoritativeClientModel
                 ValidatePlayerResources(player);
                 ValidateVisitedLevels(player);
                 ValidateStash(player);
+                ValidatePlayerItemFootprints(player);
                 if (!Enum.IsDefined(player.CombatMode)
                     || (player.CombatMode == PlayerCombatMode.Stand
                         && player.CombatModeEndTick != 0)
@@ -383,6 +384,28 @@ public sealed class AuthoritativeClientModel
                 "The authoritative snapshot contains an invalid stash page.");
         foreach (var page in pages)
             _ = StashLayout.Build(player.Stash, page);
+    }
+
+    private static void ValidatePlayerItemFootprints(PlayerSnapshot player)
+    {
+        foreach (var item in player.Inventory)
+            ValidateInventoryFootprint(item?.State);
+        foreach (var item in player.Belt)
+            ValidateInventoryFootprint(item?.State);
+        foreach (var item in player.Equipment)
+            ValidateInventoryFootprint(item?.State);
+        if (player.HeldItem is { } heldItem)
+            ValidateInventoryFootprint(heldItem.State);
+    }
+
+    private static void ValidateInventoryFootprint(ItemStateSnapshot? state)
+    {
+        if (state is null)
+            return;
+        if (state.InventoryWidth > 10 || state.InventoryHeight > 4) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an item footprint outside the native inventory grid.");
+        }
     }
 
     private static void ValidatePlayerResources(PlayerSnapshot player)

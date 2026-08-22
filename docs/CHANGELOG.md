@@ -16,6 +16,8 @@ All notable changes to this fork are documented below.
 - The Godot HUD now selects the server-owned identified item name only when
   authoritative state marks the item identified, with a compatibility fallback
   for older snapshots that omit the base name.
+- The Godot protocol boundary now rejects oversized ordinary inventory,
+  belt, equipment, or held-item footprints instead of silently clamping them.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
