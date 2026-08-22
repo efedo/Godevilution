@@ -44,6 +44,8 @@ All notable changes to this fork are documented below.
   metadata by `misc_id` when compatibility state omits native item identity.
 - Consumable action kind and amount now resolve unambiguous authored metadata by
   `misc_id`, with ambiguous mappings rejected rather than guessed.
+- Arena-only admission now resolves authored `arena_only` metadata by `misc_id`
+  when compatibility state lacks stable/native item identity.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

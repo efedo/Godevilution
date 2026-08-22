@@ -349,6 +349,34 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves an authored arena-only admission flag by misc ID. */
+    public bool TryGetArenaOnlyByMiscId(int miscId, out bool arenaOnly)
+    {
+        arenaOnly = false;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && (definition.ArenaOnly.HasValue
+                    || string.Equals(
+                        definition.StableSymbol,
+                        "arena_potion",
+                        StringComparison.OrdinalIgnoreCase)))
+            .Select(definition => definition.ArenaOnly
+                ?? string.Equals(
+                    definition.StableSymbol,
+                    "arena_potion",
+                    StringComparison.OrdinalIgnoreCase))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1)
+            return false;
+
+        arenaOnly = values[0];
+        return true;
+    }
+
     /** Resolves non-empty, unambiguous semantic item tags by misc ID. */
     public bool TryGetGenerationTagsByMiscId(
         int miscId,

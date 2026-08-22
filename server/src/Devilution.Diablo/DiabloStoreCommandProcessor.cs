@@ -708,11 +708,21 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsArenaOnlyItem(AuthoritativeItemState state)
     {
-        if (items is not null && items.TryGetByState(state, out var definition)) {
-            if (definition.ArenaOnly.HasValue)
-                return definition.ArenaOnly.Value;
-            if (string.Equals(definition.StableSymbol, "arena_potion", StringComparison.OrdinalIgnoreCase))
-                return true;
+        if (items is not null) {
+            var hasDefinition = items.TryGetByState(state, out var definition);
+            if (hasDefinition) {
+                if (definition.ArenaOnly.HasValue)
+                    return definition.ArenaOnly.Value;
+                if (string.Equals(definition.StableSymbol, "arena_potion", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            var miscId = state.MiscId != 0
+                ? state.MiscId
+                : hasDefinition
+                    ? definition.MiscId
+                    : 0;
+            if (items.TryGetArenaOnlyByMiscId(miscId, out var arenaOnly))
+                return arenaOnly;
         }
         if (state.MiscId == 55)
             return true;
