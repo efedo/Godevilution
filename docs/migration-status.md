@@ -32,6 +32,10 @@ longer select a second gameplay state while the server-backed runtime is active.
 Connected single-player transition progress no longer writes legacy per-level save
 files before a server-owned move; multiplayer delta saves remain protected by the
 existing delta-state policy.
+Native authoritative object projection now prefers a local compatibility object
+at the server-projected position before falling back to object-type matching;
+ordinary local objects remain presentation-only until their authored replacements
+are available.
 
 ## Current state
 

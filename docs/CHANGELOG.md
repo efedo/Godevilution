@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native authoritative object projection now prefers a compatibility object at
+  the projected server position before falling back to type matching, reducing
+  presentation misassociation when legacy levels contain duplicate object types.
 - Connected single-player transition progress no longer writes legacy per-level
   save files before server-owned moves; multiplayer delta saves remain protected by
   the existing delta-state policy.

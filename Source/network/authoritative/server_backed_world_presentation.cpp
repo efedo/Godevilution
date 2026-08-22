@@ -791,15 +791,23 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		    && FindActiveObjectListIndex(mapped->second) >= 0)
 			slot = mapped->second;
 		if (slot < 0) {
+			const Point projectedPosition { snapshot.positionX, snapshot.positionY };
+			int positionMatchedSlot = -1;
 			for (int activeIndex = 0; activeIndex < ObjectPoolAdapter::ActiveObjectCountValue(); ++activeIndex) {
 				const int candidate = ObjectPoolAdapter::ActiveObjectIndexAt(activeIndex);
 				if (claimedObjectSlots.contains(candidate))
 					continue;
-				if (static_cast<uint32_t>(Objects[candidate]._otype) == snapshot.objectId) {
+				if (static_cast<uint32_t>(Objects[candidate]._otype) != snapshot.objectId)
+					continue;
+				if (Objects[candidate].position == projectedPosition) {
 					slot = candidate;
 					break;
 				}
+				if (positionMatchedSlot < 0)
+					positionMatchedSlot = candidate;
 			}
+			if (slot < 0)
+				slot = positionMatchedSlot;
 		}
 		if (slot < 0 && snapshot.objectId <= static_cast<uint32_t>(OBJ_LAST) && ObjectPoolAdapter::HasFreeObjectSlot()) {
 			if (Object *object = AddObject(static_cast<_object_id>(snapshot.objectId), { snapshot.positionX, snapshot.positionY }); object != nullptr)
