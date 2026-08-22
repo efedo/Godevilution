@@ -159,6 +159,11 @@ public static class DiabloCastSourceRules
         TryGetDefinition(state, items, out var definition);
         if (definition?.Usable == false)
             return false;
+        if (definition is null
+            && items is not null
+            && items.TryGetUsableByMiscId(state.MiscId, out var usable)
+            && !usable)
+            return false;
         var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
         if (sourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ConsumableItem

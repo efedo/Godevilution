@@ -50,6 +50,8 @@ All notable changes to this fork are documented below.
   `misc_id` before applying the native type/index fallback.
 - Item-backed spell-source classification now fills omitted spell and charge
   fields from unambiguous charged/consumable metadata keyed by `misc_id`.
+- Authored `usable=false` consumable metadata is now enforced by `misc_id` when
+  native/stable item identity is unavailable.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

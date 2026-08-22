@@ -134,6 +134,8 @@ scaled hit points), not only the client's difficulty label.
   `misc_id` before applying the native type/index fallback.
 - Item-backed spell-source classification now fills omitted spell and charge
   fields from unambiguous charged/consumable metadata keyed by `misc_id`.
+- Authored `usable=false` consumable metadata is now enforced by `misc_id` when
+  native/stable item identity is unavailable.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

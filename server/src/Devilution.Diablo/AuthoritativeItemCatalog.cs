@@ -341,6 +341,26 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves an unambiguous authored usability flag by misc ID. */
+    public bool TryGetUsableByMiscId(int miscId, out bool usable)
+    {
+        usable = true;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && definition.Usable.HasValue)
+            .Select(definition => definition.Usable!.Value)
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1)
+            return false;
+
+        usable = values[0];
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,
