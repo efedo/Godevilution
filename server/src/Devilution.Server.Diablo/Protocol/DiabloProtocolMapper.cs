@@ -1496,6 +1496,9 @@ internal static class DiabloProtocolMapper
     {
         var spellSourceKind = state.SpellSourceKind
             ?? DiabloCastSourceRules.ClassifyItem(state, spells);
+        var hasPresentation = !string.IsNullOrEmpty(state.BaseName)
+            || !string.IsNullOrEmpty(state.IdentifiedName)
+            || state.NativeCursorGraphic.HasValue;
         if (state.Value < 0
             || state.IdentifiedValue < 0
             || state.MinDamage < 0
@@ -1513,6 +1516,14 @@ internal static class DiabloProtocolMapper
             || state.InventoryWidth > 10
             || state.InventoryHeight < 0
             || state.InventoryHeight > 4
+            || hasPresentation
+                && (string.IsNullOrEmpty(state.BaseName)
+                    || string.IsNullOrEmpty(state.IdentifiedName)
+                    || state.BaseName.Contains('\0')
+                    || state.IdentifiedName.Contains('\0')
+                    || System.Text.Encoding.UTF8.GetByteCount(state.BaseName) >= 64
+                    || System.Text.Encoding.UTF8.GetByteCount(state.IdentifiedName) >= 64
+                    || state.NativeCursorGraphic is < 0 or > byte.MaxValue)
             || !Enum.IsDefined(spellSourceKind)
             || !Enum.IsDefined(state.ItemActionKind)) {
             throw new InvalidDataException(

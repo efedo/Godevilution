@@ -462,6 +462,24 @@ public sealed class DialogueProtocolProjectionTests
 
         Assert.Throws<InvalidDataException>(() =>
             DiabloProtocolMapper.ToProtocolSnapshot(source));
+
+        var partialPresentation = invalidItem with {
+            State = AuthoritativeItemState.Empty with { BaseName = "Potion" },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { Inventory = [partialPresentation] },
+            }));
+
+        var invalidCursor = invalidItem with {
+            State = AuthoritativeItemState.Empty with {
+                NativeCursorGraphic = -1,
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { Inventory = [invalidCursor] },
+            }));
     }
 
     [Fact]
