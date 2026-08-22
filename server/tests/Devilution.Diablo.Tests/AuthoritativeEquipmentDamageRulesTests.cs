@@ -32,6 +32,42 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
     }
 
     [Fact]
+    public void EquippedWeaponRangeResolvesByMiscIdWhenStateOmitsDamage()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 4, 8, 0, 20, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                GenerationTags = new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var equipment = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 121,
+                ItemType = 1,
+                ItemClass = 1,
+                StatFlag = true,
+            });
+
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(20, 20)),
+            [equipment],
+            CreateClass("warrior"),
+            items);
+
+        Assert.Equal(4, profile.MinimumDamage);
+        Assert.Equal(8, profile.MaximumDamage);
+    }
+
+    [Fact]
     public void MonkUnarmedAndShieldRangesUseNativeLevelRules()
     {
         var attributes = new PlayerAttributesState(

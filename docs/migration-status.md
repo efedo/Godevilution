@@ -153,6 +153,8 @@ scaled hit points), not only the client's difficulty label.
 - Store sale, repair, and recharge prices now resolve omitted item values from
   unambiguous authored metadata, including compatibility states keyed by
   `misc_id`.
+- Equipped physical damage now resolves omitted weapon ranges from authored
+  item metadata before calculating the server-owned player damage profile.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

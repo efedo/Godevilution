@@ -55,8 +55,9 @@ public static class AuthoritativeEquipmentDamageRules
         var minimumDamage = 0;
         var maximumDamage = 0;
         foreach (var equippedItem in usableEquipment) {
-            minimumDamage = checked(minimumDamage + equippedItem.State.MinDamage);
-            maximumDamage = checked(maximumDamage + equippedItem.State.MaxDamage);
+            var damage = ResolveBaseDamage(equippedItem.State, items);
+            minimumDamage = checked(minimumDamage + damage.MinimumDamage);
+            maximumDamage = checked(maximumDamage + damage.MaximumDamage);
         }
 
         var handItems = usableEquipment
@@ -122,6 +123,23 @@ public static class AuthoritativeEquipmentDamageRules
             minimumDamage,
             maximumDamage,
             damageModifier);
+    }
+
+    private static (int MinimumDamage, int MaximumDamage) ResolveBaseDamage(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items)
+    {
+        if (state.MaxDamage > 0 || items is null)
+            return (state.MinDamage, state.MaxDamage);
+        if (items.TryGetByState(state, out var definition)
+            && definition.MaxDamage > 0)
+            return (definition.MinDamage, definition.MaxDamage);
+        if (items.TryGetBaseDamageByMiscId(
+                state.MiscId,
+                out var minimumDamage,
+                out var maximumDamage))
+            return (minimumDamage, maximumDamage);
+        return (state.MinDamage, state.MaxDamage);
     }
 
     private static int CalculateBarbarianModifier(
