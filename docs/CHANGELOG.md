@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
   monsters; legacy charger cleanup remains offline-only.
 - Preserve the server-selected player tile during connected native level
   loading; the legacy nearby-tile placement fallback remains offline-only.
+- Keep connected native player initialization from replacing the authoritative
+  transition tile with the legacy view-position fallback during level loading.
 - Guard connected native dungeon-message playback during level loading so
   legacy Defiler quest mutation and quest resynchronization commands cannot
   bypass authoritative level projections.

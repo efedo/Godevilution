@@ -23,6 +23,10 @@ Connected native level loading now preserves the server-selected player tile;
 the legacy nearby-tile placement fallback is offline-only, so a transition
 cannot rewrite authoritative movement state during presentation setup.
 
+Connected native player initialization also skips its legacy view-position
+placement fallback during level loading, preventing initialization from
+rewriting the authoritative transition tile before snapshot projection.
+
 Connected native level loading also skips legacy charger cleanup, preserving
 server-owned monster combat modes while still retaining the cleanup for
 offline level loads.

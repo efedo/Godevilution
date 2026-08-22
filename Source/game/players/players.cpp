@@ -119,6 +119,15 @@ bool LegacyPlayerStateMutationAllowed() noexcept
 #endif
 }
 
+bool LegacyLevelLoadPlayerPlacementAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadPlayerPlacement(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 struct DirectionSettings {
 	Direction dir;
 	PLR_MODE walkMode;
@@ -2930,7 +2939,7 @@ void InitPlayer(Player &player, bool firstTime)
 
 		player.direction = Direction::South;
 
-		if (&player == MyPlayer && (!firstTime || levelType() != DTYPE_TOWN)) {
+		if (&player == MyPlayer && (!firstTime || levelType() != DTYPE_TOWN) && LegacyLevelLoadPlayerPlacementAllowed()) {
 			player.position.tile = viewPosition();
 		}
 
