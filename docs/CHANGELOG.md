@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh the migration verification baseline to record the current Diablo
+  module result: 1,452 of 1,452 focused module tests pass.
+
 - Align Na-Krul's unique-spawn regression coverage with the native weakening
   rule: both current and maximum health are reduced to 50 percent.
 
