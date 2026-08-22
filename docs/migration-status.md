@@ -43,6 +43,10 @@ Connected native death-drop helpers now also fail closed at their direct entry
 points, covering item respawn, gold splitting, and top-gold overflow while the
 server owns inventory and world-item consequences.
 
+Connected native equipment-damage helpers now fail closed before weapon decay,
+shield/staff durability loss, or armor damage can mutate local inventory; the
+server remains the sole connected combat authority.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

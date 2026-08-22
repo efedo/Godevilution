@@ -99,6 +99,15 @@ bool LegacyDeathDropsAllowed() noexcept
 #endif
 }
 
+bool LegacyEquipmentDamageAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 struct DirectionSettings {
 	Direction dir;
 	PLR_MODE walkMode;
@@ -494,6 +503,9 @@ bool DoWalk(Player &player)
 
 bool WeaponDecay(Player &player, int ii)
 {
+	if (!LegacyEquipmentDamageAllowed())
+		return false;
+
 	if (!player.InvBody[ii].isEmpty() && player.InvBody[ii]._iClass == ICLASS_WEAPON && HasAnyOf(player.InvBody[ii]._iDamAcFlags, ItemSpecialEffectHf::Decay)) {
 		player.InvBody[ii]._iPLDam -= 5;
 		if (player.InvBody[ii]._iPLDam <= -100) {
@@ -508,6 +520,9 @@ bool WeaponDecay(Player &player, int ii)
 
 bool DamageWeapon(Player &player, unsigned damageFrequency)
 {
+	if (!LegacyEquipmentDamageAllowed())
+		return false;
+
 	if (&player != MyPlayer) {
 		return false;
 	}
@@ -969,6 +984,9 @@ bool DoRangeAttack(Player &player)
 
 void DamageParryItem(Player &player)
 {
+	if (!LegacyEquipmentDamageAllowed())
+		return;
+
 	if (&player != MyPlayer) {
 		return;
 	}
@@ -1013,6 +1031,9 @@ bool DoBlock(Player &player)
 
 void DamageArmor(Player &player)
 {
+	if (!LegacyEquipmentDamageAllowed())
+		return;
+
 	if (&player != MyPlayer) {
 		return;
 	}
