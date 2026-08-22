@@ -84,6 +84,10 @@ and automatic-store-placement entry points now fail closed before legacy vendor
 state can diverge from authoritative store commands. Read-only room checks
 remain available to preserve connected vendor UI behavior.
 
+Connected native manual and automatic world-item pickup actions now resolve the
+projected world-item entity and submit `PickupWorldItemRequested`; legacy pickup
+commands and direct inventory/world cleanup helpers remain offline-only.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

@@ -44,6 +44,9 @@ All notable changes to this fork are documented below.
 - Guard direct connected native store purchase, sale, repair, recharge,
   identify, currency, and automatic-placement mutations while preserving
   read-only vendor room checks.
+- Route connected native manual and automatic world-item pickup through the
+  authoritative projected entity command and guard direct legacy pickup and
+  cleanup helpers.
 - Guard direct legacy delta-load helpers for spawned monsters, monster state,
   objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an

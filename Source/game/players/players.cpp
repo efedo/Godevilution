@@ -1404,6 +1404,20 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 				x = std::abs(player.position.tile.x - item->position.x);
 				y = std::abs(player.position.tile.y - item->position.y);
 				if (x <= 1 && y <= 1 && pcurs == CURSOR_HAND && !item->_iRequest) {
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					if (authoritative::GetServerBackedRuntime().IsConnected()) {
+						const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(item->position.x, item->position.y);
+						if (!entityId.has_value()) {
+							LogError("Server-backed pickup target has no authoritative world-item entity.");
+							break;
+						}
+						if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+							LogError("Server-backed world-item pickup failed: {}", result.error());
+						else
+							item->_iRequest = true;
+						break;
+					}
+				#endif
 					NetSendCmdGItem(true, CMD_REQUESTGITEM, player, targetId);
 					item->_iRequest = true;
 				}
@@ -1414,6 +1428,20 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 				x = std::abs(player.position.tile.x - item->position.x);
 				y = std::abs(player.position.tile.y - item->position.y);
 				if (x <= 1 && y <= 1 && pcurs == CURSOR_HAND) {
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					if (authoritative::GetServerBackedRuntime().IsConnected()) {
+						const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(item->position.x, item->position.y);
+						if (!entityId.has_value()) {
+							LogError("Server-backed automatic pickup target has no authoritative world-item entity.");
+							break;
+						}
+						if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
+							LogError("Server-backed automatic world-item pickup failed: {}", result.error());
+						else
+							item->_iRequest = true;
+						break;
+					}
+				#endif
 					NetSendCmdGItem(true, CMD_REQUESTAGITEM, player, targetId);
 				}
 			}

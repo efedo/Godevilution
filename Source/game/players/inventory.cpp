@@ -1258,6 +1258,11 @@ void CheckQuestItem(Player &player, Item &questItem)
 
 void CleanupItems(int ii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	const Item &item = Items[ii];
 	tileAt(item.position).setItem(0);
 
@@ -1952,6 +1957,11 @@ void CheckInvScrn(bool isShiftHeld, bool isCtrlHeld)
 
 void InvGetItem(Player &player, int ii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Item &item = Items[ii];
 	CloseGoldDrop();
 
@@ -2022,6 +2032,11 @@ std::optional<Point> FindAdjacentPositionForItem(Point origin, Direction facing)
 
 void AutoGetItem(Player &player, Item *itemPointer, int ii)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyAutoPickup(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	Item &item = *itemPointer;
 
 	CloseGoldDrop();
@@ -2085,6 +2100,11 @@ int FindGetItem(uint32_t iseed, _item_indexes idx, uint16_t createInfo)
 
 void SyncGetItem(Point position, uint32_t iseed, _item_indexes idx, uint16_t ci)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	// Check what the local client has at the target position
 	int ii = tileAt(position).item() - 1;
 
