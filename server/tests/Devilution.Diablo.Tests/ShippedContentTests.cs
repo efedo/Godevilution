@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.387.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.388.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1951,7 +1951,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.387.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.388.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2256,6 +2256,15 @@ public sealed class ShippedContentTests
             uberroom.TileLayer[^1],
             hellfireLevel.NativeMegaTileLayer[(6 + uberroom.MegaHeight - 1) * 20
                 + 9 + uberroom.MegaWidth - 1]);
+        Assert.Equal(
+            [(1U, 1U, 2401U, 2403U, -4, 0), (2U, 1U, 2402U, 2403U, -2, 0)],
+            activation.NativeDunFragmentObjects!.Placements.Select(placement => (
+                placement.PlacementId,
+                placement.FragmentId,
+                placement.EntityId,
+                placement.AnchorEntityId,
+                placement.OffsetX,
+                placement.OffsetY)).ToArray());
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)
@@ -2264,6 +2273,9 @@ public sealed class ShippedContentTests
         Assert.Equal(
             [1, 2, 3],
             nakrulTomes.Select(@object => @object.EffectAmount).ToArray());
+        Assert.Equal(
+            [(20, 20), (22, 20), (24, 20)],
+            nakrulTomes.Select(@object => (@object.PositionX, @object.PositionY)).ToArray());
         var finalNakrulTome = nakrulTomes.Single(@object => @object.EffectAmount == 3);
         Assert.Equal(
             (AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster, 139U, 9200U),

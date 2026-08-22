@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add `native_dun_fragment_objects.tsv` for validated anchor-relative
+  placement of existing authored objects. The Hellfire Na-Krul tome rows now
+  follow the encounter anchor instead of duplicating absolute coordinates.
+
 - Add optional validated `.til`/`.sol` collision composition to native DUN
   fragments. External tile definitions now expand fragment mega-tiles into
   anchor-relative solid and missile-blocked cells without hard-coded gameplay

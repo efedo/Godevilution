@@ -40,7 +40,8 @@ public sealed record DiabloContentActivation
         AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
-        AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null)
+        AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
+        AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -67,6 +68,7 @@ public sealed record DiabloContentActivation
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
         NativeDunFragments = nativeDunFragments;
+        NativeDunFragmentObjects = nativeDunFragmentObjects;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -122,6 +124,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native DUN fragments composed into ordinary runtime levels. */
     public AuthoritativeNativeDunFragmentCatalog? NativeDunFragments { get; }
+
+    /** Validated anchor-relative authored objects for native DUN fragments. */
+    public AuthoritativeNativeDunFragmentObjectCatalog? NativeDunFragmentObjects { get; }
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
@@ -407,6 +412,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeDunFragmentsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var nativeDunFragmentObjects = content.TryGetTable(
+                "native_dun_fragment_objects.tsv",
+                out var nativeDunFragmentObjectsTable)
+            ? AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
+                nativeDunFragmentObjectsTable.SourcePath,
+                nativeDunFragmentObjectsTable.ToCanonicalTsv())
+            : null;
         var levelGeneration = content.TryGetTable(
             "level_generation.tsv",
             out var levelGenerationTable)
@@ -537,6 +549,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectId => objectDefinitions.Any(@object => @object.ObjectId == objectId));
         if (world is not null && objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
+        if (nativeDunFragmentObjects is not null) {
+            if (world is null || objects is null || nativeDunFragments is null)
+                throw new InvalidDataException(
+                    "Native DUN fragment object placements require a world, fragments, and authored objects.");
+            nativeDunFragmentObjects.Apply(world, objects, nativeDunFragments);
+            AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
+        }
         if (objectDefinitions.Length > 0)
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objectDefinitions, itemCatalog!);
         if (objectDefinitions.Length > 0)
@@ -928,7 +947,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             setLevelObjects,
             setLevelMaps,
             nativeDunObjects,
-            nativeDunFragments);
+            nativeDunFragments,
+            nativeDunFragmentObjects);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -37,6 +37,11 @@ scaled hit points), not only the client's difficulty label.
 
 ## Implemented authoritative systems
 
+- Hellfire Na-Krul tome objects now use the validated
+  `native_dun_fragment_objects.tsv` contract to follow the encounter anchor;
+  their behavior remains authored once in `objects.tsv` while placement is
+  externalized with the room fragment.
+
 - Native server-backed input, polling, portal, store, quest, and ability
   requests now timestamp the compatibility boundary with the shared
   demo-aware timer; the adapter no longer reintroduces direct SDL timing for
