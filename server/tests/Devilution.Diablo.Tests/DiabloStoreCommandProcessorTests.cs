@@ -1884,6 +1884,67 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void SharpnessOilResolvesTargetDamageByMiscId()
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            2310,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplySharpnessOil,
+                ItemClass = 3,
+            });
+        var targetDefinition = new AuthoritativeItemDefinition(
+            2311,
+            1,
+            100,
+            100,
+            5,
+            10,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            MiscId = 129,
+            NativeItemIndex = 109,
+            GenerationTags = new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase),
+        };
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            2311,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 129,
+                ItemClass = 1,
+                MinDamage = 0,
+                MaxDamage = 0,
+            });
+        var player = CreatePlayer(inventory: [oil, target]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: new AuthoritativeItemCatalog([targetDefinition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var applied = Assert.Single(player.Inventory);
+        Assert.Equal(5, applied.State.MinDamage);
+        Assert.Equal(11, applied.State.MaxDamage);
+    }
+
+    [Fact]
     public void AccuracyAndFortitudeOilsUseNativeBoundedRandomEffects()
     {
         var accuracy = new OwnedStoreItem(

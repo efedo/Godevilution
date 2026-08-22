@@ -148,6 +148,8 @@ scaled hit points), not only the client's difficulty label.
   durability through stable, native, or `misc_id` identity.
 - Blacksmith and Fortitude oil mutations now hydrate omitted target durability
   from authored item metadata before applying native effects.
+- Sharpness Oil now hydrates omitted target weapon damage from authored item
+  metadata before applying its native increment.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

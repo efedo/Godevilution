@@ -453,6 +453,24 @@ public sealed class DiabloStoreCommandProcessor
         return 0;
     }
 
+    private (int MinimumDamage, int MaximumDamage) ResolveBaseDamage(
+        AuthoritativeItemState state)
+    {
+        if (state.MaxDamage > 0)
+            return (state.MinDamage, state.MaxDamage);
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.MaxDamage > 0)
+                return (definition.MinDamage, definition.MaxDamage);
+            if (items.TryGetBaseDamageByMiscId(
+                    state.MiscId,
+                    out var minimumDamage,
+                    out var maximumDamage))
+                return (minimumDamage, maximumDamage);
+        }
+        return (state.MinDamage, state.MaxDamage);
+    }
+
     private int ResolveChargedSpellId(AuthoritativeItemState state)
     {
         if (state.SpellId != 0)
@@ -729,6 +747,17 @@ public sealed class DiabloStoreCommandProcessor
         var maximumDurability = ResolveMaximumDurability(state);
         if (state.MaxDurability == 0 && maximumDurability > 0)
             state = state with { MaxDurability = maximumDurability };
+        if (action == DiabloItemActionKind.ApplySharpnessOil) {
+            var baseDamage = ResolveBaseDamage(state);
+            if (state.MinDamage == 0
+                && state.MaxDamage == 0
+                && baseDamage.MaximumDamage > 0) {
+                state = state with {
+                    MinDamage = baseDamage.MinimumDamage,
+                    MaxDamage = baseDamage.MaximumDamage,
+                };
+            }
+        }
         switch (action) {
         case DiabloItemActionKind.ApplyBlacksmithOil:
             if (state.MaxDurability != byte.MaxValue) {

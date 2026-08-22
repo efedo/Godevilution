@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   by stable or native item identity when compatibility state omits those fields.
 - Recharge validation and pricing now resolve authored maximum charges and spell
   identity through stable or native item metadata when state omits those fields.
+- Sharpness Oil now hydrates omitted target weapon damage from authored item
+  metadata before applying its native increment.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative

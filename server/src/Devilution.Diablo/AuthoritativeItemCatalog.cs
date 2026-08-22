@@ -385,6 +385,30 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous authored base damage metadata by misc ID. */
+    public bool TryGetBaseDamageByMiscId(
+        int miscId,
+        out int minimumDamage,
+        out int maximumDamage)
+    {
+        minimumDamage = 0;
+        maximumDamage = 0;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .Select(definition => (definition.MinDamage, definition.MaxDamage))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1 || values[0].MaxDamage <= 0)
+            return false;
+
+        minimumDamage = values[0].MinDamage;
+        maximumDamage = values[0].MaxDamage;
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,
