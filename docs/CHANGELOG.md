@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Guard connected native dungeon-message playback during level loading so
+  legacy Defiler quest mutation and quest resynchronization commands cannot
+  bypass authoritative level projections.
 - Guard direct connected identify, repair, recharge, and oil cursor callbacks;
   stable-reference item-service commands remain the connected mutation path.
 - Guard direct connected town-opening helpers before legacy hive or grave

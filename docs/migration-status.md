@@ -15,6 +15,10 @@ Connected native identify, repair, recharge, and oil cursor callbacks now also
 fail closed at their direct entry points; stable-reference item-service
 commands remain the connected mutation path.
 
+Connected native dungeon-message playback now also fails closed during level
+loading, preventing legacy Defiler quest mutation and quest resynchronization
+commands from bypassing authoritative level projections.
+
 Connected native missile presentation no longer clears legacy missile and wall
 tile flags for server-owned projectiles; only locally simulated missiles update
 that native gameplay bookkeeping.

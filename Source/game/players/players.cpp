@@ -61,6 +61,7 @@
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
@@ -4102,6 +4103,11 @@ enum {
 
 void PlayDungMsgs()
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	assert(MyPlayer != nullptr);
 	Player &myPlayer = *MyPlayer;
 
