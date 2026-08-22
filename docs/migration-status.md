@@ -62,6 +62,9 @@ Native debug item and monster spawning is also offline-only; connected world
 items and monsters remain projections of server state.
 Native object operation now also fails closed when the selected local object
 has no matching authoritative projection instead of invoking legacy behavior.
+Connected native death presentation now suppresses legacy death messaging and
+local death-drop synthesis; gold, equipment, held-item, and ear consequences
+remain server-owned and arrive through authoritative projections.
 
 ## Current state
 

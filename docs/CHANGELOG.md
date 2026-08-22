@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native death presentation no longer emits legacy death commands or
+  synthesizes local gold, equipment, held-item, or ear drops; the authoritative
+  server owns those consequences.
 - Native object operation now fails closed when an authoritative session has
   no projected entity at the selected object position, preventing fallback to
   legacy local object behavior.

@@ -11,4 +11,13 @@ constexpr bool ShouldProcessLegacyCombatMessage(bool serverConnected) noexcept
 	return !serverConnected;
 }
 
+/**
+ * Native death-drop generation is offline-only while the authoritative server
+ * owns gold, equipment, held-item, and ear consequences.
+ */
+constexpr bool ShouldProcessLegacyDeathDrops(bool authoritativeMode) noexcept
+{
+	return !authoritativeMode;
+}
+
 } // namespace devilution

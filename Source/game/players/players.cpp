@@ -57,6 +57,7 @@
 #include "game/spells/spells.hpp"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
+#include "network/protocol/legacy_combat_policy.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
@@ -2977,8 +2978,15 @@ Player::startKill(DeathReason deathReason)
 		return;
 	}
 
+	bool processLegacyDeathDrops = true;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	processLegacyDeathDrops = ShouldProcessLegacyDeathDrops(
+		&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode());
+#endif
+
 	if (&player == MyPlayer) {
-		NetSendCmdParam1(true, CMD_PLRDEAD, static_cast<uint16_t>(deathReason));
+		if (processLegacyDeathDrops)
+			NetSendCmdParam1(true, CMD_PLRDEAD, static_cast<uint16_t>(deathReason));
 		gamemenu_off();
 	}
 
@@ -3028,14 +3036,14 @@ Player::startKill(DeathReason deathReason)
 		if (&player == MyPlayer) {
 			RedrawComponent(PanelDrawComponent::Health);
 
-			if (!player.HoldItem.isEmpty()) {
+			if (processLegacyDeathDrops && !player.HoldItem.isEmpty()) {
 				DeadItem(player, std::move(player.HoldItem), { 0, 0 });
 				NewCursor(CURSOR_HAND);
 			}
-			if (dropGold) {
+			if (processLegacyDeathDrops && dropGold) {
 				DropHalfPlayersGold(player);
 			}
-			if (dropEar) {
+			if (processLegacyDeathDrops && dropEar) {
 				Item ear;
 				InitializeItem(ear, IDI_EAR);
 				CopyUtf8(ear._iName, fmt::format(fmt::runtime("Ear of {:s}"), player._pName), sizeof(ear._iName));
@@ -3065,7 +3073,7 @@ Player::startKill(DeathReason deathReason)
 					DeadItem(player, std::move(ear), { 0, 0 });
 				}
 			}
-			if (dropItems) {
+			if (processLegacyDeathDrops && dropItems) {
 				Direction pdd = player.direction;
 				for (Item &item : player.InvBody) {
 					pdd = Left(pdd);
@@ -3073,6 +3081,12 @@ Player::startKill(DeathReason deathReason)
 				}
 
 				CalcPlrInv(player, false);
+			}
+			if (!processLegacyDeathDrops && !player.HoldItem.isEmpty()) {
+				// The authoritative server resolves held-item drops and the next
+				// snapshot reconciles the cursor. Do not synthesize a local item.
+				player.HoldItem.clear();
+				NewCursor(CURSOR_HAND);
 			}
 		}
 	}
