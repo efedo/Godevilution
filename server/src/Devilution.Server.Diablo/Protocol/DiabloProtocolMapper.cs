@@ -17,6 +17,7 @@ internal static class DiabloProtocolMapper
         bool allowZeroPlayerEntityId = false)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ValidateProjectedStoreState(source);
         var visibleParticipants = participants?
             .Where(player => player.EntityId != 0)
             .ToArray();
@@ -386,6 +387,18 @@ internal static class DiabloProtocolMapper
         return snapshot;
     }
 
+    private static void ValidateProjectedStoreState(DiabloSimulationSnapshot source)
+    {
+        var activeStoreId = source.Player.ActiveStoreId;
+        if ((source.ActiveStore is null) != (activeStoreId is null)
+            || source.ActiveStore is not null
+                && (source.ActiveStore.StoreId == 0
+                    || source.ActiveStore.StoreId != activeStoreId)) {
+            throw new InvalidDataException(
+                "Authoritative active-store state does not match the local player projection.");
+        }
+    }
+
     private static bool IsWarpAvailable(
         AuthoritativeWarpTarget warp,
         IReadOnlyList<DiabloQuestState> quests)
@@ -403,6 +416,10 @@ internal static class DiabloProtocolMapper
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks)
     {
+        if (state.StashOpen && state.ActiveStoreId is not null) {
+            throw new InvalidDataException(
+                "Authoritative player projection opens a stash and store simultaneously.");
+        }
         if (!Enum.IsDefined(state.AbilityKind)
             || !Enum.IsDefined(state.FacingDirection)
             || !Enum.IsDefined(state.CombatMode)) {

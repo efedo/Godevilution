@@ -345,6 +345,49 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInconsistentStoreAndStashProjections()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { ActiveStoreId = 12 },
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                ActiveStore = new DiabloStoreState(12, []),
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { StashOpen = true, ActiveStoreId = 12 },
+                ActiveStore = new DiabloStoreState(12, []),
+            }));
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(
