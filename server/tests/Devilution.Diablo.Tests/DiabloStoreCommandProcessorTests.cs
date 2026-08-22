@@ -1131,6 +1131,97 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ItemActionMetadataResolvesByMiscIdWhenNativeIdentityIsAbsent()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            48,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 121,
+            });
+        var player = CreatePlayer(
+            playerClass: LoadClass("warrior"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            inventory: [elixir]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2143, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 20,
+                MiscId = 121,
+                ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
+                ItemActionAmount = 2,
+                GenerationTags = new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(32, player.Attributes.Strength.Base);
+        Assert.Equal(12, player.Attributes.Magic.Base);
+        Assert.Equal(22, player.Attributes.Dexterity.Base);
+        Assert.Equal(27, player.Attributes.Vitality.Base);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
+    public void AmbiguousItemActionMetadataByMiscIdFailsClosed()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            49,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 121,
+            });
+        var player = CreatePlayer(inventory: [elixir]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2144, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 20,
+                MiscId = 121,
+                ItemActionKind = DiabloItemActionKind.IncreaseStrength,
+                ItemActionAmount = 1,
+            },
+            new AuthoritativeItemDefinition(2145, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 21,
+                MiscId = 121,
+                ItemActionKind = DiabloItemActionKind.IncreaseStrength,
+                ItemActionAmount = 2,
+            },
+        ]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
     public void HellfireElixirOfMagicIncreasesResourcesAndRestoresMana()
     {
         var elixir = new OwnedStoreItem(

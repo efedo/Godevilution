@@ -321,6 +321,34 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous consumable action metadata by misc ID. */
+    public bool TryGetItemActionMetadataByMiscId(
+        int miscId,
+        out DiabloItemActionKind actionKind,
+        out int actionAmount)
+    {
+        actionKind = DiabloItemActionKind.None;
+        actionAmount = 0;
+        if (miscId <= 0)
+            return false;
+
+        var matches = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && definition.ItemActionKind != DiabloItemActionKind.None)
+            .ToArray();
+        if (matches.Length == 0)
+            return false;
+
+        var actionValues = matches.Select(definition => definition.ItemActionKind).Distinct().ToArray();
+        var amountValues = matches.Select(definition => definition.ItemActionAmount).Distinct().ToArray();
+        if (actionValues.Length != 1 || amountValues.Length != 1 || amountValues[0] <= 0)
+            return false;
+
+        actionKind = actionValues[0];
+        actionAmount = amountValues[0];
+        return true;
+    }
+
     /** Resolves non-empty, unambiguous semantic item tags by misc ID. */
     public bool TryGetGenerationTagsByMiscId(
         int miscId,

@@ -42,6 +42,8 @@ All notable changes to this fork are documented below.
   when a compatibility state has no stable or native item identity.
 - Recharge capacity and spell pricing now resolve unambiguous charged-item
   metadata by `misc_id` when compatibility state omits native item identity.
+- Consumable action kind and amount now resolve unambiguous authored metadata by
+  `misc_id`, with ambiguous mappings rejected rather than guessed.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

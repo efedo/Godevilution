@@ -600,9 +600,17 @@ public sealed class DiabloStoreCommandProcessor
         AuthoritativeItemState state,
         DiabloItemActionKind action)
     {
-        if (items is not null
-            && items.TryGetByState(state, out var definition))
-            return definition.ItemActionAmount;
+        if (items is not null) {
+            var hasDefinition = items.TryGetByState(state, out var definition);
+            if (hasDefinition)
+                return definition.ItemActionAmount;
+            if (items.TryGetItemActionMetadataByMiscId(
+                    state.MiscId,
+                    out var contentAction,
+                    out var contentAmount)
+                && contentAction == action)
+                return contentAmount;
+        }
 
         // Preserve the native Spectral Elixir behavior for states that cannot
         // resolve a stable or native content identity.
@@ -613,10 +621,16 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (state.ItemActionKind != DiabloItemActionKind.None)
             return state.ItemActionKind;
-        if (items is not null
-            && items.TryGetByState(state, out var definition)
-            && definition.ItemActionKind != DiabloItemActionKind.None)
-            return definition.ItemActionKind;
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition)
+                && definition.ItemActionKind != DiabloItemActionKind.None)
+                return definition.ItemActionKind;
+            if (items.TryGetItemActionMetadataByMiscId(
+                    state.MiscId,
+                    out var contentAction,
+                    out _))
+                return contentAction;
+        }
         return DiabloItemActionKind.None;
     }
 
