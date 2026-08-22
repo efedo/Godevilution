@@ -49,6 +49,7 @@
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "persistence/options.h"
@@ -2209,6 +2210,10 @@ size_t OnPlayerDamage(const TCmdDamage &message, Player &player)
 
 size_t OnOperateObject(const TCmdLoc &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else {
@@ -2229,6 +2234,10 @@ size_t OnOperateObject(const TCmdLoc &message, Player &player)
 
 size_t OnBreakObject(const TCmdLoc &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else {
@@ -2646,6 +2655,10 @@ size_t OnString(const TCmd &cmd, size_t maxCmdSize, Player &player)
 
 size_t OnFriendlyMode(const TCmd &cmd, Player &player) // NOLINT(misc-unused-parameters)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	player.friendlyMode = !player.friendlyMode;
 	RedrawEverything();
 	return sizeof(cmd);
@@ -2653,6 +2666,10 @@ size_t OnFriendlyMode(const TCmd &cmd, Player &player) // NOLINT(misc-unused-par
 
 size_t OnSyncQuest(const TCmdQuest &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &message, sizeof(message));
 	} else {
@@ -2681,6 +2698,10 @@ size_t OnCheatExperience(const TCmd &cmd, Player &player) // NOLINT(misc-unused-
 
 size_t OnChangeSpellLevel(const TCmdParam2 &message, Player &player) // NOLINT(misc-unused-parameters)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const auto spellID = static_cast<SpellID>(Swap16LE(message.wParam1));
 	const uint8_t spellLevel = std::min(static_cast<uint8_t>(Swap16LE(message.wParam2)), MaxSpellLevel);
 
@@ -2737,6 +2758,10 @@ size_t OnSetReflect(const TCmdParam1 &message, Player &player)
 
 size_t OnNakrul(const TCmd &cmd)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs != 1) {
 		if (currentLevelNumber() == 24) {
 			PlaySfxLoc(SfxID::CryptDoorOpen, { uberRow(), uberCol() });
@@ -2751,6 +2776,10 @@ size_t OnNakrul(const TCmd &cmd)
 
 size_t OnOpenHive(const TCmd &cmd, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs != 1) {
 		AddMissile({ 0, 0 }, { 0, 0 }, Direction::South, MissileID::OpenNest, TARGET_MONSTERS, player, 0, 0);
 		TownOpenHive();
@@ -2762,6 +2791,10 @@ size_t OnOpenHive(const TCmd &cmd, Player &player)
 
 size_t OnOpenGrave(const TCmd &cmd)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs != 1) {
 		TownOpenGrave();
 		InitTownTriggers();

@@ -20,6 +20,7 @@
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "persistence/save_policy.hpp"
 #include "ui/panel/control_chat_commands.hpp"
 
@@ -138,6 +139,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyCombatMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyCombatMessage(false));
 	EXPECT_FALSE(ShouldProcessLegacyCombatMessage(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyWorldStateMessagesFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyWorldStateMessage(false));
+	EXPECT_FALSE(ShouldProcessLegacyWorldStateMessage(true));
 }
 
 } // namespace

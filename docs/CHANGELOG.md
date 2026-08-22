@@ -48,6 +48,8 @@ All notable changes to this fork are documented below.
   messages; server-owned movement, portals, and level state remain authoritative.
 - Connected native clients now ignore legacy combat, damage, resurrection,
   shield, reflection, and monster-spawn messages; the server owns those effects.
+- Connected native clients now ignore legacy quest, spell-level, object,
+  set-piece, and friendly-mode synchronization messages; the server owns them.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.
