@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <limits>
+#include <set>
 #include <vector>
 #include <unordered_set>
 #include <utility>
@@ -80,6 +81,28 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		return tl::make_unexpected("Server-backed snapshot contains stash gold outside the native range.");
 	if (player->stash_open() && player->active_store_id() != 0)
 		return tl::make_unexpected("Server-backed snapshot opens both a stash and a vendor.");
+	std::set<uint32_t> itemSeeds;
+	const auto hasUniqueItemSeed = [&itemSeeds](uint32_t itemSeed) {
+		return itemSeed == 0 || itemSeeds.insert(itemSeed).second;
+	};
+	for (const auto &source : player->inventory()) {
+		if (!hasUniqueItemSeed(source.item_seed()))
+			return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
+	}
+	for (const auto &source : player->equipment()) {
+		if (!hasUniqueItemSeed(source.item_seed()))
+			return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
+	}
+	for (const auto &source : player->belt()) {
+		if (!hasUniqueItemSeed(source.item_seed()))
+			return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
+	}
+	for (const auto &source : player->stash()) {
+		if (!hasUniqueItemSeed(source.item().item_seed()))
+			return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
+	}
+	if (player->has_held_item() && !hasUniqueItemSeed(player->held_item().item_seed()))
+		return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
 	if (!IsValidSpellTargetingKind(static_cast<uint32_t>(player->ability_targeting_kind())))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid ability targeting kind.");
 

@@ -59,6 +59,8 @@ All notable changes to this fork are documented below.
   spell, and item targeting enums before converting them to native state.
 - Native and Godot authoritative item projections now reject unsigned prices
   that cannot be represented by the legacy native integer price field.
+- Native authoritative projection and UI validation now reject duplicate
+  nonzero player item seeds across inventory, equipment, belt, stash, and held state.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - The native authoritative projection now rejects non-empty visited-level sets

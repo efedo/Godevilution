@@ -100,6 +100,8 @@ scaled hit points), not only the client's difficulty label.
   ability, memorized-spell, and item targeting enums before native conversion.
 - Native and Godot authoritative item projections now reject unsigned prices
   outside the legacy native integer range before applying player or world state.
+- Native authoritative projection and UI validation now reject duplicate
+  nonzero player item seeds across inventory, equipment, belt, stash, and held state.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

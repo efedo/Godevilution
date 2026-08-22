@@ -220,6 +220,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsUnrepresentableItemPricesDuringProjectio
 	EXPECT_FALSE(ProjectWorldItemSnapshots(worldSnapshot).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsDuplicatePlayerItemSeedsDuringProjection)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->add_inventory()->set_item_seed(42);
+	player->add_equipment()->set_item_seed(42);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)
 {
 	Player player;
@@ -1711,6 +1721,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataWithoutMutation)
 
 	snapshot.inventory.clear();
 	snapshot.inventory.push_back({ .price = std::numeric_limits<uint32_t>::max() });
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsDuplicatePlayerItemSeedsWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterLevel = 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	snapshot.inventory.push_back({ .itemSeed = 42 });
+	snapshot.equipment.push_back({ .itemSeed = 42 });
+
+	Player player;
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 }
 

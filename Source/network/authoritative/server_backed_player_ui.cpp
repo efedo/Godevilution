@@ -134,19 +134,27 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 			return tl::make_unexpected("Server-backed status effects contain invalid or duplicate state.");
 		}
 	}
+	std::set<uint32_t> playerItemSeeds;
+	const auto hasUniqueItemSeed = [&playerItemSeeds](uint32_t itemSeed) {
+		return itemSeed == 0 || playerItemSeeds.insert(itemSeed).second;
+	};
 	if (snapshot.belt.size() > MaxBeltItems)
 		return tl::make_unexpected("Server-backed belt exceeds the native belt capacity.");
 	for (const auto &beltItem : snapshot.belt) {
-		if (beltItem.slot >= MaxBeltItems || !IsValidSpellTargetingKind(beltItem.spellTargetingKind))
+		if (beltItem.slot >= MaxBeltItems || !IsValidSpellTargetingKind(beltItem.spellTargetingKind)
+		    || !hasUniqueItemSeed(beltItem.itemSeed))
 			return tl::make_unexpected("Server-backed belt contains an invalid slot.");
 	}
 	for (const auto &inventoryItem : snapshot.inventory) {
 		if (!IsValidSpellTargetingKind(inventoryItem.spellTargetingKind)
-		    || inventoryItem.price > static_cast<uint32_t>(INT_MAX))
+		    || inventoryItem.price > static_cast<uint32_t>(INT_MAX)
+		    || !hasUniqueItemSeed(inventoryItem.itemSeed))
 			return tl::make_unexpected("Server-backed inventory contains an invalid spell targeting kind.");
 	}
 	if (snapshot.heldItem.has_value() && !IsValidSpellTargetingKind(snapshot.heldItem->spellTargetingKind))
 		return tl::make_unexpected("Server-backed held item contains an invalid spell targeting kind.");
+	if (snapshot.heldItem.has_value() && !hasUniqueItemSeed(snapshot.heldItem->itemSeed))
+		return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
 	if (snapshot.inventory.size() > InventoryGridCells || snapshot.inventoryGrid.size() != InventoryGridCells)
 		return tl::make_unexpected("Server-backed inventory does not fit the native inventory layout.");
 	if (snapshot.heldItem.has_value()
@@ -160,6 +168,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	std::set<uint32_t> equipmentSlots;
 	for (const auto &equipment : snapshot.equipment) {
 		if (equipment.slot >= NUM_INVLOC || !IsValidSpellTargetingKind(equipment.spellTargetingKind)
+		    || !hasUniqueItemSeed(equipment.itemSeed)
 		    || !equipmentSlots.insert(equipment.slot).second)
 			return tl::make_unexpected("Server-backed equipment contains a duplicate or invalid slot.");
 	}
@@ -169,6 +178,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    || stashItem.width == 0 || stashItem.height == 0
 		    || !IsValidSpellTargetingKind(stashItem.spellTargetingKind)
 		    || stashItem.price > static_cast<uint32_t>(INT_MAX)
+		    || !hasUniqueItemSeed(stashItem.itemSeed)
 		    || stashItem.width > 10 || stashItem.height > 10
 		    || stashItem.cell % 10 + stashItem.width > 10
 		    || stashItem.cell / 10 + stashItem.height > 10) {
