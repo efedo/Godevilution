@@ -12,6 +12,15 @@ constexpr bool ShouldProcessLegacyWorldStateMessage(bool serverConnected) noexce
 }
 
 /**
+ * Legacy per-tick quest checks can create portals, mutate quest variables, and
+ * start level transitions, so they are offline-only for server-backed games.
+ */
+constexpr bool ShouldProcessLegacyQuestTick(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyWorldStateMessage(serverConnected);
+}
+
+/**
  * Legacy quest resynchronization rebuilds local quest-driven world state and
  * is offline-only while connected sessions use authoritative projections.
  */

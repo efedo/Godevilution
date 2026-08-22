@@ -305,6 +305,11 @@ void InitialiseQuestPools(uint32_t seed, Quest quests[])
 
 void CheckQuests()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyQuestTick(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (gbIsSpawn)
 		return;
 

@@ -248,6 +248,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacySimulationFailsClosed)
 	EXPECT_FALSE(ShouldProcessLegacySimulation(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyQuestTicksFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyQuestTick(false));
+	EXPECT_FALSE(ShouldProcessLegacyQuestTick(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyInputMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyInputMessage(false));
