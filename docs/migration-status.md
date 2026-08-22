@@ -2,6 +2,9 @@
 
 Status date: 2026-08-22
 
+Set-level map definitions now reject incomplete `.til`/`.sol` collision pairs,
+while legacy metadata-only rows remain valid when neither asset is present.
+
 Ordinary native-DUN level activation now validates every referenced `.dun` and
 optional `.til`/`.sol` asset before publishing any level replacement, matching
 the staged fragment activation boundary.

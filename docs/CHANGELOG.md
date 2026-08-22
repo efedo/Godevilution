@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Set-level map definitions now require `.til` and `.sol` collision assets as
+  an explicit pair; metadata-only rows remain valid when neither is supplied.
 - Ordinary native-DUN level activation now preflights every referenced `.dun`
   and optional `.til`/`.sol` asset before publishing the composed world, matching
   the fragment catalog's activation boundary.

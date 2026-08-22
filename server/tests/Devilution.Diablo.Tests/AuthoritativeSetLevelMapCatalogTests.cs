@@ -44,6 +44,12 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
 
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSetLevelMapCatalog([
             new(1, "levels/l1data/sklkng1.dun", "levels/l1data/sklkng2.dun", "Cathedral", 1, 1) {
+                TileAssetPath = "levels/l1data/l1.til",
+            },
+        ]));
+
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSetLevelMapCatalog([
+            new(1, "levels/l1data/sklkng1.dun", "levels/l1data/sklkng2.dun", "Cathedral", 1, 1) {
                 SolAssetPath = "levels/l1data/l1.bin",
             },
         ]));

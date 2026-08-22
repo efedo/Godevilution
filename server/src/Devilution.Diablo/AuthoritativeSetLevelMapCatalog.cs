@@ -25,6 +25,8 @@ public sealed record AuthoritativeSetLevelMapDefinition(
 
     public AuthoritativeSetLevelMapDefinition Validate()
     {
+        var hasTileAsset = !string.IsNullOrWhiteSpace(TileAssetPath);
+        var hasSolAsset = !string.IsNullOrWhiteSpace(SolAssetPath);
         if (SetLevelId is < 0 or > 8
             || string.IsNullOrWhiteSpace(PreMapAssetPath)
             || string.IsNullOrWhiteSpace(ActiveMapAssetPath)
@@ -33,6 +35,7 @@ public sealed record AuthoritativeSetLevelMapDefinition(
             || SpawnY is < 0 or > 255
             || !IsRelativeDunAssetPath(PreMapAssetPath)
             || !IsRelativeDunAssetPath(ActiveMapAssetPath)
+            || hasTileAsset != hasSolAsset
             || !IsOptionalAssetPath(TileAssetPath, ".til")
             || !IsOptionalAssetPath(SolAssetPath, ".sol")
             || !IsOptionalAssetPath(TransparencyAssetPath, ".dun")
