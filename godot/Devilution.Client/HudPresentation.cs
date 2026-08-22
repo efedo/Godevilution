@@ -959,8 +959,9 @@ public partial class HudPresentation : CanvasLayer
     {
         if (state is null)
             return "unknown item";
-        if (!string.IsNullOrEmpty(state.BaseName))
-            return $"{state.BaseName}, value {state.Value}";
+        var name = ItemPresentationStyle.ResolveName(state);
+        if (!string.IsNullOrEmpty(name))
+            return $"{name}, value {state.Value}";
         var details = state.ItemType switch {
             1 => state.MinDamage > 0 ? $"weapon {state.MinDamage}-{state.MaxDamage}" : $"armor {state.ArmorClass}",
             _ => $"item type {state.ItemType}",

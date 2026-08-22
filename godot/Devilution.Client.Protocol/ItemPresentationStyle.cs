@@ -14,6 +14,17 @@ public enum ItemPresentationKind
 /** Maps additive item presentation metadata with a generic compatibility fallback. */
 public static class ItemPresentationStyle
 {
+    /** Selects the server-owned display name without inventing client state. */
+    public static string ResolveName(ItemStateSnapshot state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (state.Identified && !string.IsNullOrEmpty(state.IdentifiedName))
+            return state.IdentifiedName;
+        if (!string.IsNullOrEmpty(state.BaseName))
+            return state.BaseName;
+        return state.IdentifiedName;
+    }
+
     public static ItemPresentationKind Resolve(ItemStateSnapshot state)
     {
         ArgumentNullException.ThrowIfNull(state);

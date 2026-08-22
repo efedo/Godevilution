@@ -57,6 +57,8 @@ scaled hit points), not only the client's difficulty label.
 - Compatibility item hydration also restores omitted immutable classification,
   attribute requirements, native index, and authored effect flags whenever
   stable/native identity resolves, preserving nonzero runtime state.
+- Godot item descriptions now honor the authoritative identified flag and
+  identified-name projection while retaining a safe fallback for older state.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

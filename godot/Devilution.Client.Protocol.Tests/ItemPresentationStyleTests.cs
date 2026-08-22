@@ -20,4 +20,30 @@ public sealed class ItemPresentationStyleTests
 
         Assert.Equal(expected, ItemPresentationStyle.Resolve(state));
     }
+
+    [Fact]
+    public void ResolvesIdentifiedNameOnlyWhenTheServerMarksTheItemIdentified()
+    {
+        var state = new ItemStateSnapshot {
+            BaseName = "Unidentified Sword",
+            IdentifiedName = "Sword of Dawn",
+            Identified = true,
+        };
+
+        Assert.Equal("Sword of Dawn", ItemPresentationStyle.ResolveName(state));
+
+        state.Identified = false;
+        Assert.Equal("Unidentified Sword", ItemPresentationStyle.ResolveName(state));
+    }
+
+    [Fact]
+    public void ResolvesIdentifiedNameAsCompatibilityFallbackWhenBaseNameIsMissing()
+    {
+        var state = new ItemStateSnapshot {
+            IdentifiedName = "Server Item",
+            Identified = false,
+        };
+
+        Assert.Equal("Server Item", ItemPresentationStyle.ResolveName(state));
+    }
 }
