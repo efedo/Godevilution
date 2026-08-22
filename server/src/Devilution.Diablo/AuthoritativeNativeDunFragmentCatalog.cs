@@ -85,6 +85,27 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
     public IReadOnlyList<AuthoritativeNativeDunFragmentDefinition> Definitions
         => definitions;
 
+    /** Returns a validated view containing only definitions accepted by a lifecycle phase. */
+    public AuthoritativeNativeDunFragmentCatalog Filter(
+        Func<AuthoritativeNativeDunFragmentDefinition, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return new AuthoritativeNativeDunFragmentCatalog(definitions.Where(predicate));
+    }
+
+    /** Validates that every deferred fragment asset is present before activation. */
+    public void ValidateAssets(ComposedContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        foreach (var definition in definitions) {
+            RequireAsset(content, definition.FragmentId, definition.AssetPath);
+            if (!string.IsNullOrWhiteSpace(definition.TileAssetPath))
+                RequireAsset(content, definition.FragmentId, definition.TileAssetPath!);
+            if (!string.IsNullOrWhiteSpace(definition.SolAssetPath))
+                RequireAsset(content, definition.FragmentId, definition.SolAssetPath!);
+        }
+    }
+
     /** Applies each fragment's tile, transparency, and object layers atomically. */
     public void Apply(
         ComposedContent content,
@@ -269,5 +290,15 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
             && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)
             ? value
             : null;
+    }
+
+    private static void RequireAsset(
+        ComposedContent content,
+        uint fragmentId,
+        string assetPath)
+    {
+        if (!content.TryGetAsset(assetPath, out _))
+            throw new InvalidDataException(
+                $"Native DUN fragment {fragmentId} references missing asset '{assetPath}'.");
     }
 }

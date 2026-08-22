@@ -901,7 +901,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (world is null || objects is null)
                 throw new InvalidDataException(
                     "Native DUN fragments require a world and authored anchors.");
-            nativeDunFragments.Apply(content, world, objects, combatTargets);
+            nativeDunFragments.ValidateAssets(content);
+            nativeDunFragments
+                .Filter(definition => definition.AnchorEntityId != 0)
+                .Apply(content, world, objects, combatTargets);
         }
 
         var rules = new DiabloStoreRules(pricing, itemCatalog);
@@ -920,6 +923,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             SetLevelObjects = setLevelObjects,
             SetLevelMaps = setLevelMaps,
             NativeDunObjects = nativeDunObjects,
+            NativeDunFragments = nativeDunFragments,
+            Content = content,
             NativeObjectTemplates = objectTemplates,
             Spells = spells,
             SpellBooks = spellBooks,

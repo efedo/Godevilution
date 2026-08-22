@@ -1,3 +1,5 @@
+using Devilution.Data;
+
 namespace Devilution.Diablo;
 
 /** Native-compatible game mode selected for one authoritative simulation. */
@@ -70,6 +72,12 @@ public sealed class DiabloSimulationOptions
 
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
+
+    /** Validated native DUN fragments whose unique anchors may materialize on level entry. */
+    public AuthoritativeNativeDunFragmentCatalog? NativeDunFragments { get; init; }
+
+    /** Composed content bytes retained for deferred native fragment materialization. */
+    public ComposedContent? Content { get; init; }
 
     /** Optional object templates used when mapped native DUN entities are rematerialized. */
     public IReadOnlyList<AuthoritativeWorldObject>? NativeObjectTemplates { get; init; }
@@ -181,6 +189,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.WorldMutations,
             nativeDunObjects: options.NativeDunObjects,
             nativeObjectTemplates: options.NativeObjectTemplates);
+        if (options.NativeDunFragments is not null && options.Content is null)
+            throw new InvalidDataException(
+                "Deferred native DUN fragments require their composed content bytes.");
         var spells = options.Spells ?? new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0),
             new AuthoritativeSpellDefinition(2, 3, 0, 1, 10, 1),
@@ -276,7 +287,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.DialogueMessages,
             options.SetLevelObjects,
             options.SetLevelMaps,
-            options.NativeDunObjects);
+            options.NativeDunObjects,
+            options.NativeDunFragments,
+            options.Content);
     }
 }
 
@@ -297,6 +310,9 @@ public sealed partial class DiabloSimulation
     private readonly DiabloGameMode gameMode;
     private readonly DiabloDifficulty difficulty;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
+    private readonly AuthoritativeNativeDunFragmentCatalog? nativeDunFragments;
+    private readonly ComposedContent? content;
+    private readonly HashSet<uint> appliedNativeDunFragments = [];
     private readonly HashSet<uint> materializedProceduralLevels = [];
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
@@ -324,7 +340,9 @@ public sealed partial class DiabloSimulation
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
         AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
-        AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null)
+        AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
+        AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
+        ComposedContent? content = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -352,6 +370,9 @@ public sealed partial class DiabloSimulation
         SetLevelObjects = setLevelObjects;
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
+        this.nativeDunFragments = nativeDunFragments;
+        this.content = content;
+        ApplyDeferredNativeDunFragments();
         ReconcileProceduralSpawnState();
     }
 
@@ -469,8 +490,46 @@ public sealed partial class DiabloSimulation
                 monsterTypes);
             WorldState.CombatTargets.Add(target.EntityId, target);
         }
+        ApplyDeferredNativeDunFragments();
         if (targets.Count != 0)
             nextGeneratedMonsterEntityId = checked(targets[^1].EntityId + 1);
+    }
+
+    /** Applies unique-anchored fragments once their generated encounter exists. */
+    private void ApplyDeferredNativeDunFragments()
+    {
+        if (nativeDunFragments is null
+            || content is null
+            || WorldState.World is null)
+            return;
+        var targetPool = WorldState.CombatTargets.Values.ToArray();
+        var candidates = nativeDunFragments.Definitions
+            .Where(definition => definition.AnchorEntityId == 0
+                && !appliedNativeDunFragments.Contains(definition.FragmentId))
+            .Where(definition => {
+                var matches = targetPool.Where(target => target.IsUnique
+                    && target.LevelId == definition.LevelId
+                    && string.Equals(
+                        target.UniqueIdentity,
+                        definition.AnchorUniqueIdentity,
+                        StringComparison.Ordinal)).ToArray();
+                if (matches.Length > 1)
+                    throw new InvalidDataException(
+                        $"Native DUN fragment {definition.FragmentId} unique anchor "
+                        + $"'{definition.AnchorUniqueIdentity}' must match exactly one encounter; found {matches.Length}.");
+                return matches.Length == 1;
+            })
+            .ToArray();
+        if (candidates.Length == 0)
+            return;
+        var catalog = new AuthoritativeNativeDunFragmentCatalog(candidates);
+        catalog.Apply(
+            content,
+            WorldState.World,
+            WorldState.Objects.Values,
+            targetPool);
+        foreach (var candidate in candidates)
+            appliedNativeDunFragments.Add(candidate.FragmentId);
     }
 
     private uint FindNextMonsterEntityId(

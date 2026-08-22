@@ -67,6 +67,10 @@ scaled hit points), not only the client's difficulty label.
   monster dialogue. Snotspill now preserves the native intermediate banner
   prompt after its opening conversation instead of jumping directly to hand-in.
 
+- Unique-anchored native DUN fragments now follow the encounter lifecycle:
+  fixed-object fragments apply during activation, while generated unique
+  encounters apply their validated fragments when materialized on level entry.
+
 - Native server-backed input, polling, portal, store, quest, and ability
   requests now timestamp the compatibility boundary with the shared
   demo-aware timer; the adapter no longer reintroduces direct SDL timing for

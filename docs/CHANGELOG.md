@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Defer unique-anchored native DUN fragments until the matching generated
+  encounter is materialized; fixed-object fragments still apply during content
+  activation, and deferred fragments now compose into the same authoritative
+  level state on initial or entered-level spawn.
+
 - Preserve Snotspill's authored intermediate banner dialogue identity through
   the staged server dialogue contract; omitted next-message values remain
   backward compatible with next-stage lookup.

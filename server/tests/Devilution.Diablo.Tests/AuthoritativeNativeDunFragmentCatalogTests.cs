@@ -86,6 +86,70 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void SimulationDefersUniqueAnchoredFragmentsUntilTheEncounterExists()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorUniqueIdentity: "Snotspill"),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var target = new AuthoritativeCombatTarget(
+            0x10000000,
+            4,
+            4,
+            100,
+            levelId: 24,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                CombatTargets = [target],
+                NativeDunFragments = catalog,
+                Content = content,
+            });
+
+        var level = Assert.Single(simulation.WorldState.World!.Levels);
+        Assert.Equal((ushort)42, level.NativeMegaTileLayer[1 * 4 + 1]);
+    }
+
+    [Fact]
+    public void ValidatesDeferredFragmentAssetsBeforeEncounterMaterialization()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "missing.dun",
+                0,
+                -2,
+                -2,
+                AnchorUniqueIdentity: "Snotspill"),
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest(
+            "rules",
+            "1",
+            [new ContentPack("base", "1", [])]));
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateAssets(content));
+        Assert.Contains("missing.dun", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsAnIncompleteNativeCollisionAssetPair()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
