@@ -699,6 +699,56 @@ tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(const
 	return projected;
 }
 
+tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLevelGeometrySnapshots(const protocol::Snapshot &snapshot)
+{
+	if (auto validation = ValidateLevelGeometrySnapshots(snapshot); !validation.has_value())
+		return tl::make_unexpected(validation.error());
+
+	std::vector<ProjectedLevelGeometrySnapshot> projected;
+	projected.reserve(snapshot.level_geometry_size());
+	for (const auto &source : snapshot.level_geometry()) {
+		ProjectedLevelGeometrySnapshot level {
+			.levelId = source.level_id(),
+			.width = source.width(),
+			.height = source.height(),
+		};
+		level.blockedCells.assign(source.blocked_cells().begin(), source.blocked_cells().end());
+		level.missileBlockedCells.assign(source.missile_blocked_cells().begin(), source.missile_blocked_cells().end());
+		level.nativeTransparency.reserve(source.native_transparency_size());
+		for (const uint32_t value : source.native_transparency())
+			level.nativeTransparency.push_back(static_cast<uint16_t>(value));
+		level.nativeObjectLayer.reserve(source.native_object_layer_size());
+		for (const uint32_t value : source.native_object_layer())
+			level.nativeObjectLayer.push_back(static_cast<uint16_t>(value));
+		level.nativeMegaTileLayer.reserve(source.native_mega_tile_layer_size());
+		for (const uint32_t value : source.native_mega_tile_layer())
+			level.nativeMegaTileLayer.push_back(static_cast<uint16_t>(value));
+		level.warpTriggers.reserve(source.warp_triggers_size());
+		for (const auto &warp : source.warp_triggers()) {
+			level.warpTriggers.push_back({
+				.warpId = warp.warp_id(),
+				.triggerX = warp.trigger_x(),
+				.triggerY = warp.trigger_y(),
+				.targetLevelId = warp.target_level_id(),
+				.targetX = warp.target_x(),
+				.targetY = warp.target_y(),
+				.requiredQuestId = warp.required_quest_id(),
+				.requiredQuestCompleted = warp.required_quest_completed(),
+				.stableSymbol = warp.stable_symbol(),
+				.available = warp.available(),
+			});
+		}
+		std::sort(level.warpTriggers.begin(), level.warpTriggers.end(), [](const auto &left, const auto &right) {
+			return left.warpId < right.warpId;
+		});
+		projected.push_back(std::move(level));
+	}
+	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) {
+		return left.levelId < right.levelId;
+	});
+	return projected;
+}
+
 tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot &snapshot)
 {
 	if (snapshot.quests_size() > 4096)

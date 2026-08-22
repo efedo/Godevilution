@@ -505,6 +505,9 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	auto sessionMetadata = ProjectSessionMetadata(snapshot);
 	if (!sessionMetadata.has_value())
 		return tl::make_unexpected(sessionMetadata.error());
+	auto levelGeometry = ProjectLevelGeometrySnapshots(snapshot);
+	if (!levelGeometry.has_value())
+		return tl::make_unexpected(levelGeometry.error());
 	if (entityId_ == 0) {
 		if (snapshot.players_size() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains no player entity.");
@@ -554,6 +557,7 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 		return tl::make_unexpected(corpses.error());
 	corpseState_ = std::move(*corpses);
 	sessionMetadata_ = std::move(*sessionMetadata);
+	levelGeometryState_ = std::move(*levelGeometry);
 	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());
 	questTownerInteractions_.assign(
 		snapshot.quest_towner_interactions().begin(),

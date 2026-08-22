@@ -238,6 +238,32 @@ struct ProjectedSessionMetadata {
 	std::vector<uint32_t> activeWorldMutationIds;
 };
 
+struct ProjectedWarpTriggerSnapshot {
+	uint32_t warpId = 0;
+	int32_t triggerX = 0;
+	int32_t triggerY = 0;
+	uint32_t targetLevelId = 0;
+	int32_t targetX = 0;
+	int32_t targetY = 0;
+	uint32_t requiredQuestId = 0;
+	bool requiredQuestCompleted = false;
+	std::string stableSymbol;
+	bool available = false;
+};
+
+/** Server-owned effective level geometry retained for native presentation. */
+struct ProjectedLevelGeometrySnapshot {
+	uint32_t levelId = 0;
+	int32_t width = 0;
+	int32_t height = 0;
+	std::vector<int32_t> blockedCells;
+	std::vector<int32_t> missileBlockedCells;
+	std::vector<uint16_t> nativeTransparency;
+	std::vector<ProjectedWarpTriggerSnapshot> warpTriggers;
+	std::vector<uint16_t> nativeObjectLayer;
+	std::vector<uint16_t> nativeMegaTileLayer;
+};
+
 struct ProjectedPlayerActionSnapshot {
 	uint32_t kind = 0;
 	uint64_t startedAtTick = 0;
@@ -343,6 +369,9 @@ struct ProjectedPlayerSnapshot {
     const ::devilution::protocol::v1::Snapshot &snapshot);
 /** Projects server-owned session metadata without enabling local simulation. */
 [[nodiscard]] tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+/** Projects server-owned effective level geometry in stable level-ID order. */
+[[nodiscard]] tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLevelGeometrySnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
 /** Validates server-owned quest state before native interaction gates consume it. */

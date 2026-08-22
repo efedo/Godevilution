@@ -50,6 +50,7 @@ public:
 	[[nodiscard]] const std::vector<ProjectedPortalSnapshot> &PortalState() const noexcept { return portalState_; }
 	[[nodiscard]] const std::vector<ProjectedCorpseSnapshot> &CorpseState() const noexcept { return corpseState_; }
 	[[nodiscard]] const ProjectedSessionMetadata &SessionMetadata() const noexcept { return sessionMetadata_; }
+	[[nodiscard]] const std::vector<ProjectedLevelGeometrySnapshot> &LevelGeometryState() const noexcept { return levelGeometryState_; }
 	[[nodiscard]] const ServerBackedVendorState &VendorState() const noexcept { return vendorState_; }
 	/** Takes event batches received with the latest authoritative snapshot. */
 	std::vector<protocol::EventBatch> TakePendingEventBatches() { return client_->TakePendingEventBatches(); }
@@ -156,6 +157,7 @@ private:
 	std::vector<ProjectedPortalSnapshot> portalState_;
 	std::vector<ProjectedCorpseSnapshot> corpseState_;
 	ProjectedSessionMetadata sessionMetadata_;
+	std::vector<ProjectedLevelGeometrySnapshot> levelGeometryState_;
 	std::vector<protocol::QuestSnapshot> questStates_;
 	std::vector<protocol::QuestTownerInteractionSnapshot> questTownerInteractions_;
 	ServerBackedVendorState vendorState_;

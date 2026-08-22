@@ -1123,6 +1123,49 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidSessionMetadata)
 	EXPECT_FALSE(ProjectSessionMetadata(duplicateMutation).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
+{
+	protocol::Snapshot snapshot;
+	auto *second = snapshot.add_level_geometry();
+	second->set_level_id(20);
+	second->set_width(2);
+	second->set_height(2);
+	second->add_blocked_cells(3);
+	second->add_missile_blocked_cells(1);
+	second->add_native_transparency(0x1234);
+	second->add_native_transparency(0x5678);
+	second->add_native_transparency(0x9ABC);
+	second->add_native_transparency(0xDEF0);
+	second->add_native_object_layer(5);
+	second->add_native_object_layer(6);
+	second->add_native_object_layer(7);
+	second->add_native_object_layer(8);
+	second->add_native_mega_tile_layer(42);
+	auto *warp = second->add_warp_triggers();
+	warp->set_warp_id(200);
+	warp->set_trigger_x(1);
+	warp->set_trigger_y(1);
+	warp->set_target_level_id(10);
+	warp->set_target_x(0);
+	warp->set_target_y(0);
+	warp->set_stable_symbol("stairs-down");
+	warp->set_available(true);
+	auto *first = snapshot.add_level_geometry();
+	first->set_level_id(10);
+	first->set_width(2);
+	first->set_height(2);
+
+	auto projected = ProjectLevelGeometrySnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 2U);
+	EXPECT_EQ(projected->front().levelId, 10U);
+	EXPECT_EQ(projected->back().levelId, 20U);
+	ASSERT_EQ(projected->back().warpTriggers.size(), 1U);
+	EXPECT_EQ(projected->back().warpTriggers.front().stableSymbol, "stairs-down");
+	EXPECT_EQ(projected->back().nativeTransparency[2], 0x9ABCU);
+	EXPECT_EQ(projected->back().nativeMegaTileLayer.front(), 42U);
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

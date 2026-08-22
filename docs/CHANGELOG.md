@@ -19,6 +19,8 @@ All notable changes to this fork are documented below.
   without attempting to synthesize missing native corpse visual metadata.
 - Native authoritative sessions now retain server-owned RNG, victory, difficulty,
   and active world-mutation metadata without enabling local simulation.
+- Native authoritative sessions now retain sorted effective level geometry,
+  native layers, blocked cells, and warp markers for presentation consumers.
 - The native debug console now stays native-only in authoritative mode: it
   skips script prelude loading, autocomplete, module help, and interpreter
   fallback while exposing the registered server-compatible command list.
