@@ -726,6 +726,9 @@ public sealed class DiabloStoreCommandProcessor
         }
 
         var state = target.State;
+        var maximumDurability = ResolveMaximumDurability(state);
+        if (state.MaxDurability == 0 && maximumDurability > 0)
+            state = state with { MaxDurability = maximumDurability };
         switch (action) {
         case DiabloItemActionKind.ApplyBlacksmithOil:
             if (state.MaxDurability != byte.MaxValue) {

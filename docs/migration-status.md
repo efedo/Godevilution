@@ -146,6 +146,8 @@ scaled hit points), not only the client's difficulty label.
   state when compatibility state omitted that field.
 - Repair validation, pricing, and mutation now resolve authored maximum
   durability through stable, native, or `misc_id` identity.
+- Blacksmith and Fortitude oil mutations now hydrate omitted target durability
+  from authored item metadata before applying native effects.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

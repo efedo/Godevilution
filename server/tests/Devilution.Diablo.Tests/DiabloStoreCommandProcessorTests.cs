@@ -1822,6 +1822,68 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void BlacksmithOilResolvesTargetDurabilityByMiscId()
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            2308,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplyBlacksmithOil,
+                ItemClass = 3,
+            });
+        var targetDefinition = new AuthoritativeItemDefinition(
+            2309,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            MiscId = 128,
+            NativeItemIndex = 108,
+            GenerationTags = new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase),
+        };
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            2309,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 128,
+                ItemClass = 1,
+                Durability = 5,
+                MaxDurability = 0,
+            });
+        var player = CreatePlayer(inventory: [oil, target]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: new AuthoritativeItemCatalog([targetDefinition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var applied = Assert.Single(player.Inventory);
+        Assert.Equal(2309U, applied.ItemSeed);
+        Assert.Equal(9, applied.State.Durability);
+        Assert.Equal(20, applied.State.MaxDurability);
+    }
+
+    [Fact]
     public void AccuracyAndFortitudeOilsUseNativeBoundedRandomEffects()
     {
         var accuracy = new OwnedStoreItem(

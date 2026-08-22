@@ -62,6 +62,8 @@ All notable changes to this fork are documented below.
   state when compatibility state omitted that field.
 - Repair validation, pricing, and mutation now resolve authored maximum
   durability through stable, native, or `misc_id` identity.
+- Blacksmith and Fortitude oil mutations now hydrate omitted target durability
+  from authored item metadata before applying native effects.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for
