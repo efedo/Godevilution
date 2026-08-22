@@ -506,6 +506,37 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedPlayerAttributeProjection()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Attributes = new PlayerAttributesSnapshot {
+                        Strength = new AttributeSnapshot { Base = 15, Current = 15 },
+                        Magic = new AttributeSnapshot { Base = 20, Current = 20 },
+                        Dexterity = new AttributeSnapshot { Base = 10, Current = 10 },
+                        Vitality = new AttributeSnapshot { Base = 25, Current = 25 },
+                    },
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        var missing = snapshot.Clone();
+        missing.Players[0].Attributes!.Vitality = null;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: missing)));
+
+        var negative = snapshot.Clone();
+        negative.Players[0].Attributes!.Strength.Current = -1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: negative)));
+    }
+
+    [Fact]
     public void SelectsUnloggedQuestTownerStageOnlyBeforeQuestIsLogged()
     {
         var snapshot = new Snapshot {

@@ -92,6 +92,8 @@ scaled hit points), not only the client's difficulty label.
   level bounds and blocked cells, while retaining older geometry-free snapshots.
 - Godot now validates that non-empty visited-level projections include the
   player’s current level before authored quest gates consume them.
+- Godot now validates complete, non-negative player attribute projections when
+  the additive attribute message is present.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

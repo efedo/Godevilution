@@ -51,6 +51,8 @@ All notable changes to this fork are documented below.
   while retaining compatibility for snapshots without level geometry.
 - Godot now rejects non-empty visited-level projections that omit the player’s
   current level, matching the server-owned quest-gate state invariant.
+- Godot now rejects partially populated or negative player attribute projections
+  before the presentation HUD consumes authoritative character state.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks

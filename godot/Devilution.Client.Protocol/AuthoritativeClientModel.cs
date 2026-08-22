@@ -112,6 +112,7 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid player ability kind.");
                 }
                 ValidatePlayerResources(player);
+                ValidatePlayerAttributes(player);
                 ValidateVisitedLevels(player);
                 ValidatePlayerSpells(player);
                 ValidateStash(player);
@@ -618,6 +619,29 @@ public sealed class AuthoritativeClientModel
             || player.CharacterLevel > MaximumNativeCharacterLevel) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid player resources.");
+        }
+    }
+
+    private static void ValidatePlayerAttributes(PlayerSnapshot player)
+    {
+        var attributes = player.Attributes;
+        if (attributes is null)
+            return;
+
+        if (attributes.Strength is null
+            || attributes.Magic is null
+            || attributes.Dexterity is null
+            || attributes.Vitality is null
+            || attributes.Strength.Base < 0
+            || attributes.Strength.Current < 0
+            || attributes.Magic.Base < 0
+            || attributes.Magic.Current < 0
+            || attributes.Dexterity.Base < 0
+            || attributes.Dexterity.Current < 0
+            || attributes.Vitality.Base < 0
+            || attributes.Vitality.Current < 0) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid player attributes.");
         }
     }
 
