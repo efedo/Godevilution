@@ -258,6 +258,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeItemEffectsTable.SourcePath,
                 nativeItemEffectsTable.ToCanonicalTsv())
             : null;
+        var nativeItemHellfireEffects = content.TryGetTable(
+            "native_item_hellfire_effects.tsv",
+            out var nativeItemHellfireEffectsTable)
+            ? AuthoritativeNativeItemHellfireEffectCatalog.LoadTsv(
+                nativeItemHellfireEffectsTable.SourcePath,
+                nativeItemHellfireEffectsTable.ToCanonicalTsv())
+            : null;
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
             out var legacyPrefixTable);
@@ -293,7 +300,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 null,
                 cursorCatalog,
                 stableIds,
-                nativeItemEffects)
+                nativeItemEffects,
+                nativeItemHellfireEffects)
             : null;
         // Normalized IDs take precedence. The legacy table remains a fallback
         // and intentionally derives compatibility IDs from its own row order.

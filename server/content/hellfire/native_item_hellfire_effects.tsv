@@ -1,0 +1,10 @@
+symbol	native_flag
+Devastation	1
+Decay	2
+Peril	4
+Jesters	8
+Doppelganger	16
+ACAgainstDemons	32
+ACDEMON	32
+ACAgainstUndead	64
+ACUNDEAD	64

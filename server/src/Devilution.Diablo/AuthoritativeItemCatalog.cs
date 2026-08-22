@@ -960,7 +960,8 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
         AuthoritativeItemCursorCatalog? cursorCatalog = null,
         StableContentIdCatalog? stableIds = null,
-        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows.Select(row => new AuthoritativeItemDefinition(
@@ -989,7 +990,9 @@ public sealed class AuthoritativeItemCatalog
                 ItemActionKind = ParseItemActionKind(row),
                 ItemActionAmount = row.OptionalInt32("item_action_amount", 1),
                 Flags = ParseNormalizedFlags(row, nativeItemEffectCatalog),
-                HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(row),
+                HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(
+                    row,
+                    nativeItemHellfireEffectCatalog),
                 MinArmorClass = row.OptionalInt32("min_armor_class", -1),
                 MaxArmorClass = row.OptionalInt32("max_armor_class", -1),
                 MinimumStrength = row.OptionalInt32("min_strength"),
@@ -1407,7 +1410,9 @@ public sealed class AuthoritativeItemCatalog
             nativeItemEffectCatalog);
     }
 
-    private static int ParseNormalizedHellfireEffects(TsvRow row)
+    private static int ParseNormalizedHellfireEffects(
+        TsvRow row,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         if (!row.TryGet("hellfire_effects", out var value)
             || string.IsNullOrWhiteSpace(value)) {
@@ -1418,7 +1423,11 @@ public sealed class AuthoritativeItemCatalog
         foreach (var effect in value.Split(
                      ',',
                      StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
-            var flag = effect.ToUpperInvariant() switch {
+            var flag = nativeItemHellfireEffectCatalog is not null
+                ? nativeItemHellfireEffectCatalog.TryGetFlag(effect, out var contentFlag)
+                    ? contentFlag
+                    : 0
+                : effect.ToUpperInvariant() switch {
                 "DEVASTATION" => AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
                 "DECAY" => AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
                 "PERIL" => AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
