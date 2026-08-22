@@ -138,6 +138,10 @@ Ordinary native-DUN level activation now validates every referenced `.dun` and
 optional `.til`/`.sol` asset before publishing any level replacement, matching
 the staged fragment activation boundary.
 
+Authoritative portal catalogs now revalidate zero and duplicate portal IDs at
+the world-validation boundary, including direct callers that do not originate
+from TSV loading.
+
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility
 fallback remains available to older direct callers.

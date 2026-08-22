@@ -79,6 +79,8 @@ All notable changes to this fork are documented below.
 - Ordinary native-DUN level activation now preflights every referenced `.dun`
   and optional `.til`/`.sol` asset before publishing the composed world, matching
   the fragment catalog's activation boundary.
+- Revalidate authoritative portal IDs during world validation so direct catalog
+  callers cannot publish zero or duplicate portal identities.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

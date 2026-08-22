@@ -322,6 +322,15 @@ public sealed class AuthoritativeWorldTests
 
         AuthoritativePortalCatalog.ValidateWorld(portals, world);
         Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
+            [new AuthoritativePortal(0, 1, 1, 1, 2, 2, 2)],
+            world));
+        Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
+            [
+                new AuthoritativePortal(4, 1, 1, 1, 2, 2, 2),
+                new AuthoritativePortal(4, 1, 0, 0, 2, 1, 1),
+            ],
+            world));
+        Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
             [new AuthoritativePortal(2, 1, 3, 0, 2, 0, 0)],
             world));
         Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(

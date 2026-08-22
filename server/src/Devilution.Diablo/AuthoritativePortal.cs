@@ -85,7 +85,11 @@ public static class AuthoritativePortalCatalog
     {
         ArgumentNullException.ThrowIfNull(portals);
         ArgumentNullException.ThrowIfNull(world);
+        var portalIds = new HashSet<uint>();
         foreach (var portal in portals) {
+            if (portal.PortalId == 0 || !portalIds.Add(portal.PortalId))
+                throw new InvalidDataException(
+                    $"Portal catalog contains duplicate or zero ID {portal.PortalId}.");
             if (!world.ContainsLevel(portal.SourceLevelId)
                 || !world.ContainsLevel(portal.DestinationLevelId)) {
                 throw new InvalidDataException(
