@@ -7,6 +7,7 @@ All notable changes to this fork are documented below.
 - Validate participant-template equipment/belt slots, item dimensions, and inventory footprints before runtime creation.
 - Validate participant-template scalar resources, ability IDs, reflect charges, and combat-mode timing before runtime creation.
 - Validate participant-template attribute references and non-negative base/current values before runtime creation.
+- Reject negative participant attribute values during authoritative save restore.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
 - Validate participant-template stable item IDs, seeds, names, and cursor graphics before runtime creation.
 - Preserve legacy startup inventory-grid placeholders and defer malformed stash-footprint rejection to save restore.

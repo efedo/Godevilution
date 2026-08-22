@@ -3278,6 +3278,25 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void AuthoritativeSaveRejectsNegativeAttributeState()
+    {
+        var source = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        var document = System.Text.Json.JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            source.ExportPlayerSave("player-a"))!;
+        var snapshot = Snapshot.Parser.ParseFrom(Convert.FromBase64String(document.SnapshotBase64));
+        var player = Assert.Single(snapshot.Players);
+        player.Attributes.Strength.Base = -1;
+        var invalidAttributes = document with {
+            SnapshotBase64 = Convert.ToBase64String(snapshot.ToByteArray()),
+        };
+
+        var destination = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        Assert.Throws<InvalidDataException>(() => destination.ImportPlayerSave(
+            "player-a",
+            System.Text.Json.JsonSerializer.Serialize(invalidAttributes)));
+    }
+
+    [Fact]
     public void AuthoritativeSaveRejectsOverlappingStashFootprints()
     {
         var itemState = AuthoritativeItemState.Empty with {

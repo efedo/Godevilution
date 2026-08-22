@@ -2376,11 +2376,7 @@ public sealed partial class DiabloSimulation
             || source.LifeMaximum != expectedResources.LifeQ6
             || source.ManaMaximum != expectedResources.ManaQ6
             || (source.StashOpen && source.ActiveStoreId is not null)
-            || source.Attributes is null
-            || source.Attributes.Strength is null
-            || source.Attributes.Magic is null
-            || source.Attributes.Dexterity is null
-            || source.Attributes.Vitality is null) {
+            || !HasValidAttributeState(source.Attributes)) {
             throw new InvalidDataException(
                 "The authoritative save contains out-of-range player state.");
         }
@@ -2669,6 +2665,15 @@ public sealed partial class DiabloSimulation
         return hasValidNames
             && (!state.NativeCursorGraphic.HasValue
                 || state.NativeCursorGraphic is >= 0 and <= byte.MaxValue);
+    }
+
+    private static bool HasValidAttributeState(PlayerAttributesState? attributes)
+    {
+        return attributes is not null
+            && attributes.Strength is { Base: >= 0, Current: >= 0 }
+            && attributes.Magic is { Base: >= 0, Current: >= 0 }
+            && attributes.Dexterity is { Base: >= 0, Current: >= 0 }
+            && attributes.Vitality is { Base: >= 0, Current: >= 0 };
     }
 
     private static bool IsNativeItemPrice(uint price) => price <= int.MaxValue;
