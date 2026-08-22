@@ -313,9 +313,13 @@ public static class AuthoritativeItemClassification
         int legacyItemType)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (items is not null
-            && items.TryGetByState(state, out var definition))
-            return HasSubtype(definition, tag, legacyItemType);
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition))
+                return HasSubtype(definition, tag, legacyItemType);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return tags.Contains(tag, StringComparer.OrdinalIgnoreCase);
+        }
         return state.ItemType == legacyItemType;
     }
 
@@ -337,9 +341,13 @@ public static class AuthoritativeItemClassification
         int legacyItemType)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (items is not null
-            && items.TryGetByState(state, out var definition))
-            return HasArmorSubtype(definition, tag, legacyItemType);
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition))
+                return HasArmorSubtype(definition, tag, legacyItemType);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return tags.Contains(tag, StringComparer.OrdinalIgnoreCase);
+        }
         return state.ItemType == legacyItemType;
     }
 

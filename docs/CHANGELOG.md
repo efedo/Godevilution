@@ -30,6 +30,8 @@ All notable changes to this fork are documented below.
   authoritative before using the native item-class fallback.
 - Weapon and armor subtype classification now treats active non-empty subtype
   tags as authoritative before using native item-type fallback.
+- Weapon and armor subtype state classification now also resolves unambiguous
+  content tags by misc ID when native item-index lookup is unavailable.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

@@ -168,6 +168,27 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void SubtypeTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Shield", "HeavyArmor"]) with {
+            ItemType = 99,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemType = 99,
+            MiscId = 121,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsShield(state, catalog));
+        Assert.True(AuthoritativeItemClassification.IsHeavyArmor(state, catalog));
+        Assert.False(AuthoritativeItemClassification.IsSword(state, catalog));
+        Assert.False(AuthoritativeItemClassification.IsMediumArmor(state, catalog));
+    }
+
+    [Fact]
     public void GoldTagsOverrideConflictingNativeGoldIdentity()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

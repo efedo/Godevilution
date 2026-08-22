@@ -114,6 +114,8 @@ scaled hit points), not only the client's difficulty label.
   before the native item-class fallback.
 - Weapon and armor subtype classification now honors active non-empty subtype
   tags before the native item-type fallback.
+- Weapon and armor subtype state classification also resolves unambiguous
+  content tags by misc ID when native item-index lookup is unavailable.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
