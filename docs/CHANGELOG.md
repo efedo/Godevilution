@@ -34,6 +34,8 @@ All notable changes to this fork are documented below.
   unambiguous authored item dimensions before relocation and stash moves.
 - World-item pickup now resolves omitted/default inventory footprints from
   authored item dimensions before placement.
+- Snapshot capture and restore now hydrate omitted/default inventory footprints
+  from authored item dimensions before persistence validation and world use.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative

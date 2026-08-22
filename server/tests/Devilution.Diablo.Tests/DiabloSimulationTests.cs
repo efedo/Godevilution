@@ -2095,6 +2095,98 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreHydratesAuthoredInventoryFootprintsByMiscId()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            7,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            1,
+            true) {
+            NativeItemIndex = 101,
+            MiscId = 121,
+        };
+        var items = new AuthoritativeItemCatalog([
+            definition,
+            new AuthoritativeItemDefinition(
+                24,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                true) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+            },
+        ]);
+        var legacyState = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+        };
+        var storeCatalog = new StoreCatalog();
+        storeCatalog.AddStore(1, [new StoreItem(0, 44, 25, legacyState)]);
+        var options = new DiabloSimulationOptions(
+            storeCatalog,
+            DiabloModule.Instance.Rules) {
+            Items = items,
+        };
+        var simulation = DiabloSimulationFactory.Instance.Create(options);
+        var source = CreatePlayer();
+        source.ActiveStoreId = 1;
+        source.Inventory.Add(new OwnedStoreItem(0, 0, 42, 25, 0, legacyState));
+        source.InventoryGrid[0] = 0;
+        source.InventoryGrid[1] = 0;
+        simulation.WorldState.WorldItems.Add(
+            20,
+            new AuthoritativeWorldItem(20, 0, 2, 0, 43, 25, legacyState));
+
+        var captured = simulation.CaptureSnapshot(source, 1);
+        Assert.NotNull(captured.ActiveStore);
+        var capturedStore = captured.ActiveStore!;
+        var legacySnapshot = captured with {
+            Player = captured.Player with {
+                Inventory = [captured.Player.Inventory[0] with {
+                    State = legacyState,
+                }],
+            },
+            WorldItems = [captured.WorldItems[0] with { State = legacyState }],
+            ActiveStore = capturedStore with {
+                Items = [capturedStore.Items[0] with { State = legacyState }],
+            },
+        };
+        var destination = CreatePlayer();
+        var replacement = DiabloSimulationFactory.Instance.Create(options);
+
+        replacement.RestoreSnapshot(destination, legacySnapshot);
+
+        var restoredInventoryItem = Assert.Single(destination.Inventory);
+        Assert.Equal(2, restoredInventoryItem.State.InventoryWidth);
+        Assert.Equal(1, restoredInventoryItem.State.InventoryHeight);
+        Assert.Equal([0, 0], destination.InventoryGrid.Take(2));
+        var restoredWorldItem = Assert.Single(replacement.WorldState.WorldItems).Value;
+        Assert.Equal(2, restoredWorldItem.State.InventoryWidth);
+        Assert.Equal(1, restoredWorldItem.State.InventoryHeight);
+        var restoredSnapshot = replacement.CaptureSnapshot(destination, 2);
+        Assert.NotNull(restoredSnapshot.ActiveStore);
+        var restoredStore = restoredSnapshot.ActiveStore!;
+        Assert.Equal(2, restoredStore.Items[0].State.InventoryWidth);
+        Assert.Equal(1, restoredStore.Items[0].State.InventoryHeight);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsDynamicPortalState()
     {
         var portal = new AuthoritativePortal(

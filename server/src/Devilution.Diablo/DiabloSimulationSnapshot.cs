@@ -461,7 +461,7 @@ public sealed partial class DiabloSimulation
     public StorePlayerSnapshot CapturePlayerState(AuthoritativePlayerState player)
     {
         ArgumentNullException.ThrowIfNull(player);
-        return new StorePlayerSnapshot(
+        var snapshot = new StorePlayerSnapshot(
             player.Gold,
             player.ActiveStoreId,
             player.Inventory.ToArray(),
@@ -506,6 +506,7 @@ public sealed partial class DiabloSimulation
             StashGold = player.StashGold,
             StashOpen = player.StashOpen,
         };
+        return ResolveSnapshotItemFootprints(snapshot);
     }
 
     public DiabloSimulationSnapshot CaptureSnapshot(
@@ -514,7 +515,11 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(player);
         var activeStore = player.ActiveStoreId is uint storeId
-            ? new DiabloStoreState(storeId, storeCatalog.GetItems(storeId).ToArray())
+            ? new DiabloStoreState(
+                storeId,
+                storeCatalog.GetItems(storeId)
+                    .Select(item => item with { State = ResolveItemState(item.State) })
+                    .ToArray())
             : null;
         return new DiabloSimulationSnapshot(
             tick,
@@ -617,7 +622,7 @@ public sealed partial class DiabloSimulation
                     item.PositionY,
                     item.ItemSeed,
                     item.Price,
-                    item.State))
+                    ResolveItemState(item.State)))
                 .ToArray(),
             WorldState.Objects.Values
                 .OrderBy(@object => @object.EntityId)
@@ -804,6 +809,14 @@ public sealed partial class DiabloSimulation
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
+        source = ResolveSnapshotItemFootprints(source);
+        snapshot = snapshot with {
+            Player = source,
+            WorldItems = snapshot.WorldItems
+                .Select(ResolveWorldItemFootprint)
+                .ToArray(),
+            ActiveStore = ResolveStoreState(snapshot.ActiveStore),
+        };
         WorldState.RestoreWorldMutations(snapshot.ActiveWorldMutationIds);
         ValidateSavedPlayer(source, destination);
 
@@ -1658,6 +1671,63 @@ public sealed partial class DiabloSimulation
         WorldState.VictoryTriggered = snapshot.VictoryTriggered;
         if (restoredStore is not null)
             storeCatalog.ReplaceStore(restoredStore.StoreId, restoredStore.Items);
+    }
+
+    /** Hydrates authored inventory footprints before persistence validation or use. */
+    private StorePlayerSnapshot ResolveSnapshotItemFootprints(StorePlayerSnapshot source)
+    {
+        if (Items is null)
+            return source;
+
+        return source with {
+            Inventory = source.Inventory is null
+                ? null!
+                : source.Inventory.Select(item => item is null || item.State is null
+                    ? item!
+                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+            Equipment = source.Equipment is null
+                ? null!
+                : source.Equipment.Select(item => item is null || item.State is null
+                    ? item!
+                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+            Belt = source.Belt is null
+                ? null!
+                : source.Belt.Select(item => item is null || item.State is null
+                    ? item!
+                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+            Stash = source.Stash is null
+                ? null!
+                : source.Stash.Select(item => item is null || item.State is null
+                    ? item!
+                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+            HeldItem = source.HeldItem is null || source.HeldItem.State is null
+                ? source.HeldItem
+                : source.HeldItem with { State = ResolveItemState(source.HeldItem.State) },
+        };
+    }
+
+    private AuthoritativeItemState ResolveItemState(AuthoritativeItemState state)
+    {
+        return Items?.ResolveInventoryDimensions(state) ?? state;
+    }
+
+    private DiabloWorldItemState ResolveWorldItemFootprint(DiabloWorldItemState item)
+    {
+        return item.State is null
+            ? item
+            : item with { State = ResolveItemState(item.State) };
+    }
+
+    private DiabloStoreState? ResolveStoreState(DiabloStoreState? store)
+    {
+        if (Items is null || store is null)
+            return store;
+
+        return store with {
+            Items = store.Items.Select(item => item is null || item.State is null
+                ? item!
+                : item with { State = ResolveItemState(item.State) }).ToArray(),
+        };
     }
 
     private bool IsMalformedGoldWorldItem(DiabloWorldItemState item)
