@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native set-piece object initialization no longer rewrites Blind, Blood,
+  or Warlord quest-message state or loads their legacy map fragments; authored
+  server state remains authoritative for those connected sessions.
 - Native authoritative world presentation now removes unclaimed local monster
   slots after each snapshot, preventing legacy level-load monsters from remaining
   visible or occupying tiles outside server-owned state.

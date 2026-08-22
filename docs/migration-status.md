@@ -20,6 +20,9 @@ local quest-completion side effect.
 The native authoritative world bridge now removes unclaimed local monster
 presentation slots after each snapshot, so legacy level-load monsters cannot
 remain visible or occupy tiles after server state is applied.
+Connected native set-piece object initialization now leaves Blind, Blood,
+and Warlord quest-message and map-fragment mutations offline-only; connected
+sessions retain only presentation object setup until authored replacements exist.
 
 ## Current state
 

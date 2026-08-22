@@ -55,6 +55,7 @@
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "engine/track.h"
 #include "utils/algorithm/container.hpp"
 #include "utils/endian/endian_swap.hpp"
@@ -70,6 +71,15 @@ bool LoadingMapObjects;
 int NaKrulTomeSequence;
 
 namespace {
+
+bool LegacyLevelLoadMutationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
 
 enum shrine_type : uint8_t {
 	ShrineMysterious,
@@ -3994,9 +4004,11 @@ void InitObjects()
 				default:
 					break;
 				}
-				Quests[Q_BLIND]._qmsg = spId;
+				if (LegacyLevelLoadMutationAllowed())
+					Quests[Q_BLIND]._qmsg = spId;
 				AddBookLever(OBJ_BLINDBOOK, { setPiece().position, setPiece().size + 1 }, spId);
-				LoadMapObjects("levels\\l2data\\blind2.dun", setPiece().position.megaToWorld());
+				if (LegacyLevelLoadMutationAllowed())
+					LoadMapObjects("levels\\l2data\\blind2.dun", setPiece().position.megaToWorld());
 			}
 			if (Quests[Q_BLOOD].IsAvailable()) {
 				_speech_id spId;
@@ -4022,7 +4034,8 @@ void InitObjects()
 				default:
 					break;
 				}
-				Quests[Q_BLOOD]._qmsg = spId;
+				if (LegacyLevelLoadMutationAllowed())
+					Quests[Q_BLOOD]._qmsg = spId;
 				AddBookLever(OBJ_BLOODBOOK, { setPiece().position + Displacement { 0, 3 }, { 2, 4 } }, spId);
 				AddObject(OBJ_PEDESTAL, setPiece().position.megaToWorld() + Displacement { 9, 16 });
 			}
@@ -4057,9 +4070,11 @@ void InitObjects()
 				default:
 					break;
 				}
-				Quests[Q_WARLORD]._qmsg = spId;
+				if (LegacyLevelLoadMutationAllowed())
+					Quests[Q_WARLORD]._qmsg = spId;
 				AddBookLever(OBJ_STEELTOME, setPiece(), spId);
-				LoadMapObjects("levels\\l4data\\warlord.dun", setPiece().position.megaToWorld());
+				if (LegacyLevelLoadMutationAllowed())
+					LoadMapObjects("levels\\l4data\\warlord.dun", setPiece().position.megaToWorld());
 			}
 			if (Quests[Q_BETRAYER].IsAvailable() && !UseMultiplayerQuests())
 				AddLazStand();
