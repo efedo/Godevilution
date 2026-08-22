@@ -725,7 +725,7 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (player.HeldItem is not null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        var itemState = items?.ResolveInventoryDimensions(item.State) ?? item.State;
+        var itemState = ResolveWorldItemState(player, item);
 
         if (DiabloGoldInventory.HasGoldIdentity(
                 itemState,
@@ -808,6 +808,26 @@ public sealed class DiabloWorldCommandProcessor
         ApplyItemQuestEffects(itemState);
         ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    private AuthoritativeItemState ResolveWorldItemState(
+        AuthoritativePlayerState player,
+        AuthoritativeWorldItem item)
+    {
+        var state = items?.ResolveInventoryDimensions(item.State) ?? item.State;
+        if (item.Price <= int.MaxValue
+            && DiabloGoldInventory.HasGoldIdentity(
+                state,
+                combatRules,
+                player.Items ?? items)) {
+            state = state with {
+                Value = state.Value == 0 ? checked((int)item.Price) : state.Value,
+                IdentifiedValue = state.IdentifiedValue == 0
+                    ? checked((int)item.Price)
+                    : state.IdentifiedValue,
+            };
+        }
+        return state;
     }
 
     /** Resolves content-owned quest gates on native level triggers. */

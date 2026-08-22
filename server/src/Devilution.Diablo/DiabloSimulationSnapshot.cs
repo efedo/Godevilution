@@ -622,7 +622,7 @@ public sealed partial class DiabloSimulation
                     item.PositionY,
                     item.ItemSeed,
                     item.Price,
-                    ResolveItemState(item.State)))
+                    ResolveWorldItemState(item)))
                 .ToArray(),
             WorldState.Objects.Values
                 .OrderBy(@object => @object.EntityId)
@@ -813,7 +813,7 @@ public sealed partial class DiabloSimulation
         snapshot = snapshot with {
             Player = source,
             WorldItems = snapshot.WorldItems
-                .Select(ResolveWorldItemFootprint)
+                .Select(ResolveWorldItemState)
                 .ToArray(),
             ActiveStore = ResolveStoreState(snapshot.ActiveStore),
         };
@@ -1711,11 +1711,34 @@ public sealed partial class DiabloSimulation
         return Items?.ResolveInventoryDimensions(state) ?? state;
     }
 
-    private DiabloWorldItemState ResolveWorldItemFootprint(DiabloWorldItemState item)
+    private AuthoritativeItemState ResolveWorldItemState(AuthoritativeWorldItem item)
     {
-        return item.State is null
-            ? item
-            : item with { State = ResolveItemState(item.State) };
+        return ResolveWorldItemState(item.State, item.Price);
+    }
+
+    private DiabloWorldItemState ResolveWorldItemState(DiabloWorldItemState item)
+    {
+        if (item.State is null)
+            return item;
+
+        return item with { State = ResolveWorldItemState(item.State, item.Price) };
+    }
+
+    private AuthoritativeItemState ResolveWorldItemState(
+        AuthoritativeItemState source,
+        uint price)
+    {
+        var state = ResolveItemState(source);
+        if (price <= int.MaxValue
+            && DiabloGoldInventory.HasGoldIdentity(state, CombatRules, Items)) {
+            state = state with {
+                Value = state.Value == 0 ? checked((int)price) : state.Value,
+                IdentifiedValue = state.IdentifiedValue == 0
+                    ? checked((int)price)
+                    : state.IdentifiedValue,
+            };
+        }
+        return state;
     }
 
     private DiabloStoreState? ResolveStoreState(DiabloStoreState? store)

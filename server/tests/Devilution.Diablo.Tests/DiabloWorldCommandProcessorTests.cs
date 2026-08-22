@@ -601,6 +601,37 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void PickupGoldHydratesOmittedValueFieldsFromWorldPrice()
+    {
+        var item = new AuthoritativeWorldItem(
+            20,
+            0,
+            1,
+            0,
+            42,
+            75,
+            AuthoritativeItemState.Empty with {
+                ItemType = 11,
+                ItemIndex = 0,
+                StatFlag = true,
+            });
+        var world = new DiabloWorldState(worldItems: [item]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(entityId: 1);
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(20),
+            27,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(175U, player.Gold);
+        Assert.Empty(player.Inventory);
+        Assert.DoesNotContain(20U, world.WorldItems.Keys);
+    }
+
+    [Fact]
     public void PickupGoldUsesNativeTopologyAndPlacementOrderWhenStacksArePresent()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

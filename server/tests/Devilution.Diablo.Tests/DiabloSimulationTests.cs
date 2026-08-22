@@ -3032,6 +3032,36 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreHydratesOmittedGoldValueFieldsFromWorldPrice()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+        var player = CreatePlayer();
+        var snapshot = simulation.CaptureSnapshot(player, 1) with {
+            WorldItems = [new DiabloWorldItemState(
+                20,
+                0,
+                1,
+                0,
+                42,
+                75,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 11,
+                    ItemIndex = 0,
+                    StatFlag = true,
+                })],
+        };
+
+        simulation.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(simulation.WorldState.WorldItems).Value;
+        Assert.Equal(75, restored.State.Value);
+        Assert.Equal(75, restored.State.IdentifiedValue);
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsMalformedTeleportControllerState()
     {
         var catalog = new StoreCatalog();

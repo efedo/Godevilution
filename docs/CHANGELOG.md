@@ -36,6 +36,8 @@ All notable changes to this fork are documented below.
   authored item dimensions before placement.
 - Snapshot capture and restore now hydrate omitted/default inventory footprints
   from authored item dimensions before persistence validation and world use.
+- World-item gold pickup and snapshot restore now hydrate omitted gold values
+  from the authoritative world-item price while preserving mismatch rejection.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative
