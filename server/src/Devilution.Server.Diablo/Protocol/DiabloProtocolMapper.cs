@@ -18,7 +18,10 @@ internal static class DiabloProtocolMapper
     {
         ArgumentNullException.ThrowIfNull(source);
         ValidateProjectedStoreState(source);
-        ValidateProjectedWorldItemPositions(source.WorldItems, levelGeometry);
+        var projectedLevels = levelGeometry?.ToDictionary(level => level.LevelId)
+            ?? new Dictionary<uint, AuthoritativeLevel>();
+        ValidateProjectedWorldItemPositions(source.WorldItems, projectedLevels);
+        ValidateProjectedObjectPositions(source.Objects, projectedLevels);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -416,19 +419,45 @@ internal static class DiabloProtocolMapper
 
     private static void ValidateProjectedWorldItemPositions(
         IReadOnlyList<DiabloWorldItemState> worldItems,
-        IReadOnlyList<AuthoritativeLevel>? levelGeometry)
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
-        var levels = levelGeometry?.ToDictionary(level => level.LevelId)
-            ?? new Dictionary<uint, AuthoritativeLevel>();
         foreach (var item in worldItems) {
-            if (item.PositionX is < 0 or > byte.MaxValue
-                || item.PositionY is < 0 or > byte.MaxValue
-                || levels.TryGetValue(item.LevelId, out var level)
-                    && (item.PositionX >= level.Width
-                        || item.PositionY >= level.Height)) {
-                throw new InvalidDataException(
-                    "Authoritative world-item position is outside the projected level geometry.");
-            }
+            ValidateProjectedEntityPosition(
+                item.LevelId,
+                item.PositionX,
+                item.PositionY,
+                levels,
+                "world-item");
+        }
+    }
+
+    private static void ValidateProjectedObjectPositions(
+        IReadOnlyList<DiabloObjectState> objects,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var @object in objects) {
+            ValidateProjectedEntityPosition(
+                @object.LevelId,
+                @object.PositionX,
+                @object.PositionY,
+                levels,
+                "object");
+        }
+    }
+
+    private static void ValidateProjectedEntityPosition(
+        uint levelId,
+        int positionX,
+        int positionY,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels,
+        string entityKind)
+    {
+        if (positionX is < 0 or > byte.MaxValue
+            || positionY is < 0 or > byte.MaxValue
+            || levels.TryGetValue(levelId, out var level)
+                && (positionX >= level.Width || positionY >= level.Height)) {
+            throw new InvalidDataException(
+                $"Authoritative {entityKind} position is outside the projected level geometry.");
         }
     }
 

@@ -44,6 +44,8 @@ All notable changes to this fork are documented below.
 - Reject active-store projections containing duplicate stock slots.
 - Reject world-item projections with coordinates outside the native tile range
   or supplied authoritative level geometry.
+- Reject authored object projections with coordinates outside the native tile
+  range or supplied authoritative level geometry.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
