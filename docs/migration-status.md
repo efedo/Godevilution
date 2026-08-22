@@ -90,6 +90,8 @@ scaled hit points), not only the client's difficulty label.
   entities even when optional level geometry is absent.
 - Godot now validates projected player movement destinations against supplied
   level bounds and blocked cells, while retaining older geometry-free snapshots.
+- Godot now validates that non-empty visited-level projections include the
+  player’s current level before authored quest gates consume them.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

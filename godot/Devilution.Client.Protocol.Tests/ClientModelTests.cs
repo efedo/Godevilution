@@ -484,6 +484,28 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsVisitedLevelsThatOmitTheCurrentLevel()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 4,
+                    VisitedLevelIds = { 0 },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+
+        snapshot.Players[0].VisitedLevelIds.Add(4);
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+        Assert.Contains(4U, model.Snapshot!.Players[0].VisitedLevelIds);
+    }
+
+    [Fact]
     public void SelectsUnloggedQuestTownerStageOnlyBeforeQuestIsLogged()
     {
         var snapshot = new Snapshot {

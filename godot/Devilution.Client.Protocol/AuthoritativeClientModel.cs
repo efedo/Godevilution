@@ -915,6 +915,8 @@ public sealed class AuthoritativeClientModel
     private static void ValidateVisitedLevels(PlayerSnapshot player)
     {
         if (player.VisitedLevelIds.Count > 256
+            || (player.VisitedLevelIds.Count > 0
+                && !player.VisitedLevelIds.Contains(player.LevelId))
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid visited-level state.");
