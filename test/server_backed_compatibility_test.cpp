@@ -276,6 +276,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyLevelLoadMutationsFailClosed)
 	EXPECT_FALSE(ShouldProcessLegacyLevelLoadMutation(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyLevelLoadPlayerPlacementFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyLevelLoadPlayerPlacement(false));
+	EXPECT_FALSE(ShouldProcessLegacyLevelLoadPlayerPlacement(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyPlayerStateMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyPlayerStateMessage(false));

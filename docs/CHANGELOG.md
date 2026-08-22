@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Preserve the server-selected player tile during connected native level
+  loading; the legacy nearby-tile placement fallback remains offline-only.
 - Guard connected native dungeon-message playback during level loading so
   legacy Defiler quest mutation and quest resynchronization commands cannot
   bypass authoritative level projections.

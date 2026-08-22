@@ -55,6 +55,15 @@ constexpr bool ShouldProcessLegacyLevelLoadMutation(bool serverConnected) noexce
 }
 
 /**
+ * Legacy level-load player placement may choose a nearby local tile, so it is
+ * offline-only while connected sessions retain the server-selected position.
+ */
+constexpr bool ShouldProcessLegacyLevelLoadPlayerPlacement(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyLevelLoadMutation(serverConnected);
+}
+
+/**
  * Legacy missile tile flags belong to locally simulated missiles; authoritative
  * presentation missiles must not rewrite that native gameplay bookkeeping.
  */

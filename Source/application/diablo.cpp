@@ -199,6 +199,15 @@ bool LegacyLevelLoadMutationAllowed() noexcept
 #endif
 }
 
+bool LegacyLevelLoadPlayerPlacementAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadPlayerPlacement(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 void StartGame(interface_mode uMsg)
 {
 	CalcViewportGeometry();
@@ -3810,7 +3819,7 @@ void LoadGameLevelSyncPlayerEntry(lvl_entry lvldir)
 	for (Player &player : Players) {
 		if (player.plractive && player.isOnActiveLevel() && (!player._pLvlChanging || &player == MyPlayer)) {
 			if (player.life.current > 0) {
-				if (lvldir != ENTRY_LOAD)
+				if (lvldir != ENTRY_LOAD && LegacyLevelLoadPlayerPlacementAllowed())
 					player.syncInitialPosition();
 			} else {
 				tileAt(player.position.tile).addFlags(DungeonFlag::DeadPlayer);
