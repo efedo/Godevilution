@@ -462,6 +462,37 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous authored spell-book metadata by misc ID. */
+    public bool TryGetBookMetadataByMiscId(
+        int miscId,
+        out int spellId,
+        out int minimumMagic)
+    {
+        spellId = 0;
+        minimumMagic = 0;
+        if (miscId <= 0)
+            return false;
+
+        var matches = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && definition.SpellId > 0
+                && (definition.ItemActionKind == DiabloItemActionKind.ReadBook
+                    || definition.GenerationTags.Contains(
+                        "Book",
+                        StringComparer.OrdinalIgnoreCase)))
+            .ToArray();
+        var values = matches
+            .Select(definition => (definition.SpellId, definition.MinimumMagic))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1)
+            return false;
+
+        spellId = values[0].SpellId;
+        minimumMagic = values[0].MinimumMagic;
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,

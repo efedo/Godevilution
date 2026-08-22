@@ -158,6 +158,8 @@ scaled hit points), not only the client's difficulty label.
 - Equipped fixed armor now resolves omitted armor values from authored item
   metadata; randomized armor ranges remain unresolved unless state supplies the
   rolled value.
+- `ReadBook` now resolves omitted spell and minimum-magic fields from
+  unambiguous authored book metadata keyed by `misc_id`.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

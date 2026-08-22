@@ -535,6 +535,17 @@ public sealed class DiabloStoreCommandProcessor
         var minimumMagic = state.MinimumMagic != 0
             ? state.MinimumMagic
             : definition?.MinimumMagic ?? 0;
+        if (items is not null
+            && (spellId <= 0 || minimumMagic == 0)
+            && items.TryGetBookMetadataByMiscId(
+                state.MiscId,
+                out var contentSpellId,
+                out var contentMinimumMagic)) {
+            if (spellId <= 0)
+                spellId = contentSpellId;
+            if (minimumMagic == 0)
+                minimumMagic = contentMinimumMagic;
+        }
         if (state.Deleted
             || action != DiabloItemActionKind.ReadBook
             || !IsBookItem(state)

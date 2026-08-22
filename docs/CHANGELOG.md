@@ -28,6 +28,8 @@ All notable changes to this fork are documented below.
 - Equipped fixed armor now resolves omitted armor values from authored item
   metadata; randomized armor ranges remain unresolved unless state supplies the
   rolled value.
+- `ReadBook` now resolves omitted spell and minimum-magic fields from
+  unambiguous authored book metadata keyed by `misc_id`.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative
