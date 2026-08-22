@@ -281,7 +281,6 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Items,
             options.Difficulty,
             options.MonsterTypes,
-            options.QuestTypes,
             options.SpellBooks,
             options.QuestTownerInteractions,
             options.QuestDialogueStages,
@@ -290,7 +289,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.SetLevelMaps,
             options.NativeDunObjects,
             options.NativeDunFragments,
-            options.Content);
+            options.Content,
+            questTypes: options.QuestTypes);
     }
 }
 
@@ -335,7 +335,6 @@ public sealed partial class DiabloSimulation
         AuthoritativeItemCatalog? items = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
-        AuthoritativeQuestTypeCatalog? questTypes = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
@@ -344,7 +343,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
-        ComposedContent? content = null)
+        ComposedContent? content = null,
+        AuthoritativeQuestTypeCatalog? questTypes = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));

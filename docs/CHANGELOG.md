@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- The authoritative quest catalog extension preserves the existing
+  `DiabloSimulation` positional constructor argument order for compatibility.
 - Quest content activation now rejects duplicate native quest ordinals before
   they can reach protocol snapshot projection.
 - Authoritative quest snapshots now optionally carry validated native quest
