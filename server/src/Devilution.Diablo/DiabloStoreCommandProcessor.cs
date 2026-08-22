@@ -441,7 +441,7 @@ public sealed class DiabloStoreCommandProcessor
         var state = item.State;
         if (state.Deleted
             || state.ItemActionKind != DiabloItemActionKind.ReadBook
-            || state.MiscId != 25
+            || !IsBookItem(state)
             || state.SpellId <= 0
             || spells is null
             || !spells.TryGet(checked((uint)state.SpellId), out var spell)) {
@@ -473,6 +473,15 @@ public sealed class DiabloStoreCommandProcessor
         }
         DiabloPlayerItemAccess.Remove(player, reference);
         return DiabloIntentResult.Accepted;
+    }
+
+    private bool IsBookItem(AuthoritativeItemState state)
+    {
+        if (items is not null
+            && items.TryGetByState(state, out var definition)
+            && definition.GenerationTags.Count > 0)
+            return definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase);
+        return state.MiscId == 25;
     }
 
     /** Mirrors Item::updateRequiredStatsCacheForPlayer for the current spell level. */

@@ -83,6 +83,9 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.406 externalizes Arena Potion admission through the optional
   `arena_only` item field; the shipped row declares arena-only behavior while
   older item mappings retain the native misc-ID fallback.
+- Spell-book template generation and `ReadBook` admission now honor the active
+  content definition's `Book` item tag; mappings without item tags retain the
+  native misc-ID fallback.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

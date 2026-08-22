@@ -607,6 +607,70 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ReadBookUsesContentBookTagWhenLegacyMiscIdDiffers()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            42,
+            6,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 99,
+            NativeItemIndex = 42,
+            GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+        };
+        var book = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ReadBook,
+                StableItemId = 42,
+                ItemIndex = 42,
+                MiscId = 99,
+                SpellId = 1,
+                MinimumMagic = 15,
+            });
+        var player = CreatePlayer(
+            mana: 100,
+            manaMaximum: 640,
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 20),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0)),
+            inventory: [book]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+                    ManaCostScale = 64,
+                },
+            ]),
+            items: new AuthoritativeItemCatalog([definition]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloReadBookIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(new MemorizedSpellState(1, 1), Assert.Single(player.MemorizedSpells));
+    }
+
+    [Fact]
     public void ReadBookUsesTheCurrentLearnedLevelForNativeMagicRequirement()
     {
         var book = new OwnedStoreItem(

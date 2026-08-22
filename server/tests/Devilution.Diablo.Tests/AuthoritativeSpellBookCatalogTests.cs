@@ -189,6 +189,45 @@ public sealed class AuthoritativeSpellBookCatalogTests
     }
 
     [Fact]
+    public void ContentBookTagsOverrideTheLegacyMiscIdAdmission()
+    {
+        var taggedBook = new AuthoritativeItemDefinition(
+            114,
+            6,
+            75,
+            75,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 99,
+            GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+        };
+        var taggedNonBook = taggedBook with {
+            ItemId = 115,
+            MiscId = 25,
+            GenerationTags = new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([taggedBook, taggedNonBook]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+
+        Assert.True(books.IsBookTemplate(items, 114));
+        Assert.False(books.IsBookTemplate(items, 115));
+    }
+
+    [Fact]
     public void UsesContentBookTemplateThresholdsBeforeLegacyFallback()
     {
         var items = new AuthoritativeItemCatalog([

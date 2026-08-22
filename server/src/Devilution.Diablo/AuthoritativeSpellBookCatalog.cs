@@ -321,8 +321,9 @@ public sealed class AuthoritativeSpellBookCatalog
     }
 
     private static bool IsBookTemplate(AuthoritativeItemDefinition definition)
-        => definition.MiscId == BookMiscId
-            && definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase);
+        => definition.GenerationTags.Count > 0
+            ? definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase)
+            : definition.MiscId == BookMiscId;
 
     private static IReadOnlyList<(uint ItemId, AuthoritativeItemDefinition Definition)> GetBookTemplates(
         AuthoritativeItemCatalog items)
