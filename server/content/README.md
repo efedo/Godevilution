@@ -60,7 +60,8 @@ flags, use the same validated namespace during generation and legacy affix
 application; direct catalogs
 retain native flag fallbacks when the table is not supplied.
 `native_item_hellfire_effects.tsv` covers the native Hellfire item-effect
-symbols and bit flags used by normalized item loading.
+symbols and bit flags used by normalized item loading and Hellfire affix
+generation.
 
 `classes.tsv` defines the native-compatible class IDs `0` through `5`, their
 base-game or Hellfire availability, exactly one active default, class flags,
@@ -2217,10 +2218,10 @@ unique-item effect flags; adding symbols does not change the table contract or
 schema version.
 
 Schema `1.411.0` adds `native_item_hellfire_effects.tsv`, the validated native
-Hellfire item-effect symbol and bit-flag mapping used by normalized item
-loading. Older direct loader callers retain the legacy fallback.
+Hellfire item-effect symbol and bit-flag mapping used by normalized item and
+Hellfire affix loading. Older direct loader callers retain the legacy fallback.
 
-Unique-item Hellfire powers (`DEVASTATION`, `DECAY`, `PERIL`, `JESTERS`,
+Unique-item and affix Hellfire powers (`DEVASTATION`, `DECAY`, `PERIL`, `JESTERS`,
 `DOPPELGANGER`, `ACDEMON`, and `ACUNDEAD`) use the same validated effect
 namespace during generation; direct catalogs retain their native flag fallback
 when no effect catalog is supplied.

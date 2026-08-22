@@ -232,4 +232,45 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
             new HashSet<string>(["Any"]));
         Assert.Equal(AuthoritativeEquipmentElementalDamageRules.FireDamageFlag, fallback.Flags);
     }
+
+    [Fact]
+    public void LegacyAffixLoadingUsesExternalHellfireEffectNamespaceWhenProvided()
+    {
+        var effects = new AuthoritativeNativeItemHellfireEffectCatalog([
+            new("DEVASTATION", 2),
+        ]);
+        const string header = "name\tpower\tpower.value1\tpower.value2\tminLevel\titemTypes\talignment\tchance\tuseful\tminVal\tmaxVal\tmultVal\n";
+        const string row = "Devastation\tDEVASTATION\t0\t0\t0\tAny\tAny\t1\ttrue\t0\t0\t0\n";
+        var rules = new AuthoritativeItemGenerationRules(0, 0, 0, 0, 0, 100, 0, 100, 0, 0);
+        var affixes = AuthoritativeItemAffixCatalog.LoadLegacyTsv(
+            "item_prefixes.tsv",
+            header + row,
+            "item_suffixes.tsv",
+            header,
+            rules,
+            nativeItemHellfireEffectCatalog: effects);
+
+        var remapped = affixes.Apply(
+            AuthoritativeItemState.Empty,
+            42,
+            1,
+            new HashSet<string>(["Any"]));
+
+        Assert.Equal(2, remapped.HellfireDamageArmorFlags);
+
+        var fallbackAffixes = AuthoritativeItemAffixCatalog.LoadLegacyTsv(
+            "item_prefixes.tsv",
+            header + row,
+            "item_suffixes.tsv",
+            header,
+            rules);
+        var fallback = fallbackAffixes.Apply(
+            AuthoritativeItemState.Empty,
+            42,
+            1,
+            new HashSet<string>(["Any"]));
+        Assert.Equal(
+            AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+            fallback.HellfireDamageArmorFlags);
+    }
 }

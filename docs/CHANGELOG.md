@@ -9,7 +9,7 @@ All notable changes to this fork are documented below.
   level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock
   flags and elemental arrow/damage channel mappings are now covered by the same
   catalog.
-- Hellfire unique-item powers now resolve through the
+- Hellfire unique-item and affix powers now resolve through the
   validated `native_item_hellfire_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace.
 - Legacy charged-staff initialization now resolves the `STAFF` miscellaneous

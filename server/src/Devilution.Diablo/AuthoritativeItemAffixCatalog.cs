@@ -74,6 +74,7 @@ public sealed class AuthoritativeItemAffixCatalog
     private readonly IReadOnlyList<AuthoritativeItemAffix> suffixes;
     private readonly AuthoritativeItemGenerationRules generationRules;
     private readonly AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog;
+    private readonly AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog;
 
     public bool UsesLegacyRandom { get; }
 
@@ -82,12 +83,14 @@ public sealed class AuthoritativeItemAffixCatalog
         IEnumerable<AuthoritativeItemAffix> suffixes,
         AuthoritativeItemGenerationRules? generationRules = null,
         bool usesLegacyRandom = false,
-        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         this.prefixes = Validate(prefixes, "prefix");
         this.suffixes = Validate(suffixes, "suffix");
         this.generationRules = generationRules ?? AuthoritativeItemGenerationRules.Default;
         this.nativeItemEffectCatalog = nativeItemEffectCatalog;
+        this.nativeItemHellfireEffectCatalog = nativeItemHellfireEffectCatalog;
         UsesLegacyRandom = usesLegacyRandom;
     }
 
@@ -217,14 +220,16 @@ public sealed class AuthoritativeItemAffixCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemGenerationRules? generationRules = null,
-        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeItemAffixCatalog(
             table.Rows.Where(row => !row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
             table.Rows.Where(row => row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
             generationRules,
-            nativeItemEffectCatalog: nativeItemEffectCatalog);
+            nativeItemEffectCatalog: nativeItemEffectCatalog,
+            nativeItemHellfireEffectCatalog: nativeItemHellfireEffectCatalog);
     }
 
     /** Loads the native legacy prefix and suffix table shapes without rewriting their columns. */
@@ -234,7 +239,8 @@ public sealed class AuthoritativeItemAffixCatalog
         string suffixSourcePath,
         string suffixContents,
         AuthoritativeItemGenerationRules? generationRules = null,
-        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null,
+        AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         var prefixes = TsvTable.Parse(prefixSourcePath, prefixContents).Rows.Select(ParseLegacy);
         var suffixes = TsvTable.Parse(suffixSourcePath, suffixContents).Rows.Select(ParseLegacy);
@@ -243,7 +249,8 @@ public sealed class AuthoritativeItemAffixCatalog
             suffixes,
             generationRules,
             usesLegacyRandom: true,
-            nativeItemEffectCatalog: nativeItemEffectCatalog);
+            nativeItemEffectCatalog: nativeItemEffectCatalog,
+            nativeItemHellfireEffectCatalog: nativeItemHellfireEffectCatalog);
     }
 
     private static AuthoritativeItemAffix Parse(TsvRow row)
@@ -456,23 +463,33 @@ public sealed class AuthoritativeItemAffixCatalog
             },
             "DEVASTATION" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+                    | ResolveHellfireEffectFlag(
+                        "DEVASTATION",
+                        AuthoritativeEquipmentIncomingDamageRules.DevastationFlag),
             },
             "PERIL" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                    | ResolveHellfireEffectFlag(
+                        "PERIL",
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag),
             },
             "JESTERS" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+                    | ResolveHellfireEffectFlag(
+                        "JESTERS",
+                        AuthoritativeEquipmentIncomingDamageRules.JestersFlag),
             },
             "DOPPELGANGER" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+                    | ResolveHellfireEffectFlag(
+                        "DOPPELGANGER",
+                        AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag),
             },
             "DECAY" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
-                    | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                    | ResolveHellfireEffectFlag(
+                        "DECAY",
+                        AuthoritativeEquipmentIncomingDamageRules.DecayFlag),
                 PlusDamage = state.PlusDamage + value,
             },
             "INDESTRUCTIBLE" => state with { Durability = 255, MaxDurability = 255 },
@@ -655,6 +672,14 @@ public sealed class AuthoritativeItemAffixCatalog
     {
         return nativeItemEffectCatalog is not null
             && nativeItemEffectCatalog.TryGetFlag(symbol, out var nativeFlag)
+            ? nativeFlag
+            : fallback;
+    }
+
+    private int ResolveHellfireEffectFlag(string symbol, int fallback)
+    {
+        return nativeItemHellfireEffectCatalog is not null
+            && nativeItemHellfireEffectCatalog.TryGetFlag(symbol, out var nativeFlag)
             ? nativeFlag
             : fallback;
     }

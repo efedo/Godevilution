@@ -285,13 +285,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 legacySuffixTable.SourcePath,
                 legacySuffixTable.ToCanonicalTsv(),
                 generationRules,
-                nativeItemEffectCatalog: nativeItemEffects)
+                nativeItemEffectCatalog: nativeItemEffects,
+                nativeItemHellfireEffectCatalog: nativeItemHellfireEffects)
             : content.TryGetTable("item_affixes.tsv", out var affixTable)
                 ? AuthoritativeItemAffixCatalog.LoadTsv(
                     affixTable.SourcePath,
                     affixTable.ToCanonicalTsv(),
                     generationRules,
-                    nativeItemEffectCatalog: nativeItemEffects)
+                    nativeItemEffectCatalog: nativeItemEffects,
+                    nativeItemHellfireEffectCatalog: nativeItemHellfireEffects)
                 : null;
         var cursorCatalog = content.TryGetTable(
             "item_cursor_graphics.tsv",

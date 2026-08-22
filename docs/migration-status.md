@@ -10,7 +10,7 @@ external `native_item_misc.tsv` namespace as well.
 Legacy charged-staff initialization now resolves the `STAFF` miscellaneous
 identity through that namespace, retaining the native fallback for older
 callers.
-Normalized unique-item Hellfire powers now resolve through the validated
+Normalized unique-item and Hellfire affix powers now resolve through the validated
 Hellfire item-effect namespace, retaining native flag fallbacks for direct
 catalogs without that namespace.
 Unique-item and affix powers with matching ordinary effect symbols now resolve through
