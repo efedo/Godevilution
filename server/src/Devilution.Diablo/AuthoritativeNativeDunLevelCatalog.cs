@@ -82,6 +82,19 @@ public sealed class AuthoritativeNativeDunLevelCatalog
         }
     }
 
+    /** Validates every deferred DUN and optional collision asset before activation. */
+    public void ValidateAssets(ComposedContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        foreach (var definition in definitions) {
+            RequireAsset(definition.LevelId, definition.AssetPath, content);
+            if (!string.IsNullOrWhiteSpace(definition.TileAssetPath))
+                RequireAsset(definition.LevelId, definition.TileAssetPath!, content);
+            if (!string.IsNullOrWhiteSpace(definition.SolAssetPath))
+                RequireAsset(definition.LevelId, definition.SolAssetPath!, content);
+        }
+    }
+
     /** Applies each native DUN object's layer and optional external collision geometry. */
     public void Apply(ComposedContent content, AuthoritativeWorld world)
     {
@@ -168,5 +181,15 @@ public sealed class AuthoritativeNativeDunLevelCatalog
             && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)
             ? value
             : null;
+    }
+
+    private static void RequireAsset(
+        uint levelId,
+        string assetPath,
+        ComposedContent content)
+    {
+        if (!content.TryGetAsset(assetPath, out _))
+            throw new InvalidDataException(
+                $"Native DUN level {levelId} references missing asset '{assetPath}'.");
     }
 }

@@ -2,6 +2,10 @@
 
 Status date: 2026-08-22
 
+Ordinary native-DUN level activation now validates every referenced `.dun` and
+optional `.til`/`.sol` asset before publishing any level replacement, matching
+the staged fragment activation boundary.
+
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility
 fallback remains available to older direct callers.

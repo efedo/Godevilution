@@ -487,6 +487,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (world is null)
                 throw new InvalidDataException(
                     "Native DUN level layers require levels.tsv or procedural_levels.tsv.");
+            nativeDunLevels.ValidateAssets(content);
             nativeDunLevels.Apply(content, world);
         }
         var nativeDunFragments = content.TryGetTable(

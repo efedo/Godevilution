@@ -100,6 +100,28 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
     }
 
     [Fact]
+    public void ValidatesAllReferencedAssetsBeforeActivation()
+    {
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("level.dun", CreateDun([0, 0, 0, 0])),
+            ]),
+        ]));
+        var catalog = new AuthoritativeNativeDunLevelCatalog([
+            new AuthoritativeNativeDunLevelDefinition(
+                2,
+                "level.dun",
+                "level.til",
+                "level.sol"),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.ValidateAssets(content));
+
+        Assert.Contains("level.til", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("level 2", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsIncompleteCollisionAssetPair()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
