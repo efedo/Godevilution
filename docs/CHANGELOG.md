@@ -93,6 +93,8 @@ All notable changes to this fork are documented below.
   their server-owned entity identities before publishing a session.
 - Reject invalid mutable projectile lifetime, enum, and endpoint state at the
   live initial-position gate.
+- Revalidate mutable quest dictionary keys against their server-owned quest
+  identities before publishing a session.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

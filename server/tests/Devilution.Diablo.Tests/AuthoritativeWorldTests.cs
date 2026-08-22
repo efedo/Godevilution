@@ -490,6 +490,19 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void InitialWorldValidationRejectsMutatedQuestDictionaryKeys()
+    {
+        var quest = new AuthoritativeQuestState(40, 0, 1);
+        var world = new DiabloWorldState(quests: [quest]);
+        world.Quests.Clear();
+        world.Quests.Add(41, quest);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            world.ValidateInitialPlayerPosition(0, 0, 0));
+        Assert.Contains("Quest dictionary key 41 does not match quest identity 40", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(

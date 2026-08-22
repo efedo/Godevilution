@@ -154,6 +154,8 @@ The same gate now checks all mutable entity-map keys, including projectiles,
 against their server-owned entity identities.
 It also rejects mutable projectiles with invalid lifetime, enum, or endpoint
 state before the authoritative session starts.
+Quest dictionary keys are likewise checked against their server-owned quest
+identities before startup publication.
 
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility

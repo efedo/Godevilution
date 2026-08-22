@@ -628,6 +628,11 @@ public sealed class DiabloWorldState
                     $"Entity {@object.EntityId} is registered more than once.");
             }
         }
+        foreach (var entry in Quests) {
+            if (entry.Key != entry.Value.QuestId)
+                throw new InvalidDataException(
+                    $"Quest dictionary key {entry.Key} does not match quest identity {entry.Value.QuestId}.");
+        }
         foreach (var entry in Projectiles) {
             ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "projectile");
             var projectile = entry.Value;
