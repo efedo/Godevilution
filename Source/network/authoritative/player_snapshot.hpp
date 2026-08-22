@@ -345,6 +345,10 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<void, std::string> ValidateMonsterSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates native-compatible projectile metadata before projection. */
+[[nodiscard]] tl::expected<void, std::string> ValidateProjectileSnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

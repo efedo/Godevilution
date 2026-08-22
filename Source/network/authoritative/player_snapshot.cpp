@@ -567,7 +567,9 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 	std::vector<ProjectedProjectileSnapshot> projected;
 	projected.reserve(snapshot.projectiles_size());
 	for (const auto &source : snapshot.projectiles()) {
-		if (source.entity_id() == 0 || source.source_entity_id() == 0 || source.spell_id() == 0 || source.remaining_ticks() == 0)
+		if (source.entity_id() == 0 || source.source_entity_id() == 0
+		    || (source.spell_id() == 0 && source.behavior() != 58 && source.behavior() != 59)
+		    || source.remaining_ticks() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains a projectile with an invalid identity or lifetime.");
 		if (source.damage() < 0 || source.area_radius() < 0)
 			return tl::make_unexpected("Server-backed snapshot contains a projectile with an invalid effect.");
@@ -954,6 +956,33 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
 		    || (monster.dialogue_message_id() != 0 && !monster.is_unique()))
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster combat state.");
+	}
+	return {};
+}
+
+tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snapshot &snapshot)
+{
+	for (const auto &projectile : snapshot.projectiles()) {
+		if (projectile.source_entity_id() == 0
+		    || (projectile.spell_id() == 0 && projectile.behavior() != 58 && projectile.behavior() != 59)
+		    || projectile.remaining_ticks() == 0
+		    || projectile.damage() < 0
+		    || projectile.area_radius() < 0
+		    || projectile.damage_minimum() < 0
+		    || projectile.damage_maximum() < projectile.damage_minimum()
+		    || projectile.damage_q6() < 0
+		    || projectile.elemental_fire_damage() < 0
+		    || projectile.elemental_lightning_damage() < 0
+		    || projectile.peril_self_damage_q6() < 0
+		    || projectile.effective_spell_level() < 0
+		    || projectile.damage_type() < 0 || projectile.damage_type() > 4
+		    || projectile.behavior() < 0 || projectile.behavior() > 59
+		    || projectile.phase() < 0 || projectile.phase() > 1
+		    || static_cast<int32_t>(projectile.presentation_kind()) < 0
+		    || static_cast<int32_t>(projectile.presentation_kind()) > 19
+		    || static_cast<int32_t>(projectile.native_visual()) < 0
+		    || static_cast<int32_t>(projectile.native_visual()) > 27)
+			return tl::make_unexpected("Server-backed snapshot contains invalid projectile state.");
 	}
 	return {};
 }

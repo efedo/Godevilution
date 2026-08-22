@@ -1034,6 +1034,37 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDialogue).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
+{
+	const auto makeProjectile = []() {
+		protocol::Snapshot snapshot;
+		auto *projectile = snapshot.add_projectiles();
+		projectile->set_entity_id(1);
+		projectile->set_source_entity_id(2);
+		projectile->set_spell_id(3);
+		projectile->set_remaining_ticks(1);
+		return snapshot;
+	};
+
+	protocol::Snapshot invalidDamage = makeProjectile();
+	invalidDamage.mutable_projectiles(0)->set_damage_minimum(4);
+	invalidDamage.mutable_projectiles(0)->set_damage_maximum(3);
+	EXPECT_FALSE(ValidateProjectileSnapshots(invalidDamage).has_value());
+
+	protocol::Snapshot invalidLifecycle = makeProjectile();
+	invalidLifecycle.mutable_projectiles(0)->set_behavior(60);
+	EXPECT_FALSE(ValidateProjectileSnapshots(invalidLifecycle).has_value());
+
+	protocol::Snapshot invalidPresentation = makeProjectile();
+	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(28));
+	EXPECT_FALSE(ValidateProjectileSnapshots(invalidPresentation).has_value());
+
+	protocol::Snapshot zeroSpellArrow = makeProjectile();
+	zeroSpellArrow.mutable_projectiles(0)->set_spell_id(0);
+	zeroSpellArrow.mutable_projectiles(0)->set_behavior(58);
+	EXPECT_TRUE(ValidateProjectileSnapshots(zeroSpellArrow).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;
