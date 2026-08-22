@@ -23,6 +23,8 @@ All notable changes to this fork are documented below.
   native layers, blocked cells, and warp markers for presentation consumers.
 - Native world projections now carry authoritative level geometry and expose
   fail-closed blocked-cell and missile-blocked queries.
+- Native authoritative event application now consumes typed victory events for
+  the local participant's server-owned Diablo-kill rank.
 - The native debug console now stays native-only in authoritative mode: it
   skips script prelude loading, autocomplete, module help, and interpreter
   fallback while exposing the registered server-compatible command list.

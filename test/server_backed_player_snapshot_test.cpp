@@ -279,11 +279,16 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources
 	auto *exactHealing = events.add_events()->mutable_healing();
 	exactHealing->set_target_entity_id(7);
 	exactHealing->set_amount_q6(5);
+	auto *victory = events.add_events()->mutable_victory();
+	victory->set_player_entity_id(7);
+	victory->set_boss_entity_id(99);
+	victory->set_diablo_kill_level(3);
 
 	ApplyServerBackedEventBatch(player, events, 7);
 
 	EXPECT_EQ(player.life.current, 70);
 	EXPECT_EQ(player._pExperience, 40U);
+	EXPECT_EQ(player.pDiabloKillLevel, 3U);
 }
 
 TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedback)

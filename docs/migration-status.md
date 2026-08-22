@@ -137,6 +137,8 @@ scaled hit points), not only the client's difficulty label.
   native layers, blocked cells, and warp markers for presentation consumers.
 - Native world projections now carry authoritative level geometry and expose
   fail-closed blocked-cell and missile-blocked queries.
+- Native authoritative event application now consumes typed victory events for
+  the local participant's server-owned Diablo-kill rank.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

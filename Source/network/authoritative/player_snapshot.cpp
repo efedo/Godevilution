@@ -1117,6 +1117,10 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			player._pExperience += event.experience().amount();
 			AddFloatingExperienceNumber(player.position.tile, event.experience().amount());
 		}
+		if (event.has_victory() && event.victory().player_entity_id() == entityId) {
+			const auto killLevel = std::min<uint32_t>(event.victory().diablo_kill_level(), std::numeric_limits<uint8_t>::max());
+			player.pDiabloKillLevel = static_cast<uint8_t>(killLevel);
+		}
 		if (event.has_dialogue()
 		    && event.dialogue().source_entity_id() == entityId
 		    && event.dialogue().message_id() >= 0
