@@ -224,6 +224,20 @@ struct ProjectedCorpseSnapshot {
 	int32_t positionY = 0;
 };
 
+enum class ProjectedGameDifficulty : uint32_t {
+	Normal = 1,
+	Nightmare = 2,
+	Hell = 3,
+};
+
+/** Server-owned session metadata retained for native presentation and parity. */
+struct ProjectedSessionMetadata {
+	uint32_t randomState = 0;
+	bool victoryTriggered = false;
+	ProjectedGameDifficulty difficulty = ProjectedGameDifficulty::Normal;
+	std::vector<uint32_t> activeWorldMutationIds;
+};
+
 struct ProjectedPlayerActionSnapshot {
 	uint32_t kind = 0;
 	uint64_t startedAtTick = 0;
@@ -326,6 +340,9 @@ struct ProjectedPlayerSnapshot {
     const ::devilution::protocol::v1::Snapshot &snapshot);
 /** Projects server-owned corpse tiles in stable entity-ID order. */
 [[nodiscard]] tl::expected<std::vector<ProjectedCorpseSnapshot>, std::string> ProjectCorpseSnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+/** Projects server-owned session metadata without enabling local simulation. */
+[[nodiscard]] tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
 /** Validates server-owned quest state before native interaction gates consume it. */

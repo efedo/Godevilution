@@ -131,6 +131,8 @@ scaled hit points), not only the client's difficulty label.
   lifecycle ranges, behavior/phase values, and typed presentation identities.
 - Native authoritative sessions now retain sorted server-owned corpse positions
   without attempting to synthesize missing native corpse visual metadata.
+- Native authoritative sessions now retain server-owned RNG, victory, difficulty,
+  and active world-mutation metadata without enabling local simulation.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

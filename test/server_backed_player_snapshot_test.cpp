@@ -1088,6 +1088,41 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeCorpses)
 	EXPECT_EQ(projected->back().positionY, 9);
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsSessionMetadataWithoutLocalSimulation)
+{
+	protocol::Snapshot snapshot;
+	snapshot.set_random_state(0x12345678);
+	snapshot.set_victory_triggered(true);
+	snapshot.set_difficulty(protocol::GAME_DIFFICULTY_HELL);
+	snapshot.add_active_world_mutation_ids(20);
+	snapshot.add_active_world_mutation_ids(10);
+
+	auto projected = ProjectSessionMetadata(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	EXPECT_EQ(projected->randomState, 0x12345678U);
+	EXPECT_TRUE(projected->victoryTriggered);
+	EXPECT_EQ(projected->difficulty, ProjectedGameDifficulty::Hell);
+	ASSERT_EQ(projected->activeWorldMutationIds.size(), 2U);
+	EXPECT_EQ(projected->activeWorldMutationIds[0], 10U);
+	EXPECT_EQ(projected->activeWorldMutationIds[1], 20U);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidSessionMetadata)
+{
+	protocol::Snapshot invalidDifficulty;
+	invalidDifficulty.set_difficulty(static_cast<protocol::GameDifficulty>(99));
+	EXPECT_FALSE(ProjectSessionMetadata(invalidDifficulty).has_value());
+
+	protocol::Snapshot invalidMutation;
+	invalidMutation.add_active_world_mutation_ids(0);
+	EXPECT_FALSE(ProjectSessionMetadata(invalidMutation).has_value());
+
+	protocol::Snapshot duplicateMutation;
+	duplicateMutation.add_active_world_mutation_ids(7);
+	duplicateMutation.add_active_world_mutation_ids(7);
+	EXPECT_FALSE(ProjectSessionMetadata(duplicateMutation).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

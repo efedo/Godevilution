@@ -663,6 +663,42 @@ tl::expected<std::vector<ProjectedCorpseSnapshot>, std::string> ProjectCorpseSna
 	return projected;
 }
 
+tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(const protocol::Snapshot &snapshot)
+{
+	ProjectedGameDifficulty difficulty = ProjectedGameDifficulty::Normal;
+	switch (snapshot.difficulty()) {
+	case protocol::GAME_DIFFICULTY_UNSPECIFIED:
+	case protocol::GAME_DIFFICULTY_NORMAL:
+		difficulty = ProjectedGameDifficulty::Normal;
+		break;
+	case protocol::GAME_DIFFICULTY_NIGHTMARE:
+		difficulty = ProjectedGameDifficulty::Nightmare;
+		break;
+	case protocol::GAME_DIFFICULTY_HELL:
+		difficulty = ProjectedGameDifficulty::Hell;
+		break;
+	default:
+		return tl::make_unexpected("Server-backed snapshot contains an invalid game difficulty.");
+	}
+
+	ProjectedSessionMetadata projected {
+		.randomState = snapshot.random_state(),
+		.victoryTriggered = snapshot.victory_triggered(),
+		.difficulty = difficulty,
+	};
+	projected.activeWorldMutationIds.reserve(snapshot.active_world_mutation_ids_size());
+	for (const uint32_t mutationId : snapshot.active_world_mutation_ids()) {
+		if (mutationId == 0)
+			return tl::make_unexpected("Server-backed snapshot contains an invalid world-mutation identity.");
+		if (std::find(projected.activeWorldMutationIds.begin(), projected.activeWorldMutationIds.end(), mutationId)
+		    != projected.activeWorldMutationIds.end())
+			return tl::make_unexpected("Server-backed snapshot contains duplicate world-mutation identities.");
+		projected.activeWorldMutationIds.push_back(mutationId);
+	}
+	std::sort(projected.activeWorldMutationIds.begin(), projected.activeWorldMutationIds.end());
+	return projected;
+}
+
 tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot &snapshot)
 {
 	if (snapshot.quests_size() > 4096)
