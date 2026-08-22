@@ -136,6 +136,15 @@ bool LegacyLevelLoadMutationAllowed() noexcept
 #endif
 }
 
+bool LegacyMonsterSimulationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 constexpr int NightmareToHitBonus = 85;
 constexpr int HellToHitBonus = 120;
 
@@ -1520,6 +1529,9 @@ void ShrinkLeaderPacksize(const Monster &monster)
 
 void MonsterDeath(Monster &monster)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	monster.var1++;
 	if (monster.type().type == MT_DIABLO) {
 		if (monster.position.tile.x < viewPosition().x) {
@@ -3646,6 +3658,9 @@ Monster *AddMonster(Point position, Direction dir, size_t typeIndex, bool inMap)
 
 void SpawnMonster(Point position, Direction dir, size_t typeIndex)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	if (ActiveMonsterCount >= MaxMonsters)
 		return;
 
@@ -3939,6 +3954,9 @@ void Monster::startHit(const Player &player, int dam)
 
 void MonsterDeath(Monster &monster, Direction md, bool sendmsg)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	if (!monster.isPlayerMinion())
 		AddPlrMonstExper(monster.level(sgGameInitInfo.nDifficulty), monster.exp(sgGameInitInfo.nDifficulty), monster.whoHit);
 
@@ -3976,6 +3994,9 @@ void MonsterDeath(Monster &monster, Direction md, bool sendmsg)
 
 void StartMonsterDeath(Monster &monster, const Player &player, bool sendmsg)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	monster.tag(player);
 	const Direction md = GetDirection(monster.position.tile, player.position.tile);
 	MonsterDeath(monster, md, sendmsg);
@@ -3983,6 +4004,9 @@ void StartMonsterDeath(Monster &monster, const Player &player, bool sendmsg)
 
 void KillGolem(Monster &golem)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	delta_kill_monster(golem, golem.position.tile, *MyPlayer);
 	NetSendCmdLocParam1(false, CMD_MONSTDEATH, golem.position.tile, static_cast<uint16_t>(golem.getId()));
 	golem.startKill(*MyPlayer);
@@ -3995,6 +4019,9 @@ void Monster::startKill(const Player &player)
 
 void Monster::syncStartKill(Point position, const Player &player)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	if (this->hitPoints == 0 || this->mode == MonsterMode::Death) {
 		return;
 	}
@@ -4774,6 +4801,9 @@ void TalktoMonster(Player &player, Monster &monster)
 
 void SpawnGolem(const Player &player, Point position, uint8_t spellLevel)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	// Search monster index to use for the new golem
 	Monster *golem = nullptr;
 	// 1. Prefer MonsterIndex = PlayerIndex for vanilla compatibility
