@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   wall tile flags; only locally simulated missiles update that bookkeeping.
 - Guard native object synchronization helpers at their public entry points so
   direct connected delta, operate, close, and break callbacks fail closed.
+- Guard direct legacy delta-load helpers for spawned monsters, monster state,
+  objects, and world items in connected sessions.
 - Route native stair, town-warp, and quest-entrance trigger checks through an
   explicit connected-session legacy-world policy, with compatibility coverage
   proving that connected clients cannot emit legacy level-transition commands.

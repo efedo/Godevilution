@@ -849,6 +849,9 @@ void DeltaImportData(_cmd_id cmd, uint32_t recvOffset, int pnum)
 
 void DeltaLoadSpawnedMonsters(const DLevel &deltaLevel)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (const auto &deltaSpawnedMonster : deltaLevel.spawnedMonsters) {
 		const auto &monsterData = deltaSpawnedMonster.second;
 		LoadDeltaSpawnedMonster(deltaSpawnedMonster.second.typeIndex, deltaSpawnedMonster.first, monsterData.seed, monsterData.golemOwnerPlayerId, monsterData.golemSpellLevel);
@@ -858,6 +861,9 @@ void DeltaLoadSpawnedMonsters(const DLevel &deltaLevel)
 
 void DeltaLoadEnemies(const DLevel &deltaLevel)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (size_t i = 0; i < MaxMonsters; i++) {
 		const DMonsterStr &deltaMonster = deltaLevel.monster[i];
 		if (!IsMonsterDeltaValid(deltaMonster))
@@ -881,6 +887,9 @@ void DeltaLoadEnemies(const DLevel &deltaLevel)
 
 void DeltaLoadMonsters(const DLevel &deltaLevel)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (size_t i = 0; i < MaxMonsters; i++) {
 		const DMonsterStr &deltaMonster = deltaLevel.monster[i];
 		if (!IsMonsterDeltaValid(deltaMonster))
@@ -921,6 +930,9 @@ void DeltaLoadMonsters(const DLevel &deltaLevel)
 
 void DeltaLoadObjects(DLevel &deltaLevel)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (auto it = deltaLevel.object.begin(); it != deltaLevel.object.end();) {
 		Object *object = FindObjectAtPosition(it->first);
 		if (object == nullptr) {
@@ -957,6 +969,9 @@ void DeltaLoadObjects(DLevel &deltaLevel)
 
 void DeltaLoadItems(const DLevel &deltaLevel)
 {
+	if (!LegacyDeltaStateAllowed())
+		return;
+
 	for (const TCmdPItem &deltaItem : deltaLevel.item) {
 		if (deltaItem.bCmd == CMD_INVALID)
 			continue;

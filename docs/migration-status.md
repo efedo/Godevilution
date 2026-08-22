@@ -15,6 +15,10 @@ Connected native object synchronization helpers now fail closed at their public
 entry points as well as at protocol dispatch, preventing direct legacy delta,
 operate, close, and break callbacks from mutating server-owned object state.
 
+Native legacy delta-load helpers now also fail closed at their direct entry
+points, covering spawned monsters, monster state, objects, and world items in
+addition to the existing guarded delta dispatch.
+
 Engine verification now includes a 64-generation ruleset replacement pressure
 fixture that holds every prior generation under lease and drains them only
 after all leases release.
