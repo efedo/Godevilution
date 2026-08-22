@@ -431,6 +431,7 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative item price exceeds the shared native protocol range.");
         }
+        ValidateProjectedPlayerItemTopology(state);
         if (!string.IsNullOrEmpty(state.CharacterName)
             && !DiabloPlayerName.IsValid(state.CharacterName)) {
             throw new InvalidDataException(
@@ -579,6 +580,70 @@ internal static class DiabloProtocolMapper
         player.StashGold = state.StashGold;
         player.StashOpen = state.StashOpen;
         return player;
+    }
+
+    private static void ValidateProjectedPlayerItemTopology(StorePlayerSnapshot state)
+    {
+        if (state.Inventory is null
+            || state.Equipment is null
+            || state.Belt is null
+            || state.InventoryGrid is null
+            || state.Stash is null
+            || state.Inventory.Count > 40
+            || state.Equipment.Count > 7
+            || state.Belt.Count > 8
+            || state.Stash.Count > DiabloStashLayout.MaximumItems
+            || state.InventoryGrid.Count != 0 && state.InventoryGrid.Count != 40
+            || state.InventoryGrid.Any(cell => cell < -1 || cell >= state.Inventory.Count)) {
+            throw new InvalidDataException(
+                "Authoritative player item collections have invalid topology.");
+        }
+
+        var equipmentSlots = new HashSet<uint>();
+        foreach (var item in state.Equipment) {
+            if (item is null || item.State is null || item.Slot >= 7
+                || !equipmentSlots.Add(item.Slot)) {
+                throw new InvalidDataException(
+                    "Authoritative player equipment slots are invalid or duplicated.");
+            }
+        }
+
+        var beltSlots = new HashSet<uint>();
+        foreach (var item in state.Belt) {
+            if (item is null || item.State is null || item.Slot >= 8
+                || !beltSlots.Add(item.Slot)) {
+                throw new InvalidDataException(
+                    "Authoritative player belt slots are invalid or duplicated.");
+            }
+        }
+
+        var itemSeeds = new HashSet<uint>();
+        bool AddItemSeed(uint itemSeed) => itemSeed == 0 || itemSeeds.Add(itemSeed);
+        foreach (var item in state.Inventory) {
+            if (item is null || item.State is null || !AddItemSeed(item.ItemSeed)) {
+                throw new InvalidDataException(
+                    "Authoritative player item references are invalid or duplicated.");
+            }
+        }
+        foreach (var item in state.Equipment)
+            if (!AddItemSeed(item.ItemSeed))
+                throw new InvalidDataException(
+                    "Authoritative player item references are invalid or duplicated.");
+        foreach (var item in state.Belt)
+            if (!AddItemSeed(item.ItemSeed))
+                throw new InvalidDataException(
+                    "Authoritative player item references are invalid or duplicated.");
+        foreach (var item in state.Stash) {
+            if (item is null || item.State is null || !AddItemSeed(item.ItemSeed)) {
+                throw new InvalidDataException(
+                    "Authoritative player item references are invalid or duplicated.");
+            }
+        }
+        if (state.HeldItem is { } heldItem
+            && (heldItem.State is null || !AddItemSeed(heldItem.ItemSeed))) {
+            throw new InvalidDataException(
+                "Authoritative held-item reference is invalid or duplicated.");
+        }
     }
 
     private static void ValidateProjectedVisitedLevels(StorePlayerSnapshot state)

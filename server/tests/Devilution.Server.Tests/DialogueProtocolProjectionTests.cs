@@ -577,6 +577,53 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedPlayerItemTopology()
+    {
+        var item = new OwnedStoreItem(0, 0, 7, 0, 0, AuthoritativeItemState.Empty);
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [item],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Belt = [new BeltStoreItem(0, 7, AuthoritativeItemState.Empty)],
+                },
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Equipment = [new EquippedStoreItem(7, 8, AuthoritativeItemState.Empty)],
+                },
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { InventoryGrid = [0, 1] },
+            }));
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(
