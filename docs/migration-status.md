@@ -125,6 +125,8 @@ scaled hit points), not only the client's difficulty label.
   across players, monsters, world items, objects, projectiles, and corpses.
 - Native authoritative snapshot application now rejects malformed player action
   timing, combat-mode combinations, casts, deaths, transitions, and blocked moves.
+- Native authoritative monster snapshots now reject invalid combat ranges,
+  resistances, hit chances, death timelines, ownership, and dialogue identity.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

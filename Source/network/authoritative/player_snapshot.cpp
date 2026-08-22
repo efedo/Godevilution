@@ -923,6 +923,41 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 	return {};
 }
 
+tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapshot &snapshot)
+{
+	for (const auto &monster : snapshot.monsters()) {
+		if (monster.unique_identity().size() > 128
+		    || (!monster.is_unique() && !monster.unique_identity().empty())
+		    || monster.attack_damage() < 0
+		    || monster.min_damage() < 0
+		    || monster.max_damage() < monster.min_damage()
+		    || monster.min_damage_special() < 0
+		    || monster.max_damage_special() < monster.min_damage_special()
+		    || monster.aggro_range() < 0
+		    || monster.monster_level() < 0
+		    || monster.death_animation_ticks() < 0
+		    || monster.death_animation_ticks() > 1024
+		    || monster.death_ticks_remaining() < 0
+		    || monster.death_ticks_remaining() > monster.death_animation_ticks()
+		    || (monster.hit_points_q6() > 0 && monster.death_ticks_remaining() != 0)
+		    || monster.experience_reward() > 1'000'000
+		    || monster.to_hit() < 0 || monster.to_hit() > 255
+		    || monster.to_hit_special() < 0 || monster.to_hit_special() > 255
+		    || monster.intelligence() < 0 || monster.intelligence() > 255
+		    || monster.direction() < 0 || monster.direction() > 7
+		    || monster.fire_resistance() < -100 || monster.fire_resistance() > 100
+		    || monster.lightning_resistance() < -100 || monster.lightning_resistance() > 100
+		    || monster.magic_resistance() < -100 || monster.magic_resistance() > 100
+		    || monster.acid_resistance() < -100 || monster.acid_resistance() > 100
+		    || (!monster.is_player_minion() && monster.owner_player_id() != 0)
+		    || monster.dialogue_message_id() < 0
+		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
+		    || (monster.dialogue_message_id() != 0 && !monster.is_unique()))
+			return tl::make_unexpected("Server-backed snapshot contains invalid monster combat state.");
+	}
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {

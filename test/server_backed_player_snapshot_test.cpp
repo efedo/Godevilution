@@ -1000,6 +1000,40 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidCast).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
+{
+	const auto makeMonster = []() {
+		protocol::Snapshot snapshot;
+		auto *monster = snapshot.add_monsters();
+		monster->set_entity_id(1);
+		monster->set_hit_points(10);
+		monster->set_max_hit_points(10);
+		return snapshot;
+	};
+
+	protocol::Snapshot invalidDamage = makeMonster();
+	invalidDamage.mutable_monsters(0)->set_max_damage(1);
+	invalidDamage.mutable_monsters(0)->set_min_damage(2);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDamage).has_value());
+
+	protocol::Snapshot invalidResistance = makeMonster();
+	invalidResistance.mutable_monsters(0)->set_fire_resistance(101);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidResistance).has_value());
+
+	protocol::Snapshot invalidDeath = makeMonster();
+	invalidDeath.mutable_monsters(0)->set_death_animation_ticks(2);
+	invalidDeath.mutable_monsters(0)->set_death_ticks_remaining(3);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDeath).has_value());
+
+	protocol::Snapshot invalidOwner = makeMonster();
+	invalidOwner.mutable_monsters(0)->set_owner_player_id(4);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidOwner).has_value());
+
+	protocol::Snapshot invalidDialogue = makeMonster();
+	invalidDialogue.mutable_monsters(0)->set_dialogue_message_id(1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDialogue).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

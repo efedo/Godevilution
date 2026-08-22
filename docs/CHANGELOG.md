@@ -11,6 +11,8 @@ All notable changes to this fork are documented below.
   across players, monsters, world items, objects, projectiles, and corpses.
 - Native authoritative snapshot application now rejects malformed player action
   timing, combat-mode combinations, casts, deaths, transitions, and blocked moves.
+- Native authoritative monster snapshots now reject invalid combat ranges,
+  resistances, hit chances, death timelines, ownership, and dialogue identity.
 - The native debug console now stays native-only in authoritative mode: it
   skips script prelude loading, autocomplete, module help, and interpreter
   fallback while exposing the registered server-compatible command list.

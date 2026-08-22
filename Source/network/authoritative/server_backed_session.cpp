@@ -494,6 +494,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 		return tl::make_unexpected(identities.error());
 	if (auto actions = ValidatePlayerActionSnapshots(snapshot); !actions.has_value())
 		return tl::make_unexpected(actions.error());
+	if (auto monsters = ValidateMonsterSnapshots(snapshot); !monsters.has_value())
+		return tl::make_unexpected(monsters.error());
 	if (auto quests = ValidateQuestSnapshots(snapshot); !quests.has_value())
 		return tl::make_unexpected(quests.error());
 	if (auto interactions = ValidateQuestTownerInteractions(snapshot); !interactions.has_value())
