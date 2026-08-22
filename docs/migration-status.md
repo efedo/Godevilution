@@ -132,6 +132,8 @@ scaled hit points), not only the client's difficulty label.
   when compatibility state lacks stable/native item identity.
 - Gold classification now resolves authored `Gold` and `Currency` tags by
   `misc_id` before applying the native type/index fallback.
+- Item-backed spell-source classification now fills omitted spell and charge
+  fields from unambiguous charged/consumable metadata keyed by `misc_id`.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

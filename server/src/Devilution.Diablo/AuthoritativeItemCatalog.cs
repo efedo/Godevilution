@@ -321,6 +321,26 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves an unambiguous consumable-item spell identity by misc ID. */
+    public bool TryGetConsumableItemSpellIdByMiscId(int miscId, out int spellId)
+    {
+        spellId = 0;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem)
+            .Select(definition => definition.SpellId)
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1 || values[0] <= 0)
+            return false;
+
+        spellId = values[0];
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,

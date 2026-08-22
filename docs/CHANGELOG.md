@@ -48,6 +48,8 @@ All notable changes to this fork are documented below.
   when compatibility state lacks stable/native item identity.
 - Gold classification now resolves authored `Gold` and `Currency` tags by
   `misc_id` before applying the native type/index fallback.
+- Item-backed spell-source classification now fills omitted spell and charge
+  fields from unambiguous charged/consumable metadata keyed by `misc_id`.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

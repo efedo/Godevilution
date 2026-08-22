@@ -34,8 +34,8 @@ public static class DiabloCastSourceRules
             && definition.SpellSourceKind is { } contentKind)
             return contentKind;
         var miscId = GetEffectiveMiscId(state, definition);
-        var spellId = GetEffectiveSpellId(state, definition);
-        var maximumCharges = GetEffectiveMaximumCharges(state, definition);
+        var spellId = GetEffectiveSpellId(state, definition, items);
+        var maximumCharges = GetEffectiveMaximumCharges(state, definition, items);
         if (GetChargedSpellId(miscId, spellId, maximumCharges, items) != 0)
             return DiabloItemSpellSourceKind.ChargedItem;
         if (GetConsumableSpellId(miscId, spellId, spells, items) != 0)
@@ -49,6 +49,16 @@ public static class DiabloCastSourceRules
         int maximumCharges,
         AuthoritativeItemCatalog? items = null)
     {
+        if (items is not null
+            && items.TryGetChargedItemMetadataByMiscId(
+                miscId,
+                out var contentMaximumCharges,
+                out var contentSpellId)) {
+            if (spellId <= 0)
+                spellId = contentSpellId;
+            if (maximumCharges <= 0)
+                maximumCharges = contentMaximumCharges;
+        }
         var isChargedSource = items is not null
             && items.TryGetSpellSourceKindByMiscId(
                 miscId,
@@ -70,17 +80,17 @@ public static class DiabloCastSourceRules
     {
         ArgumentNullException.ThrowIfNull(state);
         TryGetDefinition(state, items, out var definition);
+        var miscId = GetEffectiveMiscId(state, definition);
         var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
+        var spellId = GetEffectiveSpellId(state, definition, items, sourceKind);
+        var maximumCharges = GetEffectiveMaximumCharges(state, definition, items);
         if (sourceKind is { } explicitKind)
             return explicitKind is DiabloItemSpellSourceKind.ChargedItem
                 or DiabloItemSpellSourceKind.ConsumableItem
-                ? GetEffectiveSpellId(state, definition) > 0
-                    ? checked((uint)GetEffectiveSpellId(state, definition))
+                ? spellId > 0
+                    ? checked((uint)spellId)
                     : 0
                 : 0;
-        var miscId = GetEffectiveMiscId(state, definition);
-        var spellId = GetEffectiveSpellId(state, definition);
-        var maximumCharges = GetEffectiveMaximumCharges(state, definition);
         var chargedSpellId = GetChargedSpellId(miscId, spellId, maximumCharges, items);
         return chargedSpellId != 0
             ? chargedSpellId
@@ -93,6 +103,10 @@ public static class DiabloCastSourceRules
         AuthoritativeSpellCatalog? spells,
         AuthoritativeItemCatalog? items = null)
     {
+        if (spellId <= 0
+            && items is not null
+            && items.TryGetConsumableItemSpellIdByMiscId(miscId, out var contentSpellId))
+            spellId = contentSpellId;
         var isConsumableSource = items is not null
             && items.TryGetSpellSourceKindByMiscId(
                 miscId,
@@ -120,15 +134,17 @@ public static class DiabloCastSourceRules
         ArgumentNullException.ThrowIfNull(state);
         TryGetDefinition(state, items, out var definition);
         var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
+        var spellIdFromContent = GetEffectiveSpellId(state, definition, items, sourceKind);
+        var maximumCharges = GetEffectiveMaximumCharges(state, definition, items);
         if (sourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ChargedItem
-                && GetEffectiveSpellId(state, definition) > 0
-                && GetEffectiveMaximumCharges(state, definition) > 0
-                && (uint)GetEffectiveSpellId(state, definition) == spellId;
+                && spellIdFromContent > 0
+                && maximumCharges > 0
+                && (uint)spellIdFromContent == spellId;
         return GetChargedSpellId(
                 GetEffectiveMiscId(state, definition),
-                GetEffectiveSpellId(state, definition),
-                GetEffectiveMaximumCharges(state, definition),
+                spellIdFromContent,
+                maximumCharges,
                 items)
             == spellId;
     }
@@ -146,11 +162,11 @@ public static class DiabloCastSourceRules
         var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
         if (sourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ConsumableItem
-                && GetEffectiveSpellId(state, definition) > 0
-                && (uint)GetEffectiveSpellId(state, definition) == spellId;
+                && GetEffectiveSpellId(state, definition, items, explicitKind) > 0
+                && (uint)GetEffectiveSpellId(state, definition, items, explicitKind) == spellId;
         return GetConsumableSpellId(
                 GetEffectiveMiscId(state, definition),
-                GetEffectiveSpellId(state, definition),
+                GetEffectiveSpellId(state, definition, items, sourceKind),
                 spells,
                 items)
             == spellId;
@@ -173,11 +189,41 @@ public static class DiabloCastSourceRules
 
     private static int GetEffectiveSpellId(
         AuthoritativeItemState state,
-        AuthoritativeItemDefinition? definition)
-        => state.SpellId != 0 ? state.SpellId : definition?.SpellId ?? 0;
+        AuthoritativeItemDefinition? definition,
+        AuthoritativeItemCatalog? items,
+        DiabloItemSpellSourceKind? sourceKind = null)
+    {
+        if (state.SpellId != 0)
+            return state.SpellId;
+        if (definition?.SpellId is > 0)
+            return definition.SpellId;
+        if (items is not null) {
+            var miscId = GetEffectiveMiscId(state, definition);
+            if (sourceKind != DiabloItemSpellSourceKind.ConsumableItem
+                && items.TryGetChargedItemMetadataByMiscId(miscId, out _, out var chargedSpellId))
+                return chargedSpellId;
+            if (sourceKind != DiabloItemSpellSourceKind.ChargedItem
+                && items.TryGetConsumableItemSpellIdByMiscId(miscId, out var consumableSpellId))
+                return consumableSpellId;
+        }
+        return 0;
+    }
 
     private static int GetEffectiveMaximumCharges(
         AuthoritativeItemState state,
-        AuthoritativeItemDefinition? definition)
-        => state.MaxCharges != 0 ? state.MaxCharges : definition?.MaxCharges ?? 0;
+        AuthoritativeItemDefinition? definition,
+        AuthoritativeItemCatalog? items)
+    {
+        if (state.MaxCharges != 0)
+            return state.MaxCharges;
+        if (definition?.MaxCharges is > 0)
+            return definition.MaxCharges;
+        if (items is not null
+            && items.TryGetChargedItemMetadataByMiscId(
+                GetEffectiveMiscId(state, definition),
+                out var maximumCharges,
+                out _))
+            return maximumCharges;
+        return 0;
+    }
 }
