@@ -95,6 +95,8 @@ scaled hit points), not only the client's difficulty label.
 - Consumable action magnitudes now resolve through stable or native item
   catalog identity, preserving the legacy Spectral Elixir amount only when no
   content definition can be resolved.
+- Consumable and book action admission now resolves authored action kinds by
+  stable or native item identity when compatibility state omits that field.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
   preventing legacy staff misc IDs from overriding authored non-staff metadata.
 - Consumable action magnitudes now resolve through stable or native item
   catalog identity before using the legacy Spectral Elixir fallback.
+- Consumable and book action admission now resolves authored item actions by
+  stable or native identity when serialized state omits the action kind.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

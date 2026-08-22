@@ -439,8 +439,9 @@ public sealed class DiabloStoreCommandProcessor
         }
 
         var state = item.State;
+        var action = ResolveItemActionKind(state);
         if (state.Deleted
-            || state.ItemActionKind != DiabloItemActionKind.ReadBook
+            || action != DiabloItemActionKind.ReadBook
             || !IsBookItem(state)
             || state.SpellId <= 0
             || spells is null
@@ -507,7 +508,7 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
-        var action = item.State.ItemActionKind;
+        var action = ResolveItemActionKind(item.State);
         if (item.State.Deleted
             || action is not (DiabloItemActionKind.RestorePartialLife
                 or DiabloItemActionKind.RestoreFullLife
@@ -595,6 +596,17 @@ public sealed class DiabloStoreCommandProcessor
         // Preserve the native Spectral Elixir behavior for states that cannot
         // resolve a stable or native content identity.
         return action == DiabloItemActionKind.IncreaseAllAttributes ? 3 : 1;
+    }
+
+    private DiabloItemActionKind ResolveItemActionKind(AuthoritativeItemState state)
+    {
+        if (state.ItemActionKind != DiabloItemActionKind.None)
+            return state.ItemActionKind;
+        if (items is not null
+            && items.TryGetByState(state, out var definition)
+            && definition.ItemActionKind != DiabloItemActionKind.None)
+            return definition.ItemActionKind;
+        return DiabloItemActionKind.None;
     }
 
     private DiabloIntentResult ApplyOil(

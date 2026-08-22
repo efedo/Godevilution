@@ -624,6 +624,7 @@ public sealed class DiabloStoreCommandProcessorTests
             true) {
             MiscId = 99,
             NativeItemIndex = 42,
+            ItemActionKind = DiabloItemActionKind.ReadBook,
             GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
         };
         var book = new OwnedStoreItem(
@@ -633,7 +634,6 @@ public sealed class DiabloStoreCommandProcessorTests
             100,
             0,
             AuthoritativeItemState.Empty with {
-                ItemActionKind = DiabloItemActionKind.ReadBook,
                 StableItemId = 42,
                 ItemIndex = 42,
                 MiscId = 99,
@@ -1031,7 +1031,6 @@ public sealed class DiabloStoreCommandProcessorTests
             100,
             0,
             AuthoritativeItemState.Empty with {
-                ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
                 ItemIndex = 20,
             });
         var player = CreatePlayer(
