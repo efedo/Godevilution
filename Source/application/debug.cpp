@@ -523,6 +523,8 @@ std::string DebugCmdSetSpellsLevel(uint8_t level)
 
 std::string DebugCmdEnableQuest(uint8_t questId)
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Quest activation"); error.has_value())
+		return *error;
 	if (questId >= MAXQUESTS)
 		return StrCat("Quest ", questId, " does not exist!");
 	Quest &quest = Quests[questId];
@@ -535,6 +537,8 @@ std::string DebugCmdEnableQuest(uint8_t questId)
 
 std::string DebugCmdEnableQuests()
 {
+	if (const auto error = RejectAuthoritativeDebugMutation("Quest activation"); error.has_value())
+		return *error;
 	for (Quest &quest : Quests) {
 		if (IsNoneOf(quest._qactive, QUEST_NOTAVAIL, QUEST_INIT))
 			continue;

@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Native debug quest activation now fails closed in authoritative mode;
+  read-only quest diagnostics remain available against projected state.
 - Native player-mutating debug commands now fail closed in authoritative mode,
   including god mode, arrow effects, resource adjustments, attributes, level,
   gold, and spell-level changes.

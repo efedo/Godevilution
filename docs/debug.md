@@ -63,8 +63,10 @@ high-priority experience commands as the legacy level-up helper.
 inventory-stack behavior; omitted amounts use the maximum sweep.
 `debug.player.spells.setLevel <level>` preserves the learned-spell filter and
 network update sequence.
-Quest diagnostics are available as `debug.quests.activate <id>`,
-`debug.quests.activateAll`, `debug.quests.info <id>`, and `debug.quests.all`.
+Quest diagnostics are available as `debug.quests.info <id>` and
+`debug.quests.all`; the activation commands `debug.quests.activate <id>` and
+`debug.quests.activateAll` remain available only to offline sessions because
+connected authoritative quest state is server-owned.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.
