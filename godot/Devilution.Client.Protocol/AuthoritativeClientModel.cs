@@ -120,6 +120,7 @@ public sealed class AuthoritativeClientModel
                 ValidateStatusEffects(player);
                 ValidatePlayerAction(player);
             }
+            ValidateActiveStore(message.Snapshot);
             foreach (var monster in message.Snapshot.Monsters) {
                 ValidateEntityId(entityIds, monster.EntityId);
                 ValidateMonsterVitality(monster);
@@ -385,6 +386,31 @@ public sealed class AuthoritativeClientModel
                 "The authoritative snapshot contains an invalid stash page.");
         foreach (var page in pages)
             _ = StashLayout.Build(player.Stash, page);
+    }
+
+    private static void ValidateActiveStore(Snapshot snapshot)
+    {
+        var player = snapshot.Players[0];
+        var store = snapshot.ActiveStore;
+        if ((store is null) != (player.ActiveStoreId == 0)
+            || store is not null
+                && (store.StoreId == 0 || store.StoreId != player.ActiveStoreId)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an inconsistent active store.");
+        }
+        if (store is null)
+            return;
+
+        var slots = new HashSet<uint>();
+        foreach (var item in store.Items) {
+            if (!slots.Add(item.StoreSlot)
+                || item.Price > int.MaxValue
+                || !HasValidItemIdentity(item.ItemSeed, item.State)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid active-store stock.");
+            }
+            ValidateItemState(item.State);
+        }
     }
 
     private static void ValidatePlayerItemFootprints(PlayerSnapshot player)

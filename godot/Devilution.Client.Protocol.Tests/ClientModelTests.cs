@@ -997,6 +997,70 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsInconsistentOrMalformedActiveStoreSnapshots()
+    {
+        var model = new AuthoritativeClientModel();
+        var missingStore = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, ActiveStoreId = 1 } },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: missingStore)));
+
+        var duplicateSlot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, ActiveStoreId = 1 } },
+            ActiveStore = new StoreSnapshot {
+                StoreId = 1,
+                Items = {
+                    new StoreItemSnapshot {
+                        StoreSlot = 4,
+                        ItemSeed = 42,
+                        State = new ItemStateSnapshot { ItemType = 1 },
+                    },
+                    new StoreItemSnapshot {
+                        StoreSlot = 4,
+                        ItemSeed = 43,
+                        State = new ItemStateSnapshot { ItemType = 1 },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateSlot)));
+
+        var unsupportedPrice = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, ActiveStoreId = 1 } },
+            ActiveStore = new StoreSnapshot {
+                StoreId = 1,
+                Items = {
+                    new StoreItemSnapshot {
+                        StoreSlot = 4,
+                        ItemSeed = 42,
+                        Price = uint.MaxValue,
+                        State = new ItemStateSnapshot { ItemType = 1 },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: unsupportedPrice)));
+
+        var invalidIdentity = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, ActiveStoreId = 1 } },
+            ActiveStore = new StoreSnapshot {
+                StoreId = 1,
+                Items = {
+                    new StoreItemSnapshot {
+                        StoreSlot = 4,
+                        State = new ItemStateSnapshot { ItemType = 1 },
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidIdentity)));
+    }
+
+    [Fact]
     public void AppliesMultiplayerSnapshotsWithTheReceivingParticipantFirst()
     {
         var model = new AuthoritativeClientModel();

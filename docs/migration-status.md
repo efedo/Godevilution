@@ -65,6 +65,8 @@ scaled hit points), not only the client's difficulty label.
   belt, equipment, stash, and held-item projections.
 - Godot now rejects impossible core item value, damage, armor, charge,
   durability, and elemental-damage ranges before presentation consumes them.
+- Godot now cross-validates the active vendor session and rejects duplicate
+  stock slots, prices outside the native range, and invalid stock identities.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

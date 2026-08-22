@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
   inventory, belt, equipment, stash, and held-item references remain unambiguous.
 - The Godot protocol boundary now rejects impossible core item ranges while
   retaining signed affix modifiers and omitted zero-valued legacy defaults.
+- The Godot protocol boundary now cross-validates active vendor state, rejecting
+  inconsistent session IDs, duplicate stock slots, unsupported prices, and
+  invalid stock item identities before presentation consumes them.
 - Use content-owned `Book` item tags for spell-book template generation,
   random-drop eligibility, and `ReadBook` admission; use authored `Gold`
   classification for unique-monster drop filtering, retaining native fallbacks
