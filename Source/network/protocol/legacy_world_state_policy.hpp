@@ -21,6 +21,16 @@ constexpr bool ShouldProcessLegacyQuestTick(bool serverConnected) noexcept
 }
 
 /**
+ * Legacy trigger checks can emit level-transition commands when a player
+ * reaches a stair, warp, or quest entrance, so they are offline-only while
+ * connected sessions use authoritative movement and transition projections.
+ */
+constexpr bool ShouldProcessLegacyTriggerCheck(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyWorldStateMessage(serverConnected);
+}
+
+/**
  * Legacy quest resynchronization rebuilds local quest-driven world state and
  * is offline-only while connected sessions use authoritative projections.
  */

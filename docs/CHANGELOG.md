@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Route native stair, town-warp, and quest-entrance trigger checks through an
+  explicit connected-session legacy-world policy, with compatibility coverage
+  proving that connected clients cannot emit legacy level-transition commands.
 - Add a 64-generation ruleset replacement pressure fixture proving that
   pinned generations remain retired until every lease is released.
 - Set-level native geometry now has an explicit asset preflight before level
