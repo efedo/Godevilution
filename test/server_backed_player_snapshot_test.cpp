@@ -230,6 +230,15 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicatePlayerItemSeedsDuringProjection
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidPlayerItemIdentityDuringProjection)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->add_inventory()->set_item_seed(0);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)
 {
 	Player player;
@@ -1430,14 +1439,14 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
 	Item inventoryItem;
 	inventoryItem._itype = ItemType::Sword;
-	snapshot.inventory.push_back({ .item = inventoryItem });
+	snapshot.inventory.push_back({ .itemSeed = 42, .item = inventoryItem });
 	snapshot.inventoryGrid[0] = 0;
 	Item equippedItem;
 	equippedItem._itype = ItemType::Shield;
-	snapshot.equipment.push_back({ .slot = INVLOC_HAND_LEFT, .item = equippedItem });
+	snapshot.equipment.push_back({ .slot = INVLOC_HAND_LEFT, .itemSeed = 43, .item = equippedItem });
 	Item beltItem;
 	beltItem._itype = ItemType::Misc;
-	snapshot.belt.push_back({ .slot = 2, .item = beltItem });
+	snapshot.belt.push_back({ .slot = 2, .itemSeed = 44, .item = beltItem });
 	Item heldItem;
 	heldItem._itype = ItemType::Gold;
 	heldItem._iSeed = 99;
@@ -1732,6 +1741,18 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicatePlayerItemSeedsWithoutMutation)
 	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
 	snapshot.inventory.push_back({ .itemSeed = 42 });
 	snapshot.equipment.push_back({ .itemSeed = 42 });
+
+	Player player;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidPlayerItemIdentityWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterLevel = 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	snapshot.inventory.push_back({ .itemSeed = 0 });
 
 	Player player;
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());

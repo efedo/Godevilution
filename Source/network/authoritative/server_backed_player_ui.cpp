@@ -22,6 +22,11 @@ bool IsValidSpellTargetingKind(ProjectedSpellTargetingKind value)
 	return static_cast<uint32_t>(value) <= static_cast<uint32_t>(ProjectedSpellTargetingKind::WorldEntity);
 }
 
+bool HasValidProjectedItemIdentity(uint32_t itemSeed, const Item &item)
+{
+	return (itemSeed != 0 || item._iMiscId == IMISC_EAR) && !item.isEmpty();
+}
+
 tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &snapshot)
 {
 	if (snapshot.entityId == 0)
@@ -142,13 +147,15 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed belt exceeds the native belt capacity.");
 	for (const auto &beltItem : snapshot.belt) {
 		if (beltItem.slot >= MaxBeltItems || !IsValidSpellTargetingKind(beltItem.spellTargetingKind)
-		    || !hasUniqueItemSeed(beltItem.itemSeed))
+		    || !hasUniqueItemSeed(beltItem.itemSeed)
+		    || !HasValidProjectedItemIdentity(beltItem.itemSeed, beltItem.item))
 			return tl::make_unexpected("Server-backed belt contains an invalid slot.");
 	}
 	for (const auto &inventoryItem : snapshot.inventory) {
 		if (!IsValidSpellTargetingKind(inventoryItem.spellTargetingKind)
 		    || inventoryItem.price > static_cast<uint32_t>(INT_MAX)
-		    || !hasUniqueItemSeed(inventoryItem.itemSeed))
+		    || !hasUniqueItemSeed(inventoryItem.itemSeed)
+		    || !HasValidProjectedItemIdentity(inventoryItem.itemSeed, inventoryItem.item))
 			return tl::make_unexpected("Server-backed inventory contains an invalid spell targeting kind.");
 	}
 	if (snapshot.heldItem.has_value() && !IsValidSpellTargetingKind(snapshot.heldItem->spellTargetingKind))
@@ -159,7 +166,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed inventory does not fit the native inventory layout.");
 	if (snapshot.heldItem.has_value()
 	    && ((snapshot.heldItem->itemSeed == 0
-	            && snapshot.heldItem->item._iMiscId != IMISC_EAR)
+            && snapshot.heldItem->item._iMiscId != IMISC_EAR)
+	        || !HasValidProjectedItemIdentity(snapshot.heldItem->itemSeed, snapshot.heldItem->item)
 	        || snapshot.heldItem->price > static_cast<uint32_t>(INT_MAX)
 	        || snapshot.heldItem->item.isEmpty())) {
 		return tl::make_unexpected("Server-backed held item is invalid.");
@@ -169,6 +177,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	for (const auto &equipment : snapshot.equipment) {
 		if (equipment.slot >= NUM_INVLOC || !IsValidSpellTargetingKind(equipment.spellTargetingKind)
 		    || !hasUniqueItemSeed(equipment.itemSeed)
+		    || !HasValidProjectedItemIdentity(equipment.itemSeed, equipment.item)
 		    || !equipmentSlots.insert(equipment.slot).second)
 			return tl::make_unexpected("Server-backed equipment contains a duplicate or invalid slot.");
 	}
@@ -179,6 +188,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    || !IsValidSpellTargetingKind(stashItem.spellTargetingKind)
 		    || stashItem.price > static_cast<uint32_t>(INT_MAX)
 		    || !hasUniqueItemSeed(stashItem.itemSeed)
+		    || !HasValidProjectedItemIdentity(stashItem.itemSeed, stashItem.item)
 		    || stashItem.width > 10 || stashItem.height > 10
 		    || stashItem.cell % 10 + stashItem.width > 10
 		    || stashItem.cell / 10 + stashItem.height > 10) {

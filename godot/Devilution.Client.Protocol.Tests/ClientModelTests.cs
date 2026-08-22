@@ -1084,6 +1084,27 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsPlayerItemsWithIncompleteIdentity()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsOversizedInventoryFootprintsInsteadOfClampingThem()
     {
         var model = new AuthoritativeClientModel();

@@ -580,6 +580,9 @@ public sealed class AuthoritativeClientModel
         if (itemSeed != 0 && !itemSeeds.Add(itemSeed))
             throw new InvalidDataException(
                 "The authoritative snapshot contains duplicate player item references.");
+        if (state is not null && !HasValidItemIdentity(itemSeed, state))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains a player item with an invalid identity.");
         ValidateInventoryFootprint(state);
         ValidateItemState(state);
     }

@@ -184,6 +184,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		projected.statusEffects.push_back({ effect.effect_id(), effect.remaining_ticks(), effect.magnitude(), static_cast<uint32_t>(effect.behavior()) });
 	projected.inventory.reserve(player->inventory_size());
 	for (const auto &source : player->inventory()) {
+		if (!HasValidItemIdentity(source.item_seed(), source.state()))
+			return tl::make_unexpected("Server-backed snapshot contains an inventory item with an invalid native identity.");
 		auto item = ProjectNativeItem(source.state(), source.item_seed(), source.price());
 		if (!item.has_value())
 			return tl::make_unexpected(item.error());
@@ -220,6 +222,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	projected.equipment.reserve(player->equipment_size());
 	for (const auto &source : player->equipment()) {
+		if (!HasValidItemIdentity(source.item_seed(), source.state()))
+			return tl::make_unexpected("Server-backed snapshot contains an equipment item with an invalid native identity.");
 		auto item = ProjectNativeItem(source.state(), source.item_seed(), 0);
 		if (!item.has_value())
 			return tl::make_unexpected(item.error());
@@ -234,6 +238,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	projected.belt.reserve(player->belt_size());
 	for (const auto &source : player->belt()) {
+		if (!HasValidItemIdentity(source.item_seed(), source.state()))
+			return tl::make_unexpected("Server-backed snapshot contains a belt item with an invalid native identity.");
 		auto item = ProjectNativeItem(source.state(), source.item_seed(), 0);
 		if (!item.has_value())
 			return tl::make_unexpected(item.error());
