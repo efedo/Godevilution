@@ -358,11 +358,19 @@ public sealed class DiabloStoreCommandProcessor
 
         if (!TryResolveGoldTopology(player, out var hasGoldTopology))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        var maximumCharges = ResolveChargedMaximumCharges(item.State);
         ReplaceItem(
             player,
             intent.Item,
             intent.LegacyInventoryIndex,
-            item with { State = item.State with { Charges = item.State.MaxCharges } });
+            item with {
+                State = item.State with {
+                    Charges = maximumCharges,
+                    MaxCharges = maximumCharges == 0
+                        ? item.State.MaxCharges
+                        : maximumCharges,
+                },
+            });
         if (!SpendGold(player, rules.GetRechargePrice(item), hasGoldTopology))
             throw new InvalidOperationException("Validated recharge Gold could not be removed.");
         return DiabloIntentResult.Accepted;

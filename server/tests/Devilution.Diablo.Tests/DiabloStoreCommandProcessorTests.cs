@@ -123,6 +123,64 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void VendorRechargeUsesChargedCapacityByMiscIdWhenStateOmitsIt()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2305,
+            0,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 125,
+            NativeItemIndex = 105,
+            SpellId = 30,
+            SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            MaxCharges = 10,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 125,
+            Charges = 1,
+            MaxCharges = 0,
+            Value = 100,
+        };
+        var player = CreatePlayer(
+            gold: 1000,
+            equipment: [new EquippedStoreItem(3, 2305, state)]);
+        var pricing = new StoreServicePricing(
+            spellStaffCosts: new Dictionary<int, uint> { [30] = 0 });
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            rules: new DiabloStoreRules(pricing, items),
+            items: items);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            0).Succeeded);
+        var result = processor.Execute(
+            player,
+            new DiabloRechargeItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 3),
+                0),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var recharged = Assert.Single(player.Equipment).State;
+        Assert.Equal(10, recharged.Charges);
+        Assert.Equal(10, recharged.MaxCharges);
+        Assert.Equal(1000U - 45U, player.Gold);
+    }
+
+    [Fact]
     public void SemanticRechargeRoleAuthorizesAConfiguredCustomSpellIdentity()
     {
         var item = new OwnedStoreItem(

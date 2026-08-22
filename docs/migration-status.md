@@ -142,6 +142,8 @@ scaled hit points), not only the client's difficulty label.
   native, or `misc_id` identity and enforces authored usability.
 - Sorcerer Staff Recharge execution now resolves omitted spell and charge
   metadata through the active charged-item catalog, including `misc_id`.
+- Vendor Recharge now writes resolved authored maximum charges back into item
+  state when compatibility state omitted that field.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
