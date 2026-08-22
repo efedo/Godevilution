@@ -351,7 +351,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeSpellBookCatalog.LoadTsv(
                 spellBooksTable.SourcePath,
                 spellBooksTable.ToCanonicalTsv(),
-                stableIds)
+                stableIds,
+                cursorCatalog)
             : null;
         if (spellBooks is not null) {
             if (spells is null)

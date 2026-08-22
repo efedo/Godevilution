@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Spell-book rows can now author their native cursor projection through the
+  validated `item_cursor_graphics.tsv` catalog, advancing the Diablo content
+  schema to `1.413.0` while retaining the native magic-school fallback.
 - Legacy item-type generation tags now resolve through validated external
   `native_item_tags.tsv` data during content activation, advancing the Diablo
   content schema to `1.412.0` while retaining direct-loader compatibility
@@ -5003,4 +5006,4 @@ All notable changes to this fork are documented below.
   attribute, light, recovery, and trap-resistance powers through keyed item and
   unique-item overlays.
 - Add a three-cycle server reconnect soak that preserves a resumed participant's
-  identity and complete self-first multiplayer snapshot while another session remains connected.
+  identity and complete self-first multiplayer snapshot while another session remains connected.

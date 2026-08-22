@@ -19,8 +19,8 @@ public sealed record AuthoritativeSpellBookDefinition(
     AuthoritativeSpellBookMagicType MagicType,
     int MinimumMagic)
 {
-    /** Native cursor graphic selected from the spell's magic school. */
-    public int NativeCursorGraphic => MagicType switch {
+    /** Native cursor graphic selected from the spell's external cursor symbol. */
+    public int NativeCursorGraphic { get; init; } = MagicType switch {
         AuthoritativeSpellBookMagicType.Magic => 86,
         AuthoritativeSpellBookMagicType.Fire => 87,
         AuthoritativeSpellBookMagicType.Lightning => 88,
@@ -56,6 +56,7 @@ public sealed class AuthoritativeSpellBookCatalog
                 || definition.BookLevel <= 0
                 || definition.BookCost < 0
                 || definition.MinimumMagic < 0
+                || definition.NativeCursorGraphic is < 0 or > byte.MaxValue
                 || !Enum.IsDefined(definition.MagicType)) {
                 throw new InvalidDataException("Spell-book definitions contain invalid bounds or presentation data.");
             }
@@ -271,16 +272,28 @@ public sealed class AuthoritativeSpellBookCatalog
     public static AuthoritativeSpellBookCatalog LoadTsv(
         string sourcePath,
         string contents,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeItemCursorCatalog? cursorCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        return new AuthoritativeSpellBookCatalog(table.Rows.Select(row => new AuthoritativeSpellBookDefinition(
-            ResolveSpellId(row, stableIds),
-            row.Required("display_name"),
-            row.RequiredInt32("book_level"),
-            row.RequiredInt32("book_cost"),
-            ParseMagicType(row),
-            row.RequiredInt32("minimum_magic"))));
+        return new AuthoritativeSpellBookCatalog(table.Rows.Select(row => {
+            var magicType = ParseMagicType(row);
+            var definition = new AuthoritativeSpellBookDefinition(
+                ResolveSpellId(row, stableIds),
+                row.Required("display_name"),
+                row.RequiredInt32("book_level"),
+                row.RequiredInt32("book_cost"),
+                magicType,
+                row.RequiredInt32("minimum_magic"));
+            if (cursorCatalog is not null
+                && row.TryGet("cursor_symbol", out var cursorSymbol)
+                && !string.IsNullOrWhiteSpace(cursorSymbol)) {
+                definition = definition with {
+                    NativeCursorGraphic = cursorCatalog.Resolve(cursorSymbol),
+                };
+            }
+            return definition;
+        }));
     }
 
     private static uint ResolveSpellId(TsvRow row, StableContentIdCatalog? stableIds)

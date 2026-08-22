@@ -6,6 +6,21 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeSpellBookCatalogTests
 {
     [Fact]
+    public void LoadsNativeCursorSymbolThroughExternalCursorCatalog()
+    {
+        var cursors = new AuthoritativeItemCursorCatalog([
+            new("BOOK_RED", 123),
+        ]);
+        var books = AuthoritativeSpellBookCatalog.LoadTsv(
+            "spell_books.tsv",
+            "spell_id\tdisplay_name\tbook_level\tbook_cost\tmagic_type\tminimum_magic\tcursor_symbol\n"
+                + "1\tFirebolt\t1\t1000\tFire\t15\tBOOK_RED\n",
+            cursorCatalog: cursors);
+
+        Assert.Equal(123, books.Definitions.Single().NativeCursorGraphic);
+    }
+
+    [Fact]
     public void RandomBookSelectionWalksNativeSpellIdsInsteadOfStableIds()
     {
         var items = CreateBookTemplateCatalog();
