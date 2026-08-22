@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Server boundary tests now explicitly enforce that the Diablo game module
+  depends only on Domain, Data, and Engine.
 - Production content activation now rejects unique and affix power symbols
   without an authoritative C# handler, while direct catalogs retain their
   compatibility behavior.

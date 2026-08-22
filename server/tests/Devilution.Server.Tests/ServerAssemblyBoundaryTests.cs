@@ -51,6 +51,20 @@ public sealed class ServerAssemblyBoundaryTests
     }
 
     [Fact]
+    public void DiabloGameModuleDependsOnlyOnDomainDataAndEngine()
+    {
+        var diablo = Assembly.Load("Devilution.Diablo");
+
+        Assert.Equal(
+            [
+                "Devilution.Data",
+                "Devilution.Domain",
+                "Devilution.Engine",
+            ],
+            GodevilutionDependencies(diablo));
+    }
+
+    [Fact]
     public void CanonicalProtobufSchemaHasOneManagedGeneratorOwner()
     {
         var repositoryRoot = FindRepositoryRoot();
