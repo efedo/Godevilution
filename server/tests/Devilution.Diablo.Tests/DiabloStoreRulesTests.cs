@@ -198,4 +198,63 @@ public sealed class DiabloStoreRulesTests
         Assert.Null(rules.ValidateRecharge(state, 100));
         Assert.Equal(90U, rules.GetRechargePrice(state));
     }
+
+    [Fact]
+    public void RechargeUsesContentCapacityAndSpellPricingByMiscId()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                SpellId = 7,
+                MaxCharges = 10,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+        ]);
+        var pricing = new StoreServicePricing(
+            spellStaffCosts: new Dictionary<int, uint> { [7] = 100 });
+        var rules = new DiabloStoreRules(pricing, items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+            Charges = 1,
+            Value = 100,
+        };
+
+        Assert.Null(rules.ValidateRecharge(state, 100));
+        Assert.Equal(90U, rules.GetRechargePrice(state));
+    }
+
+    [Fact]
+    public void AmbiguousChargedMetadataByMiscIdFailsClosed()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                SpellId = 7,
+                MaxCharges = 10,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+            new AuthoritativeItemDefinition(8, 1, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 102,
+                MiscId = 121,
+                SpellId = 7,
+                MaxCharges = 12,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+            Charges = 1,
+            Value = 100,
+        };
+
+        Assert.Equal(
+            DiabloRuleFailure.NotAllowed,
+            rules.ValidateRecharge(state, 100));
+        Assert.Equal(0U, rules.GetRechargePrice(state));
+    }
 }

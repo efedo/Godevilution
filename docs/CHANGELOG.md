@@ -40,6 +40,8 @@ All notable changes to this fork are documented below.
   preserving native `ItemClass` behavior only for tagless compatibility states.
 - `ReadBook` admission now resolves authored `Book` tags by unambiguous `misc_id`
   when a compatibility state has no stable or native item identity.
+- Recharge capacity and spell pricing now resolve unambiguous charged-item
+  metadata by `misc_id` when compatibility state omits native item identity.
 
 - Externalize Arena Potion admission through the optional `arena_only` Boolean
   field in `items.tsv`, preserving the native misc-ID compatibility fallback for

@@ -124,6 +124,8 @@ scaled hit points), not only the client's difficulty label.
   preserving native `ItemClass` behavior only for tagless compatibility states.
 - `ReadBook` admission now resolves authored `Book` tags by unambiguous `misc_id`
   when a compatibility state has no stable or native item identity.
+- Recharge capacity and spell pricing now resolve unambiguous charged-item
+  metadata by `misc_id` when compatibility state omits native item identity.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

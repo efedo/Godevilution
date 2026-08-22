@@ -212,10 +212,21 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     {
         if (state.MaxCharges != 0)
             return state.MaxCharges;
-        if (items is not null
-            && items.TryGetByState(state, out var definition)
-            && definition.MaxCharges != 0)
-            return definition.MaxCharges;
+        if (items is not null) {
+            var hasDefinition = items.TryGetByState(state, out var definition);
+            if (hasDefinition && definition.MaxCharges != 0)
+                return definition.MaxCharges;
+            var miscId = state.MiscId != 0
+                ? state.MiscId
+                : hasDefinition
+                    ? definition.MiscId
+                    : 0;
+            if (items.TryGetChargedItemMetadataByMiscId(
+                    miscId,
+                    out var maximumCharges,
+                    out _))
+                return maximumCharges;
+        }
         return 0;
     }
 
@@ -223,9 +234,21 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     {
         if (state.SpellId != 0)
             return state.SpellId;
-        if (items is not null
-            && items.TryGetByState(state, out var definition))
-            return definition.SpellId;
+        if (items is not null) {
+            var hasDefinition = items.TryGetByState(state, out var definition);
+            if (hasDefinition && definition.SpellId != 0)
+                return definition.SpellId;
+            var miscId = state.MiscId != 0
+                ? state.MiscId
+                : hasDefinition
+                    ? definition.MiscId
+                    : 0;
+            if (items.TryGetChargedItemMetadataByMiscId(
+                    miscId,
+                    out _,
+                    out var spellId))
+                return spellId;
+        }
         return 0;
     }
 

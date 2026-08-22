@@ -292,6 +292,35 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous charged-item capacity and spell metadata by misc ID. */
+    public bool TryGetChargedItemMetadataByMiscId(
+        int miscId,
+        out int maximumCharges,
+        out int spellId)
+    {
+        maximumCharges = 0;
+        spellId = 0;
+        if (miscId <= 0)
+            return false;
+
+        var matches = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem)
+            .ToArray();
+        if (matches.Length == 0)
+            return false;
+
+        var chargeValues = matches.Select(definition => definition.MaxCharges).Distinct().ToArray();
+        var spellValues = matches.Select(definition => definition.SpellId).Distinct().ToArray();
+        if (chargeValues.Length != 1 || spellValues.Length != 1
+            || chargeValues[0] <= 0 || spellValues[0] <= 0)
+            return false;
+
+        maximumCharges = chargeValues[0];
+        spellId = spellValues[0];
+        return true;
+    }
+
     /** Resolves non-empty, unambiguous semantic item tags by misc ID. */
     public bool TryGetGenerationTagsByMiscId(
         int miscId,
