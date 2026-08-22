@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
   portal creation, quest-variable transitions, and local level changes cannot
   bypass server-owned world progression; offline sessions retain the legacy
   path.
+- Connected native quest completion, set-piece drawing, and legacy multiplayer
+  quest synchronization helpers now fail closed as well; authoritative quest
+  state and world mutations remain server-owned.
 - Public native simulation helpers now fail closed while connected so
   movement, combat, lifecycle, trap, door, and other world mutation cannot
   bypass the server-owned game loop; offline sessions retain the legacy

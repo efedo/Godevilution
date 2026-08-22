@@ -400,6 +400,11 @@ bool ForceQuests()
 
 void CheckQuestKill(const Monster &monster, bool sendmsg)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (gbIsSpawn)
 		return;
 
@@ -462,6 +467,11 @@ void CheckQuestKill(const Monster &monster, bool sendmsg)
 
 void DRLG_CheckQuests(Point position)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	for (auto &quest : Quests) {
 		if (quest.IsAvailable()) {
 			switch (quest._qidx) {
@@ -919,6 +929,11 @@ void QuestlogESC()
 
 void SetMultiQuest(int q, quest_state s, bool log, int v1, int v2, int16_t qmsg)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (gbIsSpawn)
 		return;
 

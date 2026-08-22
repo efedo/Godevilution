@@ -15,6 +15,9 @@ world-item state; offline sessions retain the legacy path.
 Connected native quest ticking now fails closed at its public helper so legacy
 portal creation, quest-variable transitions, and local level changes cannot
 bypass server-owned world progression; offline sessions retain the legacy path.
+Connected native quest completion, set-piece drawing, and legacy multiplayer
+quest synchronization helpers now fail closed as well; authoritative quest
+state and world mutations remain server-owned.
 Public native simulation helpers now fail closed while connected, closing the
 direct-call seams around the existing authoritative game-loop gate; offline
 sessions retain the legacy movement, combat, lifecycle, trap, door, and other
