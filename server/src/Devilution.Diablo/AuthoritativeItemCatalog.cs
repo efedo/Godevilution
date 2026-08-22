@@ -409,6 +409,31 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous authored service-value metadata by misc ID. */
+    public bool TryGetValueMetadataByMiscId(
+        int miscId,
+        out int value,
+        out int identifiedValue)
+    {
+        value = 0;
+        identifiedValue = 0;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .Select(definition => (definition.Value, definition.IdentifiedValue))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1
+            || values[0].Value <= 0 && values[0].IdentifiedValue <= 0)
+            return false;
+
+        value = values[0].Value;
+        identifiedValue = values[0].IdentifiedValue;
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,

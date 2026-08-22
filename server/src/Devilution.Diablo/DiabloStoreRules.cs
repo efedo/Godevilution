@@ -164,7 +164,10 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     public uint GetSalePrice(AuthoritativeItemState state)
     {
         ArgumentNullException.ThrowIfNull(state);
-        var value = state.Magical != 0 && state.Identified ? state.IdentifiedValue : state.Value;
+        var values = ResolveValues(state);
+        var value = state.Magical != 0 && state.Identified
+            ? values.IdentifiedValue
+            : values.Value;
         return (uint)Math.Max(value / Pricing.SaleDivisor, 1);
     }
 
@@ -181,14 +184,15 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         var due = maximumDurability - state.Durability;
         if (due <= 0 || maximumDurability <= 0)
             return 0;
+        var values = ResolveValues(state);
         if (state.Magical != 0 && state.Identified) {
             return (uint)Math.Max(
                 0,
-                Pricing.MagicalRepairPercent * state.IdentifiedValue * due
+                Pricing.MagicalRepairPercent * values.IdentifiedValue * due
                     / (maximumDurability * Pricing.MagicalRepairDivisor));
         }
         return (uint)Math.Max(
-            state.Value * due / (maximumDurability * Pricing.NormalRepairDivisor),
+            values.Value * due / (maximumDurability * Pricing.NormalRepairDivisor),
             1);
     }
 
@@ -215,6 +219,29 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         return 0;
     }
 
+    private (int Value, int IdentifiedValue) ResolveValues(AuthoritativeItemState state)
+    {
+        var value = state.Value;
+        var identifiedValue = state.IdentifiedValue;
+        if (items is not null && (value == 0 || identifiedValue == 0)) {
+            if (items.TryGetByState(state, out var definition)) {
+                if (value == 0)
+                    value = definition.Value;
+                if (identifiedValue == 0)
+                    identifiedValue = definition.IdentifiedValue;
+            } else if (items.TryGetValueMetadataByMiscId(
+                    state.MiscId,
+                    out var contentValue,
+                    out var contentIdentifiedValue)) {
+                if (value == 0)
+                    value = contentValue;
+                if (identifiedValue == 0)
+                    identifiedValue = contentIdentifiedValue;
+            }
+        }
+        return (value, identifiedValue);
+    }
+
     public uint GetRechargePrice(AuthoritativeItemState state)
     {
         ArgumentNullException.ThrowIfNull(state);
@@ -223,7 +250,7 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         if (due <= 0 || maximumCharges <= 0)
             return 0;
         var spellId = ResolveSpellId(state);
-        var baseValue = checked(state.Value + (int)Pricing.GetSpellStaffCost(spellId));
+        var baseValue = checked(ResolveValues(state).Value + (int)Pricing.GetSpellStaffCost(spellId));
         return (uint)Math.Max(0, baseValue * due / (maximumCharges * Pricing.RechargeDivisor));
     }
 

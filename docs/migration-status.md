@@ -150,6 +150,9 @@ scaled hit points), not only the client's difficulty label.
   from authored item metadata before applying native effects.
 - Sharpness Oil now hydrates omitted target weapon damage from authored item
   metadata before applying its native increment.
+- Store sale, repair, and recharge prices now resolve omitted item values from
+  unambiguous authored metadata, including compatibility states keyed by
+  `misc_id`.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

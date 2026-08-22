@@ -20,6 +20,9 @@ All notable changes to this fork are documented below.
   identity through stable or native item metadata when state omits those fields.
 - Sharpness Oil now hydrates omitted target weapon damage from authored item
   metadata before applying its native increment.
+- Store sale, repair, and recharge prices now resolve omitted item values from
+  unambiguous authored metadata, including compatibility states keyed by
+  `misc_id`.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative

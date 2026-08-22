@@ -248,6 +248,61 @@ public sealed class DiabloStoreRulesTests
     }
 
     [Fact]
+    public void StorePricesResolveContentValuesByMiscIdWhenStateOmitsValues()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 200, 0, 0, 0, 0, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                SpellId = 7,
+                MaxCharges = 10,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+        ]);
+        var pricing = new StoreServicePricing(
+            spellStaffCosts: new Dictionary<int, uint> { [7] = 100 });
+        var rules = new DiabloStoreRules(pricing, items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+            Magical = 1,
+            Identified = true,
+            Durability = 1,
+            Charges = 1,
+        };
+
+        Assert.Equal(50U, rules.GetSalePrice(state));
+        Assert.Equal(28U, rules.GetRepairPrice(state));
+        Assert.Equal(90U, rules.GetRechargePrice(state));
+    }
+
+    [Fact]
+    public void AmbiguousValueMetadataByMiscIdFailsClosed()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 0, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+            },
+            new AuthoritativeItemDefinition(8, 1, 200, 200, 0, 0, 0, 0, 20, 1, 1, true) {
+                NativeItemIndex = 102,
+                MiscId = 121,
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            MiscId = 121,
+            Magical = 1,
+            Identified = true,
+            Durability = 1,
+        };
+
+        Assert.Equal(1U, rules.GetSalePrice(state));
+        Assert.Equal(0U, rules.GetRepairPrice(state));
+    }
+
+    [Fact]
     public void AmbiguousDurabilityMetadataByMiscIdFailsClosed()
     {
         var items = new AuthoritativeItemCatalog([
