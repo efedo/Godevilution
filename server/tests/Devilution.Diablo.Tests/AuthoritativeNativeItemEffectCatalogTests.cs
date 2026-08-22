@@ -192,4 +192,44 @@ public sealed class AuthoritativeNativeItemEffectCatalogTests
             AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
             uniques.Generate(items, 2002, 42, 1).Flags);
     }
+
+    [Fact]
+    public void LegacyAffixLoadingUsesExternalEffectNamespaceWhenProvided()
+    {
+        var effects = new AuthoritativeNativeItemEffectCatalog([
+            new("FireDamage", 1024),
+            new("LightningDamage", 2048),
+        ]);
+        const string header = "name\tpower\tpower.value1\tpower.value2\tminLevel\titemTypes\talignment\tchance\tuseful\tminVal\tmaxVal\tmultVal\n";
+        const string row = "Flame\tFIREDAM\t2\t4\t0\tAny\tAny\t1\ttrue\t0\t0\t0\n";
+        var rules = new AuthoritativeItemGenerationRules(0, 0, 0, 0, 0, 100, 0, 100, 0, 0);
+        var affixes = AuthoritativeItemAffixCatalog.LoadLegacyTsv(
+            "item_prefixes.tsv",
+            header + row,
+            "item_suffixes.tsv",
+            header,
+            rules,
+            nativeItemEffectCatalog: effects);
+        var state = AuthoritativeItemState.Empty with {
+            Flags = 2048U,
+            Value = 1,
+        };
+
+        var remapped = affixes.Apply(state, 42, 1, new HashSet<string>(["Any"]));
+
+        Assert.Equal(1024U, remapped.Flags);
+
+        var fallbackAffixes = AuthoritativeItemAffixCatalog.LoadLegacyTsv(
+            "item_prefixes.tsv",
+            header + row,
+            "item_suffixes.tsv",
+            header,
+            rules);
+        var fallback = fallbackAffixes.Apply(
+            state with { Flags = AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag },
+            42,
+            1,
+            new HashSet<string>(["Any"]));
+        Assert.Equal(AuthoritativeEquipmentElementalDamageRules.FireDamageFlag, fallback.Flags);
+    }
 }

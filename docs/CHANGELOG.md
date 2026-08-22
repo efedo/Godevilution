@@ -3,7 +3,7 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
-- Unique-item powers with matching ordinary effect symbols now resolve through
+- Unique-item and affix powers with matching ordinary effect symbols now resolve through
   the validated `native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining
   level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock

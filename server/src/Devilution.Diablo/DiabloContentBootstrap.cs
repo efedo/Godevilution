@@ -284,12 +284,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 legacyPrefixTable.ToCanonicalTsv(),
                 legacySuffixTable.SourcePath,
                 legacySuffixTable.ToCanonicalTsv(),
-                generationRules)
+                generationRules,
+                nativeItemEffectCatalog: nativeItemEffects)
             : content.TryGetTable("item_affixes.tsv", out var affixTable)
                 ? AuthoritativeItemAffixCatalog.LoadTsv(
                     affixTable.SourcePath,
                     affixTable.ToCanonicalTsv(),
-                    generationRules)
+                    generationRules,
+                    nativeItemEffectCatalog: nativeItemEffects)
                 : null;
         var cursorCatalog = content.TryGetTable(
             "item_cursor_graphics.tsv",

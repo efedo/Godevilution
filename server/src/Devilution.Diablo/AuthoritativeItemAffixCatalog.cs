@@ -73,6 +73,7 @@ public sealed class AuthoritativeItemAffixCatalog
     private readonly IReadOnlyList<AuthoritativeItemAffix> prefixes;
     private readonly IReadOnlyList<AuthoritativeItemAffix> suffixes;
     private readonly AuthoritativeItemGenerationRules generationRules;
+    private readonly AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog;
 
     public bool UsesLegacyRandom { get; }
 
@@ -80,11 +81,13 @@ public sealed class AuthoritativeItemAffixCatalog
         IEnumerable<AuthoritativeItemAffix> prefixes,
         IEnumerable<AuthoritativeItemAffix> suffixes,
         AuthoritativeItemGenerationRules? generationRules = null,
-        bool usesLegacyRandom = false)
+        bool usesLegacyRandom = false,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         this.prefixes = Validate(prefixes, "prefix");
         this.suffixes = Validate(suffixes, "suffix");
         this.generationRules = generationRules ?? AuthoritativeItemGenerationRules.Default;
+        this.nativeItemEffectCatalog = nativeItemEffectCatalog;
         UsesLegacyRandom = usesLegacyRandom;
     }
 
@@ -165,7 +168,7 @@ public sealed class AuthoritativeItemAffixCatalog
         return RecalculateItemValue(result with { Magical = prefix is not null || suffix is not null ? 1 : result.Magical });
     }
 
-    private static AuthoritativeItemState ApplyLegacyPower(
+    private AuthoritativeItemState ApplyLegacyPower(
         AuthoritativeItemState state,
         AuthoritativeItemAffix affix,
         AuthoritativeLegacyRandom random,
@@ -213,13 +216,15 @@ public sealed class AuthoritativeItemAffixCatalog
     public static AuthoritativeItemAffixCatalog LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativeItemGenerationRules? generationRules = null)
+        AuthoritativeItemGenerationRules? generationRules = null,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeItemAffixCatalog(
             table.Rows.Where(row => !row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
             table.Rows.Where(row => row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
-            generationRules);
+            generationRules,
+            nativeItemEffectCatalog: nativeItemEffectCatalog);
     }
 
     /** Loads the native legacy prefix and suffix table shapes without rewriting their columns. */
@@ -228,11 +233,17 @@ public sealed class AuthoritativeItemAffixCatalog
         string prefixContents,
         string suffixSourcePath,
         string suffixContents,
-        AuthoritativeItemGenerationRules? generationRules = null)
+        AuthoritativeItemGenerationRules? generationRules = null,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         var prefixes = TsvTable.Parse(prefixSourcePath, prefixContents).Rows.Select(ParseLegacy);
         var suffixes = TsvTable.Parse(suffixSourcePath, suffixContents).Rows.Select(ParseLegacy);
-        return new AuthoritativeItemAffixCatalog(prefixes, suffixes, generationRules, usesLegacyRandom: true);
+        return new AuthoritativeItemAffixCatalog(
+            prefixes,
+            suffixes,
+            generationRules,
+            usesLegacyRandom: true,
+            nativeItemEffectCatalog: nativeItemEffectCatalog);
     }
 
     private static AuthoritativeItemAffix Parse(TsvRow row)
@@ -353,7 +364,7 @@ public sealed class AuthoritativeItemAffixCatalog
         return state with { IdentifiedValue = Math.Max(value, 1) };
     }
 
-    private static AuthoritativeItemState ApplyPower(
+    private AuthoritativeItemState ApplyPower(
         AuthoritativeItemState state,
         AuthoritativeItemAffix affix,
         int value,
@@ -424,16 +435,24 @@ public sealed class AuthoritativeItemAffixCatalog
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 0,
                 LightningMaxDamage = 0,
-                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
-                    & ~AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                Flags = (state.Flags | ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag))
+                    & ~ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag),
             },
             "LIGHTDAM" => state with {
                 LightningMinDamage = affix.Value1,
                 LightningMaxDamage = affix.Value2,
                 FireMinDamage = 0,
                 FireMaxDamage = 0,
-                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
-                    & ~AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                Flags = (state.Flags | ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag))
+                    & ~ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag),
             },
             "DEVASTATION" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
@@ -459,9 +478,15 @@ public sealed class AuthoritativeItemAffixCatalog
             "INDESTRUCTIBLE" => state with { Durability = 255, MaxDurability = 255 },
             "FIRE_ARROWS" => state with {
                 Flags = (state.Flags
-                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag
-                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
-                    & ~AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag,
+                    | ResolveItemEffectFlag(
+                        "FireArrows",
+                        AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag)
+                    | ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag))
+                    & ~ResolveItemEffectFlag(
+                        "LightningArrows",
+                        AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag),
                 FireMinDamage = affix.Value1,
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 0,
@@ -469,46 +494,124 @@ public sealed class AuthoritativeItemAffixCatalog
             },
             "LIGHT_ARROWS" => state with {
                 Flags = (state.Flags
-                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
-                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
-                    & ~AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
+                    | ResolveItemEffectFlag(
+                        "LightningArrows",
+                        AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag)
+                    | ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag))
+                    & ~ResolveItemEffectFlag(
+                        "FireArrows",
+                        AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag),
                 LightningMinDamage = affix.Value1,
                 LightningMaxDamage = affix.Value2,
                 FireMinDamage = 0,
                 FireMaxDamage = 0,
             },
-            "MULT_ARROWS" => state with { Flags = state.Flags | 0x00000200U },
+            "MULT_ARROWS" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "MultipleArrows",
+                    AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag),
+            },
             "THORNS" => state with {
-                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "Thorns",
+                    AuthoritativeEquipmentIncomingDamageRules.ThornsFlag),
             },
-            "NOMANA" => state with { Flags = state.Flags | 0x08000000U },
+            "NOMANA" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "NoMana",
+                    AuthoritativeEquipmentAttackEffectRules.NoManaFlag),
+            },
             "ABSHALFTRAP" => state with {
-                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "HalfTrapDamage",
+                    AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag),
             },
-            "KNOCKBACK" => state with { Flags = state.Flags | 0x00000800U },
-            "3XDAMVDEM" => state with { Flags = state.Flags | 0x40000000U },
-            "ALLRESZERO" => state with { Flags = state.Flags | 0x80000000U },
-            "STEALMANA" => state with { Flags = state.Flags | (affix.Value1 == 3 ? 0x00002000U : 0x00004000U) },
-            "STEALLIFE" => state with { Flags = state.Flags | (affix.Value1 == 3 ? 0x00008000U : 0x00010000U) },
+            "KNOCKBACK" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "Knockback",
+                    AuthoritativeEquipmentAttackEffectRules.KnockbackFlag),
+            },
+            "3XDAMVDEM" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "TripleDemonDamage",
+                    AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag),
+            },
+            "ALLRESZERO" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "ZeroResistance",
+                    AuthoritativeEquipmentResistanceRules.ZeroResistanceFlag),
+            },
+            "STEALMANA" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    affix.Value1 == 3 ? "StealMana3Percent" : "StealMana5Percent",
+                    affix.Value1 == 3 ? 0x00002000U : 0x00004000U),
+            },
+            "STEALLIFE" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    affix.Value1 == 3 ? "StealLife3Percent" : "StealLife5Percent",
+                    affix.Value1 == 3 ? 0x00008000U : 0x00010000U),
+            },
             "TARGAC" => state with { PlusEnemyArmorClass = state.PlusEnemyArmorClass + value },
-            "FASTATTACK" => state with { Flags = state.Flags | (affix.Value1 switch { 1 => 0x00020000U, 2 => 0x00040000U, 3 => 0x00080000U, _ => 0x00100000U }) },
-            "FASTRECOVER" => state with { Flags = state.Flags | (affix.Value1 switch { 1 => 0x00200000U, 2 => 0x00400000U, _ => 0x00800000U }) },
-            "FASTBLOCK" => state with { Flags = state.Flags | 0x01000000U },
+            "FASTATTACK" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    affix.Value1 switch {
+                        1 => "FastAttack1",
+                        2 => "FastAttack2",
+                        3 => "FastAttack3",
+                        _ => "FastAttack4",
+                    },
+                    affix.Value1 switch {
+                        1 => 0x00020000U,
+                        2 => 0x00040000U,
+                        3 => 0x00080000U,
+                        _ => 0x00100000U,
+                    }),
+            },
+            "FASTRECOVER" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    affix.Value1 switch {
+                        1 => "FastRecover1",
+                        2 => "FastRecover2",
+                        _ => "FastRecover3",
+                    },
+                    affix.Value1 switch {
+                        1 => 0x00200000U,
+                        2 => 0x00400000U,
+                        _ => 0x00800000U,
+                    }),
+            },
+            "FASTBLOCK" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag("FastBlock", 0x01000000U),
+            },
             "RNDARROWVEL" => state with {
-                Flags = state.Flags | AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag,
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "RandomArrowVelocity",
+                    AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag),
             },
             "SETDAM" => state with { MinDamage = affix.Value1, MaxDamage = affix.Value2 },
             "SETDUR" => state with { Durability = affix.Value1, MaxDurability = affix.Value1 },
             "NOMINSTR" => state with { MinimumStrength = 0 },
             "ONEHAND" => state with { EquipLocation = 1 },
             "DRAINLIFE" => state with {
-                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag,
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "DrainLife",
+                    AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag),
             },
-            "RNDSTEALLIFE" => state with { Flags = state.Flags | 0x00000002U },
+            "RNDSTEALLIFE" => state with {
+                Flags = state.Flags | ResolveItemEffectFlag(
+                    "RandomStealLife",
+                    AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag),
+            },
             "ADDACLIFE" => state with {
                 Flags = state.Flags
-                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
-                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
+                    | ResolveItemEffectFlag(
+                        "LightningArrows",
+                        AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag)
+                    | ResolveItemEffectFlag(
+                        "FireArrows",
+                        AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag),
                 FireMinDamage = affix.Value1,
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 1,
@@ -516,8 +619,12 @@ public sealed class AuthoritativeItemAffixCatalog
             },
             "ADDMANAAC" => state with {
                 Flags = state.Flags
-                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag
-                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                    | ResolveItemEffectFlag(
+                        "LightningDamage",
+                        AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
+                    | ResolveItemEffectFlag(
+                        "FireDamage",
+                        AuthoritativeEquipmentElementalDamageRules.FireDamageFlag),
                 FireMinDamage = affix.Value1,
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 2,
@@ -542,6 +649,14 @@ public sealed class AuthoritativeItemAffixCatalog
             ValueAdd2 = result.ValueAdd1 != 0 && result.ValueAdd2 == 0 ? value : result.ValueAdd2,
             ValueMultiply2 = result.ValueAdd1 != 0 && result.ValueAdd2 == value ? affix.ValueMultiplier : result.ValueMultiply2,
         };
+    }
+
+    private uint ResolveItemEffectFlag(string symbol, uint fallback)
+    {
+        return nativeItemEffectCatalog is not null
+            && nativeItemEffectCatalog.TryGetFlag(symbol, out var nativeFlag)
+            ? nativeFlag
+            : fallback;
     }
 
     private static int StablePowerId(string power)
