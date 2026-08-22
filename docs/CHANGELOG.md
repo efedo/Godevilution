@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
 - Native authoritative clients no longer run the legacy Mana Shield depletion
   loop or emit CMD_REMSHIELD; server-projected status state remains the only
   connected-client source of truth.
+- Connected native inventory sorting now fails closed because the legacy
+  reorder mutates local placement and has no authoritative command equivalent;
+  disconnected clients retain the legacy sort.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

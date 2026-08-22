@@ -149,6 +149,15 @@ bool AutoPlaceItemInBelt(Player &player, const Item &item, bool persistItem = fa
 // Sort player inventory.
 void ReorganizeInventory(Player &player);
 
+/**
+ * The legacy inventory sort mutates local placement and has no authoritative
+ * command equivalent; connected clients must leave it to the server.
+ */
+constexpr bool ShouldProcessLegacyInventorySort(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 // Calculate the maximum additional gold that may fit in the user's inventory
 int RoomForGold();
 

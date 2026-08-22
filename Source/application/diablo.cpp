@@ -2433,6 +2433,12 @@ void InitKeymapActions()
 	    N_("Sorts the inventory."),
 	    'R',
 	    [] {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		    if (!ShouldProcessLegacyInventorySort(authoritative::GetServerBackedRuntime().IsConnected())) {
+			    LogError("Server-backed inventory sort has no authoritative command.");
+			    return;
+		    }
+	#endif
 		    ReorganizeInventory(*MyPlayer);
 	    });
 #ifdef _DEBUG
@@ -2945,6 +2951,12 @@ void InitPadmapActions()
 	    N_("Sorts the inventory."),
 	    ControllerButton_NONE,
 	    [] {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		    if (!ShouldProcessLegacyInventorySort(authoritative::GetServerBackedRuntime().IsConnected())) {
+			    LogError("Server-backed inventory sort has no authoritative command.");
+			    return;
+		    }
+	#endif
 		    ReorganizeInventory(*MyPlayer);
 	    });
 	options.Padmapper.AddAction(

@@ -6,6 +6,7 @@
 #include "controls/player_controls.h"
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
+#include "game/players/inventory.hpp"
 #include "network/authoritative/authoritative_client.hpp"
 #include "network/authoritative/runtime_configuration.hpp"
 #include "network/authoritative/store_snapshot.hpp"
@@ -80,6 +81,12 @@ TEST(ServerBackedCompatibility, ConnectedManaShieldUsesServerLifecycle)
 {
 	EXPECT_TRUE(ShouldProcessNativeManaShield(false));
 	EXPECT_FALSE(ShouldProcessNativeManaShield(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedInventorySortFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyInventorySort(false));
+	EXPECT_FALSE(ShouldProcessLegacyInventorySort(true));
 }
 
 } // namespace
