@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <limits>
+#include <string>
 
 #include "devilution.pb.h"
 #include "engine/cursor.h"
@@ -236,6 +237,25 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidPlayerItemIdentityDuringProjectio
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
 	player->add_inventory()->set_item_seed(0);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidItemSemanticStateDuringProjection)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	auto *inventory = player->add_inventory();
+	inventory->set_item_seed(42);
+	inventory->mutable_state()->set_charges(-1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	inventory->mutable_state()->set_charges(0);
+	inventory->mutable_state()->set_presentation_kind(static_cast<protocol::ItemPresentationKind>(99));
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	inventory->mutable_state()->set_presentation_kind(protocol::ITEM_PRESENTATION_KIND_UNSPECIFIED);
+	inventory->mutable_state()->set_spell_display_name(std::string("bad\0name", 8));
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 

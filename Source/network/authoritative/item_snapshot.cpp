@@ -33,8 +33,26 @@ tl::expected<Item, std::string> ProjectNativeItem(const protocol::ItemStateSnaps
 {
 	if (price > static_cast<uint32_t>(INT_MAX))
 		return tl::make_unexpected("Server-backed item price is outside the native range.");
-	if (static_cast<uint32_t>(state.spell_targeting_kind()) > static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY))
-		return tl::make_unexpected("Server-backed item contains an invalid spell targeting kind.");
+	if (state.value() < 0
+	    || state.identified_value() < 0
+	    || state.min_damage() < 0
+	    || state.max_damage() < state.min_damage()
+	    || state.armor_class() < 0
+	    || state.charges() < 0
+	    || state.max_charges() < state.charges()
+	    || state.durability() < 0
+	    || state.max_durability() < state.durability()
+	    || state.fire_min_damage() < 0
+	    || state.fire_max_damage() < state.fire_min_damage()
+	    || state.lightning_min_damage() < 0
+	    || state.lightning_max_damage() < state.lightning_min_damage()
+	    || static_cast<uint32_t>(state.presentation_kind()) > static_cast<uint32_t>(protocol::ITEM_PRESENTATION_KIND_EAR)
+	    || static_cast<uint32_t>(state.spell_source_kind()) > static_cast<uint32_t>(protocol::ITEM_SPELL_SOURCE_KIND_CONSUMABLE_ITEM)
+	    || static_cast<uint32_t>(state.item_action_kind()) > static_cast<uint32_t>(protocol::ITEM_ACTION_KIND_APPLY_FORTITUDE_OIL)
+	    || static_cast<uint32_t>(state.spell_targeting_kind()) > static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY)
+	    || state.spell_display_name().find('\0') != std::string::npos) {
+		return tl::make_unexpected("Server-backed item contains invalid semantic state.");
+	}
 	if (state.base_name().size() >= ItemNameLength
 	    || state.identified_name().size() >= ItemNameLength
 	    || state.base_name().find('\0') != std::string::npos

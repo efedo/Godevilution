@@ -104,6 +104,8 @@ scaled hit points), not only the client's difficulty label.
   nonzero player item seeds across inventory, equipment, belt, stash, and held state.
 - Native and Godot player-item projections now reject incomplete item identity
   metadata before converting or applying inventory, equipment, or belt state.
+- Native item conversion now rejects invalid damage, armor, charge, durability,
+  typed metadata, and NUL-containing spell-display ranges before narrowing.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level
