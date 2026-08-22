@@ -434,6 +434,34 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves unambiguous fixed authored armor metadata by misc ID. */
+    public bool TryGetFixedArmorClassByMiscId(int miscId, out int armorClass)
+    {
+        armorClass = 0;
+        if (miscId <= 0)
+            return false;
+
+        var matches = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .ToArray();
+        if (matches.Length == 0
+            || matches.Any(definition => definition.MinArmorClass >= 0
+                && definition.MaxArmorClass > definition.MinArmorClass))
+            return false;
+
+        var values = matches
+            .Select(definition => definition.MinArmorClass >= 0
+                ? definition.MinArmorClass
+                : definition.ArmorClass)
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1 || values[0] <= 0)
+            return false;
+
+        armorClass = values[0];
+        return true;
+    }
+
     /** Resolves unambiguous consumable action metadata by misc ID. */
     public bool TryGetItemActionMetadataByMiscId(
         int miscId,

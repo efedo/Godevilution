@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
   `misc_id`.
 - Equipped physical damage now resolves omitted weapon ranges from authored
   item metadata before calculating the server-owned player damage profile.
+- Equipped fixed armor now resolves omitted armor values from authored item
+  metadata; randomized armor ranges remain unresolved unless state supplies the
+  rolled value.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative

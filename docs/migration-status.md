@@ -155,6 +155,9 @@ scaled hit points), not only the client's difficulty label.
   `misc_id`.
 - Equipped physical damage now resolves omitted weapon ranges from authored
   item metadata before calculating the server-owned player damage profile.
+- Equipped fixed armor now resolves omitted armor values from authored item
+  metadata; randomized armor ranges remain unresolved unless state supplies the
+  rolled value.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord

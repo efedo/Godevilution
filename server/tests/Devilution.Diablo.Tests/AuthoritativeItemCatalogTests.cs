@@ -1303,6 +1303,64 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void EquippedArmorResolvesFixedArmorByMiscIdWhenStateOmitsArmor()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 6, 100, 100, 0, 0, 20, 20, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                GenerationTags = new HashSet<string>(["Armor"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var armorItem = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 121,
+                StatFlag = true,
+                PlusArmorClass = 50,
+            });
+
+        var armor = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            5,
+            23,
+            [armorItem],
+            items: items);
+
+        Assert.Equal(5 + (23 / 5) + 20 + 10, armor);
+    }
+
+    [Fact]
+    public void EquippedArmorDoesNotGuessRandomArmorByMiscId()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 6, 100, 100, 0, 0, 0, 20, 20, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                MinArmorClass = 10,
+                MaxArmorClass = 20,
+            },
+        ]);
+        var armorItem = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 999,
+                MiscId = 121,
+                StatFlag = true,
+            });
+
+        var armor = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            5,
+            23,
+            [armorItem],
+            items: items);
+
+        Assert.Equal(5 + (23 / 5), armor);
+    }
+
+    [Fact]
     public void IronSkinAddsNativeLevelScaledArmorAfterEquipment()
     {
         var classes = AuthoritativePlayerClassCatalog.LoadTsv(

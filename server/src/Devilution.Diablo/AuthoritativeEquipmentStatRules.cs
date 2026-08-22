@@ -30,13 +30,14 @@ public static class AuthoritativeEquipmentStatRules
             if (!state.StatFlag)
                 continue;
 
-            armorClass = checked(armorClass + state.ArmorClass);
+            var itemArmorClass = ResolveArmorClass(state, items);
+            armorClass = checked(armorClass + itemArmorClass);
             if (state.Magical != 0 && !state.Identified)
                 continue;
 
             if (state.PlusArmorClass == 0)
                 continue;
-            var bonus = state.ArmorClass * state.PlusArmorClass / 100;
+            var bonus = itemArmorClass * state.PlusArmorClass / 100;
             if (bonus == 0)
                 bonus = Math.Sign(state.PlusArmorClass);
             armorClass = checked(armorClass + bonus);
@@ -68,6 +69,24 @@ public static class AuthoritativeEquipmentStatRules
         }
 
         return Math.Max(0, armorClass);
+    }
+
+    private static int ResolveArmorClass(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items)
+    {
+        if (state.ArmorClass > 0 || items is null)
+            return state.ArmorClass;
+        if (items.TryGetByState(state, out var definition)) {
+            if (definition.MinArmorClass >= 0
+                && definition.MaxArmorClass == definition.MinArmorClass)
+                return definition.MinArmorClass;
+            if (definition.MinArmorClass < 0 && definition.ArmorClass > 0)
+                return definition.ArmorClass;
+        }
+        if (items.TryGetFixedArmorClassByMiscId(state.MiscId, out var armorClass))
+            return armorClass;
+        return state.ArmorClass;
     }
 
     private static ArmorSubtype ResolveChestArmorSubtype(
