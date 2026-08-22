@@ -20,6 +20,7 @@ public sealed class AuthoritativeClientModel
     private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
     private const int MaximumNativeMonsterToHit = 255;
     private const int MaximumNativeMonsterIntelligence = 255;
+    private const int MaximumObjectEffectKind = 9;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
@@ -650,8 +651,11 @@ public sealed class AuthoritativeClientModel
                 && @object.QuestSequenceFollowUpAmount != 0,
             _ => false,
         };
-        if (@object.EffectAmount < 0
+        if (@object.ObjectId == 0
+            || @object.EffectAmount < 0
             || effectKind < 0
+            || effectKind > MaximumObjectEffectKind
+            || !Enum.IsDefined(@object.PresentationKind)
             || @object.QuestId != 0 && !questIds.Contains(@object.QuestId)
             || transitionKind is < 0 or > 8
             || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
@@ -673,7 +677,9 @@ public sealed class AuthoritativeClientModel
             || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
             || !followUpValid
             || @object.ProjectileSourceKind is < 0 or > 1
-            || !producesProjectile && @object.ProjectileSourceKind != 0) {
+            || !producesProjectile && @object.ProjectileSourceKind != 0
+            || @object.Breakable && @object.MissilePassable
+            || @object.Destroyed && !@object.Breakable) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid object effect metadata.");
         }

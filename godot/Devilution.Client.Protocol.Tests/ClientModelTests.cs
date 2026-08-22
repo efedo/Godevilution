@@ -765,7 +765,7 @@ public sealed class ClientModelTests
                     State = new ItemStateSnapshot(),
                 },
             },
-            Objects = { new ObjectSnapshot { EntityId = 10 } },
+            Objects = { new ObjectSnapshot { EntityId = 10, ObjectId = 4 } },
             Projectiles = {
                 new ProjectileSnapshot {
                     EntityId = 11,
@@ -839,6 +839,28 @@ public sealed class ClientModelTests
         invalidProjectileSource.Objects[0].ProjectileSourceKind = 1;
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidProjectileSource)));
+
+        var invalidPresentation = valid.Clone();
+        invalidPresentation.Objects[0].PresentationKind
+            = (Devilution.Protocol.V1.ObjectPresentationKind)99;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidPresentation)));
+
+        var invalidEffect = valid.Clone();
+        invalidEffect.Objects[0].EffectKind = 10;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidEffect)));
+
+        var invalidCollision = valid.Clone();
+        invalidCollision.Objects[0].Breakable = true;
+        invalidCollision.Objects[0].MissilePassable = true;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidCollision)));
+
+        var invalidDestroyedState = valid.Clone();
+        invalidDestroyedState.Objects[0].Destroyed = true;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidDestroyedState)));
     }
 
     [Fact]

@@ -82,6 +82,8 @@ scaled hit points), not only the client's difficulty label.
   death-timer relationships, ownership, and bounded native combat metadata.
 - Godot now validates adjacent monster movement destinations and stationary
   future-cell retention before interpolation consumes the snapshot.
+- Godot now validates object identity, typed effect/presentation kinds, and
+  breakable/missile-passability/destroyed-state relationships.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2
