@@ -1064,7 +1064,7 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!CanApplyObjectReward(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!CanApplyObjectSpellEffect(@object))
+        if (!CanApplyObjectSpellEffect(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
@@ -1170,7 +1170,9 @@ public sealed class DiabloWorldCommandProcessor
             player.MemorizedSpells.Add(new MemorizedSpellState(spellId, nextLevel));
     }
 
-    private bool CanApplyObjectSpellEffect(AuthoritativeWorldObject @object)
+    private bool CanApplyObjectSpellEffect(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
     {
         if ((@object.EffectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
@@ -1187,7 +1189,7 @@ public sealed class DiabloWorldCommandProcessor
                 @object.ProjectileTargetOffsetY);
         if (@object.QuestSequenceFollowUpKind
             == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster) {
-            return CanSpawnNativeMonster(@object);
+            return CanSpawnNativeMonster(@object, player);
         }
         if (@object.QuestSequenceFollowUpKind
             != AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
@@ -1200,7 +1202,9 @@ public sealed class DiabloWorldCommandProcessor
             @object.QuestSequenceFollowUpOffsetY);
     }
 
-    private bool CanSpawnNativeMonster(AuthoritativeWorldObject @object)
+    private bool CanSpawnNativeMonster(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
     {
         if (monsterSpawnPlanner is null
             || @object.QuestSequenceFollowUpAmount == 0) {
@@ -1214,13 +1218,15 @@ public sealed class DiabloWorldCommandProcessor
                 @object.LevelId,
                 targetX,
                 targetY,
-                [],
+                [player],
                 0);
     }
 
-    private void SpawnNativeMonster(AuthoritativeWorldObject @object)
+    private void SpawnNativeMonster(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
     {
-        if (!CanSpawnNativeMonster(@object))
+        if (!CanSpawnNativeMonster(@object, player))
             throw new InvalidDataException(
                 $"Object {@object.EntityId} cannot materialize native monster {@object.QuestSequenceFollowUpAmount}.");
 
@@ -1597,7 +1603,7 @@ public sealed class DiabloWorldCommandProcessor
             SpawnObjectSpellProjectile(@object, player);
             return;
         case AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster:
-            SpawnNativeMonster(@object);
+            SpawnNativeMonster(@object, player);
             return;
         default:
             throw new InvalidDataException(
