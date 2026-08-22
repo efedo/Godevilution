@@ -85,7 +85,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		variableOneQuest->set_turn_in_completion_required_variable1(0);
 		variableOneQuest->set_turn_in_completion_variable1(2);
 		auto *stagedTurnInQuest = initial.mutable_snapshot()->add_quests();
-		stagedTurnInQuest->set_quest_id(3002);
+		stagedTurnInQuest->set_quest_id(3027);
 		stagedTurnInQuest->set_required_progress(1);
 		stagedTurnInQuest->set_variable_1(5);
 		stagedTurnInQuest->set_turn_in_towner_id(9);
@@ -200,7 +200,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	EXPECT_EQ((*session)->ActiveQuestForTowner(7), std::optional<uint32_t> { 3017 });
 	EXPECT_FALSE((*session)->ActiveQuestForTowner(12).has_value());
 	EXPECT_EQ((*session)->ActiveQuestForTowner(8), std::optional<uint32_t> { 3014 });
-	EXPECT_EQ((*session)->ActiveQuestForTowner(9), std::optional<uint32_t> { 3002 });
+	EXPECT_EQ((*session)->ActiveQuestForTowner(9), std::optional<uint32_t> { 3027 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(11), std::optional<uint32_t> { 3020 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(13), std::optional<uint32_t> { 3025 });
 	EXPECT_FALSE((*session)->ActiveQuestForTowner(14).has_value());
@@ -288,6 +288,79 @@ TEST(ServerBackedSession, IgnoresStaleSnapshotsAndEventsDuringPolling)
 	auto session = ServerBackedSession::Connect(configuration);
 	ASSERT_TRUE(session.has_value()) << session.error();
 	ASSERT_TRUE((*session)->Poll(1000).has_value());
+	ASSERT_NE((*session)->PlayerState().Snapshot(), nullptr);
+	EXPECT_EQ((*session)->PlayerState().Snapshot()->serverTick, 10U);
+	EXPECT_EQ((*session)->PlayerState().Snapshot()->positionX, 4);
+	EXPECT_EQ((*session)->PlayerState().Snapshot()->positionY, 5);
+	(*session)->Close();
+	server.join();
+	EXPECT_TRUE(observed);
+}
+
+TEST(ServerBackedSession, RejectsMalformedSnapshotWithoutPartialStateMutation)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool observed = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_session_token("session");
+		WriteEnvelope(socket, serverHello);
+
+		protocol::Envelope initial;
+		auto *initialPlayer = initial.mutable_snapshot()->add_players();
+		initialPlayer->set_entity_id(7);
+		initialPlayer->set_position_x(4);
+		initialPlayer->set_position_y(5);
+		initial.mutable_snapshot()->set_tick(10);
+		WriteEnvelope(socket, initial);
+
+		auto pollPayload = EnvelopeCodec::Read(socket);
+		if (!pollPayload.has_value() || !pollPayload->has_value())
+			return;
+		protocol::Envelope poll;
+		if (!poll.ParseFromArray(pollPayload->value().data(), static_cast<int>(pollPayload->value().size()))
+		    || !poll.has_snapshot_request())
+			return;
+
+		protocol::Envelope malformed;
+		auto *malformedPlayer = malformed.mutable_snapshot()->add_players();
+		malformedPlayer->set_entity_id(7);
+		malformedPlayer->set_position_x(9);
+		malformedPlayer->set_position_y(10);
+		malformed.mutable_snapshot()->set_tick(11);
+		auto *invalidWorldItem = malformed.mutable_snapshot()->add_world_items();
+		invalidWorldItem->set_entity_id(8);
+		invalidWorldItem->set_position_x(9);
+		invalidWorldItem->set_position_y(10);
+		invalidWorldItem->set_item_seed(0);
+		WriteEnvelope(socket, malformed);
+		observed = true;
+	});
+
+	ServerBackedSession::Configuration configuration {
+		.client = {
+			.host = "127.0.0.1",
+			.port = acceptor.local_endpoint().port(),
+			.clientBuildId = "client",
+			.protocolSchemaVersion = "1",
+			.contentManifestHash = "content",
+		},
+	};
+	auto session = ServerBackedSession::Connect(configuration);
+	ASSERT_TRUE(session.has_value()) << session.error();
+	auto poll = (*session)->Poll(1000);
+	ASSERT_FALSE(poll.has_value());
 	ASSERT_NE((*session)->PlayerState().Snapshot(), nullptr);
 	EXPECT_EQ((*session)->PlayerState().Snapshot()->serverTick, 10U);
 	EXPECT_EQ((*session)->PlayerState().Snapshot()->positionX, 4);
@@ -387,8 +460,10 @@ TEST(ServerBackedSession, SubmitsAuthoredQuestDialogueIntent)
 		WriteEnvelope(socket, serverHello);
 		protocol::Envelope initial;
 		initial.mutable_snapshot()->add_players()->set_entity_id(7);
-		initial.mutable_snapshot()->add_quests()->set_quest_id(3021);
-		initial.mutable_snapshot()->mutable_quests(0)->set_completion_unique_identity("Defiler");
+		auto *quest = initial.mutable_snapshot()->add_quests();
+		quest->set_quest_id(3021);
+		quest->set_required_progress(1);
+		quest->set_completion_unique_identity("Defiler");
 		WriteEnvelope(socket, initial);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);

@@ -508,16 +508,16 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	auto levelGeometry = ProjectLevelGeometrySnapshots(snapshot);
 	if (!levelGeometry.has_value())
 		return tl::make_unexpected(levelGeometry.error());
-	if (entityId_ == 0) {
-		if (snapshot.players_size() == 0)
-			return tl::make_unexpected("Server-backed snapshot contains no player entity.");
-		entityId_ = snapshot.players(0).entity_id();
-	}
+	const uint32_t requestedEntityId = entityId_ == 0 && snapshot.players_size() > 0
+	    ? snapshot.players(0).entity_id()
+	    : entityId_;
+	if (requestedEntityId == 0)
+		return tl::make_unexpected("Server-backed snapshot contains no player entity.");
 	auto players = ProjectPlayerSnapshots(snapshot);
 	if (!players.has_value())
 		return tl::make_unexpected(players.error());
 	const auto player = std::find_if(players->begin(), players->end(), [&](const auto &candidate) {
-		return candidate.entityId == entityId_;
+		return candidate.entityId == requestedEntityId;
 	});
 	if (player == players->end())
 		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
@@ -529,32 +529,51 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	if (const auto *previous = playerState_.Snapshot(); previous != nullptr
 	    && player->serverTick < previous->serverTick)
 		return { };
-	if (!playerState_.ApplySnapshot(*player))
-		return tl::make_unexpected("Server-backed player snapshot could not be applied.");
-	playerStates_ = std::move(*players);
 	auto monsters = ProjectMonsterSnapshots(snapshot);
 	if (!monsters.has_value())
 		return tl::make_unexpected(monsters.error());
-	monsterState_ = std::move(*monsters);
 	auto worldItems = ProjectWorldItemSnapshots(snapshot);
 	if (!worldItems.has_value())
 		return tl::make_unexpected(worldItems.error());
-	worldItemState_ = std::move(*worldItems);
 	auto objects = ProjectObjectSnapshots(snapshot);
 	if (!objects.has_value())
 		return tl::make_unexpected(objects.error());
-	objectState_ = std::move(*objects);
 	auto projectiles = ProjectProjectileSnapshots(snapshot);
 	if (!projectiles.has_value())
 		return tl::make_unexpected(projectiles.error());
-	projectileState_ = std::move(*projectiles);
 	auto portals = ProjectPortalSnapshots(snapshot);
 	if (!portals.has_value())
 		return tl::make_unexpected(portals.error());
-	portalState_ = std::move(*portals);
 	auto corpses = ProjectCorpseSnapshots(snapshot);
 	if (!corpses.has_value())
 		return tl::make_unexpected(corpses.error());
+	std::optional<ProjectedVendorSnapshot> vendor;
+	if (snapshot.has_active_store()) {
+		auto projectedVendor = ProjectVendorSnapshot(snapshot);
+		if (!projectedVendor.has_value())
+			return tl::make_unexpected(projectedVendor.error());
+		vendor = std::move(*projectedVendor);
+	}
+	ServerBackedPlayerState candidatePlayerState = playerState_;
+	if (!candidatePlayerState.ApplySnapshot(*player))
+		return tl::make_unexpected("Server-backed player snapshot could not be applied.");
+	ServerBackedVendorState candidateVendorState = vendorState_;
+	candidateVendorState.SetEnabled(true);
+	candidateVendorState.SetConnected(true);
+	if (vendor.has_value()) {
+		if (!candidateVendorState.ApplySnapshot(std::move(*vendor)))
+			return tl::make_unexpected("Server-backed vendor snapshot could not be applied.");
+	} else {
+		candidateVendorState.ClearSnapshot();
+	}
+	entityId_ = requestedEntityId;
+	playerState_ = std::move(candidatePlayerState);
+	playerStates_ = std::move(*players);
+	monsterState_ = std::move(*monsters);
+	worldItemState_ = std::move(*worldItems);
+	objectState_ = std::move(*objects);
+	projectileState_ = std::move(*projectiles);
+	portalState_ = std::move(*portals);
 	corpseState_ = std::move(*corpses);
 	sessionMetadata_ = std::move(*sessionMetadata);
 	levelGeometryState_ = std::move(*levelGeometry);
@@ -562,18 +581,7 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	questTownerInteractions_.assign(
 		snapshot.quest_towner_interactions().begin(),
 		snapshot.quest_towner_interactions().end());
-
-	vendorState_.SetEnabled(true);
-	vendorState_.SetConnected(true);
-	if (snapshot.has_active_store()) {
-		auto vendor = ProjectVendorSnapshot(snapshot);
-		if (!vendor.has_value())
-			return tl::make_unexpected(vendor.error());
-		if (!vendorState_.ApplySnapshot(std::move(*vendor)))
-			return tl::make_unexpected("Server-backed vendor snapshot could not be applied.");
-	} else {
-		vendorState_.ClearSnapshot();
-	}
+	vendorState_ = std::move(candidateVendorState);
 	return { };
 }
 
