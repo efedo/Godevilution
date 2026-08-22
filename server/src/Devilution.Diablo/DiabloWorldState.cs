@@ -76,6 +76,12 @@ public sealed class DiabloWorldState
         foreach (var portal in portals ?? []) {
             if (portal.PortalId == 0)
                 throw new InvalidDataException("Portal identity cannot be zero.");
+            if (portal.Bidirectional
+                ? portal.OwnerEntityId == 0 || portal.RemainingTicks == 0
+                : portal.OwnerEntityId != 0 || portal.RemainingTicks != 0) {
+                throw new InvalidDataException(
+                    $"Portal {portal.PortalId} has invalid ownership or lifetime metadata.");
+            }
             if (!Portals.TryAdd(portal.PortalId, portal))
                 throw new InvalidDataException(
                     $"Portal {portal.PortalId} is registered more than once.");

@@ -144,6 +144,8 @@ from TSV loading.
 
 Runtime world construction now applies the same zero-and-duplicate portal
 identity boundary before portal state can be published into a live session.
+It also rejects contradictory static-versus-dynamic ownership and lifetime
+metadata at that boundary.
 
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility

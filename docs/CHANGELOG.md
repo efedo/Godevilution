@@ -83,6 +83,8 @@ All notable changes to this fork are documented below.
   callers cannot publish zero or duplicate portal identities.
 - Reject zero or duplicate portal IDs when constructing live authoritative world
   state, closing the same identity gap for direct runtime callers.
+- Reject contradictory static-versus-dynamic portal ownership and lifetime
+  metadata during live authoritative world construction.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

@@ -360,6 +360,23 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RuntimeWorldStateRejectsInvalidPortalOwnershipAndLifetime()
+    {
+        var missingOwnerException = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            portals: [new AuthoritativePortal(5, 1, 1, 1, 2, 2, 2) {
+                Bidirectional = true,
+                RemainingTicks = 10,
+            }]));
+        Assert.Contains("Portal 5 has invalid ownership or lifetime metadata", missingOwnerException.Message, StringComparison.Ordinal);
+
+        var staticLifetimeException = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            portals: [new AuthoritativePortal(6, 1, 1, 1, 2, 2, 2) {
+                OwnerEntityId = 9,
+            }]));
+        Assert.Contains("Portal 6 has invalid ownership or lifetime metadata", staticLifetimeException.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(
