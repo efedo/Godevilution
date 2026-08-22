@@ -63,6 +63,12 @@ constexpr bool ShouldProcessLegacyLevelLoadPlayerPlacement(bool serverConnected)
 	return ShouldProcessLegacyLevelLoadMutation(serverConnected);
 }
 
+/** Legacy level-load monster cleanup must not rewrite server-owned combat state. */
+constexpr bool ShouldProcessLegacyLevelLoadMonsterCleanup(bool serverConnected) noexcept
+{
+	return ShouldProcessLegacyLevelLoadMutation(serverConnected);
+}
+
 /**
  * Legacy missile tile flags belong to locally simulated missiles; authoritative
  * presentation missiles must not rewrite that native gameplay bookkeeping.

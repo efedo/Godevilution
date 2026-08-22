@@ -23,6 +23,10 @@ Connected native level loading now preserves the server-selected player tile;
 the legacy nearby-tile placement fallback is offline-only, so a transition
 cannot rewrite authoritative movement state during presentation setup.
 
+Connected native level loading also skips legacy charger cleanup, preserving
+server-owned monster combat modes while still retaining the cleanup for
+offline level loads.
+
 Connected native missile presentation no longer clears legacy missile and wall
 tile flags for server-owned projectiles; only locally simulated missiles update
 that native gameplay bookkeeping.

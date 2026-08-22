@@ -1801,6 +1801,11 @@ void CreateLevel(lvl_entry entry)
 
 void UnstuckChargers()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyLevelLoadMonsterCleanup(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (gbIsMultiplayer) {
 		for (Player &player : Players) {
 			if (!player.plractive)
