@@ -388,14 +388,29 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidatePlayerItemFootprints(PlayerSnapshot player)
     {
+        var itemSeeds = new HashSet<uint>();
         foreach (var item in player.Inventory)
-            ValidateInventoryFootprint(item?.State);
+            ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
         foreach (var item in player.Belt)
-            ValidateInventoryFootprint(item?.State);
+            ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
         foreach (var item in player.Equipment)
-            ValidateInventoryFootprint(item?.State);
+            ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
+        foreach (var item in player.Stash)
+            if (item?.Item is { } stashItem)
+                ValidatePlayerItem(stashItem.ItemSeed, stashItem.State, itemSeeds);
         if (player.HeldItem is { } heldItem)
-            ValidateInventoryFootprint(heldItem.State);
+            ValidatePlayerItem(heldItem.ItemSeed, heldItem.State, itemSeeds);
+    }
+
+    private static void ValidatePlayerItem(
+        uint itemSeed,
+        ItemStateSnapshot? state,
+        ISet<uint> itemSeeds)
+    {
+        if (itemSeed != 0 && !itemSeeds.Add(itemSeed))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains duplicate player item references.");
+        ValidateInventoryFootprint(state);
     }
 
     private static void ValidateInventoryFootprint(ItemStateSnapshot? state)

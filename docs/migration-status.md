@@ -61,6 +61,8 @@ scaled hit points), not only the client's difficulty label.
   identified-name projection while retaining a safe fallback for older state.
 - Godot now rejects ordinary player-item footprints outside the native 10×4
   grid before presentation layout can silently relocate or clamp them.
+- Godot also rejects duplicate nonzero player item seeds across inventory,
+  belt, equipment, stash, and held-item projections.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

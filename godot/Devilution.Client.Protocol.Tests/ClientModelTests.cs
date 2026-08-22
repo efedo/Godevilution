@@ -935,6 +935,34 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsDuplicateNonzeroPlayerItemSeedsAcrossCollections()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                    Belt = {
+                        new BeltItemSnapshot {
+                            ItemSeed = 42,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void AppliesMultiplayerSnapshotsWithTheReceivingParticipantFirst()
     {
         var model = new AuthoritativeClientModel();
