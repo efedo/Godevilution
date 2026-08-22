@@ -44,6 +44,8 @@ All notable changes to this fork are documented below.
   authoritative world-item and inventory commands remain server-owned.
 - Connected native clients now ignore legacy `CMD_ADD*` attribute messages;
   character-panel allocation remains server-owned.
+- Connected native clients now ignore legacy level and portal transition
+  messages; server-owned movement, portals, and level state remain authoritative.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

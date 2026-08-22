@@ -18,6 +18,7 @@
 #include "network/authoritative/server_backed_vendor_state.hpp"
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "network/protocol/legacy_transition_policy.hpp"
 #include "persistence/save_policy.hpp"
 #include "ui/panel/control_chat_commands.hpp"
 
@@ -124,6 +125,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyAttributeMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyAttributeMessage(false));
 	EXPECT_FALSE(ShouldProcessLegacyAttributeMessage(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedLegacyTransitionMessagesFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyTransitionMessage(false));
+	EXPECT_FALSE(ShouldProcessLegacyTransitionMessage(true));
 }
 
 } // namespace

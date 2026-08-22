@@ -47,6 +47,7 @@
 #include "network/protocol/network_ticks.h"
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "network/protocol/legacy_transition_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "persistence/options.h"
@@ -2041,6 +2042,10 @@ size_t OnTalkXY(const TCmdLocParam1 &message, Player &player)
 
 size_t OnNewLevel(const TCmdParam2 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t eventIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs == 1) {
@@ -2064,6 +2069,10 @@ size_t OnNewLevel(const TCmdParam2 &message, Player &player)
 
 size_t OnWarp(const TCmdParam1 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const uint16_t portalIdx = Swap16LE(message.wParam1);
 
 	if (gbBufferMsgs == 1) {
@@ -2391,6 +2400,10 @@ size_t OnSendPlayerInfo(const TCmdPlrInfoHdr &header, size_t maxCmdSize, Player 
 
 size_t OnPlayerJoinLevel(const TCmdLocParam2 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 
 	if (gbBufferMsgs == 1) {
@@ -2446,6 +2459,10 @@ size_t OnPlayerJoinLevel(const TCmdLocParam2 &message, Player &player)
 
 size_t OnActivatePortal(const TCmdLocParam3 &message, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(message);
+#endif
 	const Point position { message.x, message.y };
 	const auto level = static_cast<uint8_t>(Swap16LE(message.wParam1));
 	const uint16_t dungeonTypeIdx = Swap16LE(message.wParam2);
@@ -2483,6 +2500,10 @@ size_t OnActivatePortal(const TCmdLocParam3 &message, Player &player)
 
 size_t OnDeactivatePortal(const TCmd &cmd, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &cmd, sizeof(cmd));
 	} else {
@@ -2497,6 +2518,10 @@ size_t OnDeactivatePortal(const TCmd &cmd, Player &player)
 
 size_t OnRestartTown(const TCmd &cmd, Player &player)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyTransitionMessage(authoritative::GetServerBackedRuntime().IsConnected()))
+		return sizeof(cmd);
+#endif
 	if (gbBufferMsgs == 1) {
 		BufferMessage(player, &cmd, sizeof(cmd));
 	} else {
