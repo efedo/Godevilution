@@ -528,12 +528,12 @@ public sealed class DiabloWorldCommandProcessorTests
             7,
             1,
             100,
-            100,
+            150,
+            3,
+            7,
             0,
-            0,
-            0,
-            0,
-            0,
+            20,
+            40,
             2,
             1,
             true) {
@@ -561,6 +561,12 @@ public sealed class DiabloWorldCommandProcessorTests
         var ownedItem = Assert.Single(player.Inventory);
         Assert.Equal(2, ownedItem.State.InventoryWidth);
         Assert.Equal(1, ownedItem.State.InventoryHeight);
+        Assert.Equal(100, ownedItem.State.Value);
+        Assert.Equal(150, ownedItem.State.IdentifiedValue);
+        Assert.Equal(3, ownedItem.State.MinDamage);
+        Assert.Equal(7, ownedItem.State.MaxDamage);
+        Assert.Equal(20, ownedItem.State.Durability);
+        Assert.Equal(40, ownedItem.State.MaxDurability);
         Assert.Equal(0, player.InventoryGrid[0]);
         Assert.Equal(0, player.InventoryGrid[1]);
     }

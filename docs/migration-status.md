@@ -46,6 +46,8 @@ scaled hit points), not only the client's difficulty label.
   equipment, belt, stash, held, world-item, and store state without changing
   stable or native item identity; zero current charges remain preserved as a
   legitimate depleted-item state.
+- Live world-item pickup now materializes the same authored metadata before
+  mutating player state.
 
 - Schema 1.395 externalizes Counselor adjacent Flash-admission chance bands
   through `monster_types.tsv`; shipped Counselor-family rows carry native 20/2

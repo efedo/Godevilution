@@ -42,6 +42,8 @@ All notable changes to this fork are documented below.
   durability, maximum charges, spell sources, and item actions across inventory,
   equipment, belt, stash, held, world-item, and store state without changing
   stable or native item identity.
+- Live world-item pickup now materializes the same authored metadata before
+  mutating player state.
 - Death-gold classification now treats active non-empty item tags as authoritative
   instead of allowing a conflicting native type/index to override them.
 - Belt classification now treats active non-empty item tags as authoritative
