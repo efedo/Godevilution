@@ -5,6 +5,11 @@ namespace Devilution.Diablo;
 /** Immutable starting-state template for one authoritative Diablo participant. */
 public sealed class DiabloPlayerTemplate
 {
+    private const int MaximumInventoryCount = 40;
+    private const int MaximumEquipmentCount = 7;
+    private const int MaximumBeltCount = 8;
+    private const int MaximumInventoryGridCells = 400;
+
     /** Creates the normalized first-party starting player used by server hosts. */
     public static DiabloPlayerTemplate CreateDefault(
         uint gold,
@@ -80,6 +85,12 @@ public sealed class DiabloPlayerTemplate
         IReadOnlyList<StashStoreItem>? stash = null,
         uint stashGold = 0)
     {
+        ValidateCount(equipment, MaximumEquipmentCount, "equipment");
+        ValidateCount(inventoryGrid, MaximumInventoryGridCells, "inventory-grid");
+        ValidateCount(belt, MaximumBeltCount, "belt");
+        ValidateCount(inventory, MaximumInventoryCount, "inventory");
+        ValidateCount(memorizedSpells, AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount, "memorized-spell");
+        ValidateCount(stash, DiabloStashLayout.MaximumItems, "stash");
         Gold = gold;
         Experience = experience;
         Life = life;
@@ -127,6 +138,16 @@ public sealed class DiabloPlayerTemplate
         StatPoints = statPoints;
         Stash = stash?.ToArray() ?? [];
         StashGold = stashGold;
+
+        static void ValidateCount<T>(
+            IReadOnlyList<T>? values,
+            int maximum,
+            string category)
+        {
+            if (values is not null && values.Count > maximum)
+                throw new InvalidDataException(
+                    $"Player template contains too many {category} entries.");
+        }
     }
 
     public uint Gold { get; }

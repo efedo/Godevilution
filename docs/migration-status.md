@@ -156,6 +156,9 @@ It also rejects mutable projectiles with invalid lifetime, enum, or endpoint
 state before the authoritative session starts.
 Quest dictionary keys are likewise checked against their server-owned quest
 identities before startup publication.
+Participant templates now reject oversized native-compatible inventory,
+equipment, belt, inventory-grid, memorized-spell, and stash collections before
+runtime creation.
 
 Legacy item-table spell names now resolve through the validated external
 `native_spells.tsv` namespace during content activation; the compatibility

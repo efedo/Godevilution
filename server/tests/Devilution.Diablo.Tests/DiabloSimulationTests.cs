@@ -3446,6 +3446,29 @@ public sealed class DiabloSimulationTests
         Assert.Equal(1U, player.ActiveStoreId);
     }
 
+    [Fact]
+    public void PlayerTemplateRejectsOversizedStartupCollections()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 1,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: Enumerable.Repeat(-1, 401).ToArray(),
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 1,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0));
+
+        Assert.Contains("too many inventory-grid entries", exception.Message, StringComparison.Ordinal);
+    }
+
     private static GameplayModuleContext CreateContext()
     {
         var content = new ContentManifest(
