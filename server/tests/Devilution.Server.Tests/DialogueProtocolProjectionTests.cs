@@ -426,6 +426,45 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidItemStateBeforeProjection()
+    {
+        var invalidItem = new OwnedStoreItem(
+            0,
+            0,
+            7,
+            0,
+            0,
+            AuthoritativeItemState.Empty with { Value = -1 });
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [invalidItem],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(

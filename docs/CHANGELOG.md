@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
   state cannot be represented consistently by the shared client projection.
 - Reject malformed live authoritative character names before native/Godot
   projection, including names outside the native printable length rules.
+- Reject live authoritative item projections with impossible value, damage,
+  armor, charge, durability, elemental, footprint, or semantic enum state.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.

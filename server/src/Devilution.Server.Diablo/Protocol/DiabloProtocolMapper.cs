@@ -1409,6 +1409,7 @@ internal static class DiabloProtocolMapper
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks)
     {
+        ValidateProjectedItemState(state, spells);
         var snapshot = new ItemStateSnapshot {
             CreateInfo = state.CreateInfo,
             ItemType = state.ItemType,
@@ -1487,6 +1488,36 @@ internal static class DiabloProtocolMapper
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;
         return snapshot;
+    }
+
+    private static void ValidateProjectedItemState(
+        AuthoritativeItemState state,
+        AuthoritativeSpellCatalog? spells)
+    {
+        var spellSourceKind = state.SpellSourceKind
+            ?? DiabloCastSourceRules.ClassifyItem(state, spells);
+        if (state.Value < 0
+            || state.IdentifiedValue < 0
+            || state.MinDamage < 0
+            || state.MaxDamage < state.MinDamage
+            || state.ArmorClass < 0
+            || state.Charges < 0
+            || state.MaxCharges < state.Charges
+            || state.Durability < 0
+            || state.MaxDurability < state.Durability
+            || state.FireMinDamage < 0
+            || state.FireMaxDamage < state.FireMinDamage
+            || state.LightningMinDamage < 0
+            || state.LightningMaxDamage < state.LightningMinDamage
+            || state.InventoryWidth < 0
+            || state.InventoryWidth > 10
+            || state.InventoryHeight < 0
+            || state.InventoryHeight > 4
+            || !Enum.IsDefined(spellSourceKind)
+            || !Enum.IsDefined(state.ItemActionKind)) {
+            throw new InvalidDataException(
+                "Authoritative item projection contains impossible state ranges.");
+        }
     }
 
     private static ItemPresentationKind ResolveItemPresentationKind(
