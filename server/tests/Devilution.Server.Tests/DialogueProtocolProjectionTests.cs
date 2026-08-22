@@ -54,6 +54,47 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsPlayerResourcesOutsideTheSharedProtocolRange()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        void AssertRejected(Func<StorePlayerSnapshot, StorePlayerSnapshot> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Player = mutate(player),
+                }));
+        }
+
+        AssertRejected(value => value with { Gold = (uint)int.MaxValue + 1U });
+        AssertRejected(value => value with { StashGold = (uint)int.MaxValue + 1U });
+        AssertRejected(value => value with { StatPoints = (uint)int.MaxValue + 1U });
+    }
+
+    [Fact]
     public void ProjectsAuthoredWarpTriggersWithQuestAvailability()
     {
         var player = new StorePlayerSnapshot(

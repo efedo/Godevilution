@@ -9,6 +9,7 @@ All notable changes to this fork are documented below.
 - Validate participant-template attribute references and non-negative base/current values before runtime creation.
 - Reject negative participant attribute values during authoritative save restore.
 - Reject saved player gold, stash gold, and stat points that cannot cross the shared protocol boundary.
+- Reject the same unrepresentable player resources before live server-to-client protocol projection.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
