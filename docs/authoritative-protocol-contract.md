@@ -363,6 +363,13 @@ resolve these rolls. Zero values retain the additive compatibility fallback.
 dispatch identity. The server owns AI execution; clients do not dispatch
 behavior from this metadata.
 
+`MonsterSnapshot.dialogue_message_id` field 85 carries the current authored
+dialogue identity for a unique encounter. A zero value means that no authored
+conversation is pending. The field is presentation metadata only: clients do
+not advance quest variables or execute monster AI from it. Nonzero values are
+included in the conditional `godevilution-monster-dialogue-message-v1`
+canonical-hash section.
+
 `MonsterSnapshot.intelligence` field 44 carries the validated native intelligence
 value used by server-owned AI probability bands. Clients do not resolve AI rolls
 from this metadata.

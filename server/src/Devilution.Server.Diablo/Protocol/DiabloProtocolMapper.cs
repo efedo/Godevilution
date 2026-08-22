@@ -68,6 +68,7 @@ internal static class DiabloProtocolMapper
                 FuturePositionX = monster.FuturePositionX,
                 FuturePositionY = monster.FuturePositionY,
                 Direction = monster.Direction,
+                DialogueMessageId = monster.DialogueMessageId,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,
                 IsUndead = monster.IsUndead,

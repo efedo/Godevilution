@@ -555,6 +555,11 @@ Windows toolchain command.
 - Optional `MonsterSnapshot.mega_delay_ticks` field 83 carries the server-owned
   native intermediate-distance `MegaAi` post-action delay countdown. Older
   peers may omit it; clients never execute the delay policy.
+- `MonsterSnapshot.dialogue_message_id` field 85 carries the current authored
+  dialogue identity for a unique encounter. It is zero when the target has no
+  pending authored conversation; clients present the identity but never advance
+  quest state or execute monster AI from it. The value is included in the
+  conditional `godevilution-monster-dialogue-message-v1` canonical hash.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

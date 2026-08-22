@@ -768,6 +768,8 @@ message MonsterSnapshot {
 	optional int32 mega_delay_ticks = 83;
 	// Native monster direction used by movement, attacks, and Hork Spawn (0-7).
 	optional int32 direction = 84;
+	// Server-owned dialogue identity currently displayed by a unique encounter.
+	int32 dialogue_message_id = 85;
 }
 
 message WorldItemSnapshot {

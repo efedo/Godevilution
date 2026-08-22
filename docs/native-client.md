@@ -243,9 +243,9 @@ identities are now declared independently of static placement and are applied
 when their validated procedural unique encounters materialize. Gharbad's four
 user-visible dialogue stages now use the server-owned
 `quest_dialogue_stages.tsv` contract for authored messages and monotonic
-quest-variable transitions. Its random item reward is server-owned; encounter-
-state and presentation transitions remain local fallbacks until an
-authoritative encounter-state contract is added.
+quest-variable transitions. Its random item reward is server-owned; the current
+authored dialogue identity is now retained in the authoritative monster
+snapshot, while encounter-state transitions remain local fallbacks.
 When the active pack includes `dialogue_messages.tsv`, the server also sends
 the authored text on `DialogueEvent.text`; older packs continue to use the
 message identity fallback.
@@ -253,8 +253,8 @@ The shared Ogden's Sign/Snotspill quest now uses the same contract for
 Snotspill's banner dialogue and Tavern Sign hand-in, including server-owned
 item consumption and quest completion.
 Warlord's two authored dialogue transitions now use the same staged contract;
-its native AI-driven speech completion and encounter-state presentation remain
-compatibility fallbacks.
+the next authored message identity survives in authoritative snapshots, while
+native AI-driven speech completion remains a compatibility fallback.
 Unauthored legacy monster conversations retain their local fallback until
 their content actions are externalized.
 

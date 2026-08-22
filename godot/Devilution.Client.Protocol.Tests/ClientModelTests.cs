@@ -813,7 +813,10 @@ public sealed class ClientModelTests
         var nativeMonsterFollowUp = valid.Clone();
         nativeMonsterFollowUp.Objects[0].EffectKind = 4;
         nativeMonsterFollowUp.Objects[0].QuestId = 3002;
-        nativeMonsterFollowUp.Quests.Add(new QuestSnapshot { QuestId = 3002 });
+        nativeMonsterFollowUp.Quests.Add(new QuestSnapshot {
+            QuestId = 3002,
+            RequiredProgress = 1,
+        });
         nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpKind = 3;
         nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpAmount = 139;
         nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpOffsetX = 1;

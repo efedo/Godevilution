@@ -418,6 +418,12 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster vitality.");
         }
+        if (monster.DialogueMessageId < 0
+            || monster.DialogueMessageId > short.MaxValue
+            || monster.DialogueMessageId != 0 && !monster.IsUnique) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid monster dialogue identity.");
+        }
     }
 
     private static void ValidateObject(

@@ -37,6 +37,12 @@ scaled hit points), not only the client's difficulty label.
 
 ## Implemented authoritative systems
 
+- Staged unique-monster dialogue now retains the next authored message identity
+  on the server-owned monster state and protocol snapshot. Gharbad and Warlord
+  conversations therefore preserve their current dialogue target across
+  snapshot/reconnect boundaries; terminal stages clear the identity while the
+  existing native AI compatibility behavior remains unchanged.
+
 - Hellfire Na-Krul tome objects now use the validated
   `native_dun_fragment_objects.tsv` contract to follow the encounter anchor;
   their behavior remains authored once in `objects.tsv` while placement is

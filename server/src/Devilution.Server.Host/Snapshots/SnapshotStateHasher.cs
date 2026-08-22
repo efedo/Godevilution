@@ -305,6 +305,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-direction-v1");
                     hasher.AppendInt32(monster.Direction);
                 }
+                if (monster.DialogueMessageId != 0) {
+                    hasher.AppendString("godevilution-monster-dialogue-message-v1");
+                    hasher.AppendInt32(monster.DialogueMessageId);
+                }
                 if (monster.StoneCurseImmune) {
                     hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
                     hasher.AppendBool(true);

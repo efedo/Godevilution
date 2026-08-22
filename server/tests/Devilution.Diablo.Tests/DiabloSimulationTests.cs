@@ -130,6 +130,30 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsMonsterDialogueIdentity()
+    {
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    10,
+                    unique: true,
+                    uniqueIdentity: "Gharbad",
+                    dialogueMessageId: 145)],
+            });
+
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+        var destination = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+
+        destination.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.Equal(145, Assert.Single(destination.WorldState.CombatTargets.Values).DialogueMessageId);
+    }
+
+    [Fact]
     public void HellUsesTypeSpecificResistanceMetadataWithoutChangingNightmare()
     {
         var type = new AuthoritativeMonsterTypeDefinition(

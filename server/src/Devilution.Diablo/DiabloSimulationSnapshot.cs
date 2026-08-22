@@ -30,6 +30,9 @@ public sealed record DiabloMonsterState(
     /** Native monster direction used by movement, attacks, and Hork Spawn. */
     public int Direction { get; init; }
 
+    /** Server-owned dialogue identity currently displayed by a unique encounter. */
+    public int DialogueMessageId { get; init; }
+
     public bool Petrified { get; init; }
 
     public bool StoneCurseImmune { get; init; }
@@ -538,6 +541,7 @@ public sealed partial class DiabloSimulation
                     FuturePositionX = target.FuturePositionX,
                     FuturePositionY = target.FuturePositionY,
                     Direction = target.Direction,
+                    DialogueMessageId = target.DialogueMessageId,
                     Petrified = target.IsPetrified,
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
@@ -916,11 +920,13 @@ public sealed partial class DiabloSimulation
                 || monster.Intelligence is < 0 or > 255
                 || monster.UniqueIdentity.Length > 128
                 || (!string.IsNullOrWhiteSpace(monster.UniqueIdentity) && !monster.IsUnique)
+                || (monster.DialogueMessageId != 0 && !monster.IsUnique)
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.FallenFearTicks is < 0 or > 1024
                 || monster.FallenFearDirection is < 0 or >= 8
                 || monster.Direction is < 0 or >= 8
+                || monster.DialogueMessageId is < 0 or > short.MaxValue
                 || monster.SneakRetreatTicks is < 0 or > 64
                 || monster.ScavengerHealingTicks is < 0 or > 64
                 || monster.BatRetreatTicks is < 0 or > 64
@@ -1836,6 +1842,7 @@ public sealed partial class DiabloSimulation
                 target.PositionX = monster.PositionX;
                 target.PositionY = monster.PositionY;
                 target.RestoreDirection(monster.Direction);
+                target.DialogueMessageId = monster.DialogueMessageId;
                 target.ArmorClass = monster.ArmorClass;
                 target.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
@@ -1949,6 +1956,7 @@ public sealed partial class DiabloSimulation
                     futurePositionX: monster.FuturePositionX,
                     futurePositionY: monster.FuturePositionY,
                     direction: monster.Direction,
+                    dialogueMessageId: monster.DialogueMessageId,
                     petrified: monster.Petrified,
                     stoneCurseImmune: monster.StoneCurseImmune,
                     undead: monster.IsUndead,

@@ -1766,6 +1766,13 @@ public sealed class DiabloWorldCommandProcessor
             quest.Logged = true;
             quest.Variable1 = Math.Max(quest.Variable1, stage.NextVariable1);
             quest.Variable2 = Math.Max(quest.Variable2, stage.NextVariable2);
+            target.DialogueMessageId = questDialogueStages.TryGet(
+                    questId,
+                    quest.Variable1,
+                    quest.Variable2,
+                    out var nextStage)
+                ? nextStage.MessageId
+                : 0;
             if (stage.CompleteQuest) {
                 quest.Progress = quest.RequiredProgress;
                 quest.Completed = true;

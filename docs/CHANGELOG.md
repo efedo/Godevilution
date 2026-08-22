@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve the current staged unique-monster dialogue identity in the
+  authoritative monster snapshot and protocol. Accepted dialogue stages now
+  advance the target to the next authored message (or clear it at the terminal
+  stage), allowing reconnecting clients to present the same encounter state.
+
 - Add `quest_sequence_variants.tsv` for complete content-declared native
   ordered-quest permutations. Hellfire Na-Krul tome slots now select one of
   the six native layouts with the authoritative Diablo RNG before simulation

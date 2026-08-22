@@ -1297,10 +1297,10 @@ public sealed class DiabloWorldCommandProcessorTests
         var player = CreatePlayer(entityId: 7);
 
         foreach (var expected in new[] {
-            (MessageId: 144, Variable1: 1),
-            (MessageId: 145, Variable1: 3),
-            (MessageId: 146, Variable1: 4),
-            (MessageId: 147, Variable1: 5),
+            (MessageId: 144, Variable1: 1, NextMessageId: 145),
+            (MessageId: 145, Variable1: 3, NextMessageId: 146),
+            (MessageId: 146, Variable1: 4, NextMessageId: 147),
+            (MessageId: 147, Variable1: 5, NextMessageId: 0),
         }) {
             var result = processor.Execute(
                 player,
@@ -1311,6 +1311,7 @@ public sealed class DiabloWorldCommandProcessorTests
             Assert.True(result.Succeeded, result.Failure?.ToString());
             Assert.Equal(expected.Variable1, quest.Variable1);
             Assert.Equal(expected.MessageId, Assert.Single(result.Events).MessageId);
+            Assert.Equal(expected.NextMessageId, target.DialogueMessageId);
             Assert.True(quest.Active);
             Assert.False(quest.Completed);
         }

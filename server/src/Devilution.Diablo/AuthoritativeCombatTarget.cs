@@ -90,7 +90,8 @@ public sealed class AuthoritativeCombatTarget
         int avoidanceDelayTicks = 0,
         int rangedDelayTicks = 0,
         int megaDelayTicks = 0,
-        int direction = 0)
+        int direction = 0,
+        int dialogueMessageId = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -180,6 +181,12 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(megaDelayTicks));
         if (direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(direction));
+        if (dialogueMessageId is < 0 or > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(dialogueMessageId));
+        if (dialogueMessageId != 0 && !unique)
+            throw new ArgumentException(
+                "A dialogue identity requires a unique encounter.",
+                nameof(dialogueMessageId));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -217,6 +224,7 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionX = resolvedFuturePositionX;
         FuturePositionY = resolvedFuturePositionY;
         Direction = direction;
+        DialogueMessageId = dialogueMessageId;
         IsMoving = moving;
         IsPetrified = petrified;
         StoneCurseImmune = stoneCurseImmune;
@@ -313,6 +321,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native monster direction used by movement, attacks, and Hork Spawn. */
     public int Direction { get; private set; }
+
+    /** Server-owned dialogue identity currently displayed by a unique encounter. */
+    public int DialogueMessageId { get; set; }
     public bool IsMoving { get; private set; }
     public bool IsPetrified { get; set; }
     public bool StoneCurseImmune { get; set; }
