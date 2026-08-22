@@ -633,6 +633,31 @@ public sealed class DialogueProtocolProjectionTests
                     InventoryGrid = malformedGrid,
                 },
             }));
+
+        var stashItemState = AuthoritativeItemState.Empty with { InventoryWidth = 2 };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Stash = [
+                        new StashStoreItem(0, 0, 0, 0, 8, 0, 0, stashItemState),
+                        new StashStoreItem(0, 1, 0, 0, 9, 0, 0, stashItemState),
+                    ],
+                },
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Stash = [new StashStoreItem(
+                        DiabloStashLayout.PageCount,
+                        0,
+                        0,
+                        0,
+                        8,
+                        0,
+                        0,
+                        AuthoritativeItemState.Empty)],
+                },
+            }));
     }
 
     [Fact]

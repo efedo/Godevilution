@@ -39,6 +39,8 @@ All notable changes to this fork are documented below.
   oversized counts, or malformed inventory-grid references.
 - Reject live inventory grids whose cell occupancy does not exactly match each
   projected item's native footprint.
+- Reject live stash pages with out-of-range cells/pages or overlapping item
+  footprints before projection.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.

@@ -669,6 +669,23 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative held-item reference is invalid or duplicated.");
         }
+
+        foreach (var pageGroup in state.Stash.GroupBy(item => item.Page)) {
+            if (pageGroup.Key >= DiabloStashLayout.PageCount)
+                throw new InvalidDataException("Authoritative stash page is outside the native range.");
+            var cells = DiabloStashLayout.CreateEmptyPage();
+            foreach (var item in pageGroup) {
+                var width = Math.Max(1, item.State.InventoryWidth);
+                var height = Math.Max(1, item.State.InventoryHeight);
+                if (width > 10
+                    || height > 10
+                    || !DiabloStashLayout.CanPlace(cells, item.Cell, width, height)) {
+                    throw new InvalidDataException(
+                        "Authoritative stash contains an invalid or overlapping footprint.");
+                }
+                DiabloStashLayout.Fill(cells, item.Cell, width, height);
+            }
+        }
     }
 
     private static bool HasExactProjectedInventoryFootprint(
