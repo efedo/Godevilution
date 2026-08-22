@@ -4,6 +4,7 @@
 
 #include "devilution.pb.h"
 #include "controls/player_controls.h"
+#include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "network/authoritative/authoritative_client.hpp"
 #include "network/authoritative/runtime_configuration.hpp"
@@ -73,6 +74,12 @@ TEST(ServerBackedCompatibility, MissingMonsterProjectionFailsClosed)
 	EXPECT_EQ(
 	    ResolveServerBackedMonsterInteractionRoute(true, true, false),
 	    Route::None);
+}
+
+TEST(ServerBackedCompatibility, ConnectedManaShieldUsesServerLifecycle)
+{
+	EXPECT_TRUE(ShouldProcessNativeManaShield(false));
+	EXPECT_FALSE(ShouldProcessNativeManaShield(true));
 }
 
 } // namespace

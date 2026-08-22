@@ -160,6 +160,9 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative path-based trap disarm now submits the server-owned
   disarm intent before the legacy action loop, preventing local trap RNG and
   state mutation from preceding authoritative validation.
+- Native authoritative clients no longer run the legacy Mana Shield depletion
+  loop or emit CMD_REMSHIELD; server-projected status state remains the only
+  connected-client source of truth.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level

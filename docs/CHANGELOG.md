@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
 - Native authoritative path-based trap disarm now submits the server-owned
   disarm intent before the legacy action loop, preventing local trap RNG and
   state mutation from preceding authoritative validation.
+- Native authoritative clients no longer run the legacy Mana Shield depletion
+  loop or emit CMD_REMSHIELD; server-projected status state remains the only
+  connected-client source of truth.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

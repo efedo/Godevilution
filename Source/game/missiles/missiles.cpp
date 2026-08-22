@@ -4207,6 +4207,10 @@ static void DeleteMissiles()
 
 void ProcessManaShield()
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessNativeManaShield(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
 	Player &myPlayer = *MyPlayer;
 	if (myPlayer.pManaShield && myPlayer.hasNoMana()) {
 		myPlayer.pManaShield = false;

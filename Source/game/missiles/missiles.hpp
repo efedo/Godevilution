@@ -388,6 +388,15 @@ void ProcessRhino(Missile &missile);
 void ProcessWallControl(Missile &missile);
 void ProcessInfravision(Missile &missile);
 void ProcessApocalypse(Missile &missile);
+
+/**
+ * The native Mana Shield depletion loop is authoritative-client compatible
+ * only while disconnected; connected clients consume server-projected state.
+ */
+constexpr bool ShouldProcessNativeManaShield(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
 void ProcessFlameWaveControl(Missile &missile);
 void ProcessNova(Missile &missile);
 void ProcessRage(Missile &missile);
