@@ -3,6 +3,9 @@ namespace Devilution.Diablo;
 /** Module-owned authoritative world state and deterministic navigation rules. */
 public sealed class DiabloWorldState
 {
+    /** Per-category bound shared by live state and save restoration. */
+    public const int MaximumWorldStateEntries = 4096;
+
     private readonly int fallbackWidth;
     private readonly int fallbackHeight;
     private readonly HashSet<int> fallbackBlockedCells;
@@ -31,6 +34,12 @@ public sealed class DiabloWorldState
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null)
     {
+        ValidateEntryCount(combatTargets, "combat target");
+        ValidateEntryCount(portals, "portal");
+        ValidateEntryCount(worldItems, "world item");
+        ValidateEntryCount(objects, "object");
+        ValidateEntryCount(projectiles, "projectile");
+        ValidateEntryCount(corpses, "corpse");
         World = world;
         WorldMutations = worldMutations;
         this.nativeDunObjects = nativeDunObjects;
@@ -109,6 +118,13 @@ public sealed class DiabloWorldState
         if (World is not null)
             WorldMutations?.ValidateWorld(World, Objects.Values, CombatTargets.Values);
         RebuildProjectedGeometry();
+
+        static void ValidateEntryCount<T>(IReadOnlyList<T>? entries, string category)
+        {
+            if (entries is not null && entries.Count > MaximumWorldStateEntries)
+                throw new InvalidDataException(
+                    $"Initial world state contains too many {category} entries.");
+        }
     }
 
     public AuthoritativeWorld? World { get; }

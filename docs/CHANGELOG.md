@@ -85,6 +85,8 @@ All notable changes to this fork are documented below.
   state, closing the same identity gap for direct runtime callers.
 - Reject contradictory static-versus-dynamic portal ownership and lifetime
   metadata during live authoritative world construction.
+- Bound direct initial world-state collections to the same 4,096-entry
+  per-category limit enforced during authoritative save restoration.
 - The server boundary suite now rejects Lua assets or manifest references in
   the active base and Hellfire content packs, while legacy compatibility files
   remain outside those packs.

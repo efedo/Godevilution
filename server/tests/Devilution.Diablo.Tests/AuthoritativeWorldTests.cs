@@ -377,6 +377,18 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RuntimeWorldStateRejectsOversizedInitialCollections()
+    {
+        var corpses = Enumerable.Range(1, DiabloWorldState.MaximumWorldStateEntries + 1)
+            .Select(entityId => new AuthoritativeCorpse((uint)entityId, 0, 0, 0))
+            .ToArray();
+
+        var exception = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            corpses: corpses));
+        Assert.Contains("too many corpse entries", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(
