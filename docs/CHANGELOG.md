@@ -33,6 +33,9 @@ All notable changes to this fork are documented below.
   disconnected clients retain the legacy sort.
 - Connected native quick save/load now fail closed because server-backed
   sessions own persistence; legacy local binary saves remain offline-only.
+- Connected classic store dialogs now fail closed for premium Griswold
+  purchases because no authoritative command exists; offline clients retain
+  the legacy premium purchase path.
 - Native authoritative snapshot application now rejects player, moving-monster,
   world-item, object, projectile, corpse, and portal positions outside native
   coordinate limits or supplied level geometry, matching the Godot boundary.

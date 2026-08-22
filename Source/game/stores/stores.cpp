@@ -1292,6 +1292,13 @@ void SmithEnter()
 		CurrentStoreManager.StartStore(TalkID::SmithBuy);
 		break;
 	case 14:
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			LogError("Server-backed premium store purchases have no authoritative command.");
+			CurrentStoreManager.activeStore() = TalkID::None;
+			return;
+		}
+	#endif
 		CurrentStoreManager.StartStore(TalkID::SmithPremiumBuy);
 		break;
 	case 16:
@@ -1883,6 +1890,10 @@ void ConfirmEnter(Item &item)
 				LogError("Server-backed store command failed: {}", error);
 				refresh();
 			};
+			if (!HasServerBackedStoreAction(CurrentStoreManager.oldActiveStore())) {
+				fail("The selected store action has no authoritative command.");
+				return;
+			}
 			if (idx < 0 || idx >= 48) {
 				fail("The selected store item index is outside the legacy store buffer.");
 				return;

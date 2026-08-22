@@ -7,6 +7,7 @@
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/players/inventory.hpp"
+#include "game/stores/stores.hpp"
 #include "network/authoritative/authoritative_client.hpp"
 #include "network/authoritative/runtime_configuration.hpp"
 #include "network/authoritative/store_snapshot.hpp"
@@ -94,6 +95,14 @@ TEST(ServerBackedCompatibility, ConnectedSessionsDoNotUseLegacySaves)
 {
 	EXPECT_TRUE(ShouldUseLegacyLocalSave(false));
 	EXPECT_FALSE(ShouldUseLegacyLocalSave(true));
+}
+
+TEST(ServerBackedCompatibility, ConnectedPremiumStorePurchaseFailsClosed)
+{
+	EXPECT_TRUE(HasServerBackedStoreAction(TalkID::SmithBuy));
+	EXPECT_TRUE(HasServerBackedStoreAction(TalkID::SmithRepair));
+	EXPECT_TRUE(HasServerBackedStoreAction(TalkID::StorytellerIdentify));
+	EXPECT_FALSE(HasServerBackedStoreAction(TalkID::SmithPremiumBuy));
 }
 
 } // namespace

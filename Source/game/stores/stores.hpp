@@ -69,6 +69,29 @@ enum class TalkID : uint8_t {
 	Barmaid,
 };
 
+/**
+ * Returns whether a classic store purchase/service action has a server-backed
+ * command route. Connected sessions must not fall through to legacy mutation
+ * for actions that are not listed here.
+ */
+constexpr bool HasServerBackedStoreAction(TalkID store) noexcept
+{
+	switch (store) {
+	case TalkID::SmithBuy:
+	case TalkID::SmithSell:
+	case TalkID::SmithRepair:
+	case TalkID::WitchBuy:
+	case TalkID::WitchSell:
+	case TalkID::WitchRecharge:
+	case TalkID::BoyBuy:
+	case TalkID::HealerBuy:
+	case TalkID::StorytellerIdentify:
+		return true;
+	default:
+		return false;
+	}
+}
+
 struct TownerDialogOption {
 	std::function<std::string()> getLabel;
 	std::function<void()> onSelect;

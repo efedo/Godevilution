@@ -168,6 +168,9 @@ scaled hit points), not only the client's difficulty label.
   disconnected clients retain the legacy sort.
 - Connected native quick save/load now fail closed because server-backed
   sessions own persistence; legacy local binary saves remain offline-only.
+- Connected classic store dialogs now fail closed for premium Griswold
+  purchases because no authoritative command exists; offline clients retain
+  the legacy premium purchase path.
 - The authoritative Diablo save boundary now rejects the same out-of-range item
   prices before restoring player, world, or active-store state.
 - Native authoritative projection now validates that non-empty visited-level
