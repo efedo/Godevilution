@@ -625,6 +625,8 @@ public sealed class DiabloStoreCommandProcessorTests
             MiscId = 99,
             NativeItemIndex = 42,
             ItemActionKind = DiabloItemActionKind.ReadBook,
+            SpellId = 1,
+            MinimumMagic = 15,
             GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
         };
         var book = new OwnedStoreItem(
@@ -637,8 +639,6 @@ public sealed class DiabloStoreCommandProcessorTests
                 StableItemId = 42,
                 ItemIndex = 42,
                 MiscId = 99,
-                SpellId = 1,
-                MinimumMagic = 15,
             });
         var player = CreatePlayer(
             mana: 100,

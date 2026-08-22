@@ -439,13 +439,20 @@ public sealed class DiabloStoreCommandProcessor
         }
 
         var state = item.State;
+        AuthoritativeItemDefinition? definition = null;
+        if (items is not null)
+            items.TryGetByState(state, out definition);
         var action = ResolveItemActionKind(state);
+        var spellId = state.SpellId != 0 ? state.SpellId : definition?.SpellId ?? 0;
+        var minimumMagic = state.MinimumMagic != 0
+            ? state.MinimumMagic
+            : definition?.MinimumMagic ?? 0;
         if (state.Deleted
             || action != DiabloItemActionKind.ReadBook
             || !IsBookItem(state)
-            || state.SpellId <= 0
+            || spellId <= 0
             || spells is null
-            || !spells.TryGet(checked((uint)state.SpellId), out var spell)) {
+            || !spells.TryGet(checked((uint)spellId), out var spell)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
@@ -453,7 +460,7 @@ public sealed class DiabloStoreCommandProcessor
             .FirstOrDefault(candidate => candidate.SpellId == spell.SpellId)
             ?.Level
             ?? 0;
-        var requiredMagic = ResolveBookMinimumMagic(state.MinimumMagic, previousLevel);
+        var requiredMagic = ResolveBookMinimumMagic(minimumMagic, previousLevel);
         if (player.Attributes.Magic.Current < requiredMagic)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 

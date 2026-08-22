@@ -97,6 +97,8 @@ scaled hit points), not only the client's difficulty label.
   content definition can be resolved.
 - Consumable and book action admission now resolves authored action kinds by
   stable or native item identity when compatibility state omits that field.
+- `ReadBook` now resolves authored spell identity and minimum-magic requirements
+  by stable or native item identity when compatibility state omits those fields.
 
 - Staged unique-monster dialogue now retains the next authored message identity
   on the server-owned monster state and protocol snapshot. Gharbad and Warlord
