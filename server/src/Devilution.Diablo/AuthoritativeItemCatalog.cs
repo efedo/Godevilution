@@ -959,7 +959,8 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeItemAffixCatalog? affixes = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
         AuthoritativeItemCursorCatalog? cursorCatalog = null,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows.Select(row => new AuthoritativeItemDefinition(
@@ -987,7 +988,7 @@ public sealed class AuthoritativeItemCatalog
                 SpellSourceKind = ParseSpellSourceKind(row),
                 ItemActionKind = ParseItemActionKind(row),
                 ItemActionAmount = row.OptionalInt32("item_action_amount", 1),
-                Flags = ParseNormalizedFlags(row),
+                Flags = ParseNormalizedFlags(row, nativeItemEffectCatalog),
                 HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(row),
                 MinArmorClass = row.OptionalInt32("min_armor_class", -1),
                 MaxArmorClass = row.OptionalInt32("max_armor_class", -1),
@@ -1079,7 +1080,8 @@ public sealed class AuthoritativeItemCatalog
         AuthoritativeItemCursorCatalog? cursorCatalog = null,
         AuthoritativeNativeSpellCatalog? nativeSpellCatalog = null,
         AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null,
-        AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null)
+        AuthoritativeNativeItemTopologyCatalog? nativeTopologyCatalog = null,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
@@ -1118,7 +1120,9 @@ public sealed class AuthoritativeItemCatalog
                         OptionalText(row, "spell"),
                         spellCatalog,
                         nativeSpellCatalog),
-                    Flags = ParseLegacyFlags(OptionalText(row, "specialEffects")),
+                    Flags = ParseLegacyFlags(
+                        OptionalText(row, "specialEffects"),
+                        nativeItemEffectCatalog),
                     MinimumStrength = row.OptionalInt32("minStrength"),
                     MinimumMagic = row.OptionalInt32("minMagic"),
                     MinimumDexterity = row.OptionalInt32("minDexterity"),
@@ -1387,7 +1391,9 @@ public sealed class AuthoritativeItemCatalog
         return nativeSpellId < 0 ? uint.MaxValue : checked((uint)nativeSpellId);
     }
 
-    private static uint ParseNormalizedFlags(TsvRow row)
+    private static uint ParseNormalizedFlags(
+        TsvRow row,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         var flags = row.OptionalUInt32("flags");
         if (!row.TryGet("special_effects", out var value)
@@ -1397,7 +1403,8 @@ public sealed class AuthoritativeItemCatalog
         return flags | ParseSpecialEffects(
             value,
             rejectUnknown: true,
-            lineNumber: row.LineNumber);
+            lineNumber: row.LineNumber,
+            nativeItemEffectCatalog);
     }
 
     private static int ParseNormalizedHellfireEffects(TsvRow row)
@@ -1430,19 +1437,30 @@ public sealed class AuthoritativeItemCatalog
         return flags;
     }
 
-    private static uint ParseLegacyFlags(string value)
+    private static uint ParseLegacyFlags(
+        string value,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
-        return ParseSpecialEffects(value, rejectUnknown: false, lineNumber: null);
+        return ParseSpecialEffects(
+            value,
+            rejectUnknown: false,
+            lineNumber: null,
+            nativeItemEffectCatalog);
     }
 
     private static uint ParseSpecialEffects(
         string value,
         bool rejectUnknown,
-        int? lineNumber)
+        int? lineNumber,
+        AuthoritativeNativeItemEffectCatalog? nativeItemEffectCatalog = null)
     {
         var flags = 0U;
         foreach (var effect in (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
-            uint? flag = effect.ToUpperInvariant() switch {
+            uint? flag = nativeItemEffectCatalog is not null
+                ? nativeItemEffectCatalog.TryGetFlag(effect, out var contentFlag)
+                    ? contentFlag
+                    : null
+                : effect.ToUpperInvariant() switch {
                 "RANDOMSTEALLIFE" => 0x00000002U,
                 "RANDOMARROWVELOCITY" => AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag,
                 "FIREARROWS" => AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,

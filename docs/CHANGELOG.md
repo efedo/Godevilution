@@ -3,6 +3,10 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Legacy `itemdat.tsv` and normalized item special-effect symbols now resolve
+  through validated external `native_item_effects.tsv` data during content
+  activation, advancing the Diablo content schema to `1.410.0` while retaining
+  direct-loader compatibility fallback.
 - Legacy `itemdat.tsv` type, class, and equipment-location symbols now resolve
   through validated external `native_item_topology.tsv` data during production
   activation, advancing the Diablo content schema to `1.409.0` while retaining

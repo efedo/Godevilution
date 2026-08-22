@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.409.0"
+    "version": "1.410.0"
   },
   "dependencyConstraints": [
     {
@@ -15,6 +15,26 @@
     }
   ],
   "overlays": [
+    {
+      "table": "native_spells.tsv",
+      "keys": ["native_spell_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "native_item_misc.tsv",
+      "keys": ["native_misc_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "native_item_topology.tsv",
+      "keys": ["kind", "symbol"],
+      "mode": "upsert"
+    },
+    {
+      "table": "native_item_effects.tsv",
+      "keys": ["symbol"],
+      "mode": "upsert"
+    },
     {
       "table": "content_ids.tsv",
       "keys": ["kind", "symbol"],

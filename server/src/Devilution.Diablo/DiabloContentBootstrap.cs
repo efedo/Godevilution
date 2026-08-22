@@ -251,6 +251,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeTopologyTable.SourcePath,
                 nativeTopologyTable.ToCanonicalTsv())
             : null;
+        var nativeItemEffects = content.TryGetTable(
+            "native_item_effects.tsv",
+            out var nativeItemEffectsTable)
+            ? AuthoritativeNativeItemEffectCatalog.LoadTsv(
+                nativeItemEffectsTable.SourcePath,
+                nativeItemEffectsTable.ToCanonicalTsv())
+            : null;
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
             out var legacyPrefixTable);
@@ -285,7 +292,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 affixes,
                 null,
                 cursorCatalog,
-                stableIds)
+                stableIds,
+                nativeItemEffects)
             : null;
         // Normalized IDs take precedence. The legacy table remains a fallback
         // and intentionally derives compatibility IDs from its own row order.
@@ -300,6 +308,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (nativeTopology is null)
                 throw new InvalidDataException(
                     "Legacy itemdat.tsv content requires a validated native_item_topology.tsv catalog.");
+            if (nativeItemEffects is null)
+                throw new InvalidDataException(
+                    "Legacy itemdat.tsv content requires a validated native_item_effects.tsv catalog.");
             itemCatalog = AuthoritativeItemCatalog.LoadLegacyTsv(
                 legacyItemTable.SourcePath,
                 legacyItemTable.ToCanonicalTsv(),
@@ -309,7 +320,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 cursorCatalog,
                 nativeSpells,
                 nativeMisc,
-                nativeTopology);
+                nativeTopology,
+                nativeItemEffects);
         }
         if (itemCatalog is null) {
             throw new InvalidDataException(

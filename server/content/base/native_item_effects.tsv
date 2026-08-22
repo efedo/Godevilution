@@ -1,0 +1,16 @@
+symbol	native_flag
+RandomStealLife	2
+RandomArrowVelocity	4
+FireArrows	8
+FireDamage	16
+LightningDamage	32
+DrainLife	64
+LightningArrows	33554432
+MultipleArrows	512
+MULTIPLE ARROWS	512
+Knockback	2048
+Thorns	67108864
+NoMana	134217728
+HalfTrapDamage	268435456
+TripleDemonDamage	1073741824
+ZeroResistance	2147483648
