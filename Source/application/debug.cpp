@@ -57,6 +57,9 @@
 #include "tables/spelldat.h"
 #include "ui/load_screens.h"
 #include "ui/player_messages.h"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "utils/endian/endian_stream.hpp"
 #include "utils/file/file_util.h"
 #include "utils/is_of.hpp"
@@ -1043,6 +1046,11 @@ std::string DebugCmdItemInfo()
 
 std::string DebugCmdVisitTowner(std::string_view name)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode())
+		return StrCat("Towner travel is unavailable in authoritative mode.");
+#endif
+
 	Player &myPlayer = *MyPlayer;
 
 	if (isSetLevel() || !myPlayer.isOnLevel(0))

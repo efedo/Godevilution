@@ -49,6 +49,8 @@ projected monster has no authored server dialogue, preventing legacy quest
 activation, item consumption, and reward mutation.
 The native debug towner entry point also fails closed in authoritative mode;
 legacy debug interaction remains available only to offline sessions.
+Native debug towner travel likewise remains offline-only so it cannot mutate
+authoritative movement through a local teleport spell.
 
 ## Current state
 
