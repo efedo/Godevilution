@@ -71,6 +71,8 @@ sole source of that damage and any resulting death.
 Connected native Mana Shield creation and removal likewise remain offline-only;
 connected shield state is applied from authoritative snapshots without legacy
 `CMD_SETSHIELD` or `CMD_REMSHIELD` lifecycle commands.
+Connected native Reflect charge mutation and legacy `CMD_SETREFLECT` broadcasts
+are likewise offline-only; connected charges remain server-owned projections.
 
 ## Current state
 

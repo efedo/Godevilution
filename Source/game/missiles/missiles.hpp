@@ -397,6 +397,15 @@ constexpr bool ShouldProcessNativeManaShield(bool serverConnected) noexcept
 {
 	return !serverConnected;
 }
+
+/**
+ * Native Reflect charge mutation is presentation-compatible only while
+ * disconnected; connected clients consume server-projected charges.
+ */
+constexpr bool ShouldProcessNativeReflect(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
 void ProcessFlameWaveControl(Missile &missile);
 void ProcessNova(Missile &missile);
 void ProcessRage(Missile &missile);

@@ -1286,6 +1286,11 @@ void AddReflect(Missile &missile, AddMissileParameter & /*parameter*/)
 {
 	missile._miDelFlag = true;
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessNativeReflect(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	if (missile.sourceType() != MissileSource::Player)
 		return;
 

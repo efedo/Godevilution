@@ -95,6 +95,12 @@ TEST(ServerBackedCompatibility, ConnectedManaShieldUsesServerLifecycle)
 	EXPECT_FALSE(ShouldProcessNativeManaShield(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedReflectUsesServerLifecycle)
+{
+	EXPECT_TRUE(ShouldProcessNativeReflect(false));
+	EXPECT_FALSE(ShouldProcessNativeReflect(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedInventorySortFailsClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyInventorySort(false));

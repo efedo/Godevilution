@@ -3,6 +3,8 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native sessions no longer mutate or broadcast legacy Reflect
+  charges; authoritative snapshots own the connected status effect.
 - Connected native sessions no longer create or remove Mana Shield through
   legacy local lifecycle commands; shield state is server-owned and projected
   from authoritative snapshots.
