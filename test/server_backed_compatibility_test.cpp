@@ -176,6 +176,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyItemProtocolFailsClosed)
 	EXPECT_FALSE(ShouldProcessLegacyItemProtocol(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacyInventoryMutationsFailClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacyInventoryMutation(false));
+	EXPECT_FALSE(ShouldProcessLegacyInventoryMutation(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyItemUseFailsClosedExceptServerRoutedCasts)
 {
 	EXPECT_TRUE(ShouldProcessLegacyItemUse(false, false));

@@ -67,6 +67,11 @@ Connected native inventory and equipment stat-recalculation helpers now also
 fail closed. Authoritative item stat flags, resources, and derived player state
 remain snapshot-owned while legacy recalculation remains available offline.
 
+Connected native inventory, belt, and equipment removal helpers now also fail
+closed at their direct entry points. Legacy automatic placement helpers use the
+same boundary, while stable-reference inventory, belt, stash, and equipment
+commands remain the connected mutation path.
+
 Native legacy delta-load helpers now also fail closed at their direct entry
 points, covering spawned monsters, monster state, objects, and world items in
 addition to the existing guarded delta dispatch.

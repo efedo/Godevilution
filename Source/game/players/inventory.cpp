@@ -1521,6 +1521,11 @@ void DrawInvBelt(const Surface &out)
 
 void RemoveEquipment(Player &player, inv_body_loc bodyLocation, bool hiPri)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	if (&player == MyPlayer) {
 		NetSendCmdDelItem(hiPri, bodyLocation);
 	}
@@ -1530,6 +1535,11 @@ void RemoveEquipment(Player &player, inv_body_loc bodyLocation, bool hiPri)
 
 bool AutoPlaceItemInBelt(Player &player, const Item &item, bool persistItem, bool sendNetworkMessage)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+	#endif
+
 	if (!CanBePlacedOnBelt(player, item)) {
 		return false;
 	}
@@ -1555,6 +1565,11 @@ bool AutoPlaceItemInBelt(Player &player, const Item &item, bool persistItem, boo
 
 bool AutoEquip(Player &player, const Item &item, bool persistItem, bool sendNetworkMessage)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+	#endif
+
 	if (!CanEquip(item)) {
 		return false;
 	}
@@ -1602,6 +1617,11 @@ bool CanFitItemInInventory(const Player &player, const Item &item)
 
 bool AutoPlaceItemInInventory(Player &player, const Item &item, bool sendNetworkMessage)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return false;
+	#endif
+
 	const Size itemSize = GetInventorySize(item);
 	std::optional<int> targetSlot = FindSlotForItem(player, itemSize);
 

@@ -58,6 +58,7 @@
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
+#include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "utils/is_of.hpp"
@@ -1805,6 +1806,11 @@ int Player::UpdateManaPercentage()
 
 void Player::RemoveInvItem(int iv, bool calcScrolls)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	if (this == MyPlayer) {
 		// Locate the first grid index containing this item and notify remote clients
 		for (size_t i = 0; i < InventoryGridCells; i++) {
@@ -1850,6 +1856,11 @@ void Player::RemoveInvItem(int iv, bool calcScrolls)
 
 void Player::RemoveSpdBarItem(int iv)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+	#endif
+
 	if (this == MyPlayer) {
 		NetSendCmdParam1(false, CMD_DELBELTITEMS, iv);
 	}
