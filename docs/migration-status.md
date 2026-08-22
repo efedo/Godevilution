@@ -65,6 +65,9 @@ has no matching authoritative projection instead of invoking legacy behavior.
 Connected native death presentation now suppresses legacy death messaging and
 local death-drop synthesis; gold, equipment, held-item, and ear consequences
 remain server-owned and arrive through authoritative projections.
+Connected native player processing also suppresses the legacy periodic
+`DRAINLIFE` equipment damage tick; the server-owned combat tick remains the
+sole source of that damage and any resulting death.
 
 ## Current state
 

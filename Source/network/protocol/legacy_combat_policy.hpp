@@ -20,4 +20,13 @@ constexpr bool ShouldProcessLegacyDeathDrops(bool authoritativeMode) noexcept
 	return !authoritativeMode;
 }
 
+/**
+ * Native periodic equipment damage is offline-only while the authoritative
+ * server owns the connected player's combat tick.
+ */
+constexpr bool ShouldProcessNativeDrainLife(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 } // namespace devilution

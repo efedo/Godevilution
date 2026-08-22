@@ -157,6 +157,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyDeathDropsFailClosed)
 	EXPECT_FALSE(ShouldProcessLegacyDeathDrops(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedNativeDrainLifeFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessNativeDrainLife(false));
+	EXPECT_FALSE(ShouldProcessNativeDrainLife(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyWorldStateMessagesFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyWorldStateMessage(false));

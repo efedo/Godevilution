@@ -3,6 +3,9 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native sessions no longer apply the legacy periodic `DRAINLIFE`
+  equipment tick; the authoritative server owns that damage and its death
+  consequences.
 - Connected native death presentation no longer emits legacy death commands or
   synthesizes local gold, equipment, held-item, or ear drops; the authoritative
   server owns those consequences.

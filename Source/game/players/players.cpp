@@ -3308,6 +3308,10 @@ void ProcessPlayers()
 {
 	assert(MyPlayer != nullptr);
 	Player &myPlayer = *MyPlayer;
+	bool processNativeDrainLife = true;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	processNativeDrainLife = ShouldProcessNativeDrainLife(authoritative::GetServerBackedRuntime().IsConnected());
+#endif
 
 	if (myPlayer.pLvlLoad > 0) {
 		myPlayer.pLvlLoad--;
@@ -3345,7 +3349,8 @@ void ProcessPlayers()
 			}
 
 			if (&player == MyPlayer) {
-				if (HasAnyOf(player._pIFlags, ItemSpecialEffect::DrainLife) && levelType() != DTYPE_TOWN) {
+				if (processNativeDrainLife && HasAnyOf(player._pIFlags, ItemSpecialEffect::DrainLife)
+				    && levelType() != DTYPE_TOWN) {
 					player.applyDamage(DamageType::Physical, 0, 0, 4);
 				}
 				if (player.pManaShield && HasAnyOf(player._pIFlags, ItemSpecialEffect::NoMana)) {
