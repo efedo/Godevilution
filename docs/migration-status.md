@@ -63,6 +63,10 @@ scaled hit points), not only the client's difficulty label.
   native step permutations with the same deterministic RNG and applies it to
   the anchored authored objects before the simulation is created.
 
+- Schema 1.393 adds optional authored next-message identities to staged unique-
+  monster dialogue. Snotspill now preserves the native intermediate banner
+  prompt after its opening conversation instead of jumping directly to hand-in.
+
 - Native server-backed input, polling, portal, store, quest, and ability
   requests now timestamp the compatibility boundary with the shared
   demo-aware timer; the adapter no longer reintroduces direct SDL timing for

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve Snotspill's authored intermediate banner dialogue identity through
+  the staged server dialogue contract; omitted next-message values remain
+  backward compatible with next-stage lookup.
+
 - Allow authored world mutations to follow one validated server-owned unique
   encounter by identity, removing the fixed-object-anchor limitation for future
   generated set-piece transitions while preserving existing object anchors.

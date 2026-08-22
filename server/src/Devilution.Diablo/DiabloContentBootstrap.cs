@@ -749,7 +749,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             : null;
         dialogueMessages?.ValidateMessageIds(
             (questDialogueStages?.Definitions ?? [])
-                .Select(stage => stage.MessageId));
+                .SelectMany(stage => new[] { stage.MessageId, stage.NextMessageId }));
 
         if (world is not null
             && quests is null

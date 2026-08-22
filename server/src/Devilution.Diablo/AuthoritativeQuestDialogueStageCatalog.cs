@@ -34,7 +34,8 @@ public sealed record AuthoritativeQuestDialogueStage(
     int RewardOffsetX = 0,
     int RewardOffsetY = 0,
     AuthoritativeQuestDialogueFollowUpKind FollowUpKind = AuthoritativeQuestDialogueFollowUpKind.None,
-    uint FollowUpAmount = 0);
+    uint FollowUpAmount = 0,
+    int NextMessageId = 0);
 
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
@@ -52,6 +53,7 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 || stage.RequiredVariable1 is < 0 or > byte.MaxValue
                 || stage.RequiredVariable2 is < -1 or > byte.MaxValue
                 || stage.MessageId is <= 0 or > short.MaxValue
+                || stage.NextMessageId is < 0 or > short.MaxValue
                 || stage.NextVariable1 is < 0 or > byte.MaxValue
                 || stage.NextVariable2 is < 0 or > byte.MaxValue
                 || stage.RequiredVariable2 >= 0
@@ -208,7 +210,8 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 row.OptionalInt32("reward_offset_x"),
                 row.OptionalInt32("reward_offset_y"),
                 ParseFollowUpKind(row),
-                row.OptionalUInt32("follow_up_amount"))));
+                row.OptionalUInt32("follow_up_amount"),
+                row.OptionalInt32("next_message_id"))));
     }
 
     private static AuthoritativeQuestDialogueRewardKind ParseRewardKind(TsvRow row)

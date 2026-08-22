@@ -1285,7 +1285,7 @@ public sealed class DiabloWorldCommandProcessorTests
             unique: true,
             uniqueIdentity: "Gharbad");
         var stages = new AuthoritativeQuestDialogueStageCatalog([
-            new(3003, 0, -1, 144, 1, 0),
+            new(3003, 0, -1, 144, 1, 0, NextMessageId: 222),
             new(3003, 1, -1, 145, 3, 0),
             new(3003, 3, -1, 146, 4, 0),
             new(3003, 4, -1, 147, 5, 0),
@@ -1297,7 +1297,7 @@ public sealed class DiabloWorldCommandProcessorTests
         var player = CreatePlayer(entityId: 7);
 
         foreach (var expected in new[] {
-            (MessageId: 144, Variable1: 1, NextMessageId: 145),
+            (MessageId: 144, Variable1: 1, NextMessageId: 222),
             (MessageId: 145, Variable1: 3, NextMessageId: 146),
             (MessageId: 146, Variable1: 4, NextMessageId: 147),
             (MessageId: 147, Variable1: 5, NextMessageId: 0),

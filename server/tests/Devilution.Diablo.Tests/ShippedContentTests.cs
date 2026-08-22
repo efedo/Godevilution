@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.392.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.393.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -108,6 +108,10 @@ public sealed class ShippedContentTests
         Assert.Equal(AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop, gharbadReward.RewardKind);
         Assert.Equal((1, 1), (gharbadReward.RewardOffsetX, gharbadReward.RewardOffsetY));
         Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.None, gharbadReward.FollowUpKind);
+        var snotspillIntro = Assert.Single(
+            catalog.Definitions,
+            stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 1);
+        Assert.Equal(22, snotspillIntro.NextMessageId);
         var snotspill = Assert.Single(
             catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 2);
@@ -137,12 +141,15 @@ public sealed class ShippedContentTests
             table.SourcePath,
             table.ToCanonicalTsv());
 
-        Assert.Equal([21, 23, 110, 144, 145, 146, 147],
+        Assert.Equal([21, 22, 23, 110, 144, 145, 146, 147],
             catalog.Definitions.Select(message => message.MessageId));
         Assert.Equal(
             "Something for you I am making. Again, not kill Gharbad. Live and give good. \n \nYou take this as proof I keep word...",
             catalog.TryGet(145, out var gharbad) ? gharbad.Text : null);
-        catalog.ValidateMessageIds([144, 145, 146, 147, 21, 23, 110]);
+        Assert.Equal(
+            "You kill uglies, get banner. You bring to me, or else...",
+            catalog.TryGet(22, out var snotspill) ? snotspill.Text : null);
+        catalog.ValidateMessageIds([144, 145, 146, 147, 21, 22, 23, 110]);
     }
 
     [Fact]
@@ -1951,7 +1958,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.392.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.393.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
