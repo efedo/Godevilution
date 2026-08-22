@@ -13,6 +13,10 @@ Set-piece quest activation and Na-Krul room reconstruction are also offline-only
 during connected level loads.
 Legacy Cornerstone item restoration from local Hellfire options is offline-only
 as well.
+Connected native level loads now skip legacy random and quest-item generation.
+Authoritative world-item projections remain the only connected-session source of
+world-item state, and projected Cornerstone items no longer trigger the legacy
+local quest-completion side effect.
 
 ## Current state
 

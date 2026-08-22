@@ -63,6 +63,7 @@
 #include "game/monsters/monsters.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "persistence/options.h"
@@ -100,6 +101,28 @@
 #endif
 
 namespace devilution {
+
+namespace {
+
+bool LegacyWorldItemMutationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
+bool LegacyLevelItemGenerationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyLevelLoadMutation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
+} // namespace
 
 // Item method implementations moved from items.h header
 
@@ -1743,6 +1766,9 @@ void Hex2bin(const char *src, int bytes, uint8_t *target)
 
 void SpawnRock()
 {
+	if (!LegacyWorldItemMutationAllowed())
+		return;
+
 	if (ActiveItemCount >= MAXITEMS)
 		return;
 
@@ -2615,7 +2641,7 @@ void InitItems()
 		ActiveItems[i] = i;
 	}
 
-	if (!isSetLevel()) {
+	if (!isSetLevel() && LegacyLevelItemGenerationAllowed()) {
 		DiscardRandomValues(1);
 		if (Quests[Q_ROCK].IsAvailable())
 			SpawnRock();
@@ -3279,7 +3305,7 @@ uint8_t PlaceItemInWorld(Item &&item, WorldTilePosition position)
 	newItem.position = position;
 	RespawnItem(newItem, true);
 
-	if (CornerStone.isAvailable() && position == CornerStone.position) {
+	if (LegacyWorldItemMutationAllowed() && CornerStone.isAvailable() && position == CornerStone.position) {
 		CornerStone.item = newItem;
 		InitQTextMsg(TEXT_CORNSTN);
 		Quests[Q_CORNSTN]._qactive = QUEST_DONE;
@@ -3811,6 +3837,9 @@ void CornerstoneLoad(Point position)
 
 void SpawnQuestItem(_item_indexes itemid, Point position, int randarea, SelectionRegion selectionRegion, bool sendmsg)
 {
+	if (!LegacyWorldItemMutationAllowed())
+		return;
+
 	if (randarea > 0) {
 		int tries = 0;
 		while (true) {
@@ -3865,6 +3894,9 @@ void SpawnQuestItem(_item_indexes itemid, Point position, int randarea, Selectio
 
 void SpawnRewardItem(_item_indexes itemid, Point position, bool sendmsg)
 {
+	if (!LegacyWorldItemMutationAllowed())
+		return;
+
 	if (ActiveItemCount >= MAXITEMS)
 		return;
 

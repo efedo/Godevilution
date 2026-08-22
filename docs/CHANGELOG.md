@@ -3,6 +3,10 @@
 All notable changes to this fork are documented below.
 
 ## Unreleased
+- Connected native level loads no longer generate legacy random or quest items.
+  Authoritative world-item projections remain the only connected-session source of
+  world-item state, and projected Cornerstone items cannot complete the legacy
+  local quest.
 
 - Native authoritative snapshot application now preflights every projected
   entity, session, geometry, quest, and vendor state before committing any
