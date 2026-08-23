@@ -901,6 +901,14 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative player projection contains an invalid enum value.");
         }
+        if (state.CombatMode == DiabloPlayerCombatMode.Stand
+                && state.CombatModeEndTick != 0
+            || state.CombatMode is DiabloPlayerCombatMode.Block
+                or DiabloPlayerCombatMode.GotHit
+                && state.CombatModeEndTick == 0) {
+            throw new InvalidDataException(
+                "Authoritative player combat-mode timing is invalid.");
+        }
         if (state.Attributes.Strength.Base < 0
             || state.Attributes.Strength.Current < 0
             || state.Attributes.Magic.Base < 0

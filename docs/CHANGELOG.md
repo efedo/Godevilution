@@ -62,6 +62,8 @@ All notable changes to this fork are documented below.
   level links, native IDs, message IDs, coordinates, or variable ranges.
 - Reject projected active world-mutation collections with zero, duplicate, or
   oversized identities before serialization.
+- Reject projected player combat modes whose end-tick state violates the
+  native Stand, Block, or GotHit timing contract.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
