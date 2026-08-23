@@ -913,6 +913,87 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedObjectState()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var @object = new DiabloObjectState(
+            2,
+            4,
+            0,
+            4,
+            5,
+            false,
+            0,
+            AuthoritativeObjectEffectKind.None,
+            0);
+
+        void AssertRejected(Func<DiabloObjectState, DiabloObjectState> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Objects = [mutate(@object)],
+                }));
+        }
+
+        AssertRejected(value => value with { ObjectId = 0 });
+        AssertRejected(value => value with { EffectAmount = -1 });
+        AssertRejected(value => value with { EffectKind = (AuthoritativeObjectEffectKind)99 });
+        AssertRejected(value => value with { QuestId = 1 });
+        AssertRejected(value => value with {
+            QuestTransitionKind = AuthoritativeObjectQuestTransitionKind.ActivateQuest,
+        });
+        AssertRejected(value => value with { QuestTransitionAmount = 256 });
+        AssertRejected(value => value with { QuestTransitionRequiredVariable1 = -2 });
+        AssertRejected(value => value with { RewardKind = (AuthoritativeObjectRewardKind)99 });
+        AssertRejected(value => value with { RewardItemLevel = 256 });
+        AssertRejected(value => value with { RewardOffsetX = 17 });
+        AssertRejected(value => value with {
+            RewardKind = AuthoritativeObjectRewardKind.NormalItem,
+        });
+        AssertRejected(value => value with { ProjectileTargetOffsetX = 33 });
+        AssertRejected(value => value with { ProjectileTargetOffsetY = 1 });
+        AssertRejected(value => value with {
+            QuestSequenceFollowUpKind = (AuthoritativeQuestSequenceFollowUpKind)99,
+        });
+        AssertRejected(value => value with { QuestSequenceFollowUpOffsetX = -33 });
+        AssertRejected(value => value with {
+            QuestSequenceFollowUpKind = AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
+            QuestSequenceFollowUpAmount = 1,
+        });
+        AssertRejected(value => value with { ProjectileSourceKind = (AuthoritativeObjectProjectileSourceKind)99 });
+        AssertRejected(value => value with {
+            ProjectileSourceKind = AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+        });
+        AssertRejected(value => value with {
+            Breakable = true,
+            MissilePassable = true,
+        });
+        AssertRejected(value => value with { Destroyed = true });
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

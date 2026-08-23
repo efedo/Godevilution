@@ -22,6 +22,7 @@ internal static class DiabloProtocolMapper
             ?? new Dictionary<uint, AuthoritativeLevel>();
         ValidateProjectedWorldItemPositions(source.WorldItems, projectedLevels);
         ValidateProjectedObjectPositions(source.Objects, projectedLevels);
+        ValidateProjectedObjectStates(source.Objects, source.Quests);
         ValidateProjectedProjectileStates(source.Projectiles, projectedLevels);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
@@ -448,6 +449,97 @@ internal static class DiabloProtocolMapper
                 @object.PositionY,
                 levels,
                 "object");
+        }
+    }
+
+    private static void ValidateProjectedObjectStates(
+        IReadOnlyList<DiabloObjectState> objects,
+        IReadOnlyList<DiabloQuestState> quests)
+    {
+        var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
+        foreach (var @object in objects) {
+            var transitionKind = @object.QuestTransitionKind;
+            var rewardKind = @object.RewardKind;
+            var followUpKind = @object.QuestSequenceFollowUpKind;
+            var effectKind = @object.EffectKind;
+            var transitionSetsVariable = transitionKind is
+                AuthoritativeObjectQuestTransitionKind.SetVariable1
+                or AuthoritativeObjectQuestTransitionKind.SetVariable2
+                or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1
+                or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable2
+                or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable1
+                or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable2;
+            var transitionValid = transitionKind == AuthoritativeObjectQuestTransitionKind.None
+                || @object.QuestId != 0
+                    && (transitionSetsVariable
+                        ? @object.QuestTransitionAmount > 0
+                        : @object.QuestTransitionAmount == 0);
+            var rewardValid = rewardKind == AuthoritativeObjectRewardKind.None
+                ? @object.RewardId == 0
+                    && @object.RewardItemLevel == 0
+                    && @object.RewardOffsetX == 0
+                    && @object.RewardOffsetY == 0
+                : @object.RewardId != 0;
+            var producesProjectile = effectKind is
+                    AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                    or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
+                || followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile;
+            var followUpValid = followUpKind switch {
+                AuthoritativeQuestSequenceFollowUpKind.None
+                    => @object.QuestSequenceFollowUpAmount == 0
+                        && @object.QuestSequenceFollowUpOffsetX == 0
+                        && @object.QuestSequenceFollowUpOffsetY == 0,
+                AuthoritativeQuestSequenceFollowUpKind.WorldMutation
+                    => effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                        && @object.QuestSequenceFollowUpAmount != 0
+                        && @object.QuestSequenceFollowUpOffsetX == 0
+                        && @object.QuestSequenceFollowUpOffsetY == 0,
+                AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
+                    => (effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                        || effectKind == AuthoritativeObjectEffectKind.WorldMutation)
+                        && @object.QuestSequenceFollowUpAmount != 0,
+                AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster
+                    => effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                        && @object.QuestSequenceFollowUpAmount != 0,
+                _ => false,
+            };
+
+            if (@object.ObjectId == 0
+                || @object.EffectAmount < 0
+                || effectKind is < AuthoritativeObjectEffectKind.None
+                    or > AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile
+                || @object.QuestId != 0 && !questIds.Contains(@object.QuestId)
+                || transitionKind is < AuthoritativeObjectQuestTransitionKind.None
+                    or > AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable2
+                || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
+                || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue
+                || @object.QuestTransitionRequiredVariable2 is < -1 or > byte.MaxValue
+                || !transitionValid
+                || rewardKind is < AuthoritativeObjectRewardKind.None
+                    or > AuthoritativeObjectRewardKind.UniqueItem
+                || @object.RewardItemLevel is < 0 or > byte.MaxValue
+                || @object.RewardOffsetX is < -16 or > 16
+                || @object.RewardOffsetY is < -16 or > 16
+                || !rewardValid
+                || @object.ProjectileTargetOffsetX is < -32 or > 32
+                || @object.ProjectileTargetOffsetY is < -32 or > 32
+                || !producesProjectile
+                    && (@object.ProjectileTargetOffsetX != 0
+                        || @object.ProjectileTargetOffsetY != 0)
+                || followUpKind is < AuthoritativeQuestSequenceFollowUpKind.None
+                    or > AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster
+                || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
+                || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
+                || !followUpValid
+                || @object.ProjectileSourceKind is < AuthoritativeObjectProjectileSourceKind.Object
+                    or > AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
+                || !producesProjectile && @object.ProjectileSourceKind
+                    != AuthoritativeObjectProjectileSourceKind.Object
+                || @object.Breakable && @object.MissilePassable
+                || @object.Destroyed && !@object.Breakable) {
+                throw new InvalidDataException(
+                    "Authoritative object state is outside the shared protocol range.");
+            }
         }
     }
 
