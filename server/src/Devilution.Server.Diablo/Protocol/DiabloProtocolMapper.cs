@@ -1340,7 +1340,7 @@ internal static class DiabloProtocolMapper
                     item.ItemSeed,
                     item.Price,
                     FromProtocolItemState(item.State))).ToArray());
-        return new DiabloSimulationSnapshot(
+        var snapshot = new DiabloSimulationSnapshot(
             source.Tick,
             player,
             source.Monsters.Select(monster => new DiabloMonsterState(
@@ -1644,6 +1644,8 @@ internal static class DiabloProtocolMapper
             Difficulty = FromProtocolDifficulty(source.Difficulty),
             ActiveWorldMutationIds = source.ActiveWorldMutationIds.ToArray(),
         };
+        ValidateImportedSimulationState(snapshot);
+        return snapshot;
     }
 
     private static void ValidateProtocolSnapshotHash(Snapshot source)
@@ -1680,6 +1682,14 @@ internal static class DiabloProtocolMapper
         // Keep save imports on the same fail-closed player boundary as live
         // projections without duplicating the topology and range rules.
         _ = ToProtocolPlayer(state, spells: null, spellBooks: null);
+    }
+
+    private static void ValidateImportedSimulationState(
+        DiabloSimulationSnapshot state)
+    {
+        // Reuse the aggregate projection boundary for world entities so save
+        // imports cannot bypass checks that protect live authoritative output.
+        _ = ToProtocolSnapshot(state, allowZeroPlayerEntityId: true);
     }
 
     private static void ValidateEntityIds(
