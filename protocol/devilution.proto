@@ -137,6 +137,7 @@ message Command {
 		CloseStashRequested close_stash_requested = 38;
 		DepositStashGoldRequested deposit_stash_gold_requested = 39;
 		WithdrawStashGoldRequested withdraw_stash_gold_requested = 40;
+		SplitGoldRequested split_gold_requested = 41;
 	}
 }
 
@@ -208,6 +209,12 @@ message DepositStashGoldRequested {
 
 message WithdrawStashGoldRequested {
 	uint32 amount = 1;
+}
+
+message SplitGoldRequested {
+	// Gold stack in the player's inventory or belt to split onto the cursor.
+	PlayerItemReference item = 1;
+	uint32 amount = 2;
 }
 
 message PurchaseRequested {

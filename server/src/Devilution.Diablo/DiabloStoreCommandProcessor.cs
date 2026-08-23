@@ -64,6 +64,7 @@ public sealed class DiabloStoreCommandProcessor
             DiabloCloseStashIntent => CloseStash(player),
             DiabloDepositStashGoldIntent deposit => DepositStashGold(player, deposit.Amount),
             DiabloWithdrawStashGoldIntent withdraw => WithdrawStashGold(player, withdraw.Amount),
+            DiabloSplitGoldIntent split => SplitGold(player, split),
             DiabloPurchaseIntent purchase => Purchase(player, purchase, appliedTick),
             DiabloSellItemIntent sale => Sell(player, sale.Item, sale.LegacyInventoryIndex),
             DiabloRepairItemIntent repair => Repair(player, repair),
@@ -182,6 +183,47 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
         player.StashGold -= amount;
         player.Gold += amount;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloIntentResult SplitGold(
+        AuthoritativePlayerState player,
+        DiabloSplitGoldIntent intent)
+    {
+        if (intent.Amount == 0 || player.HeldItem is not null)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (intent.Item.Location is not (DiabloPlayerItemLocation.Inventory
+            or DiabloPlayerItemLocation.Belt)
+            || !DiabloPlayerItemAccess.TryGet(player, intent.Item, out var source)
+            || !DiabloGoldInventory.IsValidStack(source, combatRules, items)
+            || intent.Amount > source.Price) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+        if (intent.Amount > player.Gold)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+
+        if (intent.Amount == source.Price) {
+            DiabloPlayerItemAccess.Remove(player, intent.Item);
+        } else {
+            DiabloPlayerItemAccess.Replace(
+                player,
+                intent.Item,
+                DiabloGoldInventory.WithValue(
+                    source,
+                    source.Price - intent.Amount,
+                    combatRules,
+                    items));
+        }
+
+        var held = DiabloGoldInventory.CreateStack(
+            AllocateNonzeroGoldStackSeed(),
+            intent.Amount,
+            combatRules,
+            items) with {
+                PurchasedAtTick = 0,
+            };
+        player.Gold -= intent.Amount;
+        player.HeldItem = held;
         return DiabloIntentResult.Accepted;
     }
 
@@ -2078,6 +2120,15 @@ public sealed class DiabloStoreCommandProcessor
     private uint AllocateGoldStackSeed()
     {
         return unchecked((uint)random.AdvanceRndSeed());
+    }
+
+    private uint AllocateNonzeroGoldStackSeed()
+    {
+        uint seed;
+        do {
+            seed = AllocateGoldStackSeed();
+        } while (seed == 0);
+        return seed;
     }
 
     private static int FindNativeInventoryPlacement(

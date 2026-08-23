@@ -93,6 +93,23 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeWithdrawStash
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeSplitGoldCommand(ServerBackedItemReference item, uint32_t amount, uint64_t requestedTick)
+{
+	if (amount == 0)
+		return tl::make_unexpected("Cannot split zero gold.");
+	const auto reference = MakeItemReference(item);
+	if (!reference.has_value())
+		return tl::make_unexpected(reference.error());
+	if (item.location != ServerBackedItemLocation::Inventory
+	    && item.location != ServerBackedItemLocation::Belt)
+		return tl::make_unexpected("Gold can only be split from inventory or belt.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_split_gold_requested()->mutable_item()->CopyFrom(*reference);
+	command.mutable_split_gold_requested()->set_amount(amount);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakePurchaseCommand(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick)
 {
 	if (storeId == 0)

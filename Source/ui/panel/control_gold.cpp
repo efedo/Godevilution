@@ -14,6 +14,7 @@
 #include "utils/display.h"
 #include "utils/string/format_int.hpp"
 #include "utils/log.hpp"
+#include "utils/timer.hpp"
 #include "utils/sdl/sdl_compat.h"
 #include "network/protocol/legacy_item_policy.hpp"
 
@@ -34,6 +35,25 @@ std::optional<NumberInputState> GoldDropInputState;
 
 void RemoveGold(Player &player, int goldIndex, int amount)
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		uint32_t itemSeed = 0;
+		if (goldIndex >= INVITEM_INV_FIRST && goldIndex <= INVITEM_INV_LAST) {
+			itemSeed = player.InvList[goldIndex - INVITEM_INV_FIRST]._iSeed;
+		} else if (goldIndex >= INVITEM_BELT_FIRST && goldIndex <= INVITEM_BELT_LAST) {
+			itemSeed = player.SpdList[goldIndex - INVITEM_BELT_FIRST]._iSeed;
+		}
+		const auto item = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(itemSeed);
+		if (!item.has_value()) {
+			LogError("Connected gold splitting could not resolve the selected authoritative stack.");
+			return;
+		}
+		if (auto result = authoritative::GetServerBackedRuntime().SplitGold(*item, amount, 0, GetMillisecondsSinceStartup()); !result.has_value())
+			LogError("Failed to submit authoritative gold split: {}", result.error());
+		return;
+	}
+	#endif
+
 	const int gi = goldIndex - INVITEM_INV_FIRST;
 	player.InvList[gi]._ivalue -= amount;
 	if (player.InvList[gi]._ivalue > 0) {
@@ -95,14 +115,6 @@ void DrawGoldSplit(const Surface &out)
 
 void control_drop_gold(SDL_Keycode vkey)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (!ShouldProcessLegacyGoldDrop(authoritative::GetServerBackedRuntime().IsConnected())) {
-		CloseGoldDrop();
-		LogError("Connected gold splitting has no authoritative drop command.");
-		return;
-	}
-	#endif
-
 	Player &myPlayer = *MyPlayer;
 
 	if (myPlayer.hasNoLife()) {

@@ -35,6 +35,11 @@ public sealed record DiabloDepositStashGoldIntent(uint Amount) : DiabloStoreInte
 /** Moves stash gold into the carried authoritative wallet. */
 public sealed record DiabloWithdrawStashGoldIntent(uint Amount) : DiabloStoreIntent;
 
+/** Splits a carried gold stack onto the authoritative presentation cursor. */
+public sealed record DiabloSplitGoldIntent(
+    DiabloPlayerItemReference Item,
+    uint Amount) : DiabloStoreIntent;
+
 public sealed record DiabloPurchaseIntent(uint StoreId, uint StoreSlot) : DiabloStoreIntent;
 
 public sealed record DiabloSellItemIntent(

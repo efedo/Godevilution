@@ -32,16 +32,29 @@ TEST(ServerBackedVendorCommand, BuildsStashSessionAndGoldIntents)
 	const auto close = MakeCloseStashCommand(22);
 	const auto deposit = MakeDepositStashGoldCommand(300, 23);
 	const auto withdraw = MakeWithdrawStashGoldCommand(125, 24);
+	const ServerBackedItemReference gold { .location = ServerBackedItemLocation::Inventory, .slot = 3, .stableItemId = 701 };
+	const auto split = MakeSplitGoldCommand(gold, 75, 25);
 	ASSERT_TRUE(open.has_value());
 	ASSERT_TRUE(close.has_value());
 	ASSERT_TRUE(deposit.has_value());
 	ASSERT_TRUE(withdraw.has_value());
+	ASSERT_TRUE(split.has_value());
 	EXPECT_EQ(open->intent_case(), protocol::Command::kOpenStashRequested);
 	EXPECT_EQ(close->intent_case(), protocol::Command::kCloseStashRequested);
 	EXPECT_EQ(deposit->deposit_stash_gold_requested().amount(), 300U);
 	EXPECT_EQ(withdraw->withdraw_stash_gold_requested().amount(), 125U);
+	EXPECT_EQ(split->intent_case(), protocol::Command::kSplitGoldRequested);
+	EXPECT_EQ(split->split_gold_requested().item().slot(), 3U);
+	EXPECT_EQ(split->split_gold_requested().item().stable_item_id(), 701U);
+	EXPECT_EQ(split->split_gold_requested().amount(), 75U);
 	EXPECT_FALSE(MakeDepositStashGoldCommand(0, 1).has_value());
 	EXPECT_FALSE(MakeWithdrawStashGoldCommand(0, 1).has_value());
+	EXPECT_FALSE(MakeSplitGoldCommand(gold, 0, 1).has_value());
+	EXPECT_FALSE(MakeSplitGoldCommand(
+	    ServerBackedItemReference { .location = ServerBackedItemLocation::Stash, .slot = 1, .page = 0 },
+	    1,
+	    1)
+	                 .has_value());
 }
 
 TEST(ServerBackedVendorCommand, BuildsPurchaseIntentWithStableSlot)

@@ -1086,6 +1086,92 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void SplitGoldProjectsAServerOwnedHeldStackAndPreservesInventoryTotal()
+    {
+        var goldState = AuthoritativeItemState.Empty with {
+            ItemType = 11,
+            ItemIndex = 0,
+            Value = 100,
+            IdentifiedValue = 100,
+            StatFlag = true,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+        inventoryGrid[0] = 0;
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingInventoryGrid: inventoryGrid,
+            startingInventory: [new OwnedStoreItem(0, 0, 42, 100, 0, goldState)]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 0,
+            SplitGoldRequested = new SplitGoldRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+                Amount = 40,
+            },
+        }, 0);
+
+        var player = executor.GetPlayerState("player-a");
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Equal(60U, player.Gold);
+        Assert.Equal(60U, Assert.Single(player.Inventory).Price);
+        Assert.NotNull(player.HeldItem);
+        Assert.Equal(40U, player.HeldItem!.Price);
+        Assert.Equal(100U, player.Gold + player.HeldItem!.Price);
+        var snapshot = executor.CreateSnapshot("player-a", 1, 1);
+        Assert.Equal(60U, Assert.Single(snapshot.Players).Gold);
+        Assert.Equal(40U, Assert.Single(snapshot.Players).HeldItem.Price);
+    }
+
+    [Fact]
+    public void SplitGoldRejectsASecondCursorStackWithoutMutatingTheSource()
+    {
+        var goldState = AuthoritativeItemState.Empty with {
+            ItemType = 11,
+            ItemIndex = 0,
+            Value = 100,
+            IdentifiedValue = 100,
+            StatFlag = true,
+        };
+        var held = new OwnedStoreItem(0, 0, 43, 5, 0, goldState with { Value = 5, IdentifiedValue = 5 });
+        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+        inventoryGrid[0] = 0;
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingInventoryGrid: inventoryGrid,
+            startingInventory: [new OwnedStoreItem(0, 0, 42, 100, 0, goldState)],
+            startingHeldItem: held);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 0,
+            SplitGoldRequested = new SplitGoldRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+                Amount = 40,
+            },
+        }, 0);
+
+        var player = executor.GetPlayerState("player-a");
+        Assert.Equal(CommandStatus.Rejected, result.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, result.RejectReason);
+        Assert.Equal(100U, Assert.Single(player.Inventory).Price);
+        Assert.NotNull(player.HeldItem);
+        Assert.Equal(5U, player.HeldItem!.Price);
+    }
+
+    [Fact]
     public void AutoEquipCommandDispatchesAtomicEquipmentSwap()
     {
         var sourceState = AuthoritativeItemState.Empty with {

@@ -253,6 +253,10 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     new DiabloWithdrawStashGoldIntent(
                         command.WithdrawStashGoldRequested.Amount),
                     appliedTick),
+                Command.IntentOneofCase.SplitGoldRequested => ExecuteSplitGoldIntent(
+                    player,
+                    command.SplitGoldRequested,
+                    appliedTick),
                 Command.IntentOneofCase.PurchaseRequested => ExecuteStoreIntent(
                     player,
                     new DiabloPurchaseIntent(
@@ -743,6 +747,22 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         return ExecuteStoreIntent(
             player,
             new DiabloMoveItemIntent(item.Value, destination.Value),
+            appliedTick);
+    }
+
+    private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteSplitGoldIntent(
+        AuthoritativePlayerState player,
+        SplitGoldRequested request,
+        ulong appliedTick)
+    {
+        if (!TryMapItemReference(request.Item, out var item) || !item.HasValue) {
+            return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
+                CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
+        }
+
+        return ExecuteStoreIntent(
+            player,
+            new DiabloSplitGoldIntent(item.Value, request.Amount),
             appliedTick);
     }
 

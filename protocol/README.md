@@ -53,6 +53,11 @@ Windows toolchain command.
   the requested amount between the server-owned wallet and stash gold. The
   server validates the open session and available balance before changing
   either total.
+- `SplitGoldRequested` moves a validated amount from an inventory or belt Gold
+  stack to `PlayerSnapshot.held_item`; the server rejects a second held stack and
+  reduces the projected wallet by the split amount while retaining the held
+  stack separately. `DropHeldItemRequested` then returns that
+  server-owned cursor stack to the world.
 - The server assigns `server_receipt_sequence` and `applied_tick`; command
   acknowledgements explicitly report acceptance, rescheduling, rejection, or
   duplication.
