@@ -34,6 +34,7 @@ internal static class DiabloProtocolMapper
             source.QuestTownerInteractions,
             source.Quests,
             projectedLevels);
+        ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -670,6 +671,17 @@ internal static class DiabloProtocolMapper
                 throw new InvalidDataException(
                     "Authoritative quest/towner interaction is outside the shared protocol range.");
             }
+        }
+    }
+
+    private static void ValidateProjectedWorldMutationIds(
+        IReadOnlyList<uint> mutationIds)
+    {
+        if (mutationIds.Count > DiabloWorldState.MaximumWorldStateEntries
+            || mutationIds.Any(mutationId => mutationId == 0)
+            || mutationIds.Distinct().Count() != mutationIds.Count) {
+            throw new InvalidDataException(
+                "Authoritative active world mutations contain invalid or duplicate identities.");
         }
     }
 

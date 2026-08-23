@@ -1214,6 +1214,48 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedWorldMutationIdentities()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        void AssertRejected(IReadOnlyList<uint> mutationIds)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    ActiveWorldMutationIds = mutationIds,
+                }));
+        }
+
+        AssertRejected([0]);
+        AssertRejected([7, 7]);
+        AssertRejected(Enumerable.Range(1, DiabloWorldState.MaximumWorldStateEntries + 1)
+            .Select(value => (uint)value)
+            .ToArray());
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

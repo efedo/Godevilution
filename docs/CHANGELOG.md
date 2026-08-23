@@ -60,6 +60,8 @@ All notable changes to this fork are documented below.
   unknown quest gates, or non-printable stable symbols.
 - Reject projected quest/towner interactions with invalid identity, quest or
   level links, native IDs, message IDs, coordinates, or variable ranges.
+- Reject projected active world-mutation collections with zero, duplicate, or
+  oversized identities before serialization.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
