@@ -1324,10 +1324,12 @@ internal static class DiabloProtocolMapper
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
         if (source.ActiveStore is not null)
             ValidateProjectedActiveStoreSlots(source.ActiveStore.Items.Select(item => item.StoreSlot));
-        var player = source.Players.Count == 1
-            ? ToPlayerState(source.Players[0])
-            : throw new InvalidDataException(
+        if (source.Players.Count != 1) {
+            throw new InvalidDataException(
                 "The authoritative save must contain exactly one player snapshot.");
+        }
+        ValidateImportedStoreState(source);
+        var player = ToPlayerState(source.Players[0]);
         var activeStore = source.ActiveStore is null
             ? null
             : new DiabloStoreState(
@@ -1652,6 +1654,23 @@ internal static class DiabloProtocolMapper
         if (!string.Equals(source.StateSha256, expectedHash, StringComparison.OrdinalIgnoreCase)) {
             throw new InvalidDataException(
                 "Authoritative protocol snapshot state hash does not match its contents.");
+        }
+    }
+
+    private static void ValidateImportedStoreState(Snapshot source)
+    {
+        var player = source.Players[0];
+        var activeStoreId = player.ActiveStoreId;
+        if ((source.ActiveStore is null) != (activeStoreId == 0)
+            || source.ActiveStore is not null
+                && (source.ActiveStore.StoreId == 0
+                    || source.ActiveStore.StoreId != activeStoreId)) {
+            throw new InvalidDataException(
+                "Authoritative active-store state does not match the saved player projection.");
+        }
+        if (player.StashOpen && activeStoreId != 0) {
+            throw new InvalidDataException(
+                "Authoritative saved player opens a stash and store simultaneously.");
         }
     }
 

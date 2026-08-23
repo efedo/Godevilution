@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Devilution.Protocol.V1;
 using Devilution.Server.Stores;
+using Devilution.Server.Snapshots;
 using Google.Protobuf;
 using Xunit;
 
@@ -320,6 +321,33 @@ public sealed class AuthoritativeSaveCodecTests
             Convert.ToBase64String(snapshot.ToByteArray())));
 
         Assert.Throws<InvalidDataException>(() => codec.Deserialize(malformedSave));
+    }
+
+    [Fact]
+    public void RejectsContradictoryStoreSessionStateWhenReadingSaves()
+    {
+        var codec = new AuthoritativeSaveCodec();
+        var document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            codec.Serialize(CreateSnapshot()))!;
+
+        var missingStore = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(document.SnapshotBase64));
+        missingStore.ActiveStore = null;
+        missingStore.StateSha256 = SnapshotStateHasher.Compute(missingStore);
+        var missingStoreSave = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
+            1,
+            Convert.ToBase64String(missingStore.ToByteArray())));
+
+        var stashAndStore = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(document.SnapshotBase64));
+        stashAndStore.Players[0].StashOpen = true;
+        stashAndStore.StateSha256 = SnapshotStateHasher.Compute(stashAndStore);
+        var stashAndStoreSave = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
+            1,
+            Convert.ToBase64String(stashAndStore.ToByteArray())));
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(missingStoreSave));
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(stashAndStoreSave));
     }
 
     [Fact]
