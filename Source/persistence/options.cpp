@@ -35,6 +35,9 @@
 #include "controls/controller_buttons.h"
 #include "engine/assets.hpp"
 #include "engine/audio/sound_defs.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_configuration.hpp"
+#endif
 #include "platform/locale.hpp"
 #include "ui/quick_messages.hpp"
 #include "utils/algorithm/container.hpp"
@@ -69,10 +72,25 @@ namespace devilution {
 
 namespace {
 
+bool IsAuthoritativeServerBackedMode()
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return authoritative::GetServerBackedRuntimeConfiguration().mode
+		== authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative;
+#else
+	return false;
+#endif
+}
+
 void DiscoverMods()
 {
-	// Add mods available by default:
-	std::unordered_set<std::string> modNames = { "clock", "adria_refills_mana", "Floating Numbers - Damage", "Floating Numbers - XP" };
+	// Add script-backed mods by default only for the legacy runtime. The
+	// authoritative client gets gameplay and presentation data from its server
+	// and validated content packs instead.
+	std::unordered_set<std::string> modNames;
+	if (!IsAuthoritativeServerBackedMode()) {
+		modNames = { "clock", "adria_refills_mana", "Floating Numbers - Damage", "Floating Numbers - XP" };
+	}
 
 	if (HaveHellfire()) {
 		modNames.insert("Hellfire");
@@ -86,6 +104,8 @@ void DiscoverMods()
 			// Only consider this folder if the init.lua file exists.
 			const std::string modScriptPath = modsPath + DIRECTORY_SEPARATOR_STR + modFolder + DIRECTORY_SEPARATOR_STR + "lua" + DIRECTORY_SEPARATOR_STR + "mods" + DIRECTORY_SEPARATOR_STR + modFolder + DIRECTORY_SEPARATOR_STR + "init.lua";
 			if (!FileExists(modScriptPath.c_str()))
+				continue;
+			if (IsAuthoritativeServerBackedMode())
 				continue;
 
 			modNames.insert(modFolder);

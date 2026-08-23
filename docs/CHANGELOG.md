@@ -4,6 +4,7 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Exclude script-backed default and unpacked `init.lua` mods from authoritative native startup while retaining legacy discovery.
 - Keep legacy `/lua` debug chat hotkeys out of authoritative console entry while
   preserving their legacy-mode behavior.
 - Reuse the aggregate projection validation boundary when importing saved world entities, rejecting malformed world-item, object, quest, monster, projectile, portal, and corpse state.

@@ -211,6 +211,29 @@ public sealed class ServerAssemblyBoundaryTests
             "The legacy Lua hotkey must remain inside the authoritative native-only guard.");
     }
 
+    [Fact]
+    public void AuthoritativeNativeModDiscoverySkipsScriptMods()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "Source",
+            "persistence",
+            "options.cpp"));
+
+        Assert.Contains(
+            "if (!IsAuthoritativeServerBackedMode())",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "if (IsAuthoritativeServerBackedMode())",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "const std::string modScriptPath =",
+            source,
+            StringComparison.Ordinal);
+    }
+
     private static string[] GodevilutionDependencies(Assembly assembly)
     {
         return assembly

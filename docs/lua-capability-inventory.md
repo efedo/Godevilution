@@ -45,6 +45,7 @@ shows only the registered native command list. Legacy mode retains the existing
 script console behavior.
 Authoritative debug chat hotkeys also skip `/lua` entries before opening the
 console, while legacy mode retains the existing script hotkey behavior.
+Authoritative startup also excludes script-backed default and unpacked `init.lua` mods; legacy mode retains their discovery and reload behavior.
 The `dev.player.stats.rejuvenate` helper now delegates to the native
 `debug.player.rejuvenate` command; the Lua function remains only as a
 compatibility alias while the native command owns the health/mana mutation and

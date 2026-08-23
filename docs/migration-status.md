@@ -47,6 +47,8 @@ Authoritative debug chat hotkeys now ignore legacy `/lua` entries before they
 reach console initialization; legacy mode retains the existing script hotkey
 behavior.
 
+Authoritative startup now excludes script-backed default and unpacked `init.lua` mods; legacy mode retains their discovery and reload behavior.
+
 Connected native object interaction facades now also fail closed for direct
 operate, break, trap, and Na-Krul room callbacks; local authoritative operate
 requests still route through the server projection.
