@@ -994,6 +994,87 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedQuestAndPortalState()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var quest = new DiabloQuestState(1, 1, 0, 2, false);
+        var portal = new DiabloPortalState(1, 1, 0, 0, 2, 1, 1);
+
+        void AssertQuestRejected(Func<DiabloQuestState, DiabloQuestState> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Quests = [mutate(quest)],
+                }));
+        }
+
+        AssertQuestRejected(value => value with { QuestId = 0 });
+        AssertQuestRejected(value => value with { RequiredProgress = 0 });
+        AssertQuestRejected(value => value with { Progress = 3 });
+        AssertQuestRejected(value => value with { Unavailable = true, Progress = 1 });
+        AssertQuestRejected(value => value with { Variable1 = 256 });
+        AssertQuestRejected(value => value with { Variable2 = -1 });
+        AssertQuestRejected(value => value with { MessageId = short.MaxValue + 1 });
+        AssertQuestRejected(value => value with { TurnInTownerId = -2 });
+        AssertQuestRejected(value => value with { TurnInAlternateMessageId = short.MaxValue + 1 });
+        AssertQuestRejected(value => value with { TurnInCompletionVariable2 = -2 });
+        AssertQuestRejected(value => value with { TurnInCompletionRequiredVariable1 = 256 });
+        AssertQuestRejected(value => value with { TurnInCompletionVariable1 = -2 });
+        AssertQuestRejected(value => value with { TurnInRequiredVariable1 = 256 });
+        AssertQuestRejected(value => value with { TurnInVariable1 = -2 });
+        AssertQuestRejected(value => value with {
+            CompletionUniqueIdentity = new string('x', 129),
+        });
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Quests = [quest, quest],
+            }));
+
+        void AssertPortalRejected(Func<DiabloPortalState, DiabloPortalState> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    Portals = [mutate(portal)],
+                }));
+        }
+
+        AssertPortalRejected(value => value with { PortalId = 0 });
+        AssertPortalRejected(value => value with { Bidirectional = true });
+        AssertPortalRejected(value => value with {
+            Bidirectional = true,
+            OwnerEntityId = 2,
+        });
+        AssertPortalRejected(value => value with { OwnerEntityId = 2 });
+        AssertPortalRejected(value => value with { RemainingTicks = 1 });
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Portals = [portal, portal],
+            }));
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

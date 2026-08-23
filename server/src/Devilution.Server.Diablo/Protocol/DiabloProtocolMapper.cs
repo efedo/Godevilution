@@ -22,8 +22,10 @@ internal static class DiabloProtocolMapper
             ?? new Dictionary<uint, AuthoritativeLevel>();
         ValidateProjectedWorldItemPositions(source.WorldItems, projectedLevels);
         ValidateProjectedObjectPositions(source.Objects, projectedLevels);
+        ValidateProjectedQuestStates(source.Quests);
         ValidateProjectedObjectStates(source.Objects, source.Quests);
         ValidateProjectedProjectileStates(source.Projectiles, projectedLevels);
+        ValidateProjectedPortalStates(source.Portals);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -539,6 +541,55 @@ internal static class DiabloProtocolMapper
                 || @object.Destroyed && !@object.Breakable) {
                 throw new InvalidDataException(
                     "Authoritative object state is outside the shared protocol range.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedQuestStates(
+        IReadOnlyList<DiabloQuestState> quests)
+    {
+        if (quests.Count > 4096) {
+            throw new InvalidDataException(
+                "Authoritative quest state exceeds the shared protocol collection limit.");
+        }
+
+        var questIds = new HashSet<uint>();
+        foreach (var quest in quests) {
+            if (quest.QuestId == 0
+                || !questIds.Add(quest.QuestId)
+                || quest.RequiredProgress == 0
+                || quest.Progress > quest.RequiredProgress
+                || quest.Unavailable && (quest.Completed || quest.Progress != 0)
+                || quest.Variable1 is < 0 or > byte.MaxValue
+                || quest.Variable2 is < 0 or > byte.MaxValue
+                || quest.MessageId is < 0 or > short.MaxValue
+                || quest.TurnInTownerId is < -1 or > byte.MaxValue
+                || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
+                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInVariable1 is < -1 or > byte.MaxValue
+                || quest.CompletionUniqueIdentity.Length > 128) {
+                throw new InvalidDataException(
+                    "Authoritative quest state is outside the shared protocol range.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedPortalStates(
+        IReadOnlyList<DiabloPortalState> portals)
+    {
+        var portalIds = new HashSet<uint>();
+        foreach (var portal in portals) {
+            if (portal.PortalId == 0
+                || !portalIds.Add(portal.PortalId)
+                || portal.Bidirectional
+                    && (portal.OwnerEntityId == 0 || portal.RemainingTicks == 0)
+                || !portal.Bidirectional
+                    && (portal.OwnerEntityId != 0 || portal.RemainingTicks != 0)) {
+                throw new InvalidDataException(
+                    "Authoritative portal state is outside the shared protocol range.");
             }
         }
     }

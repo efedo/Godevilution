@@ -54,6 +54,8 @@ All notable changes to this fork are documented below.
   and movement-occupancy states outside the shared native protocol range.
 - Reject projected object effect, quest-transition, reward, follow-up, and
   projectile metadata that cannot be represented by the shared client contract.
+- Reject projected quest identity/progress metadata and portal identity,
+  ownership, and lifetime states that cannot cross the shared client contract.
 - Validate world-mutation identities before publishing a restored mutation set, preserving the prior projection when a save lists an unknown or duplicate mutation.
 - Roll back the prior world-mutation projection when later authoritative snapshot validation rejects a save.
 - Reject duplicate participant-template item identities across inventory, equipment, belt, stash, and held-item state.
