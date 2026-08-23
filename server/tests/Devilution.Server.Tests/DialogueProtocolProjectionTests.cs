@@ -1075,6 +1075,67 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedWarpTargets()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var levels = new[] {
+            new AuthoritativeLevel(1, 10, 10),
+            new AuthoritativeLevel(2, 10, 10),
+        };
+        var validWarp = new AuthoritativeWarpTarget(1, 1, 4, 5, 2, 1, 1) {
+            StableSymbol = "stairs",
+        };
+
+        void AssertRejected(AuthoritativeWarpTarget warp)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(
+                    source,
+                    levelGeometry: levels,
+                    warpTargets: [warp]));
+        }
+
+        AssertRejected(new AuthoritativeWarpTarget(2, 1, -1, 5, 2, 1, 1));
+        AssertRejected(new AuthoritativeWarpTarget(2, 1, 10, 5, 2, 1, 1));
+        AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 2, 10, 1));
+        AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 99, 1, 1));
+        AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 2, 1, 1, 99));
+        AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 2, 1, 1) {
+            StableSymbol = "bad\u0001symbol",
+        });
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                source,
+                levelGeometry: levels,
+                warpTargets: [validWarp, validWarp]));
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

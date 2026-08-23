@@ -20,12 +20,16 @@ internal static class DiabloProtocolMapper
         ValidateProjectedStoreState(source);
         var projectedLevels = levelGeometry?.ToDictionary(level => level.LevelId)
             ?? new Dictionary<uint, AuthoritativeLevel>();
+        var projectedWarpTargets = (warpTargets ?? [])
+            .Where(warp => projectedLevels.ContainsKey(warp.SourceLevelId))
+            .ToArray();
         ValidateProjectedWorldItemPositions(source.WorldItems, projectedLevels);
         ValidateProjectedObjectPositions(source.Objects, projectedLevels);
         ValidateProjectedQuestStates(source.Quests);
         ValidateProjectedObjectStates(source.Objects, source.Quests);
         ValidateProjectedProjectileStates(source.Projectiles, projectedLevels);
         ValidateProjectedPortalStates(source.Portals);
+        ValidateProjectedWarpTargets(projectedWarpTargets, projectedLevels, source.Quests);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -590,6 +594,36 @@ internal static class DiabloProtocolMapper
                     && (portal.OwnerEntityId != 0 || portal.RemainingTicks != 0)) {
                 throw new InvalidDataException(
                     "Authoritative portal state is outside the shared protocol range.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedWarpTargets(
+        IReadOnlyList<AuthoritativeWarpTarget> warpTargets,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels,
+        IReadOnlyList<DiabloQuestState> quests)
+    {
+        var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
+        var warpIds = new HashSet<uint>();
+        foreach (var warp in warpTargets) {
+            var sourceLevel = levels[warp.SourceLevelId];
+            if (warp.WarpId == 0
+                || !warpIds.Add(warp.WarpId)
+                || warp.TriggerX < 0
+                || warp.TriggerY < 0
+                || warp.TriggerX >= sourceLevel.Width
+                || warp.TriggerY >= sourceLevel.Height
+                || !levels.TryGetValue(warp.TargetLevelId, out var targetLevel)
+                || warp.TargetX < 0
+                || warp.TargetY < 0
+                || warp.TargetX >= targetLevel.Width
+                || warp.TargetY >= targetLevel.Height
+                || warp.RequiredQuestId != 0
+                    && !questIds.Contains(warp.RequiredQuestId)
+                || warp.RequiredQuestId == 0 && warp.RequiredQuestCompleted
+                || warp.StableSymbol.Any(character => character is < (char)0x21 or > (char)0x7e)) {
+                throw new InvalidDataException(
+                    "Authoritative warp target is outside the shared protocol range.");
             }
         }
     }
