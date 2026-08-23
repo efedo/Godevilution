@@ -40,6 +40,9 @@ public sealed record DiabloSplitGoldIntent(
     DiabloPlayerItemReference Item,
     uint Amount) : DiabloStoreIntent;
 
+/** Reorganizes carried inventory using the native deterministic placement order. */
+public sealed record DiabloSortInventoryIntent : DiabloStoreIntent;
+
 public sealed record DiabloPurchaseIntent(uint StoreId, uint StoreSlot) : DiabloStoreIntent;
 
 public sealed record DiabloSellItemIntent(

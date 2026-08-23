@@ -2458,8 +2458,9 @@ void InitKeymapActions()
 	    'R',
 	    [] {
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-		    if (!ShouldProcessLegacyInventorySort(authoritative::GetServerBackedRuntime().IsConnected())) {
-			    LogError("Server-backed inventory sort has no authoritative command.");
+		    if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			    if (auto result = authoritative::GetServerBackedRuntime().SortInventory(0, GetMillisecondsSinceStartup()); !result.has_value())
+				    LogError("Failed to submit authoritative inventory sort: {}", result.error());
 			    return;
 		    }
 	#endif
@@ -2976,8 +2977,9 @@ void InitPadmapActions()
 	    ControllerButton_NONE,
 	    [] {
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-		    if (!ShouldProcessLegacyInventorySort(authoritative::GetServerBackedRuntime().IsConnected())) {
-			    LogError("Server-backed inventory sort has no authoritative command.");
+		    if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			    if (auto result = authoritative::GetServerBackedRuntime().SortInventory(0, GetMillisecondsSinceStartup()); !result.has_value())
+				    LogError("Failed to submit authoritative inventory sort: {}", result.error());
 			    return;
 		    }
 	#endif

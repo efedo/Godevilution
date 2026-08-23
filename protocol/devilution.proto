@@ -138,6 +138,7 @@ message Command {
 		DepositStashGoldRequested deposit_stash_gold_requested = 39;
 		WithdrawStashGoldRequested withdraw_stash_gold_requested = 40;
 		SplitGoldRequested split_gold_requested = 41;
+		SortInventoryRequested sort_inventory_requested = 42;
 	}
 }
 
@@ -216,6 +217,8 @@ message SplitGoldRequested {
 	PlayerItemReference item = 1;
 	uint32 amount = 2;
 }
+
+message SortInventoryRequested {}
 
 message PurchaseRequested {
 	uint32 store_id = 1;

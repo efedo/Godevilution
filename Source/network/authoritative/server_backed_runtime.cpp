@@ -252,6 +252,17 @@ tl::expected<void, std::string> ServerBackedRuntime::SplitGold(ServerBackedItemR
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::SortInventory(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->SortInventory(requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::PurchaseVendor(uint32_t storeId, uint32_t storeSlot, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_ || !vendorUiAdapter_)

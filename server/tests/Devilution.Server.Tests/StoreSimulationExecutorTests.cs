@@ -1047,6 +1047,119 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void SortInventoryUsesNativeSizeOrderAndPlacementOrder()
+    {
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[30] = 0;
+        grid[0] = 1;
+        grid[10] = 1;
+        grid[2] = 2;
+        grid[3] = 2;
+        var inventory = new[] {
+            new OwnedStoreItem(
+                0,
+                0,
+                11,
+                0,
+                0,
+                AuthoritativeItemState.Empty with {
+                    StableItemId = 801,
+                    ItemType = 1,
+                    ItemIndex = 1,
+                    InventoryWidth = 1,
+                    InventoryHeight = 1,
+                }),
+            new OwnedStoreItem(
+                0,
+                1,
+                22,
+                0,
+                0,
+                AuthoritativeItemState.Empty with {
+                    StableItemId = 802,
+                    ItemType = 1,
+                    ItemIndex = 2,
+                    InventoryWidth = 1,
+                    InventoryHeight = 2,
+                }),
+            new OwnedStoreItem(
+                0,
+                2,
+                33,
+                0,
+                0,
+                AuthoritativeItemState.Empty with {
+                    StableItemId = 803,
+                    ItemType = 1,
+                    ItemIndex = 3,
+                    InventoryWidth = 2,
+                    InventoryHeight = 1,
+                }),
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventoryGrid: grid,
+            startingInventory: inventory);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 0,
+            SortInventoryRequested = new SortInventoryRequested(),
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var state = executor.GetPlayerState("player-a");
+        Assert.Equal(new uint[] { 22, 33, 11 }, state.Inventory.Select(item => item.ItemSeed));
+        Assert.Equal(0, state.InventoryGrid[9]);
+        Assert.Equal(0, state.InventoryGrid[19]);
+        Assert.Equal(1, state.InventoryGrid[30]);
+        Assert.Equal(1, state.InventoryGrid[31]);
+        Assert.Equal(2, state.InventoryGrid[32]);
+    }
+
+    [Fact]
+    public void SortInventoryRejectsAHeldCursorWithoutMutatingInventory()
+    {
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            11,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 804,
+                ItemType = 1,
+                ItemIndex = 1,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventoryGrid: grid,
+            startingInventory: [item],
+            startingHeldItem: item with { ItemSeed = 99 });
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 0,
+            SortInventoryRequested = new SortInventoryRequested(),
+        }, 0);
+
+        Assert.Equal(CommandStatus.Rejected, result.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, result.RejectReason);
+        var state = executor.GetPlayerState("player-a");
+        Assert.Same(item, Assert.Single(state.Inventory));
+        Assert.Equal(0, state.InventoryGrid[0]);
+        Assert.Equal(99U, state.HeldItem!.ItemSeed);
+    }
+
+    [Fact]
     public void StashGoldCommandsUseTheAuthoritativeSessionBoundary()
     {
         var executor = new StoreSimulationExecutor(

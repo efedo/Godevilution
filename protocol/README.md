@@ -58,6 +58,9 @@ Windows toolchain command.
   reduces the projected wallet by the split amount while retaining the held
   stack separately. `DropHeldItemRequested` then returns that
   server-owned cursor stack to the world.
+- `SortInventoryRequested` atomically reorganizes carried inventory using the
+  native size ordering and placement scan. A held cursor stack is rejected;
+  clients wait for the authoritative snapshot before updating their layout.
 - The server assigns `server_receipt_sequence` and `applied_tick`; command
   acknowledgements explicitly report acceptance, rescheduling, rejection, or
   duplication.

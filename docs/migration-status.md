@@ -8,6 +8,8 @@ unchanged.
 
 Connected native gold splitting now submits a server-owned `SplitGoldRequested` intent; the authoritative snapshot projects the source remainder and held cursor stack while legacy offline splitting remains unchanged.
 
+Connected native inventory sorting now submits a server-owned `SortInventoryRequested` intent; the server applies the native size ordering and placement scan atomically while legacy offline sorting remains unchanged.
+
 Connected native object-command routes now resolve only projected objects with
 authoritative behavior. Ordinary presentation-only objects remain available for
 rendering but fail closed before OperateObject, DisarmTrap, or object-targeted

@@ -257,6 +257,10 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     player,
                     command.SplitGoldRequested,
                     appliedTick),
+                Command.IntentOneofCase.SortInventoryRequested => ExecuteStoreIntent(
+                    player,
+                    new DiabloSortInventoryIntent(),
+                    appliedTick),
                 Command.IntentOneofCase.PurchaseRequested => ExecuteStoreIntent(
                     player,
                     new DiabloPurchaseIntent(

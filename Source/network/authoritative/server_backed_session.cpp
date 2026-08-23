@@ -82,6 +82,11 @@ tl::expected<void, std::string> ServerBackedSession::SplitGold(ServerBackedItemR
 	return SubmitInventoryCommand(MakeSplitGoldCommand(item, amount, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::SortInventory(uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeSortInventoryCommand(requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::Purchase(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs)
 {
 	lastCommandResolution_ = CommandResolution::None;

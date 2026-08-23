@@ -64,6 +64,7 @@ struct ServerBackedCastSource {
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeDepositStashGoldCommand(uint32_t amount, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeWithdrawStashGoldCommand(uint32_t amount, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSplitGoldCommand(ServerBackedItemReference item, uint32_t amount, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSortInventoryCommand(uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakePurchaseCommand(uint32_t storeId, uint32_t storeSlot, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSellItemCommand(uint32_t inventoryIndex, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCommand(uint32_t inventoryIndex, uint64_t requestedTick);

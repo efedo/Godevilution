@@ -71,6 +71,7 @@ public:
 	tl::expected<void, std::string> DepositStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> WithdrawStashGold(uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> SplitGold(ServerBackedItemReference item, uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> SortInventory(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PurchaseVendor(uint32_t storeId, uint32_t storeSlot, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OpenSmithStore(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OpenWitchStore(uint64_t requestedTick, uint64_t nowMs);

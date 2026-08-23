@@ -65,6 +65,7 @@ public sealed class DiabloStoreCommandProcessor
             DiabloDepositStashGoldIntent deposit => DepositStashGold(player, deposit.Amount),
             DiabloWithdrawStashGoldIntent withdraw => WithdrawStashGold(player, withdraw.Amount),
             DiabloSplitGoldIntent split => SplitGold(player, split),
+            DiabloSortInventoryIntent => SortInventory(player),
             DiabloPurchaseIntent purchase => Purchase(player, purchase, appliedTick),
             DiabloSellItemIntent sale => Sell(player, sale.Item, sale.LegacyInventoryIndex),
             DiabloRepairItemIntent repair => Repair(player, repair),
@@ -224,6 +225,44 @@ public sealed class DiabloStoreCommandProcessor
             };
         player.Gold -= intent.Amount;
         player.HeldItem = held;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloIntentResult SortInventory(AuthoritativePlayerState player)
+    {
+        if (player.HeldItem is not null)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (player.Inventory.Count == 0)
+            return DiabloIntentResult.Accepted;
+
+        var sortedItems = player.Inventory
+            .Select((item, index) => (Item: item, Index: index))
+            .OrderByDescending(entry => entry.Item.State.InventoryHeight)
+            .ThenByDescending(entry => entry.Item.State.InventoryWidth)
+            .ThenBy(entry => entry.Index)
+            .Select(entry => entry.Item)
+            .ToArray();
+        var sortedGrid = Enumerable.Repeat(-1, player.InventoryGrid.Count).ToArray();
+        for (var index = 0; index < sortedItems.Length; index++) {
+            var state = sortedItems[index].State;
+            var targetCell = FindNativeInventoryPlacement(
+                sortedGrid,
+                state.InventoryWidth,
+                state.InventoryHeight);
+            if (targetCell < 0)
+                return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            InventoryGridLayout.Fill(
+                sortedGrid,
+                targetCell,
+                index,
+                state.InventoryWidth,
+                state.InventoryHeight);
+        }
+
+        player.Inventory.Clear();
+        player.Inventory.AddRange(sortedItems);
+        for (var cell = 0; cell < player.InventoryGrid.Count; cell++)
+            player.InventoryGrid[cell] = sortedGrid[cell];
         return DiabloIntentResult.Accepted;
     }
 

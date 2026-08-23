@@ -154,8 +154,8 @@ bool AutoPlaceItemInBelt(Player &player, const Item &item, bool persistItem = fa
 void ReorganizeInventory(Player &player);
 
 /**
- * The legacy inventory sort mutates local placement and has no authoritative
- * command equivalent; connected clients must leave it to the server.
+ * Direct legacy inventory sorting remains offline-only; connected sessions
+ * submit SortInventoryRequested.
  */
 constexpr bool ShouldProcessLegacyInventorySort(bool serverConnected) noexcept
 {
