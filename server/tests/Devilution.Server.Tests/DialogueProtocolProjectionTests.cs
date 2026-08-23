@@ -1136,6 +1136,84 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedQuestTownerInteractions()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var quest = new DiabloQuestState(1, 1, 0, 2, false);
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [ ],
+            null) with {
+                Quests = [quest],
+            };
+        var levels = new[] { new AuthoritativeLevel(1, 10, 10) };
+        var interaction = new AuthoritativeQuestTownerInteractionDefinition(
+            1,
+            1,
+            2,
+            1,
+            4,
+            5,
+            7,
+            AuthoritativeQuestTownerInteractionKind.Activate,
+            MessageId: 10);
+
+        void AssertRejected(
+            Func<AuthoritativeQuestTownerInteractionDefinition,
+                AuthoritativeQuestTownerInteractionDefinition> mutate)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                    QuestTownerInteractions = [mutate(interaction)],
+                }, levelGeometry: levels));
+        }
+
+        AssertRejected(value => value with { InteractionId = 0 });
+        AssertRejected(value => value with { QuestId = 99 });
+        AssertRejected(value => value with { LevelId = 99 });
+        AssertRejected(value => value with { PositionX = 10 });
+        AssertRejected(value => value with { PositionX = -1 });
+        AssertRejected(value => value with { TownerId = -1 });
+        AssertRejected(value => value with { TownerId = 256 });
+        AssertRejected(value => value with { LevelId = ushort.MaxValue + 1U });
+        AssertRejected(value => value with { RequiredVisitedLevel1 = ushort.MaxValue + 1U });
+        AssertRejected(value => value with {
+            Kind = (AuthoritativeQuestTownerInteractionKind)99,
+        });
+        AssertRejected(value => value with { MessageId = 0 });
+        AssertRejected(value => value with { MessageId = short.MaxValue + 1 });
+        AssertRejected(value => value with { RequiredVariable1 = -2 });
+        AssertRejected(value => value with { RequiredVariable2 = 256 });
+        AssertRejected(value => value with { Variable1 = -2 });
+        AssertRejected(value => value with { Variable2 = 256 });
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                QuestTownerInteractions = [interaction, interaction],
+            }, levelGeometry: levels));
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(

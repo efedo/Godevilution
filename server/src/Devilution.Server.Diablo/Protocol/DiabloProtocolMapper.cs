@@ -30,6 +30,10 @@ internal static class DiabloProtocolMapper
         ValidateProjectedProjectileStates(source.Projectiles, projectedLevels);
         ValidateProjectedPortalStates(source.Portals);
         ValidateProjectedWarpTargets(projectedWarpTargets, projectedLevels, source.Quests);
+        ValidateProjectedQuestTownerInteractions(
+            source.QuestTownerInteractions,
+            source.Quests,
+            projectedLevels);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -624,6 +628,47 @@ internal static class DiabloProtocolMapper
                 || warp.StableSymbol.Any(character => character is < (char)0x21 or > (char)0x7e)) {
                 throw new InvalidDataException(
                     "Authoritative warp target is outside the shared protocol range.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedQuestTownerInteractions(
+        IReadOnlyList<AuthoritativeQuestTownerInteractionDefinition> interactions,
+        IReadOnlyList<DiabloQuestState> quests,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        if (interactions.Count > 1024) {
+            throw new InvalidDataException(
+                "Authoritative quest/towner interactions exceed the shared protocol limit.");
+        }
+
+        var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
+        var interactionIds = new HashSet<uint>();
+        foreach (var interaction in interactions) {
+            var hasLevel = levels.TryGetValue(interaction.LevelId, out var level);
+            if (interaction.InteractionId == 0
+                || !interactionIds.Add(interaction.InteractionId)
+                || interaction.QuestId == 0
+                || !questIds.Contains(interaction.QuestId)
+                || levels.Count > 0
+                    && (!hasLevel
+                        || interaction.PositionX >= level!.Width
+                        || interaction.PositionY >= level.Height)
+                || interaction.TownerId is < 0 or > byte.MaxValue
+                || interaction.LevelId > ushort.MaxValue
+                || interaction.RequiredVisitedLevel1 > ushort.MaxValue
+                || interaction.RequiredVisitedLevel2 > ushort.MaxValue
+                || interaction.PositionX < 0
+                || interaction.PositionY < 0
+                || interaction.Kind is < AuthoritativeQuestTownerInteractionKind.Activate
+                    or > AuthoritativeQuestTownerInteractionKind.Dialogue
+                || interaction.MessageId is <= 0 or > short.MaxValue
+                || interaction.RequiredVariable1 is < -1 or > byte.MaxValue
+                || interaction.RequiredVariable2 is < -1 or > byte.MaxValue
+                || interaction.Variable1 is < -1 or > byte.MaxValue
+                || interaction.Variable2 is < -1 or > byte.MaxValue) {
+                throw new InvalidDataException(
+                    "Authoritative quest/towner interaction is outside the shared protocol range.");
             }
         }
     }
