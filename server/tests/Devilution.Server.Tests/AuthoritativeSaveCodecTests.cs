@@ -306,6 +306,23 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void RejectsTamperedSnapshotHashesWhenReadingSaves()
+    {
+        var codec = new AuthoritativeSaveCodec();
+        var document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            codec.Serialize(CreateSnapshot()))!;
+        var snapshot = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(document.SnapshotBase64));
+        snapshot.RandomState++;
+
+        var malformedSave = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
+            1,
+            Convert.ToBase64String(snapshot.ToByteArray())));
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(malformedSave));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsSneakStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

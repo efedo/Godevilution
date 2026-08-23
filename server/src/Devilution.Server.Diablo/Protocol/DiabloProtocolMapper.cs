@@ -1319,6 +1319,7 @@ internal static class DiabloProtocolMapper
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ValidateProtocolSnapshotHash(source);
         ValidateEntityIds(source, allowZeroPlayerEntityId: true);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
         if (source.ActiveStore is not null)
@@ -1640,6 +1641,18 @@ internal static class DiabloProtocolMapper
             Difficulty = FromProtocolDifficulty(source.Difficulty),
             ActiveWorldMutationIds = source.ActiveWorldMutationIds.ToArray(),
         };
+    }
+
+    private static void ValidateProtocolSnapshotHash(Snapshot source)
+    {
+        if (string.IsNullOrWhiteSpace(source.StateSha256))
+            return;
+
+        var expectedHash = SnapshotStateHasher.Compute(source);
+        if (!string.Equals(source.StateSha256, expectedHash, StringComparison.OrdinalIgnoreCase)) {
+            throw new InvalidDataException(
+                "Authoritative protocol snapshot state hash does not match its contents.");
+        }
     }
 
     private static void ValidateEntityIds(

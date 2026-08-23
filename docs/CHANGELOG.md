@@ -4,6 +4,7 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Verify the protocol state hash when importing version-1 saves, rejecting tampered snapshots while retaining hashless legacy compatibility.
 - Reject invalid world-mutation identities and duplicate active-store slots when importing protocol snapshots for authoritative saves, matching the live projection boundary.
 - Align save round-trip fixtures with authoritative stash/vendor exclusivity and quest-linked object validation.
 - Validate participant-template equipment/belt slots, item dimensions, and inventory footprints before runtime creation.
