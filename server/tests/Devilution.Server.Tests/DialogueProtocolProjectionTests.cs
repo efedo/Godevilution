@@ -1303,6 +1303,47 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsNullProjectedInventoryAndStashEntries()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Inventory = [null!],
+                },
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with {
+                    Stash = [null!],
+                },
+            }));
+    }
+
+    [Fact]
     public void RejectsSeedlessItemWithoutPresentationIdentity()
     {
         var player = new StorePlayerSnapshot(
