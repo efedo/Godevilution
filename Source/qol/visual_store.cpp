@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <optional>
 #include <span>
+#include <string>
 
 #include <SDL.h>
 
@@ -257,6 +258,30 @@ void FreeVisualStoreGFX()
 
 void OpenVisualStore(VisualStoreVendor vendor)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		tl::expected<void, std::string> result;
+		switch (vendor) {
+		case VisualStoreVendor::Smith:
+			result = authoritative::GetServerBackedRuntime().OpenSmithStore(0, GetMillisecondsSinceStartup());
+			break;
+		case VisualStoreVendor::Witch:
+			result = authoritative::GetServerBackedRuntime().OpenWitchStore(0, GetMillisecondsSinceStartup());
+			break;
+		case VisualStoreVendor::Healer:
+			result = authoritative::GetServerBackedRuntime().OpenHealerStore(0, GetMillisecondsSinceStartup());
+			break;
+		case VisualStoreVendor::Boy:
+			result = authoritative::GetServerBackedRuntime().OpenWirtStore(0, GetMillisecondsSinceStartup());
+			break;
+		}
+		if (!result.has_value()) {
+			LogError("Failed to open the server-backed visual store: {}", result.error());
+			return;
+		}
+	}
+#endif
+
 	IsVisualStoreOpen = true;
 	invflag = true; // Open inventory panel alongside
 
@@ -301,6 +326,12 @@ void SetVisualStoreTab(VisualStoreTab tab)
 {
 	if (!VendorHasTabs())
 		return;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected() && tab == VisualStoreTab::Premium) {
+		LogError("Server-backed premium visual store stock is not available.");
+		return;
+	}
+#endif
 
 	VisualStore.activeTab = tab;
 	VisualStore.currentPage = 0;

@@ -154,6 +154,8 @@ All notable changes to this fork are documented below.
   pinned generations remain retired until every lease is released.
 - Extend the generic host adapter replacement soak from eight to 64 generations,
   preserving migrated session state and disposing each prior target after publication.
+- Route connected native visual-store openings through authoritative vendor stock
+  for Smith, Witch, Healer, and Wirt; keep the unsupported premium tab fail-closed.
 - Set-level native geometry now has an explicit asset preflight before level
   materialization; partial bundles fail before any runtime geometry is published.
 - Set-level map definitions now require `.til` and `.sol` collision assets as
@@ -290,8 +292,6 @@ All notable changes to this fork are documented below.
 - Connected native inventory actions now fail closed before the legacy item-use
   fallback can remove or mutate unsupported local items; scroll and rune uses
   retain only their immediate authoritative cast-intent route.
-- Connected native gold splitting now fails closed because no authoritative
-  drop-gold command exists; offline sessions retain the legacy behavior.
 - Native, Godot, and saved-state validation now require zero magnitude for all
   typed status behaviors, including Etherealize, keeping malformed authoritative
   snapshots fail-closed across clients and persistence.
@@ -390,9 +390,6 @@ All notable changes to this fork are documented below.
 - Native authoritative clients no longer run the legacy Mana Shield depletion
   loop or emit CMD_REMSHIELD; server-projected status state remains the only
   connected-client source of truth.
-- Connected native inventory sorting now fails closed because the legacy
-  reorder mutates local placement and has no authoritative command equivalent;
-  disconnected clients retain the legacy sort.
 - Connected native local save/load entry points and legacy persistence writers
   now fail closed because server-backed sessions own persistence; legacy local
   binary saves remain offline-only.

@@ -61,5 +61,24 @@ TEST(ServerBackedVendorUi, RejectsWirtSnapshotWithMoreThanOneItem)
 	EXPECT_TRUE(store.boyItem().isEmpty());
 }
 
+TEST(ServerBackedVendorUi, AppliesEveryVisualStoreDestination)
+{
+	StoreManager store;
+	ServerBackedVendorUiAdapter adapter(store);
+
+	ASSERT_TRUE(adapter.Apply(MakeSnapshot(1, { 4 }), ServerBackedVendorDestination::Smith, 1).has_value());
+	ASSERT_TRUE(adapter.Apply(MakeSnapshot(2, { 5 }), ServerBackedVendorDestination::Witch, 2).has_value());
+	ASSERT_TRUE(adapter.Apply(MakeSnapshot(4, { 6 }), ServerBackedVendorDestination::Healer, 4).has_value());
+	ASSERT_TRUE(adapter.Apply(MakeSnapshot(3, { 7 }), ServerBackedVendorDestination::Wirt, 3).has_value());
+
+	EXPECT_EQ(store.smithItems().size(), 1U);
+	EXPECT_EQ(store.smithItems()[0]._iSeed, 104U);
+	EXPECT_EQ(store.witchItems().size(), 1U);
+	EXPECT_EQ(store.witchItems()[0]._iSeed, 105U);
+	EXPECT_EQ(store.healerItems().size(), 1U);
+	EXPECT_EQ(store.healerItems()[0]._iSeed, 106U);
+	EXPECT_EQ(store.boyItem()._iSeed, 107U);
+}
+
 } // namespace
 } // namespace devilution::authoritative

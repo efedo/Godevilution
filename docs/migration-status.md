@@ -275,8 +275,8 @@ only so the server owns both inventory and stash state.
 Connected native inventory actions now fail closed before unsupported legacy
 item-use fallbacks can remove or mutate local state; scroll and rune items retain
 only their immediate authoritative cast-intent route.
-Connected native gold splitting is also offline-only until an authoritative
-drop-gold command exists; the local inventory cannot be changed by that dialog.
+Connected native gold splitting now submits the authoritative
+`SplitGoldRequested` intent; disconnected sessions retain the legacy dialog.
 Native player projections now accept protocol behavior `3` (Etherealize) status
 effects and hydrate the native `SpellFlag::Etherealize` bit for local and remote
 presentation; valid server snapshots no longer fail closed on this effect.
@@ -516,9 +516,11 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative clients no longer run the legacy Mana Shield depletion
   loop or emit CMD_REMSHIELD; server-projected status state remains the only
   connected-client source of truth.
-- Connected native inventory sorting now fails closed because the legacy
-  reorder mutates local placement and has no authoritative command equivalent;
-  disconnected clients retain the legacy sort.
+- Connected native inventory sorting now submits the authoritative
+  `SortInventoryRequested` intent; disconnected clients retain the legacy sort.
+- Connected native visual-store openings now hydrate basic Smith, Witch, Healer,
+  and Wirt stock from the server before rendering; the unsupported premium tab
+  remains fail-closed instead of exposing stale legacy stock.
 - Connected native local save/load entry points and legacy persistence writers
   now fail closed because server-backed sessions own persistence; legacy local
   binary saves remain offline-only.
