@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Devilution.Protocol.V1;
 using Devilution.Server.Stores;
+using Google.Protobuf;
 using Xunit;
 
 namespace Devilution.Server.Tests;
@@ -264,6 +266,40 @@ public sealed class AuthoritativeSaveCodecTests
 
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSaveCodec().Serialize(source));
+    }
+
+    [Fact]
+    public void RejectsInvalidWorldMutationIdentitiesWhenReadingSaves()
+    {
+        var codec = new AuthoritativeSaveCodec();
+        var document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            codec.Serialize(CreateSnapshot()))!;
+        var snapshot = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(document.SnapshotBase64));
+        snapshot.ActiveWorldMutationIds.Add(0);
+
+        var malformedSave = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
+            1,
+            Convert.ToBase64String(snapshot.ToByteArray())));
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(malformedSave));
+    }
+
+    [Fact]
+    public void RejectsDuplicateActiveStoreSlotsWhenReadingSaves()
+    {
+        var codec = new AuthoritativeSaveCodec();
+        var document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            codec.Serialize(CreateSnapshot()))!;
+        var snapshot = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(document.SnapshotBase64));
+        snapshot.ActiveStore!.Items.Add(snapshot.ActiveStore.Items[0]);
+
+        var malformedSave = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
+            1,
+            Convert.ToBase64String(snapshot.ToByteArray())));
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(malformedSave));
     }
 
     [Fact]

@@ -685,6 +685,18 @@ internal static class DiabloProtocolMapper
         }
     }
 
+    private static void ValidateProjectedActiveStoreSlots(
+        IEnumerable<uint> storeSlots)
+    {
+        var uniqueSlots = new HashSet<uint>();
+        foreach (var storeSlot in storeSlots) {
+            if (!uniqueSlots.Add(storeSlot)) {
+                throw new InvalidDataException(
+                    "Authoritative active-store stock contains duplicate slots.");
+            }
+        }
+    }
+
     private static void ValidateProjectedEntityPosition(
         uint levelId,
         int positionX,
@@ -1308,6 +1320,9 @@ internal static class DiabloProtocolMapper
     {
         ArgumentNullException.ThrowIfNull(source);
         ValidateEntityIds(source, allowZeroPlayerEntityId: true);
+        ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
+        if (source.ActiveStore is not null)
+            ValidateProjectedActiveStoreSlots(source.ActiveStore.Items.Select(item => item.StoreSlot));
         var player = source.Players.Count == 1
             ? ToPlayerState(source.Players[0])
             : throw new InvalidDataException(
