@@ -152,6 +152,8 @@ All notable changes to this fork are documented below.
   proving that connected clients cannot emit legacy level-transition commands.
 - Add a 64-generation ruleset replacement pressure fixture proving that
   pinned generations remain retired until every lease is released.
+- Extend the generic host adapter replacement soak from eight to 64 generations,
+  preserving migrated session state and disposing each prior target after publication.
 - Set-level native geometry now has an explicit asset preflight before level
   materialization; partial bundles fail before any runtime geometry is published.
 - Set-level map definitions now require `.til` and `.sol` collision assets as

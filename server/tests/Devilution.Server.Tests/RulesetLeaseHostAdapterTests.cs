@@ -79,9 +79,9 @@ public sealed class RulesetLeaseHostAdapterTests
     }
 
     [Fact]
-    public void RepeatedReloadsPreserveSessionStateAndRetireEachPreviousGeneration()
+    public void RepeatedReloadsPreserveSessionStateAndRetireEachPreviousGenerationAcross64Generations()
     {
-        const int replacementGenerations = 8;
+        const int replacementGenerations = 64;
         var names = Enumerable.Range(0, replacementGenerations + 1)
             .Select(index => index == 0 ? "initial" : $"replacement-{index}")
             .ToArray();
