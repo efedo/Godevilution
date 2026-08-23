@@ -42,6 +42,7 @@ void InitConsole();
 bool IsConsoleOpen();
 void OpenConsole();
 void CloseConsole();
+bool IsNativeOnlyConsole();
 bool ConsoleHandleEvent(const SDL_Event &event);
 void DrawConsole(const Surface &out);
 void RunInConsole(std::string_view code);

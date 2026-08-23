@@ -495,8 +495,6 @@ void ClearConsole()
 
 } // namespace
 
-bool IsNativeOnlyConsole();
-
 bool IsConsoleOpen()
 {
 	return IsConsoleVisible;

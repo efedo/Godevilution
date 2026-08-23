@@ -292,10 +292,12 @@ void DiabloHotkeyMsg(uint32_t dwMsg)
 
 #ifdef _DEBUG
 	constexpr std::string_view LuaPrefix = "/lua ";
-	for (const std::string &msg : GetOptions().Chat.szHotKeyMsgs[dwMsg]) {
-		if (!msg.starts_with(LuaPrefix)) continue;
-		InitConsole();
-		RunInConsole(std::string_view(msg).substr(LuaPrefix.size()));
+	if (!IsNativeOnlyConsole()) {
+		for (const std::string &msg : GetOptions().Chat.szHotKeyMsgs[dwMsg]) {
+			if (!msg.starts_with(LuaPrefix)) continue;
+			InitConsole();
+			RunInConsole(std::string_view(msg).substr(LuaPrefix.size()));
+		}
 	}
 #endif
 

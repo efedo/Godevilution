@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Keep legacy `/lua` debug chat hotkeys out of authoritative console entry while
+  preserving their legacy-mode behavior.
 - Reuse the aggregate projection validation boundary when importing saved world entities, rejecting malformed world-item, object, quest, monster, projectile, portal, and corpse state.
 - Reuse the live player projection validation boundary when importing saved snapshots, rejecting malformed resources, item topology, actions, spell state, and item identity.
 - Reject imported saves whose player, active-store, and stash-session state contradicts the authoritative session contract.

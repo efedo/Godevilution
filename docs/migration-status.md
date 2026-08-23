@@ -43,6 +43,10 @@ Connected native object synchronization helpers now fail closed at their public
 entry points as well as at protocol dispatch, preventing direct legacy delta,
 operate, close, and break callbacks from mutating server-owned object state.
 
+Authoritative debug chat hotkeys now ignore legacy `/lua` entries before they
+reach console initialization; legacy mode retains the existing script hotkey
+behavior.
+
 Connected native object interaction facades now also fail closed for direct
 operate, break, trap, and Na-Krul room callbacks; local authoritative operate
 requests still route through the server projection.

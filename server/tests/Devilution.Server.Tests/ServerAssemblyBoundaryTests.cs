@@ -190,6 +190,27 @@ public sealed class ServerAssemblyBoundaryTests
             StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void AuthoritativeChatHotkeysDoNotEnterLegacyConsole()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "Source",
+            "ui",
+            "panel",
+            "control_chat.cpp"));
+        const string nativeOnlyGuard = "if (!IsNativeOnlyConsole())";
+        var guardIndex = source.IndexOf(nativeOnlyGuard, StringComparison.Ordinal);
+        var legacyConsoleCallIndex = source.IndexOf(
+            "RunInConsole(std::string_view(msg).substr(LuaPrefix.size()))",
+            StringComparison.Ordinal);
+
+        Assert.True(guardIndex >= 0);
+        Assert.True(
+            legacyConsoleCallIndex > guardIndex,
+            "The legacy Lua hotkey must remain inside the authoritative native-only guard.");
+    }
+
     private static string[] GodevilutionDependencies(Assembly assembly)
     {
         return assembly
