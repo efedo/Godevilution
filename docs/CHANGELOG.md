@@ -5,6 +5,7 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Reject invalid world-mutation identities and duplicate active-store slots when importing protocol snapshots for authoritative saves, matching the live projection boundary.
+- Align save round-trip fixtures with authoritative stash/vendor exclusivity and quest-linked object validation.
 - Validate participant-template equipment/belt slots, item dimensions, and inventory footprints before runtime creation.
 - Validate participant-template scalar resources, ability IDs, reflect charges, and combat-mode timing before runtime creation.
 - Validate participant-template attribute references and non-negative base/current values before runtime creation.

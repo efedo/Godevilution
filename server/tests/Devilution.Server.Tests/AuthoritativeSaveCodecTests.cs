@@ -90,7 +90,9 @@ public sealed class AuthoritativeSaveCodecTests
                 StatFlag = true,
             });
         var source = baseline with {
+            ActiveStore = null,
             Player = baseline.Player with {
+                ActiveStoreId = null,
                 Stash = [stashItem],
                 StashGold = 4321,
                 StashOpen = true,
@@ -123,6 +125,7 @@ public sealed class AuthoritativeSaveCodecTests
     {
         var baseline = CreateSnapshot();
         var source = baseline with {
+            Quests = [new DiabloQuestState(30, 0, 0, 1, false)],
             Objects = [baseline.Objects[0] with {
                 QuestId = 30,
                 QuestTransitionKind = AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
