@@ -16,15 +16,26 @@ public partial class CharacterSetupPresentation : CanvasLayer
     ];
 
     private readonly OptionButton classSelector = new();
+    private readonly LineEdit hostField = new() {
+        PlaceholderText = "Server host",
+        CustomMinimumSize = new Vector2(240, 0),
+    };
+    private readonly SpinBox portField = new() {
+        MinValue = 1,
+        MaxValue = 65535,
+        Step = 1,
+        Value = 6113,
+        CustomMinimumSize = new Vector2(100, 0),
+    };
     private readonly LineEdit nameField = new() { PlaceholderText = "Character name" };
     private readonly Label validation = new();
 
-    public event Action<uint, string>? Submitted;
+    public event Action<uint, string, string, int>? Submitted;
 
     public override void _Ready()
     {
         var panel = new PanelContainer {
-            CustomMinimumSize = new Vector2(420, 240),
+            CustomMinimumSize = new Vector2(420, 320),
         };
         panel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.Center);
         AddChild(panel);
@@ -53,6 +64,12 @@ public partial class CharacterSetupPresentation : CanvasLayer
         classSelector.Selected = 0;
         layout.AddChild(classSelector);
 
+        layout.AddChild(new Label { Text = "Authoritative server" });
+        var endpoint = new HBoxContainer();
+        endpoint.AddChild(hostField);
+        endpoint.AddChild(portField);
+        layout.AddChild(endpoint);
+
         nameField.MaxLength = 32;
         nameField.Text = "Hero";
         layout.AddChild(nameField);
@@ -77,6 +94,8 @@ public partial class CharacterSetupPresentation : CanvasLayer
         }
         if (!string.IsNullOrWhiteSpace(options.RequestedCharacterName))
             nameField.Text = options.RequestedCharacterName;
+        hostField.Text = options.Host;
+        portField.Value = options.Port;
         nameField.GrabFocus();
     }
 
@@ -84,6 +103,13 @@ public partial class CharacterSetupPresentation : CanvasLayer
 
     private void SubmitSelection()
     {
+        var host = hostField.Text.Trim();
+        var port = (int)portField.Value;
+        if (!ClientConnectionOptions.TryValidateEndpoint(host, port, out var endpointError)) {
+            validation.Text = endpointError;
+            return;
+        }
+
         var name = nameField.Text.Trim();
         if (name.Length is < 1 or > 32) {
             validation.Text = "Enter a character name between 1 and 32 characters.";
@@ -91,6 +117,6 @@ public partial class CharacterSetupPresentation : CanvasLayer
         }
 
         validation.Text = string.Empty;
-        Submitted?.Invoke((uint)classSelector.GetSelectedId(), name);
+        Submitted?.Invoke((uint)classSelector.GetSelectedId(), name, host, port);
     }
 }

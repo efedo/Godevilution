@@ -69,6 +69,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     {
         if (IsConnected)
             throw new InvalidOperationException("The authoritative client is already connected.");
+        if (!ClientConnectionOptions.TryValidateEndpoint(options.Host, options.Port, out var endpointError))
+            throw new InvalidOperationException(endpointError);
         if (string.IsNullOrWhiteSpace(options.ContentManifestHash))
             throw new InvalidOperationException("DEVILUTION_CONTENT_HASH must match the server manifest before connecting.");
         if (string.Equals(

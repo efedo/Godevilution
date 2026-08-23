@@ -31,9 +31,11 @@ public partial class Main : Node2D
         AddChild(feedback);
         characterSetup = new CharacterSetupPresentation();
         AddChild(characterSetup);
-        characterSetup.Submitted += (classId, name) => {
+        characterSetup.Submitted += (classId, name, host, port) => {
             if (connectionOptions is not null)
                 StartConnection(connectionOptions with {
+                    Host = host,
+                    Port = port,
                     RequestedCharacterClassId = classId,
                     RequestedCharacterName = name,
                 });

@@ -2,6 +2,10 @@
 
 Status date: 2026-08-22
 
+The Godot character setup flow now accepts a validated authoritative server
+host and port; environment-provided endpoints and resume-token launches remain
+unchanged.
+
 Connected native object-command routes now resolve only projected objects with
 authoritative behavior. Ordinary presentation-only objects remain available for
 rendering but fail closed before OperateObject, DisarmTrap, or object-targeted

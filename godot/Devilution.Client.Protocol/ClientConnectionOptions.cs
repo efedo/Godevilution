@@ -43,6 +43,26 @@ public sealed record ClientConnectionOptions(
         };
     }
 
+    /** Validates the endpoint values used by both the Godot form and TCP transport. */
+    public static bool TryValidateEndpoint(string? host, int port, out string error)
+    {
+        if (string.IsNullOrWhiteSpace(host)) {
+            error = "Enter a server host.";
+            return false;
+        }
+        if (host.Trim().Length > 253) {
+            error = "The server host is too long.";
+            return false;
+        }
+        if (port is < 1 or > 65535) {
+            error = "Enter a server port between 1 and 65535.";
+            return false;
+        }
+
+        error = string.Empty;
+        return true;
+    }
+
     private static int ParsePort(string? value)
     {
         return int.TryParse(value, out var port) && port is > 0 and <= 65535 ? port : 6113;

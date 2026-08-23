@@ -77,6 +77,11 @@ losing its server-issued resume token or pending command sequence ledger. Pendin
 commands become eligible for immediate retry after the replacement connection's
 authoritative snapshot is received, so the Godot presentation layer does not need to
 recreate its protocol model for a transient disconnect.
+When no endpoint is supplied by the launch environment, the character setup form
+accepts the authoritative server host and port and validates them before the
+initial connection. DEVILUTION_SERVER_HOST and DEVILUTION_SERVER_PORT remain
+available for scripted launches.
+
 The `Main` presentation node observes transport closure and poll failures, then
 retries with bounded exponential backoff while retaining the same authoritative
 model and pending-command ledger. Reconnect also clears transient movement
