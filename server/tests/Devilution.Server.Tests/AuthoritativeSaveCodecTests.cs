@@ -351,6 +351,24 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void RejectsInvalidImportedPlayerResources()
+    {
+        var codec = new AuthoritativeSaveCodec();
+        var document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            codec.Serialize(CreateSnapshot()))!;
+        var snapshot = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(document.SnapshotBase64));
+        snapshot.Players[0].Life = snapshot.Players[0].LifeMaximum + 1;
+        snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
+
+        var malformedSave = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
+            1,
+            Convert.ToBase64String(snapshot.ToByteArray())));
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(malformedSave));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsSneakStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

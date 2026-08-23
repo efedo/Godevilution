@@ -1330,6 +1330,7 @@ internal static class DiabloProtocolMapper
         }
         ValidateImportedStoreState(source);
         var player = ToPlayerState(source.Players[0]);
+        ValidateImportedPlayerState(player);
         var activeStore = source.ActiveStore is null
             ? null
             : new DiabloStoreState(
@@ -1672,6 +1673,13 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative saved player opens a stash and store simultaneously.");
         }
+    }
+
+    private static void ValidateImportedPlayerState(StorePlayerSnapshot state)
+    {
+        // Keep save imports on the same fail-closed player boundary as live
+        // projections without duplicating the topology and range rules.
+        _ = ToProtocolPlayer(state, spells: null, spellBooks: null);
     }
 
     private static void ValidateEntityIds(

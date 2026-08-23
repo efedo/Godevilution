@@ -4,6 +4,7 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reuse the live player projection validation boundary when importing saved snapshots, rejecting malformed resources, item topology, actions, spell state, and item identity.
 - Reject imported saves whose player, active-store, and stash-session state contradicts the authoritative session contract.
 - Verify the protocol state hash when importing version-1 saves, rejecting tampered snapshots while retaining hashless legacy compatibility.
 - Reject invalid world-mutation identities and duplicate active-store slots when importing protocol snapshots for authoritative saves, matching the live projection boundary.
