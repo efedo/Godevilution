@@ -873,8 +873,13 @@ public sealed class AuthoritativeClientModel
         var questIds = snapshot.Quests
             .Select(quest => quest.QuestId)
             .ToHashSet();
-        var levelGeometry = snapshot.LevelGeometry
-            .ToDictionary(level => level.LevelId);
+        var levelGeometry = new Dictionary<uint, LevelGeometrySnapshot>();
+        foreach (var level in snapshot.LevelGeometry) {
+            if (!levelGeometry.TryAdd(level.LevelId, level)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate level geometry.");
+            }
+        }
         var interactionIds = new HashSet<uint>();
         foreach (var interaction in snapshot.QuestTownerInteractions) {
             if (interaction.InteractionId == 0

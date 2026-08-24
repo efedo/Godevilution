@@ -2,6 +2,10 @@
 
 Status date: 2026-08-24
 
+Godot quest/towner snapshot validation now rejects duplicate level-geometry
+identities through its normal invalid-snapshot boundary before evaluating
+interaction bounds, matching the native fail-closed path.
+
 Dynamic item presentation identity now has the same native compatibility
 requirements in the server mapper and Godot model as in the C++ bridge: both
 runtime names and a byte-representable cursor graphic are required together.

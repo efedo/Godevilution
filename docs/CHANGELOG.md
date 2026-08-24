@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Aligned Godot quest/towner validation with the native duplicate-level
+  geometry boundary. Duplicate level identities now fail with the controlled
+  invalid-snapshot error before interaction bounds are evaluated, rather than
+  escaping through a dictionary-construction exception.
 - Aligned dynamic item identity validation across server, native, and Godot
   boundaries: runtime-authored names now require the byte-representable native
   cursor graphic as well as both base and identified names.
