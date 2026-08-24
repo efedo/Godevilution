@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Inventory placement now retains native ordering for known footprints and
+  falls back deterministically for other validated external-content footprints
+  permitted by the authoritative 10x4 grid contract.
 - Authoritative purchases now maintain a supplied inventory grid even for
   wallet-only compatibility sessions without Gold item stacks; Gold topology
   detection no longer suppresses ordinary item placement.

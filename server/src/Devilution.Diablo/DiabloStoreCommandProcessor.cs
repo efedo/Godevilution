@@ -2282,7 +2282,9 @@ public sealed class DiabloStoreCommandProcessor
                     return cell;
             }
         }
-        return -1;
+        // Preserve native placement order above, then support any other
+        // validated external-content footprint deterministically.
+        return InventoryGridLayout.FindFirstPlacement(inventoryGrid, width, height);
     }
 
     private static ItemTopologySnapshot CaptureItemTopology(

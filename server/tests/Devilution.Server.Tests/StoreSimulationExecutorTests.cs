@@ -1482,6 +1482,31 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void InventoryPlacementSupportsValidatedExternalFootprintsBeyondNativeOrdering()
+    {
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            InventoryWidth = 1,
+            InventoryHeight = 4,
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(new StoreItem(0, 42, 10, itemState)),
+            startingGold: 100,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray());
+        var server = new AuthoritativeCommandServer(executor);
+        server.Process("player-a", OpenStore(1), 10);
+
+        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", Purchase(2, 0), 12).Status);
+        var grid = executor.GetPlayerState("player-a").InventoryGrid;
+        Assert.Equal(0, grid[0]);
+        Assert.Equal(0, grid[10]);
+        Assert.Equal(0, grid[20]);
+        Assert.Equal(0, grid[30]);
+        Assert.Single(executor.CreateSnapshot("player-a", 7, 12).Players[0].Inventory);
+    }
+
+    [Fact]
     public void MultiCellPlacementRejectsEdgeAndCollisionTargets()
     {
         var large = AuthoritativeItemState.Empty with { ItemType = 1, InventoryWidth = 2, InventoryHeight = 1 };
