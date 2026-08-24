@@ -453,6 +453,21 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_TRUE((*projected)[1].stoneCurseImmune);
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedUniqueMonsterIdentity)
+{
+	protocol::Snapshot snapshot;
+	auto *monster = snapshot.add_monsters();
+	monster->set_entity_id(1);
+	monster->set_is_unique(false);
+	monster->set_unique_identity("not-unique");
+	EXPECT_FALSE(ProjectMonsterSnapshots(snapshot).has_value());
+
+	monster->clear_unique_identity();
+	monster->set_is_unique(true);
+	monster->set_unique_identity(std::string(129, 'x'));
+	EXPECT_FALSE(ProjectMonsterSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeWorldItems)
 {
 	devilution::protocol::v1::Snapshot snapshot;

@@ -899,6 +899,8 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { DeathAnimationTicks = 1, DeathTicksRemaining = 2 });
         AssertRejected(value => value with { HitPointsQ6 = 1, DeathTicksRemaining = 1 });
         AssertRejected(value => value with { ExperienceReward = 1_000_001 });
+        AssertRejected(value => value with { UniqueIdentity = new string('x', 129) });
+        AssertRejected(value => value with { UniqueIdentity = "not-unique" });
         AssertRejected(value => value with { ToHit = 256 });
         AssertRejected(value => value with { ToHitSpecial = 256 });
         AssertRejected(value => value with { Intelligence = 256 });

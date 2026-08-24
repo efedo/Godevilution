@@ -822,6 +822,8 @@ internal static class DiabloProtocolMapper
                 || monster.ToHit is < 0 or > byte.MaxValue
                 || monster.ToHitSpecial is < 0 or > byte.MaxValue
                 || monster.Intelligence is < 0 or > byte.MaxValue
+                || monster.UniqueIdentity.Length > 128
+                || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique
                 || monster.Direction is < 0 or > 7
                 || monster.FireResistance is < -100 or > 100
                 || monster.LightningResistance is < -100 or > 100

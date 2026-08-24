@@ -2017,6 +2017,8 @@ public sealed class ClientModelTests
             monster => monster.DeathAnimationTicks = 1025,
             monster => monster.DeathTicksRemaining = -1,
             monster => monster.ExperienceReward = 1_000_001,
+            monster => monster.UniqueIdentity = new string('x', 129),
+            monster => monster.UniqueIdentity = "not-unique",
             monster => monster.ToHit = 256,
             monster => monster.ToHitSpecial = -1,
             monster => monster.Intelligence = 256,

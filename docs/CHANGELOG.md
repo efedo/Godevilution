@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Aligned optional native quest-ordinal validation across server, native, and
   Godot snapshots with the compatibility range (`0` through `23`) and unique
   identity requirement.
+- Aligned projected monster unique-identity validation with native behavior:
+  identities are limited to 128 characters and cannot be attached to ordinary
+  monsters.
 - Applied validated authoritative level mega-tile, d-piece, and transparency
   layers in the native compatibility presentation bridge. Native DUN object
   layers remain inert until an authored object mapping exists, so behavior and

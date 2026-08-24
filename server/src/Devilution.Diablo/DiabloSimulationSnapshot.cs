@@ -969,7 +969,7 @@ public sealed partial class DiabloSimulation
                 || monster.ToHitSpecial is < 0 or > 255
                 || monster.Intelligence is < 0 or > 255
                 || monster.UniqueIdentity.Length > 128
-                || (!string.IsNullOrWhiteSpace(monster.UniqueIdentity) && !monster.IsUnique)
+                || (!string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique)
                 || (monster.DialogueMessageId != 0 && !monster.IsUnique)
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))

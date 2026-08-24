@@ -691,7 +691,9 @@ public sealed class AuthoritativeClientModel
             || monster.MaxHitPoints > 0 && monster.HitPoints > monster.MaxHitPoints
             || monster.HitPointsQ6 < 0
             || monster.MaxHitPointsQ6 < 0
-            || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6) {
+            || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6
+            || monster.UniqueIdentity.Length > 128
+            || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster vitality.");
         }

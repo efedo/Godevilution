@@ -12,6 +12,9 @@ unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.
 Native quest ordinals in projected quest snapshots now share the `0` through
 `23` range and uniqueness checks across server, native, and Godot validation.
+Projected monster unique identities now enforce the native 128-character
+limit and unique-monster ownership across the engine, server, native, and
+Godot boundaries.
 Object snapshot identities now use that same bound before native or Godot
 presentation consumes them.
 Native-DUN mapping activation and mutable authoritative-object updates enforce
