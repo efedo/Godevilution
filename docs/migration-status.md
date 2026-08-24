@@ -6,8 +6,10 @@ The Vile Betrayer center circle now materializes as an authored occupancy
 trigger. After both linked books activate, a player entering the circle applies
 the deferred center replacement, advances native `_qvar1` to 4, and receives the
 server-owned player-origin Phasing transition. Occupancy-trigger behavior and
-linked-object gates are reusable content fields; native object resynchronization
-and encounter-progress presentation remain compatibility seams.
+linked-object gates are reusable content fields; unactivated trigger tiles remain
+enterable across snapshot restore, and secondary authored mutation follow-ups are
+validated before activation. Native object resynchronization and encounter-
+progress presentation remain compatibility seams.
 The fixed Chamber of Bone completion books now clone validated authored
 templates: the server owns quest completion, one Guardian level, and the native
 player-origin Guardian target offset. Set-level quest progress gates resolve the

@@ -1669,7 +1669,9 @@ public sealed partial class DiabloSimulation
                     : [(monster.LevelId, monster.PositionX, monster.PositionY)])),
             restoredWorldItems.Select(item => (item.LevelId, item.PositionX, item.PositionY)),
             restoredObjects
-                .Where(@object => !@object.Activated && !@object.Destroyed)
+                .Where(@object => !@object.Activated
+                    && !@object.Destroyed
+                    && !@object.ActivateOnOccupancy)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY)));
 
         RestorePlayer(source, destination);

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Hardened authored occupancy-trigger persistence: an unactivated trigger tile
+  remains enterable during snapshot restore, and every secondary authored world
+  mutation follow-up is validated before content activation.
 - Externalized the Vile Betrayer center-circle trigger as a validated occupancy
   object: both linked books must activate before the circle applies its deferred
   replacement, advances native `_qvar1` to 4, and launches activating-player

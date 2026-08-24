@@ -812,6 +812,31 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void MutationValidationRejectsAnUnknownSecondaryFollowUpMutation()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            questId: 30,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 1,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
+            questSequenceFollowUpAmount: 137,
+            questSequenceFollowUpWorldMutationId: 99);
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(137, 1),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.ValidateMutationRequirements([@object], mutations));
+
+        Assert.Contains("unknown world mutation 99", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ObjectTableLoadsWorldMutationProjectileFollowUp()
     {
         var stableIds = new StableContentIdCatalog([

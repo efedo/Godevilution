@@ -760,7 +760,9 @@ public sealed class DiabloWorldState
                     : [(target.LevelId, target.PositionX, target.PositionY)]),
             WorldItems.Values.Select(item => (item.LevelId, item.PositionX, item.PositionY)),
             Objects.Values
-                .Where(@object => !@object.Activated && !@object.Destroyed)
+                .Where(@object => !@object.Activated
+                    && !@object.Destroyed
+                    && !@object.ActivateOnOccupancy)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY)));
     }
 

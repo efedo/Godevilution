@@ -169,6 +169,53 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreAllowsPlayerToRemainOnUnactivatedOccupancyTrigger()
+    {
+        DiabloSimulation CreateSimulation()
+        {
+            var world = new AuthoritativeWorld();
+            world.AddLevel(new AuthoritativeLevel(
+                5,
+                10,
+                10,
+                nativePieceLayer: Enumerable.Repeat<ushort>(0, 100)));
+            return DiabloSimulationFactory.Instance.Create(
+                new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                    World = world,
+                    Objects = [new AuthoritativeWorldObject(
+                        2040,
+                        3,
+                        5,
+                        2,
+                        2,
+                        questId: 3016,
+                        activateOnOccupancy: true,
+                        requiredActivatedLinkedObjects: 2)],
+                    Quests = [new AuthoritativeQuestState(3016, 5, 1, active: true)],
+                });
+        }
+
+        var source = CreateSimulation();
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.LevelId = 5;
+        sourcePlayer.PositionX = 2;
+        sourcePlayer.PositionY = 2;
+        var snapshot = source.CaptureSnapshot(sourcePlayer, 1);
+        var destination = CreateSimulation();
+        var restoredPlayer = CreatePlayer();
+        restoredPlayer.LevelId = 5;
+        restoredPlayer.PositionX = 2;
+        restoredPlayer.PositionY = 2;
+
+        destination.RestoreSnapshot(restoredPlayer, snapshot);
+
+        var restored = Assert.Single(destination.WorldState.Objects.Values);
+        Assert.True(restored.ActivateOnOccupancy);
+        Assert.Equal(2, restored.RequiredActivatedLinkedObjects);
+        Assert.Equal((2, 2), (restoredPlayer.PositionX, restoredPlayer.PositionY));
+    }
+
+    [Fact]
     public void HellUsesTypeSpecificResistanceMetadataWithoutChangingNightmare()
     {
         var type = new AuthoritativeMonsterTypeDefinition(

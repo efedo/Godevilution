@@ -586,18 +586,17 @@ public static class AuthoritativeWorldObjectCatalog
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(mutations);
-        foreach (var @object in objects.Where(@object =>
-                     @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
-                     || @object.QuestSequenceFollowUpKind
-                         == AuthoritativeQuestSequenceFollowUpKind.WorldMutation
-                     || @object.QuestSequenceFollowUpWorldMutationId != 0)) {
-            var mutationId = @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
-                ? @object.EffectAmount > 0 ? (uint)@object.EffectAmount : 0
-                : @object.QuestSequenceFollowUpKind
-                    == AuthoritativeQuestSequenceFollowUpKind.WorldMutation
-                    ? @object.QuestSequenceFollowUpAmount
-                    : @object.QuestSequenceFollowUpWorldMutationId;
-            if (mutationId == 0 || !mutations.TryGet(mutationId, out _)) {
+        foreach (var @object in objects) {
+            var mutationIds = new List<uint>();
+            if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation)
+                mutationIds.Add(@object.EffectAmount > 0 ? (uint)@object.EffectAmount : 0);
+            if (@object.QuestSequenceFollowUpKind
+                == AuthoritativeQuestSequenceFollowUpKind.WorldMutation) {
+                mutationIds.Add(@object.QuestSequenceFollowUpAmount);
+            }
+            if (@object.QuestSequenceFollowUpWorldMutationId != 0)
+                mutationIds.Add(@object.QuestSequenceFollowUpWorldMutationId);
+            foreach (var mutationId in mutationIds.Where(id => id == 0 || !mutations.TryGet(id, out _))) {
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unknown world mutation {mutationId}.");
             }
