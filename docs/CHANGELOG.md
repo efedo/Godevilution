@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
 - Route the connected native Cain identification menu through the Storyteller
   service session, closing it when the menu is left while retaining offline
   behavior.
+- Close the connected Storyteller service on both Cain's explicit leave option
+  and the native Escape path.
 - Constrain authoritative Repair and Recharge admission to declared Smith and
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store
