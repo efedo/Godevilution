@@ -101,10 +101,11 @@ public sealed class DiabloSimulationTests
                     new AuthoritativeProceduralSetPieceOriginDefinition(6, 17, 4, 4, 1234),
                 ]),
                 RandomSeed = 99,
-            });
+        });
 
         Assert.Empty(simulation.SetLevelObjectOrigins);
-        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        simulation.WorldState.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        Assert.Contains(simulation.WorldState.LevelGeometry, level => level.LevelId == 17);
 
         var published = simulation.PublishAvailableProceduralSetPieceOrigins();
         var origin = Assert.Single(published).Value;

@@ -19,6 +19,11 @@ publication revalidates without duplicating objects.
 Producing the actual Blind, Blood, and Warlord origins from native-compatible
 level generation remains follow-up work.
 
+Late-generated level additions and replacements now pass through
+`DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
+before deferred procedural origins are published; direct simulation consumers
+no longer need to mutate the projected-level cache themselves.
+
 Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's
 connected-mode no-op to preserve server ownership. Offline sessions retain the

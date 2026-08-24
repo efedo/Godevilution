@@ -213,6 +213,21 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LateGeneratedLevelsUpdateTheAuthoritativeProjection()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 3, 3));
+        var state = new DiabloWorldState(world);
+
+        state.AddLevel(new AuthoritativeLevel(2, 4, 4));
+        Assert.True(state.IsWalkable(2, 3, 3));
+        Assert.Contains(state.LevelGeometry, level => level.LevelId == 2);
+
+        state.ReplaceLevel(new AuthoritativeLevel(2, 4, 4, blockedCells: [5]));
+        Assert.False(state.IsWalkable(2, 1, 1));
+    }
+
+    [Fact]
     public void RejectsDuplicateLevelsAndInvalidBlockedCells()
     {
         var world = new AuthoritativeWorld();

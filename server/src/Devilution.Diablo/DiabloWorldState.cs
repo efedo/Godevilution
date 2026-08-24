@@ -122,6 +122,28 @@ public sealed class DiabloWorldState
 
     public AuthoritativeWorld? World { get; }
 
+    /** Adds late-generated level geometry and refreshes the effective projection. */
+    public void AddLevel(AuthoritativeLevel level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        if (World is null)
+            throw new InvalidDataException(
+                "Late-generated levels require an authoritative world geometry catalog.");
+        World.AddLevel(level);
+        RebuildProjectedGeometry();
+    }
+
+    /** Replaces late-generated level geometry and refreshes the effective projection. */
+    public void ReplaceLevel(AuthoritativeLevel level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        if (World is null)
+            throw new InvalidDataException(
+                "Generated level replacement requires an authoritative world geometry catalog.");
+        World.ReplaceLevel(level);
+        RebuildProjectedGeometry();
+    }
+
     /** Validated content-backed level-cell overlays available to object effects. */
     public AuthoritativeWorldMutationCatalog? WorldMutations { get; }
 

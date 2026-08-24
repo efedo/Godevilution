@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   deferred origins after generated geometry arrives; level-transition intents
   invoke the same pass, and repeated publication is deterministic without
   duplicating relative objects.
+- Added authoritative world-state add/replace operations for late-generated
+  levels; effective mutation and native-layer geometry is rebuilt before those
+  levels can feed deferred origin publication.
 - Added schema 1.426's optional set-level object placement mode. Existing rows
   remain absolute; future procedural set-piece rows can use signed offsets from
   a runtime-supplied origin and stay deferred until its geometry is available.

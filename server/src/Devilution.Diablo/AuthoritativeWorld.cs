@@ -4,7 +4,7 @@ using Devilution.Data;
 using System.Collections.ObjectModel;
 using System.Globalization;
 
-/** Immutable level geometry used by authoritative movement and transitions. */
+/** Validated level geometry used by authoritative movement and transitions. */
 public sealed class AuthoritativeWorld
 {
     private readonly Dictionary<uint, AuthoritativeLevel> levels = new();
