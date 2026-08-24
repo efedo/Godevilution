@@ -763,6 +763,40 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void OptionalProceduralOriginRowsActivateAgainstGeneratedGeometry()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var originTable = TsvTable.Parse(
+            "procedural_set_piece_origins.tsv",
+            "set_level_id\tset_level_symbol\tlevel_id\tlevel_symbol\tfootprint_width\tfootprint_height\tselection_seed\talignment\n"
+                + "6\tSL_ARENA_CHURCH\t3\tcaves\t4\t4\t1234\t2\n");
+        var pack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables.Append(originTable).ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("procedural-origin", "1", [pack])));
+
+        var definition = Assert.Single(activation.ProceduralSetPieceOrigins!.Definitions);
+        var origin = Assert.Single(activation.Simulation.SetLevelObjectOrigins);
+        Assert.Equal((6, 3U, "SL_ARENA_CHURCH", "caves"), (
+            definition.SetLevelId,
+            definition.LevelId,
+            definition.SetLevelSymbol,
+            definition.LevelSymbol));
+        Assert.Equal(3U, origin.Value.LevelId);
+        Assert.Equal(0, origin.Value.PositionX % 2);
+        Assert.Equal(0, origin.Value.PositionY % 2);
+    }
+
+    [Fact]
     public void ExplicitLevelRowsTakePrecedenceOverShippedProceduralRows()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
