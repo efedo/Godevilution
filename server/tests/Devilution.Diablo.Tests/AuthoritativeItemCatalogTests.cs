@@ -652,6 +652,63 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void RandomUniqueMonsterDropUsesContentBookTagsWithoutSpellBookCatalog()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            114,
+            99,
+            75,
+            75,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 99,
+            SpellId = 7,
+            ItemActionKind = DiabloItemActionKind.ReadBook,
+            GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            DropRate = 1,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+
+        var state = items.GenerateRandomUniqueMonsterDrop(42, monsterLevel: 1);
+
+        Assert.Equal(114U, state.StableItemId);
+        Assert.Equal(7, state.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, state.ItemActionKind);
+    }
+
+    [Fact]
+    public void RandomUniqueMonsterDropDoesNotUseLegacyBookMiscFallbackForTaggedNonBooks()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            114,
+            0,
+            75,
+            75,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            MiscId = 25,
+            GenerationTags = new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase),
+            DropRate = 1,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+
+        Assert.Throws<InvalidDataException>(
+            () => items.GenerateRandomUniqueMonsterDrop(42, monsterLevel: 1));
+    }
+
+    [Fact]
     public void RandomUniqueMonsterDropUsesContentGoldClassificationWhenTagsArePresent()
     {
         var items = new AuthoritativeItemCatalog([

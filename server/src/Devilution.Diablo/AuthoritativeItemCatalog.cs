@@ -919,7 +919,11 @@ public sealed class AuthoritativeItemCatalog
             .Where(definition => {
                 var isBookTemplate = spellBooks is not null
                     ? spellBooks.IsBookTemplate(this, definition.ItemId)
-                    : definition.ItemType == 0 && definition.MiscId == bookMiscId;
+                    : definition.GenerationTags.Count > 0
+                        ? definition.GenerationTags.Contains(
+                            "Book",
+                            StringComparer.OrdinalIgnoreCase)
+                        : definition.MiscId == bookMiscId;
                 var isGold = definition.GenerationTags.Count > 0
                     ? AuthoritativeItemClassification.IsGold(definition)
                     : definition.ItemType == goldItemType;

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Random unique-monster drop admission now honors normalized `Book` generation
+  tags even when the spell-book catalog is omitted; tagged non-books no longer
+  inherit the native `misc_id=25` book fallback.
 - Restricted the legacy Smith/Witch oil misc-ID and Staff of Lazarus item-index
   sale fallbacks to catalog-less compatibility calls; normalized item metadata
   now fully owns vendor admission whenever an authoritative catalog is present.

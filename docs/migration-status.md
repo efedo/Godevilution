@@ -228,6 +228,11 @@ native misc-ID range retained only for older compatibility states.
 Normalized item classification also owns quest-sale admission; the legacy
 quest-index range is now consulted only when no item catalog is available.
 
+Random unique-monster drop admission now honors normalized `Book` generation
+tags even when the spell-book catalog is omitted; tagged non-book rows no
+longer inherit the native `misc_id=25` book fallback. Untagged legacy rows
+retain the compatibility fallback.
+
 The shipped spell-book catalog now requires every production book row to carry
 explicit `single_player_excluded` metadata; native Resurrection/Heal Other
 inference remains only a compatibility fallback for older packs.
