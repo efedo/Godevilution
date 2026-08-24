@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Aligned dynamic item identity validation across server, native, and Godot
+  boundaries: runtime-authored names now require the byte-representable native
+  cursor graphic as well as both base and identified names.
 - Aligned warp-trigger reference validation across the server mapper, native
   snapshot bridge, and Godot protocol model: source levels must exist and
   nonzero quest gates must reference a quest in the same snapshot.

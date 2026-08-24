@@ -1109,8 +1109,8 @@ public sealed class AuthoritativeClientModel
             && System.Text.Encoding.UTF8.GetByteCount(state.BaseName) < 64
             && System.Text.Encoding.UTF8.GetByteCount(state.IdentifiedName) < 64;
         return hasValidNames
-            && (!state.HasNativeCursorGraphic
-                || state.NativeCursorGraphic is >= 0 and <= byte.MaxValue);
+            && state.HasNativeCursorGraphic
+            && state.NativeCursorGraphic is >= 0 and <= byte.MaxValue;
     }
 
     private readonly record struct PredictedMove(int DirectionX, int DirectionY);

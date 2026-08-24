@@ -2,6 +2,10 @@
 
 Status date: 2026-08-24
 
+Dynamic item presentation identity now has the same native compatibility
+requirements in the server mapper and Godot model as in the C++ bridge: both
+runtime names and a byte-representable cursor graphic are required together.
+
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,
 and Godot protocol validation; d-piece presentation values remain independently

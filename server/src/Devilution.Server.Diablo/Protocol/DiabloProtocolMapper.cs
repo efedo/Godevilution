@@ -2203,6 +2203,7 @@ internal static class DiabloProtocolMapper
             || hasPresentation
                 && (string.IsNullOrEmpty(state.BaseName)
                     || string.IsNullOrEmpty(state.IdentifiedName)
+                    || !state.NativeCursorGraphic.HasValue
                     || state.BaseName.Contains('\0')
                     || state.IdentifiedName.Contains('\0')
                     || System.Text.Encoding.UTF8.GetByteCount(state.BaseName) >= 64

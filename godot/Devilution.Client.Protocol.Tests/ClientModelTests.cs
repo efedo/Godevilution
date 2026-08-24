@@ -1752,6 +1752,10 @@ public sealed class ClientModelTests
         missingDynamicName.WorldItems[0].State.IdentifiedName = "";
         Assert.Throws<InvalidDataException>(() => model.Apply(
             new AuthoritativeClientMessage(Snapshot: missingDynamicName)));
+        var missingCursor = snapshot.Clone();
+        missingCursor.WorldItems[0].State.ClearNativeCursorGraphic();
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: missingCursor)));
         var invalidPrice = snapshot.Clone();
         invalidPrice.WorldItems[0].Price = uint.MaxValue;
         Assert.Throws<InvalidDataException>(() => model.Apply(

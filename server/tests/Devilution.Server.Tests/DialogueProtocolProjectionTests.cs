@@ -508,6 +508,17 @@ public sealed class DialogueProtocolProjectionTests
                 Player = player with { Inventory = [partialPresentation] },
             }));
 
+        var missingCursor = invalidItem with {
+            State = AuthoritativeItemState.Empty with {
+                BaseName = "Potion",
+                IdentifiedName = "Potion",
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { Inventory = [missingCursor] },
+            }));
+
         var invalidCursor = invalidItem with {
             State = AuthoritativeItemState.Empty with {
                 NativeCursorGraphic = -1,
