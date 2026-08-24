@@ -297,7 +297,9 @@ public sealed class DiabloStoreCommandProcessor
         if (!TryResolveGoldTopology(player, out var hasGoldTopology))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var targetCell = -1;
-        if (hasGoldTopology) {
+        // Gold topology controls wallet mutation; it does not determine whether
+        // a supplied inventory grid must receive the purchased item.
+        if (player.InventoryGrid.Count > 0) {
             targetCell = FindNativeInventoryPlacement(
                 player.InventoryGrid,
                 item.State.InventoryWidth,
@@ -319,7 +321,7 @@ public sealed class DiabloStoreCommandProcessor
             item.Price,
             appliedTick,
             item.State));
-        if (hasGoldTopology) {
+        if (targetCell >= 0) {
             InventoryGridLayout.Fill(
                 player.InventoryGrid,
                 targetCell,

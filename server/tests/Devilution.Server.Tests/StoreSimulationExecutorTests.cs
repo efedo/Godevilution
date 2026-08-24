@@ -86,6 +86,30 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void PurchaseFillsWalletOnlyCompatibilityInventoryGrid()
+    {
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+        };
+        var catalog = CreateCatalog(new StoreItem(0, 42, 10, itemState));
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            startingGold: 100,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray());
+        var server = new AuthoritativeCommandServer(executor);
+        server.Process("player-a", OpenStore(1), currentTick: 10);
+
+        var result = server.Process("player-a", Purchase(2, 0), currentTick: 12);
+        var state = executor.GetPlayerState("player-a");
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Equal(0, state.InventoryGrid[30]);
+        var snapshot = executor.CreateSnapshot("player-a", entityId: 7, tick: 12);
+        Assert.Equal([0], snapshot.Players[0].InventoryGrid.Skip(30).Take(1));
+    }
+
+    [Fact]
     public void CloseStoreClearsAuthoritativeStoreSnapshot()
     {
         var executor = new StoreSimulationExecutor(CreateCatalog(), startingGold: 100);
@@ -958,7 +982,7 @@ public sealed class StoreSimulationExecutorTests
     [Fact]
     public void ExplicitMoveTransfersInventoryAndBeltItemsAuthoritatively()
     {
-        var executor = new StoreSimulationExecutor(CreateCatalog(new StoreItem(0, 42, 10)), startingGold: 100, startingInventoryGrid: [0]);
+        var executor = new StoreSimulationExecutor(CreateCatalog(new StoreItem(0, 42, 10)), startingGold: 100, startingInventoryGrid: [-1]);
         var server = new AuthoritativeCommandServer(executor);
         Assert.Equal(CommandStatus.Accepted, server.Process("player-a", OpenStore(1), 10).Status);
         Assert.Equal(CommandStatus.Accepted, server.Process("player-a", Purchase(2, 0), 12).Status);
@@ -1074,7 +1098,7 @@ public sealed class StoreSimulationExecutorTests
         var executor = new StoreSimulationExecutor(
             CreateCatalog(new StoreItem(0, 42, 10)),
             startingGold: 100,
-            startingInventoryGrid: [0],
+            startingInventoryGrid: [-1],
             startingEquipment: [new EquippedStoreItem(3, 99)]);
         var server = new AuthoritativeCommandServer(executor);
         server.Process("player-a", OpenStore(1), 10);

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Authoritative purchases now maintain a supplied inventory grid even for
+  wallet-only compatibility sessions without Gold item stacks; Gold topology
+  detection no longer suppresses ordinary item placement.
 - Aligned authoritative store-simulation fixtures with strict protocol
   topology, native item identity, cursor metadata, and unique-seed validation;
   the full store executor class now passes without weakening those boundaries.
