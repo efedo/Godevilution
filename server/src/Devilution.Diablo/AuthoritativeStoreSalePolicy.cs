@@ -49,7 +49,7 @@ public static class AuthoritativeStoreSalePolicy
             && (gameVariant != DiabloGameVariant.Hellfire
                 || HasValidSpell(state, spells)))
             return false;
-        return state.ItemIndex != LegacyLazarusStaffItemIndex;
+        return items is not null || state.ItemIndex != LegacyLazarusStaffItemIndex;
     }
 
     private static bool WitchAccepts(
@@ -71,7 +71,7 @@ public static class AuthoritativeStoreSalePolicy
             || (items is null
                 && state.ItemIndex is >= LegacyFirstQuestItemIndex and <= LegacyLastQuestItemIndex))
             accepts = false;
-        if (state.ItemIndex == LegacyLazarusStaffItemIndex)
+        if (items is null && state.ItemIndex == LegacyLazarusStaffItemIndex)
             accepts = false;
         return accepts;
     }
@@ -125,10 +125,11 @@ public static class AuthoritativeStoreSalePolicy
             && items.TryGetByState(state, out var definition)) {
             action = definition.ItemActionKind;
         }
-        return action is DiabloItemActionKind.ApplyBlacksmithOil
+        var isOilAction = action is DiabloItemActionKind.ApplyBlacksmithOil
             or DiabloItemActionKind.ApplyAccuracyOil
             or DiabloItemActionKind.ApplySharpnessOil
-            or DiabloItemActionKind.ApplyFortitudeOil
-            || state.MiscId > OilFirst && state.MiscId < OilLast;
+            or DiabloItemActionKind.ApplyFortitudeOil;
+        return isOilAction
+            || items is null && state.MiscId > OilFirst && state.MiscId < OilLast;
     }
 }

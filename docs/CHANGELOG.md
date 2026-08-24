@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restricted the legacy Smith/Witch oil misc-ID and Staff of Lazarus item-index
+  sale fallbacks to catalog-less compatibility calls; normalized item metadata
+  now fully owns vendor admission whenever an authoritative catalog is present.
 - Added validated quest-type world-item anchors; a matching single-player
   drop completes the quest while the dropped item remains server-owned and
   persistent in world state, with snapshot round-trip coverage for the

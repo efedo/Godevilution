@@ -2602,6 +2602,74 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void NormalizedItemMetadataSuppressesLegacyOilMiscFallback()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2186,
+            0,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            ItemClass = 3,
+            MiscId = 37,
+            NativeItemIndex = 999,
+            GenerationTags = new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = definition.Generate(0x12345678);
+
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
+    public void NormalizedItemMetadataSuppressesLegacyLazarusIndexFallback()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2401,
+            1,
+            100,
+            100,
+            1,
+            4,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            ItemClass = 1,
+            NativeItemIndex = 33,
+            GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            definition.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void NormalizedItemClassificationReplacesLegacyQuestIndexRange()
     {
         var definition = new AuthoritativeItemDefinition(
