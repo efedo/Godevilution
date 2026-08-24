@@ -126,6 +126,8 @@ struct ProjectedMonsterSnapshot {
 	int32_t futurePositionX = 0;
 	int32_t futurePositionY = 0;
 	bool petrified = false;
+	/** Server-owned stealth state; hidden monsters are not presentation targets. */
+	bool sneakHidden = false;
 	bool stoneCurseImmune = false;
 };
 

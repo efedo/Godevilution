@@ -471,6 +471,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_future_position_x(5);
 	second->set_future_position_y(5);
 	second->set_petrified(true);
+	second->set_sneak_hidden(true);
 	second->set_stone_curse_immune(true);
 	const auto first = snapshot.add_monsters();
 	first->set_entity_id(3);
@@ -501,6 +502,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_EQ((*projected)[1].futurePositionX, 5);
 	EXPECT_EQ((*projected)[1].futurePositionY, 5);
 	EXPECT_TRUE((*projected)[1].petrified);
+	EXPECT_TRUE((*projected)[1].sneakHidden);
 	EXPECT_TRUE((*projected)[1].stoneCurseImmune);
 }
 
@@ -1410,13 +1412,17 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	EXPECT_FALSE(projection.IsBlocked(3, 0).has_value());
 }
 
-TEST(ServerBackedPlayerSnapshot, FiltersDeadMonstersFromNativePresentation)
+TEST(ServerBackedPlayerSnapshot, FiltersDeadAndHiddenMonstersFromNativePresentation)
 {
 	ProjectedMonsterSnapshot snapshot;
 	snapshot.alive = true;
 	EXPECT_TRUE(IsAuthoritativeMonsterPresentable(snapshot));
 
 	snapshot.alive = false;
+	EXPECT_FALSE(IsAuthoritativeMonsterPresentable(snapshot));
+
+	snapshot.alive = true;
+	snapshot.sneakHidden = true;
 	EXPECT_FALSE(IsAuthoritativeMonsterPresentable(snapshot));
 }
 
@@ -2072,6 +2078,10 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t>(30));
 	EXPECT_FALSE(projection.QuestObjectAt(4, 5).has_value());
 	EXPECT_FALSE(projection.AuthoritativeObjectAt(4, 5).has_value());
+	monster.sneakHidden = true;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	EXPECT_FALSE(projection.MonsterAt(4, 5).has_value());
+	EXPECT_FALSE(projection.MonsterAt(5, 5).has_value());
 	ProjectedObjectSnapshot questObject;
 	questObject.entityId = 32;
 	questObject.levelId = 1;

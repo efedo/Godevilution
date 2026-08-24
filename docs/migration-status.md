@@ -5,6 +5,9 @@ Status date: 2026-08-24
 Native authoritative monster presentation now applies the same alive-only
 visibility rule as Godot. Dead projected monsters are omitted before pool
 hydration, so stale compatibility slots are removed rather than rendered.
+The native projection now also preserves server-owned `SneakHidden` state;
+hidden monsters are omitted from native presentation and interaction lookup,
+matching Godot's visibility and targeting filters.
 
 Godot quest/towner snapshot validation now rejects duplicate level-geometry
 identities through its normal invalid-snapshot boundary before evaluating

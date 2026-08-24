@@ -131,7 +131,8 @@ std::optional<uint32_t> ServerBackedWorldProjection::MonsterAt(int32_t positionX
 {
 	const auto levelId = levelId_;
 	const auto monster = std::find_if(monsters_.begin(), monsters_.end(), [positionX, positionY, levelId](const auto &candidate) {
-		return candidate.entityId != 0 && candidate.alive && (candidate.levelId == 0 || candidate.levelId == levelId)
+		return candidate.entityId != 0 && candidate.alive && !candidate.sneakHidden
+		    && (candidate.levelId == 0 || candidate.levelId == levelId)
 		    && ((candidate.positionX == positionX && candidate.positionY == positionY)
 		        || (candidate.moving && candidate.futurePositionX == positionX && candidate.futurePositionY == positionY));
 	});

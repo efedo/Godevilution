@@ -787,7 +787,7 @@ bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player
 
 bool IsAuthoritativeMonsterPresentable(const ProjectedMonsterSnapshot &snapshot)
 {
-	return snapshot.alive;
+	return snapshot.alive && !snapshot.sneakHidden;
 }
 
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(

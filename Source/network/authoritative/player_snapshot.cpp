@@ -487,6 +487,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		    .futurePositionX = futurePositionX,
 		    .futurePositionY = futurePositionY,
 		    .petrified = source.petrified(),
+		    .sneakHidden = source.sneak_hidden(),
 		    .stoneCurseImmune = source.stone_curse_immune(),
 		});
 	}
