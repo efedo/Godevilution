@@ -1268,6 +1268,14 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	EXPECT_EQ(tileAt(1, 1).transVal(), 9);
 	EXPECT_EQ(megaTileAt(0, 0).current(), 12);
 
+	ProjectedLevelGeometrySnapshot townGeometry;
+	townGeometry.levelId = 0;
+	townGeometry.width = MAXDUNX;
+	townGeometry.height = MAXDUNY;
+	ServerBackedWorldProjection townProjection;
+	ASSERT_TRUE(townProjection.Apply({ }, { }, { }, { }, { townGeometry }, 0).has_value());
+	EXPECT_TRUE(presentation.Apply(townProjection, 0).has_value());
+
 	ProjectedLevelGeometrySnapshot invalid = geometry;
 	invalid.nativeMegaTileLayer[0] = 256;
 	ServerBackedWorldProjection invalidProjection;

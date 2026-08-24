@@ -7,6 +7,9 @@ mega-tile, d-piece, and transparency layers to the active level after validating
 their native dimensions and value ranges. This closes the map-layer portion of
 the snapshot resynchronization seam; native DUN object-layer materialization and
 object encounter-state presentation remain server-authored compatibility work.
+Town-sized 112×112 geometry without a coarse mega-tile layer now remains a
+valid presentation projection; the native 40×40 coarse limit applies only when
+that optional layer is supplied.
 The authoritative C# level model and Godot protocol model enforce the same
 signed-byte transparency and byte-sized mega-tile ranges before those layers
 cross the shared protocol.

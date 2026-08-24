@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   layers remain inert until an authored object mapping exists, so behavior and
   encounter-state ownership cannot be reconstructed locally from presentation
   data.
+- Allowed native town-sized geometry projections without an optional coarse
+  mega-tile layer while retaining the 40×40 coarse-layer bound when that layer
+  is present.
 - Tightened native level-geometry protocol validation so transparency regions
   and mega-tile identities cannot exceed the native compatibility client's
   signed-byte and byte-sized presentation ranges across the C++ bridge,

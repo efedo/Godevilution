@@ -713,7 +713,8 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		return tl::make_unexpected("Authoritative level geometry exceeds the native dungeon dimensions.");
 	const auto coarseWidth = (static_cast<uint64_t>(geometry->width) + 1) / 2;
 	const auto coarseHeight = (static_cast<uint64_t>(geometry->height) + 1) / 2;
-	if (coarseWidth > DMAXX || coarseHeight > DMAXY)
+	if (!geometry->nativeMegaTileLayer.empty()
+	    && (coarseWidth > DMAXX || coarseHeight > DMAXY))
 		return tl::make_unexpected("Authoritative level geometry exceeds the native megatile dimensions.");
 
 	const auto cellCount = static_cast<uint64_t>(geometry->width) * static_cast<uint64_t>(geometry->height);
