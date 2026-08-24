@@ -5035,6 +5035,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void LachdananRemainsPassiveOutsideQuestDialogue()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            monsterId: 1,
+            levelId: 0,
+            attackDamage: 12,
+            aggroRange: 5,
+            nativeAi: "Lachdanan",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Lachdanan",
+                1,
+                16,
+                1,
+                1,
+                10,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Lachdanan",
+                AggroRange = 5,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            positionX: 1,
+            life: 20,
+            lifeMaximum: 20,
+            entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.Equal(20, player.Life);
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void AutonomousMonsterRoutesAroundBlockedCorridor()
     {
         var geometry = new AuthoritativeWorld();

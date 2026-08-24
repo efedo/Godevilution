@@ -4864,6 +4864,10 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (IsQuestDialogueTarget(target))
                 continue;
+            // Native Lachdanan only exposes quest dialogue and never enters a
+            // combat or movement mode, even when a player is in aggro range.
+            if (UsesNativeAi(target, "Lachdanan"))
+                continue;
             if (TryAdvanceScavengerAi(target, tick, players))
                 continue;
             if (TryAdvanceFallenFear(target, players))

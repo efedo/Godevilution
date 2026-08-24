@@ -136,6 +136,16 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void AcceptsLachdananNativeAiIdentity()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with { NativeAi = "Lachdanan" },
+        ]);
+
+        Assert.Equal("Lachdanan", Assert.Single(catalog.Definitions).NativeAi);
+    }
+
+    [Fact]
     public void RejectsInvalidFallenFearTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([

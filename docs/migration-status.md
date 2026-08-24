@@ -33,6 +33,10 @@ when a text property table is used: legacy `solid`/`block_missile` rows remain
 valid, while optional lighting, transparency, and trap flags are validated and
 retained for the same authoritative geometry model.
 
+The authoritative monster catalog now accepts Lachdanan's native AI identity,
+and server ticks keep the dialogue-only encounter passive outside the existing
+server-owned quest-dialogue path.
+
 Late-generated level additions and replacements now pass through
 `DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
 before deferred procedural origins are published; direct simulation consumers
