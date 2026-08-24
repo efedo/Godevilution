@@ -344,7 +344,10 @@ explicit migration seams, not server-authority claims:
   Phasing projectile source and target offsets plus the authored replacement
   rectangles when the native map bundle is available, while native object
   resynchronization and encounter-progress presentation remain compatibility
-  seams. Set-level rows can clone validated
+  seams. The Vile center circle now uses an authored occupancy trigger gated on
+  both linked books; the server applies its deferred replacement, advances the
+  native quest marker, and launches the activating-player Phasing transition.
+  Set-level rows can clone validated
   `objects.tsv` behavior templates, and the generic `GrantSpellLevel`,
   `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` effects cover
   reusable spell-level and Phasing/Guardian-controller transitions. The

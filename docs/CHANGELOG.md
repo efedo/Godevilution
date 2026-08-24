@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized the Vile Betrayer center-circle trigger as a validated occupancy
+  object: both linked books must activate before the circle applies its deferred
+  replacement, advances native `_qvar1` to 4, and launches activating-player
+  Phasing. Occupancy-trigger objects remain enterable and persist through
+  authoritative snapshots.
 - Externalized the two fixed Chamber of Bone completion books as validated
   set-level behavior templates: the server now completes the authored quest,
   grants one Guardian level, and starts the native player-origin Guardian at

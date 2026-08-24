@@ -38,7 +38,9 @@ public sealed class AuthoritativeWorldObject
         int questSequenceFollowUpOffsetY = 0,
         AuthoritativeObjectProjectileSourceKind projectileSourceKind
             = AuthoritativeObjectProjectileSourceKind.Object,
-        uint questSequenceFollowUpWorldMutationId = 0)
+        uint questSequenceFollowUpWorldMutationId = 0,
+        bool activateOnOccupancy = false,
+        int requiredActivatedLinkedObjects = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -121,12 +123,21 @@ public sealed class AuthoritativeWorldObject
             throw new InvalidDataException(
                 "Object quest-sequence world-mutation follow-up values are invalid.");
         }
+        if (!IsValidOccupancyTrigger(
+                activateOnOccupancy,
+                requiredActivatedLinkedObjects,
+                questId)) {
+            throw new InvalidDataException(
+                "Object occupancy-trigger values are invalid.");
+        }
         QuestSequenceFollowUpKind = questSequenceFollowUpKind;
         QuestSequenceFollowUpAmount = questSequenceFollowUpAmount;
         QuestSequenceFollowUpOffsetX = questSequenceFollowUpOffsetX;
         QuestSequenceFollowUpOffsetY = questSequenceFollowUpOffsetY;
         QuestSequenceFollowUpWorldMutationId = questSequenceFollowUpWorldMutationId;
         ProjectileSourceKind = projectileSourceKind;
+        ActivateOnOccupancy = activateOnOccupancy;
+        RequiredActivatedLinkedObjects = requiredActivatedLinkedObjects;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -169,6 +180,12 @@ public sealed class AuthoritativeWorldObject
 
     /** Optional second follow-up applied after the primary quest-sequence action. */
     public uint QuestSequenceFollowUpWorldMutationId { get; set; }
+
+    /** Applies this object's authored operation when a player enters its tile. */
+    public bool ActivateOnOccupancy { get; set; }
+
+    /** Optional count of other linked quest objects that must already be active. */
+    public int RequiredActivatedLinkedObjects { get; set; }
 
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
@@ -221,7 +238,9 @@ public sealed class AuthoritativeWorldObject
             QuestSequenceFollowUpOffsetX,
             QuestSequenceFollowUpOffsetY,
             ProjectileSourceKind,
-            QuestSequenceFollowUpWorldMutationId);
+            QuestSequenceFollowUpWorldMutationId,
+            ActivateOnOccupancy,
+            RequiredActivatedLinkedObjects);
     }
 
     public static bool IsValidQuestTransition(
@@ -248,6 +267,17 @@ public sealed class AuthoritativeWorldObject
         return kind != AuthoritativeObjectQuestTransitionKind.None
             ? setsVariable ? amount > 0 : amount == 0
             : amount == 0 && requiredVariable1 < 0 && requiredVariable2 < 0;
+    }
+
+    public static bool IsValidOccupancyTrigger(
+        bool activateOnOccupancy,
+        int requiredActivatedLinkedObjects,
+        uint questId)
+    {
+        return requiredActivatedLinkedObjects is >= 0 and <= byte.MaxValue
+            && (requiredActivatedLinkedObjects == 0 || questId != 0)
+            && (requiredActivatedLinkedObjects == 0 || activateOnOccupancy)
+            && (!activateOnOccupancy || questId != 0);
     }
 
     public static bool IsValidReward(
@@ -449,7 +479,9 @@ public static class AuthoritativeWorldObjectCatalog
                     row.OptionalInt32("quest_sequence_follow_up_offset_x"),
                     row.OptionalInt32("quest_sequence_follow_up_offset_y"),
                     projectileSourceKind,
-                    row.OptionalUInt32("quest_sequence_follow_up_world_mutation_id")),
+                    row.OptionalUInt32("quest_sequence_follow_up_world_mutation_id"),
+                    row.OptionalBoolean("activate_on_occupancy"),
+                    row.OptionalInt32("required_activated_linked_objects")),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();

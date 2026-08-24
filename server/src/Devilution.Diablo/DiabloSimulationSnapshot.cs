@@ -285,6 +285,12 @@ public sealed record DiabloObjectState(
     public int QuestSequenceFollowUpOffsetY { get; init; }
 
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; init; }
+
+    public uint QuestSequenceFollowUpWorldMutationId { get; init; }
+
+    public bool ActivateOnOccupancy { get; init; }
+
+    public int RequiredActivatedLinkedObjects { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -662,6 +668,9 @@ public sealed partial class DiabloSimulation
                     QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
                     QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                     ProjectileSourceKind = @object.ProjectileSourceKind,
+                    QuestSequenceFollowUpWorldMutationId = @object.QuestSequenceFollowUpWorldMutationId,
+                    ActivateOnOccupancy = @object.ActivateOnOccupancy,
+                    RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -1064,6 +1073,10 @@ public sealed partial class DiabloSimulation
                     @object.EffectKind,
                     @object.QuestSequenceFollowUpKind,
                     @object.ProjectileSourceKind)
+                || !AuthoritativeWorldObject.IsValidOccupancyTrigger(
+                    @object.ActivateOnOccupancy,
+                    @object.RequiredActivatedLinkedObjects,
+                    @object.QuestId)
                 || (@object.Breakable && @object.MissilePassable)
                 || (@object.Destroyed && !@object.Breakable)) {
                 throw new InvalidDataException(
@@ -2231,6 +2244,9 @@ public sealed partial class DiabloSimulation
                 target.QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX;
                 target.QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY;
                 target.ProjectileSourceKind = @object.ProjectileSourceKind;
+                target.QuestSequenceFollowUpWorldMutationId = @object.QuestSequenceFollowUpWorldMutationId;
+                target.ActivateOnOccupancy = @object.ActivateOnOccupancy;
+                target.RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2263,7 +2279,10 @@ public sealed partial class DiabloSimulation
                     @object.QuestSequenceFollowUpAmount,
                     @object.QuestSequenceFollowUpOffsetX,
                     @object.QuestSequenceFollowUpOffsetY,
-                    @object.ProjectileSourceKind));
+                    @object.ProjectileSourceKind,
+                    @object.QuestSequenceFollowUpWorldMutationId,
+                    @object.ActivateOnOccupancy,
+                    @object.RequiredActivatedLinkedObjects));
             }
         }
     }

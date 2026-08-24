@@ -363,6 +363,37 @@ public sealed class DiabloWorldCommandProcessor
             searchRadius);
     }
 
+    /** Applies authored object operations whose trigger tile is occupied by a player. */
+    public DiabloWorldIntentResult ExecuteOccupancyTriggers(
+        AuthoritativePlayerState player,
+        IEnumerable<AuthoritativePlayerState> players)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(players);
+        var events = new List<DiabloGameplayEvent>();
+        foreach (var @object in world.Objects.Values
+                     .Where(candidate => candidate.ActivateOnOccupancy
+                         && !candidate.Activated
+                         && candidate.LevelId == player.LevelId
+                         && candidate.PositionX == player.PositionX
+                         && candidate.PositionY == player.PositionY
+                         && HasRequiredActivatedLinkedObjects(candidate))
+                     .OrderBy(candidate => candidate.EntityId)
+                     .ToArray()) {
+            var result = OperateObject(
+                player,
+                @object.EntityId,
+                requireAdjacent: false);
+            if (!result.Succeeded)
+                continue;
+            events.AddRange(result.Events);
+        }
+
+        return events.Count == 0
+            ? DiabloWorldIntentResult.Accepted
+            : DiabloWorldIntentResult.AcceptedWith(events.ToArray());
+    }
+
     private DiabloWorldIntentResult ApplyWarpTarget(
         AuthoritativePlayerState player,
         AuthoritativeWarpTarget warp,
@@ -535,10 +566,23 @@ public sealed class DiabloWorldCommandProcessor
             intent.DirectionY);
         player.PositionX = targetX;
         player.PositionY = targetY;
+        ExecuteOccupancyTriggers(player, players);
         var levelTrigger = ExecuteLevelTrigger(player, appliedTick, players);
         if (levelTrigger.Succeeded)
             return levelTrigger;
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    private bool HasRequiredActivatedLinkedObjects(AuthoritativeWorldObject @object)
+    {
+        if (@object.RequiredActivatedLinkedObjects <= 0)
+            return true;
+        return world.Objects.Values.Count(candidate =>
+                candidate.EntityId != @object.EntityId
+                && candidate.QuestId == @object.QuestId
+                && candidate.LevelId == @object.LevelId
+                && candidate.Activated)
+            >= @object.RequiredActivatedLinkedObjects;
     }
 
     /** Applies one server-owned deterministic path step toward a native walk target. */

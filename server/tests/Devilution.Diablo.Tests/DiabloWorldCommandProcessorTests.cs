@@ -170,6 +170,105 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void OccupancyTriggerAppliesAfterAuthoredLinkedObjectsActivate()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n5\t20\t20\tnone\n");
+        var quest = new AuthoritativeQuestState(3016, 5, 1, active: true);
+        var book1 = new AuthoritativeWorldObject(
+            2010,
+            1,
+            5,
+            0,
+            0,
+            questId: 3016,
+            effectKind: AuthoritativeObjectEffectKind.WorldMutation,
+            effectAmount: 9302,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.ActivateQuest);
+        var book2 = new AuthoritativeWorldObject(
+            2011,
+            2,
+            5,
+            4,
+            4,
+            questId: 3016,
+            effectKind: AuthoritativeObjectEffectKind.WorldMutation,
+            effectAmount: 9303,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.ActivateQuest);
+        var circle = new AuthoritativeWorldObject(
+            2014,
+            3,
+            5,
+            2,
+            2,
+            questId: 3016,
+            effectKind: AuthoritativeObjectEffectKind.WorldMutation,
+            effectAmount: 9304,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
+            questTransitionAmount: 4,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile,
+            questSequenceFollowUpAmount: 10,
+            questSequenceFollowUpOffsetX: 0,
+            questSequenceFollowUpOffsetY: 10,
+            projectileSourceKind: AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+            activateOnOccupancy: true,
+            requiredActivatedLinkedObjects: 2);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [book1, book2, circle],
+            quests: [quest],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(9302, 5),
+                new AuthoritativeWorldMutation(9303, 5),
+                new AuthoritativeWorldMutation(9304, 5),
+            ]));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(10, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+                ProjectileLifetime = 2,
+                PhasingMinimumAxisOffset = 1,
+                PhasingMaximumAxisOffset = 10,
+            },
+        ]);
+        var processor = new DiabloWorldCommandProcessor(world, spells: spells);
+        var player = CreatePlayer(levelId: 5, positionX: 0, positionY: 1, entityId: 7);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(book1.EntityId),
+            1,
+            [player]).Succeeded);
+        player.PositionX = 4;
+        player.PositionY = 3;
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(book2.EntityId),
+            2,
+            [player]).Succeeded);
+
+        player.PositionX = 1;
+        player.PositionY = 2;
+        var result = processor.Execute(
+            player,
+            new DiabloMoveIntent(1, 0),
+            3,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(circle.Activated);
+        Assert.Equal(4, quest.Variable1);
+        Assert.Equal([9302U, 9303U, 9304U], world.ActiveWorldMutationIds);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((7U, 5U, 2, 12), (
+            projectile.SourceEntityId,
+            projectile.LevelId,
+            projectile.PositionX,
+            projectile.TargetY));
+    }
+
+    [Fact]
     public void PortalRequiresExactSourceAndUnoccupiedDestination()
     {
         var portal = new AuthoritativePortal(5, 0, 0, 0, 2, 3, 4);

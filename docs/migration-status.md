@@ -2,6 +2,12 @@
 
 Status date: 2026-08-24
 
+The Vile Betrayer center circle now materializes as an authored occupancy
+trigger. After both linked books activate, a player entering the circle applies
+the deferred center replacement, advances native `_qvar1` to 4, and receives the
+server-owned player-origin Phasing transition. Occupancy-trigger behavior and
+linked-object gates are reusable content fields; native object resynchronization
+and encounter-progress presentation remain compatibility seams.
 The fixed Chamber of Bone completion books now clone validated authored
 templates: the server owns quest completion, one Guardian level, and the native
 player-origin Guardian target offset. Set-level quest progress gates resolve the
@@ -297,9 +303,14 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.420.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.419.0` schema
+The Diablo content schema is now `1.421.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.420.0` schema
 for existing manifest-based packs.
+
+Schema 1.421 adds optional occupancy-trigger and linked-object-gate fields to
+`objects.tsv`. The server applies an authored object's normal validated effect
+when a player enters its tile, after any declared linked quest objects have
+activated; omitted fields preserve ordinary interaction behavior.
 
 Schema 1.419 adds optional anchored native mega-tile assignments and explicit
 transparency-layer creation to `world_mutations.tsv`. The assignments are
@@ -530,7 +541,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.420.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.421.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.

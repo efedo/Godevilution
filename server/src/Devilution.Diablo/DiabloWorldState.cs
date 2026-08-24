@@ -647,7 +647,8 @@ public sealed class DiabloWorldState
                     || (player.IsMoving
                         && player.FuturePositionX == positionX
                         && player.FuturePositionY == positionY)))
-            || Objects.Values.Any(@object => !@object.Activated
+            || Objects.Values.Any(@object => !@object.ActivateOnOccupancy
+                && !@object.Activated
                 && !@object.Destroyed
                 && @object.EntityId != excludedEntityId
                 && @object.LevelId == levelId

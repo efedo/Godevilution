@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.420.0` schema in
+It declares its identity and `devilution.diablo@1.421.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.419.0` schema so existing manifest-based packs remain
+previous additive `1.420.0` schema so existing manifest-based packs remain
 loadable. The standalone host falls back to legacy command-line identity only
 for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1803,6 +1803,14 @@ the source and target layers once those bundles are materialized. Set-level
 copy sources and targets use the deterministic runtime identities emitted by
 the set-level map catalog.
 
+Schema 1.421 adds optional `quest_transition_kind`,
+`quest_transition_amount`, `quest_transition_required_variable1`,
+`quest_transition_required_variable2`, `activate_on_occupancy`, and
+`required_activated_linked_objects` values to `objects.tsv`. Occupancy-triggered
+objects are enterable by players and apply their validated effects once; linked
+object counts gate set-piece triggers such as the Vile Betrayer center circle.
+Omitted columns retain ordinary interaction behavior.
+
 Schema 1.416 adds optional `tile_asset_path` and `sol_asset_path` values to
 `native_dun_levels.tsv`. Ordinary native DUN levels can now supply a validated
 external `.til`/`.sol` pair for effective d-piece collision geometry; legacy
@@ -2756,6 +2764,11 @@ The following table is the authoritative ownership and key reference for the
 base pack. Column order is part of the validated schema; overlays must retain
 the complete target header even when they upsert only one row.
 
+Schema 1.421 occupancy columns on `objects.tsv` are part of the world-object
+behavior contract: `activate_on_occupancy` makes a player-entered tile invoke the
+authored operation, and `required_activated_linked_objects` gates it on other
+activated objects sharing the quest identity.
+
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
 | `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, FastBlock timing, and class-specific ranged-arrow speed tuning. |
@@ -2832,7 +2845,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.420.0"
+    "version": "1.421.0"
   },
   "dependencyConstraints": [
     {
@@ -2864,7 +2877,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.420.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.421.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
