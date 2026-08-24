@@ -1026,6 +1026,14 @@ public sealed class ShippedContentTests
             "store",
             id => stores.ContainsStore(id) || id == worldRules.AdriaStoreId);
         Assert.Equal(10U, stableIds.Resolve("store", "adria"));
+        Assert.True(stores.TryGetRole(stableIds.Resolve("store", "smith"), out var smithRole));
+        Assert.Equal(AuthoritativeStoreRole.Smith, smithRole);
+        Assert.True(stores.TryGetRole(stableIds.Resolve("store", "witch"), out var witchRole));
+        Assert.Equal(AuthoritativeStoreRole.Witch, witchRole);
+        Assert.True(stores.TryGetRole(stableIds.Resolve("store", "wirt"), out var wirtRole));
+        Assert.Equal(AuthoritativeStoreRole.Wirt, wirtRole);
+        Assert.True(stores.TryGetRole(stableIds.Resolve("store", "healer"), out var healerRole));
+        Assert.Equal(AuthoritativeStoreRole.Healer, healerRole);
     }
 
     [Fact]

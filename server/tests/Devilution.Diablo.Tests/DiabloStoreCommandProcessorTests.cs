@@ -2217,6 +2217,174 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void VendorRoleRejectsSalesThatNativeVendorsDoNotBuy()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            77,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 1,
+                ItemType = 1,
+                ItemIndex = 1,
+                Value = 100,
+                IdentifiedValue = 100,
+            });
+
+        foreach (var (storeId, role) in new[] {
+            (3U, AuthoritativeStoreRole.Wirt),
+            (4U, AuthoritativeStoreRole.Healer),
+        }) {
+            var catalog = new StoreCatalog();
+            catalog.AddStore(storeId, [], role);
+            var player = CreatePlayer(
+                gold: 100,
+                inventory: [item],
+                inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+            var processor = new DiabloStoreCommandProcessor(catalog);
+
+            Assert.True(processor.Execute(player, new DiabloOpenStoreIntent(storeId), 0).Succeeded);
+            var result = processor.Execute(player, new DiabloSellItemIntent(null, 0), 1);
+
+            Assert.False(result.Succeeded);
+            Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+            Assert.Single(player.Inventory);
+            Assert.Equal(100U, player.Gold);
+        }
+    }
+
+    [Fact]
+    public void SmithAndWitchUseTheirNativeMiscAndOilBuyFilters()
+    {
+        var potion = new OwnedStoreItem(
+            0,
+            0,
+            77,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 3,
+                ItemType = 0,
+                MiscId = 3,
+                ItemIndex = 105,
+                Value = 100,
+                IdentifiedValue = 100,
+            });
+        var oil = potion with {
+            ItemSeed = 78,
+            State = potion.State with { MiscId = 37 },
+        };
+
+        var smithCatalog = new StoreCatalog();
+        smithCatalog.AddStore(1, [], AuthoritativeStoreRole.Smith);
+        var smith = CreatePlayer(
+            inventory: [potion],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var smithProcessor = new DiabloStoreCommandProcessor(smithCatalog);
+        Assert.True(smithProcessor.Execute(smith, new DiabloOpenStoreIntent(1), 0).Succeeded);
+        Assert.False(smithProcessor.Execute(smith, new DiabloSellItemIntent(null, 0), 1).Succeeded);
+
+        var witchCatalog = new StoreCatalog();
+        witchCatalog.AddStore(2, [], AuthoritativeStoreRole.Witch);
+        var witch = CreatePlayer(
+            inventory: [potion],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var witchProcessor = new DiabloStoreCommandProcessor(witchCatalog);
+        Assert.True(witchProcessor.Execute(witch, new DiabloOpenStoreIntent(2), 0).Succeeded);
+        Assert.True(witchProcessor.Execute(witch, new DiabloSellItemIntent(null, 0), 1).Succeeded);
+
+        var oilCatalog = new StoreCatalog();
+        oilCatalog.AddStore(1, [], AuthoritativeStoreRole.Smith);
+        var smithOil = CreatePlayer(
+            inventory: [oil],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var smithOilProcessor = new DiabloStoreCommandProcessor(oilCatalog);
+        Assert.True(smithOilProcessor.Execute(smithOil, new DiabloOpenStoreIntent(1), 0).Succeeded);
+        Assert.True(smithOilProcessor.Execute(smithOil, new DiabloSellItemIntent(null, 0), 1).Succeeded);
+
+        var witchOilCatalog = new StoreCatalog();
+        witchOilCatalog.AddStore(2, [], AuthoritativeStoreRole.Witch);
+        var witchOil = CreatePlayer(
+            inventory: [oil],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var witchOilProcessor = new DiabloStoreCommandProcessor(witchOilCatalog);
+        Assert.True(witchOilProcessor.Execute(witchOil, new DiabloOpenStoreIntent(2), 0).Succeeded);
+        Assert.False(witchOilProcessor.Execute(witchOil, new DiabloSellItemIntent(null, 0), 1).Succeeded);
+    }
+
+    [Fact]
+    public void StaffSalesMatchNativeSmithAndWitchHellfireFilters()
+    {
+        var invalidStaff = AuthoritativeItemState.Empty with {
+            ItemType = 10,
+            ItemClass = 1,
+            ItemIndex = 50,
+        };
+        var validSpells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 50, 0, 0, 0, 0),
+        ]);
+
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            invalidStaff,
+            null,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            invalidStaff,
+            null,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            invalidStaff,
+            null,
+            null,
+            DiabloGameVariant.Hellfire));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            invalidStaff,
+            null,
+            null,
+            DiabloGameVariant.Hellfire));
+
+        var validStaff = invalidStaff with { SpellId = 1 };
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            validStaff,
+            null,
+            validSpells,
+            DiabloGameVariant.Hellfire));
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            validStaff,
+            null,
+            validSpells,
+            DiabloGameVariant.Hellfire));
+
+        var nonQuestClass = invalidStaff with {
+            ItemType = 1,
+            ItemClass = 1,
+            ItemIndex = 6,
+        };
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            nonQuestClass,
+            null,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            nonQuestClass,
+            null,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void CloseStoreClearsActiveStoreAndIsIdempotent()
     {
         var processor = new DiabloStoreCommandProcessor(CreateCatalog());

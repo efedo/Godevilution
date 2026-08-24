@@ -2,6 +2,17 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Native vendor role used to validate which items a store will buy. */
+public enum AuthoritativeStoreRole
+{
+    Generic,
+    Smith,
+    Witch,
+    Wirt,
+    Healer,
+    Adria,
+}
+
 /** Core authoritative item fields shared by store, inventory, and equipment projections. */
 public sealed record AuthoritativeItemState(
     uint CreateInfo,
@@ -147,6 +158,7 @@ public sealed record StoreItem(uint StoreSlot, uint ItemSeed, uint Price)
 public sealed class StoreCatalog
 {
     private readonly Dictionary<uint, Dictionary<uint, StoreItem>> stores = new();
+    private readonly Dictionary<uint, AuthoritativeStoreRole> roles = new();
 
     /** Loads the first store slice from an external TSV table. */
     public static StoreCatalog LoadTsv(
@@ -163,20 +175,27 @@ public sealed class StoreCatalog
         var grouped = table.Rows.GroupBy(row =>
             AuthoritativeStoreIdentity.Resolve(row, stableIds));
         foreach (var store in grouped) {
-            catalog.AddStore(store.Key, store.Select(row => new StoreItem(
+            var rows = store.ToArray();
+            catalog.AddStore(store.Key, rows.Select(row => new StoreItem(
                 row.RequiredUInt32("store_slot"),
                 row.RequiredUInt32("item_seed"),
                 row.RequiredUInt32("price"),
-                ParseItemState(row, itemCatalog, uniqueItems, stableIds, spellBooks, gameMode))));
+                ParseItemState(row, itemCatalog, uniqueItems, stableIds, spellBooks, gameMode))),
+                ParseRole(rows));
         }
         if (!catalog.stores.Any())
             throw new InvalidDataException($"Store table '{sourcePath}' does not contain any stores.");
         return catalog;
     }
 
-    public void AddStore(uint storeId, IEnumerable<StoreItem> items)
+    public void AddStore(
+        uint storeId,
+        IEnumerable<StoreItem> items,
+        AuthoritativeStoreRole role = AuthoritativeStoreRole.Generic)
     {
         ArgumentNullException.ThrowIfNull(items);
+        if (!Enum.IsDefined(role))
+            throw new ArgumentOutOfRangeException(nameof(role));
         if (stores.ContainsKey(storeId))
             throw new ArgumentException($"Store {storeId} has already been registered.", nameof(storeId));
 
@@ -187,11 +206,18 @@ public sealed class StoreCatalog
         }
 
         stores.Add(storeId, stock);
+        roles.Add(storeId, role);
     }
 
     public bool ContainsStore(uint storeId)
     {
         return stores.ContainsKey(storeId);
+    }
+
+    /** Returns the native vendor role for a store, if one was declared. */
+    public bool TryGetRole(uint storeId, out AuthoritativeStoreRole role)
+    {
+        return roles.TryGetValue(storeId, out role);
     }
 
     public bool TryGetItem(uint storeId, uint storeSlot, out StoreItem item)
@@ -240,6 +266,38 @@ public sealed class StoreCatalog
             }
         }
         stores[storeId] = stock;
+    }
+
+    private static AuthoritativeStoreRole ParseRole(IReadOnlyList<TsvRow> rows)
+    {
+        var values = rows
+            .Select(row => row.TryGet("store_role", out var value) ? value : string.Empty)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (values.Length > 1)
+            throw new InvalidDataException(
+                $"Store rows declare conflicting store roles: {string.Join(", ", values)}.");
+
+        var explicitValue = values.SingleOrDefault();
+        if (!string.IsNullOrWhiteSpace(explicitValue)) {
+            if (!Enum.TryParse<AuthoritativeStoreRole>(explicitValue, ignoreCase: true, out var explicitRole)
+                || !Enum.IsDefined(explicitRole)) {
+                throw new InvalidDataException(
+                    $"Store rows declare unsupported store role '{explicitValue}'.");
+            }
+            return explicitRole;
+        }
+
+        // Legacy/custom store symbols do not necessarily name a native vendor.
+        // Infer only known roles and retain Generic for all other symbols.
+        var symbol = rows
+            .Select(row => row.TryGet("store_symbol", out var value) ? value : string.Empty)
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+        return Enum.TryParse<AuthoritativeStoreRole>(symbol, ignoreCase: true, out var inferredRole)
+                && Enum.IsDefined(inferredRole)
+            ? inferredRole
+            : AuthoritativeStoreRole.Generic;
     }
 
     /** Returns a stable copy of the remaining items in one store. */

@@ -1,8 +1,8 @@
-store_id	store_symbol	store_slot	item_seed	price	item_id	item_symbol
-1	smith	0	42	75	1	short_sword
-1	smith	1	43	25	2	buckler
-2	witch	0	100	120	1	short_sword
-2	witch	1	101	30	2	buckler
-3	wirt	0	200	200	1	short_sword
-4	healer	0	300	25	2	buckler
-4	healer	1	301	50	1	short_sword
+store_id	store_symbol	store_role	store_slot	item_seed	price	item_id	item_symbol
+1	smith	Smith	0	42	75	1	short_sword
+1	smith	Smith	1	43	25	2	buckler
+2	witch	Witch	0	100	120	1	short_sword
+2	witch	Witch	1	101	30	2	buckler
+3	wirt	Wirt	0	200	200	1	short_sword
+4	healer	Healer	0	300	25	2	buckler
+4	healer	Healer	1	301	50	1	short_sword

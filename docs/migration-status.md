@@ -1,6 +1,11 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-22
+Status date: 2026-08-23
+
+Authoritative store catalogs now carry content-declared native vendor roles;
+server sale admission applies the native Smith and Witch buy filters and
+rejects Wirt and Healer sales before generic pricing, while unknown legacy
+store symbols remain generic for compatibility.
 
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain

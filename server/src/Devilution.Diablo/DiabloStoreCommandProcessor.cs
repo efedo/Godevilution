@@ -324,6 +324,15 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (!TryGetItem(player, reference, inventoryIndex, out var item))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (catalog.TryGetRole(player.ActiveStoreId.Value, out var role)
+            && !AuthoritativeStoreSalePolicy.Accepts(
+                role,
+                item.State,
+                items,
+                spells,
+                combatRules.GameVariant)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
         var rejection = rules.ValidateSale(item);
         if (rejection.HasValue)
             return DiabloIntentResult.Rejected(rejection.Value);

@@ -28,6 +28,46 @@ public sealed class StoreCatalogTests
     }
 
     [Fact]
+    public void LoadsExplicitVendorRoleAndRetainsItWhenStockIsReplaced()
+    {
+        var catalog = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_symbol\tstore_role\tstore_slot\titem_seed\tprice\n"
+                + "3\twirt\tWirt\t0\t42\t75\n");
+
+        Assert.True(catalog.TryGetRole(3, out var role));
+        Assert.Equal(AuthoritativeStoreRole.Wirt, role);
+
+        catalog.ReplaceStore(3, [new StoreItem(1, 43, 80)]);
+        Assert.True(catalog.TryGetRole(3, out role));
+        Assert.Equal(AuthoritativeStoreRole.Wirt, role);
+    }
+
+    [Fact]
+    public void ConflictingVendorRolesAreRejected()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_role\tstore_slot\titem_seed\tprice\n"
+                + "1\tSmith\t0\t42\t75\n"
+                + "1\tWitch\t1\t43\t80\n"));
+
+        Assert.Contains("conflicting store roles", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void UnknownLegacyStoreSymbolsRemainGeneric()
+    {
+        var catalog = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_symbol\tstore_slot\titem_seed\tprice\n"
+                + "99\tcustom_event_store\t0\t42\t75\n");
+
+        Assert.True(catalog.TryGetRole(99, out var role));
+        Assert.Equal(AuthoritativeStoreRole.Generic, role);
+    }
+
+    [Fact]
     public void DuplicateSlotsDoNotPartiallyRegisterAStore()
     {
         var catalog = new StoreCatalog();

@@ -4,6 +4,7 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize native vendor roles in store content and enforce Smith, Witch, Wirt, and Healer sale admission on the authoritative server, with focused native-filter parity coverage.
 - Add validated authoritative server host and port entry to the Godot character setup flow while preserving environment defaults and resume behavior.
 - Add an authoritative `SplitGoldRequested` transition for connected native gold-stack splitting; the server owns the source remainder and held cursor stack.
 - Route connected native inventory sorting through an authoritative `SortInventoryRequested` transition that preserves native ordering and placement.
