@@ -9,6 +9,8 @@ The client also converts authoritative damage, healing, and experience events
 into transient floating feedback positioned from the latest snapshot. This is
 the server-backed presentation path; the native Lua floating-number mods remain
 available only to the legacy compatibility client.
+Feedback anchors are exposed only for entities visible on the active level, so
+off-level snapshot entries cannot create floating labels in the current view.
 
 The protocol model retains the latest 256 accepted event entries. A monotonic
 sequence window lets feedback advance past entries that roll off, so a

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot now filters cached item/projectile positions and floating-feedback
+  anchors by active-level visibility, preventing off-level snapshot entries from
+  leaking into the current presentation.
 - Corrected Godot portal presentation and endpoint range validation to treat
   level zero as the real native town level, matching server-owned exact endpoint
   admission rather than the generic entity visibility wildcard.

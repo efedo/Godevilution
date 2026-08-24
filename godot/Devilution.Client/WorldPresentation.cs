@@ -66,7 +66,10 @@ public partial class WorldPresentation : Node2D
             activeEntityIds.Add(monster.EntityId);
             UpdatePosition(monster.EntityId, ToScreen(monster.PositionX, monster.PositionY), delta, monster.LevelId);
         }
-        foreach (var item in snapshot.WorldItems) {
+        foreach (var item in snapshot.WorldItems.Where(item =>
+                     AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(
+                         item.LevelId,
+                         localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(item.EntityId);
             UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta, item.LevelId);
         }
@@ -87,7 +90,10 @@ public partial class WorldPresentation : Node2D
                 UpdatePosition(portal.PortalId, ToScreen(endpoint.X, endpoint.Y), delta, localPlayer.LevelId);
             }
         }
-        foreach (var projectile in snapshot.Projectiles) {
+        foreach (var projectile in snapshot.Projectiles.Where(projectile =>
+                     AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(
+                         projectile.LevelId,
+                         localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(projectile.EntityId);
             UpdatePosition(projectile.EntityId, ToScreen(projectile.PositionX, projectile.PositionY), delta, projectile.LevelId);
         }
@@ -109,9 +115,14 @@ public partial class WorldPresentation : Node2D
 
     public Vector2? ScreenPositionForEntity(uint entityId)
     {
-        return displayedPositions.TryGetValue(entityId, out var position)
-            ? position
-            : null;
+        if (!displayedPositions.TryGetValue(entityId, out var position)
+            || !displayedPositionLevels.TryGetValue(entityId, out var entityLevelId)
+            || snapshot?.Players.FirstOrDefault() is not { } localPlayer
+            || !AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(
+                entityLevelId,
+                localPlayer.LevelId))
+            return null;
+        return position;
     }
 
     public void SetTargetPreview(Vector2I? target)

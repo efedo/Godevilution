@@ -671,6 +671,9 @@ for portal admission.
 Godot authoritative level geometry is now replaced rather than merged: omitted
 levels and geometry-less legacy snapshots cannot retain prior-session blocked
 cells or warp markers, while static layouts remain a presentation fallback.
+Godot cached item and projectile positions now use the active-level visibility
+boundary, and feedback anchors refuse off-level entities instead of presenting
+transient labels from another projected level.
 
 ## Current state
 
