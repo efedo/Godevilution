@@ -1153,8 +1153,13 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapshot &snapshot)
 {
 	for (const auto &monster : snapshot.monsters()) {
+		const int64_t hitPointsQ6 = monster.hit_points_q6() == 0 && monster.hit_points() != 0
+		    ? static_cast<int64_t>(monster.hit_points()) * 64
+		    : monster.hit_points_q6();
 		if (monster.unique_identity().size() > 128
 		    || (!monster.is_unique() && !monster.unique_identity().empty())
+		    || hitPointsQ6 < 0
+		    || monster.alive() != (hitPointsQ6 > 0)
 		    || monster.attack_damage() < 0
 		    || monster.min_damage() < 0
 		    || monster.max_damage() < monster.min_damage()

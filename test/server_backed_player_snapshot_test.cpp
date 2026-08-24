@@ -1172,8 +1172,18 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 		monster->set_entity_id(1);
 		monster->set_hit_points(10);
 		monster->set_max_hit_points(10);
+		monster->set_alive(true);
 		return snapshot;
 	};
+
+	protocol::Snapshot invalidAlive = makeMonster();
+	invalidAlive.mutable_monsters(0)->set_alive(false);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidAlive).has_value());
+
+	protocol::Snapshot invalidHitPoints = makeMonster();
+	invalidHitPoints.mutable_monsters(0)->set_hit_points(0);
+	invalidHitPoints.mutable_monsters(0)->set_alive(true);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidHitPoints).has_value());
 
 	protocol::Snapshot invalidDamage = makeMonster();
 	invalidDamage.mutable_monsters(0)->set_max_damage(1);

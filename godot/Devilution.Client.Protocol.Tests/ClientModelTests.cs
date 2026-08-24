@@ -2008,6 +2008,12 @@ public sealed class ClientModelTests
             monster => monster.HitPointsQ6 = 321,
             monster => monster.MaxHitPoints = 2,
             monster => monster.HitPoints = -1,
+            monster => monster.Alive = false,
+            monster => {
+                monster.Alive = true;
+                monster.HitPoints = 0;
+                monster.HitPointsQ6 = 0;
+            },
         }) {
             var invalid = valid.Clone();
             mutate(invalid.Monsters[0]);

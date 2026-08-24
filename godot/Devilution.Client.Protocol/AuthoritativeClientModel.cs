@@ -728,6 +728,9 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateMonsterVitality(MonsterSnapshot monster)
     {
+        var hitPointsQ6 = monster.HitPointsQ6 == 0 && monster.HitPoints != 0
+            ? (long)monster.HitPoints * 64
+            : monster.HitPointsQ6;
         if (monster.EntityId == 0
             || monster.HitPoints < 0
             || monster.MaxHitPoints < 0
@@ -735,6 +738,8 @@ public sealed class AuthoritativeClientModel
             || monster.HitPointsQ6 < 0
             || monster.MaxHitPointsQ6 < 0
             || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6
+            || hitPointsQ6 < 0
+            || monster.Alive != (hitPointsQ6 > 0)
             || System.Text.Encoding.UTF8.GetByteCount(monster.UniqueIdentity) > 128
             || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique) {
             throw new InvalidDataException(
