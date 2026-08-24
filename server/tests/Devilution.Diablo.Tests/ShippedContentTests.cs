@@ -988,6 +988,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ShippedStaffOfLazarusDeclaresNoSalePolicy()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "items.tsv").ToCanonicalTsv(),
+            stableIds: stableIds);
+
+        var staff = items.GetRequired(stableIds.Resolve("item", "lazarus_staff"));
+        Assert.Contains("NoSale", staff.GenerationTags, StringComparer.OrdinalIgnoreCase);
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            staff.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            staff.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void ShippedWorldObjectsUseStableObjectSymbols()
     {
         var repositoryRoot = FindRepositoryRoot();

@@ -2520,6 +2520,47 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void NormalizedNoSaleTagOverridesLegacyItemIndexFallback()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            34,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            NativeItemIndex = 33,
+            GenerationTags = new HashSet<string>(["Misc", "NoSale"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = 34,
+            ItemIndex = 999,
+            ItemType = 0,
+            ItemClass = 0,
+        };
+
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void CloseStoreClearsActiveStoreAndIsIdempotent()
     {
         var processor = new DiabloStoreCommandProcessor(CreateCatalog());

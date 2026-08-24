@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
   behavior.
 - Close the connected Storyteller service on both Cain's explicit leave option
   and the native Escape path.
+- Externalize the shipped Staff of Lazarus vendor-sale exception through the
+  normalized `NoSale` item tag while retaining the legacy index fallback.
 - Constrain authoritative Repair and Recharge admission to declared Smith and
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store

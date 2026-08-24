@@ -25,6 +25,11 @@ Connected native Cain identification now opens and closes that authoritative
 Storyteller session around the legacy identification menu; offline Cain remains
 unchanged.
 
+The shipped Staff of Lazarus vendor-sale exception is now declared by the
+normalized `NoSale` item tag. Authoritative Smith and Witch admission resolves
+that content metadata first; the native item-index check remains only as a
+compatibility fallback for older direct catalogs without normalized items.
+
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain
 unchanged.

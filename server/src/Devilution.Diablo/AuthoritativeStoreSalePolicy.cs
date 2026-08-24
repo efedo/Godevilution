@@ -7,7 +7,9 @@ public static class AuthoritativeStoreSalePolicy
     private const int OilLast = 41;
     private const int FirstQuestItemIndex = 6;
     private const int LastQuestItemIndex = 22;
-    private const int LazarusStaffItemIndex = 33;
+    // Retained only for legacy direct callers that do not provide an item catalog.
+    // Shipped authoritative content declares the exception through the NoSale tag.
+    private const int LegacyLazarusStaffItemIndex = 33;
 
     public static bool Accepts(
         AuthoritativeStoreRole role,
@@ -36,6 +38,8 @@ public static class AuthoritativeStoreSalePolicy
         AuthoritativeSpellCatalog? spells,
         DiabloGameVariant gameVariant)
     {
+        if (IsNoSale(state, items))
+            return false;
         if (IsOil(state))
             return true;
         if (IsMisc(state, items) || IsGold(state, items) || IsQuest(state, items))
@@ -44,7 +48,7 @@ public static class AuthoritativeStoreSalePolicy
             && (gameVariant != DiabloGameVariant.Hellfire
                 || HasValidSpell(state, spells)))
             return false;
-        return state.ItemIndex != LazarusStaffItemIndex;
+        return state.ItemIndex != LegacyLazarusStaffItemIndex;
     }
 
     private static bool WitchAccepts(
@@ -53,6 +57,8 @@ public static class AuthoritativeStoreSalePolicy
         AuthoritativeSpellCatalog? spells,
         DiabloGameVariant gameVariant)
     {
+        if (IsNoSale(state, items))
+            return false;
         var accepts = IsMisc(state, items);
         if (state.MiscId > OilFirst && state.MiscId < OilLast)
             accepts = false;
@@ -63,10 +69,17 @@ public static class AuthoritativeStoreSalePolicy
         if (IsQuest(state, items)
             || state.ItemIndex is >= FirstQuestItemIndex and <= LastQuestItemIndex)
             accepts = false;
-        if (state.ItemIndex == LazarusStaffItemIndex)
+        if (state.ItemIndex == LegacyLazarusStaffItemIndex)
             accepts = false;
         return accepts;
     }
+
+    private static bool IsNoSale(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items)
+        => items is not null
+            && items.TryGetByState(state, out var definition)
+            && definition.GenerationTags.Contains("NoSale", StringComparer.OrdinalIgnoreCase);
 
     private static bool IsMisc(AuthoritativeItemState state, AuthoritativeItemCatalog? items)
     {
