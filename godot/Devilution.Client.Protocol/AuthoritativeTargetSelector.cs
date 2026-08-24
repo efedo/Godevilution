@@ -68,22 +68,26 @@ public static class AuthoritativeTargetSelector
         if (localPlayer is null)
             return null;
 
-        var worldObject = snapshot.Objects.FirstOrDefault(candidate =>
-            candidate.EntityId != 0
-            && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
-            && !candidate.Activated
-            && !candidate.Destroyed
-            && AuthoritativeObjectSelector.HasAuthoritativeInteraction(candidate)
-            && candidate.PositionX == targetX
-            && candidate.PositionY == targetY);
+        var worldObject = snapshot.Objects
+            .Where(candidate => candidate.EntityId != 0
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && !candidate.Activated
+                && !candidate.Destroyed
+                && AuthoritativeObjectSelector.HasAuthoritativeInteraction(candidate)
+                && candidate.PositionX == targetX
+                && candidate.PositionY == targetY)
+            .OrderBy(candidate => candidate.EntityId)
+            .FirstOrDefault();
         if (worldObject is not null)
             return worldObject.EntityId;
 
-        var item = snapshot.WorldItems.FirstOrDefault(candidate =>
-            candidate.EntityId != 0
-            && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
-            && candidate.PositionX == targetX
-            && candidate.PositionY == targetY);
+        var item = snapshot.WorldItems
+            .Where(candidate => candidate.EntityId != 0
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && candidate.PositionX == targetX
+                && candidate.PositionY == targetY)
+            .OrderBy(candidate => candidate.EntityId)
+            .FirstOrDefault();
         if (item is not null)
             return item.EntityId;
 

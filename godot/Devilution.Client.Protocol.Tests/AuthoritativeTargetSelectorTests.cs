@@ -379,6 +379,27 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void OrdersOverlappingWorldTargetsByEntityIdentity()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2 },
+            },
+            WorldItems = {
+                new WorldItemSnapshot { EntityId = 30, LevelId = 2, PositionX = 4, PositionY = 4 },
+                new WorldItemSnapshot { EntityId = 29, LevelId = 2, PositionX = 4, PositionY = 4 },
+            },
+            Objects = {
+                new ObjectSnapshot { EntityId = 20, LevelId = 2, PositionX = 5, PositionY = 5, EffectKind = 1 },
+                new ObjectSnapshot { EntityId = 19, LevelId = 2, PositionX = 5, PositionY = 5, EffectKind = 1 },
+            },
+        };
+
+        Assert.Equal(29U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 4, 4));
+        Assert.Equal(19U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 5, 5));
+    }
+
+    [Fact]
     public void SelectsRemotePlayersAtTheirReservedWalkDestination()
     {
         var snapshot = new Snapshot {

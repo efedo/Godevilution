@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Canonicalized Godot world-item and authored-object target selection, plus
+  clicked item and portal hit-testing, by entity ID so client interaction
+  resolution matches the native projection order.
 - Canonicalized native monster, world-item, and object projection ordering by
   entity ID so overlapping interaction lookups match Godot's deterministic
   selector order, with focused native regression coverage.

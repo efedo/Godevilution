@@ -116,26 +116,30 @@ public partial class WorldPresentation : Node2D
     public uint? WorldItemEntityIdAt(Vector2I target)
     {
         var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
-        return snapshot?.WorldItems.FirstOrDefault(item =>
-            currentLevelId.HasValue
-            && AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevelId.Value)
-            && item.PositionX == target.X
-            && item.PositionY == target.Y)?.EntityId;
+        return snapshot?.WorldItems
+            .Where(item => currentLevelId.HasValue
+                && AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevelId.Value)
+                && item.PositionX == target.X
+                && item.PositionY == target.Y)
+            .OrderBy(item => item.EntityId)
+            .FirstOrDefault()?.EntityId;
     }
 
     /** Returns an authoritative portal occupying a visible clicked tile. */
     public uint? PortalEntityIdAt(Vector2I target)
     {
         var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
-        return snapshot?.Portals.FirstOrDefault(portal =>
-            currentLevelId.HasValue
-            && ((portal.SourceLevelId == currentLevelId.Value
-                    && portal.SourcePositionX == target.X
-                    && portal.SourcePositionY == target.Y)
-                || (portal.Bidirectional
-                    && portal.DestinationLevelId == currentLevelId.Value
-                    && portal.DestinationPositionX == target.X
-                    && portal.DestinationPositionY == target.Y)))?.PortalId;
+        return snapshot?.Portals
+            .Where(portal => currentLevelId.HasValue
+                && ((portal.SourceLevelId == currentLevelId.Value
+                        && portal.SourcePositionX == target.X
+                        && portal.SourcePositionY == target.Y)
+                    || (portal.Bidirectional
+                        && portal.DestinationLevelId == currentLevelId.Value
+                        && portal.DestinationPositionX == target.X
+                        && portal.DestinationPositionY == target.Y)))
+            .OrderBy(portal => portal.PortalId)
+            .FirstOrDefault()?.PortalId;
     }
 
     /** Returns an authoritative world object occupying a visible clicked tile. */
