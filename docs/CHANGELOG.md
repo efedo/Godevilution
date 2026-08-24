@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   metadata while retaining later Banner mutations as a compatibility seam.
 - Gate the authored Snotspill placement on the active Ogden's Sign quest so
   single-player quest-pool exclusions preserve native encounter availability.
+- Allow native-DUN fragment object placements to follow generated unique
+  encounters after materialization, while retaining fixed-anchor compatibility.
 - Externalize a validated Storyteller service-only store identity for paid Cain
   identification, preserving the previous additive content schema while the
   connected native menu is routed through the authoritative session.

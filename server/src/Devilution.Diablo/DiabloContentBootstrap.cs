@@ -661,7 +661,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (world is null || objects is null || nativeDunFragments is null)
                 throw new InvalidDataException(
                     "Native DUN fragment object placements require a world, fragments, and authored objects.");
-            nativeDunFragmentObjects.Apply(world, objects, nativeDunFragments);
+            nativeDunFragmentObjects
+                .Filter(placement => placement.AnchorEntityId != 0)
+                .Apply(world, objects, nativeDunFragments);
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         }
         if (objectDefinitions.Length > 0)
@@ -1042,6 +1044,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             combatTargets = (combatTargets ?? [])
                 .Concat(authoredTargets)
                 .ToArray();
+        }
+        if (nativeDunFragmentObjects is not null
+            && nativeDunFragmentObjects.Placements.Any(placement => placement.AnchorEntityId == 0)) {
+            if (world is null || objects is null || nativeDunFragments is null)
+                throw new InvalidDataException(
+                    "Native DUN fragment object placements require a world, fragments, and authored objects.");
+            nativeDunFragmentObjects
+                .Filter(placement => placement.AnchorEntityId == 0)
+                .Apply(world, objects, nativeDunFragments, combatTargets);
+            AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         }
         if (nativeDunFragments is not null) {
             if (world is null || objects is null)

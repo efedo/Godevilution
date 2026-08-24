@@ -745,7 +745,9 @@ scaled hit points), not only the client's difficulty label.
 - Hellfire Na-Krul tome objects now use the validated
   `native_dun_fragment_objects.tsv` contract to follow the encounter anchor;
   their behavior remains authored once in `objects.tsv` while placement is
-  externalized with the room fragment.
+  externalized with the room fragment. The same contract now accepts a unique
+  encounter identity, so generated set-piece objects can be positioned after
+  encounter materialization without client-owned coordinates.
 
 - Hellfire Na-Krul tome slots now use the validated
   `quest_sequence_variants.tsv` contract. Activation selects one of the six

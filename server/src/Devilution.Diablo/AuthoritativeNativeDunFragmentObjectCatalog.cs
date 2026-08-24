@@ -11,19 +11,27 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
     int OffsetX,
     int OffsetY)
 {
+    /** Optional generated unique encounter used as the placement anchor. */
+    public string AnchorUniqueIdentity { get; init; } = string.Empty;
+
     public AuthoritativeNativeDunFragmentObjectPlacement Validate()
     {
+        var anchorUniqueIdentity = AnchorUniqueIdentity.Trim();
         if (PlacementId == 0
             || FragmentId == 0
             || EntityId == 0
-            || AnchorEntityId == 0
+            || AnchorEntityId != 0 && anchorUniqueIdentity.Length != 0
+            || AnchorEntityId == 0 && anchorUniqueIdentity.Length == 0
             || EntityId == AnchorEntityId
             || OffsetX is < -80 or > 80
-            || OffsetY is < -80 or > 80) {
+            || OffsetY is < -80 or > 80
+            || anchorUniqueIdentity.Length > 128) {
             throw new InvalidDataException(
                 $"Native DUN fragment object placement {PlacementId} contains invalid identity or offset metadata.");
         }
-        return this;
+        return anchorUniqueIdentity == AnchorUniqueIdentity
+            ? this
+            : this with { AnchorUniqueIdentity = anchorUniqueIdentity };
     }
 }
 
@@ -52,11 +60,20 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
     public IReadOnlyList<AuthoritativeNativeDunFragmentObjectPlacement> Placements
         => placements;
 
+    /** Returns placements admitted by the active anchor lifecycle. */
+    public AuthoritativeNativeDunFragmentObjectCatalog Filter(
+        Func<AuthoritativeNativeDunFragmentObjectPlacement, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return new AuthoritativeNativeDunFragmentObjectCatalog(placements.Where(predicate));
+    }
+
     /** Applies placements using the anchors' original positions atomically. */
     public void Apply(
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject> objects,
-        AuthoritativeNativeDunFragmentCatalog fragments)
+        AuthoritativeNativeDunFragmentCatalog fragments,
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(objects);
@@ -66,6 +83,10 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
         var anchorPositions = objectsById.ToDictionary(
             pair => pair.Key,
             pair => (pair.Value.LevelId, pair.Value.PositionX, pair.Value.PositionY));
+        var targetsByUniqueIdentity = (combatTargets ?? [])
+            .Where(target => target.IsUnique)
+            .GroupBy(target => target.UniqueIdentity, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
         var plannedPositions = new Dictionary<uint, (int X, int Y)>();
         foreach (var placement in placements) {
             if (!fragmentsById.TryGetValue(placement.FragmentId, out var fragment))
@@ -74,14 +95,33 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
             if (!objectsById.TryGetValue(placement.EntityId, out var target))
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} references missing object {placement.EntityId}.");
-            if (!anchorPositions.TryGetValue(placement.AnchorEntityId, out var anchor))
-                throw new InvalidDataException(
-                    $"Native DUN fragment object placement {placement.PlacementId} references missing anchor {placement.AnchorEntityId}.");
+            (uint LevelId, int PositionX, int PositionY) anchor;
+            if (placement.AnchorEntityId != 0) {
+                if (!anchorPositions.TryGetValue(placement.AnchorEntityId, out anchor))
+                    throw new InvalidDataException(
+                        $"Native DUN fragment object placement {placement.PlacementId} references missing anchor {placement.AnchorEntityId}.");
+            } else {
+                if (!targetsByUniqueIdentity.TryGetValue(
+                        placement.AnchorUniqueIdentity,
+                        out var matchingTargets)
+                    || matchingTargets.Length != 1) {
+                    throw new InvalidDataException(
+                        $"Native DUN fragment object placement {placement.PlacementId} unique anchor "
+                        + $"'{placement.AnchorUniqueIdentity}' must match exactly one encounter; found "
+                        + $"{(matchingTargets?.Length ?? 0)}.");
+                }
+                var uniqueTarget = matchingTargets[0];
+                anchor = (uniqueTarget.LevelId, uniqueTarget.PositionX, uniqueTarget.PositionY);
+            }
             if (target.LevelId != anchor.LevelId)
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} targets level {target.LevelId} but its anchor is on level {anchor.LevelId}.");
             if (fragment.LevelId != target.LevelId
-                || fragment.AnchorEntityId != placement.AnchorEntityId) {
+                || fragment.AnchorEntityId != placement.AnchorEntityId
+                || !string.Equals(
+                    fragment.AnchorUniqueIdentity,
+                    placement.AnchorUniqueIdentity,
+                    StringComparison.Ordinal)) {
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} does not match its fragment anchor or level.");
             }
@@ -111,6 +151,11 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 row.RequiredUInt32("entity_id"),
                 row.RequiredUInt32("anchor_entity_id"),
                 row.RequiredInt32("offset_x"),
-                row.RequiredInt32("offset_y"))));
+                row.RequiredInt32("offset_y")) {
+                AnchorUniqueIdentity = row.TryGet("anchor_unique_identity", out var identity)
+                    && !string.Equals(identity, "none", StringComparison.OrdinalIgnoreCase)
+                    ? identity
+                    : string.Empty,
+            }));
     }
 }
