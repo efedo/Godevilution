@@ -370,6 +370,8 @@ public sealed class DiabloWorldState
                              baseLevel.Height,
                              originX,
                              originY)) {
+                    if (transparency.Length == 0 && mutation.CreateTransparencyLayer)
+                        transparency = new ushort[checked(baseLevel.Width * baseLevel.Height)];
                     if (transparency.Length == 0)
                         throw new InvalidDataException(
                             $"World mutation {mutation.MutationId} requires a native transparency layer.");
@@ -417,6 +419,16 @@ public sealed class DiabloWorldState
                         }
                     }
                 }
+                var megaTileCells = mutation.GetMegaTileCells(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY);
+                if (megaTileCells.Count > 0 && megaTileLayer.Length == 0)
+                    megaTileLayer = new ushort[checked(((baseLevel.Width + 1) / 2)
+                        * ((baseLevel.Height + 1) / 2))];
+                foreach (var (cell, tileId) in megaTileCells)
+                    megaTileLayer[cell] = tileId;
             }
             projectedLevels.Add(
                 baseLevel.LevelId,

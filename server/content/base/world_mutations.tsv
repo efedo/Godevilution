@@ -1,1 +1,2 @@
-mutation_id	level_id	anchor_entity_id	anchor_unique_identity	blocked_cells_add	blocked_cells_remove	missile_blocked_cells_add	missile_blocked_cells_remove	geometry_rect_add	geometry_rect_remove	transparency_rects	object_layer_rects	piece_layer_rects
+mutation_id	level_id	anchor_entity_id	anchor_unique_identity	blocked_cells_add	blocked_cells_remove	missile_blocked_cells_add	missile_blocked_cells_remove	geometry_rect_add	geometry_rect_remove	transparency_rects	object_layer_rects	piece_layer_rects	anchor_mega_offset_x	anchor_mega_offset_y	mega_tile_assignments	create_transparency_layer
+9300	4	0	Snotspill	none	none	none	none	none	none	-11,-9,16,8,9	none	none	-11	-9	3,4,136;3,5,135;4,5,137;5,5,135;6,5,135;3,6,134	true

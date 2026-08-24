@@ -2,6 +2,12 @@
 
 Status date: 2026-08-24
 
+Authoritative world mutations now support anchored native mega-tile
+assignments and explicit creation of missing native transparency layers. The
+base Snotspill Banner hand-in stage uses that contract for its final
+server-owned mega-tile and transparency transition; the earlier opening
+transition and native encounter-state presentation remain compatibility seams.
+
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and
 rejects Wirt and Healer sales before generic pricing, while unknown legacy
@@ -244,9 +250,15 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.418.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.417.0` schema
+The Diablo content schema is now `1.419.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.418.0` schema
 for existing manifest-based packs.
+
+Schema 1.419 adds optional anchored native mega-tile assignments and explicit
+transparency-layer creation to `world_mutations.tsv`. The assignments are
+validated against the targeted level's mega dimensions and projected through
+the authoritative level geometry; the transparency option preserves authored
+set-piece transitions on metadata-only base levels.
 
 Schema 1.418 adds optional `storyteller_store_id` and
 `storyteller_store_symbol` columns to `world_rules.tsv`. The service-only
@@ -471,7 +483,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.418.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.419.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.
@@ -784,8 +796,9 @@ scaled hit points), not only the client's difficulty label.
 
 - The initial Snotspill Banner room is now externalized as a unique-anchored
   `banner1.dun` fragment plus an explicit Hell placement. Later Banner quest
-  state changes and resynchronization remain native until their authored
-  mutation rows are available.
+  opening state changes and resynchronization remain native, while the final
+  item-gated mega-tile/transparency transition is now an authored mutation
+  follow-up.
 
 - Native server-backed input, polling, portal, store, quest, and ability
   requests now timestamp the compatibility boundary with the shared
@@ -1508,8 +1521,8 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.355 extends `quest_dialogue_stages.tsv` with validated item gates
   and optional quest completion. The shared Ogden's Sign/Snotspill quest now
   routes Snotspill's banner dialogue and Tavern Sign hand-in through
-  `TalkToQuestRequested`; the Banner set-piece map mutation remains native
-  until authored map-state operations are available.
+  `TalkToQuestRequested`; its final Banner mega-tile/transparency transition
+  now follows the accepted hand-in through `world_mutations.tsv`.
 
 - Schema 1.356 moves Warlord's two authored dialogue transitions into the
   staged dialogue catalog. Messages and monotonic `_qvar1` transitions through

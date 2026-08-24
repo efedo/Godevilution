@@ -170,6 +170,23 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ExplicitTransparencyLayerCreationProjectsWithoutNativeLayer()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\ttransparency_rects\tcreate_transparency_layer\n"
+                + "7\t1\t1,1,1,1,9\ttrue\n");
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 2, 2));
+        catalog.ValidateWorld(geometry);
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal(new ushort[] { 0, 0, 0, 9 }, level.NativeTransparency);
+    }
+
+    [Fact]
     public void LoadsAndProjectsNativeObjectLayerRectangles()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
@@ -225,6 +242,95 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.Equal((ushort)299, level.NativePieceLayer[5]);
         Assert.Equal((ushort)299, level.NativePieceLayer[6]);
         Assert.Equal((ushort)0, level.NativePieceLayer[4]);
+    }
+
+    [Fact]
+    public void LoadsAndProjectsAnchoredMegaTileAssignments()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_unique_identity\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\n"
+                + "7\t1\tSnotspill\t2\t2\t0,0,136;1,1,135\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal((2, 2), (mutation.AnchorMegaOffsetX, mutation.AnchorMegaOffsetY));
+        Assert.Equal(
+            [(2 * 4 + 2, (ushort)136), (3 * 4 + 3, (ushort)135)],
+            mutation.GetMegaTileCells(8, 8, 2, 2));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            8,
+            8,
+            nativeMegaTileLayer: Enumerable.Repeat<ushort>(0, 16)));
+        var target = new AuthoritativeCombatTarget(
+            20,
+            2,
+            2,
+            100,
+            levelId: 1,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var world = new DiabloWorldState(
+            geometry,
+            combatTargets: [target],
+            worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)136, level.NativeMegaTileLayer[2 * 4 + 2]);
+        Assert.Equal((ushort)135, level.NativeMegaTileLayer[3 * 4 + 3]);
+    }
+
+    [Fact]
+    public void RejectsDuplicateOrUnalignedMegaTileAssignments()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            8,
+            8,
+            nativeMegaTileLayer: Enumerable.Repeat<ushort>(0, 16)));
+        var duplicate = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                megaTileAssignments: [
+                    new AuthoritativeWorldMutationMegaTileAssignment(0, 0, 136),
+                    new AuthoritativeWorldMutationMegaTileAssignment(0, 0, 135),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => duplicate.ValidateWorld(geometry));
+
+        var target = new AuthoritativeCombatTarget(
+            20,
+            2,
+            2,
+            100,
+            levelId: 1,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var unaligned = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                8,
+                1,
+                anchorUniqueIdentity: "Snotspill",
+                anchorMegaOffsetX: 1,
+                megaTileAssignments: [
+                    new AuthoritativeWorldMutationMegaTileAssignment(0, 0, 136),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => unaligned.ValidateWorld(geometry, combatTargets: [target]));
+
+        var outOfBounds = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                9,
+                1,
+                megaTileAssignments: [
+                    new AuthoritativeWorldMutationMegaTileAssignment(4, 0, 136),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => outOfBounds.ValidateWorld(geometry));
     }
 
     [Fact]

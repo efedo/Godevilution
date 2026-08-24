@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.418.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.419.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -62,6 +62,49 @@ public sealed class ShippedContentTests
         Assert.Equal(
             2180,
             pack.Assets.Single(asset => asset.SourcePath == fragment.AssetPath).Contents.Length);
+    }
+
+    [Fact]
+    public void BaseContentPackShipsTheSnotspillBannerMapTransition()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var mutationTable = pack.Tables.Single(table => table.SourcePath == "world_mutations.tsv");
+        var mutation = Assert.Single(
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                mutationTable.SourcePath,
+                mutationTable.ToCanonicalTsv()).Definitions,
+            definition => definition.MutationId == 9300);
+
+        Assert.Equal(("Snotspill", -11, -9), (
+            mutation.AnchorUniqueIdentity,
+            mutation.AnchorMegaOffsetX,
+            mutation.AnchorMegaOffsetY));
+        Assert.True(mutation.CreateTransparencyLayer);
+        Assert.Equal(
+            ( -11, -9, 16, 8, (ushort)9),
+            mutation.TransparencyRectangles.Select(rectangle => (
+                rectangle.X,
+                rectangle.Y,
+                rectangle.Width,
+                rectangle.Height,
+                rectangle.Value)).Single());
+        Assert.Equal(
+            [(3, 4, (ushort)136), (3, 5, (ushort)135), (3, 6, (ushort)134),
+                (4, 5, (ushort)137), (5, 5, (ushort)135), (6, 5, (ushort)135)],
+            mutation.MegaTileAssignments.Select(assignment => (
+                assignment.X,
+                assignment.Y,
+                assignment.TileId)));
+
+        var stageTable = pack.Tables.Single(table => table.SourcePath == "quest_dialogue_stages.tsv");
+        var stage = Assert.Single(
+            AuthoritativeQuestDialogueStageCatalog.LoadTsv(
+                stageTable.SourcePath,
+                stageTable.ToCanonicalTsv()).Definitions,
+            definition => definition.QuestId == 3008 && definition.RequiredVariable1 == 2);
+        Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.WorldMutation, stage.FollowUpKind);
+        Assert.Equal(9300U, stage.FollowUpAmount);
     }
 
     [Fact]
@@ -612,8 +655,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -679,7 +722,9 @@ public sealed class ShippedContentTests
         Assert.Equal(active.LevelId, mutationObject.LevelId);
         Assert.Equal(
             AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true),
-            activation.Simulation.WorldState.WorldMutations!.Definitions.Single().LevelId);
+            activation.Simulation.WorldState.WorldMutations!.Definitions
+                .Single(mutation => mutation.MutationId == 9100)
+                .LevelId);
     }
 
     [Fact]
@@ -2179,7 +2224,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.418.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.419.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

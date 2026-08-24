@@ -1573,6 +1573,87 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ItemGatedQuestDialogueAppliesItsWorldMutationFollowUp()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2136, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3008,
+            4,
+            1,
+            variable1: 2,
+            completionUniqueIdentity: "Snotspill");
+        var target = new AuthoritativeCombatTarget(
+            20,
+            25,
+            25,
+            100,
+            levelId: 4,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                9300,
+                4,
+                anchorUniqueIdentity: "Snotspill",
+                megaTileAssignments: [
+                    new AuthoritativeWorldMutationMegaTileAssignment(0, 0, 136),
+                ],
+                anchorMegaOffsetX: -1,
+                anchorMegaOffsetY: -1,
+                transparencyRectangles: [
+                    new AuthoritativeWorldMutationTransparencyRectangle(-1, -1, 1, 1, 9),
+                ],
+                createTransparencyLayer: true),
+        ]);
+        var worldGeometry = new AuthoritativeWorld();
+        worldGeometry.AddLevel(new AuthoritativeLevel(
+            4,
+            40,
+            40,
+            nativeMegaTileLayer: Enumerable.Repeat<ushort>(0, 400)));
+        var world = new DiabloWorldState(
+            worldGeometry,
+            combatTargets: [target],
+            quests: [quest],
+            worldMutations: mutations);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questDialogueStages: new AuthoritativeQuestDialogueStageCatalog([
+                new(
+                    3008,
+                    2,
+                    -1,
+                    23,
+                    3,
+                    0,
+                    2136,
+                    true,
+                    true,
+                    FollowUpKind: AuthoritativeQuestDialogueFollowUpKind.WorldMutation,
+                    FollowUpAmount: 9300),
+            ]));
+        var player = CreatePlayer(positionX: 24, positionY: 25, levelId: 4, entityId: 7);
+        var sign = items.Generate(2136, 42);
+        player.Inventory.Add(new OwnedStoreItem(0, 0, sign.CreateInfo, 0, 0, sign));
+        player.InventoryGrid[0] = 0;
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3008, 20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Contains(9300U, world.ActiveWorldMutationIds);
+        var projected = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)136, projected.NativeMegaTileLayer[12 * 20 + 12]);
+        Assert.Equal((ushort)9, projected.NativeTransparency[24 * 40 + 24]);
+    }
+
+    [Fact]
     public void ContentOwnedQuestTownerStagesShareOneQuestAndConsumeBeltItems()
     {
         var items = new AuthoritativeItemCatalog([

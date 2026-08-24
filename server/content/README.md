@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.418.0` schema in
+It declares its identity and `devilution.diablo@1.419.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.417.0` schema so existing manifest-based packs remain
+previous additive `1.418.0` schema so existing manifest-based packs remain
 loadable. The standalone host falls back to legacy command-line identity only
 for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1607,10 +1607,11 @@ Schema 1.355 adds optional `required_item_symbol`, `consume_item`, and
 `complete_quest` columns to `quest_dialogue_stages.tsv`. Item-gated stages
 validate and consume the stable item identity before applying their transition;
 completion stages close the quest after emitting the authored message. The
-shared Ogden's Sign/Snotspill quest uses this for the Tavern Sign hand-in; its
+shared Ogden's Sign/Snotspill quest uses this for the Tavern Sign hand-in.
 The initial Banner room placement is now content-owned through a unique-anchored
-`banner1.dun` fragment and explicit Snotspill placement; later Banner state
-mutations remain a native fallback.
+`banner1.dun` fragment and explicit Snotspill placement; the final item-gated
+Banner mega-tile/transparency transition is now a server-owned dialogue
+follow-up, while the opening state mutation remains a native fallback.
 
 Schema 1.356 adds the authored Warlord dialogue stages. Its two message-110
 rows advance `_qvar1` from `0` to `2` and from `2` to `3`, preserving the
@@ -1757,8 +1758,8 @@ Schema 1.376 adds optional `transparency_rects` values to
 `world_mutations.tsv`. Each semicolon-separated `x,y,width,height,value` entry
 assigns a native transparency value after the target level's transparency layer
 is validated. Overlapping assignments and targets without a native layer are
-rejected; active values are projected through the existing level-geometry
-snapshot.
+rejected unless `create_transparency_layer=true`; active values are projected
+through the existing level-geometry snapshot.
 
 Schema 1.377 adds optional `object_layer_rects` values to
 `world_mutations.tsv`. Each semicolon-separated `x,y,width,height,value` entry
@@ -1776,6 +1777,17 @@ preserves native `ObjSetMicro` mutations such as the Hellfire Na-Krul room
 opening. When a fragment supplies external `.til`/`.sol` definitions, the
 authoritative level retains the d-piece collision provenance so later piece
 mutations update only the native-owned movement and missile cells.
+
+Schema 1.419 adds optional `anchor_mega_offset_x`,
+`anchor_mega_offset_y`, and `mega_tile_assignments` values to
+`world_mutations.tsv`. Assignments are semicolon-separated `x,y,value` native
+mega-tile values in local mega coordinates. When an object or unique anchor is
+present, the two offsets are world-cell offsets that must resolve an even
+mega-tile origin. Duplicate and out-of-bounds assignments are rejected, and
+the resulting layer is projected through authoritative level geometry. The
+optional `create_transparency_layer` flag permits a native transparency layer
+to be materialized when a mutation needs one but the base level did not carry
+that optional presentation layer.
 
 Schema 1.416 adds optional `tile_asset_path` and `sol_asset_path` values to
 `native_dun_levels.tsv`. Ordinary native DUN levels can now supply a validated
@@ -2751,7 +2763,7 @@ the complete target header even when they upsert only one row.
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, optional initial launch travel advance and projectile count, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission, damage-type, and spell-identity tuning, optional ranged-avoidance distance/chance/movement-goal tuning, optional ranged-avoidance ordinary movement-band and divisor tuning, optional post-melee missile identity, optional ranged-retreat distance/chance tuning, optional Snake adjacent-attack and distance-delay admission tuning, optional monster-Inferno admission tuning, and optional native random-damage bounds; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence`, `QuestItemCompletion`, `WorldMutation`, `GrantSpellLevel`, `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` interactions), linked-quest progress amounts, optional quest activation/completion or `_qvar1`/`_qvar2` transition kind, amount, and required-variable gates, optional normal/unique item rewards with stable ID, item level, and relative offsets, optional `projectile_target_offset_x`/`projectile_target_offset_y` target displacement, optional `projectile_source` (`Object` or `ActivatingPlayer`, defaulting to `Object`), optional quest-sequence/world-mutation follow-up mutation/projectile/native-monster metadata and relative offsets, optional second `quest_sequence_follow_up_world_mutation_id` applied after the primary follow-up, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; spell effects store the validated spell ID in `effect_amount` with optional `effect_spell_symbol` cross-checking; native-monster follow-ups store a validated monster ID or `quest_sequence_follow_up_monster_symbol`; other follow-ups use their own amount and optional spell symbol. Projectile-producing effects currently accept only Phasing and Guardian controller spell behaviors; `ActivatingPlayer` is currently valid only for Phasing. |
 | `objects.tsv` | `entity_id` | Optional `template_only` rows are validated and available for set-level/native-DUN behavior cloning but are excluded from ordinary world placement; rows omitted from the column or marked `0` retain the full world-object behavior contract. |
-| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter, allowing generated quest targets to provide the mutation origin. The two anchor columns are mutually exclusive. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer; optional `piece_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native d-piece layer. |
+| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter, allowing generated quest targets to provide the mutation origin. The two anchor columns are mutually exclusive. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer, with `create_transparency_layer` allowing an absent layer to be materialized; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer; optional `piece_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native d-piece layer; optional `anchor_mega_offset_x`/`anchor_mega_offset_y` and `mega_tile_assignments` author anchored native mega-tile values for exact set-piece transitions. |
 | `set_level_objects.tsv` | `placement_id`, `set_level_id`, `object_id` | Validated native fixed-object placements and template footprints for set-level maps, with optional `template_entity_id` linking an authored `objects.tsv` behavior template. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; positions and template rectangles are bounded, duplicate placements are rejected, and template object IDs must match. |
 | `native_dun_objects.tsv` | `native_object_id`, one level target | Optional explicit mapping from native DUN object-layer values to authoritative object identities for either a set-level variant (`set_level_id`/`set_level_symbol` plus `active_map`) or an ordinary runtime level (`level_id`/`level_symbol`). Optional `object_symbol` cross-checks the authored object identity. Duplicate mappings, ambiguous targets, unknown identities, missing native layers, and mismatched templates reject activation; unmapped values remain inert. |
 | `native_dun_levels.tsv` | `level_id`, `asset_path` | Optional ordinary-level native `.dun` object-layer assets. Stable `level_symbol` values cross-check the active level catalog; missing assets, unknown levels, invalid paths, malformed DUN data, and dimension mismatches reject activation. Optional `tile_asset_path` and `sol_asset_path` form a required pair of relative `.til`/`.sol` assets; when present, their effective d-piece layer and validated collision properties replace the level's prior movement/missile geometry and remain available for later d-piece mutation recomputation. |
@@ -2762,7 +2774,7 @@ the complete target header even when they upsert only one row.
 | Native binary assets (`.dun`, `.til`, `.sol`) | relative asset path | Immutable native map, mega-tile, and d-piece property bytes carried beside TSV tables. Asset bytes are included in the content manifest identity; identical inherited copies are accepted and conflicting copies reject composition. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional first/subsequent dialogue and completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional route-entry `_qvar1` marker in `route_activation_variable1`, optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, content-owned towner turn-ins with optional item-consuming `turn_in_activation_only` rows and `turn_in_activation_variable1` markers, active staged item turn-ins gated by `turn_in_required_variable1` and advancing `turn_in_variable1` with `turn_in_progress_only`, one-shot `turn_in_on_completion` stages with optional required/marker `_qvar1` fields, non-consuming item-gated `turn_in_dialogue_only` stages optionally suppressed after `turn_in_blocked_visited_level`, and alternate-item interactions, and unique-monster dialogue definitions with optional item hand-ins, relative unique/normal rewards, and one-time `dialogue_reward_on_activation` rewards. |
 | `quest_towner_interactions.tsv` | `interaction_id` | Repeatable content-owned quest/towner stages keyed by quest and towner identity, level/adjacency position, optional item identity, and interaction kind (`Activate`, `Advance`, `Complete`, or `Dialogue`); optional `_qvar1`/`_qvar2` gates and authored markers/messages reproduce multi-stage native conversations while preserving inventory/belt consumption rules. Itemless activation/dialogue stages are supported, activation stages may use variable gates on already-active quests, `allow_completed` explicitly permits a post-completion dialogue stage, `required_visited_level1`/`required_visited_level2` provide an OR-gate over server-owned native `_pLvlVisited` state, and `require_unlogged` preserves native branches that only surface before the quest is logged. |
-| `quest_dialogue_stages.tsv` | `quest_id`, `required_variable1`, `required_variable2` | Server-owned user-visible unique-monster dialogue stages. Exact `_qvar2` gates take precedence over `-1` wildcards; each row emits its authored message and advances monotonic `_qvar1`/`_qvar2` values. Optional `next_message_id` preserves an authored intermediate message identity after the transition; omitted values resolve the next stage's message as before. Optional `required_item_symbol` gates a stage on a stable inventory item; `consume_item` removes it atomically, and `complete_quest` closes the quest after the transition. Optional `reward_kind=RandomUniqueMonsterDrop` generates one deterministic native-quality random drop at the authored relative offset. Optional `follow_up_kind=WorldMutation` with `follow_up_amount` applies one validated world-cell overlay after the accepted transition. Base Gharbad, Ogden's Sign/Snotspill, and Warlord use the staged contract. Staged quests require a unique identity and cannot also declare legacy unique-dialogue hand-ins or rewards. |
+| `quest_dialogue_stages.tsv` | `quest_id`, `required_variable1`, `required_variable2` | Server-owned user-visible unique-monster dialogue stages. Exact `_qvar2` gates take precedence over `-1` wildcards; each row emits its authored message and advances monotonic `_qvar1`/`_qvar2` values. Optional `next_message_id` preserves an authored intermediate message identity after the transition; omitted values resolve the next stage's message as before. Optional `required_item_symbol` gates a stage on a stable inventory item; `consume_item` removes it atomically, and `complete_quest` closes the quest after the transition. Optional `reward_kind=RandomUniqueMonsterDrop` generates one deterministic native-quality random drop at the authored relative offset. Optional `follow_up_kind=WorldMutation` with `follow_up_amount` applies one validated world overlay after the accepted transition, including native mega-tile and transparency state. Base Gharbad, Ogden's Sign/Snotspill, and Warlord use the staged contract. Staged quests require a unique identity and cannot also declare legacy unique-dialogue hand-ins or rewards. |
 | `dialogue_messages.tsv` | `message_id`, `message_symbol`, `text` | Validated server-owned text for authored dialogue events. Literal `\\n` sequences become line breaks at load; the protocol carries the resulting text additively and falls back to the numeric identity when the table is absent. |
 | `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol`, `completion_activate_quest_symbol`, `completion_reward_item_symbol`, and completion-stage towner reward symbols resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variables, message, dialogue/completion-transition, follow-on activation, route-entry `_qvar1` marker, completion-trigger, optional completion-reward item, item-consuming activation-only or completing towner turn-in, active staged item turn-ins with required/marker `_qvar1` fields and progress-only advancement, completion-stage `_qvar1` required/marker fields, non-consuming item-gated dialogue-only towner stages with optional `turn_in_blocked_visited_level`, activation markers, one-shot completion-stage and alternate-item towner interactions, and unique-monster dialogue/reward fields, including optional subsequent-dialogue `_qvar1` transitions. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, and single-player availability. |
@@ -2806,7 +2818,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.418.0"
+    "version": "1.419.0"
   },
   "dependencyConstraints": [
     {
@@ -2838,7 +2850,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.418.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.419.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

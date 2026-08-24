@@ -100,6 +100,23 @@ public sealed class AuthoritativeWorldMutationPieceRectangle
     public ushort PieceId { get; }
 }
 
+/** One native mega-tile value assigned by an authored world mutation. */
+public sealed class AuthoritativeWorldMutationMegaTileAssignment
+{
+    public AuthoritativeWorldMutationMegaTileAssignment(int x, int y, ushort tileId)
+    {
+        X = x;
+        Y = y;
+        TileId = tileId;
+    }
+
+    public int X { get; }
+
+    public int Y { get; }
+
+    public ushort TileId { get; }
+}
+
 /** One deterministic cell overlay applied by an authored world interaction. */
 public sealed class AuthoritativeWorldMutation
 {
@@ -116,7 +133,11 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationObjectRectangle>? objectLayerRectangles = null,
         uint anchorEntityId = 0,
         string anchorUniqueIdentity = "",
-        IEnumerable<AuthoritativeWorldMutationPieceRectangle>? pieceLayerRectangles = null)
+        IEnumerable<AuthoritativeWorldMutationPieceRectangle>? pieceLayerRectangles = null,
+        IEnumerable<AuthoritativeWorldMutationMegaTileAssignment>? megaTileAssignments = null,
+        int anchorMegaOffsetX = 0,
+        int anchorMegaOffsetY = 0,
+        bool createTransparencyLayer = false)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -129,11 +150,24 @@ public sealed class AuthoritativeWorldMutation
                 "A world mutation cannot use both an object and unique-identity anchor.");
         if (AnchorUniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(anchorUniqueIdentity));
+        if (AnchorEntityId == 0 && AnchorUniqueIdentity.Length == 0
+            && (anchorMegaOffsetX != 0 || anchorMegaOffsetY != 0)) {
+            throw new InvalidDataException(
+                "Mega-tile anchor offsets require an object or unique-identity anchor.");
+        }
+        if (anchorMegaOffsetX is < -255 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(anchorMegaOffsetX));
+        if (anchorMegaOffsetY is < -255 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(anchorMegaOffsetY));
+        AnchorMegaOffsetX = anchorMegaOffsetX;
+        AnchorMegaOffsetY = anchorMegaOffsetY;
+        CreateTransparencyLayer = createTransparencyLayer;
         GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
         TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
         ObjectLayerRectangles = NormalizeObjectLayerRectangles(objectLayerRectangles);
         PieceLayerRectangles = NormalizePieceLayerRectangles(pieceLayerRectangles);
+        MegaTileAssignments = NormalizeMegaTileAssignments(megaTileAssignments);
         BlockedCellsAdd = Normalize(blockedCellsAdd);
         BlockedCellsRemove = Normalize(blockedCellsRemove);
         MissileBlockedCellsAdd = Normalize(missileBlockedCellsAdd);
@@ -161,6 +195,14 @@ public sealed class AuthoritativeWorldMutation
     /** Optional server-owned unique encounter identity whose position is the mutation origin. */
     public string AnchorUniqueIdentity { get; }
 
+    /** World-cell offsets used to resolve an anchored mega-tile origin. */
+    public int AnchorMegaOffsetX { get; }
+
+    public int AnchorMegaOffsetY { get; }
+
+    /** Allows a mutation to create the initially absent native transparency layer. */
+    public bool CreateTransparencyLayer { get; }
+
     public IReadOnlyList<int> BlockedCellsAdd { get; }
 
     public IReadOnlyList<int> BlockedCellsRemove { get; }
@@ -183,6 +225,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Native d-piece assignments retained for exact set-piece mutations. */
     public IReadOnlyList<AuthoritativeWorldMutationPieceRectangle> PieceLayerRectangles { get; }
+
+    /** Native mega-tile values assigned at local mega coordinates. */
+    public IReadOnlyList<AuthoritativeWorldMutationMegaTileAssignment> MegaTileAssignments { get; }
 
     public IReadOnlyList<int> GetBlockedCells(
         int levelWidth,
@@ -269,6 +314,38 @@ public sealed class AuthoritativeWorldMutation
                 .Select(cell => (cell, rectangle.PieceId)))
             .ToArray();
 
+    public IReadOnlyList<(int Cell, ushort TileId)> GetMegaTileCells(
+        int levelWidth,
+        int levelHeight,
+        int anchorX = 0,
+        int anchorY = 0)
+    {
+        var megaWidth = checked((levelWidth + 1) / 2);
+        var megaHeight = checked((levelHeight + 1) / 2);
+        var originX = 0;
+        var originY = 0;
+        if (AnchorEntityId != 0 || AnchorUniqueIdentity.Length != 0) {
+            var translatedX = checked(anchorX + AnchorMegaOffsetX);
+            var translatedY = checked(anchorY + AnchorMegaOffsetY);
+            if ((translatedX & 1) != 0 || (translatedY & 1) != 0)
+                throw new InvalidDataException(
+                    $"World mutation {MutationId} resolves an unaligned mega-tile anchor.");
+            originX = translatedX / 2;
+            originY = translatedY / 2;
+        }
+
+        return MegaTileAssignments
+            .Select(assignment => {
+                var x = checked(originX + assignment.X);
+                var y = checked(originY + assignment.Y);
+                if (x < 0 || x >= megaWidth || y < 0 || y >= megaHeight)
+                    throw new InvalidDataException(
+                        $"World mutation {MutationId} contains an out-of-range mega-tile assignment.");
+                return (checked(y * megaWidth + x), assignment.TileId);
+            })
+            .ToArray();
+    }
+
     private static IReadOnlyList<int> Normalize(IEnumerable<int>? cells)
         => (cells ?? [])
             .Distinct()
@@ -319,6 +396,16 @@ public sealed class AuthoritativeWorldMutation
             .ThenBy(rectangle => rectangle.Width)
             .ThenBy(rectangle => rectangle.Height)
             .ThenBy(rectangle => rectangle.PieceId)
+            .ToArray();
+
+    private static IReadOnlyList<AuthoritativeWorldMutationMegaTileAssignment>
+        NormalizeMegaTileAssignments(
+            IEnumerable<AuthoritativeWorldMutationMegaTileAssignment>? assignments)
+        => (assignments ?? [])
+            .Where(assignment => assignment is not null)
+            .OrderBy(assignment => assignment.X)
+            .ThenBy(assignment => assignment.Y)
+            .ThenBy(assignment => assignment.TileId)
             .ToArray();
 
     private static IReadOnlyList<int> MergeCells(
@@ -399,6 +486,7 @@ public sealed class AuthoritativeWorldMutationCatalog
             IReadOnlyList<(int Cell, ushort Value)> transparencyCells;
             IReadOnlyList<(int Cell, ushort ObjectId)> objectLayerCells;
             IReadOnlyList<(int Cell, ushort PieceId)> pieceLayerCells;
+            IReadOnlyList<(int Cell, ushort TileId)> megaTileCells;
             try {
                 blockedAdd = mutation.GetBlockedCells(
                     level.Width,
@@ -435,6 +523,11 @@ public sealed class AuthoritativeWorldMutationCatalog
                     level.Height,
                     anchor?.X ?? 0,
                     anchor?.Y ?? 0);
+                megaTileCells = mutation.GetMegaTileCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
             } catch (Exception exception)
                 when (exception is InvalidDataException or OverflowException) {
                 throw new InvalidDataException(
@@ -446,7 +539,9 @@ public sealed class AuthoritativeWorldMutationCatalog
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} adds and removes the same geometry cell.");
             }
-            if (transparencyCells.Count > 0 && level.NativeTransparency.Count == 0)
+            if (transparencyCells.Count > 0
+                && level.NativeTransparency.Count == 0
+                && !mutation.CreateTransparencyLayer)
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} requires a native transparency layer.");
             if (transparencyCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
@@ -458,6 +553,9 @@ public sealed class AuthoritativeWorldMutationCatalog
             if (pieceLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns a d-piece value more than once to a cell.");
+            if (megaTileCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} assigns a mega-tile value more than once to a cell.");
             foreach (var cell in blockedAdd
                          .Concat(blockedRemove)
                          .Concat(missileBlockedAdd)
@@ -491,7 +589,11 @@ public sealed class AuthoritativeWorldMutationCatalog
                 row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
                     ? anchorUniqueIdentity
                     : string.Empty,
-                ParsePieceLayerRectangles(row))));
+                ParsePieceLayerRectangles(row),
+                ParseMegaTileAssignments(row),
+                row.OptionalInt32("anchor_mega_offset_x"),
+                row.OptionalInt32("anchor_mega_offset_y"),
+                row.OptionalBoolean("create_transparency_layer"))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -781,6 +883,34 @@ public sealed class AuthoritativeWorldMutationCatalog
                         $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",
                         exception);
                 }
+            })
+            .ToArray();
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationMegaTileAssignment>
+        ParseMegaTileAssignments(TsvRow row)
+    {
+        const string column = "mega_tile_assignments";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return [];
+        }
+        return value.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(assignment => {
+                var fields = assignment.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (fields.Length != 3
+                    || !int.TryParse(fields[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x)
+                    || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y)
+                    || !ushort.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var tileId)) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} assignment '{assignment}'.");
+                }
+                return new AuthoritativeWorldMutationMegaTileAssignment(x, y, tileId);
             })
             .ToArray();
     }
