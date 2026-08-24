@@ -76,6 +76,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native DUN fragments whose unique anchors may materialize on level entry. */
     public AuthoritativeNativeDunFragmentCatalog? NativeDunFragments { get; init; }
 
+    /** Optional anchor-relative object placements applied with deferred fragments. */
+    public AuthoritativeNativeDunFragmentObjectCatalog? NativeDunFragmentObjects { get; init; }
+
     /** Composed content bytes retained for deferred native fragment materialization. */
     public ComposedContent? Content { get; init; }
 
@@ -294,6 +297,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.SetLevelMaps,
             options.NativeDunObjects,
             options.NativeDunFragments,
+            options.NativeDunFragmentObjects,
+            options.NativeObjectTemplates,
             options.Content,
             questTypes: options.QuestTypes);
     }
@@ -317,6 +322,8 @@ public sealed partial class DiabloSimulation
     private readonly DiabloDifficulty difficulty;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeNativeDunFragmentCatalog? nativeDunFragments;
+    private readonly AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects;
+    private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly ComposedContent? content;
     private readonly HashSet<uint> appliedNativeDunFragments = [];
     private readonly HashSet<uint> materializedProceduralLevels = [];
@@ -348,6 +355,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
+        AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
+        IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
         ComposedContent? content = null,
         AuthoritativeQuestTypeCatalog? questTypes = null)
     {
@@ -379,6 +388,8 @@ public sealed partial class DiabloSimulation
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
         this.nativeDunFragments = nativeDunFragments;
+        this.nativeDunFragmentObjects = nativeDunFragmentObjects;
+        this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         this.content = content;
         ApplyDeferredNativeDunFragments();
         ReconcileProceduralSpawnState();
@@ -534,6 +545,28 @@ public sealed partial class DiabloSimulation
         if (candidates.Length == 0)
             return;
         var catalog = new AuthoritativeNativeDunFragmentCatalog(candidates);
+        if (nativeDunFragmentObjects is not null) {
+            var candidateIds = candidates
+                .Select(candidate => candidate.FragmentId)
+                .ToHashSet();
+            var generatedObjects = nativeDunFragmentObjects
+                .Filter(placement => candidateIds.Contains(placement.FragmentId))
+                .Materialize(
+                    WorldState.World,
+                    WorldState.Objects.Values,
+                    nativeObjectTemplates,
+                    catalog,
+                    targetPool);
+            foreach (var generatedObject in generatedObjects) {
+                if (WorldState.IsEntityIdOccupied(generatedObject.EntityId))
+                    throw new InvalidDataException(
+                        $"Deferred native DUN fragment object entity {generatedObject.EntityId} is already occupied.");
+                WorldState.Objects.Add(generatedObject.EntityId, generatedObject);
+            }
+            AuthoritativeWorldObjectCatalog.ValidateWorld(
+                WorldState.Objects.Values,
+                WorldState.World);
+        }
         catalog.Apply(
             content,
             WorldState.World,

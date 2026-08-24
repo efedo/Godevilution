@@ -232,6 +232,13 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
                 -2,
                 AnchorUniqueIdentity: "Generated"),
         ]);
+        var fragmentObjects = new AuthoritativeNativeDunFragmentObjectCatalog([
+            new AuthoritativeNativeDunFragmentObjectPlacement(1, 7, 900, 0, -2, -2) {
+                AnchorUniqueIdentity = "Generated",
+                TemplateEntityId = 100,
+            },
+        ]);
+        var template = new AuthoritativeWorldObject(100, 97, 0, 0, 0);
         var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
             new ContentPack("base", "1", [], assets: [
                 new ContentAsset("fragment.dun", CreateDun(42)),
@@ -242,6 +249,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
                 World = world,
                 Content = content,
                 NativeDunFragments = fragments,
+                NativeDunFragmentObjects = fragmentObjects,
+                NativeObjectTemplates = [template],
                 MonsterTypes = monsterTypes,
                 MonsterSpawnPlanner = planner,
                 ProceduralMonsterSpawns = new DiabloMonsterSpawnConfiguration(1, 1),
@@ -279,6 +288,13 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         var originY = target.PositionY - 2;
         var megaWidth = (level.Width + 1) / 2;
         Assert.Equal((ushort)42, level.NativeMegaTileLayer[(originY / 2) * megaWidth + originX / 2]);
+        var generatedObject = Assert.Single(
+            simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 900);
+        Assert.Equal(97U, generatedObject.ObjectId);
+        Assert.Equal((target.PositionX - 2, target.PositionY - 2), (
+            generatedObject.PositionX,
+            generatedObject.PositionY));
     }
 
     [Fact]

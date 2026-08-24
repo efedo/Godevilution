@@ -1834,6 +1834,9 @@ The optional `template_entity_id` column clones a `template_only=1` row from
 Snotspill Banner sign chest to materialize at its unique encounter-relative
 position; if the quest-gated encounter is unavailable, the placement is
 deferred without creating an orphan object.
+The same materialization boundary is used when a procedural unique encounter
+appears on level entry, so deferred fragments and their behavior objects remain
+one authoritative lifecycle.
 
 Schema 1.389 adds the optional `quest_sequence_variants.tsv` table. Each
 content-declared variant assigns a complete permutation of ordered steps to a

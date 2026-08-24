@@ -14,6 +14,9 @@ All notable changes to this fork are documented below.
 - Materialize the authored Snotspill Banner sign chest by cloning a validated
   behavior-only object template at its unique encounter-relative position;
   unavailable quest-gated encounters produce no orphan chest.
+- Apply unique-anchored fragment behavior objects when deferred encounters are
+  generated on level entry, keeping geometry and object state in one server-owned
+  lifecycle.
 - Externalize a validated Storyteller service-only store identity for paid Cain
   identification, preserving the previous additive content schema while the
   connected native menu is routed through the authoritative session.

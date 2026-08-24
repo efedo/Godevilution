@@ -775,6 +775,10 @@ scaled hit points), not only the client's difficulty label.
   materializes at its unique encounter-relative coordinate; an unavailable
   quest-gated Snotspill target leaves no orphan chest.
 
+- Deferred unique-anchored fragments now materialize their anchored behavior
+  objects in the same simulation boundary as the fragment geometry, including
+  procedural level-entry encounters rather than only activation-time targets.
+
 - The initial Snotspill Banner room is now externalized as a unique-anchored
   `banner1.dun` fragment plus an explicit Hell placement. Later Banner quest
   state changes and resynchronization remain native until their authored
