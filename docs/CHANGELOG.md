@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Applied the connected-session player-simulation boundary to the native
+  per-action execution helpers (`DoWalk`, attacks, block, spell, hit, and
+  death), so direct calls cannot advance legacy gameplay beside the server.
 - Added an explicit connected-session guard to the native player action-start
   helpers for walking, melee attack, ranged attack, and spell execution; direct
   callers can no longer start legacy player simulation alongside the server.

@@ -503,6 +503,9 @@ void InitLevelChange(Player &player)
  */
 bool DoWalk(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	// Play walking sound effect on certain animation frames
 	if (*GetOptions().Audio.walkingSound && (levelType() != DTYPE_TOWN || sgGameInitInfo.bRunInTown == 0)) {
 		if (player.animInfo.currentFrame == 0
@@ -884,6 +887,9 @@ bool PlrHitObj(const Player &player, Object &targetObject)
 
 bool DoAttack(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (player.animInfo.currentFrame == player._pAFNum - 2) {
 		PlaySfxLoc(SfxID::Swing, player.position.tile);
 	}
@@ -958,6 +964,9 @@ bool DoAttack(Player &player)
 
 bool DoRangeAttack(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	int arrows = 0;
 	if (player.animInfo.currentFrame == player._pAFNum - 1) {
 		arrows = 1;
@@ -1057,6 +1066,9 @@ void DamageParryItem(Player &player)
 
 bool DoBlock(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (player.animInfo.isLastFrame()) {
 		player.startStand(player.direction);
 		ClearStateVariables(player);
@@ -1116,6 +1128,9 @@ void DamageArmor(Player &player)
 
 bool DoSpell(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (player.animInfo.currentFrame == player._pSFNum) {
 		CastSpell(
 		    player,
@@ -1140,6 +1155,9 @@ bool DoSpell(Player &player)
 
 bool DoGotHit(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (player.animInfo.isLastFrame()) {
 		player.startStand(player.direction);
 		ClearStateVariables(player);
@@ -1155,6 +1173,9 @@ bool DoGotHit(Player &player)
 
 bool DoDeath(Player &player)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (player.animInfo.isLastFrame()) {
 		if (player.animInfo.tickCounterOfCurrentFrame == 0) {
 			player.animInfo.ticksPerFrame = 100;

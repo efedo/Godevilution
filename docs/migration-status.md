@@ -9,6 +9,9 @@ legacy spell path.
 The native player action-start helpers now apply the same explicit boundary for
 walking, melee attack, ranged attack, and spell execution; connected sessions
 cannot start a second local player simulation through a direct caller.
+The corresponding per-action execution helpers now fail closed as well,
+covering movement completion, combat impacts, blocking, spell execution, hit
+recovery, and death animation state.
 
 Native authoritative monster presentation now applies the same alive-only
 visibility rule as Godot. Dead projected monsters are omitted before pool
