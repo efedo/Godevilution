@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
+- FireMan encounters now fail closed to passive behavior because the native
+  registry has no FireMan AI; the server no longer invents generic melee
+  behavior for that shipped Hellfire identity.
 - Extended the validated text d-piece property loader to preserve the complete
   native `.sol` flag set, while retaining compatibility with older rows that
   provide only `solid` and `block_missile`.

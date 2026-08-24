@@ -4864,9 +4864,11 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (IsQuestDialogueTarget(target))
                 continue;
-            // Native Lachdanan only exposes quest dialogue and never enters a
-            // combat or movement mode, even when a player is in aggro range.
-            if (UsesNativeAi(target, "Lachdanan"))
+            // Native Lachdanan only exposes quest dialogue, while FireMan has
+            // no registered native AI; neither may fall through to generic
+            // combat or movement when a player is in aggro range.
+            if (UsesNativeAi(target, "Lachdanan")
+                || UsesNativeAi(target, "FireMan"))
                 continue;
             if (TryAdvanceScavengerAi(target, tick, players))
                 continue;

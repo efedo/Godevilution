@@ -37,6 +37,10 @@ The authoritative monster catalog now accepts Lachdanan's native AI identity,
 and server ticks keep the dialogue-only encounter passive outside the existing
 server-owned quest-dialogue path.
 
+The shipped Hellfire FireMan identity now fails closed to passive behavior,
+matching DevilutionX's unregistered native AI instead of entering generic
+authoritative melee until its native behavior is explicitly externalized.
+
 Late-generated level additions and replacements now pass through
 `DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
 before deferred procedural origins are published; direct simulation consumers
