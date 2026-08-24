@@ -242,6 +242,25 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsNativeObjectSnapshotValuesOutsideCompatibilityRange()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 10,
+                    ObjectId = 4,
+                    NativeObjectId = 109,
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsEntitiesOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

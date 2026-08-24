@@ -987,6 +987,9 @@ public sealed class DialogueProtocolProjectionTests
             ProjectileSourceKind = AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
         });
         AssertRejected(value => value with {
+            NativeObjectId = (uint)(AuthoritativeLevel.NativeMaximumObjectId + 1),
+        });
+        AssertRejected(value => value with {
             Breakable = true,
             MissilePassable = true,
         });

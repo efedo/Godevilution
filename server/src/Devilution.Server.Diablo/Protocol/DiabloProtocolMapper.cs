@@ -547,7 +547,7 @@ internal static class DiabloProtocolMapper
                     or > AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
                 || !producesProjectile && @object.ProjectileSourceKind
                     != AuthoritativeObjectProjectileSourceKind.Object
-                || @object.NativeObjectId > byte.MaxValue
+                || @object.NativeObjectId > AuthoritativeLevel.NativeMaximumObjectId
                 || @object.Breakable && @object.MissilePassable
                 || @object.Destroyed && !@object.Breakable) {
                 throw new InvalidDataException(

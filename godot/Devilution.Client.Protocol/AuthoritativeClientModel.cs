@@ -765,6 +765,7 @@ public sealed class AuthoritativeClientModel
             || !followUpValid
             || @object.ProjectileSourceKind is < 0 or > 1
             || !producesProjectile && @object.ProjectileSourceKind != 0
+            || @object.NativeObjectId > NativeMaximumObjectId
             || @object.Breakable && @object.MissilePassable
             || @object.Destroyed && !@object.Breakable) {
             throw new InvalidDataException(

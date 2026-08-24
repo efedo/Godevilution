@@ -155,6 +155,9 @@ Windows toolchain command.
   presentation metadata. `SHRINE`, `QUEST`, and `BREAKABLE` identify safe
   visual families; `TRAP` is emitted only when trap state is already revealed.
   Zero or unknown values retain the generic object presentation.
+- `ObjectSnapshot.native_object_id` uses the native object identity range
+  (`0` through `OBJ_LAST`, currently `108`) when supplied; larger values are
+  rejected by native, managed, and Godot validators.
 - `LevelGeometrySnapshot.warp_triggers` is additive presentation metadata for
   authored level transitions. Each trigger carries its server-owned source
   cell, destination, stable symbol, quest gate, and current availability;

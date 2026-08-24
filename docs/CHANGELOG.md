@@ -23,6 +23,8 @@ All notable changes to this fork are documented below.
 - Aligned native object-layer validation across the C++ bridge, authoritative
   C# levels, and Godot snapshots with the native `OBJ_LAST` range (`0` through
   `108`), while retaining the broader d-piece value range.
+- Applied the same native object identity bound to object snapshots and server
+  object state, preventing values above `OBJ_LAST` from crossing the protocol.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

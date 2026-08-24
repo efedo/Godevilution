@@ -45,7 +45,7 @@ public sealed class AuthoritativeWorldObject
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
-        if (nativeObjectId > byte.MaxValue)
+        if (nativeObjectId > AuthoritativeLevel.NativeMaximumObjectId)
             throw new ArgumentOutOfRangeException(nameof(nativeObjectId));
         EntityId = entityId;
         ObjectId = objectId;

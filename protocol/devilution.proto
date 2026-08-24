@@ -838,7 +838,8 @@ message ObjectSnapshot {
 	int32 quest_sequence_follow_up_offset_y = 31;
 	// Authored projectile origin; zero preserves object-origin compatibility.
 	int32 projectile_source_kind = 32;
-	// Optional native object type used only by compatibility presentations.
+	// Optional native object type used only by compatibility presentations
+	// (0 through native OBJ_LAST, currently 108).
 	uint32 native_object_id = 33;
 }
 
