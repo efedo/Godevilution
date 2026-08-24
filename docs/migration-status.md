@@ -664,6 +664,9 @@ resolution and equipment-slot classification.
 Godot world presentation now retains and draws the server-owned persistent corpse
 tiles from complete snapshots, using the shared level-visibility rule and keeping
 corpse lifecycle entirely authoritative.
+Godot portal presentation and click routing now resolve source and bidirectional
+destination endpoints through the same level-visibility wildcard, preventing a
+valid level-zero compatibility portal from disappearing from the presentation.
 
 ## Current state
 

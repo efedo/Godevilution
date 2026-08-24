@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot portal presentation and click routing now use the shared authoritative
+  level-visibility rule for source and bidirectional destination endpoints,
+  including native level-zero wildcard projections.
 - Godot world presentation now retains and draws server-owned persistent corpse
   tiles with the shared authoritative level-visibility contract; corpse lifecycle
   remains server-controlled.

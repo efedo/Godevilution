@@ -120,6 +120,9 @@ Persistent defeated non-minion corpse tiles are also server-owned snapshot
 entities. Godot retains and renders corpses only when their projected level is
 visible, including the native level-zero compatibility wildcard; it never
 creates or removes corpse state locally.
+Portal rendering and clicked-portal routing use the same visibility contract,
+including bidirectional destination endpoints and native level-zero wildcard
+projections; the client never chooses a transition destination.
 
 Snapshots contain every assigned participant. The server puts this client's
 player first and orders the remaining players by entity ID. The client validates

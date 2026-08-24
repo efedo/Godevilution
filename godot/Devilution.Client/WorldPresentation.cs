@@ -79,12 +79,10 @@ public partial class WorldPresentation : Node2D
             UpdatePosition(corpse.EntityId, ToScreen(corpse.PositionX, corpse.PositionY), delta, corpse.LevelId);
         }
         foreach (var portal in snapshot.Portals) {
-            if (localPlayer is not null && portal.SourceLevelId == localPlayer.LevelId) {
+            if (localPlayer is not null
+                && AuthoritativePortalPresentation.Resolve(portal, localPlayer.LevelId) is { } endpoint) {
                 activeEntityIds.Add(portal.PortalId);
-                UpdatePosition(portal.PortalId, ToScreen(portal.SourcePositionX, portal.SourcePositionY), delta, localPlayer.LevelId);
-            } else if (localPlayer is not null && portal.Bidirectional && portal.DestinationLevelId == localPlayer.LevelId) {
-                activeEntityIds.Add(portal.PortalId);
-                UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta, localPlayer.LevelId);
+                UpdatePosition(portal.PortalId, ToScreen(endpoint.X, endpoint.Y), delta, localPlayer.LevelId);
             }
         }
         foreach (var projectile in snapshot.Projectiles) {
@@ -136,17 +134,15 @@ public partial class WorldPresentation : Node2D
     public uint? PortalEntityIdAt(Vector2I target)
     {
         var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
-        return snapshot?.Portals
-            .Where(portal => currentLevelId.HasValue
-                && ((portal.SourceLevelId == currentLevelId.Value
-                        && portal.SourcePositionX == target.X
-                        && portal.SourcePositionY == target.Y)
-                    || (portal.Bidirectional
-                        && portal.DestinationLevelId == currentLevelId.Value
-                        && portal.DestinationPositionX == target.X
-                        && portal.DestinationPositionY == target.Y)))
-            .OrderBy(portal => portal.PortalId)
-            .FirstOrDefault()?.PortalId;
+        if (snapshot is null || currentLevelId is not { } levelId)
+            return null;
+        foreach (var portal in snapshot.Portals.OrderBy(portal => portal.PortalId)) {
+            if (AuthoritativePortalPresentation.Resolve(portal, levelId) is { } endpoint
+                && endpoint.X == target.X
+                && endpoint.Y == target.Y)
+                return portal.PortalId;
+        }
+        return null;
     }
 
     /** Returns an authoritative world object occupying a visible clicked tile. */
@@ -410,13 +406,9 @@ public partial class WorldPresentation : Node2D
 
     private void DrawPortal(PortalSnapshot portal, uint currentLevel)
     {
-        var isSource = portal.SourceLevelId == currentLevel;
-        var isDestination = portal.Bidirectional && portal.DestinationLevelId == currentLevel;
-        if (!isSource && !isDestination)
+        if (AuthoritativePortalPresentation.Resolve(portal, currentLevel) is not { } endpoint)
             return;
-        var x = isSource ? portal.SourcePositionX : portal.DestinationPositionX;
-        var y = isSource ? portal.SourcePositionY : portal.DestinationPositionY;
-        var center = PositionFor(portal.PortalId, x, y);
+        var center = PositionFor(portal.PortalId, endpoint.X, endpoint.Y);
         DrawArc(center, 13, 0, Mathf.Tau, 24, new Color("bd7cff"), 3);
         DrawArc(center, 8, 0, Mathf.Tau, 20, new Color("f0c7ff"), 2);
     }
