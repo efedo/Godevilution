@@ -2142,7 +2142,7 @@ void StorytellerEnter()
 	case 18:
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			if (auto result = authoritative::GetServerBackedRuntime().CloseVendor(0, GetMillisecondsSinceStartup()); !result.has_value())
+			if (auto result = authoritative::GetServerBackedRuntime().CloseStorytellerStore(0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Failed to close the server-backed Storyteller service: {}", result.error());
 		}
 #endif
@@ -2733,7 +2733,17 @@ void StoreManager::StoreESC()
 	case TalkID::Boy:
 	case TalkID::BoyBuy:
 	case TalkID::Healer:
+		CurrentStoreManager.activeStore() = TalkID::None;
+		break;
 	case TalkID::Storyteller:
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().CloseStorytellerStore(0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Failed to close the server-backed Storyteller service: {}", result.error());
+		}
+#endif
+		CurrentStoreManager.activeStore() = TalkID::None;
+		break;
 	case TalkID::Tavern:
 	case TalkID::Drunk:
 	case TalkID::Barmaid:

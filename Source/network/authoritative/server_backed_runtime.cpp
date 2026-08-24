@@ -298,6 +298,18 @@ tl::expected<void, std::string> ServerBackedRuntime::OpenStorytellerStore(uint64
 	return EnsureCommandAccepted();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::CloseStorytellerStore(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	const auto *snapshot = session_->VendorState().Snapshot();
+	if (snapshot == nullptr)
+		return { };
+	if (snapshot->storeId != StorytellerStoreId)
+		return tl::make_unexpected("A different server-backed vendor is active.");
+	return CloseVendor(requestedTick, nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::PurchaseSmith(uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs)
 {
 	return PurchaseVendor(SmithStoreId, storeSlot, ServerBackedVendorDestination::Smith, requestedTick, nowMs);

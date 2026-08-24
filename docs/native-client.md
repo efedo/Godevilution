@@ -129,7 +129,8 @@ Storyteller service session before displaying the paid-identification cursor.
 The server owns the town-level service identity and identification admission;
 the native cursor keeps its source-zero vendor command for protocol
 compatibility. Leaving Cain's menu closes that service session. Offline mode
-retains the legacy local menu and pricing behavior.
+retains the legacy local menu and pricing behavior. The explicit leave option
+and Escape path both close the authoritative session.
 
 The Barmaid stash entry now opens the server-owned stash session while
 connected. The native client validates and projects the authoritative 100-page
