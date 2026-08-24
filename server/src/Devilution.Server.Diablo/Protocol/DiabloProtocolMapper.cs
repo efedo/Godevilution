@@ -2196,6 +2196,7 @@ internal static class DiabloProtocolMapper
             || state.FireMaxDamage < state.FireMinDamage
             || state.LightningMinDamage < 0
             || state.LightningMaxDamage < state.LightningMinDamage
+            || !IsNativeItemStateRepresentable(state)
             || state.InventoryWidth < 0
             || state.InventoryWidth > 10
             || state.InventoryHeight < 0
@@ -2214,6 +2215,48 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative item projection contains impossible state ranges.");
         }
+    }
+
+    private static bool IsNativeItemStateRepresentable(AuthoritativeItemState state)
+    {
+        return state.CreateInfo <= ushort.MaxValue
+            && state.ItemType is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.Magical is >= byte.MinValue and <= byte.MaxValue
+            && state.EquipLocation is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.ItemClass is >= byte.MinValue and <= byte.MaxValue
+            && state.MinDamage is >= byte.MinValue and <= byte.MaxValue
+            && state.MaxDamage is >= byte.MinValue and <= byte.MaxValue
+            && state.ArmorClass is >= short.MinValue and <= short.MaxValue
+            && state.MiscId is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.SpellId is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.ItemIndex is >= short.MinValue and <= short.MaxValue
+            && state.PlusDamage is >= short.MinValue and <= short.MaxValue
+            && state.PlusToHit is >= short.MinValue and <= short.MaxValue
+            && state.PlusArmorClass is >= short.MinValue and <= short.MaxValue
+            && state.PlusStrength is >= short.MinValue and <= short.MaxValue
+            && state.PlusMagic is >= short.MinValue and <= short.MaxValue
+            && state.PlusDexterity is >= short.MinValue and <= short.MaxValue
+            && state.PlusVitality is >= short.MinValue and <= short.MaxValue
+            && state.PlusFireResistance is >= short.MinValue and <= short.MaxValue
+            && state.PlusLightningResistance is >= short.MinValue and <= short.MaxValue
+            && state.PlusMagicResistance is >= short.MinValue and <= short.MaxValue
+            && state.PlusMana is >= short.MinValue and <= short.MaxValue
+            && state.PlusHitPoints is >= short.MinValue and <= short.MaxValue
+            && state.PlusDamageModifier is >= short.MinValue and <= short.MaxValue
+            && state.PlusGetHit is >= short.MinValue and <= short.MaxValue
+            && state.PlusLight is >= short.MinValue and <= short.MaxValue
+            && state.SpellLevelAdd is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.FireMinDamage is >= short.MinValue and <= short.MaxValue
+            && state.FireMaxDamage is >= short.MinValue and <= short.MaxValue
+            && state.LightningMinDamage is >= short.MinValue and <= short.MaxValue
+            && state.LightningMaxDamage is >= short.MinValue and <= short.MaxValue
+            && state.PlusEnemyArmorClass is >= short.MinValue and <= short.MaxValue
+            && state.PrefixPower is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.SuffixPower is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.MinimumStrength is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.MinimumMagic is >= byte.MinValue and <= byte.MaxValue
+            && state.MinimumDexterity is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.HellfireDamageArmorFlags is >= byte.MinValue and <= byte.MaxValue;
     }
 
     private static ItemPresentationKind ResolveItemPresentationKind(

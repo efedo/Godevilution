@@ -1568,6 +1568,17 @@ public sealed class ClientModelTests
             model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
 
         snapshot.Players[0].Inventory[0].State.Value = 0;
+        snapshot.Players[0].Inventory[0].State.MaxCharges = 0;
+        snapshot.Players[0].Inventory[0].State.CreateInfo = ushort.MaxValue + 1U;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+
+        snapshot.Players[0].Inventory[0].State.CreateInfo = 0;
+        snapshot.Players[0].Inventory[0].State.PlusDamage = short.MaxValue + 1;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+
+        snapshot.Players[0].Inventory[0].State.Value = 0;
         snapshot.Players[0].Inventory[0].State.Charges = 0;
         snapshot.Players[0].Inventory[0].State.MaxCharges = 0;
         snapshot.Players[0].Inventory[0].State.MinDamage = 5;

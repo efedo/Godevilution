@@ -519,6 +519,26 @@ public sealed class DialogueProtocolProjectionTests
                 Player = player with { Inventory = [missingCursor] },
             }));
 
+        var unrepresentableCreateInfo = invalidItem with {
+            State = AuthoritativeItemState.Empty with {
+                CreateInfo = ushort.MaxValue + 1U,
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { Inventory = [unrepresentableCreateInfo] },
+            }));
+
+        var unrepresentableBonus = invalidItem with {
+            State = AuthoritativeItemState.Empty with {
+                PlusDamage = short.MaxValue + 1,
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Player = player with { Inventory = [unrepresentableBonus] },
+            }));
+
         var invalidCursor = invalidItem with {
             State = AuthoritativeItemState.Empty with {
                 NativeCursorGraphic = -1,

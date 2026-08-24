@@ -258,6 +258,14 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidItemSemanticStateDuringProjection
 	inventory->mutable_state()->set_presentation_kind(protocol::ITEM_PRESENTATION_KIND_UNSPECIFIED);
 	inventory->mutable_state()->set_spell_display_name(std::string("bad\0name", 8));
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	inventory->mutable_state()->clear_spell_display_name();
+	inventory->mutable_state()->set_create_info(std::numeric_limits<uint16_t>::max() + 1U);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+
+	inventory->mutable_state()->set_create_info(0);
+	inventory->mutable_state()->set_plus_damage(std::numeric_limits<int16_t>::max() + 1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)
