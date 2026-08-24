@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   conflicting legacy item class to override authored content.
 - Native compatibility item projection now applies authoritative Gold/Ear
   presentation identities even when legacy item fields conflict.
+- Item classification now treats semantic generation tags case-insensitively
+  across normalized definitions and custom content overlays.
 - Item presentation now resolves the content-declared `Ear` generation tag
   before applying the legacy PvP-ear identity fallback, so normalized item
   metadata owns the wire presentation kind whenever an active catalog is

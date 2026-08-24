@@ -453,6 +453,37 @@ public sealed class AuthoritativeItemClassificationTests
             AuthoritativeItemClassification.GetEquipmentSlotKind(state, catalog));
     }
 
+    [Fact]
+    public void SemanticTagsRemainCaseInsensitiveForOverlayDefinitions()
+    {
+        var definition = CreateDefinition(itemClass: 0) with {
+            GenerationTags = new HashSet<string>(["bElT", "rInG"], StringComparer.Ordinal),
+            EquipLocation = 0,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            EquipLocation = 0,
+            MiscId = 121,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsBelt(definition));
+        Assert.True(AuthoritativeItemClassification.IsBelt(state, catalog));
+        Assert.Equal(
+            DiabloEquipmentSlotKind.Ring,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(definition));
+        Assert.Equal(
+            DiabloEquipmentSlotKind.Ring,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(state, catalog));
+
+        var currency = CreateDefinition(itemClass: 0) with {
+            GenerationTags = new HashSet<string>(["cUrReNcY"], StringComparer.Ordinal),
+        };
+        Assert.True(AuthoritativeItemClassification.IsGold(currency));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)

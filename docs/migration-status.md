@@ -658,6 +658,9 @@ Native compatibility item projection now applies the server-owned Gold/Ear
 presentation identity to native item fields before presentation, so conflicting
 legacy item type, class, misc ID, or index values cannot change the projected
 item family.
+Semantic item classification now applies the same case-insensitive tag contract
+to normalized definitions and custom content overlays, including misc-ID
+resolution and equipment-slot classification.
 
 ## Current state
 

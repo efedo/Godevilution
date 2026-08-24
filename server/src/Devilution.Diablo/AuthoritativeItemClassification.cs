@@ -123,8 +123,8 @@ public static class AuthoritativeItemClassification
     public static bool IsGold(AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        return definition.GenerationTags.Contains("Gold")
-            || definition.GenerationTags.Contains("Currency");
+        return definition.GenerationTags.Contains("Gold", StringComparer.OrdinalIgnoreCase)
+            || definition.GenerationTags.Contains("Currency", StringComparer.OrdinalIgnoreCase);
     }
 
     public static bool IsGold(
@@ -187,7 +187,7 @@ public static class AuthoritativeItemClassification
             if (items.TryGetByState(state, out var definition))
                 return IsBelt(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
-                && tags.Contains("Belt"))
+                && tags.Contains("Belt", StringComparer.OrdinalIgnoreCase))
                 return true;
         }
         return state.EquipLocation == 7 && state.ItemClass == 3;
@@ -221,17 +221,17 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        if (definition.GenerationTags.Contains("TwoHanded"))
+        if (definition.GenerationTags.Contains("TwoHanded", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.TwoHanded;
-        if (definition.GenerationTags.Contains("OneHanded"))
+        if (definition.GenerationTags.Contains("OneHanded", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Hand;
-        if (definition.GenerationTags.Contains("BodyArmor"))
+        if (definition.GenerationTags.Contains("BodyArmor", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.BodyArmor;
-        if (definition.GenerationTags.Contains("Helmet"))
+        if (definition.GenerationTags.Contains("Helmet", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Helmet;
-        if (definition.GenerationTags.Contains("Ring"))
+        if (definition.GenerationTags.Contains("Ring", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Ring;
-        if (definition.GenerationTags.Contains("Amulet"))
+        if (definition.GenerationTags.Contains("Amulet", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Amulet;
         if (definition.GenerationTags.Count > 0)
             return DiabloEquipmentSlotKind.Unknown;
@@ -272,17 +272,17 @@ public static class AuthoritativeItemClassification
         IReadOnlySet<string> tags,
         int fallbackEquipLocation)
     {
-        if (tags.Contains("TwoHanded"))
+        if (tags.Contains("TwoHanded", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.TwoHanded;
-        if (tags.Contains("OneHanded"))
+        if (tags.Contains("OneHanded", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Hand;
-        if (tags.Contains("BodyArmor"))
+        if (tags.Contains("BodyArmor", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.BodyArmor;
-        if (tags.Contains("Helmet"))
+        if (tags.Contains("Helmet", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Helmet;
-        if (tags.Contains("Ring"))
+        if (tags.Contains("Ring", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Ring;
-        if (tags.Contains("Amulet"))
+        if (tags.Contains("Amulet", StringComparer.OrdinalIgnoreCase))
             return DiabloEquipmentSlotKind.Amulet;
         if (tags.Count > 0)
             return DiabloEquipmentSlotKind.Unknown;
@@ -378,19 +378,19 @@ public static class AuthoritativeItemClassification
     }
 
     private static bool HasWeaponSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("Weapon")
-            || tags.Contains("Sword")
-            || tags.Contains("Axe")
-            || tags.Contains("Mace")
-            || tags.Contains("Bow")
-            || tags.Contains("Staff");
+        => tags.Contains("Weapon", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Sword", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Axe", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Mace", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Bow", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("Staff", StringComparer.OrdinalIgnoreCase);
 
     private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
         => HasWeaponSubtype(tags)
-            || tags.Contains("Shield");
+            || tags.Contains("Shield", StringComparer.OrdinalIgnoreCase);
 
     private static bool HasExplicitArmorSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("LightArmor")
-            || tags.Contains("MediumArmor")
-            || tags.Contains("HeavyArmor");
+        => tags.Contains("LightArmor", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("MediumArmor", StringComparer.OrdinalIgnoreCase)
+            || tags.Contains("HeavyArmor", StringComparer.OrdinalIgnoreCase);
 }
