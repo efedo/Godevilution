@@ -3,3 +3,5 @@ entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	ac
 2002	97		4	hell	0	0	0	0		None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object
 2010	1		0		0	0	0	0		SpawnSpellProjectile	10		0	0	0	0	1	None	0		0	0	0	phasing	1	-16	ActivatingPlayer
 2011	2		0		0	0	0	0		SpawnSpellProjectile	10		0	0	0	0	1	None	0		0	0	0	phasing	-2	-17	ActivatingPlayer
+2012	1		0		0	0	0	3015	chamber_of_bone	GrantSpellLevelAndSpawnProjectile	7		0	0	0	0	1	None	0		0	0	0	guardian	-2	-4	ActivatingPlayer
+2013	2		0		0	0	0	3015	chamber_of_bone	GrantSpellLevelAndSpawnProjectile	7		0	0	0	0	1	None	0		0	0	0	guardian	-2	-4	ActivatingPlayer

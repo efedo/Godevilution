@@ -2,5 +2,6 @@ quest_id	quest_symbol	level_id	level_symbol	required_progress	progress	completed
 3001	magic_rock	1	cathedral	3	0	0	0	0	0	0	0	115	0		NONE	0	0	0	0	0		1	0	0		0	0	0	town	62	63	2135	magic_rock	1	1004	empyrean_band	5	61	64	117	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1			
 3002	black_mushroom	9		1	0	0	0	0	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0	1	0	town	55	79	2140	brain	-1	0		0	55	80	124	2142	spectral_elixir	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1	5	7	true
 3009	halls_of_the_blind	8		1	0	0	0	0	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0	-1	0		0	0	0		-1	0		0	0	0	0	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1			
+3015	chamber_of_bone	6		1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0	-1	0		0	0	0		-1	0		0	0	0	0	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1	-1	-1	false
 3011	anvil_of_fury	10		1	0	0	0	0	0	0	0	88	0		NONE	0	0	0	0	0		1	0	0		0	0	0	town	62	63	2138	anvil_of_fury	1	1010	griswold_s_edge	1	61	64	90	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1			
 3010	valor	5		1	0	0	0	0	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0	-1	0		0	0	0		-1	0		0	0	0	0	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1	-1	-1	false

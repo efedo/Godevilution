@@ -998,6 +998,101 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void SetLevelQuestBookCompletesChamberQuestAndSpawnsGuardianFromPlayer()
+    {
+        var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+            2,
+            activeMap: true);
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            $"level_id\twidth\theight\tblocked_cells\n{levelId}\t8\t8\tnone\n");
+        var quest = new AuthoritativeQuestState(
+            3015,
+            6,
+            1,
+            active: true);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            1,
+            levelId,
+            4,
+            4,
+            questId: 3015,
+            effectKind: AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile,
+            effectAmount: 7,
+            projectileTargetOffsetX: -2,
+            projectileTargetOffsetY: -4,
+            projectileSourceKind: AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.CompleteQuest);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [@object],
+            quests: [quest]);
+        var player = CreatePlayer();
+        player.LevelId = levelId;
+        player.PositionX = 3;
+        player.PositionY = 4;
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3015,
+                14,
+                "The Chamber of Bone",
+                6,
+                6,
+                "DTYPE_CATACOMBS",
+                2,
+                false),
+        ]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 13, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.GuardianController,
+                ProjectileLifetime = 256,
+                RandomDamageRange = 10,
+                MagicDamageDivisor = 8,
+                SpellLevelDamage = 1,
+                DamageBonus = 1,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 1,
+                ManaAdjustment = 2,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 30,
+                ManaCostScale = 64,
+                GuardianDurationTickScale = 16,
+                GuardianMinimumDuration = 30,
+                GuardianMaximumDuration = 30,
+                GuardianCharacterLevelDurationDivisor = 2,
+                GuardianSpawnSearchRadius = 5,
+                GuardianTargetSearchRadius = 6,
+                GuardianFireInterval = 16,
+                GuardianProjectileSpeedLevelStep = 2,
+                GuardianProjectileSpeedMaximumBonus = 47,
+            },
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(
+            world,
+            questTypes: questTypes,
+            spells: spells).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(@object.Activated);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(new MemorizedSpellState(7, 1), Assert.Single(player.MemorizedSpells));
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, projectile.Behavior);
+        Assert.Equal((3, 4), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal((2, 0), (projectile.TargetX, projectile.TargetY));
+    }
+
+    [Fact]
     public void WorldMutationObjectAppliesMutationAndFollowUpProjectile()
     {
         var geometry = AuthoritativeWorld.LoadTsv(
@@ -1197,7 +1292,7 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
-    public void ObjectCatalogRejectsActivatingPlayerSourceForGuardian()
+    public void ObjectCatalogAcceptsActivatingPlayerSourceForGuardian()
     {
         var @object = new AuthoritativeWorldObject(
             20,
@@ -1237,10 +1332,7 @@ public sealed class AuthoritativeWorldMutationTests
             },
         ]);
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            AuthoritativeWorldObjectCatalog.ValidateSpellRequirements([@object], spells));
-
-        Assert.Contains("only for Phasing", exception.Message);
+        AuthoritativeWorldObjectCatalog.ValidateSpellRequirements([@object], spells);
     }
 
     [Fact]

@@ -284,6 +284,42 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseContentPackDeclaresChamberOfBoneCompletionBookTemplates()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            pack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var templates = AuthoritativeWorldObjectCatalog.LoadTemplates(
+            "objects.tsv",
+            pack.Tables.Single(table => table.SourcePath == "objects.tsv").ToCanonicalTsv(),
+            stableIds);
+
+        foreach (var entityId in new uint[] { 2012, 2013 }) {
+            var book = Assert.Single(templates, @object => @object.EntityId == entityId);
+            Assert.Equal(3015U, book.QuestId);
+            Assert.Equal(
+                AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile,
+                book.EffectKind);
+            Assert.Equal(7, book.EffectAmount);
+            Assert.Equal((-2, -4), (book.ProjectileTargetOffsetX, book.ProjectileTargetOffsetY));
+            Assert.Equal(
+                AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
+                book.ProjectileSourceKind);
+            Assert.Equal(
+                AuthoritativeObjectQuestTransitionKind.None,
+                book.QuestTransitionKind);
+        }
+
+        var placements = AuthoritativeSetLevelObjectCatalog.LoadTsv(
+            "set_level_objects.tsv",
+            pack.Tables.Single(table => table.SourcePath == "set_level_objects.tsv").ToCanonicalTsv());
+        Assert.Equal(2012U, placements.Definitions.Single(placement => placement.PlacementId == 1007).TemplateEntityId);
+        Assert.Equal(2013U, placements.Definitions.Single(placement => placement.PlacementId == 1008).TemplateEntityId);
+    }
+
+    [Fact]
     public void BaseContentPackDeclaresNativeSetLevelMapAssets()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
@@ -2582,7 +2618,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(23, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(24, activation.Simulation.WorldState.Quests.Count);
         var nakrulFragment = Assert.Single(activation.NativeDunFragments!.Definitions);
         Assert.Equal((1U, 24U, 2403U, -6, -8), (
             nakrulFragment.FragmentId,

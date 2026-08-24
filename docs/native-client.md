@@ -335,8 +335,11 @@ explicit migration seams, not server-authority claims:
 - Lachdanan's item-gated dialogue hand-in now uses the authored server transition
   for its completion message, Veil of Steel reward, and post-dialogue defeat;
   native presentation still supplies the legacy speech/audio timing fallback.
-- `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Halls of
-  the Blind, and Blood-goal book branches. The Vile Betrayer's two fixed book
+- `OperateBook` and `OperateBookLever` still own Chamber of Bone's ordinary
+  quest-book activation and the Halls of the Blind and Blood-goal book branches.
+  The two fixed Chamber of Bone completion books now clone authored templates:
+  the server completes the quest, grants Guardian, and owns the exact
+  player-origin target offset. The Vile Betrayer's two fixed book
   placements now clone authored templates: server activation owns the native
   Phasing projectile source and target offsets, while native mega-tile
   replacement, object resynchronization, and encounter-progress presentation

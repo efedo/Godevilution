@@ -1065,7 +1065,7 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
             && (!world.Quests.TryGetValue(@object.QuestId, out var transitionQuest)
                 || transitionQuest.Unavailable
-                || transitionQuest.LevelId != player.LevelId
+                || !IsQuestAtPlayerLevel(transitionQuest, player.LevelId)
                 || (@object.QuestTransitionRequiredVariable1 >= 0
                     && transitionQuest.Variable1 != @object.QuestTransitionRequiredVariable1)
                 || (@object.QuestTransitionRequiredVariable2 >= 0
@@ -1094,7 +1094,7 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
             && @object.QuestTransitionKind == AuthoritativeObjectQuestTransitionKind.None
             && !quest.Unavailable
-            && !quest.Completed && quest.LevelId == player.LevelId) {
+            && !quest.Completed && IsQuestAtPlayerLevel(quest, player.LevelId)) {
             quest.Active = true;
             quest.Logged = true;
             quest.Progress = Math.Min(
@@ -1298,12 +1298,30 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (@object.ProjectileSourceKind
                 == AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
-            && spell.ProjectileBehavior != AuthoritativeProjectileBehavior.Phasing) {
+            && spell.ProjectileBehavior is not (
+                AuthoritativeProjectileBehavior.Phasing
+                or AuthoritativeProjectileBehavior.GuardianController)) {
             return false;
         }
         var targetX = checked(@object.PositionX + offsetX);
         var targetY = checked(@object.PositionY + offsetY);
         return world.ContainsPosition(@object.LevelId, targetX, targetY);
+    }
+
+    /** Accepts ordinary quest levels and the native set-level route identity. */
+    private bool IsQuestAtPlayerLevel(
+        AuthoritativeQuestState quest,
+        uint playerLevelId)
+    {
+        if (quest.LevelId == 0 || quest.LevelId == playerLevelId)
+            return true;
+        if (questTypes?.TryGet(quest.QuestId, out var definition) != true
+            || definition.SetLevel == 0) {
+            return false;
+        }
+        return AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+            definition.SetLevel,
+            activeMap: true) == playerLevelId;
     }
 
     private void SpawnObjectSpellProjectile(

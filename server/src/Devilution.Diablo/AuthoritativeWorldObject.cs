@@ -604,9 +604,11 @@ public static class AuthoritativeWorldObjectCatalog
             }
             if (@object.ProjectileSourceKind
                     == AuthoritativeObjectProjectileSourceKind.ActivatingPlayer
-                && spell.ProjectileBehavior != AuthoritativeProjectileBehavior.Phasing) {
+                && spell.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.Phasing
+                    or AuthoritativeProjectileBehavior.GuardianController)) {
                 throw new InvalidDataException(
-                    $"Object {@object.EntityId} requires ActivatingPlayer projectile source only for Phasing.");
+                    $"Object {@object.EntityId} requires ActivatingPlayer projectile source only for Phasing or Guardian.");
             }
         }
     }
