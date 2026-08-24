@@ -264,7 +264,12 @@ public sealed class StoreSimulationExecutorTests
             startingMana: 32,
             startingAttributes: attributes,
             startingEquipment: [new EquippedStoreItem(0, 77)],
-            startingInventoryGrid: [0, -1, 2]);
+            startingInventory: [
+                new OwnedStoreItem(0, 0, 71, 0, 0),
+                new OwnedStoreItem(0, 1, 72, 0, 0),
+                new OwnedStoreItem(0, 2, 73, 0, 0),
+            ],
+            startingInventoryGrid: [0, 1, 2, ..Enumerable.Repeat(-1, 37)]);
 
         var state = executor.GetPlayerState("player-a");
         var snapshot = executor.CreateSnapshot("player-a", entityId: 7, tick: 0);
@@ -281,7 +286,7 @@ public sealed class StoreSimulationExecutorTests
         Assert.Equal(16, player.Attributes.Dexterity.Current);
         Assert.Equal(21, player.Attributes.Vitality.Current);
         Assert.Equal(77U, Assert.Single(player.Equipment).ItemSeed);
-        Assert.Equal(new[] { 0, -1, 2 }, player.InventoryGrid);
+        Assert.Equal([0, 1, 2], player.InventoryGrid.Take(3));
 
         var changed = new Snapshot {
             Players = {
@@ -830,8 +835,14 @@ public sealed class StoreSimulationExecutorTests
         var executor = new StoreSimulationExecutor(
             CreateCatalog(),
             startingGold: 100,
-            startingBelt: [new BeltStoreItem(2, 101)],
-            startingEquipment: [new EquippedStoreItem(3, 102)]);
+            startingBelt: [new BeltStoreItem(
+                2,
+                101,
+                AuthoritativeItemState.Empty with { ItemType = 1, ItemIndex = 1 })],
+            startingEquipment: [new EquippedStoreItem(
+                3,
+                102,
+                AuthoritativeItemState.Empty with { ItemType = 1, ItemIndex = 2 })]);
         var server = new AuthoritativeCommandServer(executor);
         Assert.Equal(CommandStatus.Accepted, server.Process("player-a", OpenStore(1), 0).Status);
 
@@ -890,12 +901,47 @@ public sealed class StoreSimulationExecutorTests
     [Fact]
     public void RemovingInventoryItemCompactsGridReferences()
     {
-        var catalog = CreateCatalog(new StoreItem(0, 42, 10), new StoreItem(1, 43, 10));
-        var executor = new StoreSimulationExecutor(catalog, startingGold: 100, startingInventoryGrid: [0, 1, 1, -1]);
+        var catalog = CreateCatalog(
+            new StoreItem(
+                0,
+                42,
+                10,
+                AuthoritativeItemState.Empty with { ItemType = 1 }),
+            new StoreItem(
+                1,
+                43,
+                10,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    InventoryWidth = 2,
+                    InventoryHeight = 1,
+                }));
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            startingGold: 100,
+            startingInventory: [
+                new OwnedStoreItem(
+                    0,
+                    0,
+                    42,
+                    10,
+                    0,
+                    AuthoritativeItemState.Empty with { ItemType = 1 }),
+                new OwnedStoreItem(
+                    0,
+                    1,
+                    43,
+                    10,
+                    0,
+                    AuthoritativeItemState.Empty with {
+                        ItemType = 1,
+                        InventoryWidth = 2,
+                        InventoryHeight = 1,
+                    }),
+            ],
+            startingInventoryGrid: [0, 1, 1, -1, ..Enumerable.Repeat(-1, 36)]);
         var server = new AuthoritativeCommandServer(executor);
         server.Process("player-a", OpenStore(1), 0);
-        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", Purchase(2, 0), 1).Status);
-        Assert.Equal(CommandStatus.Accepted, server.Process("player-a", Purchase(3, 1), 2).Status);
 
         var sale = new Command {
             ClientSequence = 4,
@@ -904,7 +950,9 @@ public sealed class StoreSimulationExecutorTests
         };
         Assert.Equal(CommandStatus.Accepted, server.Process("player-a", sale, 3).Status);
 
-        Assert.Equal(new[] { -1, 0, 0, -1 }, executor.GetPlayerState("player-a").InventoryGrid);
+        Assert.Equal(
+            [-1, 0, 0, -1],
+            executor.GetPlayerState("player-a").InventoryGrid.Take(4));
     }
 
     [Fact]
@@ -2294,6 +2342,7 @@ public sealed class StoreSimulationExecutorTests
                 NativeItemIndex = 9,
                 Name = "Magic Rock",
                 IdentifiedName = "Magic Rock",
+                NativeCursorGraphic = 64,
             },
             new AuthoritativeItemDefinition(
                 2138,
@@ -2311,6 +2360,7 @@ public sealed class StoreSimulationExecutorTests
                 NativeItemIndex = 18,
                 Name = "Anvil of Fury",
                 IdentifiedName = "Anvil of Fury",
+                NativeCursorGraphic = 64,
             },
             new AuthoritativeItemDefinition(
                 24,
@@ -2329,6 +2379,7 @@ public sealed class StoreSimulationExecutorTests
                 MiscId = 44,
                 Name = "Ear",
                 IdentifiedName = "Ear",
+                NativeCursorGraphic = 64,
             },
         ]);
         var itemQuestEffects = new AuthoritativeItemQuestEffectCatalog([
@@ -2365,7 +2416,7 @@ public sealed class StoreSimulationExecutorTests
                     0,
                     1,
                     1,
-                    99,
+                    100,
                     0,
                     itemState with {
                         StableItemId = 2138,
@@ -2429,6 +2480,7 @@ public sealed class StoreSimulationExecutorTests
                 NativeItemIndex = 12,
                 Name = "Optic Amulet",
                 IdentifiedName = "Optic Amulet",
+                NativeCursorGraphic = 64,
             },
             new AuthoritativeItemDefinition(
                 24,
@@ -2447,6 +2499,7 @@ public sealed class StoreSimulationExecutorTests
                 MiscId = 44,
                 Name = "Ear",
                 IdentifiedName = "Ear",
+                NativeCursorGraphic = 64,
             },
         ]);
         var itemQuestEffects = new AuthoritativeItemQuestEffectCatalog([
@@ -2509,6 +2562,7 @@ public sealed class StoreSimulationExecutorTests
                 NativeItemIndex = 19,
                 Name = "Black Mushroom",
                 IdentifiedName = "Black Mushroom",
+                NativeCursorGraphic = 64,
             },
             new AuthoritativeItemDefinition(
                 24,
@@ -2527,6 +2581,7 @@ public sealed class StoreSimulationExecutorTests
                 MiscId = 44,
                 Name = "Ear",
                 IdentifiedName = "Ear",
+                NativeCursorGraphic = 64,
             },
         ]);
         var itemQuestEffects = new AuthoritativeItemQuestEffectCatalog([

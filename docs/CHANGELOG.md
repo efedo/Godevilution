@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Aligned authoritative store-simulation fixtures with strict protocol
+  topology, native item identity, cursor metadata, and unique-seed validation;
+  the full store executor class now passes without weakening those boundaries.
 - Generated authoritative items now keep DevilutionX-compatible 16-bit
   creation flags: legacy-sized fixture seeds retain their value, while larger
   stable item seeds use canonical no-flag state instead of invalid 32-bit data.
