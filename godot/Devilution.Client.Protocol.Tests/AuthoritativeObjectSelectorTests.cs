@@ -79,6 +79,25 @@ public sealed class AuthoritativeObjectSelectorTests
         Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4));
     }
 
+    [Fact]
+    public void TreatsZeroLevelAsVisibleCompatibilityWildcard()
+    {
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 9 } },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 21,
+                    LevelId = 0,
+                    PositionX = 3,
+                    PositionY = 4,
+                    EffectKind = 1,
+                },
+            },
+        };
+
+        Assert.Equal(21U, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
+    }
+
     private static Snapshot SnapshotWithObject(ObjectSnapshot @object)
     {
         @object.LevelId = 9;

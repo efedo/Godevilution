@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve native level-`0` wildcard visibility when Godot routes authored
+  object clicks, including ordinary operation and trap-disarm interactions.
 - Match native Telekinesis target precedence in Godot by preferring authored
   objects over world items and excluding server-authored dialogue monsters
   from world-spell targets.
