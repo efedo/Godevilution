@@ -2103,6 +2103,7 @@ public sealed class ClientModelTests
             Monsters = {
                 new MonsterSnapshot {
                     EntityId = 9,
+                    Alive = true,
                     HitPoints = 3,
                     MaxHitPoints = 5,
                     HitPointsQ6 = 192,

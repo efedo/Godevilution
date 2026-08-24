@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot malformed-monster protocol coverage now initializes positive vitality
+  with the explicit authoritative `Alive` state, so combat-state mutation checks
+  reach combat validation instead of failing during fixture setup.
 - Godot now filters cached item/projectile positions and floating-feedback
   anchors by active-level visibility, preventing off-level snapshot entries from
   leaking into the current presentation.
