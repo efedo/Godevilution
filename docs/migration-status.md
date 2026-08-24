@@ -6,6 +6,9 @@ Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's
 connected-mode no-op to preserve server ownership. Offline sessions retain the
 legacy spell path.
+The native player action-start helpers now apply the same explicit boundary for
+walking, melee attack, ranged attack, and spell execution; connected sessions
+cannot start a second local player simulation through a direct caller.
 
 Native authoritative monster presentation now applies the same alive-only
 visibility rule as Godot. Dead projected monsters are omitted before pool

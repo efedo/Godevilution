@@ -119,6 +119,15 @@ bool LegacyPlayerStateMutationAllowed() noexcept
 #endif
 }
 
+bool LegacyPlayerSimulationAllowed() noexcept
+{
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	return ShouldProcessLegacyPlayerSimulation(authoritative::GetServerBackedRuntime().IsConnected());
+#else
+	return true;
+#endif
+}
+
 bool LegacyLevelLoadPlayerPlacementAllowed() noexcept
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -214,6 +223,9 @@ void StartWalkAnimation(Player &player, Direction dir, bool pmWillBeCalled)
  */
 void StartWalk(Player &player, Direction dir, bool pmWillBeCalled)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return;
+
 	if (player._pInvincible && player.hasNoLife() && &player == MyPlayer) {
 		player.syncKill(DeathReason::Unknown);
 		return;
@@ -232,6 +244,9 @@ void ClearStateVariables(Player &player)
 
 void StartAttack(Player &player, Direction d, bool includesFirstFrame)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return;
+
 	if (player._pInvincible && player.hasNoLife() && &player == MyPlayer) {
 		player.syncKill(DeathReason::Unknown);
 		return;
@@ -264,6 +279,9 @@ void StartAttack(Player &player, Direction d, bool includesFirstFrame)
 
 void StartRangeAttack(Player &player, Direction d, WorldTileCoord cx, WorldTileCoord cy, bool includesFirstFrame)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return;
+
 	if (player._pInvincible && player.hasNoLife() && &player == MyPlayer) {
 		player.syncKill(DeathReason::Unknown);
 		return;
@@ -306,6 +324,9 @@ player_graphic GetPlayerGraphicForSpell(SpellID spellId)
 
 void StartSpell(Player &player, Direction d, WorldTileCoord cx, WorldTileCoord cy)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return;
+
 	if (player._pInvincible && player.hasNoLife() && &player == MyPlayer) {
 		player.syncKill(DeathReason::Unknown);
 		return;

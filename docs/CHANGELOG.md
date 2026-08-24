@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added an explicit connected-session guard to the native player action-start
+  helpers for walking, melee attack, ranged attack, and spell execution; direct
+  callers can no longer start legacy player simulation alongside the server.
 - Made the native `CastSpell` and resurrection-beam helpers explicitly
   offline-only in server-backed sessions, closing their direct-call seams
   instead of relying on the missile factory's connected-mode no-op.
