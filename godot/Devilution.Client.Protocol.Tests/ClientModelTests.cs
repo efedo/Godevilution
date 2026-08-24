@@ -535,6 +535,46 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void ValidatesSetLevelObjectOriginsAgainstProjectedGeometry()
+    {
+        var accepted = new AuthoritativeClientModel();
+        accepted.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 17 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot { LevelId = 17, Width = 8, Height = 9 },
+                },
+                SetLevelObjectOrigins = {
+                    new SetLevelObjectOriginSnapshot {
+                        SetLevelId = 6,
+                        LevelId = 17,
+                        PositionX = 7,
+                        PositionY = 8,
+                    },
+                },
+            }));
+
+        Assert.Single(accepted.Snapshot!.SetLevelObjectOrigins);
+
+        var rejected = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => rejected.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 17 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot { LevelId = 17, Width = 8, Height = 9 },
+                },
+                SetLevelObjectOrigins = {
+                    new SetLevelObjectOriginSnapshot {
+                        SetLevelId = 6,
+                        LevelId = 17,
+                        PositionX = 8,
+                        PositionY = 8,
+                    },
+                },
+            })));
+    }
+
+    [Fact]
     public void SelectsItemlessAuthoredDialogueAfterQuestCompletion()
     {
         var snapshot = new Snapshot {

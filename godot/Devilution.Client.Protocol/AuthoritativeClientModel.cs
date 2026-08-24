@@ -184,6 +184,7 @@ public sealed class AuthoritativeClientModel
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
             ValidateWarpTriggers(message.Snapshot);
+            ValidateSetLevelObjectOrigins(message.Snapshot);
             ValidateEntityPositions(message.Snapshot);
             ValidateQuestTownerInteractions(message.Snapshot);
             var portalIds = new HashSet<uint>();
@@ -965,6 +966,34 @@ public sealed class AuthoritativeClientModel
                     portal.DestinationPositionY))) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains an entity outside projected level geometry.");
+        }
+    }
+
+    /** Validates generated set-piece origins against supplied level geometry. */
+    private static void ValidateSetLevelObjectOrigins(Snapshot snapshot)
+    {
+        if (snapshot.SetLevelObjectOrigins.Count > 4096
+            || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || snapshot.SetLevelObjectOrigins
+                .Select(origin => origin.SetLevelId)
+                .Distinct()
+                .Count() != snapshot.SetLevelObjectOrigins.Count) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid or duplicate set-level object origins.");
+        }
+        if (snapshot.LevelGeometry.Count == 0)
+            return;
+
+        var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        foreach (var origin in snapshot.SetLevelObjectOrigins) {
+            if (!levels.TryGetValue(origin.LevelId, out var level)
+                || origin.PositionX < 0
+                || origin.PositionY < 0
+                || origin.PositionX >= level.Width
+                || origin.PositionY >= level.Height) {
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains a set-level object origin outside level {origin.LevelId}.");
+            }
         }
     }
 

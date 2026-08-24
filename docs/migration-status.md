@@ -19,9 +19,10 @@ publication revalidates without duplicating objects.
 Producing the actual Blind, Blood, and Warlord origins from native-compatible
 level generation remains follow-up work.
 
-The server protocol mapper now validates published generated origins against
-supplied authoritative level geometry before emitting a live snapshot; older
-geometry-free snapshots retain the compatibility path.
+The server protocol mapper and Godot client model now validate published
+generated origins against supplied authoritative level geometry before emitting
+or accepting a live snapshot; older geometry-free snapshots retain the
+compatibility path.
 
 Late-generated level additions and replacements now pass through
 `DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
