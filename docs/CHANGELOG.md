@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Clarified that un-authored native object behavior and other local interaction
+  fallbacks are offline-only; connected sessions require authoritative object
+  projections and fail closed otherwise.
 - Inventory placement now retains native ordering for known footprints and
   falls back deterministically for other validated external-content footprints
   permitted by the authoritative 10x4 grid contract.

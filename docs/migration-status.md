@@ -2,6 +2,12 @@
 
 Status date: 2026-08-24
 
+The inventory contract now preserves native placement order for the shipped
+footprints and uses a deterministic first-fit fallback for any other validated
+external footprint within the native 10x4 grid. Connected native object
+interactions likewise fail closed when an object has no authoritative
+projection; legacy object behavior remains an offline compatibility path.
+
 Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's
 connected-mode no-op to preserve server ownership. Offline sessions retain the

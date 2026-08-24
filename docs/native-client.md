@@ -271,7 +271,9 @@ boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,
 quest-state changes, item consumption, activation, and linked authored quest
 dialogue events in the server snapshot; the Hellfire Na-Krul tome sequence is
 the first shipped definition. Objects without an authored quest effect retain
-the legacy local behavior. The same boundary can now apply a validated
+the legacy local behavior only in offline sessions; connected sessions fail
+closed unless the object has an authoritative projection. The same boundary
+can now apply a validated
 `WorldMutation` effect: the server persists the active cell overlay and projects
 the resulting movement/missile geometry, while the client only presents the
 updated level snapshot. Authored object rows can also apply validated quest
@@ -307,9 +309,10 @@ tile presentation IDs.
 
 Native object activation now resolves any projected object with an authored
 server effect or quest/reward link before consulting the legacy object behavior
-registry. This keeps future set-piece templates on the authoritative path while
-leaving ordinary doors, chests, and other un-authored objects compatible with
-the legacy client behavior.
+registry. This keeps future set-piece templates on the authoritative path.
+Ordinary doors, chests, and other un-authored objects remain compatible with
+the legacy client behavior offline; connected presentation-only objects fail
+closed before they can mutate local state.
 
 ## Remaining native-only interaction inventory
 
@@ -372,7 +375,8 @@ explicit migration seams, not server-authority claims:
 
 New authored rows must be accompanied by native parity tests and a protocol
 projection before these fallback branches are removed. The legacy path remains
-available outside the authoritative runtime during this staged migration.
+available outside the authoritative runtime during this staged migration;
+connected sessions do not use these local fallbacks.
 
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
