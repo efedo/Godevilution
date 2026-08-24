@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized the two fixed Vile Betrayer book placements as validated
+  set-level behavior templates: authoritative activation now owns the native
+  activating-player Phasing projectiles and exact target offsets, while the
+  native mega-tile replacement and encounter-state presentation remain
+  documented compatibility seams.
 - Restricted the Godot HUD's generic object, trap, and quest commands to
   visible server-authored targets, using deterministic entity/quest ordering
   instead of arbitrary snapshot entries.

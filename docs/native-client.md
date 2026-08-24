@@ -335,16 +335,17 @@ explicit migration seams, not server-authority claims:
 - Lachdanan's item-gated dialogue hand-in now uses the authored server transition
   for its completion message, Veil of Steel reward, and post-dialogue defeat;
   native presentation still supplies the legacy speech/audio timing fallback.
-- `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Vile
-  Betrayer, Halls of the Blind, and Blood-goal book branches. These require
-  authored set-level placement plus projectile/map effects. Set-level rows can
-  now clone a validated `objects.tsv` behavior template, and the generic
-  `GrantSpellLevel`, `SpawnSpellProjectile`, and
-  `GrantSpellLevelAndSpawnProjectile` effects cover reusable spell-level and
-  Phasing/Guardian-controller transitions, and a direct `WorldMutation` can chain
-  one projectile follow-up; exact native
-  placement, target offsets, and map effects remain. The existing Na-Krul
-  `QuestSequence` row is not a substitute for those remaining semantics.
+- `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Halls of
+  the Blind, and Blood-goal book branches. The Vile Betrayer's two fixed book
+  placements now clone authored templates: server activation owns the native
+  Phasing projectile source and target offsets, while native mega-tile
+  replacement, object resynchronization, and encounter-progress presentation
+  remain compatibility seams. Set-level rows can clone validated
+  `objects.tsv` behavior templates, and the generic `GrantSpellLevel`,
+  `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` effects cover
+  reusable spell-level and Phasing/Guardian-controller transitions. The
+  existing Na-Krul `QuestSequence` row is not a substitute for the remaining
+  book/lever semantics.
 - Quest-specific set-piece mutation and resynchronization remains native for
   the Banner opening transition and associated unique-monster state, plus the
   remaining book/lever set pieces. Procedural level/object parity must precede

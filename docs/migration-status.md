@@ -2,6 +2,11 @@
 
 Status date: 2026-08-24
 
+The base Vile Betrayer fixed book placements now clone validated authored
+templates: the server owns each activation and its native Phasing projectile
+source/target transition, while native mega-tile replacement,
+object-resynchronization, and encounter-progress presentation remain explicit
+compatibility seams.
 Authoritative world mutations now support anchored native mega-tile
 assignments and explicit creation of missing native transparency layers. The
 base Snotspill Banner dialogue now applies the native opening transparency
