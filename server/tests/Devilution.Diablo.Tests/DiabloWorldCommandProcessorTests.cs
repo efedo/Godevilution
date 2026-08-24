@@ -1784,6 +1784,52 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void SnotspillSignChestUsesItsQuestGateAndGeneratesTheBanner()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2136, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3008,
+            4,
+            1,
+            variable1: 1,
+            completionUniqueIdentity: "Snotspill");
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(4, 40, 40));
+        var signChest = new AuthoritativeWorldObject(
+            2002,
+            97,
+            4,
+            10,
+            10,
+            questId: 3008,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.SetVariable1,
+            questTransitionAmount: 2,
+            questTransitionRequiredVariable1: 1,
+            rewardKind: AuthoritativeObjectRewardKind.NormalItem,
+            rewardId: 2136);
+        var world = new DiabloWorldState(
+            geometry,
+            quests: [quest],
+            objects: [signChest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 10, positionY: 9, levelId: 4, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(2002),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(signChest.Activated);
+        Assert.Equal(2, quest.Variable1);
+        var banner = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(2136U, banner.State.StableItemId);
+    }
+
+    [Fact]
     public void ItemGatedQuestDialogueAppliesItsWorldMutationFollowUp()
     {
         var items = new AuthoritativeItemCatalog([

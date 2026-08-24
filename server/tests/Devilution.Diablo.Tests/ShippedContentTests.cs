@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.422.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.423.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -38,6 +38,11 @@ public sealed class ShippedContentTests
             objectTable.ToCanonicalTsv());
         var signChest = Assert.Single(objects, @object => @object.EntityId == 2002);
         Assert.Equal(97U, signChest.ObjectId);
+        Assert.Equal(3008U, signChest.QuestId);
+        Assert.Equal(AuthoritativeObjectQuestTransitionKind.SetVariable1, signChest.QuestTransitionKind);
+        Assert.Equal(1, signChest.QuestTransitionRequiredVariable1);
+        Assert.Equal(AuthoritativeObjectRewardKind.NormalItem, signChest.RewardKind);
+        Assert.Equal(2136U, signChest.RewardId);
     }
 
     [Fact]
@@ -193,7 +198,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.421.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.422.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -792,9 +797,9 @@ public sealed class ShippedContentTests
                 + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t5\n");
         var objectTable = TsvTable.Parse(
             "objects.tsv",
-            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\tprojectile_source\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\tquest_transition_required_variable2\tactivate_on_occupancy\trequired_activated_linked_objects\tnative_object_id\n"
-                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\n"
-                + "9002\t41\t\t\t\t\t\t0\t0\t\tWorldMutation\t9100\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\n");
+            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\tprojectile_source\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\tquest_transition_required_variable2\tactivate_on_occupancy\trequired_activated_linked_objects\tnative_object_id\treward_kind\treward_id\treward_item_level\treward_offset_x\treward_offset_y\n"
+                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\n"
+                + "9002\t41\t\t\t\t\t\t0\t0\t\tWorldMutation\t9100\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\n");
         var placementTable = TsvTable.Parse(
             "set_level_objects.tsv",
             "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\ttemplate_entity_id\n"
@@ -1593,7 +1598,7 @@ public sealed class ShippedContentTests
         var questLinkedObjects = TsvTable.Parse(
             objects.SourcePath,
             objects.ToCanonicalTsv()
-                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\t0\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\n");
+                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\t0\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -2380,7 +2385,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.422.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.423.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

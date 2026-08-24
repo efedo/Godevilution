@@ -258,8 +258,8 @@ When the active pack includes `dialogue_messages.tsv`, the server also sends
 the authored text on `DialogueEvent.text`; older packs continue to use the
 message identity fallback.
 The shared Ogden's Sign/Snotspill quest now uses the same contract for
-Snotspill's banner dialogue and Tavern Sign hand-in, including server-owned
-item consumption and quest completion.
+Snotspill's banner dialogue, server-owned sign-chest Banner reward, and Tavern
+Sign hand-in, including item consumption and quest completion.
 Warlord's two authored dialogue transitions now use the same staged contract;
 the next authored message identity survives in authoritative snapshots, while
 native AI-driven speech completion remains a compatibility fallback.
@@ -322,8 +322,9 @@ explicit migration seams, not server-authority claims:
   server-projected dialogue identity and initial room placement. The opening
   transparency rectangle is now
   server/content-owned, alongside the initial Snotspill encounter,
-  encounter-relative sign chest, `banner1.dun` map fragment, and final
-  item-gated mega-tile/transparency transition.
+  encounter-relative sign chest and its server-owned Banner reward,
+  `banner1.dun` map fragment, and final item-gated mega-tile/transparency
+  transition.
   Gharbad's authored dialogue messages, quest-variable transitions, and
   second-stage random unique-monster reward now move through
   `TalkToQuestRequested`; his remaining encounter-state and presentation

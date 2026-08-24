@@ -9,6 +9,10 @@ closes the quest prematurely. Its three authored tomes and final lever now also
 declare native presentation identities for the compatibility client. Native
 room reconstruction and collision/tile definition parity remain compatibility
 seams.
+The Snotspill Banner sign chest now uses the authored object path: its server
+owned quest-variable gate generates the Banner item, so connected clients no
+longer depend on the native local sign-chest pickup. Native Banner map and
+object resynchronization remain compatibility seams.
 The Vile Betrayer center circle now materializes as an authored occupancy
 trigger. After both linked books activate, a player entering the circle applies
 the deferred center replacement, advances native `_qvar1` to 4, and receives the
@@ -312,9 +316,11 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.421.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.420.0` schema
-for existing manifest-based packs.
+The Diablo content schema is now `1.423.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.422.0` schema
+for existing manifest-based packs. Schema 1.423 adds authored object reward
+columns; the Snotspill Banner sign chest uses them with its server-owned
+quest-variable gate.
 
 Schema 1.421 adds optional occupancy-trigger and linked-object-gate fields to
 `objects.tsv`. The server applies an authored object's normal validated effect
@@ -428,9 +434,11 @@ local quest-completion side effect.
 The native authoritative world bridge now removes unclaimed local monster
 presentation slots after each snapshot, so legacy level-load monsters cannot
 remain visible or occupy tiles after server state is applied.
-Connected native set-piece object initialization now leaves Blind, Blood,
-and Warlord quest-message and map-fragment mutations offline-only; connected
-sessions retain only presentation object setup until authored replacements exist.
+Connected native set-piece object initialization now leaves Blind, Blood, and
+Warlord quest-message and map-fragment mutations offline-only; connected
+sessions retain only presentation object setup until authored replacements
+exist. The Snotspill Banner sign chest is the first connected set-piece object
+to use the server-owned reward path.
 Native monster level setup now also leaves the legacy Zhar-unavailable fallback
 quest-state write offline-only; connected monster presentation is reconciled from
 the authoritative snapshot.
