@@ -38,6 +38,7 @@ public sealed class ShippedContentTests
             objectTable.ToCanonicalTsv());
         var signChest = Assert.Single(objects, @object => @object.EntityId == 2002);
         Assert.Equal(97U, signChest.ObjectId);
+        Assert.Equal(97U, signChest.NativeObjectId);
         Assert.Equal(3008U, signChest.QuestId);
         Assert.Equal(AuthoritativeObjectQuestTransitionKind.SetVariable1, signChest.QuestTransitionKind);
         Assert.Equal(1, signChest.QuestTransitionRequiredVariable1);

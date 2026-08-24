@@ -11,7 +11,8 @@ room reconstruction and collision/tile definition parity remain compatibility
 seams.
 The Snotspill Banner sign chest now uses the authored object path: its server
 owned quest-variable gate generates the Banner item, so connected clients no
-longer depend on the native local sign-chest pickup. Native Banner map and
+longer depend on the native local sign-chest pickup. It also declares the
+native sign-chest presentation identity explicitly; native Banner map and
 object resynchronization remain compatibility seams.
 The Vile Betrayer center circle now materializes as an authored occupancy
 trigger. After both linked books activate, a player entering the circle applies

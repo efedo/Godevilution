@@ -6,7 +6,8 @@ All notable changes to this fork are documented below.
 
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
-  authoritative object path instead of relying on the native local pickup.
+  authoritative object path instead of relying on the native local pickup. The
+  authored row now also declares the native sign-chest presentation identity.
 - Added additive native presentation identity metadata for authored objects. The
   Hellfire Na-Krul tomes and final lever now project through their native book
   and lever visuals while stable authored object IDs remain server-owned.

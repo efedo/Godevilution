@@ -433,6 +433,17 @@ Windows toolchain command.
   progress amount. Nondefault object collision state uses the tagged
   `godevilution-object-collision-v1` hash extension. Native projection removes
   activated or destroyed objects from interaction and presentation occupancy.
+- `ObjectSnapshot.is_shrine` field 15 carries the server-owned shrine capability
+  used by Nova Ball target-tile collision. Field 16 carries the additive typed
+  object presentation family. Fields 17-20 carry authored quest-variable
+  transition kinds, amounts, and required variable gates; clients submit the
+  object entity but never apply these transitions locally. Fields 21-25 carry
+  authored normal/unique item reward identity, item level, and relative spawn
+  offset; clients must not construct or consume the reward from these metadata
+  fields. Fields 26-27 carry server-owned projectile target offsets, and fields
+  28-31 carry ordered quest-sequence follow-up kind, amount, and relative
+  offsets. These fields are additive projection metadata; the server validates
+  and applies the complete operation atomically.
 - `ObjectSnapshot.projectile_source_kind` field 32 carries the authored
   projectile origin. Zero preserves target-origin compatibility; the additive
   activating-player value is currently valid for Phasing rows. Nonzero source
