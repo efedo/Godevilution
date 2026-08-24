@@ -2565,6 +2565,42 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MiscIdOnlyNoSaleTagOverridesLegacyVendorClassification()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            34,
+            1,
+            100,
+            100,
+            1,
+            4,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            NativeItemIndex = 33,
+            MiscId = 44,
+            GenerationTags = new HashSet<string>(["Weapon", "NoSale"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemType = 1,
+            ItemClass = 1,
+            MiscId = 44,
+        };
+
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void NormalizedOilActionUsesContentMetadataForVendorFilters()
     {
         var definition = new AuthoritativeItemDefinition(
@@ -2694,6 +2730,43 @@ public sealed class DiabloStoreCommandProcessorTests
         Assert.True(AuthoritativeStoreSalePolicy.Accepts(
             AuthoritativeStoreRole.Smith,
             definition.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
+    public void MiscIdOnlyQuestTagsOverrideLegacyQuestItemClass()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2400,
+            1,
+            100,
+            100,
+            1,
+            4,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            ItemClass = 1,
+            NativeItemIndex = 6,
+            MiscId = 7,
+            GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemType = 1,
+            ItemClass = 5,
+            MiscId = 7,
+        };
+
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            state,
             items,
             null,
             DiabloGameVariant.Diablo));
