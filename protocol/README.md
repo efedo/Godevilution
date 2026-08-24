@@ -181,6 +181,11 @@ Windows toolchain command.
   `40x40`; the native and managed protocol validators reject larger values.
   A `112x112` town projection without a coarse layer remains valid. This is
   presentation metadata only.
+- `Snapshot.set_level_object_origins` carries the server-owned origins for
+  runtime-generated set-piece object groups. Entries are keyed by validated
+  set-level ID and include the runtime level plus origin cell; relative
+  `set_level_objects.tsv` placements are materialized from this state. The
+  field is additive and absent/empty preserves older snapshot behavior.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

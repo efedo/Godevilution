@@ -122,6 +122,22 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsSetLevelObjectOrigins()
+    {
+        var source = CreateSnapshot() with {
+            SetLevelObjectOrigins = [
+                new DiabloSetLevelObjectOriginState(2, 17, 31, 42),
+                new DiabloSetLevelObjectOriginState(5, 23, 12, 19),
+            ],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        Assert.Equal(source.SetLevelObjectOrigins.ToArray(), restored.SetLevelObjectOrigins.ToArray());
+    }
+
+    [Fact]
     public void VersionOneRoundTripsObjectQuestTransitionMetadata()
     {
         var baseline = CreateSnapshot();

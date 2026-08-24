@@ -35,6 +35,7 @@ internal static class DiabloProtocolMapper
             source.Quests,
             projectedLevels);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
+        ValidateProjectedSetLevelObjectOrigins(source.SetLevelObjectOrigins);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -78,6 +79,14 @@ internal static class DiabloProtocolMapper
             Difficulty = ToProtocolDifficulty(source.Difficulty),
         };
         snapshot.ActiveWorldMutationIds.Add(source.ActiveWorldMutationIds);
+        foreach (var origin in source.SetLevelObjectOrigins.OrderBy(origin => origin.SetLevelId)) {
+            snapshot.SetLevelObjectOrigins.Add(new SetLevelObjectOriginSnapshot {
+                SetLevelId = origin.SetLevelId,
+                LevelId = origin.LevelId,
+                PositionX = origin.PositionX,
+                PositionY = origin.PositionY,
+            });
+        }
         foreach (var participant in projectedParticipants)
             snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks, items));
 
@@ -689,6 +698,28 @@ internal static class DiabloProtocolMapper
             || mutationIds.Distinct().Count() != mutationIds.Count) {
             throw new InvalidDataException(
                 "Authoritative active world mutations contain invalid or duplicate identities.");
+        }
+    }
+
+    private static void ValidateProjectedSetLevelObjectOrigins(
+        IReadOnlyList<DiabloSetLevelObjectOriginState> origins)
+    {
+        if (origins.Count > DiabloWorldState.MaximumWorldStateEntries
+            || origins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || origins.Select(origin => origin.SetLevelId).Distinct().Count() != origins.Count) {
+            throw new InvalidDataException(
+                "Authoritative set-level object origins contain invalid or duplicate identities.");
+        }
+    }
+
+    private static void ValidateProjectedSetLevelObjectOrigins(
+        Google.Protobuf.Collections.RepeatedField<SetLevelObjectOriginSnapshot> origins)
+    {
+        if (origins.Count > DiabloWorldState.MaximumWorldStateEntries
+            || origins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || origins.Select(origin => origin.SetLevelId).Distinct().Count() != origins.Count) {
+            throw new InvalidDataException(
+                "Authoritative set-level object origins contain invalid or duplicate identities.");
         }
     }
 
@@ -1332,6 +1363,7 @@ internal static class DiabloProtocolMapper
         ValidateProtocolSnapshotHash(source);
         ValidateEntityIds(source, allowZeroPlayerEntityId: true);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
+        ValidateProjectedSetLevelObjectOrigins(source.SetLevelObjectOrigins);
         if (source.ActiveStore is not null)
             ValidateProjectedActiveStoreSlots(source.ActiveStore.Items.Select(item => item.StoreSlot));
         if (source.Players.Count != 1) {
@@ -1654,6 +1686,14 @@ internal static class DiabloProtocolMapper
             VictoryTriggered = source.VictoryTriggered,
             Difficulty = FromProtocolDifficulty(source.Difficulty),
             ActiveWorldMutationIds = source.ActiveWorldMutationIds.ToArray(),
+            SetLevelObjectOrigins = source.SetLevelObjectOrigins
+                .OrderBy(origin => origin.SetLevelId)
+                .Select(origin => new DiabloSetLevelObjectOriginState(
+                    origin.SetLevelId,
+                    origin.LevelId,
+                    origin.PositionX,
+                    origin.PositionY))
+                .ToArray(),
         };
         ValidateImportedSimulationState(snapshot);
         return snapshot;

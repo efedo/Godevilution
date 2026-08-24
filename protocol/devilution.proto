@@ -438,6 +438,15 @@ message Snapshot {
 	repeated QuestTownerInteractionSnapshot quest_towner_interactions = 16;
 	// Active content-backed geometry mutations persisted by the server.
 	repeated uint32 active_world_mutation_ids = 17;
+	// Runtime-generated set-piece origins persisted by the server.
+	repeated SetLevelObjectOriginSnapshot set_level_object_origins = 18;
+}
+
+message SetLevelObjectOriginSnapshot {
+	int32 set_level_id = 1;
+	uint32 level_id = 2;
+	int32 position_x = 3;
+	int32 position_y = 4;
 }
 
 message LevelGeometrySnapshot {

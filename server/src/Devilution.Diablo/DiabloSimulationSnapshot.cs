@@ -435,6 +435,13 @@ public sealed record DiabloProjectileState(
 /** Remaining stock for the store visible to the projected player. */
 public sealed record DiabloStoreState(uint StoreId, IReadOnlyList<StoreItem> Items);
 
+/** Persisted origin for one runtime-generated set-piece object group. */
+public sealed record DiabloSetLevelObjectOriginState(
+    int SetLevelId,
+    uint LevelId,
+    int PositionX,
+    int PositionY);
+
 /**
  * Transport-independent snapshot used by protocol and persistence adapters.
  * Collections are captured in stable identity order.
@@ -468,6 +475,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Active content world-cell mutations persisted with the session. */
     public IReadOnlyList<uint> ActiveWorldMutationIds { get; init; } = [];
+
+    /** Runtime-generated set-piece origins persisted with the session. */
+    public IReadOnlyList<DiabloSetLevelObjectOriginState> SetLevelObjectOrigins { get; init; } = [];
 }
 
 public sealed partial class DiabloSimulation
@@ -804,6 +814,14 @@ public sealed partial class DiabloSimulation
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
                 .OrderBy(mutationId => mutationId)
                 .ToArray(),
+            SetLevelObjectOrigins = setLevelObjectOrigins
+                .OrderBy(pair => pair.Key)
+                .Select(pair => new DiabloSetLevelObjectOriginState(
+                    pair.Key,
+                    pair.Value.LevelId,
+                    pair.Value.PositionX,
+                    pair.Value.PositionY))
+                .ToArray(),
         };
     }
 
@@ -815,11 +833,15 @@ public sealed partial class DiabloSimulation
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
         var previousWorldMutationIds = WorldState.ActiveWorldMutationIds.ToArray();
+        var previousSetLevelObjectOrigins = setLevelObjectOrigins.ToArray();
         try {
             RestoreSnapshotCore(destination, snapshot);
         }
         catch {
             WorldState.RestoreWorldMutations(previousWorldMutationIds);
+            setLevelObjectOrigins.Clear();
+            foreach (var (setLevelId, origin) in previousSetLevelObjectOrigins)
+                setLevelObjectOrigins.Add(setLevelId, origin);
             throw;
         }
     }
@@ -842,7 +864,8 @@ public sealed partial class DiabloSimulation
             || snapshot.Projectiles is null
             || snapshot.Portals is null
             || snapshot.Corpses is null
-            || snapshot.ActiveWorldMutationIds is null) {
+            || snapshot.ActiveWorldMutationIds is null
+            || snapshot.SetLevelObjectOrigins is null) {
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
@@ -1651,6 +1674,8 @@ public sealed partial class DiabloSimulation
             return quest;
         }).ToArray();
         var restoredStore = ValidateSavedStore(source, snapshot.ActiveStore);
+        var restoredSetLevelObjectOrigins = ValidateSavedSetLevelObjectOrigins(
+            snapshot.SetLevelObjectOrigins);
 
         DiabloWorldState.ValidateOccupancy(
             source.LevelId,
@@ -1689,6 +1714,14 @@ public sealed partial class DiabloSimulation
         foreach (var corpse in restoredCorpses)
             WorldState.Corpses.Add(corpse.EntityId, corpse);
         RestoreObjects(restoredObjects);
+        setLevelObjectOrigins.Clear();
+        foreach (var origin in restoredSetLevelObjectOrigins)
+            setLevelObjectOrigins.Add(
+                origin.SetLevelId,
+                new AuthoritativeSetLevelObjectOrigin(
+                    origin.LevelId,
+                    origin.PositionX,
+                    origin.PositionY));
         WorldState.Portals.Clear();
         foreach (var portal in savedPortals) {
             WorldState.Portals.Add(
@@ -1808,6 +1841,27 @@ public sealed partial class DiabloSimulation
             || state.IdentifiedValue != state.Value
             || item.Price != checked((uint)state.Value)
             || !state.StatFlag;
+    }
+
+    private IReadOnlyList<DiabloSetLevelObjectOriginState> ValidateSavedSetLevelObjectOrigins(
+        IReadOnlyList<DiabloSetLevelObjectOriginState> origins)
+    {
+        if (origins.Count == 0)
+            return [];
+        if (origins.Count > DiabloWorldState.MaximumWorldStateEntries
+            || origins.Select(origin => origin.SetLevelId).Distinct().Count() != origins.Count
+            || origins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || WorldState.World is null
+            || origins.Any(origin => !WorldState.World.ContainsPosition(
+                origin.LevelId,
+                origin.PositionX,
+                origin.PositionY))) {
+            throw new InvalidDataException(
+                "The authoritative save contains invalid set-level object origins.");
+        }
+        return origins
+            .OrderBy(origin => origin.SetLevelId)
+            .ToArray();
     }
 
     private DiabloStoreState? ValidateSavedStore(

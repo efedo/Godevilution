@@ -32,6 +32,19 @@ public static class SnapshotStateHasher
             foreach (var mutationId in activeWorldMutationIds)
                 hasher.AppendUInt32(mutationId);
         }
+        var setLevelObjectOrigins = snapshot.SetLevelObjectOrigins
+            .OrderBy(origin => origin.SetLevelId)
+            .ToArray();
+        if (setLevelObjectOrigins.Length > 0) {
+            hasher.AppendString("godevilution-set-level-object-origins-v1");
+            hasher.AppendUInt64((ulong)setLevelObjectOrigins.Length);
+            foreach (var origin in setLevelObjectOrigins) {
+                hasher.AppendInt32(origin.SetLevelId);
+                hasher.AppendUInt32(origin.LevelId);
+                hasher.AppendInt32(origin.PositionX);
+                hasher.AppendInt32(origin.PositionY);
+            }
+        }
         var players = snapshot.Players.OrderBy(player => player.EntityId).ToArray();
         hasher.AppendUInt64((ulong)players.Length);
         foreach (var player in players) {

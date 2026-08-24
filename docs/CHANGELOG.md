@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
 - Connected relative set-level placements to the authoritative simulation:
   initial origins and later level-entry origin publication now materialize
   validated objects with deterministic reserved identities.
+- Persisted runtime-generated set-piece origins through transport-neutral
+  snapshots and version-1 saves, including canonical state-hash coverage.
 - Clarified that un-authored native object behavior and other local interaction
   fallbacks are offline-only; connected sessions require authoritative object
   projections and fail closed otherwise.

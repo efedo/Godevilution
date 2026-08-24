@@ -8,6 +8,36 @@ namespace Devilution.Server.Tests;
 public sealed class SnapshotStateHasherTests
 {
     [Fact]
+    public void SetLevelObjectOriginsAreCanonicalAndHashRelevant()
+    {
+        var first = new Snapshot {
+            SetLevelObjectOrigins = {
+                new SetLevelObjectOriginSnapshot {
+                    SetLevelId = 5,
+                    LevelId = 23,
+                    PositionX = 12,
+                    PositionY = 19,
+                },
+                new SetLevelObjectOriginSnapshot {
+                    SetLevelId = 2,
+                    LevelId = 17,
+                    PositionX = 31,
+                    PositionY = 42,
+                },
+            },
+        };
+        var reordered = first.Clone();
+        var origins = reordered.SetLevelObjectOrigins.ToArray();
+        reordered.SetLevelObjectOrigins.Clear();
+        reordered.SetLevelObjectOrigins.Add(origins.Reverse());
+        var changed = first.Clone();
+        changed.SetLevelObjectOrigins[0].PositionX++;
+
+        Assert.Equal(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(reordered));
+        Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void EmptySnapshotHashesItsZeroPlayerCount()
     {
         var snapshot = new Snapshot();

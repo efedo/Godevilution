@@ -218,6 +218,12 @@ additive `active_world_mutation_ids` field preserves those identities through
 protocol-compatible saves. Both are server-owned state: clients do not author
 map changes.
 
+The additive `set_level_object_origins` field preserves runtime-generated
+set-piece origins through snapshots and protocol-compatible saves. Each entry
+identifies one validated set-level origin by set-level ID, runtime level, and
+origin cell; the server uses it to materialize relative set-level object
+placements. An absent or empty field retains compatibility with older saves.
+
 The repeated player projection contains every participant with an assigned
 entity ID. Its wire order is receiver-relative: the receiving participant is
 first, followed by all other participants in ascending entity-ID order. IDs are

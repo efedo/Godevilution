@@ -10,10 +10,10 @@ projection; legacy object behavior remains an offline compatibility path.
 
 The authoritative simulation now accepts and publishes generated set-piece
 origins, materializing relative `set_level_objects.tsv` rows at level-entry
-time with deterministic reserved identities and world-bound validation. This
-connects the 1.426 placement contract to runtime state; producing the actual
-Blind, Blood, and Warlord origins from native-compatible level generation and
-persisting those origins through saves remain follow-up work.
+time with deterministic reserved identities and world-bound validation. These
+origins now cross transport-neutral snapshots and version-1 saves with
+canonical state hashing; producing the actual Blind, Blood, and Warlord
+origins from native-compatible level generation remains follow-up work.
 
 Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's

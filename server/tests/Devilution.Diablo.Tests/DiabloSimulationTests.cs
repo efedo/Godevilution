@@ -84,6 +84,43 @@ public sealed class DiabloSimulationTests
         Assert.Same(@object, simulation.WorldState.Objects[@object.EntityId]);
     }
 
+    [Fact]
+    public void SnapshotRoundTripRestoresPublishedSetLevelObjectOrigins()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 32, 32));
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, -2, 3, 0, 0, 2, 2) {
+                PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+            },
+        ]);
+        var options = new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+            World = world,
+            SetLevelObjects = catalog,
+        };
+        var source = DiabloSimulationFactory.Instance.Create(options);
+        source.PublishSetLevelObjectOrigin(6, new AuthoritativeSetLevelObjectOrigin(17, 12, 7));
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+
+        var restoredWorld = new AuthoritativeWorld();
+        restoredWorld.AddLevel(new AuthoritativeLevel(0, 32, 32));
+        restoredWorld.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = restoredWorld,
+                SetLevelObjects = catalog,
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var origin = Assert.Single(replacement.SetLevelObjectOrigins);
+        Assert.Equal((6, 17U, 12, 7), (
+            origin.Key,
+            origin.Value.LevelId,
+            origin.Value.PositionX,
+            origin.Value.PositionY));
+    }
+
     [Theory]
     [InlineData(DiabloDifficulty.Normal, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 10)]
     [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 130)]
