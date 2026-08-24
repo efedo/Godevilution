@@ -59,7 +59,8 @@ public partial class WorldPresentation : Node2D
                 reset);
             displayedPlayerSnapshots[player.EntityId] = player.Clone();
         }
-        foreach (var monster in snapshot.Monsters) {
+        foreach (var monster in snapshot.Monsters.Where(monster =>
+                     AuthoritativeMonsterPresentationVisibility.IsVisible(monster, localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(monster.EntityId);
             UpdatePosition(monster.EntityId, ToScreen(monster.PositionX, monster.PositionY), delta, monster.LevelId);
         }
@@ -176,9 +177,7 @@ public partial class WorldPresentation : Node2D
             DrawPlayer(player, isLocal ? predictedPlayerPosition : null, isLocal, currentLevel);
         }
         foreach (var monster in snapshot.Monsters.Where(monster =>
-                     AuthoritativeLevelVisibility.IsVisible(monster.LevelId, currentLevel)
-                     && monster.Alive
-                     && !monster.SneakHidden))
+                     AuthoritativeMonsterPresentationVisibility.IsVisible(monster, currentLevel)))
             DrawMonster(monster);
         foreach (var item in snapshot.WorldItems.Where(item => AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevel)))
             DrawItem(item, searchActive);
@@ -306,7 +305,8 @@ public partial class WorldPresentation : Node2D
         if (action.TargetEntityId == 0 || snapshot is null)
             return;
         var targetMonster = snapshot.Monsters.FirstOrDefault(monster =>
-            monster.EntityId == action.TargetEntityId && monster.Alive);
+            monster.EntityId == action.TargetEntityId
+            && AuthoritativeMonsterPresentationVisibility.IsVisible(monster, currentLevel));
         var targetPlayer = targetMonster is null
             ? snapshot.Players.FirstOrDefault(candidate =>
                 candidate.EntityId == action.TargetEntityId && candidate.Life > 0)

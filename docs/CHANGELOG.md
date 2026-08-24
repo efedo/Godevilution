@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
 - Applied authoritative object missile-passability and breakable/broken state
   to native compatibility objects, preventing stale collision metadata after a
   snapshot replacement.
+- Centralized Godot's authoritative monster presentation visibility rule so
+  dead or `SneakHidden` monsters are removed from cached presentation
+  positions and cannot receive action-indicator target lines.
 - Aligned Godot quest/towner validation with the native duplicate-level
   geometry boundary. Duplicate level identities now fail with the controlled
   invalid-snapshot error before interaction bounds are evaluated, rather than

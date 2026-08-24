@@ -14,6 +14,10 @@ Native object projection now also preserves server-owned `TrapArmed` state and
 recognizes trap-only objects as authoritative disarm targets, matching Godot.
 Native compatibility objects now also receive authoritative missile-passability
 and breakable/broken state, preventing stale collision metadata on resync.
+Godot now applies one authoritative monster presentation visibility predicate
+when hydrating cached positions, drawing monsters, and rendering action-target
+indicators; dead or `SneakHidden` monsters cannot leak through a presentation
+path even when they remain present in the complete snapshot.
 
 Godot quest/towner snapshot validation now rejects duplicate level-geometry
 identities through its normal invalid-snapshot boundary before evaluating
