@@ -4993,11 +4993,17 @@ bool Monster::isPossibleToHit() const
 
 void Monster::tag(const Player &tagger)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	whoHit |= 1 << tagger.getId();
 }
 
 bool Monster::tryLiftGargoyle()
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return false;
+
 	if (ai == MonsterAIID::Gargoyle && (flags & MFLAG_ALLOW_SPECIAL) != 0) {
 		flags &= ~MFLAG_ALLOW_SPECIAL;
 		mode = MonsterMode::SpecialMeleeAttack;

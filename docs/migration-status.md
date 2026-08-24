@@ -12,6 +12,9 @@ server-owned monster or player state when reached outside the legacy loop.
 Direct native monster damage application now fails closed as well, preventing
 connected missile or protocol callers from changing server-owned hit points or
 entering legacy death/drop handling.
+Native monster hit attribution and gargoyle wake-up mutation now fail closed
+under the same boundary; connected presentation cannot update server-owned
+attacker or special-attack state.
 Native monster knockback and petrification mutators now use the same boundary;
 connected presentation continues to use snapshot-driven animation/state
 projection rather than local simulation.

@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Guarded direct native monster damage application with the same policy, so
   connected missile or protocol callers cannot mutate server-owned hit points
   or trigger legacy death/drop handling.
+- Guarded native monster hit attribution and gargoyle wake-up mutation with
+  the connected-session simulation policy; connected presentation cannot
+  update server-owned attacker or special-attack state.
 - Guarded native monster knockback and petrification mutators with the same
   policy; authoritative clients retain only snapshot-driven presentation for
   those states.
