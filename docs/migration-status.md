@@ -8,6 +8,8 @@ hydration, so stale compatibility slots are removed rather than rendered.
 The native projection now also preserves server-owned `SneakHidden` state;
 hidden monsters are omitted from native presentation and interaction lookup,
 matching Godot's visibility and targeting filters.
+Native entity visibility now uses one level-0 wildcard predicate across world
+lookups and remote-player targeting, matching the Godot level-visibility rule.
 
 Godot quest/towner snapshot validation now rejects duplicate level-geometry
 identities through its normal invalid-snapshot boundary before evaluating

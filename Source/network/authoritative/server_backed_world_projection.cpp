@@ -5,6 +5,11 @@
 
 namespace devilution::authoritative {
 
+bool IsAuthoritativeLevelVisible(uint32_t projectedLevelId, uint32_t activeLevelId) noexcept
+{
+	return projectedLevelId == 0 || projectedLevelId == activeLevelId;
+}
+
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	std::vector<ProjectedMonsterSnapshot> monsters,
 	std::vector<ProjectedWorldItemSnapshot> worldItems,
@@ -121,7 +126,7 @@ std::optional<uint32_t> ServerBackedWorldProjection::WorldItemAt(int32_t positio
 {
 	const auto levelId = levelId_;
 	const auto item = std::find_if(worldItems_.begin(), worldItems_.end(), [positionX, positionY, levelId](const auto &candidate) {
-		return candidate.entityId != 0 && (candidate.levelId == 0 || candidate.levelId == levelId)
+		return candidate.entityId != 0 && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
 		    && candidate.positionX == positionX && candidate.positionY == positionY;
 	});
 	return item == worldItems_.end() ? std::nullopt : std::optional<uint32_t> { item->entityId };
@@ -132,7 +137,7 @@ std::optional<uint32_t> ServerBackedWorldProjection::MonsterAt(int32_t positionX
 	const auto levelId = levelId_;
 	const auto monster = std::find_if(monsters_.begin(), monsters_.end(), [positionX, positionY, levelId](const auto &candidate) {
 		return candidate.entityId != 0 && candidate.alive && !candidate.sneakHidden
-		    && (candidate.levelId == 0 || candidate.levelId == levelId)
+		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
 		    && ((candidate.positionX == positionX && candidate.positionY == positionY)
 		        || (candidate.moving && candidate.futurePositionX == positionX && candidate.futurePositionY == positionY));
 	});
@@ -146,7 +151,8 @@ std::optional<uint32_t> ServerBackedWorldProjection::ObjectAt(int32_t positionX,
 {
 	const auto levelId = levelId_;
 	const auto object = std::find_if(objects_.begin(), objects_.end(), [positionX, positionY, levelId](const auto &candidate) {
-		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed && (candidate.levelId == 0 || candidate.levelId == levelId)
+		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed
+		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
 		    && candidate.positionX == positionX && candidate.positionY == positionY;
 	});
 	return object == objects_.end() ? std::nullopt : std::optional<uint32_t> { object->entityId };
@@ -160,7 +166,7 @@ std::optional<uint32_t> ServerBackedWorldProjection::QuestObjectAt(int32_t posit
 		const bool isQuestEffect = effectKind == ProjectedObjectEffectKind::QuestSequence
 		    || effectKind == ProjectedObjectEffectKind::QuestItemCompletion;
 		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed && isQuestEffect
-		    && (candidate.levelId == 0 || candidate.levelId == levelId)
+		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
 		    && candidate.positionX == positionX && candidate.positionY == positionY;
 	});
 	return object == objects_.end() ? std::nullopt : std::optional<uint32_t> { object->entityId };
@@ -177,7 +183,7 @@ std::optional<uint32_t> ServerBackedWorldProjection::AuthoritativeObjectAt(int32
 		    || candidate.questSequenceFollowUpKind != 0;
 		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed
 		    && hasAuthoritativeBehavior
-		    && (candidate.levelId == 0 || candidate.levelId == levelId)
+		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
 		    && candidate.positionX == positionX && candidate.positionY == positionY;
 	});
 	return object == objects_.end() ? std::nullopt : std::optional<uint32_t> { object->entityId };

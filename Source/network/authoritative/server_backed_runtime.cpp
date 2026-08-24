@@ -825,7 +825,7 @@ std::optional<uint32_t> ServerBackedRuntime::PlayerEntityIdAt(int32_t positionX,
 		return std::nullopt;
 	for (const auto &player : session_->PlayerStates()) {
 		if (player.entityId == 0 || player.entityId == session_->EntityId()
-		    || player.levelId != local->levelId) {
+		    || !IsAuthoritativeLevelVisible(player.levelId, local->levelId)) {
 			continue;
 		}
 		const bool atCurrentPosition = player.positionX == positionX

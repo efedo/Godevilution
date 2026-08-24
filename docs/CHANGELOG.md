@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Preserved authoritative monster stealth state through the native projection;
   hidden monsters now remain absent from native presentation and interaction
   lookup, matching Godot's `SneakHidden` behavior.
+- Centralized the native level-visibility wildcard and applied it to remote
+  player targeting, so projected level `0` players follow the same active-level
+  visibility rule as Godot and other native authoritative entities.
 - Aligned Godot quest/towner validation with the native duplicate-level
   geometry boundary. Duplicate level identities now fail with the controlled
   invalid-snapshot error before interaction bounds are evaluated, rather than

@@ -17,6 +17,9 @@
 
 namespace devilution::authoritative {
 
+/** Returns whether a projected entity level is visible on the active level. */
+[[nodiscard]] bool IsAuthoritativeLevelVisible(uint32_t projectedLevelId, uint32_t activeLevelId) noexcept;
+
 /** Keeps world projections stable while native render and interaction code catches up. */
 class ServerBackedWorldProjection {
 public:

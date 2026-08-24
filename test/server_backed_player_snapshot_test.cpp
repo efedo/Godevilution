@@ -1394,6 +1394,10 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries)
 {
+	EXPECT_TRUE(IsAuthoritativeLevelVisible(0, 1));
+	EXPECT_TRUE(IsAuthoritativeLevelVisible(1, 1));
+	EXPECT_FALSE(IsAuthoritativeLevelVisible(2, 1));
+
 	ProjectedLevelGeometrySnapshot geometry;
 	geometry.levelId = 1;
 	geometry.width = 3;
