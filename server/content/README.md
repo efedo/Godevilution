@@ -1818,8 +1818,8 @@ Schema 1.425 adds optional `world_item_anchor_position_x` and
 present, a validated single-player quest completes when an item is dropped on
 the quest's level and anchor cell; the item remains an ordinary authoritative
 world item and therefore persists through snapshots and saves. Activation
-rejects an anchor outside the authored quest level. Older quest types retain
-ordinary behavior.
+rejects an anchor outside or on a blocked cell in the authored quest level.
+Older quest types retain ordinary behavior.
 
 Schema 1.421 adds optional `quest_transition_kind`,
 `quest_transition_amount`, `quest_transition_required_variable1`,

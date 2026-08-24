@@ -84,10 +84,11 @@ public sealed class AuthoritativeQuestTypeCatalog
                 || definition.WorldItemAnchorPositionY is not { } positionY) {
                 continue;
             }
-            if (!world.ContainsPosition(quest.LevelId, positionX, positionY)) {
+            if (!world.ContainsPosition(quest.LevelId, positionX, positionY)
+                || !world.IsWalkable(quest.LevelId, positionX, positionY)) {
                 throw new InvalidDataException(
                     $"Quest type {quest.QuestId} world-item anchor ({positionX},{positionY}) "
-                    + $"is outside quest level {quest.LevelId}.");
+                    + $"is outside or blocked on quest level {quest.LevelId}.");
             }
         }
     }
