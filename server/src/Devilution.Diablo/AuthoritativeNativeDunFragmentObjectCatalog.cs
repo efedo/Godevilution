@@ -14,6 +14,9 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
     /** Optional generated unique encounter used as the placement anchor. */
     public string AnchorUniqueIdentity { get; init; } = string.Empty;
 
+    /** Optional behavior-only object entity cloned when the placement materializes. */
+    public uint TemplateEntityId { get; init; }
+
     public AuthoritativeNativeDunFragmentObjectPlacement Validate()
     {
         var anchorUniqueIdentity = AnchorUniqueIdentity.Trim();
@@ -75,11 +78,24 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
         AuthoritativeNativeDunFragmentCatalog fragments,
         IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
     {
+        _ = Materialize(world, objects, [], fragments, combatTargets);
+    }
+
+    /** Applies placements and returns any objects cloned from behavior templates. */
+    public IReadOnlyList<AuthoritativeWorldObject> Materialize(
+        AuthoritativeWorld world,
+        IEnumerable<AuthoritativeWorldObject> objects,
+        IEnumerable<AuthoritativeWorldObject> templates,
+        AuthoritativeNativeDunFragmentCatalog fragments,
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
+    {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(fragments);
         var fragmentsById = fragments.Definitions.ToDictionary(definition => definition.FragmentId);
         var objectsById = objects.ToDictionary(@object => @object.EntityId);
+        var templatesById = templates.ToDictionary(@object => @object.EntityId);
         var anchorPositions = objectsById.ToDictionary(
             pair => pair.Key,
             pair => (pair.Value.LevelId, pair.Value.PositionX, pair.Value.PositionY));
@@ -88,11 +104,13 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
             .GroupBy(target => target.UniqueIdentity, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
         var plannedPositions = new Dictionary<uint, (int X, int Y)>();
+        var generatedObjects = new List<AuthoritativeWorldObject>();
         foreach (var placement in placements) {
             if (!fragmentsById.TryGetValue(placement.FragmentId, out var fragment))
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} references unknown fragment {placement.FragmentId}.");
-            if (!objectsById.TryGetValue(placement.EntityId, out var target))
+            objectsById.TryGetValue(placement.EntityId, out var target);
+            if (target is null && placement.TemplateEntityId == 0)
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} references missing object {placement.EntityId}.");
             (uint LevelId, int PositionX, int PositionY) anchor;
@@ -103,8 +121,17 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
             } else {
                 if (!targetsByUniqueIdentity.TryGetValue(
                         placement.AnchorUniqueIdentity,
-                        out var matchingTargets)
-                    || matchingTargets.Length != 1) {
+                        out var matchingTargets)) {
+                    if (string.Equals(
+                            fragment.AnchorUniqueIdentity,
+                            placement.AnchorUniqueIdentity,
+                            StringComparison.Ordinal))
+                        continue;
+                    throw new InvalidDataException(
+                        $"Native DUN fragment object placement {placement.PlacementId} unique anchor "
+                        + $"'{placement.AnchorUniqueIdentity}' does not match its fragment.");
+                }
+                if (matchingTargets.Length != 1) {
                     throw new InvalidDataException(
                         $"Native DUN fragment object placement {placement.PlacementId} unique anchor "
                         + $"'{placement.AnchorUniqueIdentity}' must match exactly one encounter; found "
@@ -113,10 +140,11 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 var uniqueTarget = matchingTargets[0];
                 anchor = (uniqueTarget.LevelId, uniqueTarget.PositionX, uniqueTarget.PositionY);
             }
-            if (target.LevelId != anchor.LevelId)
+            if (target is not null && target.LevelId != anchor.LevelId)
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} targets level {target.LevelId} but its anchor is on level {anchor.LevelId}.");
-            if (fragment.LevelId != target.LevelId
+            var targetLevelId = target?.LevelId ?? anchor.LevelId;
+            if (fragment.LevelId != targetLevelId
                 || fragment.AnchorEntityId != placement.AnchorEntityId
                 || !string.Equals(
                     fragment.AnchorUniqueIdentity,
@@ -127,16 +155,28 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
             }
             var positionX = checked(anchor.PositionX + placement.OffsetX);
             var positionY = checked(anchor.PositionY + placement.OffsetY);
-            if (!world.ContainsPosition(target.LevelId, positionX, positionY))
+            if (!world.ContainsPosition(targetLevelId, positionX, positionY))
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} exceeds level bounds.");
-            plannedPositions.Add(placement.EntityId, (positionX, positionY));
+            if (target is not null) {
+                plannedPositions.Add(placement.EntityId, (positionX, positionY));
+            } else {
+                if (!templatesById.TryGetValue(placement.TemplateEntityId, out var template))
+                    throw new InvalidDataException(
+                        $"Native DUN fragment object placement {placement.PlacementId} references missing template {placement.TemplateEntityId}.");
+                generatedObjects.Add(template.WithPlacement(
+                    placement.EntityId,
+                    targetLevelId,
+                    positionX,
+                    positionY));
+            }
         }
 
         foreach (var planned in plannedPositions) {
             objectsById[planned.Key].PositionX = planned.Value.X;
             objectsById[planned.Key].PositionY = planned.Value.Y;
         }
+        return generatedObjects;
     }
 
     public static AuthoritativeNativeDunFragmentObjectCatalog LoadTsv(
@@ -156,6 +196,7 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                     && !string.Equals(identity, "none", StringComparison.OrdinalIgnoreCase)
                     ? identity
                     : string.Empty,
+                TemplateEntityId = row.OptionalUInt32("template_entity_id"),
             }));
     }
 }

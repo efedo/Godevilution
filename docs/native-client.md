@@ -318,8 +318,9 @@ still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
 - `TalktoMonster` still owns Snotspill's Banner quest-specific state changes
-  after the initial room placement. The initial Snotspill encounter and
-  `banner1.dun` map fragment are now server/content-owned.
+  after the initial room placement. The initial Snotspill encounter,
+  encounter-relative sign chest, and `banner1.dun` map fragment are now
+  server/content-owned.
   Gharbad's authored dialogue messages, quest-variable transitions, and
   second-stage random unique-monster reward now move through
   `TalkToQuestRequested`; his remaining encounter-state and presentation

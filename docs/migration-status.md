@@ -770,6 +770,11 @@ scaled hit points), not only the client's difficulty label.
   fixed-object fragments apply during activation, while generated unique
   encounters apply their validated fragments when materialized on level entry.
 
+- Native-DUN fragment object placements can now clone behavior-only
+  `objects.tsv` templates. The authored Snotspill Banner sign chest therefore
+  materializes at its unique encounter-relative coordinate; an unavailable
+  quest-gated Snotspill target leaves no orphan chest.
+
 - The initial Snotspill Banner room is now externalized as a unique-anchored
   `banner1.dun` fragment plus an explicit Hell placement. Later Banner quest
   state changes and resynchronization remain native until their authored

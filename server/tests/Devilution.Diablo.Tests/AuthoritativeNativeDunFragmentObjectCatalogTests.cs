@@ -60,6 +60,46 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalogTests
     }
 
     [Fact]
+    public void MaterializesAUniqueAnchoredBehaviorTemplate()
+    {
+        var catalog = AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
+            "native_dun_fragment_objects.tsv",
+            "placement_id\tfragment_id\tentity_id\tanchor_entity_id\toffset_x\toffset_y\tanchor_unique_identity\ttemplate_entity_id\n"
+                + "1\t7\t10\t0\t-2\t3\tSnotspill\t100\n");
+        var fragments = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                7,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorUniqueIdentity: "Snotspill"),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 12));
+        var template = new AuthoritativeWorldObject(100, 97, 0, 0, 0);
+        var anchor = new AuthoritativeCombatTarget(
+            11,
+            4,
+            5,
+            10,
+            levelId: 24,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+
+        var generated = catalog.Materialize(world, [], [template], fragments, [anchor]);
+
+        var result = Assert.Single(generated);
+        Assert.Equal((10U, 97U, 24U, 2, 8), (
+            result.EntityId,
+            result.ObjectId,
+            result.LevelId,
+            result.PositionX,
+            result.PositionY));
+    }
+
+    [Fact]
     public void RejectsPlacementsThatReferenceAnUnknownFragment()
     {
         var catalog = new AuthoritativeNativeDunFragmentObjectCatalog([

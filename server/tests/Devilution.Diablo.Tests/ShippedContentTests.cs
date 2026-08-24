@@ -31,6 +31,13 @@ public sealed class ShippedContentTests
         Assert.Equal(4U, placement.LevelId);
         Assert.Equal((25, 25), (placement.PositionX, placement.PositionY));
         Assert.Equal(3008U, placement.RequiredQuestId);
+
+        var objectTable = pack.Tables.Single(table => table.SourcePath == "objects.tsv");
+        var objects = AuthoritativeWorldObjectCatalog.LoadTemplates(
+            objectTable.SourcePath,
+            objectTable.ToCanonicalTsv());
+        var signChest = Assert.Single(objects, @object => @object.EntityId == 2002);
+        Assert.Equal(97U, signChest.ObjectId);
     }
 
     [Fact]
@@ -95,6 +102,26 @@ public sealed class ShippedContentTests
         Assert.DoesNotContain(
             activation.Simulation.WorldState.CombatTargets.Values,
             target => target.UniqueIdentity == "Snotspill");
+        Assert.DoesNotContain(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 2002 || @object.ObjectId == 97);
+    }
+
+    [Fact]
+    public void AvailableSnotspillActivationMaterializesTheBannerSignChest()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("available-banner", "1", [pack])),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var signChest = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 2002);
+        Assert.Equal(97U, signChest.ObjectId);
+        Assert.Equal((38, 35), (signChest.PositionX, signChest.PositionY));
     }
 
     [Fact]
@@ -1120,6 +1147,8 @@ public sealed class ShippedContentTests
             .ToArray();
         Assert.Equal(objectIds.Length, objects.Select(@object => @object.ObjectId).Distinct().Count());
         Assert.All(objectsTable.Rows, row => {
+            if (row.OptionalBoolean("template_only"))
+                return;
             var symbol = row.Required("object_symbol");
             Assert.Equal(row.RequiredUInt32("object_id"), stableIds.Resolve("object", symbol));
         });

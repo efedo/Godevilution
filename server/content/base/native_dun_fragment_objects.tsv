@@ -1,1 +1,2 @@
-placement_id	fragment_id	entity_id	anchor_entity_id	offset_x	offset_y	anchor_unique_identity
+placement_id	fragment_id	entity_id	anchor_entity_id	offset_x	offset_y	anchor_unique_identity	template_entity_id
+1	1	2002	0	13	10	Snotspill	2002

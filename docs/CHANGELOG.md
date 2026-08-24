@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
   single-player quest-pool exclusions preserve native encounter availability.
 - Allow native-DUN fragment object placements to follow generated unique
   encounters after materialization, while retaining fixed-anchor compatibility.
+- Materialize the authored Snotspill Banner sign chest by cloning a validated
+  behavior-only object template at its unique encounter-relative position;
+  unavailable quest-gated encounters produce no orphan chest.
 - Externalize a validated Storyteller service-only store identity for paid Cain
   identification, preserving the previous additive content schema while the
   connected native menu is routed through the authoritative session.

@@ -658,13 +658,22 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null && objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         if (nativeDunFragmentObjects is not null) {
-            if (world is null || objects is null || nativeDunFragments is null)
+            if (world is null
+                || nativeDunFragments is null
+                || objects is null && objectTemplates is null)
                 throw new InvalidDataException(
                     "Native DUN fragment object placements require a world, fragments, and authored objects.");
-            nativeDunFragmentObjects
+            var generatedObjects = nativeDunFragmentObjects
                 .Filter(placement => placement.AnchorEntityId != 0)
-                .Apply(world, objects, nativeDunFragments);
-            AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
+                .Materialize(
+                    world,
+                    objects ?? [],
+                    objectTemplates ?? [],
+                    nativeDunFragments);
+            if (generatedObjects.Count > 0)
+                objects = (objects ?? []).Concat(generatedObjects).ToArray();
+            if (objects is not null)
+                AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         }
         if (objectDefinitions.Length > 0)
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objectDefinitions, itemCatalog!);
@@ -1047,13 +1056,23 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (nativeDunFragmentObjects is not null
             && nativeDunFragmentObjects.Placements.Any(placement => placement.AnchorEntityId == 0)) {
-            if (world is null || objects is null || nativeDunFragments is null)
+            if (world is null
+                || nativeDunFragments is null
+                || objects is null && objectTemplates is null)
                 throw new InvalidDataException(
                     "Native DUN fragment object placements require a world, fragments, and authored objects.");
-            nativeDunFragmentObjects
+            var generatedObjects = nativeDunFragmentObjects
                 .Filter(placement => placement.AnchorEntityId == 0)
-                .Apply(world, objects, nativeDunFragments, combatTargets);
-            AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
+                .Materialize(
+                    world,
+                    objects ?? [],
+                    objectTemplates ?? [],
+                    nativeDunFragments,
+                    combatTargets);
+            if (generatedObjects.Count > 0)
+                objects = (objects ?? []).Concat(generatedObjects).ToArray();
+            if (objects is not null)
+                AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         }
         if (nativeDunFragments is not null) {
             if (world is null || objects is null)
