@@ -86,6 +86,35 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SimulationPublishesDeferredProceduralOriginsWhenGeometryArrives()
+    {
+        var world = new AuthoritativeWorld();
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                SetLevelObjects = new AuthoritativeSetLevelObjectCatalog([
+                    new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, 1, 1, 0, 0, 1, 1) {
+                        PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+                    },
+                ]),
+                ProceduralSetPieceOrigins = new AuthoritativeProceduralSetPieceOriginCatalog([
+                    new AuthoritativeProceduralSetPieceOriginDefinition(6, 17, 4, 4, 1234),
+                ]),
+                RandomSeed = 99,
+            });
+
+        Assert.Empty(simulation.SetLevelObjectOrigins);
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+
+        var published = simulation.PublishAvailableProceduralSetPieceOrigins();
+        var origin = Assert.Single(published).Value;
+        var @object = Assert.Single(simulation.WorldState.Objects.Values);
+        Assert.Equal((origin.LevelId, origin.PositionX + 1, origin.PositionY + 1),
+            (@object.LevelId, @object.PositionX, @object.PositionY));
+        Assert.Empty(simulation.PublishAvailableProceduralSetPieceOrigins());
+    }
+
+    [Fact]
     public void SimulationPublishesAndMaterializesRelativeSetLevelObjectsAfterConstruction()
     {
         var world = new AuthoritativeWorld();

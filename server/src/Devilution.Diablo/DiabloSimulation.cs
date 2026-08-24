@@ -310,7 +310,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             questTypes: options.QuestTypes,
             proceduralSetPieceOrigins: options.ProceduralSetPieceOrigins?.Plan(
                 options.World ?? new AuthoritativeWorld(),
-                options.RandomSeed));
+                options.RandomSeed),
+            proceduralSetPieceOriginCatalog: options.ProceduralSetPieceOrigins,
+            proceduralSetPieceOriginSeed: options.RandomSeed);
     }
 }
 
@@ -333,6 +335,8 @@ public sealed partial class DiabloSimulation
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeNativeDunFragmentCatalog? nativeDunFragments;
     private readonly AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects;
+    private readonly AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog;
+    private readonly uint proceduralSetPieceOriginSeed;
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly ComposedContent? content;
     private readonly HashSet<uint> appliedNativeDunFragments = [];
@@ -371,7 +375,9 @@ public sealed partial class DiabloSimulation
         IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
         ComposedContent? content = null,
         AuthoritativeQuestTypeCatalog? questTypes = null,
-        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? proceduralSetPieceOrigins = null)
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? proceduralSetPieceOrigins = null,
+        AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog = null,
+        uint proceduralSetPieceOriginSeed = 0)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -412,6 +418,8 @@ public sealed partial class DiabloSimulation
         this.nativeDunFragmentObjects = nativeDunFragmentObjects;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         this.content = content;
+        this.proceduralSetPieceOriginCatalog = proceduralSetPieceOriginCatalog;
+        this.proceduralSetPieceOriginSeed = proceduralSetPieceOriginSeed;
         MaterializeRelativeSetLevelObjects();
         ApplyDeferredNativeDunFragments();
         ReconcileProceduralSpawnState();
@@ -472,6 +480,35 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(origin);
         return PublishSetLevelObjectOrigin(setLevelId, origin, materialize: true);
+    }
+
+    /**
+     * Publishes origins whose generated target levels became available after
+     * initial activation. Existing origins are revalidated but not rematerialized.
+     */
+    public IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>
+        PublishAvailableProceduralSetPieceOrigins()
+    {
+        if (proceduralSetPieceOriginCatalog is null || WorldState.World is null)
+            return new Dictionary<int, AuthoritativeSetLevelObjectOrigin>();
+
+        var planned = proceduralSetPieceOriginCatalog.Plan(
+            WorldState.World,
+            proceduralSetPieceOriginSeed);
+        var published = new Dictionary<int, AuthoritativeSetLevelObjectOrigin>();
+        foreach (var (setLevelId, origin) in planned) {
+            if (setLevelObjectOrigins.TryGetValue(setLevelId, out var existing)) {
+                if (existing != origin)
+                    throw new InvalidDataException(
+                        $"Procedural set-level origin {setLevelId} conflicts with its published origin.");
+                continue;
+            }
+
+            PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
+            published.Add(setLevelId, origin);
+            MaterializeRelativeSetLevelObjects(setLevelId);
+        }
+        return published;
     }
 
     private IReadOnlyList<AuthoritativeWorldObject> PublishSetLevelObjectOrigin(
@@ -554,7 +591,10 @@ public sealed partial class DiabloSimulation
             ?? players.ToArray();
         foreach (var participant in participants)
             ConfigurePlayer(participant);
+        var previousLevelId = player.LevelId;
         var result = worldCommands.Execute(player, intent, appliedTick, participants);
+        if (result.Succeeded && player.LevelId != previousLevelId)
+            PublishAvailableProceduralSetPieceOrigins();
         if (result.Succeeded)
             EnsureProceduralMonsterSpawns(player.LevelId, participants);
         return result;

@@ -12,8 +12,12 @@ The authoritative simulation now accepts and publishes generated set-piece
 origins, materializing relative `set_level_objects.tsv` rows at level-entry
 time with deterministic reserved identities and world-bound validation. These
 origins now cross transport-neutral snapshots and version-1 saves with
-canonical state hashing; producing the actual Blind, Blood, and Warlord
-origins from native-compatible level generation remains follow-up work.
+canonical state hashing. The validated procedural-origin catalog is retained
+after activation, so a host can publish deferred origins when generated level
+geometry arrives, and level-transition intents invoke the same pass; repeated
+publication revalidates without duplicating objects.
+Producing the actual Blind, Blood, and Warlord origins from native-compatible
+level generation remains follow-up work.
 
 Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's

@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   Generated set-piece origins now derive deterministically from aligned
   walkable authoritative geometry and feed relative set-level object
   materialization, while unavailable target levels remain deferred.
+- Retained procedural-origin rules in the simulation so hosts can publish
+  deferred origins after generated geometry arrives; level-transition intents
+  invoke the same pass, and repeated publication is deterministic without
+  duplicating relative objects.
 - Added schema 1.426's optional set-level object placement mode. Existing rows
   remain absolute; future procedural set-piece rows can use signed offsets from
   a runtime-supplied origin and stay deferred until its geometry is available.
