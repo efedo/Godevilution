@@ -253,7 +253,8 @@ movement intent and the server resolves one deterministic path step.
 When a visible unique monster has a server-authored dialogue identity, the
 same left-click path resolves its matching active quest and submits
 `TalkToQuestRequested`; Godot never advances the dialogue or mutates quest
-state locally.
+state locally. Those monsters receive a gold dialogue marker derived from the
+same authoritative snapshot field.
 
 Targeted Firebolt, Charged Bolt, and Bone Spirit casts can also name a living
 same-level remote player. The client supplies any visible remote-player entity

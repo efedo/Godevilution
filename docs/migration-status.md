@@ -14,6 +14,8 @@ and Banner object/map resynchronization remain seams.
 Godot now resolves the same projected unique-monster dialogue identity against
 the active quest and submits `TalkToQuestRequested`; the server remains the
 authority for range, stage, inventory, rewards, and progression.
+Godot's presentation now marks those same authoritative dialogue targets with
+a gold marker without embedding native text or quest progression locally.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

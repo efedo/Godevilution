@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Mark Godot's server-authored unique-monster dialogue targets with a gold
+  presentation marker, keeping discoverability derived from snapshot state.
 - Route Godot clicks on visible authored unique monsters through
   `TalkToQuestRequested` by matching the server-projected dialogue identity to
   the active quest; the server still owns validation and state changes.

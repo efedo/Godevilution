@@ -4,6 +4,7 @@ using Godot;
 using ProjectilePresentationKind = Devilution.Client.Protocol.ProjectilePresentationKind;
 using ItemPresentationKind = Devilution.Client.Protocol.ItemPresentationKind;
 using ObjectPresentationKind = Devilution.Client.Protocol.ObjectPresentationKind;
+using MonsterPresentationKind = Devilution.Client.Protocol.MonsterPresentationKind;
 
 namespace Devilution.Client;
 
@@ -324,7 +325,12 @@ public partial class WorldPresentation : Node2D
     private void DrawMonster(MonsterSnapshot monster)
     {
         var center = PositionFor(monster.EntityId, monster.PositionX, monster.PositionY);
-        var color = monster.Petrified ? new Color("aeb7c4") : new Color("d95151");
+        var presentation = MonsterPresentationStyle.Resolve(monster);
+        var color = monster.Petrified
+            ? new Color("aeb7c4")
+            : presentation == MonsterPresentationKind.Dialogue
+                ? new Color("e5bd52")
+                : new Color("d95151");
         DrawTextureOrRect("monster", center, new Vector2(24, 24), color);
         var health = MonsterHealthBarProjection.Resolve(monster);
         if (health.Visible) {
@@ -337,6 +343,8 @@ public partial class WorldPresentation : Node2D
         }
         if (monster.Petrified)
             DrawArc(center, 15, 0, Mathf.Tau, 20, new Color("dce3eb"), 2);
+        else if (presentation == MonsterPresentationKind.Dialogue)
+            DrawArc(center, 16, 0, Mathf.Tau, 24, new Color("fff0a8"), 3);
     }
 
     private void DrawItem(WorldItemSnapshot item, bool searchActive)
