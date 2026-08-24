@@ -3084,6 +3084,45 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void StorytellerServiceAllowsPaidIdentificationOnlyThroughTheTownService()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            405,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                Value = 100,
+                IdentifiedValue = 100,
+                Magical = 1,
+                Identified = false,
+            });
+        var player = CreatePlayer(
+            gold: 1000,
+            inventory: [item],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.StorytellerStoreId),
+            0).Succeeded);
+        var identify = processor.Execute(player, new DiabloIdentifyItemIntent(null, 0), 1);
+
+        Assert.True(identify.Succeeded);
+        Assert.True(Assert.Single(player.Inventory).State.Identified);
+        Assert.Equal(900U, player.Gold);
+
+        player.ActiveStoreId = 1;
+        var smithIdentify = processor.Execute(player, new DiabloIdentifyItemIntent(null, 0), 2);
+
+        Assert.False(smithIdentify.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, smithIdentify.Failure);
+    }
+
+    [Fact]
     public void MovingHellfireConversionItemInAndOutOfEquipmentRecalculatesResources()
     {
         var item = new OwnedStoreItem(

@@ -32,6 +32,7 @@ public sealed record DiabloContentActivation
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         uint adriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId,
+        uint storytellerStoreId = DiabloStoreCommandProcessor.StorytellerStoreId,
         AuthoritativeWorldRules? worldRules = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
@@ -61,6 +62,7 @@ public sealed record DiabloContentActivation
         MonsterSpawnPlanner = monsterSpawnPlanner;
         MonsterMissiles = monsterMissiles;
         AdriaStoreId = adriaStoreId;
+        StorytellerStoreId = storytellerStoreId;
         WorldRules = worldRules ?? AuthoritativeWorldRules.NativeDefaults;
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
@@ -104,6 +106,9 @@ public sealed record DiabloContentActivation
 
     /** Service-only store identity supplied by the active world rules. */
     public uint AdriaStoreId { get; }
+
+    /** Service-only store identity supplied by the active world rules. */
+    public uint StorytellerStoreId { get; }
 
     /** Validated world identities and optional Town Portal destination geometry. */
     public AuthoritativeWorldRules WorldRules { get; }
@@ -446,7 +451,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds.ValidateReferences(
                 "store",
                 storeId => stores.ContainsStore(storeId)
-                    || storeId == worldRules.AdriaStoreId);
+                    || storeId == worldRules.AdriaStoreId
+                    || storeId == worldRules.StorytellerStoreId);
         worldRules.ValidateStores(stores);
         if (spells is not null)
             stores.ValidateSpellReferences(spells);
@@ -1064,6 +1070,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             TrapDisarmAbilitySpellId = trapDisarmAbilitySpellId,
             MonsterFlashSpellId = monsterFlashSpellId,
             AdriaStoreId = worldRules.AdriaStoreId,
+            StorytellerStoreId = worldRules.StorytellerStoreId,
             PlayerClasses = playerClasses,
             PlayerAnimations = playerAnimations,
             MonsterMissiles = monsterMissiles,
@@ -1089,6 +1096,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             monsterSpawnPlanner,
             monsterMissiles,
             worldRules.AdriaStoreId,
+            worldRules.StorytellerStoreId,
             worldRules,
             spellBooks,
             questTownerInteractions,

@@ -15,6 +15,7 @@ public sealed class AuthoritativeWorldRulesTests
 
         Assert.Equal(7U, rules.TownLevelId);
         Assert.Equal(73U, rules.AdriaStoreId);
+        Assert.Equal(DiabloStoreCommandProcessor.StorytellerStoreId, rules.StorytellerStoreId);
         Assert.False(rules.HasTownPortalDestinationGeometry);
     }
 
@@ -39,14 +40,17 @@ public sealed class AuthoritativeWorldRulesTests
         var stableIds = new StableContentIdCatalog([
             new StableContentId("level", "town", 0),
             new StableContentId("store", "adria", 10),
+            new StableContentId("store", "storyteller", 11),
         ]);
         var rules = AuthoritativeWorldRules.LoadTsv(
             "world_rules.tsv",
-            "town_level_id\ttown_level_symbol\tadria_store_id\tadria_store_symbol\n"
-                + "0\ttown\t10\tadria\n",
+            "town_level_id\ttown_level_symbol\tadria_store_id\tadria_store_symbol\t"
+                + "storyteller_store_id\tstoryteller_store_symbol\n"
+                + "0\ttown\t10\tadria\t11\tstoryteller\n",
             stableIds);
 
         Assert.Equal(10U, rules.AdriaStoreId);
+        Assert.Equal(11U, rules.StorytellerStoreId);
     }
 
     [Fact]
@@ -131,6 +135,15 @@ public sealed class AuthoritativeWorldRulesTests
             "store_id\tstore_slot\titem_seed\tprice\n10\t0\t1\t1\n");
 
         Assert.Throws<InvalidDataException>(() => rules.ValidateStores(stores));
+
+        var storytellerCollision = new AuthoritativeWorldRules(0, 10) {
+            StorytellerStoreId = 11,
+        };
+        var storytellerStores = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\n11\t0\t1\t1\n");
+
+        Assert.Throws<InvalidDataException>(() => storytellerCollision.ValidateStores(storytellerStores));
     }
 
     [Fact]
@@ -139,5 +152,11 @@ public sealed class AuthoritativeWorldRulesTests
         var rules = new AuthoritativeWorldRules(0, 0);
 
         Assert.Throws<InvalidDataException>(() => rules.ValidateStores(new StoreCatalog()));
+
+        var storytellerRules = new AuthoritativeWorldRules(0) {
+            StorytellerStoreId = 0,
+        };
+
+        Assert.Throws<InvalidDataException>(() => storytellerRules.ValidateStores(new StoreCatalog()));
     }
 }

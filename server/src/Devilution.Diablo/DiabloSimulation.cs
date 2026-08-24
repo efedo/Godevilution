@@ -132,6 +132,9 @@ public sealed class DiabloSimulationOptions
     /** External service-only store identity used by Adria's mana action. */
     public uint AdriaStoreId { get; init; } = DiabloStoreCommandProcessor.AdriaStoreId;
 
+    /** External service-only store identity used by Cain's Identify action. */
+    public uint StorytellerStoreId { get; init; } = DiabloStoreCommandProcessor.StorytellerStoreId;
+
     public AuthoritativePlayerClassCatalog? PlayerClasses { get; init; }
 
     public AuthoritativePlayerAnimationCatalog? PlayerAnimations { get; init; }
@@ -249,7 +252,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 spells,
                 options.Items,
                 options.AdriaStoreId,
-                options.WorldRules?.TownLevelId ?? AuthoritativePortalRules.TownLevelId),
+                options.WorldRules?.TownLevelId ?? AuthoritativePortalRules.TownLevelId,
+                options.StorytellerStoreId),
             worldCommands,
             new DiabloCombatCommandProcessor(
                 worldState,

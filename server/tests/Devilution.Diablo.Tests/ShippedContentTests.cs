@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.417.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.418.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -39,7 +39,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.416.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.418.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1043,13 +1043,16 @@ public sealed class ShippedContentTests
         var storeIds = stableIds.Entries
             .Where(entry => entry.Kind == "store")
             .ToArray();
-        Assert.Equal(5, storeIds.Length);
+        Assert.Equal(6, storeIds.Length);
         Assert.All(storesTable.Rows, row =>
             Assert.Equal(row.RequiredUInt32("store_id"), stableIds.Resolve("store", row.Required("store_symbol"))));
         stableIds.ValidateReferences(
             "store",
-            id => stores.ContainsStore(id) || id == worldRules.AdriaStoreId);
+            id => stores.ContainsStore(id)
+                || id == worldRules.AdriaStoreId
+                || id == worldRules.StorytellerStoreId);
         Assert.Equal(10U, stableIds.Resolve("store", "adria"));
+        Assert.Equal(11U, stableIds.Resolve("store", "storyteller"));
         Assert.True(stores.TryGetRole(stableIds.Resolve("store", "smith"), out var smithRole));
         Assert.Equal(AuthoritativeStoreRole.Smith, smithRole);
         Assert.True(stores.TryGetRole(stableIds.Resolve("store", "witch"), out var witchRole));
@@ -1379,14 +1382,21 @@ public sealed class ShippedContentTests
         var configuredWorldRules = TsvTable.Parse(
             worldRules.SourcePath,
             "town_level_id\ttown_level_symbol\tadria_store_id\tadria_store_symbol\t"
+                + "storyteller_store_id\tstoryteller_store_symbol\t"
                 + "town_portal_destination_position_x\ttown_portal_destination_position_y\t"
                 + "town_portal_destination_slot_count\ttown_portal_destination_slot_spacing\n"
-                + "0\ttown\t73\tadria\t60\t41\t2\t4\n");
+                + "0\ttown\t73\tadria\t74\tstoryteller\t60\t41\t2\t4\n");
         var configuredStableIds = TsvTable.Parse(
             stableIds.SourcePath,
             stableIds.ToCanonicalTsv().Replace(
                 "store\tadria\t10",
                 "store\tadria\t73",
+                StringComparison.Ordinal));
+        configuredStableIds = TsvTable.Parse(
+            stableIds.SourcePath,
+            configuredStableIds.ToCanonicalTsv().Replace(
+                "store\tstoryteller\t11",
+                "store\tstoryteller\t74",
                 StringComparison.Ordinal));
         var configuredPack = new ContentPack(
             basePack.Id,
@@ -1407,6 +1417,7 @@ public sealed class ShippedContentTests
             ComposedContent.Compose(new ContentManifest("base", "1", [configuredPack])));
 
         Assert.Equal(73U, activation.AdriaStoreId);
+        Assert.Equal(74U, activation.StorytellerStoreId);
         Assert.True(activation.WorldRules.HasTownPortalDestinationGeometry);
         Assert.Equal(60, activation.WorldRules.TownPortalDestinationPositionX);
     }
@@ -2029,7 +2040,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.417.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.418.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

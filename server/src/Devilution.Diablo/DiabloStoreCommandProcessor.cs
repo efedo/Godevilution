@@ -10,6 +10,8 @@ public sealed class DiabloStoreCommandProcessor
 {
     /** Reserved service-only store used by Adria's mana refill action. */
     public const uint AdriaStoreId = 10;
+    /** Reserved service-only store used by Cain's paid identification action. */
+    public const uint StorytellerStoreId = 11;
 
     private readonly StoreCatalog catalog;
     private readonly IDiabloStoreRules rules;
@@ -19,6 +21,7 @@ public sealed class DiabloStoreCommandProcessor
     private readonly uint repairAbilitySpellId;
     private readonly uint rechargeAbilitySpellId;
     private readonly uint adriaStoreId;
+    private readonly uint storytellerStoreId;
     private readonly AuthoritativeSpellCatalog? spells;
     private readonly AuthoritativeItemCatalog? items;
     private readonly uint townLevelId;
@@ -34,7 +37,8 @@ public sealed class DiabloStoreCommandProcessor
         AuthoritativeSpellCatalog? spells = null,
         AuthoritativeItemCatalog? items = null,
         uint adriaStoreId = AdriaStoreId,
-        uint townLevelId = AuthoritativePortalRules.TownLevelId)
+        uint townLevelId = AuthoritativePortalRules.TownLevelId,
+        uint storytellerStoreId = StorytellerStoreId)
     {
         this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         this.rules = rules ?? new DiabloStoreRules();
@@ -45,7 +49,10 @@ public sealed class DiabloStoreCommandProcessor
         this.rechargeAbilitySpellId = rechargeAbilitySpellId;
         if (adriaStoreId == 0)
             throw new ArgumentOutOfRangeException(nameof(adriaStoreId));
+        if (storytellerStoreId == 0 || storytellerStoreId == adriaStoreId)
+            throw new ArgumentOutOfRangeException(nameof(storytellerStoreId));
         this.adriaStoreId = adriaStoreId;
+        this.storytellerStoreId = storytellerStoreId;
         this.townLevelId = townLevelId;
         this.spells = spells;
         this.items = items;
@@ -133,9 +140,12 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (player.StashOpen)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        if (storeId == adriaStoreId && player.LevelId != townLevelId)
+        if ((storeId == adriaStoreId || storeId == storytellerStoreId)
+            && player.LevelId != townLevelId)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        if (storeId != adriaStoreId && !catalog.ContainsStore(storeId))
+        if (storeId != adriaStoreId
+            && storeId != storytellerStoreId
+            && !catalog.ContainsStore(storeId))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         player.ActiveStoreId = storeId;
@@ -1084,9 +1094,7 @@ public sealed class DiabloStoreCommandProcessor
                     identifyAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
-        } else if (!isConsumableItem
-            && (player.ActiveStoreId is null
-                || player.ActiveStoreId == adriaStoreId)) {
+        } else if (!isConsumableItem && !AllowsPaidIdentification(player)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!TryGetItem(
@@ -1178,6 +1186,19 @@ public sealed class DiabloStoreCommandProcessor
         }
         player.Mana = player.ManaMaximum;
         return DiabloIntentResult.Accepted;
+    }
+
+    /** Allows paid Identify only through Cain or legacy generic fixtures. */
+    private bool AllowsPaidIdentification(AuthoritativePlayerState player)
+    {
+        if (player.ActiveStoreId is not uint storeId
+            || storeId == adriaStoreId
+            || player.LevelId != townLevelId)
+            return false;
+        if (storeId == storytellerStoreId)
+            return true;
+        return catalog.TryGetRole(storeId, out var role)
+            && role == AuthoritativeStoreRole.Generic;
     }
 
     private static DiabloIntentResult MoveInventoryItem(

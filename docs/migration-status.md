@@ -16,6 +16,11 @@ The Adria service identity is also constrained to the active world-rule town
 level for both opening and mana refill; server clients cannot carry the service
 into dungeon levels.
 
+World rules now externalize a separate Storyteller service-only store identity.
+Paid Cain identification is admitted only through that town-level service (or
+legacy Generic fixtures), preventing connected native clients from using a
+different vendor role as an identification authority.
+
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain
 unchanged.
@@ -222,9 +227,14 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.417.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.416.0` schema
+The Diablo content schema is now `1.418.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.417.0` schema
 for existing manifest-based packs.
+
+Schema 1.418 adds optional `storyteller_store_id` and
+`storyteller_store_symbol` columns to `world_rules.tsv`. The service-only
+identity is validated separately from Adria and from stock-vendor identities;
+older rows retain the native Storyteller default.
 
 Schema 1.417 adds the optional `store_role` column to `stores.tsv`. Explicit
 roles validate native vendor identities for authoritative sale admission;
@@ -444,7 +454,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.417.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.418.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.

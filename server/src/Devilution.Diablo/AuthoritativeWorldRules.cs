@@ -11,6 +11,9 @@ public sealed record AuthoritativeWorldRules(
     int TownPortalDestinationSlotCount = AuthoritativePortalRules.TownPortalSlotCount,
     int TownPortalDestinationSlotSpacing = AuthoritativePortalRules.TownPortalSlotSpacing)
 {
+    /** Service-only store identity used by Cain's paid identification menu. */
+    public uint StorytellerStoreId { get; init; } = DiabloStoreCommandProcessor.StorytellerStoreId;
+
     /** True when the active table explicitly owns Town Portal destination geometry. */
     public bool HasTownPortalDestinationGeometry { get; init; }
 
@@ -61,6 +64,12 @@ public sealed record AuthoritativeWorldRules(
             row.OptionalInt32(
                 "town_portal_destination_slot_spacing",
                 AuthoritativePortalRules.TownPortalSlotSpacing)) {
+            StorytellerStoreId = AuthoritativeStoreIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "storyteller_store_id",
+                "storyteller_store_symbol",
+                DiabloStoreCommandProcessor.StorytellerStoreId),
             HasTownPortalDestinationGeometry = hasGeometry,
         }.Validate();
     }
@@ -113,9 +122,19 @@ public sealed record AuthoritativeWorldRules(
         ArgumentNullException.ThrowIfNull(stores);
         if (AdriaStoreId == 0)
             throw new InvalidDataException("World rules require a non-zero Adria store identity.");
+        if (StorytellerStoreId == 0)
+            throw new InvalidDataException("World rules require a non-zero Storyteller store identity.");
+        if (StorytellerStoreId == AdriaStoreId)
+            throw new InvalidDataException(
+                "World rules require distinct Adria and Storyteller store identities.");
         if (stores.ContainsStore(AdriaStoreId)) {
             throw new InvalidDataException(
                 $"World rules reserve store {AdriaStoreId} for Adria's service actions, "
+                + "but the active store catalog contains stock for that identity.");
+        }
+        if (stores.ContainsStore(StorytellerStoreId)) {
+            throw new InvalidDataException(
+                $"World rules reserve store {StorytellerStoreId} for Storyteller's service actions, "
                 + "but the active store catalog contains stock for that identity.");
         }
     }
