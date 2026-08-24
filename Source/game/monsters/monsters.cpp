@@ -3921,6 +3921,9 @@ void Monster::clearSquares()
 
 void Monster::getKnockback(WorldTilePosition attackerStartPos)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	const Direction dir = GetDirection(attackerStartPos, this->position.tile);
 	if (!IsRelativeMoveOK(*this, this->position.old, dir)) {
 		return;
@@ -4930,6 +4933,9 @@ void Monster::checkStandAnimationIsLoaded(Direction mdir)
 
 void Monster::petrify()
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	mode = MonsterMode::Petrified;
 	animInfo.isPetrified = true;
 }

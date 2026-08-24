@@ -9,6 +9,9 @@ legacy spell path.
 Native doppelgänger spawning and monster-driven player-attribute reduction now
 also fail closed in connected sessions; these public helpers cannot mutate
 server-owned monster or player state when reached outside the legacy loop.
+Native monster knockback and petrification mutators now use the same boundary;
+connected presentation continues to use snapshot-driven animation/state
+projection rather than local simulation.
 The native player action-start helpers now apply the same explicit boundary for
 walking, melee attack, ranged attack, and spell execution; connected sessions
 cannot start a second local player simulation through a direct caller.
