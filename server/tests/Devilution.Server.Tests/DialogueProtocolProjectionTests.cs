@@ -931,6 +931,7 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { HitPointsQ6 = 1, DeathTicksRemaining = 1 });
         AssertRejected(value => value with { ExperienceReward = 1_000_001 });
         AssertRejected(value => value with { UniqueIdentity = new string('x', 129) });
+        AssertRejected(value => value with { UniqueIdentity = new string('é', 65) });
         AssertRejected(value => value with { UniqueIdentity = "not-unique" });
         AssertRejected(value => value with { ToHit = 256 });
         AssertRejected(value => value with { ToHitSpecial = 256 });
@@ -1083,6 +1084,9 @@ public sealed class DialogueProtocolProjectionTests
         AssertQuestRejected(value => value with { TurnInVariable1 = -2 });
         AssertQuestRejected(value => value with {
             CompletionUniqueIdentity = new string('x', 129),
+        });
+        AssertQuestRejected(value => value with {
+            CompletionUniqueIdentity = new string('é', 65),
         });
         Assert.Throws<InvalidDataException>(() =>
             DiabloProtocolMapper.ToProtocolSnapshot(source with {

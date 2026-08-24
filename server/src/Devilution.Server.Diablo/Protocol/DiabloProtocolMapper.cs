@@ -583,7 +583,7 @@ internal static class DiabloProtocolMapper
                 || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
                 || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
                 || quest.TurnInVariable1 is < -1 or > byte.MaxValue
-                || quest.CompletionUniqueIdentity.Length > 128) {
+                || System.Text.Encoding.UTF8.GetByteCount(quest.CompletionUniqueIdentity) > 128) {
                 throw new InvalidDataException(
                     "Authoritative quest state is outside the shared protocol range.");
             }
@@ -822,7 +822,7 @@ internal static class DiabloProtocolMapper
                 || monster.ToHit is < 0 or > byte.MaxValue
                 || monster.ToHitSpecial is < 0 or > byte.MaxValue
                 || monster.Intelligence is < 0 or > byte.MaxValue
-                || monster.UniqueIdentity.Length > 128
+                || System.Text.Encoding.UTF8.GetByteCount(monster.UniqueIdentity) > 128
                 || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique
                 || monster.Direction is < 0 or > 7
                 || monster.FireResistance is < -100 or > 100

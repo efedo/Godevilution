@@ -515,6 +515,12 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedUniqueMonsterIdentity)
 	monster->set_is_unique(true);
 	monster->set_unique_identity(std::string(129, 'x'));
 	EXPECT_FALSE(ProjectMonsterSnapshots(snapshot).has_value());
+
+	std::string oversizedUtf8Identity;
+	for (int i = 0; i < 65; ++i)
+		oversizedUtf8Identity += "\xC3\xA9";
+	monster->set_unique_identity(oversizedUtf8Identity);
+	EXPECT_FALSE(ProjectMonsterSnapshots(snapshot).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeWorldItems)
@@ -841,6 +847,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestState)
 	quest->set_required_progress(1);
 	quest->set_completion_unique_identity(std::string(129, 'x'));
 	EXPECT_FALSE(ValidateQuestSnapshots(oversizedIdentity).has_value());
+
+	protocol::Snapshot oversizedUtf8Identity;
+	quest = oversizedUtf8Identity.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(1);
+	std::string utf8Identity;
+	for (int i = 0; i < 65; ++i)
+		utf8Identity += "\xC3\xA9";
+	quest->set_completion_unique_identity(utf8Identity);
+	EXPECT_FALSE(ValidateQuestSnapshots(oversizedUtf8Identity).has_value());
 
 	protocol::Snapshot invalidNativeQuestId;
 	quest = invalidNativeQuestId.add_quests();

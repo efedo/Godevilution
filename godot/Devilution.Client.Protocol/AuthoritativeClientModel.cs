@@ -735,7 +735,7 @@ public sealed class AuthoritativeClientModel
             || monster.HitPointsQ6 < 0
             || monster.MaxHitPointsQ6 < 0
             || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6
-            || monster.UniqueIdentity.Length > 128
+            || System.Text.Encoding.UTF8.GetByteCount(monster.UniqueIdentity) > 128
             || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster vitality.");
@@ -847,7 +847,7 @@ public sealed class AuthoritativeClientModel
                 || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
                 || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
                 || quest.TurnInVariable1 is < -1 or > byte.MaxValue
-                || quest.CompletionUniqueIdentity.Length > 128) {
+                || System.Text.Encoding.UTF8.GetByteCount(quest.CompletionUniqueIdentity) > 128) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid quest state.");
             }

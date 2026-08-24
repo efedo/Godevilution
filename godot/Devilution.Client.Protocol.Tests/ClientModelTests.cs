@@ -1163,6 +1163,19 @@ public sealed class ClientModelTests
         };
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateNativeQuestIds)));
+
+        var oversizedUtf8Identity = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3002,
+                    RequiredProgress = 1,
+                    CompletionUniqueIdentity = new string('é', 65),
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: oversizedUtf8Identity)));
     }
 
     [Fact]
@@ -2033,6 +2046,7 @@ public sealed class ClientModelTests
             monster => monster.DeathTicksRemaining = -1,
             monster => monster.ExperienceReward = 1_000_001,
             monster => monster.UniqueIdentity = new string('x', 129),
+            monster => monster.UniqueIdentity = new string('é', 65),
             monster => monster.UniqueIdentity = "not-unique",
             monster => monster.ToHit = 256,
             monster => monster.ToHitSpecial = -1,
