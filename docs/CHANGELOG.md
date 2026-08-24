@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restricted the Godot HUD's generic object, trap, and quest commands to
+  visible server-authored targets, using deterministic entity/quest ordering
+  instead of arbitrary snapshot entries.
 - Canonicalized Godot world-item and authored-object target selection, plus
   clicked item and portal hit-testing, by entity ID so client interaction
   resolution matches the native projection order.

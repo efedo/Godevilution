@@ -440,11 +440,21 @@ public partial class HudPresentation : CanvasLayer
         ApplyStore(model.Snapshot?.ActiveStore);
         ApplyStash(player);
         dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
-        availableObjectEntityId = model.Snapshot?.Objects.FirstOrDefault(@object => !@object.Activated)?.EntityId;
+        availableObjectEntityId = AuthoritativeObjectSelector.SelectFirst(model.Snapshot)?.EntityId;
         availableTrapEntityId = model.ArmedTrapObjects
-            .FirstOrDefault(@object => player is not null && @object.LevelId == player.LevelId)
+            .Where(@object => player is not null
+                && AuthoritativeLevelVisibility.IsVisible(@object.LevelId, player.LevelId))
+            .OrderBy(@object => @object.EntityId)
+            .FirstOrDefault()
             ?.EntityId;
-        availableQuestId = model.Snapshot?.Quests.FirstOrDefault(quest => !quest.Completed)?.QuestId;
+        availableQuestId = model.Snapshot?.Quests
+            .Where(quest => player is not null
+                && !quest.Completed
+                && !quest.Unavailable
+                && AuthoritativeLevelVisibility.IsVisible(quest.LevelId, player.LevelId))
+            .OrderBy(quest => quest.QuestId)
+            .FirstOrDefault()
+            ?.QuestId;
         availableQuestTownerInteraction = AuthoritativeQuestTownerInteractionSelector.Select(model.Snapshot);
 
         var connected = client?.IsConnected == true;

@@ -36,6 +36,9 @@ ordering as Godot selectors before presentation and interaction lookup, so
 overlapping projected cells resolve deterministically across clients.
 Godot world-item and authored-object target selection now applies that same
 entity-ID ordering, including clicked item and portal hit-testing.
+The Godot HUD's generic object, trap, and quest commands now use the same
+visible authoritative-target filters instead of selecting arbitrary snapshot
+entries, preserving fail-closed server ownership outside world click routing.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

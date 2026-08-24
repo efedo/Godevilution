@@ -5,6 +5,19 @@ namespace Devilution.Client.Protocol;
 /** Resolves visible authored objects without treating presentation-only objects as commands. */
 public static class AuthoritativeObjectSelector
 {
+    /** Selects the first visible active authored object for generic UI actions. */
+    public static ObjectSnapshot? SelectFirst(Snapshot? snapshot)
+    {
+        var player = snapshot?.Players.FirstOrDefault();
+        if (player is null)
+            return null;
+
+        return snapshot!.Objects
+            .Where(@object => IsSelectable(@object, player.LevelId))
+            .OrderBy(@object => @object.EntityId)
+            .FirstOrDefault();
+    }
+
     /** Selects an active authored object at the local player's exact tile. */
     public static ObjectSnapshot? SelectAt(Snapshot? snapshot, int x, int y)
     {
@@ -13,16 +26,19 @@ public static class AuthoritativeObjectSelector
             return null;
 
         return snapshot!.Objects
-            .Where(@object => @object.EntityId != 0
-                && AuthoritativeLevelVisibility.IsVisible(@object.LevelId, player.LevelId)
-                && !@object.Activated
-                && !@object.Destroyed
+            .Where(@object => IsSelectable(@object, player.LevelId)
                 && @object.PositionX == x
-                && @object.PositionY == y
-                && HasAuthoritativeInteraction(@object))
+                && @object.PositionY == y)
             .OrderBy(@object => @object.EntityId)
             .FirstOrDefault();
     }
+
+    private static bool IsSelectable(ObjectSnapshot @object, uint currentLevelId)
+        => @object.EntityId != 0
+            && AuthoritativeLevelVisibility.IsVisible(@object.LevelId, currentLevelId)
+            && !@object.Activated
+            && !@object.Destroyed
+            && HasAuthoritativeInteraction(@object);
 
     /** Returns whether the server declared behavior that can be submitted as an intent. */
     public static bool HasAuthoritativeInteraction(ObjectSnapshot @object)

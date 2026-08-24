@@ -17,6 +17,23 @@ public sealed class AuthoritativeObjectSelectorTests
         Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4));
     }
 
+    [Fact]
+    public void SelectFirstIgnoresPresentationOnlyAndOffLevelObjects()
+    {
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 9 } },
+            Objects = {
+                new ObjectSnapshot { EntityId = 10, LevelId = 9, EffectKind = 1 },
+                new ObjectSnapshot { EntityId = 11, LevelId = 9, EffectKind = 0 },
+                new ObjectSnapshot { EntityId = 12, LevelId = 8, EffectKind = 1 },
+                new ObjectSnapshot { EntityId = 13, LevelId = 9, EffectKind = 1, Activated = true },
+                new ObjectSnapshot { EntityId = 14, LevelId = 9, EffectKind = 1 },
+            },
+        };
+
+        Assert.Equal(10U, AuthoritativeObjectSelector.SelectFirst(snapshot)?.EntityId);
+    }
+
     [Theory]
     [InlineData(1, 0, 0, 0, 0, false)]
     [InlineData(0, 7u, 0, 0, 0, false)]
