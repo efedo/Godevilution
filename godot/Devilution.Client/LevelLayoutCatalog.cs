@@ -1,4 +1,5 @@
 using Devilution.Protocol.V1;
+using Devilution.Client.Protocol;
 using System.Text.Json;
 
 namespace Devilution.Client;
@@ -7,7 +8,9 @@ namespace Devilution.Client;
 public sealed class LevelLayoutCatalog
 {
     private readonly Dictionary<uint, LevelLayout> layouts = [];
+    private readonly Dictionary<uint, LevelLayout> authoritativeLayouts = [];
     private readonly Dictionary<uint, IReadOnlyList<WarpTriggerSnapshot>> warpTriggers = [];
+    private readonly AuthoritativeLevelGeometryState authoritativeGeometry = new();
 
     public LevelLayoutCatalog()
     {
@@ -16,6 +19,8 @@ public sealed class LevelLayoutCatalog
 
     public LevelLayout Resolve(uint levelId)
     {
+        if (authoritativeLayouts.TryGetValue(levelId, out var authoritativeLayout))
+            return authoritativeLayout;
         if (layouts.TryGetValue(levelId, out var layout))
             return layout;
         return layouts.TryGetValue(0, out var fallback) ? fallback : LevelLayout.Empty;
@@ -28,13 +33,14 @@ public sealed class LevelLayoutCatalog
     public void ApplyAuthoritative(IEnumerable<LevelGeometrySnapshot> definitions)
     {
         ArgumentNullException.ThrowIfNull(definitions);
-        foreach (var definition in definitions) {
-            if (definition.Width <= 0 || definition.Height <= 0)
-                continue;
+        authoritativeGeometry.Replace(definitions);
+        authoritativeLayouts.Clear();
+        warpTriggers.Clear();
+        foreach (var definition in authoritativeGeometry.Definitions.Values) {
             var cells = definition.BlockedCells
                 .Where(cell => cell >= 0 && cell < definition.Width * definition.Height)
                 .ToHashSet();
-            layouts[definition.LevelId] = new LevelLayout(
+            authoritativeLayouts[definition.LevelId] = new LevelLayout(
                 definition.LevelId,
                 $"Level {definition.LevelId}",
                 definition.Width,

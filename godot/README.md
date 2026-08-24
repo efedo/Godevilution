@@ -134,6 +134,9 @@ available for target selection. Remote players remain presentation-only; the
 client never advances their gameplay state. Replacing a snapshot removes
 positions for entities no longer present, and disconnecting clears all
 displayed entity state.
+Authoritative level geometry and warp markers are replaced as a complete
+projection; a geometry-less legacy snapshot or disconnect clears the prior
+server projection before static presentation fallback is used.
 When a player-targeted Resurrection or Heal Other source is selected, clicking a
 same-level remote player sends that player's stable entity ID. The server uses
 the active external spell behavior to admit the cast, validate life state,

@@ -32,6 +32,8 @@ public partial class WorldPresentation : Node2D
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
             displayedPlayerSnapshots.Clear();
+            levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
+            currentLevel = LevelLayout.Empty;
             QueueRedraw();
             return;
         }

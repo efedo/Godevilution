@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot now replaces its authoritative level-geometry cache per complete
+  snapshot and clears it on disconnect, preventing stale blocked cells or warp
+  markers from leaking across sessions or geometry-less legacy snapshots.
 - Godot portal presentation and click routing now use the shared authoritative
   level-visibility rule for source and bidirectional destination endpoints,
   including native level-zero wildcard projections.

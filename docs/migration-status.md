@@ -667,6 +667,9 @@ corpse lifecycle entirely authoritative.
 Godot portal presentation and click routing now resolve source and bidirectional
 destination endpoints through the same level-visibility wildcard, preventing a
 valid level-zero compatibility portal from disappearing from the presentation.
+Godot authoritative level geometry is now replaced rather than merged: omitted
+levels and geometry-less legacy snapshots cannot retain prior-session blocked
+cells or warp markers, while static layouts remain a presentation fallback.
 
 ## Current state
 
