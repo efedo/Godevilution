@@ -31,6 +31,8 @@ that content metadata first; the native item-index check remains only as a
 compatibility fallback for older direct catalogs without normalized items.
 Normalized oil action kinds likewise drive the Smith/Witch oil filter, with the
 native misc-ID range retained only for older compatibility states.
+Normalized item classification also owns quest-sale admission; the legacy
+quest-index range is now consulted only when no item catalog is available.
 
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain

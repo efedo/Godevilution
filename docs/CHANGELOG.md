@@ -16,6 +16,8 @@ All notable changes to this fork are documented below.
   normalized `NoSale` item tag while retaining the legacy index fallback.
 - Resolve normalized oil vendor-sale filters from content-owned item action
   kinds while retaining the native misc-ID fallback for older states.
+- Resolve normalized quest-sale admission from item classification and tags,
+  retaining the native quest-index range only for catalog-free legacy states.
 - Constrain authoritative Repair and Recharge admission to declared Smith and
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store

@@ -5,8 +5,9 @@ public static class AuthoritativeStoreSalePolicy
 {
     private const int OilFirst = 29;
     private const int OilLast = 41;
-    private const int FirstQuestItemIndex = 6;
-    private const int LastQuestItemIndex = 22;
+    // Retained only for legacy direct callers that do not provide an item catalog.
+    private const int LegacyFirstQuestItemIndex = 6;
+    private const int LegacyLastQuestItemIndex = 22;
     // Retained only for legacy direct callers that do not provide an item catalog.
     // Shipped authoritative content declares the exception through the NoSale tag.
     private const int LegacyLazarusStaffItemIndex = 33;
@@ -67,7 +68,8 @@ public static class AuthoritativeStoreSalePolicy
                 || HasValidSpell(state, spells)))
             accepts = true;
         if (IsQuest(state, items)
-            || state.ItemIndex is >= FirstQuestItemIndex and <= LastQuestItemIndex)
+            || (items is null
+                && state.ItemIndex is >= LegacyFirstQuestItemIndex and <= LegacyLastQuestItemIndex))
             accepts = false;
         if (state.ItemIndex == LegacyLazarusStaffItemIndex)
             accepts = false;

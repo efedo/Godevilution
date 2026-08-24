@@ -2602,6 +2602,36 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void NormalizedItemClassificationReplacesLegacyQuestIndexRange()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2400,
+            1,
+            100,
+            100,
+            1,
+            4,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            ItemClass = 1,
+            NativeItemIndex = 6,
+            GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            definition.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void CloseStoreClearsActiveStoreAndIsIdempotent()
     {
         var processor = new DiabloStoreCommandProcessor(CreateCatalog());
