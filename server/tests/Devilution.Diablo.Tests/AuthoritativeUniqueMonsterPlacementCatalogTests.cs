@@ -196,7 +196,7 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
                 TsvTable.Parse(
                     placementTable.SourcePath,
                     placementHeader
-                        + "\n1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t10\t10\t99\t0\t0"),
+                        + "\n1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t10\t10\t99\t0\t0\t0\t "),
             ],
             ["devilution.base"],
             [
