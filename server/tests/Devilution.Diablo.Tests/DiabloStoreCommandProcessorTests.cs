@@ -3051,6 +3051,39 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void AdriaServiceRequiresTheConfiguredTownLevel()
+    {
+        var player = CreatePlayer(gold: 1000, mana: 32, manaMaximum: 640);
+        player.LevelId = 1;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var open = processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            0);
+
+        Assert.False(open.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, open.Failure);
+        Assert.Null(player.ActiveStoreId);
+
+        player.ActiveStoreId = DiabloStoreCommandProcessor.AdriaStoreId;
+        var refill = processor.Execute(player, new DiabloRefillManaIntent(), 1);
+        Assert.False(refill.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, refill.Failure);
+        Assert.Equal(32, player.Mana);
+
+        player.LevelId = 7;
+        player.ActiveStoreId = null;
+        var configuredProcessor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            townLevelId: 7);
+        Assert.True(configuredProcessor.Execute(
+            player,
+            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            2).Succeeded);
+    }
+
+    [Fact]
     public void MovingHellfireConversionItemInAndOutOfEquipmentRecalculatesResources()
     {
         var item = new OwnedStoreItem(

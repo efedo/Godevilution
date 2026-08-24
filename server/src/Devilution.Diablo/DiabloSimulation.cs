@@ -248,7 +248,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.RechargeAbilitySpellId,
                 spells,
                 options.Items,
-                options.AdriaStoreId),
+                options.AdriaStoreId,
+                options.WorldRules?.TownLevelId ?? AuthoritativePortalRules.TownLevelId),
             worldCommands,
             new DiabloCombatCommandProcessor(
                 worldState,

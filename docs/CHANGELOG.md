@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store
   fixtures.
+- Require the authoritative Adria service to be opened and used on the
+  configured world-rule town level.
 - Advance the active Diablo content schema to `1.417.0` for the validated `stores.tsv` vendor-role contract, while retaining generic compatibility for legacy custom-store rows.
 - Keep the immediately previous additive `1.416.0` content schema activatable while `1.417.0` remains current.
 - Externalize native vendor roles in store content and enforce Smith, Witch, Wirt, and Healer sale admission on the authoritative server, with focused native-filter parity coverage.
