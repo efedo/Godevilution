@@ -213,7 +213,12 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.416.0` for these table contracts.
+The Diablo content schema is now `1.417.0` for these table contracts.
+
+Schema 1.417 adds the optional `store_role` column to `stores.tsv`. Explicit
+roles validate native vendor identities for authoritative sale admission;
+legacy rows infer only known Smith/Witch/Wirt/Healer symbols and retain the
+generic role for custom stores.
 
 Schema 1.416 extends ordinary `native_dun_levels.tsv` rows with optional
 validated `.til`/`.sol` collision assets. Legacy rows remain object/mega-tile
@@ -428,7 +433,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.416.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.417.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.
