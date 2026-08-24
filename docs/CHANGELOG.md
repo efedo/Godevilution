@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Match native Telekinesis target precedence in Godot by preferring authored
+  objects over world items and excluding server-authored dialogue monsters
+  from world-spell targets.
 - Align Godot world and authored-dialogue target selection with native
   level-`0` compatibility wildcards while retaining exact-level filtering for
   ordinary projections.

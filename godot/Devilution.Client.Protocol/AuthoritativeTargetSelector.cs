@@ -68,14 +68,6 @@ public static class AuthoritativeTargetSelector
         if (localPlayer is null)
             return null;
 
-        var item = snapshot.WorldItems.FirstOrDefault(candidate =>
-            candidate.EntityId != 0
-            && IsVisible(candidate.LevelId, localPlayer.LevelId)
-            && candidate.PositionX == targetX
-            && candidate.PositionY == targetY);
-        if (item is not null)
-            return item.EntityId;
-
         var worldObject = snapshot.Objects.FirstOrDefault(candidate =>
             candidate.EntityId != 0
             && IsVisible(candidate.LevelId, localPlayer.LevelId)
@@ -87,10 +79,19 @@ public static class AuthoritativeTargetSelector
         if (worldObject is not null)
             return worldObject.EntityId;
 
+        var item = snapshot.WorldItems.FirstOrDefault(candidate =>
+            candidate.EntityId != 0
+            && IsVisible(candidate.LevelId, localPlayer.LevelId)
+            && candidate.PositionX == targetX
+            && candidate.PositionY == targetY);
+        if (item is not null)
+            return item.EntityId;
+
         return snapshot.Monsters
             .Where(candidate => candidate.EntityId != 0
                 && candidate.Alive
                 && !candidate.SneakHidden
+                && candidate.DialogueMessageId == 0
                 && IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)

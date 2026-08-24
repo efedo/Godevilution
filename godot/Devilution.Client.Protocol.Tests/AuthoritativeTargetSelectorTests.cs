@@ -160,6 +160,16 @@ public sealed class AuthoritativeTargetSelectorTests
                     FuturePositionX = 6,
                     FuturePositionY = 6,
                     Alive = true,
+                },
+                new MonsterSnapshot {
+                    EntityId = 21,
+                    LevelId = 4,
+                    PositionX = 7,
+                    PositionY = 6,
+                    Moving = true,
+                    FuturePositionX = 8,
+                    FuturePositionY = 6,
+                    Alive = true,
                     IsUnique = true,
                     UniqueIdentity = "Gharbad",
                     DialogueMessageId = 145,
@@ -181,8 +191,8 @@ public sealed class AuthoritativeTargetSelectorTests
             20U,
             AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 6, 6));
         Assert.Equal(
-            new AuthoritativeMonsterDialogueTarget(3003, 20),
-            AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 6, 6));
+            new AuthoritativeMonsterDialogueTarget(3003, 21),
+            AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 8, 6));
     }
 
     [Fact]
@@ -313,6 +323,12 @@ public sealed class AuthoritativeTargetSelectorTests
                     PositionX = 4,
                     PositionY = 4,
                 },
+                new WorldItemSnapshot {
+                    EntityId = 33,
+                    LevelId = 2,
+                    PositionX = 5,
+                    PositionY = 5,
+                },
             },
             Objects = {
                 new ObjectSnapshot {
@@ -337,6 +353,29 @@ public sealed class AuthoritativeTargetSelectorTests
         Assert.Equal(30U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 4, 4));
         Assert.Equal(31U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 5, 5));
         Assert.Equal(32U, AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 6, 6));
+    }
+
+    [Fact]
+    public void DoesNotUseAuthoredDialogueMonsterAsWorldSpellTarget()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 2,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = true,
+                    IsUnique = true,
+                    DialogueMessageId = 145,
+                },
+            },
+        };
+
+        Assert.Null(AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 4, 4));
     }
 
     [Fact]
