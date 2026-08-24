@@ -173,6 +173,7 @@ item	amulet	171
 object	na_krul_sequence_1	6001
 object	na_krul_sequence_2	6002
 object	na_krul_sequence_3	6003
+object	na_krul_lever	6007
 object	grave_matters_cathedral_map	6004
 object	hive_entrance	6005
 quest	grave_matters	3017

@@ -351,8 +351,10 @@ explicit migration seams, not server-authority claims:
   `objects.tsv` behavior templates, and the generic `GrantSpellLevel`,
   `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` effects cover
   reusable spell-level and Phasing/Guardian-controller transitions. The
-  existing Na-Krul `QuestSequence` row is not a substitute for the remaining
-  book/lever semantics.
+  existing Na-Krul `QuestSequence` rows now include the anchor-relative final
+  lever, whose server-owned completion gate follows the three-tome sequence;
+  native room reconstruction and collision/tile-definition presentation remain
+  compatibility seams.
 - Quest-specific set-piece mutation and resynchronization remains native for
   the Banner opening transition and associated unique-monster state, plus the
   remaining book/lever set pieces. Procedural level/object parity must precede

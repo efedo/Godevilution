@@ -156,6 +156,49 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NaKrulLeverCompletesQuestAfterTheAuthoredTomeSequence()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n24\t40\t40\tnone\n");
+        var quest = new AuthoritativeQuestState(
+            3022,
+            24,
+            1,
+            active: true,
+            variable1: 3);
+        var lever = new AuthoritativeWorldObject(
+            2409,
+            6007,
+            24,
+            27,
+            19,
+            questId: 3022,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.CompleteQuest,
+            questTransitionRequiredVariable1: 3);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [lever],
+            quests: [quest]);
+        var player = CreatePlayer(
+            positionX: 26,
+            positionY: 19,
+            levelId: 24,
+            entityId: 7);
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(lever.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(lever.Activated);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+    }
+
+    [Fact]
     public void MovementRejectsLiveMonsterOccupancy()
     {
         var monster = new AuthoritativeCombatTarget(10, 1, 0, 5);

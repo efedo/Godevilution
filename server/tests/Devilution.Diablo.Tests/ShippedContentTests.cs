@@ -1333,18 +1333,27 @@ public sealed class ShippedContentTests
             objectsTable.SourcePath,
             objectsTable.ToCanonicalTsv(),
             stableIds);
+        var templates = AuthoritativeWorldObjectCatalog.LoadTemplates(
+            objectsTable.SourcePath,
+            objectsTable.ToCanonicalTsv(),
+            stableIds);
 
         var objectIds = stableIds.Entries
             .Where(entry => entry.Kind == "object")
             .ToArray();
-        Assert.Equal(objectIds.Length, objects.Select(@object => @object.ObjectId).Distinct().Count());
+        var stableObjectIds = objectIds.Select(entry => entry.NumericId).ToHashSet();
+        var allObjects = objects
+            .Concat(templates)
+            .Where(@object => stableObjectIds.Contains(@object.ObjectId))
+            .ToArray();
+        Assert.Equal(objectIds.Length, allObjects.Select(@object => @object.ObjectId).Distinct().Count());
         Assert.All(objectsTable.Rows, row => {
             if (row.OptionalBoolean("template_only"))
                 return;
             var symbol = row.Required("object_symbol");
             Assert.Equal(row.RequiredUInt32("object_id"), stableIds.Resolve("object", symbol));
         });
-        stableIds.ValidateReferences("object", id => objects.Any(@object => @object.ObjectId == id));
+        stableIds.ValidateReferences("object", id => allObjects.Any(@object => @object.ObjectId == id));
         Assert.Equal("grave_matters_cathedral_map", stableIds.Resolve(6004, "object"));
         Assert.Equal("hive_entrance", stableIds.Resolve(6005, "object"));
     }
@@ -2699,7 +2708,8 @@ public sealed class ShippedContentTests
             hellfireLevel.NativeMegaTileLayer[(6 + uberroom.MegaHeight - 1) * 20
                 + 9 + uberroom.MegaWidth - 1]);
         Assert.Equal(
-            [(1U, 1U, 2401U, 2403U, -4, 0), (2U, 1U, 2402U, 2403U, -2, 0)],
+            [(1U, 1U, 2401U, 2403U, -4, 0), (2U, 1U, 2402U, 2403U, -2, 0),
+             (3U, 1U, 2409U, 2403U, 3, -1)],
             activation.NativeDunFragmentObjects!.Placements.Select(placement => (
                 placement.PlacementId,
                 placement.FragmentId,
@@ -2708,7 +2718,8 @@ public sealed class ShippedContentTests
                 placement.OffsetX,
                 placement.OffsetY)).ToArray());
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
-            .Where(@object => @object.QuestId == 3022)
+            .Where(@object => @object.QuestId == 3022
+                && @object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             .OrderBy(@object => @object.EffectAmount)
             .ToArray();
         Assert.Equal(18, activation.QuestSequenceVariants!.Definitions.Count);
@@ -2731,6 +2742,15 @@ public sealed class ShippedContentTests
             (finalNakrulTome.QuestSequenceFollowUpKind,
              finalNakrulTome.QuestSequenceFollowUpAmount,
              finalNakrulTome.QuestSequenceFollowUpWorldMutationId));
+        var nakrulLever = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.ObjectId == 6007);
+        Assert.Equal((27, 19, 3022U, AuthoritativeObjectQuestTransitionKind.CompleteQuest), (
+            nakrulLever.PositionX,
+            nakrulLever.PositionY,
+            nakrulLever.QuestId,
+            nakrulLever.QuestTransitionKind));
+        Assert.Equal(3, nakrulLever.QuestTransitionRequiredVariable1);
         var nakrulRoomMutation = Assert.Single(
             activation.Simulation.WorldState.WorldMutations!.Definitions,
             mutation => mutation.MutationId == 9200);
@@ -2781,7 +2801,7 @@ public sealed class ShippedContentTests
             hiveWarp.TargetX,
             hiveWarp.TargetY,
             hiveWarp.RequiredQuestCompleted));
-        Assert.Equal(3, activation.Simulation.WorldState.Quests[3022].CompletionVariable1);
+        Assert.Equal(0, activation.Simulation.WorldState.Quests[3022].CompletionVariable1);
         var baseQuest = activation.Simulation.WorldState.Quests[3001];
         Assert.Equal(
             activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),

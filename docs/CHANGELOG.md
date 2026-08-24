@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized Hellfire Na-Krul's final lever as an anchor-relative authored
+  fragment object. The server now gates it on the three-tome sequence and owns
+  the final quest completion; the quest no longer completes prematurely when
+  the third tome is read.
 - Hardened authored occupancy-trigger persistence: an unactivated trigger tile
   remains enterable during snapshot restore, and every secondary authored world
   mutation follow-up is validated before content activation.
