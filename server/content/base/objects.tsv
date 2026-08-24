@@ -1,7 +1,7 @@
 entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	activated	quest_id	quest_symbol	effect_kind	effect_amount	effect_item_symbol	missile_passable	breakable	destroyed	trap_armed	template_only	quest_sequence_follow_up_kind	quest_sequence_follow_up_amount	quest_sequence_follow_up_monster_symbol	quest_sequence_follow_up_offset_x	quest_sequence_follow_up_offset_y	quest_sequence_follow_up_world_mutation_id	effect_spell_symbol	projectile_target_offset_x	projectile_target_offset_y	projectile_source
 2001	1	l1_left_door	1	cathedral	4	4	0	0		None	0		0	0	0	0	0	None	0		0	0	0		0	0	Object
 2002	97		4	hell	0	0	0	0		None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object
-2010	1		0		0	0	0	0		SpawnSpellProjectile	10		0	0	0	0	1	None	0		0	0	0	phasing	1	-16	ActivatingPlayer
-2011	2		0		0	0	0	0		SpawnSpellProjectile	10		0	0	0	0	1	None	0		0	0	0	phasing	-2	-17	ActivatingPlayer
+2010	1		0		0	0	0	0		WorldMutation	9302		0	0	0	0	1	SpawnSpellProjectile	10		1	-16	0		0	0	ActivatingPlayer
+2011	2		0		0	0	0	0		WorldMutation	9303		0	0	0	0	1	SpawnSpellProjectile	10		-2	-17	0		0	0	ActivatingPlayer
 2012	1		0		0	0	0	3015	chamber_of_bone	GrantSpellLevelAndSpawnProjectile	7		0	0	0	0	1	None	0		0	0	0	guardian	-2	-4	ActivatingPlayer
 2013	2		0		0	0	0	3015	chamber_of_bone	GrantSpellLevelAndSpawnProjectile	7		0	0	0	0	1	None	0		0	0	0	guardian	-2	-4	ActivatingPlayer

@@ -265,16 +265,55 @@ public sealed class ShippedContentTests
 
         var leftBook = Assert.Single(templates, @object => @object.EntityId == 2010);
         Assert.Equal(1U, leftBook.ObjectId);
-        Assert.Equal(AuthoritativeObjectEffectKind.SpawnSpellProjectile, leftBook.EffectKind);
-        Assert.Equal(10, leftBook.EffectAmount);
-        Assert.Equal((1, -16), (leftBook.ProjectileTargetOffsetX, leftBook.ProjectileTargetOffsetY));
+        Assert.Equal(AuthoritativeObjectEffectKind.WorldMutation, leftBook.EffectKind);
+        Assert.Equal(9302, leftBook.EffectAmount);
+        Assert.Equal(
+            AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile,
+            leftBook.QuestSequenceFollowUpKind);
+        Assert.Equal(10U, leftBook.QuestSequenceFollowUpAmount);
+        Assert.Equal(
+            (1, -16),
+            (leftBook.QuestSequenceFollowUpOffsetX, leftBook.QuestSequenceFollowUpOffsetY));
         Assert.Equal(
             AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
             leftBook.ProjectileSourceKind);
 
         var rightBook = Assert.Single(templates, @object => @object.EntityId == 2011);
         Assert.Equal(2U, rightBook.ObjectId);
-        Assert.Equal((-2, -17), (rightBook.ProjectileTargetOffsetX, rightBook.ProjectileTargetOffsetY));
+        Assert.Equal(9303, rightBook.EffectAmount);
+        Assert.Equal(
+            AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile,
+            rightBook.QuestSequenceFollowUpKind);
+        Assert.Equal(
+            (-2, -17),
+            (rightBook.QuestSequenceFollowUpOffsetX, rightBook.QuestSequenceFollowUpOffsetY));
+
+        var mutationTable = pack.Tables.Single(table => table.SourcePath == "world_mutations.tsv");
+        var mutations = AuthoritativeWorldMutationCatalog.LoadTsv(
+            mutationTable.SourcePath,
+            mutationTable.ToCanonicalTsv(),
+            stableIds);
+        Assert.Equal(
+            (AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(5, true),
+                AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(5, false)),
+            (mutations.Definitions.Single(definition => definition.MutationId == 9302).LevelId,
+                mutations.Definitions.Single(definition => definition.MutationId == 9302).MegaTileCopySourceLevelId));
+        Assert.Equal(
+            (1, 1, 9, 10),
+            mutations.Definitions.Single(definition => definition.MutationId == 9302)
+                .MegaTileCopyRectangles.Select(rectangle => (
+                    rectangle.X,
+                    rectangle.Y,
+                    rectangle.Width,
+                    rectangle.Height)).Single());
+        Assert.Equal(
+            (11, 1, 10, 10),
+            mutations.Definitions.Single(definition => definition.MutationId == 9303)
+                .MegaTileCopyRectangles.Select(rectangle => (
+                    rectangle.X,
+                    rectangle.Y,
+                    rectangle.Width,
+                    rectangle.Height)).Single());
 
         var placements = AuthoritativeSetLevelObjectCatalog.LoadTsv(
             "set_level_objects.tsv",
@@ -741,8 +780,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",

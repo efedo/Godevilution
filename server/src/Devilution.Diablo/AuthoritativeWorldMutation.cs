@@ -514,15 +514,23 @@ public sealed class AuthoritativeWorldMutationCatalog
     {
         ArgumentNullException.ThrowIfNull(world);
         foreach (var mutation in definitions.Values) {
-            if (!world.ContainsLevel(mutation.LevelId))
+            if (!world.ContainsLevel(mutation.LevelId)) {
+                if (AuthoritativeSetLevelMapCatalog.IsRuntimeLevelId(mutation.LevelId))
+                    continue;
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} references unknown level {mutation.LevelId}.");
+            }
             var level = world.Levels.Single(candidate => candidate.LevelId == mutation.LevelId);
             AuthoritativeLevel? megaTileCopySource = null;
             if (mutation.MegaTileCopyRectangles.Count > 0) {
-                if (!world.ContainsLevel(mutation.MegaTileCopySourceLevelId))
+                if (!world.ContainsLevel(mutation.MegaTileCopySourceLevelId)) {
+                    if (AuthoritativeSetLevelMapCatalog.IsRuntimeLevelId(
+                            mutation.MegaTileCopySourceLevelId)) {
+                        continue;
+                    }
                     throw new InvalidDataException(
                         $"World mutation {mutation.MutationId} references unknown mega-tile copy source level {mutation.MegaTileCopySourceLevelId}.");
+                }
                 megaTileCopySource = world.Levels.Single(candidate =>
                     candidate.LevelId == mutation.MegaTileCopySourceLevelId);
                 if (level.NativeMegaTileLayer.Count == 0

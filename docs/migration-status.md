@@ -7,16 +7,16 @@ templates: the server owns quest completion, one Guardian level, and the native
 player-origin Guardian target offset. Set-level quest progress gates resolve the
 native set-level route identity while ordinary quest-level routing remains
 unchanged. The base Vile Betrayer fixed book placements now clone validated authored
-templates: the server owns each activation and its native Phasing projectile
-source/target transition, while native mega-tile replacement,
-object-resynchronization, and encounter-progress presentation remain explicit
-compatibility seams.
+templates: the server owns each activation, its native Phasing projectile
+source/target transition, and the two authored replacement rectangles once the
+optional native map bundle is materialized. Native object-resynchronization and
+encounter-progress presentation remain explicit compatibility seams.
 World mutations can now copy a validated native mega-tile rectangle and its
 corresponding d-piece collision cells from a companion source level into the
 active target level. This provides the generic server/data boundary needed for
 Vile's pre-map replacement layer without embedding native tile values in the
-engine; the shipped map assets and exact
-Vile mutation row remain future content work.
+engine; set-level mutations remain deferred when the licensed native map bundle
+is not present.
 Authoritative world mutations now support anchored native mega-tile
 assignments and explicit creation of missing native transparency layers. The
 base Snotspill Banner dialogue now applies the native opening transparency

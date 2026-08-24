@@ -103,6 +103,18 @@ public sealed class AuthoritativeSetLevelMapCatalog
         return checked(RuntimeLevelIdBase + (uint)(setLevelId * 2) + (activeMap ? 1U : 0U));
     }
 
+    /** Returns whether a level identity belongs to a native set-level variant. */
+    public static bool IsRuntimeLevelId(uint levelId)
+    {
+        for (var setLevelId = 0; setLevelId <= 8; setLevelId++) {
+            if (levelId == GetRuntimeLevelId(setLevelId, activeMap: false)
+                || levelId == GetRuntimeLevelId(setLevelId, activeMap: true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns whether a runtime level is one of DevilutionX's active arenas. */
     public static bool IsArenaRuntimeLevel(uint levelId)
     {

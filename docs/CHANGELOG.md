@@ -9,6 +9,11 @@ All notable changes to this fork are documented below.
   grants one Guardian level, and starts the native player-origin Guardian at
   the exact book-relative target offset. Set-level quest progress gates resolve
   their native route identity without changing ordinary quest-level behavior.
+- Externalized the two fixed Vile Betrayer book replacement rectangles as
+  validated set-level world mutations. Their authored WorldMutation effects
+  apply the native pre-map replacement when the optional map bundle is loaded,
+  then launch the activating-player Phasing projectile in the same operation;
+  native object resynchronization and encounter presentation remain seams.
 - Externalized the two fixed Vile Betrayer book placements as validated
   set-level behavior templates: authoritative activation now owns the native
   activating-player Phasing projectiles and exact target offsets, while the

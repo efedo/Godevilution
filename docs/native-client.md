@@ -341,9 +341,10 @@ explicit migration seams, not server-authority claims:
   the server completes the quest, grants Guardian, and owns the exact
   player-origin target offset. The Vile Betrayer's two fixed book
   placements now clone authored templates: server activation owns the native
-  Phasing projectile source and target offsets, while native mega-tile
-  replacement, object resynchronization, and encounter-progress presentation
-  remain compatibility seams. Set-level rows can clone validated
+  Phasing projectile source and target offsets plus the authored replacement
+  rectangles when the native map bundle is available, while native object
+  resynchronization and encounter-progress presentation remain compatibility
+  seams. Set-level rows can clone validated
   `objects.tsv` behavior templates, and the generic `GrantSpellLevel`,
   `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` effects cover
   reusable spell-level and Phasing/Guardian-controller transitions. The

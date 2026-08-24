@@ -380,6 +380,29 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void DefersSetLevelMutationValidationUntilOptionalMapBundlesLoad()
+    {
+        var targetLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+            5,
+            activeMap: true);
+        var sourceLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+            5,
+            activeMap: false);
+        var catalog = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                9302,
+                targetLevelId,
+                megaTileCopySourceLevelId: sourceLevelId,
+                megaTileCopyRectangles: [new AuthoritativeWorldMutationRectangle(1, 1, 9, 10)]),
+        ]);
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t40\t40\tnone\n");
+
+        catalog.ValidateWorld(world);
+    }
+
+    [Fact]
     public void RecomputesNativeCollisionWhenAProjectedDPieceChanges()
     {
         var catalog = new AuthoritativeWorldMutationCatalog([
@@ -1139,6 +1162,54 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.Equal((2, 0), (projectile.PositionX, projectile.PositionY));
         Assert.True(@object.Activated);
         Assert.False(world.IsWalkable(1, 2, 1));
+    }
+
+    [Fact]
+    public void WorldMutationFollowUpCanLaunchPhasingFromActivatingPlayer()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            41,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.WorldMutation,
+            effectAmount: 7,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile,
+            questSequenceFollowUpAmount: 9,
+            questSequenceFollowUpOffsetX: 1,
+            projectileSourceKind: AuthoritativeObjectProjectileSourceKind.ActivatingPlayer);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [@object],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(7, 1, [6]),
+            ]));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(9, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+                ProjectileLifetime = 2,
+                PhasingMinimumAxisOffset = 1,
+                PhasingMaximumAxisOffset = 1,
+            },
+        ]);
+        var player = CreatePlayer();
+
+        var result = new DiabloWorldCommandProcessor(world, spells: spells).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            1,
+            []);
+
+        Assert.True(result.Succeeded);
+        Assert.Contains(7U, world.ActiveWorldMutationIds);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((0, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal((2, 0), (projectile.TargetX, projectile.TargetY));
     }
 
     [Fact]
