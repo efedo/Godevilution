@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Aligned native monster presentation with Godot's alive-only authoritative
+  visibility rule: dead projected monsters no longer retain stale compatibility
+  pool slots or animation state.
 - Aligned Godot quest/towner validation with the native duplicate-level
   geometry boundary. Duplicate level identities now fail with the controlled
   invalid-snapshot error before interaction bounds are evaluated, rather than

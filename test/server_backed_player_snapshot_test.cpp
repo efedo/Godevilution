@@ -1410,6 +1410,16 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	EXPECT_FALSE(projection.IsBlocked(3, 0).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, FiltersDeadMonstersFromNativePresentation)
+{
+	ProjectedMonsterSnapshot snapshot;
+	snapshot.alive = true;
+	EXPECT_TRUE(IsAuthoritativeMonsterPresentable(snapshot));
+
+	snapshot.alive = false;
+	EXPECT_FALSE(IsAuthoritativeMonsterPresentable(snapshot));
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 {
 	ProjectedLevelGeometrySnapshot geometry;

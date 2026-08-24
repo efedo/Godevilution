@@ -785,6 +785,11 @@ bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player
 	return projectedLevelId == 0 || player.isOnActiveLevel();
 }
 
+bool IsAuthoritativeMonsterPresentable(const ProjectedMonsterSnapshot &snapshot)
+{
+	return snapshot.alive;
+}
+
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const ServerBackedWorldProjection &projection,
     uint32_t levelId,
@@ -809,6 +814,12 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			return tl::make_unexpected("Authoritative monster position cannot be represented by the native world tile type.");
 		if (snapshot.moving && !IsValidWorldPosition(snapshot.futurePositionX, snapshot.futurePositionY))
 			return tl::make_unexpected("Authoritative moving monster destination cannot be represented by the native world tile type.");
+		// Godot omits dead monsters from presentation. Do the same here instead
+		// of retaining a previously mapped compatibility slot with stale animation
+		// state; RemoveUnclaimedMonsterSlots below removes that slot and the mapping
+		// cleanup at the end of this method drops its entity identity.
+		if (!IsAuthoritativeMonsterPresentable(snapshot))
+			continue;
 		currentMonsterEntities.insert(snapshot.entityId);
 		unsigned slot = std::numeric_limits<unsigned>::max();
 		if (const auto mapped = monsterSlots_.find(snapshot.entityId); mapped != monsterSlots_.end()

@@ -32,6 +32,9 @@ namespace devilution::authoritative {
 /** Returns whether a projected remote player belongs to the currently rendered level. */
 [[nodiscard]] bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player);
 
+/** Returns whether an authoritative monster should occupy native presentation state. */
+[[nodiscard]] bool IsAuthoritativeMonsterPresentable(const ProjectedMonsterSnapshot &snapshot);
+
 /** Keeps legacy rendering and tile lookup state synchronized with the server. */
 class ServerBackedWorldPresentation {
 public:

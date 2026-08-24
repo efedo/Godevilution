@@ -2,6 +2,10 @@
 
 Status date: 2026-08-24
 
+Native authoritative monster presentation now applies the same alive-only
+visibility rule as Godot. Dead projected monsters are omitted before pool
+hydration, so stale compatibility slots are removed rather than rendered.
+
 Godot quest/towner snapshot validation now rejects duplicate level-geometry
 identities through its normal invalid-snapshot boundary before evaluating
 interaction bounds, matching the native fail-closed path.
