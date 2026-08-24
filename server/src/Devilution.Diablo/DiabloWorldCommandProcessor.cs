@@ -1055,16 +1055,47 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         var entityId = AllocateWorldItemEntityId(players);
-        world.WorldItems.Add(entityId, new AuthoritativeWorldItem(
+        var droppedItem = new AuthoritativeWorldItem(
             entityId,
             player.LevelId,
             targetX,
             targetY,
             heldItem.ItemSeed,
             heldItem.Price,
-            heldItem.State));
+            heldItem.State);
+        world.WorldItems.Add(entityId, droppedItem);
         player.HeldItem = null;
+        ApplyWorldItemAnchorQuest(droppedItem);
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Completes a content-authored item-placement quest after the item is persisted in world state. */
+    private void ApplyWorldItemAnchorQuest(AuthoritativeWorldItem droppedItem)
+    {
+        if (questTypes is null)
+            return;
+
+        foreach (var quest in world.Quests.Values) {
+            if (quest.Unavailable
+                || quest.Completed
+                || !questTypes.TryGet(quest.QuestId, out var questType)) {
+                continue;
+            }
+            if (gameMode == DiabloGameMode.Multiplayer && questType.SinglePlayerOnly)
+                continue;
+            if (questType.WorldItemAnchorPositionX is not { } anchorX
+                || questType.WorldItemAnchorPositionY is not { } anchorY
+                || quest.LevelId != droppedItem.LevelId
+                || anchorX != droppedItem.PositionX
+                || anchorY != droppedItem.PositionY) {
+                continue;
+            }
+
+            quest.Progress = quest.RequiredProgress;
+            quest.Completed = true;
+            quest.Active = false;
+            quest.Logged = true;
+        }
     }
 
     private uint AllocateGoldStackSeed()

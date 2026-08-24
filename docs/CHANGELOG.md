@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added validated quest-type world-item anchors; a matching single-player
+  drop completes the quest while the dropped item remains server-owned and
+  persistent in world state.
 - Added validated deterministic coordinate anchors to native DUN fragments;
   fragment object placements can inherit a coordinate anchor, extending the
   content/runtime contract toward procedural set-piece placement without

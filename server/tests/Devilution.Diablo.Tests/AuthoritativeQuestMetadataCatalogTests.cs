@@ -58,6 +58,25 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
     }
 
     [Fact]
+    public void LoadsAndValidatesWorldItemQuestAnchorCoordinates()
+    {
+        var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
+            "quest_types.tsv",
+            "quest_id\tnative_quest_id\tname\tsingle_player_level\tmultiplayer_level\tlevel_type\tset_level\tsingle_player_only\tworld_item_anchor_position_x\tworld_item_anchor_position_y\n"
+                + "3023\t22\tCornerstone of the World\t21\t-1\t\t0\t1\t14\t14\n");
+
+        var definition = Assert.Single(questTypes.Definitions);
+        Assert.Equal((14, 14), (
+            definition.WorldItemAnchorPositionX,
+            definition.WorldItemAnchorPositionY));
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeQuestTypeCatalog.LoadTsv(
+            "quest_types.tsv",
+            "quest_id\tnative_quest_id\tname\tsingle_player_level\tmultiplayer_level\tlevel_type\tset_level\tsingle_player_only\tworld_item_anchor_position_x\tworld_item_anchor_position_y\n"
+                + "3023\t22\tCornerstone of the World\t21\t-1\t\t0\t1\t14\t\n"));
+    }
+
+    [Fact]
     public void ResolvesStableSetLevelSymbolsIncludingNativeZero()
     {
         var stableIds = new StableContentIdCatalog([

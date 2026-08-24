@@ -1,17 +1,17 @@
-quest_id	quest_symbol	native_quest_id	name	single_player_level	multiplayer_level	level_type	set_level	set_level_symbol	single_player_only
-3001	magic_rock	0	The Magic Rock	5	-1		0	SL_NONE	1
-3002	black_mushroom	1	Black Mushroom	9	-1		0	SL_NONE	1
-3003	gharbads_weak	2	Gharbad The Weak	4	-1		0	SL_NONE	1
-3004	zhar_the_mad	3	Zhar the Mad	8	-1		0	SL_NONE	1
-3005	lachdanan	4	Lachdanan	14	-1		0	SL_NONE	1
-3006	diablo	5	Diablo	15	-1		0	SL_NONE	0
-3007	butcher	6	The Butcher	2	2		0	SL_NONE	0
-3008	ogdens_sign	7	Ogden's Sign	4	-1		0	SL_NONE	1
-3009	halls_of_the_blind	8	Halls of the Blind	7	-1		0	SL_NONE	1
-3010	valor	9	Valor	5	-1		0	SL_NONE	1
-3011	anvil_of_fury	10	Anvil of Fury	10	-1		0	SL_NONE	1
-3012	warlord_of_blood	11	Warlord of Blood	13	-1		0	SL_NONE	1
-3013	king_leoric	12	The Curse of King Leoric	3	3	DTYPE_CATHEDRAL	1	SL_SKELKING	0
-3014	poisoned_water	13	Poisoned Water Supply	2	-1	DTYPE_CAVES	4	SL_POISONWATER	1
-3015	chamber_of_bone	14	The Chamber of Bone	6	-1	DTYPE_CATACOMBS	2	SL_BONECHAMB	1
-3016	lazarus	15	Archbishop Lazarus	15	15	DTYPE_CATHEDRAL	5	SL_VILEBETRAYER	0
+quest_id	quest_symbol	native_quest_id	name	single_player_level	multiplayer_level	level_type	set_level	set_level_symbol	single_player_only	world_item_anchor_position_x	world_item_anchor_position_y
+3001	magic_rock	0	The Magic Rock	5	-1		0	SL_NONE	1		
+3002	black_mushroom	1	Black Mushroom	9	-1		0	SL_NONE	1		
+3003	gharbads_weak	2	Gharbad The Weak	4	-1		0	SL_NONE	1		
+3004	zhar_the_mad	3	Zhar the Mad	8	-1		0	SL_NONE	1		
+3005	lachdanan	4	Lachdanan	14	-1		0	SL_NONE	1		
+3006	diablo	5	Diablo	15	-1		0	SL_NONE	0		
+3007	butcher	6	The Butcher	2	2		0	SL_NONE	0		
+3008	ogdens_sign	7	Ogden's Sign	4	-1		0	SL_NONE	1		
+3009	halls_of_the_blind	8	Halls of the Blind	7	-1		0	SL_NONE	1		
+3010	valor	9	Valor	5	-1		0	SL_NONE	1		
+3011	anvil_of_fury	10	Anvil of Fury	10	-1		0	SL_NONE	1		
+3012	warlord_of_blood	11	Warlord of Blood	13	-1		0	SL_NONE	1		
+3013	king_leoric	12	The Curse of King Leoric	3	3	DTYPE_CATHEDRAL	1	SL_SKELKING	0		
+3014	poisoned_water	13	Poisoned Water Supply	2	-1	DTYPE_CAVES	4	SL_POISONWATER	1		
+3015	chamber_of_bone	14	The Chamber of Bone	6	-1	DTYPE_CATACOMBS	2	SL_BONECHAMB	1		
+3016	lazarus	15	Archbishop Lazarus	15	15	DTYPE_CATHEDRAL	5	SL_VILEBETRAYER	0		

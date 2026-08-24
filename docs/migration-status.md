@@ -438,9 +438,12 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.424.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.423.0` schema
-for existing manifest-based packs. Schema 1.424 adds deterministic coordinate
+The Diablo content schema is now `1.425.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.424.0` schema
+for existing manifest-based packs. Schema 1.425 adds paired world-item anchor
+coordinates to quest types; the server completes a matching single-player
+quest when an item is dropped on that level cell while retaining the item in
+authoritative world state. Schema 1.424 adds deterministic coordinate
 anchors to native DUN fragments and lets fragment object placements inherit
 that anchor; procedural set-piece placement can now be authored without
 inventing a runtime object solely to carry coordinates. Schema 1.423 adds authored object reward
