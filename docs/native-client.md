@@ -343,7 +343,8 @@ explicit migration seams, not server-authority claims:
   player-origin target offset. The Vile Betrayer's two fixed book
   placements now clone authored templates: server activation owns the native
   Phasing projectile source and target offsets plus the authored replacement
-  rectangles when the native map bundle is available, while native object
+  rectangles when the native map bundle is available. The templates declare the
+  native book and center-circle presentation identities, while native object
   resynchronization and encounter-progress presentation remain compatibility
   seams. The Vile center circle now uses an authored occupancy trigger gated on
   both linked books; the server applies its deferred replacement, advances the

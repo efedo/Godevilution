@@ -271,6 +271,7 @@ public sealed class ShippedContentTests
 
         var leftBook = Assert.Single(templates, @object => @object.EntityId == 2010);
         Assert.Equal(1U, leftBook.ObjectId);
+        Assert.Equal(25U, leftBook.NativeObjectId);
         Assert.Equal(AuthoritativeObjectEffectKind.WorldMutation, leftBook.EffectKind);
         Assert.Equal(9302, leftBook.EffectAmount);
         Assert.Equal(
@@ -286,6 +287,7 @@ public sealed class ShippedContentTests
 
         var rightBook = Assert.Single(templates, @object => @object.EntityId == 2011);
         Assert.Equal(2U, rightBook.ObjectId);
+        Assert.Equal(25U, rightBook.NativeObjectId);
         Assert.Equal(9303, rightBook.EffectAmount);
         Assert.Equal(
             AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile,
@@ -296,6 +298,7 @@ public sealed class ShippedContentTests
 
         var circle = Assert.Single(templates, @object => @object.EntityId == 2014);
         Assert.Equal(3U, circle.ObjectId);
+        Assert.Equal(85U, circle.NativeObjectId);
         Assert.Equal(3016U, circle.QuestId);
         Assert.True(circle.ActivateOnOccupancy);
         Assert.Equal(2, circle.RequiredActivatedLinkedObjects);
@@ -365,6 +368,7 @@ public sealed class ShippedContentTests
 
         foreach (var entityId in new uint[] { 2012, 2013 }) {
             var book = Assert.Single(templates, @object => @object.EntityId == entityId);
+            Assert.Equal(25U, book.NativeObjectId);
             Assert.Equal(3015U, book.QuestId);
             Assert.Equal(
                 AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile,

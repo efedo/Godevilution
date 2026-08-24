@@ -26,7 +26,8 @@ The fixed Chamber of Bone completion books now clone validated authored
 templates: the server owns quest completion, one Guardian level, and the native
 player-origin Guardian target offset. Set-level quest progress gates resolve the
 native set-level route identity while ordinary quest-level routing remains
-unchanged. The base Vile Betrayer fixed book placements now clone validated authored
+unchanged. Their authored templates now also declare the native book and center-
+circle presentation identities. The base Vile Betrayer fixed book placements now clone validated authored
 templates: the server owns each activation, its native Phasing projectile
 source/target transition, and the two authored replacement rectangles once the
 optional native map bundle is materialized. Native object-resynchronization and

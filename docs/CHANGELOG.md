@@ -10,7 +10,9 @@ All notable changes to this fork are documented below.
   authored row now also declares the native sign-chest presentation identity.
 - Added additive native presentation identity metadata for authored objects. The
   Hellfire Na-Krul tomes and final lever now project through their native book
-  and lever visuals while stable authored object IDs remain server-owned.
+  and lever visuals while stable authored object IDs remain server-owned. The
+  Chamber of Bone and Vile Betrayer templates now likewise declare their native
+  book and center-circle presentation identities.
 - Externalized Hellfire Na-Krul's final lever as an anchor-relative authored
   fragment object. The server now gates it on the three-tome sequence and owns
   the final quest completion; the quest no longer completes prematurely when
