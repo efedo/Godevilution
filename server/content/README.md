@@ -1838,6 +1838,12 @@ retain authoritative walk and missile geometry when a binary collision bundle
 is deferred. Values use `piece_id:flag|flag` entries separated by semicolons;
 `none` is a valid flag set. Older rows default to no overrides.
 
+The validated text d-piece property loader retains the original required
+`solid` and `block_missile` columns and accepts optional `block_light`,
+`transparent`, `transparent_left`, `transparent_right`, and `trap` columns.
+This keeps text-authored geometry equivalent to the complete native `.sol`
+flag set while remaining compatible with older two-flag rows.
+
 Schema 1.427 adds the optional `procedural_set_piece_origins.tsv` table. Each
 row declares a set-level identity, target generated level, rectangular
 footprint, selection seed, and alignment. The Diablo module chooses one

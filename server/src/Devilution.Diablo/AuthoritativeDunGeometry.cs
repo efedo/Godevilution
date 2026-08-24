@@ -154,10 +154,27 @@ public sealed class AuthoritativeDunTilePropertyCatalog
         return new AuthoritativeDunTilePropertyCatalog(table.Rows.Select(row =>
             new AuthoritativeDunTileProperty(
                 row.RequiredUInt32("piece_id"),
-                (row.RequiredBoolean("solid") ? AuthoritativeDunTileFlags.Solid : AuthoritativeDunTileFlags.None)
-                | (row.RequiredBoolean("block_missile")
-                    ? AuthoritativeDunTileFlags.BlockMissile
-                    : AuthoritativeDunTileFlags.None))));
+                ReadFlag(row, "solid", AuthoritativeDunTileFlags.Solid)
+                | ReadFlag(row, "block_light", AuthoritativeDunTileFlags.BlockLight)
+                | ReadFlag(row, "block_missile", AuthoritativeDunTileFlags.BlockMissile)
+                | ReadFlag(row, "transparent", AuthoritativeDunTileFlags.Transparent)
+                | ReadFlag(row, "transparent_left", AuthoritativeDunTileFlags.TransparentLeft)
+                | ReadFlag(row, "transparent_right", AuthoritativeDunTileFlags.TransparentRight)
+                | ReadFlag(row, "trap", AuthoritativeDunTileFlags.Trap))));
+
+        static AuthoritativeDunTileFlags ReadFlag(
+            TsvRow row,
+            string column,
+            AuthoritativeDunTileFlags flag)
+        {
+            // The original TSV contract required only solid and block_missile.
+            // Keep those columns required while allowing older rows to omit the
+            // newly externalized .sol-compatible flags.
+            var enabled = column is "solid" or "block_missile"
+                ? row.RequiredBoolean(column)
+                : row.OptionalBoolean(column);
+            return enabled ? flag : AuthoritativeDunTileFlags.None;
+        }
     }
 
     /** Loads the native one-byte .sol property table (MAXTILES = 1379). */

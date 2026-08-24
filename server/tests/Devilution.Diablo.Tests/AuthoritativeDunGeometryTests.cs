@@ -73,6 +73,25 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void TilePropertyTsvLoaderPreservesAllNativeSolFlags()
+    {
+        var catalog = AuthoritativeDunTilePropertyCatalog.LoadTsv(
+            "dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_light\tblock_missile\ttransparent\ttransparent_left\ttransparent_right\ttrap\n"
+                + "10\t1\ttrue\t0\tfalse\t1\tfalse\ttrue\n");
+
+        Assert.Equal(
+            AuthoritativeDunTileFlags.Solid
+                | AuthoritativeDunTileFlags.BlockLight
+                | AuthoritativeDunTileFlags.TransparentLeft
+                | AuthoritativeDunTileFlags.Trap,
+            Assert.Single(catalog.Definitions).Flags);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeDunTilePropertyCatalog.LoadTsv(
+            "dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_missile\ttrap\n10\tfalse\tfalse\tmaybe\n"));
+    }
+
+    [Fact]
     public void TilLoaderReadsNativeLittleEndianMegaTileRecords()
     {
         var bytes = new byte[16];

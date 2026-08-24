@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extended the validated text d-piece property loader to preserve the complete
+  native `.sol` flag set, while retaining compatibility with older rows that
+  provide only `solid` and `block_missile`.
 - Added schema 1.428's optional `piece_property_overrides` world-mutation
   column. Mutations can now externalize validated native `.sol`-style
   collision flags for d-pieces introduced by a set-piece transition; the

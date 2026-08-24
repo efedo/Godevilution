@@ -28,6 +28,11 @@ The native compatibility client now enforces the same generated-origin
 validation before applying a snapshot, including duplicate set-level identity
 checks and the geometry-free legacy path.
 
+The external geometry contract now preserves all native `.sol` d-piece flags
+when a text property table is used: legacy `solid`/`block_missile` rows remain
+valid, while optional lighting, transparency, and trap flags are validated and
+retained for the same authoritative geometry model.
+
 Late-generated level additions and replacements now pass through
 `DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
 before deferred procedural origins are published; direct simulation consumers
