@@ -22,6 +22,7 @@
 #include "network/protocol/legacy_debug_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_input_policy.hpp"
+#include "network/protocol/legacy_lua_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_store_policy.hpp"
 #include "network/protocol/legacy_sync_policy.hpp"
@@ -72,6 +73,12 @@ TEST(ServerBackedCompatibility, StaleObjectHighlightsFailClosed)
 	EXPECT_EQ(
 	    ResolveServerBackedObjectInteractionRoute(true, false, false),
 	    Route::None);
+}
+
+TEST(ServerBackedCompatibility, AuthoritativeModeDoesNotOwnLegacyLuaLifecycle)
+{
+	EXPECT_TRUE(ShouldInitializeLegacyLua(false));
+	EXPECT_FALSE(ShouldInitializeLegacyLua(true));
 }
 
 TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTargets)

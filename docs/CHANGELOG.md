@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Centralize and characterize the native Lua lifecycle gate so authoritative
+  startup and shutdown cannot create or tear down an embedded Lua runtime;
+  explicit legacy launches retain the existing compatibility lifecycle.
 - Mark Godot's server-authored unique-monster dialogue targets with a gold
   presentation marker, keeping discoverability derived from snapshot state.
 - Route Godot clicks on visible authored unique monsters through

@@ -24,6 +24,9 @@ The native client now skips Lua initialization, shutdown, and debug-console
 registration when launched in authoritative server-backed mode. Explicit
 legacy mode retains the complete Lua lifecycle and console for backward
 compatibility.
+That lifecycle decision is centralized in a native policy and covered by a
+focused compatibility test so future startup changes cannot accidentally
+reintroduce embedded Lua into the authoritative client.
 The authoritative Data runtime now provides validated ordered content overlays
 and transactional activation, so new server data extensions no longer require
 Lua reload hooks. Native `ModManager` now owns archive selection, sound

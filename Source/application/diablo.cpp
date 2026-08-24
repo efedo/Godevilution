@@ -84,6 +84,7 @@
 #include "game/monsters/monster_pool.hpp"
 #include "ui/movie.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_lua_policy.hpp"
 #include "network/protocol/network_ticks.h"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -1661,7 +1662,7 @@ void DiabloDeinit()
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	// Lua was never initialized for authoritative mode, so do not tear down a
 	// compatibility runtime that does not exist.
-	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative)
+	if (ShouldInitializeLegacyLua(authoritative::GetServerBackedRuntimeConfiguration().mode == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative))
 		LuaShutdown();
 #else
 	LuaShutdown();
@@ -3136,7 +3137,7 @@ int DiabloMain(int argc, char **argv)
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	// Keep Lua available for explicit legacy launches, but leave the
 	// server-authoritative presentation path Lua-free.
-	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative)
+	if (ShouldInitializeLegacyLua(authoritative::GetServerBackedRuntimeConfiguration().mode == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative))
 		LuaInitialize();
 	else {
 		CurrentModManager.RegisterNativeOptionChangeHandler();

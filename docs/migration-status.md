@@ -16,6 +16,9 @@ the active quest and submits `TalkToQuestRequested`; the server remains the
 authority for range, stage, inventory, rewards, and progression.
 Godot's presentation now marks those same authoritative dialogue targets with
 a gold marker without embedding native text or quest progression locally.
+The native Lua lifecycle boundary is now centralized and characterized: an
+authoritative launch never initializes or shuts down embedded Lua, while
+explicit legacy launches retain the compatibility runtime.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and
