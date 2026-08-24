@@ -176,6 +176,32 @@ public sealed class DiabloStoreRulesTests
     }
 
     [Fact]
+    public void MiscIdOnlyAuthoredNonStaffTagsRejectLegacyStaffMiscIdentity()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 23,
+                MaxCharges = 10,
+                GenerationTags = new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var nonStaff = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemType = 1,
+            MiscId = 23,
+            Charges = 1,
+            MaxCharges = 10,
+            Value = 100,
+        };
+
+        Assert.Equal(
+            DiabloRuleFailure.InvalidTarget,
+            rules.ValidateRecharge(nonStaff, 100));
+    }
+
+    [Fact]
     public void RechargeUsesContentCapacityAndSpellPricingWhenStateOmitsFields()
     {
         var items = new AuthoritativeItemCatalog([

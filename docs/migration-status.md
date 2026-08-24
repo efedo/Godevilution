@@ -233,6 +233,10 @@ tags even when the spell-book catalog is omitted; tagged non-book rows no
 longer inherit the native `misc_id=25` book fallback. Untagged legacy rows
 retain the compatibility fallback.
 
+Recharge admission now suppresses the native staff misc-ID fallback when
+unambiguous normalized item tags identify a misc-ID-only row as non-staff;
+older untagged mappings retain compatibility behavior.
+
 The shipped spell-book catalog now requires every production book row to carry
 explicit `single_player_excluded` metadata; native Resurrection/Heal Other
 inference remains only a compatibility fallback for older packs.

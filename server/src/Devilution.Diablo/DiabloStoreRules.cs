@@ -124,8 +124,13 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
             if (hasDefinition && definition.GenerationTags.Count > 0)
                 return definition.GenerationTags.Contains("Staff", StringComparer.OrdinalIgnoreCase);
         }
+        var hasContentClassification = items is not null
+            && items.TryGetGenerationTagsByMiscId(
+                state.MiscId,
+                out var generationTags)
+            && generationTags.Count > 0;
         return AuthoritativeItemClassification.IsStaff(state, items)
-            || state.MiscId is 23 or 27;
+            || !hasContentClassification && state.MiscId is 23 or 27;
     }
 
     public DiabloRuleFailure? ValidateRecharge(OwnedStoreItem item, uint playerGold)
