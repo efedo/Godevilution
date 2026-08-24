@@ -14,6 +14,8 @@ All notable changes to this fork are documented below.
   and the native Escape path.
 - Externalize the shipped Staff of Lazarus vendor-sale exception through the
   normalized `NoSale` item tag while retaining the legacy index fallback.
+- Resolve normalized oil vendor-sale filters from content-owned item action
+  kinds while retaining the native misc-ID fallback for older states.
 - Constrain authoritative Repair and Recharge admission to declared Smith and
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store

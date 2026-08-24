@@ -2561,6 +2561,43 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void NormalizedOilActionUsesContentMetadataForVendorFilters()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2186,
+            0,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            ItemClass = 3,
+            ItemActionKind = DiabloItemActionKind.ApplyBlacksmithOil,
+            NativeItemIndex = 999,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = definition.Generate(0x12345678) with { MiscId = 0 };
+
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void CloseStoreClearsActiveStoreAndIsIdempotent()
     {
         var processor = new DiabloStoreCommandProcessor(CreateCatalog());

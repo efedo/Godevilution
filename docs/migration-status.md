@@ -29,6 +29,8 @@ The shipped Staff of Lazarus vendor-sale exception is now declared by the
 normalized `NoSale` item tag. Authoritative Smith and Witch admission resolves
 that content metadata first; the native item-index check remains only as a
 compatibility fallback for older direct catalogs without normalized items.
+Normalized oil action kinds likewise drive the Smith/Witch oil filter, with the
+native misc-ID range retained only for older compatibility states.
 
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain

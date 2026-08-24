@@ -40,7 +40,7 @@ public static class AuthoritativeStoreSalePolicy
     {
         if (IsNoSale(state, items))
             return false;
-        if (IsOil(state))
+        if (IsOil(state, items))
             return true;
         if (IsMisc(state, items) || IsGold(state, items) || IsQuest(state, items))
             return false;
@@ -60,7 +60,7 @@ public static class AuthoritativeStoreSalePolicy
         if (IsNoSale(state, items))
             return false;
         var accepts = IsMisc(state, items);
-        if (state.MiscId > OilFirst && state.MiscId < OilLast)
+        if (IsOil(state, items))
             accepts = false;
         if (IsStaff(state, items)
             && (gameVariant != DiabloGameVariant.Hellfire
@@ -113,6 +113,20 @@ public static class AuthoritativeStoreSalePolicy
             && spells is not null
             && spells.TryGet(checked((uint)state.SpellId), out _);
 
-    private static bool IsOil(AuthoritativeItemState state)
-        => state.MiscId > OilFirst && state.MiscId < OilLast;
+    private static bool IsOil(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items)
+    {
+        var action = state.ItemActionKind;
+        if (action == DiabloItemActionKind.None
+            && items is not null
+            && items.TryGetByState(state, out var definition)) {
+            action = definition.ItemActionKind;
+        }
+        return action is DiabloItemActionKind.ApplyBlacksmithOil
+            or DiabloItemActionKind.ApplyAccuracyOil
+            or DiabloItemActionKind.ApplySharpnessOil
+            or DiabloItemActionKind.ApplyFortitudeOil
+            || state.MiscId > OilFirst && state.MiscId < OilLast;
+    }
 }
