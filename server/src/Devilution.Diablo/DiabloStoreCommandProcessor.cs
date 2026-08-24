@@ -1079,7 +1079,9 @@ public sealed class DiabloStoreCommandProcessor
                     identifyAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
-        } else if (!isConsumableItem && player.ActiveStoreId is null) {
+        } else if (!isConsumableItem
+            && (player.ActiveStoreId is null
+                || player.ActiveStoreId == adriaStoreId)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!TryGetItem(

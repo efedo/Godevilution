@@ -2320,6 +2320,8 @@ public sealed class DiabloStoreCommandProcessorTests
                 ItemType = 1,
                 Value = 100,
                 IdentifiedValue = 100,
+                Magical = 1,
+                Identified = false,
                 Durability = 5,
                 MaxDurability = 20,
             });
@@ -2336,12 +2338,16 @@ public sealed class DiabloStoreCommandProcessorTests
             0).Succeeded);
         var sale = processor.Execute(player, new DiabloSellItemIntent(null, 0), 1);
         var repair = processor.Execute(player, new DiabloRepairItemIntent(null, 0), 2);
+        var identify = processor.Execute(player, new DiabloIdentifyItemIntent(null, 0), 3);
 
         Assert.False(sale.Succeeded);
         Assert.Equal(DiabloRuleFailure.NotAllowed, sale.Failure);
         Assert.False(repair.Succeeded);
         Assert.Equal(DiabloRuleFailure.NotAllowed, repair.Failure);
+        Assert.False(identify.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, identify.Failure);
         Assert.Single(player.Inventory);
+        Assert.False(player.Inventory[0].State.Identified);
         Assert.Equal(1000U, player.Gold);
     }
 
