@@ -324,6 +324,8 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (!TryGetItem(player, reference, inventoryIndex, out var item))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (player.ActiveStoreId.Value == adriaStoreId)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (catalog.TryGetRole(player.ActiveStoreId.Value, out var role)
             && !AuthoritativeStoreSalePolicy.Accepts(
                 role,
@@ -383,7 +385,7 @@ public sealed class DiabloStoreCommandProcessor
                     repairAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
-        } else if (player.ActiveStoreId is null) {
+        } else if (!AllowsVendorService(player, AuthoritativeStoreRole.Smith)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!TryGetItem(
@@ -480,7 +482,7 @@ public sealed class DiabloStoreCommandProcessor
                     rechargeAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
-        } else if (player.ActiveStoreId is null) {
+        } else if (!AllowsVendorService(player, AuthoritativeStoreRole.Witch)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!TryGetItem(
@@ -567,6 +569,18 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsStaff(AuthoritativeItemState state)
         => AuthoritativeItemClassification.IsStaff(state, items);
+
+    /** Allows legacy generic catalogs while constraining declared native vendors. */
+    private bool AllowsVendorService(
+        AuthoritativePlayerState player,
+        AuthoritativeStoreRole requiredRole)
+    {
+        if (player.ActiveStoreId is not uint storeId || storeId == adriaStoreId)
+            return false;
+        if (!catalog.TryGetRole(storeId, out var role))
+            return false;
+        return role is AuthoritativeStoreRole.Generic || role == requiredRole;
+    }
 
     private int ResolveMaximumDurability(AuthoritativeItemState state)
     {

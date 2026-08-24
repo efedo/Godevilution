@@ -7,6 +7,11 @@ server sale admission applies the native Smith and Witch buy filters and
 rejects Wirt and Healer sales before generic pricing, while unknown legacy
 store symbols remain generic for compatibility.
 
+Authoritative vendor services now require the declared native role: Repair is
+admitted only through Smith, Recharge only through Witch, and Adria service
+sessions reject vendor sale and service mutations. Legacy Generic catalogs
+remain compatible for custom-service fixtures.
+
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain
 unchanged.

@@ -2217,6 +2217,135 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void NativeVendorRolesConstrainRepairAndRechargeServices()
+    {
+        var repairState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            Value = 100,
+            IdentifiedValue = 100,
+            Durability = 5,
+            MaxDurability = 20,
+        };
+        var rechargeState = AuthoritativeItemState.Empty with {
+            ItemType = 10,
+            Value = 100,
+            IdentifiedValue = 100,
+            Charges = 0,
+            MaxCharges = 10,
+        };
+
+        var invalidRepairCatalog = new StoreCatalog();
+        invalidRepairCatalog.AddStore(4, [], AuthoritativeStoreRole.Healer);
+        var invalidRepairPlayer = CreatePlayer(
+            gold: 1000,
+            inventory: [new OwnedStoreItem(0, 0, 401, 100, 0, repairState)],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var invalidRepairProcessor = new DiabloStoreCommandProcessor(invalidRepairCatalog);
+        Assert.True(invalidRepairProcessor.Execute(
+            invalidRepairPlayer,
+            new DiabloOpenStoreIntent(4),
+            0).Succeeded);
+        var invalidRepair = invalidRepairProcessor.Execute(
+            invalidRepairPlayer,
+            new DiabloRepairItemIntent(null, 0),
+            1);
+        Assert.False(invalidRepair.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, invalidRepair.Failure);
+        Assert.Equal(5, Assert.Single(invalidRepairPlayer.Inventory).State.Durability);
+
+        var validRepairCatalog = new StoreCatalog();
+        validRepairCatalog.AddStore(1, [], AuthoritativeStoreRole.Smith);
+        var validRepairPlayer = CreatePlayer(
+            gold: 1000,
+            inventory: [new OwnedStoreItem(0, 0, 402, 100, 0, repairState)],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var validRepairProcessor = new DiabloStoreCommandProcessor(validRepairCatalog);
+        Assert.True(validRepairProcessor.Execute(
+            validRepairPlayer,
+            new DiabloOpenStoreIntent(1),
+            0).Succeeded);
+        Assert.True(validRepairProcessor.Execute(
+            validRepairPlayer,
+            new DiabloRepairItemIntent(null, 0),
+            1).Succeeded);
+        Assert.Equal(20, Assert.Single(validRepairPlayer.Inventory).State.Durability);
+
+        var invalidRechargeCatalog = new StoreCatalog();
+        invalidRechargeCatalog.AddStore(1, [], AuthoritativeStoreRole.Smith);
+        var invalidRechargePlayer = CreatePlayer(
+            gold: 1000,
+            inventory: [new OwnedStoreItem(0, 0, 403, 100, 0, rechargeState)],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var invalidRechargeProcessor = new DiabloStoreCommandProcessor(invalidRechargeCatalog);
+        Assert.True(invalidRechargeProcessor.Execute(
+            invalidRechargePlayer,
+            new DiabloOpenStoreIntent(1),
+            0).Succeeded);
+        var invalidRecharge = invalidRechargeProcessor.Execute(
+            invalidRechargePlayer,
+            new DiabloRechargeItemIntent(null, 0),
+            1);
+        Assert.False(invalidRecharge.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, invalidRecharge.Failure);
+        Assert.Equal(0, Assert.Single(invalidRechargePlayer.Inventory).State.Charges);
+
+        var validRechargeCatalog = new StoreCatalog();
+        validRechargeCatalog.AddStore(2, [], AuthoritativeStoreRole.Witch);
+        var validRechargePlayer = CreatePlayer(
+            gold: 1000,
+            inventory: [new OwnedStoreItem(0, 0, 404, 100, 0, rechargeState)],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var validRechargeProcessor = new DiabloStoreCommandProcessor(validRechargeCatalog);
+        Assert.True(validRechargeProcessor.Execute(
+            validRechargePlayer,
+            new DiabloOpenStoreIntent(2),
+            0).Succeeded);
+        Assert.True(validRechargeProcessor.Execute(
+            validRechargePlayer,
+            new DiabloRechargeItemIntent(null, 0),
+            1).Succeeded);
+        Assert.Equal(10, Assert.Single(validRechargePlayer.Inventory).State.Charges);
+    }
+
+    [Fact]
+    public void AdriaServiceStoreRejectsVendorMutations()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            405,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                Value = 100,
+                IdentifiedValue = 100,
+                Durability = 5,
+                MaxDurability = 20,
+            });
+        var catalog = new StoreCatalog();
+        var player = CreatePlayer(
+            gold: 1000,
+            inventory: [item],
+            inventoryGrid: [0, .. Enumerable.Repeat(-1, 39)]);
+        var processor = new DiabloStoreCommandProcessor(catalog);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            0).Succeeded);
+        var sale = processor.Execute(player, new DiabloSellItemIntent(null, 0), 1);
+        var repair = processor.Execute(player, new DiabloRepairItemIntent(null, 0), 2);
+
+        Assert.False(sale.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, sale.Failure);
+        Assert.False(repair.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, repair.Failure);
+        Assert.Single(player.Inventory);
+        Assert.Equal(1000U, player.Gold);
+    }
+
+    [Fact]
     public void VendorRoleRejectsSalesThatNativeVendorsDoNotBuy()
     {
         var item = new OwnedStoreItem(
@@ -2860,7 +2989,11 @@ public sealed class DiabloStoreCommandProcessorTests
             mana: 32,
             manaMaximum: 640,
             equipment: [new EquippedStoreItem(3, 99, serviceState)]);
-        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, [], AuthoritativeStoreRole.Smith);
+        catalog.AddStore(2, [], AuthoritativeStoreRole.Witch);
+        catalog.AddStore(99, [], AuthoritativeStoreRole.Generic);
+        var processor = new DiabloStoreCommandProcessor(catalog);
 
         Assert.True(processor.Execute(
             player,
@@ -2871,12 +3004,20 @@ public sealed class DiabloStoreCommandProcessorTests
 
         Assert.True(processor.Execute(
             player,
-            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            new DiabloOpenStoreIntent(99),
             2).Succeeded);
         var equipment = new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 3);
         Assert.True(processor.Execute(player, new DiabloIdentifyItemIntent(equipment, 0), 3).Succeeded);
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(1),
+            4).Succeeded);
         Assert.True(processor.Execute(player, new DiabloRepairItemIntent(equipment, 0), 4).Succeeded);
-        Assert.True(processor.Execute(player, new DiabloRechargeItemIntent(equipment, 0), 5).Succeeded);
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(2),
+            5).Succeeded);
+        Assert.True(processor.Execute(player, new DiabloRechargeItemIntent(equipment, 0), 6).Succeeded);
 
         var updated = Assert.Single(player.Equipment).State;
         Assert.True(updated.Identified);
