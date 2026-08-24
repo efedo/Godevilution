@@ -695,6 +695,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	first->set_level_id(1);
 	first->set_position_x(4);
 	first->set_position_y(4);
+	first->set_missile_passable(true);
 
 	auto projected = ProjectObjectSnapshots(snapshot);
 	ASSERT_TRUE(projected.has_value());
@@ -702,6 +703,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[0].entityId, 10U);
 	EXPECT_EQ((*projected)[0].objectId, 1U);
 	EXPECT_FALSE((*projected)[0].activated);
+	EXPECT_TRUE((*projected)[0].missilePassable);
 	EXPECT_EQ((*projected)[1].entityId, 20U);
 	EXPECT_TRUE((*projected)[1].activated);
 	EXPECT_EQ((*projected)[1].questId, 30U);
@@ -713,6 +715,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].questSequenceFollowUpKind, 1);
 	EXPECT_TRUE((*projected)[1].breakable);
 	EXPECT_TRUE((*projected)[1].destroyed);
+	EXPECT_FALSE((*projected)[1].missilePassable);
 	EXPECT_TRUE((*projected)[1].trapArmed);
 }
 

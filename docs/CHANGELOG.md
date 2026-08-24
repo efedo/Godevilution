@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
 - Preserved authoritative `TrapArmed` object state through native projection;
   trap-only objects now remain eligible for server-owned disarm interaction and
   update the native compatibility trap flag.
+- Applied authoritative object missile-passability and breakable/broken state
+  to native compatibility objects, preventing stale collision metadata after a
+  snapshot replacement.
 - Aligned Godot quest/towner validation with the native duplicate-level
   geometry boundary. Duplicate level identities now fail with the controlled
   invalid-snapshot error before interaction bounds are evaluated, rather than

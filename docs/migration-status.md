@@ -12,6 +12,8 @@ Native entity visibility now uses one level-0 wildcard predicate across world
 lookups and remote-player targeting, matching the Godot level-visibility rule.
 Native object projection now also preserves server-owned `TrapArmed` state and
 recognizes trap-only objects as authoritative disarm targets, matching Godot.
+Native compatibility objects now also receive authoritative missile-passability
+and breakable/broken state, preventing stale collision metadata on resync.
 
 Godot quest/towner snapshot validation now rejects duplicate level-geometry
 identities through its normal invalid-snapshot boundary before evaluating
