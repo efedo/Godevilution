@@ -455,6 +455,14 @@ inventing a runtime object solely to carry coordinates. Schema 1.423 adds author
 columns; the Snotspill Banner sign chest uses them with its server-owned
 quest-variable gate.
 
+Native `SelectChamber()` parity remains intentionally deferred: the native
+`FirstRoom()` pass owns `VerticalLayout` and `HasChamber1/2/3`, while the
+authoritative content packs do not yet contain the corresponding room-synthesis
+inputs or licensed `.til`/`.sol` collision assets. Current Cornerstone and
+`uberroom.dun` rows therefore use explicit validated anchors; no server path
+claims to reproduce native random chamber selection until those inputs can be
+externalized together.
+
 Schema 1.421 adds optional occupancy-trigger and linked-object-gate fields to
 `objects.tsv`. The server applies an authored object's normal validated effect
 when a player enters its tile, after any declared linked quest objects have
