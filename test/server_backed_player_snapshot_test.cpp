@@ -861,6 +861,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->add_native_piece_layer(65536);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidLayer).has_value());
 
+	protocol::Snapshot invalidNativePresentation;
+	level = invalidNativePresentation.add_level_geometry();
+	level->set_width(1);
+	level->set_height(1);
+	level->add_native_transparency(128);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
+	level->clear_native_transparency();
+	level->add_native_mega_tile_layer(256);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
+
 	protocol::Snapshot invalidPieceSize;
 	level = invalidPieceSize.add_level_geometry();
 	level->set_width(2);
@@ -1150,10 +1160,10 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	second->set_height(2);
 	second->add_blocked_cells(3);
 	second->add_missile_blocked_cells(1);
-	second->add_native_transparency(0x1234);
-	second->add_native_transparency(0x5678);
-	second->add_native_transparency(0x9ABC);
-	second->add_native_transparency(0xDEF0);
+	second->add_native_transparency(0x12);
+	second->add_native_transparency(0x56);
+	second->add_native_transparency(0x7A);
+	second->add_native_transparency(0x7F);
 	second->add_native_object_layer(5);
 	second->add_native_object_layer(6);
 	second->add_native_object_layer(7);
@@ -1184,7 +1194,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	EXPECT_EQ(projected->back().levelId, 20U);
 	ASSERT_EQ(projected->back().warpTriggers.size(), 1U);
 	EXPECT_EQ(projected->back().warpTriggers.front().stableSymbol, "stairs-down");
-	EXPECT_EQ(projected->back().nativeTransparency[2], 0x9ABCU);
+	EXPECT_EQ(projected->back().nativeTransparency[2], 0x7AU);
 	EXPECT_EQ(projected->back().nativeMegaTileLayer.front(), 42U);
 	EXPECT_EQ(projected->back().nativePieceLayer[0], 297U);
 	EXPECT_EQ(projected->back().nativePieceLayer[3], 298U);

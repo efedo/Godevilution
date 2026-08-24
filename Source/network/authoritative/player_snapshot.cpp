@@ -880,13 +880,13 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 	for (const auto &level : snapshot.level_geometry()) {
 		if (level.width() < 0 || level.height() < 0
 		    || !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint16_t>::max();
+				return value <= static_cast<uint32_t>(std::numeric_limits<int8_t>::max());
 			})
 		    || !std::all_of(level.native_object_layer().begin(), level.native_object_layer().end(), [](uint32_t value) {
 				return value <= std::numeric_limits<uint16_t>::max();
 			})
 		    || !std::all_of(level.native_mega_tile_layer().begin(), level.native_mega_tile_layer().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint16_t>::max();
+				return value <= std::numeric_limits<uint8_t>::max();
 			})
 		    || !std::all_of(level.native_piece_layer().begin(), level.native_piece_layer().end(), [](uint32_t value) {
 				return value <= std::numeric_limits<uint16_t>::max();

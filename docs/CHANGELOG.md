@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   layers remain inert until an authored object mapping exists, so behavior and
   encounter-state ownership cannot be reconstructed locally from presentation
   data.
+- Tightened native level-geometry protocol validation so transparency regions
+  and mega-tile identities cannot exceed the native compatibility client's
+  signed-byte and byte-sized presentation ranges.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

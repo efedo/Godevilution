@@ -162,8 +162,12 @@ Windows toolchain command.
 - `LevelGeometrySnapshot.native_object_layer` is an additive row-major
   projection of server-owned native object-layer values. It is presentation
   metadata only; clients must not infer gameplay authority from it.
+- `LevelGeometrySnapshot.native_transparency` values must fit the native
+  signed-byte transparency-region representation (`0` through `127`) for the
+  compatibility client; out-of-range values are rejected before presentation.
 - `LevelGeometrySnapshot.native_mega_tile_layer` is an additive row-major
-  projection of composed native mega-tile IDs. Its dimensions are the
+  projection of composed native mega-tile IDs. Values must fit the native
+  byte-sized mega-tile identity (`0` through `255`), and its dimensions are the
   ceiling of the level dimensions divided by two; it is presentation metadata
   only.
 - `Snapshot.players` contains every assigned participant. The receiving
