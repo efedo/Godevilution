@@ -9,6 +9,7 @@
 #include "game/levels/dungeon_common.h"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
+#include "network/authoritative/item_snapshot.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
 #include "network/authoritative/server_backed_world_presentation.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
@@ -307,6 +308,32 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidItemSemanticStateDuringProjection
 	inventory->mutable_state()->set_create_info(0);
 	inventory->mutable_state()->set_plus_damage(std::numeric_limits<int16_t>::max() + 1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeGoldAndEarPresentationIdentity)
+{
+	protocol::ItemStateSnapshot state;
+	state.set_item_type(static_cast<int32_t>(ItemType::Sword));
+	state.set_item_class(ICLASS_WEAPON);
+	state.set_item_index(123);
+	state.set_misc_id(IMISC_BOOK);
+	state.set_presentation_kind(protocol::ITEM_PRESENTATION_KIND_GOLD);
+	auto gold = ProjectNativeItem(state, 1, 10);
+	ASSERT_TRUE(gold.has_value()) << gold.error();
+	EXPECT_EQ(gold->_itype, ItemType::Gold);
+	EXPECT_EQ(gold->_iClass, ICLASS_GOLD);
+	EXPECT_EQ(gold->_iLoc, ILOC_UNEQUIPABLE);
+	EXPECT_EQ(gold->_iMiscId, IMISC_NONE);
+	EXPECT_EQ(gold->IDidx, IDI_GOLD);
+
+	state.set_presentation_kind(protocol::ITEM_PRESENTATION_KIND_EAR);
+	auto ear = ProjectNativeItem(state, 2, 0);
+	ASSERT_TRUE(ear.has_value()) << ear.error();
+	EXPECT_EQ(ear->_itype, ItemType::Misc);
+	EXPECT_EQ(ear->_iClass, ICLASS_MISC);
+	EXPECT_EQ(ear->_iLoc, ILOC_UNEQUIPABLE);
+	EXPECT_EQ(ear->_iMiscId, IMISC_EAR);
+	EXPECT_EQ(ear->IDidx, IDI_EAR);
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources)

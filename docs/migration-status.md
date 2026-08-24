@@ -654,6 +654,10 @@ catalog-less snapshots.
 Smith/Witch vendor admission likewise treats non-empty normalized generation
 tags as authoritative for `Misc` and `Quest` classification; legacy item-class
 fallback remains available only for definitions without classification tags.
+Native compatibility item projection now applies the server-owned Gold/Ear
+presentation identity to native item fields before presentation, so conflicting
+legacy item type, class, misc ID, or index values cannot change the projected
+item family.
 
 ## Current state
 

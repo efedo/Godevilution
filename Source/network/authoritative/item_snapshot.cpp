@@ -133,6 +133,27 @@ tl::expected<Item, std::string> ProjectNativeItem(const protocol::ItemStateSnaps
 			return tl::make_unexpected("Server-backed item cursor graphic is outside the native representation.");
 		item.setNewAnimation(false);
 	}
+	// Presentation metadata is server-owned. Keep the native compatibility
+	// identity aligned even when an older or custom content row carries
+	// conflicting legacy item fields.
+	switch (state.presentation_kind()) {
+	case protocol::ITEM_PRESENTATION_KIND_GOLD:
+		item._itype = ItemType::Gold;
+		item._iClass = ICLASS_GOLD;
+		item._iLoc = ILOC_UNEQUIPABLE;
+		item._iMiscId = IMISC_NONE;
+		item.IDidx = IDI_GOLD;
+		break;
+	case protocol::ITEM_PRESENTATION_KIND_EAR:
+		item._itype = ItemType::Misc;
+		item._iClass = ICLASS_MISC;
+		item._iLoc = ILOC_UNEQUIPABLE;
+		item._iMiscId = IMISC_EAR;
+		item.IDidx = IDI_EAR;
+		break;
+	default:
+		break;
+	}
 	return item;
 }
 

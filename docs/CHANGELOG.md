@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Smith/Witch vendor admission now treats non-empty normalized generation tags
   as authoritative for `Misc` and `Quest` classification instead of allowing a
   conflicting legacy item class to override authored content.
+- Native compatibility item projection now applies authoritative Gold/Ear
+  presentation identities even when legacy item fields conflict.
 - Item presentation now resolves the content-declared `Ear` generation tag
   before applying the legacy PvP-ear identity fallback, so normalized item
   metadata owns the wire presentation kind whenever an active catalog is
