@@ -9,6 +9,8 @@ The same boundaries now reject item scalar values that cannot fit the native
 item storage types before they reach compatibility presentation.
 Native player-item projection now also enforces the managed inventory-grid,
 footprint, equipment-slot, belt-slot, and collection topology checks.
+Native vendor projection now rejects seedless stock without complete dynamic
+presentation identity, matching the server and Godot active-store boundaries.
 
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,

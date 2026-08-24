@@ -13,6 +13,8 @@ All notable changes to this fork are documented below.
 - Aligned native player-item topology validation with the managed boundaries:
   inventory-grid references and footprints, equipment slots, belt slots, and
   collection limits now fail closed consistently.
+- Aligned native vendor projection with managed active-store validation by
+  rejecting stock entries that lack a valid native item identity.
 - Aligned warp-trigger reference validation across the server mapper, native
   snapshot bridge, and Godot protocol model: source levels must exist and
   nonzero quest gates must reference a quest in the same snapshot.

@@ -16,6 +16,18 @@ namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
 namespace {
 
+bool HasValidItemIdentity(uint32_t itemSeed, const protocol::ItemStateSnapshot &state)
+{
+	const bool hasDynamicPresentation = !state.base_name().empty()
+	    || !state.identified_name().empty()
+	    || state.has_native_cursor_graphic();
+	if (!hasDynamicPresentation)
+		return itemSeed != 0;
+	return !state.base_name().empty()
+	    && !state.identified_name().empty()
+	    && state.has_native_cursor_graphic();
+}
+
 } // namespace
 
 tl::expected<ProjectedVendorSnapshot, std::string> ProjectVendorSnapshot(const protocol::Snapshot &snapshot)
@@ -33,6 +45,8 @@ tl::expected<ProjectedVendorSnapshot, std::string> ProjectVendorSnapshot(const p
 			return tl::make_unexpected("Server-backed vendor snapshot contains a duplicate slot.");
 		if (source.price() > static_cast<uint32_t>(std::numeric_limits<int>::max()))
 			return tl::make_unexpected("Server-backed vendor snapshot contains an unsupported price.");
+		if (!HasValidItemIdentity(source.item_seed(), source.state()))
+			return tl::make_unexpected("Server-backed vendor snapshot contains an item with an invalid native identity.");
 		auto item = ProjectNativeItem(source.state(), source.item_seed(), source.price());
 		if (!item.has_value())
 			return tl::make_unexpected(item.error());

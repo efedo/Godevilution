@@ -65,5 +65,15 @@ TEST(ServerBackedVendorSnapshot, RejectsInvalidIdentifiersAndPrices)
 	EXPECT_FALSE(ProjectVendorSnapshot(excessiveDamage).has_value());
 }
 
+TEST(ServerBackedVendorSnapshot, RejectsInvalidItemIdentity)
+{
+	protocol::Snapshot snapshot;
+	snapshot.mutable_active_store()->set_store_id(1);
+	auto *item = snapshot.mutable_active_store()->add_items();
+	item->set_store_slot(1);
+	item->set_item_seed(0);
+	EXPECT_FALSE(ProjectVendorSnapshot(snapshot).has_value());
+}
+
 } // namespace
 } // namespace devilution::authoritative
