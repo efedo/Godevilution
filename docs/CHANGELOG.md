@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Protocol projection now validates generated set-piece origins against
+  supplied authoritative level geometry, while geometry-free legacy snapshots
+  retain their compatibility behavior.
 - Added schema 1.427's optional `procedural_set_piece_origins.tsv` catalog.
   Generated set-piece origins now derive deterministically from aligned
   walkable authoritative geometry and feed relative set-level object

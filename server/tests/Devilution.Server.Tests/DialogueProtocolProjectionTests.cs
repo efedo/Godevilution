@@ -8,6 +8,46 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsSetLevelObjectOriginsWithinSuppliedGeometry()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8));
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            source,
+            levelGeometry: [new AuthoritativeLevel(17, 8, 9)]);
+
+        var origin = Assert.Single(snapshot.SetLevelObjectOrigins);
+        Assert.Equal(6, origin.SetLevelId);
+        Assert.Equal(17U, origin.LevelId);
+        Assert.Equal((7, 8), (origin.PositionX, origin.PositionY));
+    }
+
+    [Fact]
+    public void RejectsSetLevelObjectOriginsOutsideSuppliedGeometry()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 8, 8));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                source,
+                levelGeometry: [new AuthoritativeLevel(17, 8, 9)]));
+    }
+
+    [Fact]
+    public void RejectsImportedSetLevelObjectOriginsOutsideProtocolGeometry()
+    {
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            CreateOriginSnapshot(new DiabloSetLevelObjectOriginState(6, 17, 7, 8)),
+            levelGeometry: [new AuthoritativeLevel(17, 8, 9)]);
+        snapshot.SetLevelObjectOrigins[0].PositionX = 8;
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.FromProtocolSnapshot(snapshot));
+    }
+
+    [Fact]
     public void ItemPresentationUsesContentEarTagBeforeLegacyIdentity()
     {
         var player = new StorePlayerSnapshot(
@@ -68,6 +108,37 @@ public sealed class DialogueProtocolProjectionTests
         Assert.Equal(
             ItemPresentationKind.Ear,
             Assert.Single(snapshot.WorldItems).State.PresentationKind);
+    }
+
+    private static DiabloSimulationSnapshot CreateOriginSnapshot(
+        DiabloSetLevelObjectOriginState origin)
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 17,
+        };
+        return new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null) {
+            SetLevelObjectOrigins = [origin],
+        };
     }
 
     [Fact]
