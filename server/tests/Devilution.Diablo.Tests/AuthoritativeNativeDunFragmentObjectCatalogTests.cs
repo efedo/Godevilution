@@ -118,4 +118,19 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalogTests
             fragments));
         Assert.Contains("unknown fragment 7", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void RejectsMissingBehaviorTemplatesBeforeMaterialization()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentObjectCatalog([
+            new AuthoritativeNativeDunFragmentObjectPlacement(1, 7, 10, 9, -2, 3) {
+                TemplateEntityId = 100,
+            },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateTemplates([]));
+
+        Assert.Contains("unknown template entity 100", exception.Message, StringComparison.Ordinal);
+    }
 }

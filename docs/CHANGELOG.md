@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
 - Apply unique-anchored fragment behavior objects when deferred encounters are
   generated on level entry, keeping geometry and object state in one server-owned
   lifecycle.
+- Validate native-DUN fragment behavior-template references during content
+  activation so unavailable encounters cannot hide malformed pack data.
 - Externalize a validated Storyteller service-only store identity for paid Cain
   identification, preserving the previous additive content schema while the
   connected native menu is routed through the authoritative session.

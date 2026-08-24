@@ -1836,7 +1836,8 @@ position; if the quest-gated encounter is unavailable, the placement is
 deferred without creating an orphan object.
 The same materialization boundary is used when a procedural unique encounter
 appears on level entry, so deferred fragments and their behavior objects remain
-one authoritative lifecycle.
+one authoritative lifecycle. Template references are validated during content
+activation even when their unique encounter is currently unavailable.
 
 Schema 1.389 adds the optional `quest_sequence_variants.tsv` table. Each
 content-declared variant assigns a complete permutation of ordered steps to a

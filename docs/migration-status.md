@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-23
+Status date: 2026-08-24
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and
@@ -778,6 +778,9 @@ scaled hit points), not only the client's difficulty label.
 - Deferred unique-anchored fragments now materialize their anchored behavior
   objects in the same simulation boundary as the fragment geometry, including
   procedural level-entry encounters rather than only activation-time targets.
+
+- Native-DUN fragment behavior-template references are now validated during
+  activation, before quest or encounter availability can defer their use.
 
 - The initial Snotspill Banner room is now externalized as a unique-anchored
   `banner1.dun` fragment plus an explicit Hell placement. Later Banner quest

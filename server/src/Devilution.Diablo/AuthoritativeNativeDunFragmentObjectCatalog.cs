@@ -63,6 +63,25 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
     public IReadOnlyList<AuthoritativeNativeDunFragmentObjectPlacement> Placements
         => placements;
 
+    /** Validates behavior-template references before any encounter materializes. */
+    public void ValidateTemplates(IEnumerable<AuthoritativeWorldObject> templates)
+    {
+        ArgumentNullException.ThrowIfNull(templates);
+        IReadOnlyDictionary<uint, AuthoritativeWorldObject> templatesById;
+        try {
+            templatesById = templates.ToDictionary(@object => @object.EntityId);
+        } catch (ArgumentException exception) {
+            throw new InvalidDataException(
+                "Native DUN fragment object templates contain duplicate entity IDs.",
+                exception);
+        }
+        foreach (var placement in placements.Where(placement => placement.TemplateEntityId != 0)) {
+            if (!templatesById.ContainsKey(placement.TemplateEntityId))
+                throw new InvalidDataException(
+                    $"Native DUN fragment object placement {placement.PlacementId} references unknown template entity {placement.TemplateEntityId}.");
+        }
+    }
+
     /** Returns placements admitted by the active anchor lifecycle. */
     public AuthoritativeNativeDunFragmentObjectCatalog Filter(
         Func<AuthoritativeNativeDunFragmentObjectPlacement, bool> predicate)

@@ -640,6 +640,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        nativeDunFragmentObjects?.ValidateTemplates(objectTemplates ?? []);
         var objectDefinitions = (objects ?? [])
             .Concat(objectTemplates ?? [])
             .ToArray();
