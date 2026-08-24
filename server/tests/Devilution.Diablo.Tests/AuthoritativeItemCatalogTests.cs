@@ -87,6 +87,19 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void BoundsGeneratedCreateInfoForLargeAuthoritativeSeeds()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\n"
+                + "7\t1\t75\t100\n");
+
+        var state = catalog.Generate(7, uint.MaxValue);
+
+        Assert.Equal(0U, state.CreateInfo);
+    }
+
+    [Fact]
     public void LoadsValidatedItemActionMagnitudeFromContent()
     {
         var catalog = AuthoritativeItemCatalog.LoadTsv(

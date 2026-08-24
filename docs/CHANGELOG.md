@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Generated authoritative items now keep DevilutionX-compatible 16-bit
+  creation flags: legacy-sized fixture seeds retain their value, while larger
+  stable item seeds use canonical no-flag state instead of invalid 32-bit data.
 - Godot malformed-monster protocol coverage now initializes positive vitality
   with the explicit authoritative `Alive` state, so combat-state mutation checks
   reach combat validation instead of failing during fixture setup.

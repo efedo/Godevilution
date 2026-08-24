@@ -100,7 +100,10 @@ public sealed record AuthoritativeItemDefinition(
             throw new ArgumentOutOfRangeException(nameof(itemSeed));
         ArgumentNullException.ThrowIfNull(random);
         return AuthoritativeItemState.Empty with {
-            CreateInfo = itemSeed,
+            // Native creation flags are uint16_t. Small legacy fixtures retain
+            // their historical value; large authoritative seeds use the
+            // canonical no-flag value while the full seed remains item identity.
+            CreateInfo = itemSeed <= ushort.MaxValue ? itemSeed : 0,
             ItemType = ItemType,
             EquipLocation = EquipLocation,
             ItemClass = ItemClass,
