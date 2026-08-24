@@ -137,7 +137,9 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationMegaTileAssignment>? megaTileAssignments = null,
         int anchorMegaOffsetX = 0,
         int anchorMegaOffsetY = 0,
-        bool createTransparencyLayer = false)
+        bool createTransparencyLayer = false,
+        uint megaTileCopySourceLevelId = 0,
+        IEnumerable<AuthoritativeWorldMutationRectangle>? megaTileCopyRectangles = null)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -168,6 +170,12 @@ public sealed class AuthoritativeWorldMutation
         ObjectLayerRectangles = NormalizeObjectLayerRectangles(objectLayerRectangles);
         PieceLayerRectangles = NormalizePieceLayerRectangles(pieceLayerRectangles);
         MegaTileAssignments = NormalizeMegaTileAssignments(megaTileAssignments);
+        MegaTileCopySourceLevelId = megaTileCopySourceLevelId;
+        MegaTileCopyRectangles = NormalizeRectangles(megaTileCopyRectangles);
+        if ((MegaTileCopySourceLevelId == 0) != (MegaTileCopyRectangles.Count == 0)) {
+            throw new InvalidDataException(
+                "Mega-tile copy rectangles require exactly one source level.");
+        }
         BlockedCellsAdd = Normalize(blockedCellsAdd);
         BlockedCellsRemove = Normalize(blockedCellsRemove);
         MissileBlockedCellsAdd = Normalize(missileBlockedCellsAdd);
@@ -228,6 +236,12 @@ public sealed class AuthoritativeWorldMutation
 
     /** Native mega-tile values assigned at local mega coordinates. */
     public IReadOnlyList<AuthoritativeWorldMutationMegaTileAssignment> MegaTileAssignments { get; }
+
+    /** Source level whose native mega-tile values are copied into the target. */
+    public uint MegaTileCopySourceLevelId { get; }
+
+    /** Native mega-tile rectangles copied from the source level at matching coordinates. */
+    public IReadOnlyList<AuthoritativeWorldMutationRectangle> MegaTileCopyRectangles { get; }
 
     public IReadOnlyList<int> GetBlockedCells(
         int levelWidth,
@@ -345,6 +359,33 @@ public sealed class AuthoritativeWorldMutation
                     throw new InvalidDataException(
                         $"World mutation {MutationId} contains an out-of-range mega-tile assignment.");
                 return (checked(y * megaWidth + x), assignment.TileId);
+            })
+            .ToArray();
+    }
+
+    public IReadOnlyList<(int TargetCell, int SourceCell)> GetMegaTileCopyCells(
+        int targetLevelWidth,
+        int targetLevelHeight,
+        int sourceLevelWidth,
+        int sourceLevelHeight)
+    {
+        if (MegaTileCopyRectangles.Count == 0)
+            return [];
+        var targetMegaWidth = checked((targetLevelWidth + 1) / 2);
+        var targetMegaHeight = checked((targetLevelHeight + 1) / 2);
+        var sourceMegaWidth = checked((sourceLevelWidth + 1) / 2);
+        var sourceMegaHeight = checked((sourceLevelHeight + 1) / 2);
+        var targetCells = MegaTileCopyRectangles
+            .SelectMany(rectangle => rectangle.EnumerateCells(targetMegaWidth, targetMegaHeight))
+            .ToArray();
+        return targetCells
+            .Select(targetCell => {
+                var x = targetCell % targetMegaWidth;
+                var y = targetCell / targetMegaWidth;
+                if (x >= sourceMegaWidth || y >= sourceMegaHeight)
+                    throw new InvalidDataException(
+                        "A mega-tile copy rectangle exceeds the source level bounds.");
+                return (targetCell, checked(y * sourceMegaWidth + x));
             })
             .ToArray();
     }
@@ -477,6 +518,25 @@ public sealed class AuthoritativeWorldMutationCatalog
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} references unknown level {mutation.LevelId}.");
             var level = world.Levels.Single(candidate => candidate.LevelId == mutation.LevelId);
+            AuthoritativeLevel? megaTileCopySource = null;
+            if (mutation.MegaTileCopyRectangles.Count > 0) {
+                if (!world.ContainsLevel(mutation.MegaTileCopySourceLevelId))
+                    throw new InvalidDataException(
+                        $"World mutation {mutation.MutationId} references unknown mega-tile copy source level {mutation.MegaTileCopySourceLevelId}.");
+                megaTileCopySource = world.Levels.Single(candidate =>
+                    candidate.LevelId == mutation.MegaTileCopySourceLevelId);
+                if (level.NativeMegaTileLayer.Count == 0
+                    || megaTileCopySource.NativeMegaTileLayer.Count == 0) {
+                    throw new InvalidDataException(
+                        $"World mutation {mutation.MutationId} requires native mega-tile layers on both target and source levels.");
+                }
+                if (level.NativePieceLayer.Count != checked(level.Width * level.Height)
+                    || megaTileCopySource.NativePieceLayer.Count
+                        != checked(megaTileCopySource.Width * megaTileCopySource.Height)) {
+                    throw new InvalidDataException(
+                        $"World mutation {mutation.MutationId} requires native d-piece layers on both target and source levels.");
+                }
+            }
             var anchor = ResolveAnchor(mutation, objects, combatTargets, level);
             if (mutation.AnchorUniqueIdentity.Length != 0 && anchor is null)
                 // Generated unique encounters may be materialized after content
@@ -490,6 +550,7 @@ public sealed class AuthoritativeWorldMutationCatalog
             IReadOnlyList<(int Cell, ushort ObjectId)> objectLayerCells;
             IReadOnlyList<(int Cell, ushort PieceId)> pieceLayerCells;
             IReadOnlyList<(int Cell, ushort TileId)> megaTileCells;
+            IReadOnlyList<(int TargetCell, int SourceCell)> megaTileCopyCells;
             try {
                 blockedAdd = mutation.GetBlockedCells(
                     level.Width,
@@ -531,6 +592,11 @@ public sealed class AuthoritativeWorldMutationCatalog
                     level.Height,
                     anchor?.X ?? 0,
                     anchor?.Y ?? 0);
+                megaTileCopyCells = mutation.GetMegaTileCopyCells(
+                    level.Width,
+                    level.Height,
+                    megaTileCopySource?.Width ?? 0,
+                    megaTileCopySource?.Height ?? 0);
             } catch (Exception exception)
                 when (exception is InvalidDataException or OverflowException) {
                 throw new InvalidDataException(
@@ -559,6 +625,13 @@ public sealed class AuthoritativeWorldMutationCatalog
             if (megaTileCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns a mega-tile value more than once to a cell.");
+            if (megaTileCopyCells.GroupBy(entry => entry.TargetCell).Any(group => group.Count() > 1)
+                || megaTileCells.Select(entry => entry.Cell)
+                    .Intersect(megaTileCopyCells.Select(entry => entry.TargetCell))
+                    .Any()) {
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} assigns a mega-tile value more than once to a cell.");
+            }
             foreach (var cell in blockedAdd
                          .Concat(blockedRemove)
                          .Concat(missileBlockedAdd)
@@ -596,7 +669,9 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseMegaTileAssignments(row),
                 row.OptionalInt32("anchor_mega_offset_x"),
                 row.OptionalInt32("anchor_mega_offset_y"),
-                row.OptionalBoolean("create_transparency_layer"))));
+                row.OptionalBoolean("create_transparency_layer"),
+                row.OptionalUInt32("mega_tile_copy_source_level_id"),
+                ParseRectangles(row, "mega_tile_copy_rects"))));
     }
 
     private static uint ResolveTargetLevelId(

@@ -11,15 +11,15 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.419.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.420.0"),
             DiabloContentSchema.Current);
     }
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.418.0", true)]
+    [InlineData("devilution.diablo", "1.419.0", true)]
     [InlineData("devilution.diablo", "1.415.0", false)]
-    [InlineData("other.game", "1.419.0", false)]
+    [InlineData("other.game", "1.420.0", false)]
     public void ContentSchemaCompatibilityRetainsThePreviousAdditiveContract(
         string schemaId,
         string version,
@@ -412,7 +412,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.419.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.420.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

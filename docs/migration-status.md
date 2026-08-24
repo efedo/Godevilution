@@ -7,6 +7,12 @@ templates: the server owns each activation and its native Phasing projectile
 source/target transition, while native mega-tile replacement,
 object-resynchronization, and encounter-progress presentation remain explicit
 compatibility seams.
+World mutations can now copy a validated native mega-tile rectangle and its
+corresponding d-piece collision cells from a companion source level into the
+active target level. This provides the generic server/data boundary needed for
+Vile's pre-map replacement layer without embedding native tile values in the
+engine; the shipped map assets and exact
+Vile mutation row remain future content work.
 Authoritative world mutations now support anchored native mega-tile
 assignments and explicit creation of missing native transparency layers. The
 base Snotspill Banner dialogue now applies the native opening transparency
@@ -287,8 +293,8 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.419.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.418.0` schema
+The Diablo content schema is now `1.420.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.419.0` schema
 for existing manifest-based packs.
 
 Schema 1.419 adds optional anchored native mega-tile assignments and explicit
@@ -520,7 +526,7 @@ scaled hit points), not only the client's difficulty label.
 - Godot now validates native inventory-grid references and belt/equipment slot
   topology while retaining omitted zero-length legacy grids.
 - The live Godot authoritative-server fixture manifests now use the shipped
-  `devilution.diablo@1.419.0` schema, keeping overlay startup coverage aligned
+  `devilution.diablo@1.420.0` schema, keeping overlay startup coverage aligned
   with the active base and Hellfire packs.
 - Godot now validates stable spell IDs, native spell levels, targeting enums,
   display-name NULs, duplicate memorized IDs, and the native memorized-spell cap.

@@ -429,6 +429,68 @@ public sealed class DiabloWorldState
                         * ((baseLevel.Height + 1) / 2))];
                 foreach (var (cell, tileId) in megaTileCells)
                     megaTileLayer[cell] = tileId;
+                if (mutation.MegaTileCopyRectangles.Count > 0) {
+                    var sourceLevel = World.Levels.SingleOrDefault(candidate =>
+                        candidate.LevelId == mutation.MegaTileCopySourceLevelId);
+                    if (sourceLevel is null
+                        || sourceLevel.NativeMegaTileLayer.Count == 0
+                        || baseLevel.NativeMegaTileLayer.Count == 0) {
+                        throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} requires native mega-tile layers on both target and source levels.");
+                    }
+                    if (sourceLevel.NativePieceLayer.Count
+                            != checked(sourceLevel.Width * sourceLevel.Height)
+                        || baseLevel.NativePieceLayer.Count
+                            != checked(baseLevel.Width * baseLevel.Height)) {
+                        throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} requires native d-piece layers on both target and source levels.");
+                    }
+                    var copyCells = mutation.GetMegaTileCopyCells(
+                        baseLevel.Width,
+                        baseLevel.Height,
+                        sourceLevel.Width,
+                        sourceLevel.Height);
+                    var targetMegaWidth = checked((baseLevel.Width + 1) / 2);
+                    var sourceMegaWidth = checked((sourceLevel.Width + 1) / 2);
+                    foreach (var (targetCell, sourceCell) in copyCells) {
+                        megaTileLayer[targetCell] = sourceLevel.NativeMegaTileLayer[sourceCell];
+                        var megaX = targetCell % targetMegaWidth;
+                        var megaY = targetCell / targetMegaWidth;
+                        var sourceMegaX = sourceCell % sourceMegaWidth;
+                        var sourceMegaY = sourceCell / sourceMegaWidth;
+                        for (var offsetY = 0; offsetY < 2; offsetY++) {
+                            for (var offsetX = 0; offsetX < 2; offsetX++) {
+                                var targetX = megaX * 2 + offsetX;
+                                var targetY = megaY * 2 + offsetY;
+                                var sourceX = sourceMegaX * 2 + offsetX;
+                                var sourceY = sourceMegaY * 2 + offsetY;
+                                if (!baseLevel.ContainsPosition(targetX, targetY)
+                                    || !sourceLevel.ContainsPosition(sourceX, sourceY))
+                                    continue;
+                                var targetPieceCell = targetY * baseLevel.Width + targetX;
+                                var sourcePieceCell = sourceY * sourceLevel.Width + sourceX;
+                                if (nativePieceCollisionCells.Remove(targetPieceCell))
+                                    blocked.Remove(targetPieceCell);
+                                if (nativePieceMissileBlockedCells.Remove(targetPieceCell))
+                                    missileBlocked.Remove(targetPieceCell);
+                                var pieceId = sourceLevel.NativePieceLayer[sourcePieceCell];
+                                pieceLayer[targetPieceCell] = pieceId;
+                                if (!sourceLevel.NativePieceProperties.TryGetValue(
+                                        pieceId,
+                                        out var pieceFlags))
+                                    continue;
+                                if (pieceFlags.HasFlag(AuthoritativeDunTileFlags.Solid)) {
+                                    blocked.Add(targetPieceCell);
+                                    nativePieceCollisionCells.Add(targetPieceCell);
+                                }
+                                if (pieceFlags.HasFlag(AuthoritativeDunTileFlags.BlockMissile)) {
+                                    missileBlocked.Add(targetPieceCell);
+                                    nativePieceMissileBlockedCells.Add(targetPieceCell);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             projectedLevels.Add(
                 baseLevel.LevelId,

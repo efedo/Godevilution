@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   activating-player Phasing projectiles and exact target offsets, while the
   native mega-tile replacement and encounter-state presentation remain
   documented compatibility seams.
+- Added validated native mega-tile copy rectangles to world mutations, allowing
+  a server-owned target level to apply a replacement layer and matching d-piece
+  collision state from a companion source level without hard-coded tile data.
 - Restricted the Godot HUD's generic object, trap, and quest commands to
   visible server-authored targets, using deterministic entity/quest ordering
   instead of arbitrary snapshot entries.

@@ -334,6 +334,52 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void CopiesNativeMegaTilesFromAnAuthoredSourceLevel()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\n"
+                + "7\t1\t2\t1,0,1,2\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal(2U, mutation.MegaTileCopySourceLevelId);
+        var rectangle = Assert.Single(mutation.MegaTileCopyRectangles);
+        Assert.Equal((1, 0, 1, 2), (rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            nativeMegaTileLayer: [0, 0, 0, 0],
+            nativePieceLayer: new ushort[16]));
+        geometry.AddLevel(new AuthoritativeLevel(
+            2,
+            4,
+            4,
+            nativeMegaTileLayer: [101, 102, 103, 104],
+            nativePieceLayer: Enumerable.Range(1, 16).Select(value => (ushort)value),
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [3] = AuthoritativeDunTileFlags.Solid,
+                [4] = AuthoritativeDunTileFlags.BlockMissile,
+                [7] = AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile,
+                [8] = AuthoritativeDunTileFlags.None,
+                [11] = AuthoritativeDunTileFlags.Solid,
+                [12] = AuthoritativeDunTileFlags.BlockMissile,
+                [15] = AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile,
+                [16] = AuthoritativeDunTileFlags.None,
+            }));
+        catalog.ValidateWorld(geometry);
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var target = Assert.Single(world.LevelGeometry, level => level.LevelId == 1);
+        Assert.Equal([0, 102, 0, 104], target.NativeMegaTileLayer);
+        Assert.Equal([0, 0, 3, 4, 0, 0, 7, 8, 0, 0, 11, 12, 0, 0, 15, 16], target.NativePieceLayer);
+        Assert.Equal([2, 6, 10, 14], target.BlockedCells);
+        Assert.Equal([3, 6, 11, 14], target.MissileBlockedCells);
+    }
+
+    [Fact]
     public void RecomputesNativeCollisionWhenAProjectedDPieceChanges()
     {
         var catalog = new AuthoritativeWorldMutationCatalog([
