@@ -3831,6 +3831,8 @@ void Monster::addDoppelganger()
 
 void Monster::applyDamage(DamageType damageType, int damage)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyCombatMessage(authoritative::GetServerBackedRuntime().IsConnected()))

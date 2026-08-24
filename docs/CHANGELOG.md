@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Guarded the native doppelgänger-spawn and monster attribute-reduction
   helpers with the connected-session simulation policy, preventing direct
   callers from mutating server-owned monster or player state.
+- Guarded direct native monster damage application with the same policy, so
+  connected missile or protocol callers cannot mutate server-owned hit points
+  or trigger legacy death/drop handling.
 - Guarded native monster knockback and petrification mutators with the same
   policy; authoritative clients retain only snapshot-driven presentation for
   those states.
