@@ -664,12 +664,10 @@ resolution and equipment-slot classification.
 Godot world presentation now retains and draws the server-owned persistent corpse
 tiles from complete snapshots, using the shared level-visibility rule and keeping
 corpse lifecycle entirely authoritative.
-Godot portal presentation and click routing now resolve source and bidirectional
-destination endpoints through the same level-visibility wildcard, preventing a
-valid level-zero compatibility portal from disappearing from the presentation.
-Portal interaction-range validation now consumes that same resolved endpoint, so
-a visible wildcard portal can be used without bypassing server-owned transition
-admission.
+Godot portal presentation, click routing, and interaction-range validation now
+share exact server-owned source and bidirectional destination level identities;
+level zero remains the real native town level rather than a visibility wildcard
+for portal admission.
 Godot authoritative level geometry is now replaced rather than merged: omitted
 levels and geometry-less legacy snapshots cannot retain prior-session blocked
 cells or warp markers, while static layouts remain a presentation fallback.

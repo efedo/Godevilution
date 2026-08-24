@@ -51,9 +51,9 @@ public sealed class AuthoritativeInteractionRangeTests
     }
 
     [Fact]
-    public void HonorsLevelZeroPortalWildcards()
+    public void TreatsLevelZeroPortalAsTownLevel()
     {
-        var player = new PlayerSnapshot { LevelId = 9, PositionX = 3, PositionY = 4 };
+        var player = new PlayerSnapshot { LevelId = 0, PositionX = 3, PositionY = 4 };
         var portal = new PortalSnapshot {
             SourceLevelId = 0,
             SourcePositionX = 3,
@@ -62,14 +62,15 @@ public sealed class AuthoritativeInteractionRangeTests
 
         Assert.True(AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal));
 
+        player.LevelId = 9;
         player.PositionX = 5;
         Assert.False(AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal));
     }
 
     [Fact]
-    public void HonorsBidirectionalDestinationLevelZeroWildcard()
+    public void HonorsBidirectionalTownDestination()
     {
-        var player = new PlayerSnapshot { LevelId = 9, PositionX = 7, PositionY = 8 };
+        var player = new PlayerSnapshot { LevelId = 0, PositionX = 7, PositionY = 8 };
         var portal = new PortalSnapshot {
             SourceLevelId = 4,
             DestinationLevelId = 0,

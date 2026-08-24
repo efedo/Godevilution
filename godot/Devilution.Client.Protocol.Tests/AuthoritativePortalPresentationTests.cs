@@ -7,7 +7,23 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class AuthoritativePortalPresentationTests
 {
     [Fact]
-    public void ResolvesSourceLevelZeroWildcard()
+    public void ResolvesTownSourceLevelZeroOnTownOnly()
+    {
+        var endpoint = AuthoritativePortalPresentation.Resolve(
+            new PortalSnapshot {
+                SourceLevelId = 0,
+                SourcePositionX = 4,
+                SourcePositionY = 5,
+                DestinationLevelId = 7,
+                Bidirectional = true,
+            },
+            0);
+
+        Assert.Equal(new PortalEndpoint(4, 5), endpoint);
+    }
+
+    [Fact]
+    public void DoesNotTreatTownSourceAsWildcard()
     {
         var endpoint = AuthoritativePortalPresentation.Resolve(
             new PortalSnapshot {
@@ -19,11 +35,11 @@ public sealed class AuthoritativePortalPresentationTests
             },
             3);
 
-        Assert.Equal(new PortalEndpoint(4, 5), endpoint);
+        Assert.Null(endpoint);
     }
 
     [Fact]
-    public void ResolvesBidirectionalDestinationWildcard()
+    public void ResolvesBidirectionalTownDestinationOnTownOnly()
     {
         var endpoint = AuthoritativePortalPresentation.Resolve(
             new PortalSnapshot {
@@ -33,7 +49,7 @@ public sealed class AuthoritativePortalPresentationTests
                 DestinationPositionY = 9,
                 Bidirectional = true,
             },
-            3);
+            0);
 
         Assert.Equal(new PortalEndpoint(8, 9), endpoint);
     }

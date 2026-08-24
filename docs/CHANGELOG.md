@@ -4,14 +4,14 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Godot portal endpoint range validation now shares the portal presentation
-  resolver, so visible level-zero wildcard portals can submit their use intent.
+- Corrected Godot portal presentation and endpoint range validation to treat
+  level zero as the real native town level, matching server-owned exact endpoint
+  admission rather than the generic entity visibility wildcard.
 - Godot now replaces its authoritative level-geometry cache per complete
   snapshot and clears it on disconnect, preventing stale blocked cells or warp
   markers from leaking across sessions or geometry-less legacy snapshots.
-- Godot portal presentation and click routing now use the shared authoritative
-  level-visibility rule for source and bidirectional destination endpoints,
-  including native level-zero wildcard projections.
+- Godot portal presentation and click routing now share exact server-owned
+  source and bidirectional destination level identities.
 - Godot world presentation now retains and draws server-owned persistent corpse
   tiles with the shared authoritative level-visibility contract; corpse lifecycle
   remains server-controlled.
