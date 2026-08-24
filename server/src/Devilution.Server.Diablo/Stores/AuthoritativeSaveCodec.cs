@@ -13,12 +13,19 @@ namespace Devilution.Server.Stores;
 public sealed class AuthoritativeSaveCodec
 {
     public const int CurrentFormatVersion = 1;
+    private readonly AuthoritativeItemCatalog? items;
+
+    public AuthoritativeSaveCodec(AuthoritativeItemCatalog? items = null)
+    {
+        this.items = items;
+    }
 
     public string Serialize(DiabloSimulationSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         var protocolSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
             snapshot,
+            items: items,
             allowZeroPlayerEntityId: true);
         return JsonSerializer.Serialize(new AuthoritativeSaveDocument(
             CurrentFormatVersion,

@@ -13,6 +13,7 @@ internal static class DiabloProtocolMapper
         bool revealTraps = true,
         AuthoritativeSpellCatalog? spells = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
+        AuthoritativeItemCatalog? items = null,
         IReadOnlyList<AuthoritativeLevel>? levelGeometry = null,
         IReadOnlyList<AuthoritativeWarpTarget>? warpTargets = null,
         bool allowZeroPlayerEntityId = false)
@@ -78,7 +79,7 @@ internal static class DiabloProtocolMapper
         };
         snapshot.ActiveWorldMutationIds.Add(source.ActiveWorldMutationIds);
         foreach (var participant in projectedParticipants)
-            snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks));
+            snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks, items));
 
         foreach (var monster in source.Monsters) {
             snapshot.Monsters.Add(new MonsterSnapshot {
@@ -177,7 +178,7 @@ internal static class DiabloProtocolMapper
                 PositionY = item.PositionY,
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
-                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
             });
         }
         foreach (var @object in source.Objects) {
@@ -412,7 +413,7 @@ internal static class DiabloProtocolMapper
                     StoreSlot = item.StoreSlot,
                     ItemSeed = item.ItemSeed,
                     Price = item.Price,
-                    State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
+                    State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
                 });
             }
             snapshot.ActiveStore = store;
@@ -897,7 +898,8 @@ internal static class DiabloProtocolMapper
     private static PlayerSnapshot ToProtocolPlayer(
         StorePlayerSnapshot state,
         AuthoritativeSpellCatalog? spells,
-        AuthoritativeSpellBookCatalog? spellBooks)
+        AuthoritativeSpellBookCatalog? spellBooks,
+        AuthoritativeItemCatalog? items)
     {
         if (state.StashOpen && state.ActiveStoreId is not null) {
             throw new InvalidDataException(
@@ -1021,7 +1023,7 @@ internal static class DiabloProtocolMapper
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
                 PurchasedAtTick = item.PurchasedAtTick,
-                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
             });
         }
         if (state.HeldItem is { } heldItem) {
@@ -1031,21 +1033,21 @@ internal static class DiabloProtocolMapper
                 ItemSeed = heldItem.ItemSeed,
                 Price = heldItem.Price,
                 PurchasedAtTick = heldItem.PurchasedAtTick,
-                State = ToProtocolItemState(heldItem.ItemSeed, heldItem.State, spells, spellBooks),
+                State = ToProtocolItemState(heldItem.ItemSeed, heldItem.State, spells, spellBooks, items),
             };
         }
         foreach (var item in state.Equipment) {
             player.Equipment.Add(new EquippedItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
             });
         }
         foreach (var item in state.Belt) {
             player.Belt.Add(new BeltItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
+                State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
             });
         }
         player.InventoryGrid.Add(state.InventoryGrid);
@@ -1059,7 +1061,7 @@ internal static class DiabloProtocolMapper
                     ItemSeed = item.ItemSeed,
                     Price = item.Price,
                     PurchasedAtTick = item.PurchasedAtTick,
-                    State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks),
+                    State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
                 },
             });
         }
@@ -1690,7 +1692,7 @@ internal static class DiabloProtocolMapper
     {
         // Keep save imports on the same fail-closed player boundary as live
         // projections without duplicating the topology and range rules.
-        _ = ToProtocolPlayer(state, spells: null, spellBooks: null);
+        _ = ToProtocolPlayer(state, spells: null, spellBooks: null, items: null);
     }
 
     private static void ValidateImportedSimulationState(
@@ -2090,7 +2092,8 @@ internal static class DiabloProtocolMapper
         uint itemSeed,
         AuthoritativeItemState state,
         AuthoritativeSpellCatalog? spells,
-        AuthoritativeSpellBookCatalog? spellBooks)
+        AuthoritativeSpellBookCatalog? spellBooks,
+        AuthoritativeItemCatalog? items)
     {
         ValidateProjectedItemState(itemSeed, state, spells);
         var snapshot = new ItemStateSnapshot {
@@ -2165,7 +2168,7 @@ internal static class DiabloProtocolMapper
             SpellTargetingKind = state.SpellId > 0
                 ? ResolveSpellTargetingKind(checked((uint)state.SpellId), spells)
                 : SpellTargetingKind.Unspecified,
-            PresentationKind = ResolveItemPresentationKind(state),
+            PresentationKind = ResolveItemPresentationKind(state, items),
             StableItemId = state.StableItemId,
         };
         if (state.NativeCursorGraphic.HasValue)
@@ -2261,8 +2264,16 @@ internal static class DiabloProtocolMapper
     }
 
     private static ItemPresentationKind ResolveItemPresentationKind(
-        AuthoritativeItemState state)
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items)
     {
+        if (items is not null && items.TryGetByState(state, out var definition)) {
+            if (definition.GenerationTags.Contains("Gold", StringComparer.OrdinalIgnoreCase))
+                return ItemPresentationKind.Gold;
+            return definition.GenerationTags.Contains("Ear", StringComparer.OrdinalIgnoreCase)
+                ? ItemPresentationKind.Ear
+                : ItemPresentationKind.Unspecified;
+        }
         if (state.ItemType == 11 || state.ItemClass == 4)
             return ItemPresentationKind.Gold;
         if (state.MiscId == 44 && state.ItemClass == 3)

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Item presentation now resolves the content-declared `Ear` generation tag
+  before applying the legacy PvP-ear identity fallback, so normalized item
+  metadata owns the wire presentation kind whenever an active catalog is
+  available.
 - Vendor `Misc` tags now resolve through unambiguous `misc_id` mappings and
   override conflicting legacy item-classification fields for Smith/Witch
   admission.

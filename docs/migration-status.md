@@ -647,6 +647,10 @@ connected shield state is applied from authoritative snapshots without legacy
 `CMD_SETSHIELD` or `CMD_REMSHIELD` lifecycle commands.
 Connected native Reflect charge mutation and legacy `CMD_SETREFLECT` broadcasts
 are likewise offline-only; connected charges remain server-owned projections.
+Protocol item presentation now resolves the active catalog's `Ear` generation
+tag before applying the legacy PvP-ear identity fallback, keeping normalized
+content authoritative for the wire presentation kind while preserving older
+catalog-less snapshots.
 
 ## Current state
 

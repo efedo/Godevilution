@@ -8,6 +8,69 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ItemPresentationUsesContentEarTagBeforeLegacyIdentity()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [new DiabloWorldItemState(
+                2,
+                0,
+                1,
+                1,
+                7,
+                0,
+                AuthoritativeItemState.Empty with {
+                    StableItemId = 24,
+                    ItemType = 11,
+                    ItemIndex = 91,
+                    MiscId = 99,
+                    ItemClass = 0,
+                    BaseName = "Ear",
+                    IdentifiedName = "Ear",
+                    NativeCursorGraphic = 21,
+                })],
+            [],
+            [],
+            [],
+            null);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(24, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, false) {
+                StableSymbol = "ear",
+                GenerationTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                    "Misc",
+                    "Ear",
+                },
+                NativeItemIndex = 23,
+                MiscId = 44,
+                ItemClass = 3,
+            },
+        ]);
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source, items: items);
+
+        Assert.Equal(
+            ItemPresentationKind.Ear,
+            Assert.Single(snapshot.WorldItems).State.PresentationKind);
+    }
+
+    [Fact]
     public void ProjectsSpellTargetingMetadataFromAuthoritativeSpellBehavior()
     {
         var player = new StorePlayerSnapshot(

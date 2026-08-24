@@ -49,7 +49,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             ?? throw new InvalidOperationException(
                 "The player-template factory returned no default template.");
         runtime = simulation.CreateRuntime(defaultTemplate);
-        this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();
+        this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec(simulation.Items);
     }
 
     /** Compatibility constructor retained for focused host-adapter tests. */
@@ -183,7 +183,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             stashGold: startingStashGold);
         playerTemplateFactory = (_, _) => compatibilityTemplate;
         runtime = simulation.CreateRuntime(compatibilityTemplate);
-        this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();
+        this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec(simulation.Items);
     }
 
     public void InitializeParticipant(
@@ -442,6 +442,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 state.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.TrapSense) ?? true,
                 simulation.Spells,
                 simulation.SpellBooks,
+                simulation.Items,
                 simulation.WorldState.LevelGeometry,
                 simulation.WorldState.World?.WarpTargets,
                 allowZeroPlayerEntityId: entityId == 0);
