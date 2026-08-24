@@ -37,6 +37,8 @@ All notable changes to this fork are documented below.
   both values arrive through legacy whole-point fields.
 - Aligned Godot visited-level validation with the native 25-level range so
   out-of-range authored level IDs cannot enter client state.
+- Aligned Godot session metadata validation with native projection: unknown
+  difficulties and zero or duplicate world-mutation IDs now fail closed.
 - Restored Godot compatibility with legacy stationary monster snapshots whose
   omitted future coordinates default to `(0, 0)` and normalize to the current
   tile, matching the native projection.

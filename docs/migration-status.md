@@ -34,6 +34,8 @@ maximum Q6 hit points after the same fallback, rejecting legacy snapshots that
 would be refused by native projection.
 Godot visited-level validation now rejects IDs outside the native 25-level
 range, matching native projection before `_pLvlVisited` hydration.
+Godot session metadata validation now rejects unknown difficulties and zero or
+duplicate active world-mutation identities, matching native projection.
 Godot now accepts the same omitted stationary monster destination used by the
 native projection, normalizing legacy `(0, 0)` future coordinates to the
 current tile instead of rejecting an older additive snapshot.

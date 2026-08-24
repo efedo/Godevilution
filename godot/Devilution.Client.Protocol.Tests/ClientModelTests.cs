@@ -637,6 +637,29 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsInvalidAuthoritativeSessionMetadata()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Difficulty = GameDifficulty.Hell,
+            ActiveWorldMutationIds = { 10, 20 },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<Snapshot>[] {
+            snapshot => snapshot.Difficulty = (GameDifficulty)99,
+            snapshot => snapshot.ActiveWorldMutationIds[0] = 0,
+            snapshot => snapshot.ActiveWorldMutationIds.Add(20),
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void RejectsMalformedPlayerAttributeProjection()
     {
         var model = new AuthoritativeClientModel();

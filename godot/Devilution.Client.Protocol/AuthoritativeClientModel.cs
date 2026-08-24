@@ -103,6 +103,7 @@ public sealed class AuthoritativeClientModel
         if (message.Snapshot is not null) {
             if (message.Snapshot.Players.Count == 0)
                 throw new InvalidDataException("The authoritative snapshot has no local player.");
+            ValidateSessionMetadata(message.Snapshot);
             var entityIds = new HashSet<uint>();
             foreach (var player in message.Snapshot.Players) {
                 ValidateEntityId(entityIds, player.EntityId);
@@ -1049,6 +1050,22 @@ public sealed class AuthoritativeClientModel
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid visited-level state.");
+        }
+    }
+
+    private static void ValidateSessionMetadata(Snapshot snapshot)
+    {
+        if (!Enum.IsDefined(snapshot.Difficulty)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid game difficulty.");
+        }
+
+        var mutationIds = new HashSet<uint>();
+        foreach (var mutationId in snapshot.ActiveWorldMutationIds) {
+            if (mutationId == 0 || !mutationIds.Add(mutationId)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate world-mutation identities.");
+            }
         }
     }
 
