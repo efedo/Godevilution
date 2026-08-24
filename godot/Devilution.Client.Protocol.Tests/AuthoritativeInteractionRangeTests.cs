@@ -49,4 +49,35 @@ public sealed class AuthoritativeInteractionRangeTests
         portal.Bidirectional = true;
         Assert.True(AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal));
     }
+
+    [Fact]
+    public void HonorsLevelZeroPortalWildcards()
+    {
+        var player = new PlayerSnapshot { LevelId = 9, PositionX = 3, PositionY = 4 };
+        var portal = new PortalSnapshot {
+            SourceLevelId = 0,
+            SourcePositionX = 3,
+            SourcePositionY = 4,
+        };
+
+        Assert.True(AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal));
+
+        player.PositionX = 5;
+        Assert.False(AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal));
+    }
+
+    [Fact]
+    public void HonorsBidirectionalDestinationLevelZeroWildcard()
+    {
+        var player = new PlayerSnapshot { LevelId = 9, PositionX = 7, PositionY = 8 };
+        var portal = new PortalSnapshot {
+            SourceLevelId = 4,
+            DestinationLevelId = 0,
+            DestinationPositionX = 7,
+            DestinationPositionY = 8,
+            Bidirectional = true,
+        };
+
+        Assert.True(AuthoritativeInteractionRange.IsAtPortalEndpoint(player, portal));
+    }
 }

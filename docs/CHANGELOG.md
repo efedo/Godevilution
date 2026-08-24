@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot portal endpoint range validation now shares the portal presentation
+  resolver, so visible level-zero wildcard portals can submit their use intent.
 - Godot now replaces its authoritative level-geometry cache per complete
   snapshot and clears it on disconnect, preventing stale blocked cells or warp
   markers from leaking across sessions or geometry-less legacy snapshots.

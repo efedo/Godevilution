@@ -14,17 +14,13 @@ public static class AuthoritativeInteractionRange
             Math.Abs(player.PositionY - targetY)) <= 1;
     }
 
-    /** Portal use requires the player's exact source or bidirectional endpoint. */
+    /** Portal use requires the player's exact visible source or bidirectional endpoint. */
     public static bool IsAtPortalEndpoint(PlayerSnapshot player, PortalSnapshot portal)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(portal);
-        return player.LevelId == portal.SourceLevelId
-            && player.PositionX == portal.SourcePositionX
-            && player.PositionY == portal.SourcePositionY
-            || portal.Bidirectional
-                && player.LevelId == portal.DestinationLevelId
-                && player.PositionX == portal.DestinationPositionX
-                && player.PositionY == portal.DestinationPositionY;
+        return AuthoritativePortalPresentation.Resolve(portal, player.LevelId) is { } endpoint
+            && player.PositionX == endpoint.X
+            && player.PositionY == endpoint.Y;
     }
 }
