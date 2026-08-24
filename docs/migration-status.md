@@ -12,6 +12,8 @@ cannot start a second local player simulation through a direct caller.
 The corresponding per-action execution helpers now fail closed as well,
 covering movement completion, combat impacts, blocking, spell execution, hit
 recovery, and death animation state.
+The lower-level native player combat helpers now apply the same guard before
+damage, knockback, resource-steal, and breakable-object mutation can occur.
 
 Native authoritative monster presentation now applies the same alive-only
 visibility rule as Godot. Dead projected monsters are omitted before pool

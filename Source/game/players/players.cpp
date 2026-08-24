@@ -637,6 +637,9 @@ bool DamageWeapon(Player &player, unsigned damageFrequency)
 
 bool PlrHitMonst(Player &player, Monster &monster, bool adjacentDamage = false)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	int hper = 0;
 
 	if (!monster.isPossibleToHit())
@@ -811,6 +814,9 @@ bool PlrHitMonst(Player &player, Monster &monster, bool adjacentDamage = false)
 
 bool PlrHitPlr(Player &attacker, Player &target)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (target._pInvincible) {
 		return false;
 	}
@@ -877,6 +883,9 @@ bool PlrHitPlr(Player &attacker, Player &target)
 
 bool PlrHitObj(const Player &player, Object &targetObject)
 {
+	if (!LegacyPlayerSimulationAllowed())
+		return false;
+
 	if (targetObject.IsBreakable()) {
 		BreakObject(player, targetObject);
 		return true;
