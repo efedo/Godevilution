@@ -127,6 +127,46 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
     }
 
     [Fact]
+    public void RejectsDuplicateWorldItemQuestAnchors()
+    {
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3023,
+                22,
+                "Cornerstone of the World",
+                21,
+                -1,
+                string.Empty,
+                0,
+                true) {
+                WorldItemAnchorPositionX = 2,
+                WorldItemAnchorPositionY = 2,
+            },
+            new AuthoritativeQuestTypeDefinition(
+                3024,
+                21,
+                "Another Anchored Quest",
+                21,
+                -1,
+                string.Empty,
+                0,
+                true) {
+                WorldItemAnchorPositionX = 2,
+                WorldItemAnchorPositionY = 2,
+            },
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(21, 8, 8));
+
+        Assert.Throws<InvalidDataException>(() => questTypes.ValidateWorldItemAnchors(
+            [
+                new AuthoritativeQuestState(3023, 21, 1),
+                new AuthoritativeQuestState(3024, 21, 1),
+            ],
+            world));
+    }
+
+    [Fact]
     public void ResolvesStableSetLevelSymbolsIncludingNativeZero()
     {
         var stableIds = new StableContentIdCatalog([

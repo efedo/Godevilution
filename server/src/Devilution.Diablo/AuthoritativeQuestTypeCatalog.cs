@@ -78,6 +78,7 @@ public sealed class AuthoritativeQuestTypeCatalog
     {
         ArgumentNullException.ThrowIfNull(quests);
         ArgumentNullException.ThrowIfNull(world);
+        var anchors = new HashSet<(uint LevelId, int PositionX, int PositionY)>();
         foreach (var quest in quests) {
             if (!TryGet(quest.QuestId, out var definition)
                 || definition.WorldItemAnchorPositionX is not { } positionX
@@ -89,6 +90,11 @@ public sealed class AuthoritativeQuestTypeCatalog
                 throw new InvalidDataException(
                     $"Quest type {quest.QuestId} world-item anchor ({positionX},{positionY}) "
                     + $"is outside or blocked on quest level {quest.LevelId}.");
+            }
+            if (!anchors.Add((quest.LevelId, positionX, positionY))) {
+                throw new InvalidDataException(
+                    $"Quest type {quest.QuestId} world-item anchor ({positionX},{positionY}) "
+                    + $"duplicates another quest anchor on level {quest.LevelId}.");
             }
         }
     }
