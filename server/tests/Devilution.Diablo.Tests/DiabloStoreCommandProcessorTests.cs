@@ -157,14 +157,16 @@ public sealed class DiabloStoreCommandProcessorTests
             equipment: [new EquippedStoreItem(3, 2305, state)]);
         var pricing = new StoreServicePricing(
             spellStaffCosts: new Dictionary<int, uint> { [30] = 0 });
+        var catalog = new StoreCatalog();
+        catalog.AddStore(2, [], AuthoritativeStoreRole.Witch);
         var processor = new DiabloStoreCommandProcessor(
-            new StoreCatalog(),
+            catalog,
             rules: new DiabloStoreRules(pricing, items),
             items: items);
 
         Assert.True(processor.Execute(
             player,
-            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            new DiabloOpenStoreIntent(2),
             0).Succeeded);
         var result = processor.Execute(
             player,
@@ -522,14 +524,16 @@ public sealed class DiabloStoreCommandProcessorTests
         var player = CreatePlayer(
             gold: 1000,
             equipment: [new EquippedStoreItem(3, 2307, item.State)]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, [], AuthoritativeStoreRole.Smith);
         var processor = new DiabloStoreCommandProcessor(
-            new StoreCatalog(),
+            catalog,
             rules: new DiabloStoreRules(items: items),
             items: items);
 
         Assert.True(processor.Execute(
             player,
-            new DiabloOpenStoreIntent(DiabloStoreCommandProcessor.AdriaStoreId),
+            new DiabloOpenStoreIntent(1),
             0).Succeeded);
         var result = processor.Execute(
             player,
