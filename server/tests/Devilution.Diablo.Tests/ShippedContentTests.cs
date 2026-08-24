@@ -23,9 +23,37 @@ public sealed class ShippedContentTests
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
-        Assert.Empty(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
+        var placement = Assert.Single(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
             placementTable.SourcePath,
             placementTable.ToCanonicalTsv()).Definitions);
+        Assert.Equal("Snotspill", placement.UniqueIdentity);
+        Assert.Equal(140U, placement.MonsterId);
+        Assert.Equal(4U, placement.LevelId);
+        Assert.Equal((25, 25), (placement.PositionX, placement.PositionY));
+    }
+
+    [Fact]
+    public void BaseContentPackShipsTheInitialSnotspillBannerFragment()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var table = pack.Tables.Single(table => table.SourcePath == "native_dun_fragments.tsv");
+        var fragment = Assert.Single(
+            AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+                table.SourcePath,
+                table.ToCanonicalTsv()).Definitions);
+
+        Assert.Equal((1U, 4U, "hell", "levels/l1data/banner1.dun", "Snotspill", -11, -9), (
+            fragment.FragmentId,
+            fragment.LevelId,
+            fragment.LevelSymbol,
+            fragment.AssetPath,
+            fragment.AnchorUniqueIdentity,
+            fragment.AnchorOffsetX,
+            fragment.AnchorOffsetY));
+        Assert.Equal(
+            2180,
+            pack.Assets.Single(asset => asset.SourcePath == fragment.AssetPath).Contents.Length);
     }
 
     [Fact]
@@ -428,7 +456,8 @@ public sealed class ShippedContentTests
             tables,
             dependencies: [],
             overlays: [],
-            schema: basePack.Schema);
+            schema: basePack.Schema,
+            assets: basePack.Assets);
 
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest("procedural-test", "1", [pack])));
@@ -482,7 +511,8 @@ public sealed class ShippedContentTests
             basePack.Id,
             basePack.Version,
             tables,
-            schema: basePack.Schema);
+            schema: basePack.Schema,
+            assets: basePack.Assets);
 
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest("explicit-level", "1", [pack])));
@@ -1447,7 +1477,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest("base", "1", [configuredPack])));
@@ -1872,7 +1903,9 @@ public sealed class ShippedContentTests
             randomSeed: 0x1234,
             monsterSpawns: new DiabloMonsterSpawnConfiguration(1));
 
-        var target = Assert.Single(activation.Simulation.WorldState.CombatTargets.Values);
+        var target = Assert.Single(
+            activation.Simulation.WorldState.CombatTargets.Values,
+            candidate => candidate.MonsterId == 1);
         Assert.NotNull(target.Drop);
         Assert.Equal(
             AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId,
@@ -2364,9 +2397,15 @@ public sealed class ShippedContentTests
             randomSeed: 0x1234,
             gameMode: DiabloGameMode.Multiplayer,
             monsterSpawns: new DiabloMonsterSpawnConfiguration(3, 24));
-        Assert.Equal(3, proceduralActivation.Simulation.WorldState.CombatTargets.Count);
-        Assert.All(
+        var proceduralTargets = proceduralActivation.Simulation.WorldState.CombatTargets.Values
+            .Where(target => target.LevelId == 24)
+            .ToArray();
+        Assert.Equal(3, proceduralTargets.Length);
+        Assert.Contains(
             proceduralActivation.Simulation.WorldState.CombatTargets.Values,
+            target => target.LevelId == 4 && target.IsUnique && target.MonsterId == 140);
+        Assert.All(
+            proceduralTargets,
             target => {
                 Assert.InRange(
                     target.EntityId,
@@ -2543,7 +2582,10 @@ public sealed class ShippedContentTests
         Assert.Equal("Zombie", hellfireMonster.NativeAi);
         Assert.Equal(0, hellfireMonster.Intelligence);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
-        Assert.Equal(8, activation.Simulation.WorldState.CombatTargets.Count);
+        Assert.Equal(9, activation.Simulation.WorldState.CombatTargets.Count);
+        Assert.Contains(
+            activation.Simulation.WorldState.CombatTargets.Values,
+            target => target.LevelId == 4 && target.IsUnique && target.MonsterId == 140);
         Assert.Equal(25, activation.Simulation.WorldState.CombatTargets[11].MaxHitPoints);
         Assert.True(activation.Simulation.WorldState.CombatTargets[12].IsUndead);
         Assert.Equal(5, activation.Simulation.WorldState.CombatTargets[15].MaxDamageSpecial);
@@ -2558,7 +2600,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(139, monsterTypes.Definitions.Count);
+        Assert.Equal(140, monsterTypes.Definitions.Count);
         Assert.Equal(6, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).AggroRange);
         Assert.Equal(16, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).DeathAnimationTicks);
         Assert.Equal(54U, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).ExperienceReward);
@@ -2881,12 +2923,12 @@ public sealed class ShippedContentTests
         Assert.Equal((50, 50), (
             monsterTypes.Definitions[133].MinimumSpecialDamage,
             monsterTypes.Definitions[133].MaximumSpecialDamage));
-        Assert.Equal("Na-Krul", monsterTypes.Definitions[^1].Name);
-        Assert.Equal(137U, monsterTypes.Definitions[^1].NativeMonsterId);
-        Assert.Equal(125, monsterTypes.Definitions[^1].ArmorClass);
+        var naKrul = monsterTypes.Definitions.Single(definition => definition.Name == "Na-Krul");
+        Assert.Equal(137U, naKrul.NativeMonsterId);
+        Assert.Equal(125, naKrul.ArmorClass);
         Assert.Equal((40, 50), (
-            monsterTypes.Definitions[^1].MinimumSpecialDamage,
-            monsterTypes.Definitions[^1].MaximumSpecialDamage));
+            naKrul.MinimumSpecialDamage,
+            naKrul.MaximumSpecialDamage));
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());

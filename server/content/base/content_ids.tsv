@@ -244,6 +244,7 @@ spell	nova	18
 spell	golem	52
 spell	etherealize	53
 monster	base_monster	1
+monster	snotspill	140
 monster	skeleton_king_native_50	52
 monster	the_butcher_native_51	53
 class	warrior	0

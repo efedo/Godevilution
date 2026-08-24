@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the initial Snotspill Banner room through a validated Hell
+  placement, unique-anchored `banner1.dun` fragment, and native monster type
+  metadata while retaining later Banner mutations as a compatibility seam.
 - Externalize a validated Storyteller service-only store identity for paid Cain
   identification, preserving the previous additive content schema while the
   connected native menu is routed through the authoritative session.

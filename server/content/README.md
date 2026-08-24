@@ -19,8 +19,9 @@ encounter placement. Rows are validated against unique identities, monster
 types, level geometry, reserved warp/portal/object cells, entity IDs reserved
 by existing monsters or authored world objects, and deterministic seeds before
 activation;
-the checked-in table is currently empty until native set-piece coordinates are
-authored.
+the checked-in table now carries the initial Snotspill Banner encounter at its
+Hell anchor; later quest-state mutations remain native until their coordinates
+and effects are authored.
 
 Generic TSV parsing, ordered pack loading, deterministic overlays, transactional
 composition, manifest hashing, and stable IDs are owned by the
@@ -1606,7 +1607,9 @@ Schema 1.355 adds optional `required_item_symbol`, `consume_item`, and
 validate and consume the stable item identity before applying their transition;
 completion stages close the quest after emitting the authored message. The
 shared Ogden's Sign/Snotspill quest uses this for the Tavern Sign hand-in; its
-Banner set-piece map mutation remains a native fallback.
+The initial Banner room placement is now content-owned through a unique-anchored
+`banner1.dun` fragment and explicit Snotspill placement; later Banner state
+mutations remain a native fallback.
 
 Schema 1.356 adds the authored Warlord dialogue stages. Its two message-110
 rows advance `_qvar1` from `0` to `2` and from `2` to `3`, preserving the
@@ -1857,7 +1860,8 @@ Schema 1.394 adds optional `unique_monster_placements.tsv` rows for validated,
 content-owned generated unique placement. The contract validates selectors,
 level geometry, collision cells, stable entity IDs, reserved IDs, and
 deterministic seeds before materialization; the shipped tables remain empty
-until native set-piece coordinates are authored.
+until the remaining native set-piece coordinates and state mutations are
+authored.
 
 Schema 1.395 adds optional `counselor_adjacent_attack_chance_base` and
 `counselor_adjacent_attack_chance_intelligence_scale` columns to

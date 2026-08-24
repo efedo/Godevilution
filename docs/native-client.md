@@ -317,7 +317,9 @@ The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
-- `TalktoMonster` still owns Snotspill's Banner quest-specific map changes.
+- `TalktoMonster` still owns Snotspill's Banner quest-specific state changes
+  after the initial room placement. The initial Snotspill encounter and
+  `banner1.dun` map fragment are now server/content-owned.
   Gharbad's authored dialogue messages, quest-variable transitions, and
   second-stage random unique-monster reward now move through
   `TalkToQuestRequested`; his remaining encounter-state and presentation
@@ -340,9 +342,9 @@ explicit migration seams, not server-authority claims:
   placement, target offsets, and map effects remain. The existing Na-Krul
   `QuestSequence` row is not a substitute for those remaining semantics.
 - Quest-specific set-piece mutation and resynchronization remains native,
-  including the Banner set-piece transitions and the associated unique-monster
-  state. Procedural level/object parity must precede externalizing those map
-  mutations.
+  including Banner transitions after its initial room placement and the
+  associated unique-monster state. Procedural level/object parity must precede
+  externalizing those remaining map mutations.
 - Towner methods without authored quest stages retain local dialogue/store
   presentation. Store transactions remain server commands where a store
   service is declared, but the surrounding legacy conversation is not yet a

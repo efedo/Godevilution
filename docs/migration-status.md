@@ -756,8 +756,8 @@ scaled hit points), not only the client's difficulty label.
   content-owned generated unique placement. The contract checks identity and
   monster selectors, level geometry, collision cells, stable entity IDs, and
   deterministic seeds before materializing targets through the authoritative
-  spawn planner; the shipped base table remains empty until native set-piece
-  coordinates are authored.
+  spawn planner; the shipped base table now places Snotspill for the initial
+  Banner fragment.
 
 - Schema 1.393 adds optional authored next-message identities to staged unique-
   monster dialogue. Snotspill now preserves the native intermediate banner
@@ -766,6 +766,11 @@ scaled hit points), not only the client's difficulty label.
 - Unique-anchored native DUN fragments now follow the encounter lifecycle:
   fixed-object fragments apply during activation, while generated unique
   encounters apply their validated fragments when materialized on level entry.
+
+- The initial Snotspill Banner room is now externalized as a unique-anchored
+  `banner1.dun` fragment plus an explicit Hell placement. Later Banner quest
+  state changes and resynchronization remain native until their authored
+  mutation rows are available.
 
 - Native server-backed input, polling, portal, store, quest, and ability
   requests now timestamp the compatibility boundary with the shared
