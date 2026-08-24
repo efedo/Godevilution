@@ -1084,6 +1084,7 @@ public sealed class AuthoritativeClientModel
         if ((monster.Moving
                 && Math.Max(futureDeltaX, futureDeltaY) != 1)
             || (!monster.Moving
+                && (monster.FuturePositionX != 0 || monster.FuturePositionY != 0)
                 && (monster.FuturePositionX != monster.PositionX
                     || monster.FuturePositionY != monster.PositionY))) {
             throw new InvalidDataException(

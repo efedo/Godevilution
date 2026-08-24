@@ -504,6 +504,25 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_TRUE((*projected)[1].stoneCurseImmune);
 }
 
+TEST(ServerBackedPlayerSnapshot, NormalizesOmittedStationaryMonsterDestination)
+{
+	protocol::Snapshot snapshot;
+	auto *monster = snapshot.add_monsters();
+	monster->set_entity_id(1);
+	monster->set_position_x(4);
+	monster->set_position_y(5);
+	monster->set_hit_points(10);
+	monster->set_max_hit_points(10);
+	monster->set_alive(true);
+
+	auto projected = ProjectMonsterSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 1U);
+	EXPECT_FALSE((*projected)[0].moving);
+	EXPECT_EQ((*projected)[0].futurePositionX, 4);
+	EXPECT_EQ((*projected)[0].futurePositionY, 5);
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedUniqueMonsterIdentity)
 {
 	protocol::Snapshot snapshot;

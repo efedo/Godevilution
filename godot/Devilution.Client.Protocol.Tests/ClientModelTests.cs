@@ -2105,6 +2105,21 @@ public sealed class ClientModelTests
         stationary.Monsters[0].Moving = false;
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: stationary)));
+
+        var legacyStationary = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    PositionX = 4,
+                    PositionY = 5,
+                    HitPoints = 10,
+                    MaxHitPoints = 10,
+                    Alive = true,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: legacyStationary));
     }
 
     [Fact]

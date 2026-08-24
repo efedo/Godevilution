@@ -29,6 +29,9 @@ native monster slots.
 Native and Godot snapshot validators now require each monster's `Alive` flag to
 match effective Q6 hit points, including the legacy whole-point fallback, so a
 contradictory dead/alive state cannot cross either client boundary.
+Godot now accepts the same omitted stationary monster destination used by the
+native projection, normalizing legacy `(0, 0)` future coordinates to the
+current tile instead of rejecting an older additive snapshot.
 
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,
