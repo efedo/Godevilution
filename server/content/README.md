@@ -20,8 +20,9 @@ types, level geometry, reserved warp/portal/object cells, entity IDs reserved
 by existing monsters or authored world objects, and deterministic seeds before
 activation;
 the checked-in table now carries the initial Snotspill Banner encounter at its
-Hell anchor; later quest-state mutations remain native until their coordinates
-and effects are authored.
+Hell anchor, gated by the authored Ogden's Sign quest availability; later
+quest-state mutations remain native until their coordinates and effects are
+authored.
 
 Generic TSV parsing, ordered pack loading, deterministic overlays, transactional
 composition, manifest hashing, and stable IDs are owned by the
@@ -1859,9 +1860,10 @@ does; omitted values retain the existing next-stage lookup behavior.
 Schema 1.394 adds optional `unique_monster_placements.tsv` rows for validated,
 content-owned generated unique placement. The contract validates selectors,
 level geometry, collision cells, stable entity IDs, reserved IDs, and
-deterministic seeds before materialization; the shipped tables remain empty
-until the remaining native set-piece coordinates and state mutations are
-authored.
+deterministic seeds before materialization; the shipped base table carries the
+initial Snotspill Banner placement, gated by Ogden's Sign availability, while
+remaining native set-piece coordinates and state mutations stay compatibility
+seams until authored.
 
 Schema 1.395 adds optional `counselor_adjacent_attack_chance_base` and
 `counselor_adjacent_attack_chance_intelligence_scale` columns to
@@ -2731,6 +2733,7 @@ the complete target header even when they upsert only one row.
 | `portals.tsv` | `portal_id` | Static source and destination level endpoints with optional stable `portal_symbol`, validated against the composed world geometry and walkability during activation. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`; optional `drop_item_symbol` and `drop_unique_item_symbol` cross-check catalog-backed drops, and authored levels and positions are validated against active world bounds. |
 | `unique_monsters.tsv` | `entity_id`, `monster_id`, `native_ai` | Native unique-monster identity bound to exactly one matching unique encounter; static entity IDs or validated monster/native-AI selectors are accepted and preserved by server snapshots. Optional spawn health percentage, armor delta, and resistance overrides author deterministic encounter-initialization transitions. |
+| `unique_monster_placements.tsv` | `placement_id` | Optional generated unique encounters with validated identity, monster, level, position, entity, seed, and direction fields. Optional `required_quest_id`/`required_quest_symbol` gates a placement on the active quest's availability after single-player pool selection; unavailable gated quests suppress materialization. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, optional Skeleton King summon-candidate selection, and optional monster AI tuning, including Bat movement bands, Counselor ranged-admission and movement chances, Mega delegated delay-admission chance, Mega intermediate movement chance, SkeletonRanged fresh-mode movement bonus, SkeletonKing and HorkDemon RoundWalk admission modulo, shared AiAvoidance and Fat/Overlord fresh-mode movement bonuses, shared AiAvoidance Move-goal gating, Rhino ordinary movement bands and movement-goal gating. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, optional initial launch travel advance and projectile count, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission, damage-type, and spell-identity tuning, optional ranged-avoidance distance/chance/movement-goal tuning, optional ranged-avoidance ordinary movement-band and divisor tuning, optional post-melee missile identity, optional ranged-retreat distance/chance tuning, optional Snake adjacent-attack and distance-delay admission tuning, optional monster-Inferno admission tuning, and optional native random-damage bounds; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence`, `QuestItemCompletion`, `WorldMutation`, `GrantSpellLevel`, `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` interactions), linked-quest progress amounts, optional quest activation/completion or `_qvar1`/`_qvar2` transition kind, amount, and required-variable gates, optional normal/unique item rewards with stable ID, item level, and relative offsets, optional `projectile_target_offset_x`/`projectile_target_offset_y` target displacement, optional `projectile_source` (`Object` or `ActivatingPlayer`, defaulting to `Object`), optional quest-sequence/world-mutation follow-up mutation/projectile/native-monster metadata and relative offsets, optional second `quest_sequence_follow_up_world_mutation_id` applied after the primary follow-up, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; spell effects store the validated spell ID in `effect_amount` with optional `effect_spell_symbol` cross-checking; native-monster follow-ups store a validated monster ID or `quest_sequence_follow_up_monster_symbol`; other follow-ups use their own amount and optional spell symbol. Projectile-producing effects currently accept only Phasing and Guardian controller spell behaviors; `ActivatingPlayer` is currently valid only for Phasing. |

@@ -945,6 +945,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questPools,
                 randomSeed);
         }
+        if (uniqueMonsterPlacements is not null) {
+            foreach (var placement in uniqueMonsterPlacements.Definitions
+                         .Where(definition => definition.RequiredQuestId != 0)) {
+                if (quests is null
+                    || !quests.Any(quest => quest.QuestId == placement.RequiredQuestId)) {
+                    throw new InvalidDataException(
+                        $"Unique placement {placement.PlacementId} references unknown quest "
+                        + $"{placement.RequiredQuestId}.");
+                }
+            }
+            uniqueMonsterPlacements = uniqueMonsterPlacements.Filter(placement =>
+                placement.RequiredQuestId == 0
+                || quests!.Single(quest => quest.QuestId == placement.RequiredQuestId).Unavailable == false);
+        }
         var itemQuestEffects = content.TryGetTable(
             "item_quest_effects.tsv",
             out var itemQuestEffectsTable)

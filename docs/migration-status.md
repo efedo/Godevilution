@@ -756,8 +756,9 @@ scaled hit points), not only the client's difficulty label.
   content-owned generated unique placement. The contract checks identity and
   monster selectors, level geometry, collision cells, stable entity IDs, and
   deterministic seeds before materializing targets through the authoritative
-  spawn planner; the shipped base table now places Snotspill for the initial
-  Banner fragment.
+  spawn planner. Optional quest gates are evaluated after single-player pool
+  selection; the shipped base table places Snotspill for the initial Banner
+  fragment only while Ogden's Sign remains available.
 
 - Schema 1.393 adds optional authored next-message identities to staged unique-
   monster dialogue. Snotspill now preserves the native intermediate banner

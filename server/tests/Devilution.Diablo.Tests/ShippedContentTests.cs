@@ -30,6 +30,7 @@ public sealed class ShippedContentTests
         Assert.Equal(140U, placement.MonsterId);
         Assert.Equal(4U, placement.LevelId);
         Assert.Equal((25, 25), (placement.PositionX, placement.PositionY));
+        Assert.Equal(3008U, placement.RequiredQuestId);
     }
 
     [Fact]
@@ -54,6 +55,46 @@ public sealed class ShippedContentTests
         Assert.Equal(
             2180,
             pack.Assets.Single(asset => asset.SourcePath == fragment.AssetPath).Contents.Length);
+    }
+
+    [Fact]
+    public void QuestUnavailableStateSuppressesGatedSnotspillPlacement()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var questStates = basePack.Tables.Single(table => table.SourcePath == "quest_states.tsv");
+        var unavailableStates = string.Join(
+            '\n',
+            questStates.ToCanonicalTsv()
+                .Split('\n')
+                .Select(line => {
+                    if (!line.StartsWith("3008\t", StringComparison.Ordinal))
+                        return line;
+                    var columns = line.Split('\t');
+                    columns[7] = "true";
+                    return string.Join('\t', columns);
+                }));
+        var modifiedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == questStates.SourcePath
+                    ? TsvTable.Parse(questStates.SourcePath, unavailableStates)
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("unavailable-banner", "1", [modifiedPack])),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        Assert.DoesNotContain(
+            activation.Simulation.WorldState.CombatTargets.Values,
+            target => target.UniqueIdentity == "Snotspill");
     }
 
     [Fact]

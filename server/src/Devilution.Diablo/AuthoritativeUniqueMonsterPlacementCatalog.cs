@@ -16,6 +16,9 @@ public sealed record AuthoritativeUniqueMonsterPlacementDefinition(
 {
     /** Allows a placement on a level outside the monster type's normal range. */
     public bool IgnoreDungeonLevelRange { get; init; }
+
+    /** Optional quest whose availability gates this native placement. */
+    public uint RequiredQuestId { get; init; }
 }
 
 /** Validated authored placement contract kept separate from unique identity selectors. */
@@ -53,6 +56,14 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
 
     public IReadOnlyList<AuthoritativeUniqueMonsterPlacementDefinition> Definitions
         => definitions;
+
+    /** Returns placements admitted by the active quest/content state. */
+    public AuthoritativeUniqueMonsterPlacementCatalog Filter(
+        Func<AuthoritativeUniqueMonsterPlacementDefinition, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return new AuthoritativeUniqueMonsterPlacementCatalog(definitions.Where(predicate));
+    }
 
     /** Validates every placement against the active identity, type, and world catalogs. */
     public void Validate(
@@ -176,6 +187,11 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
                 row.RequiredUInt32("seed"),
                 row.OptionalInt32("direction")) {
                 IgnoreDungeonLevelRange = row.OptionalBoolean("ignore_dungeon_level_range"),
+                RequiredQuestId = AuthoritativeQuestIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "required_quest_id",
+                    "required_quest_symbol"),
             }));
     }
 }
