@@ -29,6 +29,30 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void PreviousAdditiveContentSchemaRemainsActivatable()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var currentPack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var legacyPack = new ContentPack(
+            currentPack.Id,
+            currentPack.Version,
+            currentPack.Tables,
+            currentPack.Dependencies,
+            currentPack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.416.0"),
+            currentPack.DependencyConstraints,
+            currentPack.Assets);
+        var content = ComposedContent.Compose(new ContentManifest(
+            "legacy-schema",
+            "1",
+            [legacyPack]));
+
+        var activation = new DiabloModule().ContentBootstrap.Activate(content);
+
+        Assert.NotNull(activation);
+    }
+
+    [Fact]
     public void HellfireMonsterTypesDeclareSkeletonSummonCandidates()
     {
         var repositoryRoot = FindRepositoryRoot();

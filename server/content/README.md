@@ -4,8 +4,10 @@ Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
 It declares its identity and `devilution.diablo@1.417.0` schema in
-`base/content-pack.json`; the standalone host falls back to legacy command-line
-identity only for external roots that do not yet provide a manifest.
+`base/content-pack.json`; the Diablo module also accepts the immediately
+previous additive `1.416.0` schema so existing manifest-based packs remain
+loadable. The standalone host falls back to legacy command-line identity only
+for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
 `combat.tsv` variant selector plus the first content-owned towner turn-in row,
 so operators can activate the native Hellfire ruleset with

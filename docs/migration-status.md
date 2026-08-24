@@ -213,7 +213,9 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.417.0` for these table contracts.
+The Diablo content schema is now `1.417.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.416.0` schema
+for existing manifest-based packs.
 
 Schema 1.417 adds the optional `store_role` column to `stores.tsv`. Explicit
 roles validate native vendor identities for authoritative sale admission;

@@ -16,6 +16,21 @@ public sealed class DiabloSimulationTests
     }
 
     [Theory]
+    [InlineData("devilution.diablo", "1.416.0", true)]
+    [InlineData("devilution.diablo", "1.417.0", true)]
+    [InlineData("devilution.diablo", "1.415.0", false)]
+    [InlineData("other.game", "1.417.0", false)]
+    public void ContentSchemaCompatibilityRetainsThePreviousAdditiveContract(
+        string schemaId,
+        string version,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            DiabloContentSchema.IsCompatible(new ContentSchemaIdentity(schemaId, version)));
+    }
+
+    [Theory]
     [InlineData(DiabloDifficulty.Normal, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 10)]
     [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 130)]
     [InlineData(DiabloDifficulty.Hell, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 240)]

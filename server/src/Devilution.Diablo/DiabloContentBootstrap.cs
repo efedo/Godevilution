@@ -185,7 +185,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (!Enum.IsDefined(difficulty))
             throw new ArgumentOutOfRangeException(nameof(difficulty));
         if (content.Manifest.Schema is not null
-            && content.Manifest.Schema != Schema) {
+            && !DiabloContentSchema.IsCompatible(content.Manifest.Schema)) {
             throw new InvalidDataException(
                 $"Content schema '{content.Manifest.Schema}' is incompatible with "
                 + $"the Diablo module schema '{Schema}'.");

@@ -8,4 +8,15 @@ public static class DiabloContentSchema
     public static ContentSchemaIdentity Current { get; } = new(
         "devilution.diablo",
         "1.417.0");
+
+    private static ContentSchemaIdentity PreviousAdditive { get; } = new(
+        "devilution.diablo",
+        "1.416.0");
+
+    /** Accepts the immediately previous additive contract for pack compatibility. */
+    public static bool IsCompatible(ContentSchemaIdentity schema)
+    {
+        ArgumentNullException.ThrowIfNull(schema);
+        return schema == Current || schema == PreviousAdditive;
+    }
 }
