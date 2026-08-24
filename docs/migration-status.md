@@ -29,6 +29,9 @@ native monster slots.
 Native and Godot snapshot validators now require each monster's `Alive` flag to
 match effective Q6 hit points, including the legacy whole-point fallback, so a
 contradictory dead/alive state cannot cross either client boundary.
+Godot monster vitality validation now also compares effective current and
+maximum Q6 hit points after the same fallback, rejecting legacy snapshots that
+would be refused by native projection.
 Godot now accepts the same omitted stationary monster destination used by the
 native projection, normalizing legacy `(0, 0)` future coordinates to the
 current tile instead of rejecting an older additive snapshot.

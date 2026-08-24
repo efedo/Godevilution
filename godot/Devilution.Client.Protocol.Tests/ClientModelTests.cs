@@ -2007,6 +2007,11 @@ public sealed class ClientModelTests
             monster => monster.HitPoints = 6,
             monster => monster.HitPointsQ6 = 321,
             monster => monster.MaxHitPoints = 2,
+            monster => {
+                monster.HitPointsQ6 = 0;
+                monster.MaxHitPointsQ6 = 0;
+                monster.MaxHitPoints = 2;
+            },
             monster => monster.HitPoints = -1,
             monster => monster.Alive = false,
             monster => {

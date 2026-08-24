@@ -523,6 +523,18 @@ TEST(ServerBackedPlayerSnapshot, NormalizesOmittedStationaryMonsterDestination)
 	EXPECT_EQ((*projected)[0].futurePositionY, 5);
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMonsterWithEffectiveMaxBelowCurrentHitPoints)
+{
+	protocol::Snapshot snapshot;
+	auto *monster = snapshot.add_monsters();
+	monster->set_entity_id(1);
+	monster->set_hit_points(3);
+	monster->set_max_hit_points(2);
+	monster->set_alive(true);
+
+	EXPECT_FALSE(ProjectMonsterSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedUniqueMonsterIdentity)
 {
 	protocol::Snapshot snapshot;

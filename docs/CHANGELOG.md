@@ -32,6 +32,9 @@ All notable changes to this fork are documented below.
 - Aligned native and Godot monster snapshot validation so `Alive` must match
   effective Q6 hit points, preventing contradictory dead/alive presentation
   state at either client boundary.
+- Aligned Godot monster vitality validation with native Q6 fallback semantics:
+  effective maximum hit points now bound effective current hit points even when
+  both values arrive through legacy whole-point fields.
 - Restored Godot compatibility with legacy stationary monster snapshots whose
   omitted future coordinates default to `(0, 0)` and normalize to the current
   tile, matching the native projection.
