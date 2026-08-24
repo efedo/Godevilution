@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot world presentation now retains and draws server-owned persistent corpse
+  tiles with the shared authoritative level-visibility contract; corpse lifecycle
+  remains server-controlled.
 - Smith/Witch vendor admission now treats non-empty normalized generation tags
   as authoritative for `Misc` and `Quest` classification instead of allowing a
   conflicting legacy item class to override authored content.

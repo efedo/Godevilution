@@ -116,6 +116,10 @@ their identity from native numeric item fields.
 Object snapshots likewise carry server-owned shrine, quest, breakable, and
 revealed-trap presentation families; older or unknown metadata uses the generic
 object visual.
+Persistent defeated non-minion corpse tiles are also server-owned snapshot
+entities. Godot retains and renders corpses only when their projected level is
+visible, including the native level-zero compatibility wildcard; it never
+creates or removes corpse state locally.
 
 Snapshots contain every assigned participant. The server puts this client's
 player first and orders the remaining players by entity ID. The client validates

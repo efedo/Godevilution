@@ -73,6 +73,11 @@ public partial class WorldPresentation : Node2D
             activeEntityIds.Add(@object.EntityId);
             UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta, @object.LevelId);
         }
+        foreach (var corpse in snapshot.Corpses.Where(corpse =>
+                     AuthoritativeCorpsePresentationVisibility.IsVisible(corpse, localPlayer?.LevelId ?? 0))) {
+            activeEntityIds.Add(corpse.EntityId);
+            UpdatePosition(corpse.EntityId, ToScreen(corpse.PositionX, corpse.PositionY), delta, corpse.LevelId);
+        }
         foreach (var portal in snapshot.Portals) {
             if (localPlayer is not null && portal.SourceLevelId == localPlayer.LevelId) {
                 activeEntityIds.Add(portal.PortalId);
@@ -185,6 +190,9 @@ public partial class WorldPresentation : Node2D
         foreach (var @object in snapshot.Objects.Where(@object =>
                      AuthoritativeObjectPresentationVisibility.IsVisible(@object, currentLevel)))
             DrawObject(@object);
+        foreach (var corpse in snapshot.Corpses.Where(corpse =>
+                     AuthoritativeCorpsePresentationVisibility.IsVisible(corpse, currentLevel)))
+            DrawCorpse(corpse);
         foreach (var portal in snapshot.Portals)
             DrawPortal(portal, currentLevel);
         foreach (var projectile in snapshot.Projectiles.Where(projectile =>
@@ -388,6 +396,16 @@ public partial class WorldPresentation : Node2D
             DrawLine(center + new Vector2(-6, -6), center + new Vector2(6, 6), trapColor, 2);
             DrawLine(center + new Vector2(6, -6), center + new Vector2(-6, 6), trapColor, 2);
         }
+    }
+
+    private void DrawCorpse(CorpseSnapshot corpse)
+    {
+        var center = PositionFor(corpse.EntityId, corpse.PositionX, corpse.PositionY);
+        var color = new Color("8f7f72");
+        DrawCircle(center, 9, new Color(color, 0.72f));
+        DrawArc(center, 11, 0, Mathf.Tau, 20, color, 2);
+        DrawLine(center + new Vector2(-6, -4), center + new Vector2(6, 4), color, 2);
+        DrawLine(center + new Vector2(6, -4), center + new Vector2(-6, 4), color, 2);
     }
 
     private void DrawPortal(PortalSnapshot portal, uint currentLevel)

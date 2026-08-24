@@ -661,6 +661,9 @@ item family.
 Semantic item classification now applies the same case-insensitive tag contract
 to normalized definitions and custom content overlays, including misc-ID
 resolution and equipment-slot classification.
+Godot world presentation now retains and draws the server-owned persistent corpse
+tiles from complete snapshots, using the shared level-visibility rule and keeping
+corpse lifecycle entirely authoritative.
 
 ## Current state
 
