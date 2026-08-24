@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   kinds while retaining the native misc-ID fallback for older states.
 - Resolve normalized quest-sale admission from item classification and tags,
   retaining the native quest-index range only for catalog-free legacy states.
+- Strengthen shipped spell-book activation coverage so every production book
+  explicitly declares single-player admission metadata.
 - Constrain authoritative Repair and Recharge admission to declared Smith and
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store

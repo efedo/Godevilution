@@ -910,6 +910,12 @@ public sealed class ShippedContentTests
 
         books.Validate(spells, items);
         Assert.Equal(23, books.Definitions.Count);
+        Assert.All(books.Definitions, definition =>
+            Assert.True(
+                definition.SinglePlayerExcluded.HasValue,
+                $"Spell-book metadata for spell {definition.SpellId} must declare single-player admission."));
+        var healOther = Assert.Single(books.Definitions, definition => definition.SpellId == 34);
+        Assert.True(healOther.SinglePlayerExcluded);
 
         var firebolt = books.Generate(items, 1, 0x12345678, itemLevel: 1);
         Assert.Equal(1, firebolt.SpellId);
