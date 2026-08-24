@@ -646,6 +646,7 @@ void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSn
 	if (!snapshot.activated && !snapshot.destroyed)
 		tileAt(position).setObject(objectSlot + 1);
 	object._oDelFlag = snapshot.activated || snapshot.destroyed;
+	object._oTrapFlag = snapshot.trapArmed;
 }
 
 void RemoveMappedItem(unsigned itemSlot)

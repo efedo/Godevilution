@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
 - Centralized the native level-visibility wildcard and applied it to remote
   player targeting, so projected level `0` players follow the same active-level
   visibility rule as Godot and other native authoritative entities.
+- Preserved authoritative `TrapArmed` object state through native projection;
+  trap-only objects now remain eligible for server-owned disarm interaction and
+  update the native compatibility trap flag.
 - Aligned Godot quest/towner validation with the native duplicate-level
   geometry boundary. Duplicate level identities now fail with the controlled
   invalid-snapshot error before interaction bounds are evaluated, rather than

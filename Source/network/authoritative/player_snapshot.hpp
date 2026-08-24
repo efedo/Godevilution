@@ -167,6 +167,8 @@ struct ProjectedObjectSnapshot {
 	bool missilePassable = false;
 	bool breakable = false;
 	bool destroyed = false;
+	/** Server-owned trap state used by authoritative disarm interaction. */
+	bool trapArmed = false;
 	/** Optional native object type used only by compatibility presentations. */
 	uint32_t nativeObjectId = 0;
 	/** Authored quest-state transition identity, when present. */

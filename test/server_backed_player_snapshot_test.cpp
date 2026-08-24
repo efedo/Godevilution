@@ -688,6 +688,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	second->set_quest_sequence_follow_up_amount(1);
 	second->set_breakable(true);
 	second->set_destroyed(true);
+	second->set_trap_armed(true);
 	auto *first = snapshot.add_objects();
 	first->set_entity_id(10);
 	first->set_object_id(1);
@@ -712,6 +713,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].questSequenceFollowUpKind, 1);
 	EXPECT_TRUE((*projected)[1].breakable);
 	EXPECT_TRUE((*projected)[1].destroyed);
+	EXPECT_TRUE((*projected)[1].trapArmed);
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
@@ -2073,6 +2075,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	object.levelId = 1;
 	object.positionX = 4;
 	object.positionY = 5;
+	object.trapArmed = true;
 
 	ASSERT_TRUE(projection.Apply({ monster }, { item }, { object }, 1).has_value());
 	EXPECT_EQ(projection.MonsterAt(4, 5), std::optional<uint32_t> { 40 });
@@ -2081,7 +2084,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_FALSE(projection.WorldItemAt(4, 5).has_value());
 	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t>(30));
 	EXPECT_FALSE(projection.QuestObjectAt(4, 5).has_value());
-	EXPECT_FALSE(projection.AuthoritativeObjectAt(4, 5).has_value());
+	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t>(30));
 	monster.sneakHidden = true;
 	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
 	EXPECT_FALSE(projection.MonsterAt(4, 5).has_value());

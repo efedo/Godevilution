@@ -605,6 +605,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .missilePassable = source.missile_passable(),
 		    .breakable = source.breakable(),
 		    .destroyed = source.destroyed(),
+		    .trapArmed = source.trap_armed(),
 		    .nativeObjectId = source.native_object_id(),
 		    .questTransitionKind = source.quest_transition_kind(),
 		    .rewardKind = source.reward_kind(),

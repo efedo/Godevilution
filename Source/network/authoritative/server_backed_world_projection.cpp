@@ -182,7 +182,7 @@ std::optional<uint32_t> ServerBackedWorldProjection::AuthoritativeObjectAt(int32
 		    || candidate.rewardKind != 0
 		    || candidate.questSequenceFollowUpKind != 0;
 		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed
-		    && hasAuthoritativeBehavior
+		    && (hasAuthoritativeBehavior || candidate.trapArmed)
 		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
 		    && candidate.positionX == positionX && candidate.positionY == positionY;
 	});
