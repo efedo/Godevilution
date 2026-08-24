@@ -1085,6 +1085,71 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AnchoredWorldItemAndQuestCompletionRoundTripThroughSnapshot()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var quest = new AuthoritativeQuestState(3023, 21, 1, active: true);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3023,
+                22,
+                "Cornerstone of the World",
+                21,
+                -1,
+                string.Empty,
+                0,
+                true) {
+                WorldItemAnchorPositionX = 14,
+                WorldItemAnchorPositionY = 14,
+            },
+        ]);
+        var world = new DiabloWorldState(fallbackWidth: 40, fallbackHeight: 40, quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            combatRules: rules,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            positionX: 13,
+            positionY: 14,
+            levelId: 21,
+            entityId: 1,
+            gold: 0,
+            heldItem: CreateGoldStack(42, 65, rules));
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloDropHeldItemIntent(14, 14),
+            1,
+            [player]).Succeeded);
+
+        var simulation = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 40,
+            FallbackHeight = 40,
+            WorldItems = world.WorldItems.Values.ToArray(),
+            Quests = world.Quests.Values.ToArray(),
+        });
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var restored = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules));
+        restored.RestoreSnapshot(CreatePlayer(entityId: 1), snapshot);
+
+        var restoredQuest = Assert.Single(restored.WorldState.Quests).Value;
+        Assert.True(restoredQuest.Completed);
+        Assert.False(restoredQuest.Active);
+        var restoredItem = Assert.Single(restored.WorldState.WorldItems).Value;
+        Assert.Equal((21U, 14, 14, 42U, 65U), (
+            restoredItem.LevelId,
+            restoredItem.PositionX,
+            restoredItem.PositionY,
+            restoredItem.ItemSeed,
+            restoredItem.Price));
+    }
+
+    [Fact]
     public void MultiplayerDropDoesNotCompleteSinglePlayerWorldItemAnchorQuest()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

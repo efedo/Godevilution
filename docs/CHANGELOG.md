@@ -6,7 +6,8 @@ All notable changes to this fork are documented below.
 
 - Added validated quest-type world-item anchors; a matching single-player
   drop completes the quest while the dropped item remains server-owned and
-  persistent in world state.
+  persistent in world state, with snapshot round-trip coverage for the
+  completed quest and retained item.
 - Shipped Hellfire's native `cornerstone.dun` as a validated coordinate-anchored
   level-21 fragment at `(14,14)`, with content activation coverage for its
   mega-tile layer and matching Cornerstone quest metadata.
