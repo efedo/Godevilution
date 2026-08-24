@@ -240,6 +240,11 @@ public sealed class AuthoritativeWorldTests
             82,
             82,
             nativeMegaTileLayer: Enumerable.Repeat<ushort>(0, 41 * 41)));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            1,
+            1,
+            nativeObjectLayer: [(ushort)(AuthoritativeLevel.NativeMaximumObjectId + 1)]));
     }
 
     [Fact]

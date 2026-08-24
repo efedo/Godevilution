@@ -203,7 +203,7 @@ public sealed class ClientModelTests
                         LevelId = 1,
                         Width = 2,
                         Height = 2,
-                        NativeObjectLayer = { 0, 297, 300, 299 },
+                        NativeObjectLayer = { 0, 97, 100, 99 },
                         NativeMegaTileLayer = { 115 },
                         NativePieceLayer = { 0, 297, 300, 299 },
                     },
@@ -211,7 +211,7 @@ public sealed class ClientModelTests
             }));
 
         Assert.Equal(
-            [0U, 297U, 300U, 299U],
+            [0U, 97U, 100U, 99U],
             Assert.Single(model.Snapshot!.LevelGeometry).NativeObjectLayer);
         Assert.Equal(
             [115U],
@@ -219,6 +219,26 @@ public sealed class ClientModelTests
         Assert.Equal(
             [0U, 297U, 300U, 299U],
             Assert.Single(model.Snapshot.LevelGeometry).NativePieceLayer);
+    }
+
+    [Fact]
+    public void RejectsNativeObjectLayerValuesOutsideCompatibilityRange()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 1,
+                    Height = 1,
+                    NativeObjectLayer = { 109 },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
     }
 
     [Fact]

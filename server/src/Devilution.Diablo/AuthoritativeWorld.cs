@@ -179,6 +179,9 @@ public sealed class AuthoritativeLevel
     public const int NativeMaximumMegaWidth = 40;
     public const int NativeMaximumMegaHeight = 40;
 
+    /** Highest native object-layer ID defined by Source/tables/objdat.h (OBJ_LAST). */
+    public const int NativeMaximumObjectId = 108;
+
     private readonly HashSet<int> blockedCells;
     private readonly HashSet<int> missileBlockedCells;
     private readonly IReadOnlyList<int> blockedCellList;
@@ -235,6 +238,9 @@ public sealed class AuthoritativeLevel
         if (objects.Length != 0 && objects.Length != width * height)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native object layer with an invalid length.");
+        if (objects.Any(value => value > NativeMaximumObjectId))
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native object ID outside the compatibility range.");
         NativeObjectLayer = Array.AsReadOnly(objects);
         var megaTiles = (nativeMegaTileLayer ?? []).ToArray();
         var megaWidth = (width + 1) / 2;

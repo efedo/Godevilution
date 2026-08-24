@@ -9,6 +9,7 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumHeight = 112;
     private const int NativeMaximumMegaWidth = 40;
     private const int NativeMaximumMegaHeight = 40;
+    private const uint NativeMaximumObjectId = 108;
 
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
@@ -912,7 +913,7 @@ public sealed class AuthoritativeClientModel
                 || level.Width > NativeMaximumWidth
                 || level.Height > NativeMaximumHeight
                 || level.NativeTransparency.Any(value => value > sbyte.MaxValue)
-                || level.NativeObjectLayer.Any(value => value > ushort.MaxValue)
+                || level.NativeObjectLayer.Any(value => value > NativeMaximumObjectId)
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
                 || level.NativePieceLayer.Any(value => value > ushort.MaxValue)
                 || level.NativeMegaTileLayer.Count != 0

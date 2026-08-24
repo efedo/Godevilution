@@ -20,6 +20,9 @@ All notable changes to this fork are documented below.
   limits consistently to authoritative C# levels and Godot snapshots.
 - Applied the same fine/coarse geometry limits at the C++ snapshot validation
   boundary, while retaining coarse-layer-free 112×112 town snapshots.
+- Aligned native object-layer validation across the C++ bridge, authoritative
+  C# levels, and Godot snapshots with the native `OBJ_LAST` range (`0` through
+  `108`), while retaining the broader d-piece value range.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

@@ -16,6 +16,7 @@
 #include "game/quests/quests.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "qol/floatingnumbers.h"
+#include "tables/objdat.h"
 #include "tables/textdat.h"
 #include "ui/minitext.h"
 
@@ -888,7 +889,7 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 				return value <= static_cast<uint32_t>(std::numeric_limits<int8_t>::max());
 			})
 		    || !std::all_of(level.native_object_layer().begin(), level.native_object_layer().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint16_t>::max();
+				return value <= static_cast<uint32_t>(OBJ_LAST);
 			})
 		    || !std::all_of(level.native_mega_tile_layer().begin(), level.native_mega_tile_layer().end(), [](uint32_t value) {
 				return value <= std::numeric_limits<uint8_t>::max();

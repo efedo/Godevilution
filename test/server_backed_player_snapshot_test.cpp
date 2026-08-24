@@ -870,6 +870,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->clear_native_transparency();
 	level->add_native_mega_tile_layer(256);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
+	level->clear_native_mega_tile_layer();
+	level->add_native_object_layer(static_cast<uint32_t>(OBJ_LAST) + 1);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 
 	protocol::Snapshot invalidNativeDimensions;
 	level = invalidNativeDimensions.add_level_geometry();

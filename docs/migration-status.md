@@ -2,6 +2,12 @@
 
 Status date: 2026-08-24
 
+Native object-layer values now use the same native `OBJ_LAST` compatibility
+bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,
+and Godot protocol validation; d-piece presentation values remain independently
+validated as 16-bit identities. Unmapped native object-layer cells remain inert
+until an explicit authored mapping exists.
+
 The native compatibility presentation bridge now applies supplied authoritative
 mega-tile, d-piece, and transparency layers to the active level after validating
 their native dimensions and value ranges. This closes the map-layer portion of

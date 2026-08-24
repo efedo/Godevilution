@@ -446,7 +446,7 @@ public sealed class AuthoritativeWorldMutationTests
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
             "world_mutations.tsv",
             "mutation_id\tlevel_id\tanchor_entity_id\tobject_layer_rects\n"
-                + "7\t1\t20\t-1,0,1,1,299;0,0,1,1,297\n");
+                + "7\t1\t20\t-1,0,1,1,99;0,0,1,1,97\n");
         var mutation = Assert.Single(catalog.Definitions);
         Assert.Equal(20U, mutation.AnchorEntityId);
 
@@ -462,8 +462,8 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.True(world.ApplyWorldMutation(7));
         var level = Assert.Single(world.LevelGeometry);
         Assert.Equal(16, level.NativeObjectLayer.Count);
-        Assert.Equal((ushort)299, level.NativeObjectLayer[2 * 4 + 1]);
-        Assert.Equal((ushort)297, level.NativeObjectLayer[2 * 4 + 2]);
+        Assert.Equal((ushort)99, level.NativeObjectLayer[2 * 4 + 1]);
+        Assert.Equal((ushort)97, level.NativeObjectLayer[2 * 4 + 2]);
     }
 
     [Fact]

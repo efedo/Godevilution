@@ -160,8 +160,10 @@ Windows toolchain command.
   cell, destination, stable symbol, quest gate, and current availability;
   clients may render a marker but never choose or apply the transition.
 - `LevelGeometrySnapshot.native_object_layer` is an additive row-major
-  projection of server-owned native object-layer values. It is presentation
-  metadata only; clients must not infer gameplay authority from it.
+  projection of server-owned native object-layer values (`0` through native
+  `OBJ_LAST`, currently `108`). It is presentation metadata only; clients must
+  not infer gameplay authority from it, and larger values are rejected by the
+  native and managed validators.
 - `LevelGeometrySnapshot.native_transparency` values must fit the native
   signed-byte transparency-region representation (`0` through `127`) for the
   compatibility client; out-of-range values are rejected before presentation.
