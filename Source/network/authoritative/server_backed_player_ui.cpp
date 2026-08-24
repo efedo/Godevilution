@@ -297,6 +297,7 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	std::fill(std::begin(player._pLvlVisited), std::end(player._pLvlVisited), false);
 	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds)
 		player._pLvlVisited[visitedLevelId] = true;
+	std::fill(std::begin(player._pName), std::end(player._pName), '\0');
 	if (!snapshot.characterName.empty())
 		CopyUtf8(player._pName, snapshot.characterName, PlayerNameLength);
 	player._pAblSpells = snapshot.abilitySpellId == 0

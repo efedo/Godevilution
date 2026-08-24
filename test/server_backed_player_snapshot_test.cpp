@@ -2463,6 +2463,24 @@ TEST(ServerBackedPlayerSnapshot, AcceptsOmittedLegacyInventoryGridAndClearsStale
 	EXPECT_EQ(player.InvGrid[0], 0);
 }
 
+TEST(ServerBackedPlayerSnapshot, ClearsStaleCharacterNameWhenProjectionOmitsLegacyIdentity)
+{
+	Player player;
+	player._pName[0] = 'S';
+	player._pName[1] = 't';
+	player._pName[2] = 'a';
+	player._pName[3] = 'l';
+	player._pName[4] = 'e';
+	player._pName[5] = '\0';
+
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterLevel = 1;
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_STREQ(player._pName, "");
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsReflectChargesOutsideNativeRangeWithoutMutation)
 {
 	Player player;
