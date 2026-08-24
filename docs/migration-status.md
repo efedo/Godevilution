@@ -4,9 +4,10 @@ Status date: 2026-08-24
 
 Authoritative world mutations now support anchored native mega-tile
 assignments and explicit creation of missing native transparency layers. The
-base Snotspill Banner hand-in stage uses that contract for its final
-server-owned mega-tile and transparency transition; the earlier opening
-transition and native encounter-state presentation remain compatibility seams.
+base Snotspill Banner dialogue now applies the native opening transparency
+rectangle through an anchored server-owned follow-up, while the hand-in stage
+applies the final mega-tile/transparency transition. Native object/map
+resynchronization and encounter-state presentation remain compatibility seams.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

@@ -1573,6 +1573,75 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void SnotspillOpeningDialogueAppliesItsAuthoritativeTransparencyFollowUp()
+    {
+        var quest = new AuthoritativeQuestState(
+            3008,
+            4,
+            1,
+            variable1: 1,
+            completionUniqueIdentity: "Snotspill");
+        var target = new AuthoritativeCombatTarget(
+            20,
+            25,
+            25,
+            100,
+            levelId: 4,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            4,
+            40,
+            40,
+            nativeTransparency: []));
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                9301,
+                4,
+                anchorUniqueIdentity: "Snotspill",
+                transparencyRectangles: [
+                    new AuthoritativeWorldMutationTransparencyRectangle(-11, -9, 16, 8, 9),
+                ],
+                createTransparencyLayer: true),
+        ]);
+        var world = new DiabloWorldState(
+            geometry,
+            combatTargets: [target],
+            quests: [quest],
+            worldMutations: mutations);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questDialogueStages: new AuthoritativeQuestDialogueStageCatalog([
+                new(
+                    3008,
+                    1,
+                    -1,
+                    21,
+                    2,
+                    0,
+                    FollowUpKind: AuthoritativeQuestDialogueFollowUpKind.WorldMutation,
+                    FollowUpAmount: 9301,
+                    NextMessageId: 22),
+            ]));
+        var player = CreatePlayer(positionX: 24, positionY: 25, levelId: 4, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3008, 20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(2, quest.Variable1);
+        Assert.True(quest.Active);
+        Assert.Contains(9301U, world.ActiveWorldMutationIds);
+        var projected = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)9, projected.NativeTransparency[16 * 40 + 14]);
+        Assert.Equal(21, Assert.Single(result.Events).MessageId);
+    }
+
+    [Fact]
     public void ItemGatedQuestDialogueAppliesItsWorldMutationFollowUp()
     {
         var items = new AuthoritativeItemCatalog([

@@ -70,6 +70,21 @@ public sealed class ShippedContentTests
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var mutationTable = pack.Tables.Single(table => table.SourcePath == "world_mutations.tsv");
+        var openingMutation = Assert.Single(
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                mutationTable.SourcePath,
+                mutationTable.ToCanonicalTsv()).Definitions,
+            definition => definition.MutationId == 9301);
+        var openingTransparency = Assert.Single(openingMutation.TransparencyRectangles);
+        Assert.Equal(("Snotspill", -11, -9), (
+            openingMutation.AnchorUniqueIdentity,
+            openingTransparency.X,
+            openingTransparency.Y));
+        Assert.Equal((16, 8, (ushort)9), (
+            openingTransparency.Width,
+            openingTransparency.Height,
+            openingTransparency.Value));
+        Assert.True(openingMutation.CreateTransparencyLayer);
         var mutation = Assert.Single(
             AuthoritativeWorldMutationCatalog.LoadTsv(
                 mutationTable.SourcePath,
@@ -303,6 +318,8 @@ public sealed class ShippedContentTests
             catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 1);
         Assert.Equal(22, snotspillIntro.NextMessageId);
+        Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.WorldMutation, snotspillIntro.FollowUpKind);
+        Assert.Equal(9301U, snotspillIntro.FollowUpAmount);
         var snotspill = Assert.Single(
             catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 2);

@@ -317,11 +317,12 @@ The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
-- `TalktoMonster` still owns Snotspill's Banner opening transition,
-  encounter-state, and native speech/presentation timing after the initial room
-  placement. The initial Snotspill encounter, encounter-relative sign chest,
-  `banner1.dun` map fragment, and final item-gated mega-tile/transparency
-  transition are now server/content-owned.
+- `TalktoMonster` still owns Snotspill's Banner opening object/map
+  resynchronization, encounter-state, and native speech/presentation timing
+  after the initial room placement. The opening transparency rectangle is now
+  server/content-owned, alongside the initial Snotspill encounter,
+  encounter-relative sign chest, `banner1.dun` map fragment, and final
+  item-gated mega-tile/transparency transition.
   Gharbad's authored dialogue messages, quest-variable transitions, and
   second-stage random unique-monster reward now move through
   `TalkToQuestRequested`; his remaining encounter-state and presentation

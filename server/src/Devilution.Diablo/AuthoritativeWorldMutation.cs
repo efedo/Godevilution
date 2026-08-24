@@ -320,6 +320,9 @@ public sealed class AuthoritativeWorldMutation
         int anchorX = 0,
         int anchorY = 0)
     {
+        if (MegaTileAssignments.Count == 0)
+            return [];
+
         var megaWidth = checked((levelWidth + 1) / 2);
         var megaHeight = checked((levelHeight + 1) / 2);
         var originX = 0;

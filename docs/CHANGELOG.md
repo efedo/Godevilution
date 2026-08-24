@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   transparency-layer creation to authoritative world mutations; the base
   Snotspill hand-in now applies its final Banner map/transparency transition
   through the server-owned quest dialogue follow-up.
+- Route the first Snotspill Banner dialogue through an anchored server-owned
+  opening transparency mutation while retaining native object/map
+  resynchronization and encounter presentation as compatibility seams.
 - Advance the active Diablo content schema to `1.419.0`, retaining additive
   compatibility with schema `1.418.0`.
 - Externalize the initial Snotspill Banner room through a validated Hell
