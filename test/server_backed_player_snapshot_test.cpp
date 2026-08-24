@@ -466,6 +466,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_fire_resistance(25);
 	second->set_lightning_resistance(-10);
 	second->set_magic_resistance(40);
+	second->set_direction(static_cast<int32_t>(Direction::NorthEast));
 	second->set_moving(true);
 	second->set_future_position_x(5);
 	second->set_future_position_y(5);
@@ -495,6 +496,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_EQ((*projected)[1].fireResistance, 25);
 	EXPECT_EQ((*projected)[1].lightningResistance, -10);
 	EXPECT_EQ((*projected)[1].magicResistance, 40);
+	EXPECT_EQ((*projected)[1].direction, static_cast<int32_t>(Direction::NorthEast));
 	EXPECT_TRUE((*projected)[1].moving);
 	EXPECT_EQ((*projected)[1].futurePositionX, 5);
 	EXPECT_EQ((*projected)[1].futurePositionY, 5);

@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
 - Aligned remote native player hydration with the local snapshot path: omitted
   legacy inventory grids now clear stale equipment, belt, inventory, grid, and
   held-item presentation state before applying the next snapshot.
+- Preserved authoritative native monster directions through the C++ projection
+  so compatibility presentation no longer retains a stale pool direction.
 - Aligned warp-trigger reference validation across the server mapper, native
   snapshot bridge, and Godot protocol model: source levels must exist and
   nonzero quest gates must reference a quest in the same snapshot.

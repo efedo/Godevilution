@@ -120,6 +120,8 @@ struct ProjectedMonsterSnapshot {
 	int32_t fireResistance = 0;
 	int32_t lightningResistance = 0;
 	int32_t magicResistance = 0;
+	/** Native monster direction used by compatibility presentation. */
+	int32_t direction = 0;
 	bool moving = false;
 	int32_t futurePositionX = 0;
 	int32_t futurePositionY = 0;

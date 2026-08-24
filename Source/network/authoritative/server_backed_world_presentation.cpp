@@ -586,6 +586,7 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	ClearMonsterTile(static_cast<unsigned>(monster.getId()), oldPosition);
 	if (oldFuturePosition != oldPosition)
 		ClearMonsterTile(static_cast<unsigned>(monster.getId()), oldFuturePosition);
+	monster.direction = static_cast<Direction>(snapshot.direction);
 	if (!snapshot.petrified && monster.mode == MonsterMode::Petrified)
 		monster.startStand(monster.direction);
 	monster.position.old = position;

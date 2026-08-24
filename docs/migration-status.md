@@ -23,6 +23,9 @@ omits that optional identity, preventing prior-session names from persisting.
 Remote native player presentation follows the same rule: omitted legacy grids
 clear stale equipment, belt, inventory, grid, and held-item state before the
 next projected remote player is presented.
+Native monster projections now retain and apply the server-owned direction
+before compatibility presentation, avoiding stale direction state in reused
+native monster slots.
 
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,

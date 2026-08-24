@@ -482,6 +482,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		    .fireResistance = source.fire_resistance(),
 		    .lightningResistance = source.lightning_resistance(),
 		    .magicResistance = source.magic_resistance(),
+		    .direction = source.direction(),
 		    .moving = source.moving(),
 		    .futurePositionX = futurePositionX,
 		    .futurePositionY = futurePositionY,
