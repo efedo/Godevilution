@@ -144,6 +144,71 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void SelectsMovingMonsterFromItsFutureOccupiedCell()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 4 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 4,
+                    PositionX = 5,
+                    PositionY = 6,
+                    Moving = true,
+                    FuturePositionX = 6,
+                    FuturePositionY = 6,
+                    Alive = true,
+                    IsUnique = true,
+                    UniqueIdentity = "Gharbad",
+                    DialogueMessageId = 145,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3003,
+                    LevelId = 4,
+                    CompletionUniqueIdentity = "Gharbad",
+                },
+            },
+        };
+
+        Assert.Equal(
+            20U,
+            AuthoritativeTargetSelector.SelectMonsterTarget(snapshot, 7, 6, 6));
+        Assert.Equal(
+            20U,
+            AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 6, 6));
+        Assert.Equal(
+            new AuthoritativeMonsterDialogueTarget(3003, 20),
+            AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 6, 6));
+    }
+
+    [Fact]
+    public void DoesNotUseAnUnoccupiedFutureCellWhenMonsterIsNotMoving()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 4 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 4,
+                    PositionX = 5,
+                    PositionY = 6,
+                    FuturePositionX = 6,
+                    FuturePositionY = 6,
+                    Alive = true,
+                },
+            },
+        };
+
+        Assert.Null(AuthoritativeTargetSelector.SelectMonsterTarget(snapshot, 7, 6, 6));
+    }
+
+    [Fact]
     public void RejectsDialogueWithoutAnActiveMatchingQuestOrTarget()
     {
         var snapshot = new Snapshot {

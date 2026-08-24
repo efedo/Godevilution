@@ -19,6 +19,9 @@ a gold marker without embedding native text or quest progression locally.
 The native Lua lifecycle boundary is now centralized and characterized: an
 authoritative launch never initializes or shuts down embedded Lua, while
 explicit legacy launches retain the compatibility runtime.
+Godot's shared monster position projection now treats a moving monster's
+current and future cells as occupied, matching native target resolution for
+combat, Telekinesis, and authored dialogue without client-side movement.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

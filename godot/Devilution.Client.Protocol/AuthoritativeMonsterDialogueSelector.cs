@@ -31,8 +31,7 @@ public static class AuthoritativeMonsterDialogueSelector
                 && candidate.Alive
                 && !candidate.SneakHidden
                 && candidate.LevelId == localPlayer.LevelId
-                && candidate.PositionX == targetX
-                && candidate.PositionY == targetY)
+                && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .FirstOrDefault();
         if (monster is null || string.IsNullOrEmpty(monster.UniqueIdentity))

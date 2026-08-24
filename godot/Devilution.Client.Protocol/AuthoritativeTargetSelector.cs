@@ -92,8 +92,7 @@ public static class AuthoritativeTargetSelector
                 && candidate.Alive
                 && !candidate.SneakHidden
                 && candidate.LevelId == localPlayer.LevelId
-                && candidate.PositionX == targetX
-                && candidate.PositionY == targetY)
+                && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
             .FirstOrDefault();
@@ -139,8 +138,7 @@ public static class AuthoritativeTargetSelector
             .Where(candidate => candidate.Alive
                 && !candidate.SneakHidden
                 && IsVisible(candidate.LevelId, localPlayer.LevelId)
-                && candidate.PositionX == targetX
-                && candidate.PositionY == targetY)
+                && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
             .FirstOrDefault();

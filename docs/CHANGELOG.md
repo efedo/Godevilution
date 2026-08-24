@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align Godot monster targeting with native authoritative occupancy by
+  resolving moving monsters on both their current origin and server-owned
+  future destination for combat, Telekinesis, and authored dialogue.
 - Centralize and characterize the native Lua lifecycle gate so authoritative
   startup and shutdown cannot create or tear down an embedded Lua runtime;
   explicit legacy launches retain the existing compatibility lifecycle.
