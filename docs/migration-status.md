@@ -22,6 +22,8 @@ explicit legacy launches retain the compatibility runtime.
 Godot's shared monster position projection now treats a moving monster's
 current and future cells as occupied, matching native target resolution for
 combat, Telekinesis, and authored dialogue without client-side movement.
+Godot target selection also preserves the native level-`0` visibility wildcard
+for projected world entities and authored dialogue quests.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

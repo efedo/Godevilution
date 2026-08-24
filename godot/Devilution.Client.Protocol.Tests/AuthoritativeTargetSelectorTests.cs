@@ -209,6 +209,50 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void TreatsZeroLevelAsVisibleCompatibilityWildcard()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 4 },
+            },
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 30,
+                    LevelId = 0,
+                    PositionX = 3,
+                    PositionY = 3,
+                },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 0,
+                    PositionX = 4,
+                    PositionY = 4,
+                    Alive = true,
+                    IsUnique = true,
+                    UniqueIdentity = "Gharbad",
+                    DialogueMessageId = 145,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3003,
+                    LevelId = 0,
+                    CompletionUniqueIdentity = "Gharbad",
+                },
+            },
+        };
+
+        Assert.Equal(
+            30U,
+            AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 3, 3));
+        Assert.Equal(
+            new AuthoritativeMonsterDialogueTarget(3003, 20),
+            AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 4, 4));
+    }
+
+    [Fact]
     public void RejectsDialogueWithoutAnActiveMatchingQuestOrTarget()
     {
         var snapshot = new Snapshot {

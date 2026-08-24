@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align Godot world and authored-dialogue target selection with native
+  level-`0` compatibility wildcards while retaining exact-level filtering for
+  ordinary projections.
 - Align Godot monster targeting with native authoritative occupancy by
   resolving moving monsters on both their current origin and server-owned
   future destination for combat, Telekinesis, and authored dialogue.

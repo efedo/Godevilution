@@ -70,7 +70,7 @@ public static class AuthoritativeTargetSelector
 
         var item = snapshot.WorldItems.FirstOrDefault(candidate =>
             candidate.EntityId != 0
-            && candidate.LevelId == localPlayer.LevelId
+            && IsVisible(candidate.LevelId, localPlayer.LevelId)
             && candidate.PositionX == targetX
             && candidate.PositionY == targetY);
         if (item is not null)
@@ -78,7 +78,7 @@ public static class AuthoritativeTargetSelector
 
         var worldObject = snapshot.Objects.FirstOrDefault(candidate =>
             candidate.EntityId != 0
-            && candidate.LevelId == localPlayer.LevelId
+            && IsVisible(candidate.LevelId, localPlayer.LevelId)
             && !candidate.Activated
             && !candidate.Destroyed
             && AuthoritativeObjectSelector.HasAuthoritativeInteraction(candidate)
@@ -91,7 +91,7 @@ public static class AuthoritativeTargetSelector
             .Where(candidate => candidate.EntityId != 0
                 && candidate.Alive
                 && !candidate.SneakHidden
-                && candidate.LevelId == localPlayer.LevelId
+                && IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
