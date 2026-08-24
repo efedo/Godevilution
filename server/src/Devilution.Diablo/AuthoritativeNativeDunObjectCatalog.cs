@@ -38,6 +38,7 @@ public sealed record AuthoritativeNativeDunObjectDefinition(
     {
         if (!Enum.IsDefined(TargetKind)
             || NativeObjectId == 0
+            || NativeObjectId > AuthoritativeLevel.NativeMaximumObjectId
             || ObjectId == 0
             || (TargetKind == AuthoritativeNativeDunObjectTargetKind.SetLevel
                 && SetLevelId is < 0 or > 8)
@@ -250,7 +251,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         StableContentIdCatalog? stableIds)
     {
         var nativeObjectId = row.RequiredUInt32("native_object_id");
-        if (nativeObjectId is 0 or > ushort.MaxValue)
+        if (nativeObjectId is 0 or > AuthoritativeLevel.NativeMaximumObjectId)
             throw new InvalidDataException(
                 $"Native DUN object row {row.LineNumber} contains an invalid native object ID.");
         var hasSetLevel = (row.TryGet("set_level_id", out var setLevelId)

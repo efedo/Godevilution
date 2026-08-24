@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
   `108`), while retaining the broader d-piece value range.
 - Applied the same native object identity bound to object snapshots and server
   object state, preventing values above `OBJ_LAST` from crossing the protocol.
+- Enforced the native object identity bound during native-DUN mapping load and
+  mutable authoritative-object state updates, rather than deferring rejection
+  until snapshot projection.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

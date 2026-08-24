@@ -9,6 +9,8 @@ validated as 16-bit identities. Unmapped native object-layer cells remain inert
 until an explicit authored mapping exists.
 Object snapshot identities now use that same bound before native or Godot
 presentation consumes them.
+Native-DUN mapping activation and mutable authoritative-object updates enforce
+the bound as well, so invalid identities cannot persist in server state.
 
 The native compatibility presentation bridge now applies supplied authoritative
 mega-tile, d-piece, and transparency layers to the active level after validating

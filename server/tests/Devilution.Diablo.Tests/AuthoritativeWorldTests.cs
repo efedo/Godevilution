@@ -245,13 +245,15 @@ public sealed class AuthoritativeWorldTests
             1,
             1,
             nativeObjectLayer: [(ushort)(AuthoritativeLevel.NativeMaximumObjectId + 1)]));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new AuthoritativeWorldObject(
+        var worldObject = new AuthoritativeWorldObject(
             1,
             1,
             1,
             0,
             0,
-            nativeObjectId: (uint)(AuthoritativeLevel.NativeMaximumObjectId + 1)));
+            nativeObjectId: (uint)AuthoritativeLevel.NativeMaximumObjectId);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            worldObject.NativeObjectId = (uint)(AuthoritativeLevel.NativeMaximumObjectId + 1));
     }
 
     [Fact]

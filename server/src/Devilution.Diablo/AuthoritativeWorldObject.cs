@@ -5,6 +5,8 @@ namespace Devilution.Diablo;
 /** Mutable server-owned object state used by interaction commands. */
 public sealed class AuthoritativeWorldObject
 {
+    private uint nativeObjectId;
+
     public AuthoritativeWorldObject(
         uint entityId,
         uint objectId,
@@ -192,7 +194,16 @@ public sealed class AuthoritativeWorldObject
     public int RequiredActivatedLinkedObjects { get; set; }
 
     /** Optional native object type used only by compatibility presentations. */
-    public uint NativeObjectId { get; set; }
+    public uint NativeObjectId
+    {
+        get => nativeObjectId;
+        set
+        {
+            if (value > AuthoritativeLevel.NativeMaximumObjectId)
+                throw new ArgumentOutOfRangeException(nameof(NativeObjectId));
+            nativeObjectId = value;
+        }
+    }
 
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }

@@ -60,6 +60,16 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
     }
 
     [Fact]
+    public void TsvLoaderRejectsNativeObjectIdOutsideCompatibilityRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunObjectCatalog.LoadTsv(
+                "native_dun_objects.tsv",
+                "set_level_id\tactive_map\tnative_object_id\tobject_id\n"
+                    + "2\t1\t109\t4\n"));
+    }
+
+    [Fact]
     public void TsvLoaderParsesOrdinaryLevelTarget()
     {
         var catalog = AuthoritativeNativeDunObjectCatalog.LoadTsv(
