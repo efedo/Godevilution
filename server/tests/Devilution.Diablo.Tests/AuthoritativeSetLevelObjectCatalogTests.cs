@@ -28,6 +28,21 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
     }
 
     [Fact]
+    public void TsvLoaderAcceptsGeneratedSetPieceOffsets()
+    {
+        var catalog = AuthoritativeSetLevelObjectCatalog.LoadTsv(
+            "set_level_objects.tsv",
+            "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\tplacement_mode\n"
+                + "1101\t6\tSL_BLIND\t4\t9\t24\t0\t0\t2\t2\tset_level_origin\n");
+
+        var placement = Assert.Single(catalog.Definitions);
+        Assert.Equal(
+            AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+            placement.PlacementMode);
+        Assert.Equal((9, 24), (placement.PositionX, placement.PositionY));
+    }
+
+    [Fact]
     public void ValidationRejectsDuplicatePlacementIdentity()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSetLevelObjectCatalog([
@@ -62,6 +77,55 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
             @object.LevelId);
         Assert.Equal(4, @object.PositionX);
         Assert.Equal(5, @object.PositionY);
+    }
+
+    [Fact]
+    public void MaterializesGeneratedSetPiecePlacementFromSuppliedOrigin()
+    {
+        var levelId = 17U;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(levelId, 32, 32));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, 9, 24, 0, 0, 2, 2) {
+                PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+            },
+        ]);
+
+        var objects = catalog.LoadAvailableObjects(
+            world,
+            setLevelOrigins: new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+                [6] = new(levelId, 12, 7),
+            });
+
+        var @object = Assert.Single(objects);
+        Assert.Equal((21, 31), (@object.PositionX, @object.PositionY));
+        Assert.Equal(levelId, @object.LevelId);
+    }
+
+    [Fact]
+    public void DefersGeneratedSetPiecePlacementUntilItsOriginExists()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, 9, 24, 0, 0, 2, 2) {
+                PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+            },
+        ]);
+
+        Assert.Empty(catalog.LoadAvailableObjects(world));
+        Assert.Empty(catalog.LoadAvailableObjects(
+            world,
+            setLevelOrigins: new Dictionary<int, AuthoritativeSetLevelObjectOrigin>()));
+    }
+
+    [Fact]
+    public void RejectsUnknownGeneratedPlacementMode()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeSetLevelObjectCatalog.LoadTsv(
+            "set_level_objects.tsv",
+            "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\tplacement_mode\n"
+                + "1101\t6\tSL_BLIND\t4\t9\t24\t0\t0\t2\t2\tfuture_mode\n"));
     }
 
     [Fact]

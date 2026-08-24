@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added schema 1.426's optional set-level object placement mode. Existing rows
+  remain absolute; future procedural set-piece rows can use signed offsets from
+  a runtime-supplied origin and stay deferred until its geometry is available.
 - Clarified that un-authored native object behavior and other local interaction
   fallbacks are offline-only; connected sessions require authoritative object
   projections and fail closed otherwise.

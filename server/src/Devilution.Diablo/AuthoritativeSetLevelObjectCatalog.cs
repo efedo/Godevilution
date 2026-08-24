@@ -2,6 +2,22 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Selects how a set-level object's position is resolved. */
+public enum AuthoritativeSetLevelObjectPlacementMode
+{
+    /** PositionX/PositionY are absolute cells on the materialized set-level map. */
+    Absolute,
+
+    /** PositionX/PositionY are signed offsets from a generated set-piece origin. */
+    SetLevelOriginOffset,
+}
+
+/** Runtime origin supplied when a procedural set piece is generated. */
+public sealed record AuthoritativeSetLevelObjectOrigin(
+    uint LevelId,
+    int PositionX,
+    int PositionY);
+
 /** One native fixed-object placement on a set-level map. */
 public sealed record AuthoritativeSetLevelObjectPlacement(
     uint PlacementId,
@@ -15,6 +31,10 @@ public sealed record AuthoritativeSetLevelObjectPlacement(
     int TemplateHeight)
 {
     public string SetLevelSymbol { get; init; } = string.Empty;
+
+    /** Resolves absolute coordinates or generated set-piece-relative offsets. */
+    public AuthoritativeSetLevelObjectPlacementMode PlacementMode { get; init; }
+        = AuthoritativeSetLevelObjectPlacementMode.Absolute;
 
     /** Optional objects.tsv entity whose authored behavior is copied to this placement. */
     public uint TemplateEntityId { get; init; }
@@ -38,8 +58,11 @@ public sealed class AuthoritativeSetLevelObjectCatalog
                 || placement.PlacementId > uint.MaxValue - RuntimeObjectEntityIdBase
                 || placement.SetLevelId is < 0 or > 8
                 || placement.ObjectId == 0
-                || placement.PositionX is < 0 or > 255
-                || placement.PositionY is < 0 or > 255
+                || !Enum.IsDefined(placement.PlacementMode)
+                || placement.PlacementMode == AuthoritativeSetLevelObjectPlacementMode.Absolute
+                    && (placement.PositionX is < 0 or > 255 || placement.PositionY is < 0 or > 255)
+                || placement.PlacementMode == AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset
+                    && (placement.PositionX is < -255 or > 255 || placement.PositionY is < -255 or > 255)
                 || placement.TemplateX is < 0 or > 255
                 || placement.TemplateY is < 0 or > 255
                 || placement.TemplateWidth is <= 0 or > 64
@@ -76,7 +99,8 @@ public sealed class AuthoritativeSetLevelObjectCatalog
     public IReadOnlyList<AuthoritativeWorldObject> LoadAvailableObjects(
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
-        IEnumerable<AuthoritativeWorldObject>? templates = null)
+        IEnumerable<AuthoritativeWorldObject>? templates = null,
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         var usedEntityIds = (existingObjects ?? [])
@@ -86,12 +110,11 @@ public sealed class AuthoritativeSetLevelObjectCatalog
             .ToDictionary(@object => @object.EntityId);
         var objects = new List<AuthoritativeWorldObject>();
         foreach (var placement in definitions) {
-            var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
-                placement.SetLevelId,
-                activeMap: true);
-            if (!world.ContainsLevel(levelId))
+            var resolved = ResolvePosition(world, placement, setLevelOrigins);
+            if (resolved is null)
                 continue;
-            if (!world.ContainsPosition(levelId, placement.PositionX, placement.PositionY))
+            var (levelId, positionX, positionY) = resolved.Value;
+            if (!world.ContainsPosition(levelId, positionX, positionY))
                 throw new InvalidDataException(
                     $"Set-level object placement {placement.PlacementId} is outside runtime level {levelId}.");
 
@@ -109,18 +132,45 @@ public sealed class AuthoritativeSetLevelObjectCatalog
                 objects.Add(template.WithPlacement(
                     entityId,
                     levelId,
-                    placement.PositionX,
-                    placement.PositionY));
+                    positionX,
+                    positionY));
             } else {
                 objects.Add(new AuthoritativeWorldObject(
                     entityId,
                     placement.ObjectId,
                     levelId,
-                    placement.PositionX,
-                    placement.PositionY));
+                    positionX,
+                    positionY));
             }
         }
         return objects;
+    }
+
+    private static (uint LevelId, int PositionX, int PositionY)? ResolvePosition(
+        AuthoritativeWorld world,
+        AuthoritativeSetLevelObjectPlacement placement,
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins)
+    {
+        if (placement.PlacementMode == AuthoritativeSetLevelObjectPlacementMode.Absolute) {
+            var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                placement.SetLevelId,
+                activeMap: true);
+            return world.ContainsLevel(levelId)
+                ? (levelId, placement.PositionX, placement.PositionY)
+                : null;
+        }
+
+        if (setLevelOrigins is null
+            || !setLevelOrigins.TryGetValue(placement.SetLevelId, out var origin))
+            return null;
+        if (!world.ContainsLevel(origin.LevelId))
+            return null;
+        if (!world.ContainsPosition(origin.LevelId, origin.PositionX, origin.PositionY))
+            throw new InvalidDataException(
+                $"Set-level object placement {placement.PlacementId} has an origin outside runtime level {origin.LevelId}.");
+        var positionX = checked(origin.PositionX + placement.PositionX);
+        var positionY = checked(origin.PositionY + placement.PositionY);
+        return (origin.LevelId, positionX, positionY);
     }
 
     public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)
@@ -157,7 +207,21 @@ public sealed class AuthoritativeSetLevelObjectCatalog
                 SetLevelSymbol = row.TryGet("set_level_symbol", out var symbol)
                     ? symbol
                     : string.Empty,
+                PlacementMode = ParsePlacementMode(row),
                 TemplateEntityId = row.OptionalUInt32("template_entity_id"),
             }));
+    }
+
+    private static AuthoritativeSetLevelObjectPlacementMode ParsePlacementMode(TsvRow row)
+    {
+        if (!row.TryGet("placement_mode", out var value) || string.IsNullOrWhiteSpace(value))
+            return AuthoritativeSetLevelObjectPlacementMode.Absolute;
+        return value.Trim().ToLowerInvariant() switch {
+            "absolute" => AuthoritativeSetLevelObjectPlacementMode.Absolute,
+            "set_level_origin" or "set_level_origin_offset"
+                => AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+            _ => throw new InvalidDataException(
+                $"Column 'placement_mode' on TSV row {row.LineNumber} has an unknown value '{value}'."),
+        };
     }
 }

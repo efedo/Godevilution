@@ -461,9 +461,13 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.425.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.424.0` schema
-for existing manifest-based packs. Schema 1.425 adds paired world-item anchor
+The Diablo content schema is now `1.426.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.425.0` schema
+for existing manifest-based packs. Schema 1.426 adds the optional
+`placement_mode` column to `set_level_objects.tsv`: absolute rows preserve
+existing coordinates, while `set_level_origin` rows use signed offsets from a
+runtime-generated set-piece origin and remain deferred until that origin and
+its geometry are available. Schema 1.425 adds paired world-item anchor
 coordinates to quest types; the server completes a matching single-player
 quest when an item is dropped on that level cell while retaining the item in
 authoritative world state. Hellfire now also ships the native `cornerstone.dun`
