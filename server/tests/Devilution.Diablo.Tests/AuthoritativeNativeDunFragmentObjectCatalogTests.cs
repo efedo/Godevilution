@@ -60,6 +60,33 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalogTests
     }
 
     [Fact]
+    public void InheritsAFragmentCoordinateAnchorForObjectPlacement()
+    {
+        var catalog = AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
+            "native_dun_fragment_objects.tsv",
+            "placement_id\tfragment_id\tentity_id\tanchor_entity_id\toffset_x\toffset_y\n"
+                + "1\t7\t10\t0\t-2\t3\n");
+        var fragments = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                7,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorPositionX: 4,
+                AnchorPositionY: 4),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var target = new AuthoritativeWorldObject(10, 6001, 24, 0, 0);
+
+        catalog.Apply(world, [target], fragments);
+
+        Assert.Equal((2, 7), (target.PositionX, target.PositionY));
+    }
+
+    [Fact]
     public void MaterializesAUniqueAnchoredBehaviorTemplate()
     {
         var catalog = AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(

@@ -3,7 +3,7 @@ using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
-/** A native DUN set-piece placed relative to a validated runtime object. */
+/** A native DUN set-piece placed relative to a validated runtime anchor. */
 public sealed record AuthoritativeNativeDunFragmentDefinition(
     uint FragmentId,
     uint LevelId,
@@ -13,7 +13,9 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     int AnchorOffsetY,
     string? TileAssetPath = null,
     string? SolAssetPath = null,
-    string AnchorUniqueIdentity = "")
+    string AnchorUniqueIdentity = "",
+    int? AnchorPositionX = null,
+    int? AnchorPositionY = null)
 {
     /** Stable level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
@@ -22,9 +24,16 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     {
         var uniqueIdentity = AnchorUniqueIdentity.Trim();
         var hasUniqueAnchor = uniqueIdentity.Length != 0;
+        var hasCoordinateX = AnchorPositionX is not null;
+        var hasCoordinateY = AnchorPositionY is not null;
+        var hasCoordinateAnchor = hasCoordinateX && hasCoordinateY;
         if (FragmentId == 0
-            || AnchorEntityId != 0 && hasUniqueAnchor
-            || AnchorEntityId == 0 && !hasUniqueAnchor
+            || hasCoordinateX != hasCoordinateY
+            || (AnchorEntityId != 0 ? 1 : 0)
+                    + (hasUniqueAnchor ? 1 : 0)
+                    + (hasCoordinateAnchor ? 1 : 0) != 1
+            || AnchorPositionX is < 0 or > 512
+            || AnchorPositionY is < 0 or > 512
             || !NativeTextLimits.IsIdentityWithinLimit(uniqueIdentity)
             || !IsRelativeDunAssetPath(AssetPath)) {
             throw new InvalidDataException(
@@ -135,6 +144,11 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
 
             if (!stagedLevels.TryGetValue(definition.LevelId, out var level))
                 level = world.Levels.Single(candidate => candidate.LevelId == definition.LevelId);
+            if (definition.AnchorPositionX is not null
+                && (anchorX < 0 || anchorX >= level.Width || anchorY < 0 || anchorY >= level.Height)) {
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} coordinate anchor exceeds level {definition.LevelId} bounds.");
+            }
             var map = AuthoritativeDunMapAsset.Load(
                 definition.AssetPath,
                 content.GetRequiredAsset(definition.AssetPath).Contents);
@@ -289,7 +303,9 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 OptionalAssetPath(row, "sol_asset_path"),
                 row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
                     ? anchorUniqueIdentity
-                    : string.Empty) {
+                    : string.Empty,
+                OptionalCoordinate(row, "anchor_position_x"),
+                OptionalCoordinate(row, "anchor_position_y")) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
             }));
     }
@@ -299,6 +315,11 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         IReadOnlyDictionary<uint, AuthoritativeWorldObject> objects,
         IReadOnlyList<AuthoritativeCombatTarget> combatTargets)
     {
+        if (definition.AnchorPositionX is { } positionX
+            && definition.AnchorPositionY is { } positionY) {
+            return (positionX, positionY, definition.LevelId);
+        }
+
         if (definition.AnchorEntityId != 0) {
             if (!objects.TryGetValue(definition.AnchorEntityId, out var objectAnchor))
                 throw new InvalidDataException(
@@ -326,6 +347,14 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
             && !string.IsNullOrWhiteSpace(value)
             && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)
             ? value
+            : null;
+    }
+
+    private static int? OptionalCoordinate(TsvRow row, string column)
+    {
+        return row.TryGet(column, out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            ? row.OptionalInt32(column)
             : null;
     }
 

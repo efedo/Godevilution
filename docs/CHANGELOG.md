@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added validated deterministic coordinate anchors to native DUN fragments;
+  fragment object placements can inherit a coordinate anchor, extending the
+  content/runtime contract toward procedural set-piece placement without
+  creating a placeholder runtime object.
 - Guarded the native doppelgänger-spawn and monster attribute-reduction
   helpers with the connected-session simulation policy, preventing direct
   callers from mutating server-owned monster or player state.

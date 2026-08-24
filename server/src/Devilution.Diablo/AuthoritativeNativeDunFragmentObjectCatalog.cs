@@ -25,7 +25,6 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
             || FragmentId == 0
             || EntityId == 0
             || AnchorEntityId != 0 && anchorUniqueIdentity.Length != 0
-            || AnchorEntityId == 0 && anchorUniqueIdentity.Length == 0
             || EntityId == AnchorEntityId
             || OffsetX is < -80 or > 80
             || OffsetY is < -80 or > 80
@@ -138,7 +137,7 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 if (!anchorPositions.TryGetValue(placement.AnchorEntityId, out anchor))
                     throw new InvalidDataException(
                         $"Native DUN fragment object placement {placement.PlacementId} references missing anchor {placement.AnchorEntityId}.");
-            } else {
+            } else if (!string.IsNullOrWhiteSpace(placement.AnchorUniqueIdentity)) {
                 if (!targetsByUniqueIdentity.TryGetValue(
                         placement.AnchorUniqueIdentity,
                         out var matchingTargets)) {
@@ -159,6 +158,12 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 }
                 var uniqueTarget = matchingTargets[0];
                 anchor = (uniqueTarget.LevelId, uniqueTarget.PositionX, uniqueTarget.PositionY);
+            } else if (fragment.AnchorPositionX is { } fragmentPositionX
+                && fragment.AnchorPositionY is { } fragmentPositionY) {
+                anchor = (fragment.LevelId, fragmentPositionX, fragmentPositionY);
+            } else {
+                throw new InvalidDataException(
+                    $"Native DUN fragment object placement {placement.PlacementId} has no resolvable anchor.");
             }
             if (target is not null && target.LevelId != anchor.LevelId)
                 throw new InvalidDataException(

@@ -136,6 +136,27 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void AppliesAFragmentFromAValidatedCoordinateAnchor()
+    {
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tlevel_symbol\tasset_path\tanchor_entity_id\tanchor_unique_identity\tanchor_position_x\tanchor_position_y\tanchor_offset_x\tanchor_offset_y\n"
+                + "1\t24\thellfire_level_24\tfragment.dun\t0\t\t4\t4\t-2\t-2\n");
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        catalog.Apply(content, world, []);
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal((ushort)42, level.NativeMegaTileLayer[1 * 4 + 1]);
+    }
+
+    [Fact]
     public void SimulationDefersUniqueAnchoredFragmentsUntilTheEncounterExists()
     {
         var catalog = new AuthoritativeNativeDunFragmentCatalog([
@@ -352,6 +373,23 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
             -2,
             -2,
             AnchorUniqueIdentity: "Snotspill").Validate());
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeNativeDunFragmentDefinition(
+            1,
+            24,
+            "fragment.dun",
+            0,
+            -2,
+            -2,
+            AnchorPositionX: 4).Validate());
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeNativeDunFragmentDefinition(
+            1,
+            24,
+            "fragment.dun",
+            9,
+            -2,
+            -2,
+            AnchorPositionX: 4,
+            AnchorPositionY: 4).Validate());
     }
 
     [Fact]
@@ -373,6 +411,36 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
             world,
             [new AuthoritativeWorldObject(9, 6003, 24, 4, 4)]));
         Assert.Contains("even d-piece origin", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RejectsCoordinateAnchorsOutsideTheTargetLevel()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                0,
+                0,
+                AnchorPositionX: 8,
+                AnchorPositionY: 4),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.Apply(
+            content,
+            world,
+            []));
+
+        Assert.Contains("coordinate anchor", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
