@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
@@ -207,7 +208,7 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentException(
                 "A dialogue completion defeat requires an item hand-in and unique encounter identity.",
                 nameof(dialogueCompletionDefeatsTarget));
-        if (completionUniqueIdentity.Length > 128)
+        if (!NativeTextLimits.IsIdentityWithinLimit(completionUniqueIdentity))
             throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
         LevelId = levelId;

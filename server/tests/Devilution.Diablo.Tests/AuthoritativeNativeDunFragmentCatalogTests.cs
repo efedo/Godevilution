@@ -8,6 +8,27 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeNativeDunFragmentCatalogTests
 {
     [Fact]
+    public void RejectsAnchorIdentitiesThatExceedTheNativeUtf8ByteLimit()
+    {
+        var identity = new string('é', 65);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeNativeDunFragmentDefinition(
+            1,
+            24,
+            "fragment.dun",
+            0,
+            0,
+            0,
+            AnchorUniqueIdentity: identity).Validate());
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeNativeDunFragmentObjectPlacement(
+            1,
+            1,
+            2,
+            0,
+            0,
+            0) { AnchorUniqueIdentity = identity }.Validate());
+    }
+
+    [Fact]
     public void LoadsAndAppliesAnAnchorRelativeMegaTileFragment()
     {
         var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(

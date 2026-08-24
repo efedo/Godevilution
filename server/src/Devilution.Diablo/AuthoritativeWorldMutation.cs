@@ -1,5 +1,6 @@
 using System.Globalization;
 using Devilution.Data;
+using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
@@ -150,7 +151,7 @@ public sealed class AuthoritativeWorldMutation
         if (AnchorEntityId != 0 && AnchorUniqueIdentity.Length != 0)
             throw new InvalidDataException(
                 "A world mutation cannot use both an object and unique-identity anchor.");
-        if (AnchorUniqueIdentity.Length > 128)
+        if (!NativeTextLimits.IsIdentityWithinLimit(AnchorUniqueIdentity))
             throw new ArgumentOutOfRangeException(nameof(anchorUniqueIdentity));
         if (AnchorEntityId == 0 && AnchorUniqueIdentity.Length == 0
             && (anchorMegaOffsetX != 0 || anchorMegaOffsetY != 0)) {

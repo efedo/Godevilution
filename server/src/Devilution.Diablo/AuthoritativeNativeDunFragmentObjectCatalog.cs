@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
@@ -28,7 +29,7 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
             || EntityId == AnchorEntityId
             || OffsetX is < -80 or > 80
             || OffsetY is < -80 or > 80
-            || anchorUniqueIdentity.Length > 128) {
+            || !NativeTextLimits.IsIdentityWithinLimit(anchorUniqueIdentity)) {
             throw new InvalidDataException(
                 $"Native DUN fragment object placement {PlacementId} contains invalid identity or offset metadata.");
         }

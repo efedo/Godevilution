@@ -502,6 +502,16 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void RejectsCompletionIdentityThatExceedsTheNativeUtf8ByteLimit()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            completionUniqueIdentity: new string('é', 65)));
+    }
+
+    [Fact]
     public void QuestStateResolvesStableCompletionRewardItemSymbol()
     {
         var stableIds = new StableContentIdCatalog([

@@ -13,6 +13,9 @@ Native vendor projection now rejects seedless stock without complete dynamic
 presentation identity, matching the server and Godot active-store boundaries.
 Unique-monster and quest-completion identity limits now count UTF-8 bytes in
 the managed validators, matching the native protocol representation.
+The shared Domain limit is also applied before activation to authored unique
+monsters, placements, quest state, world-mutation anchors, and native-DUN
+fragment anchors.
 
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,
@@ -24,7 +27,7 @@ unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.
 Native quest ordinals in projected quest snapshots now share the `0` through
 `23` range and uniqueness checks across server, native, and Godot validation.
-Projected monster unique identities now enforce the native 128-character
+Projected monster unique identities now enforce the native 128 UTF-8-byte
 limit and unique-monster ownership across the engine, server, native, and
 Godot boundaries.
 Object snapshot identities now use that same bound before native or Godot

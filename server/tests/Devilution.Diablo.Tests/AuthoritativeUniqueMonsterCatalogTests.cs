@@ -39,6 +39,22 @@ public sealed class AuthoritativeUniqueMonsterCatalogTests
     }
 
     [Fact]
+    public void RejectsIdentitiesThatExceedTheNativeUtf8ByteLimit()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new AuthoritativeCombatTarget(
+            16,
+            1,
+            1,
+            20,
+            unique: true,
+            uniqueIdentity: new string('é', 65)));
+
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(16, 126, new string('é', 65)),
+        ]));
+    }
+
+    [Fact]
     public void AppliesIdentityThroughValidatedMonsterAndNativeAiSelector()
     {
         var target = new AuthoritativeCombatTarget(

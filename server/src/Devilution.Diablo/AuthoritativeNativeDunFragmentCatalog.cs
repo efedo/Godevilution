@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
@@ -24,7 +25,7 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
         if (FragmentId == 0
             || AnchorEntityId != 0 && hasUniqueAnchor
             || AnchorEntityId == 0 && !hasUniqueAnchor
-            || uniqueIdentity.Length > 128
+            || !NativeTextLimits.IsIdentityWithinLimit(uniqueIdentity)
             || !IsRelativeDunAssetPath(AssetPath)) {
             throw new InvalidDataException(
                 $"Native DUN fragment {FragmentId} contains invalid identity or asset metadata.");

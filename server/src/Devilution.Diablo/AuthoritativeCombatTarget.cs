@@ -1,4 +1,6 @@
 
+using Devilution.Domain.Protocol;
+
 namespace Devilution.Diablo;
 
 /** Minimal server-owned combat target used by the initial combat boundary. */
@@ -189,7 +191,7 @@ public sealed class AuthoritativeCombatTarget
                 nameof(dialogueMessageId));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
-        if (uniqueIdentity.Length > 128)
+        if (!NativeTextLimits.IsIdentityWithinLimit(uniqueIdentity))
             throw new ArgumentOutOfRangeException(nameof(uniqueIdentity));
         if (!string.IsNullOrWhiteSpace(uniqueIdentity) && !unique)
             throw new ArgumentException(

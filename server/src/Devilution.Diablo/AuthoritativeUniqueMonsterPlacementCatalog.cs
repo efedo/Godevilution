@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
@@ -33,7 +34,7 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
         var values = definitions.ToArray();
         if (values.Any(definition => definition.PlacementId == 0
                 || string.IsNullOrWhiteSpace(definition.UniqueIdentity)
-                || definition.UniqueIdentity.Length > 128
+                || !NativeTextLimits.IsIdentityWithinLimit(definition.UniqueIdentity)
                 || definition.MonsterId == 0
                 || definition.LevelId == 0
                 || definition.LevelId > int.MaxValue

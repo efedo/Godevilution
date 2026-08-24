@@ -1,3 +1,4 @@
+using Devilution.Domain.Protocol;
 using Devilution.Domain.Inventory;
 
 namespace Devilution.Diablo;
@@ -968,7 +969,7 @@ public sealed partial class DiabloSimulation
                 || monster.ToHit is < 0 or > 255
                 || monster.ToHitSpecial is < 0 or > 255
                 || monster.Intelligence is < 0 or > 255
-                || monster.UniqueIdentity.Length > 128
+                || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
                 || (!string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique)
                 || (monster.DialogueMessageId != 0 && !monster.IsUnique)
                 || (!string.IsNullOrEmpty(monster.NativeAi)
@@ -1643,7 +1644,7 @@ public sealed partial class DiabloSimulation
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
-            if (quest.CompletionUniqueIdentity.Length > 128) {
+            if (!NativeTextLimits.IsIdentityWithinLimit(quest.CompletionUniqueIdentity)) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest unique-monster identity.");
             }

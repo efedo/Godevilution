@@ -36,9 +36,9 @@ Windows toolchain command.
   ignore. Required behavior is negotiated during the handshake.
 - Protocol fields 54 (monster `unique_identity`) and 13 (quest
   `completion_unique_identity`) are additive opaque server-owned identities;
-  monster identities are limited to 128 characters and are only valid for
-  unique monsters; clients may ignore them while preserving them through
-  authoritative snapshots.
+  each identity is limited to 128 UTF-8 bytes, and monster identities are only
+  valid for unique monsters. Clients may ignore them while preserving them
+  through authoritative snapshots.
 - `client_sequence` is scoped to a resumable session. Retrying a command with
   the same sequence returns the recorded result without applying it twice.
 - `OpenStoreRequested` selects a validated vendor or service store, while

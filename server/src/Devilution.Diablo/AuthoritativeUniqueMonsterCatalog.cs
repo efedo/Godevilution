@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Domain.Protocol;
 
 namespace Devilution.Diablo;
 
@@ -41,8 +42,8 @@ public sealed class AuthoritativeUniqueMonsterCatalog
                     && definition.MonsterId == 0
                     && string.IsNullOrWhiteSpace(definition.NativeAi))
                 || string.IsNullOrWhiteSpace(definition.Identity)
-                || definition.Identity.Length > 128
-                || definition.NativeAi.Length > 128
+                || !NativeTextLimits.IsIdentityWithinLimit(definition.Identity)
+                || !NativeTextLimits.IsIdentityWithinLimit(definition.NativeAi)
                 || definition.SpawnHealthPercent is < 1 or > 100
                 || definition.SpawnArmorDelta is < -255 or > 255
                 || definition.SpawnFireResistance is < -100 or > 100

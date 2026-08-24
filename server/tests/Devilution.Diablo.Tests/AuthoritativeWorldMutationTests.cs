@@ -1531,6 +1531,15 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.False(world.IsWalkable(1, 2, 1));
     }
 
+    [Fact]
+    public void RejectsUniqueIdentityAnchorThatExceedsTheNativeUtf8ByteLimit()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new AuthoritativeWorldMutation(
+            7,
+            1,
+            anchorUniqueIdentity: new string('é', 65)));
+    }
+
     private static AuthoritativePlayerState CreatePlayer()
         => new(
             0,
