@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added schema 1.427's optional `procedural_set_piece_origins.tsv` catalog.
+  Generated set-piece origins now derive deterministically from aligned
+  walkable authoritative geometry and feed relative set-level object
+  materialization, while unavailable target levels remain deferred.
 - Added schema 1.426's optional set-level object placement mode. Existing rows
   remain absolute; future procedural set-piece rows can use signed offsets from
   a runtime-supplied origin and stay deferred until its geometry is available.

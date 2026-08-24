@@ -73,6 +73,9 @@ public sealed class DiabloSimulationOptions
     /** Runtime-generated origins for relative set-level object placements. */
     public IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? SetLevelObjectOrigins { get; init; }
 
+    /** Deterministically planned origins for generated set-piece placements. */
+    public AuthoritativeProceduralSetPieceOriginCatalog? ProceduralSetPieceOrigins { get; init; }
+
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
 
@@ -304,7 +307,10 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.NativeDunFragmentObjects,
             options.NativeObjectTemplates,
             options.Content,
-            questTypes: options.QuestTypes);
+            questTypes: options.QuestTypes,
+            proceduralSetPieceOrigins: options.ProceduralSetPieceOrigins?.Plan(
+                options.World ?? new AuthoritativeWorld(),
+                options.RandomSeed));
     }
 }
 
@@ -364,7 +370,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
         IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
         ComposedContent? content = null,
-        AuthoritativeQuestTypeCatalog? questTypes = null)
+        AuthoritativeQuestTypeCatalog? questTypes = null,
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? proceduralSetPieceOrigins = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -391,6 +398,10 @@ public sealed partial class DiabloSimulation
         QuestDialogueStages = questDialogueStages;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
+        if (proceduralSetPieceOrigins is not null) {
+            foreach (var (setLevelId, origin) in proceduralSetPieceOrigins)
+                PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
+        }
         if (setLevelObjectOrigins is not null) {
             foreach (var (setLevelId, origin) in setLevelObjectOrigins)
                 PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);

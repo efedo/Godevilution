@@ -44,7 +44,8 @@ public sealed record DiabloContentActivation
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
         AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null,
-        AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null)
+        AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null,
+        AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOrigins = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -69,6 +70,7 @@ public sealed record DiabloContentActivation
         QuestDialogueStages = questDialogueStages;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
+        ProceduralSetPieceOrigins = proceduralSetPieceOrigins;
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
         NativeDunFragments = nativeDunFragments;
@@ -127,6 +129,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
+
+    /** Validated deterministic origin rules for generated set-piece placements. */
+    public AuthoritativeProceduralSetPieceOriginCatalog? ProceduralSetPieceOrigins { get; }
 
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }
@@ -725,6 +730,21 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 "set_level",
                 setLevelId => setLevelId <= int.MaxValue
                     && setLevelNames.TryGet((int)setLevelId, out _));
+        var proceduralSetPieceOrigins = content.TryGetTable(
+                "procedural_set_piece_origins.tsv",
+                out var proceduralSetPieceOriginsTable)
+            ? AuthoritativeProceduralSetPieceOriginCatalog.LoadTsv(
+                proceduralSetPieceOriginsTable.SourcePath,
+                proceduralSetPieceOriginsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (proceduralSetPieceOrigins is not null) {
+            if (setLevelNames is not null)
+                foreach (var definition in proceduralSetPieceOrigins.Definitions)
+                    if (!setLevelNames.TryGet(definition.SetLevelId, out _))
+                        throw new InvalidDataException(
+                            $"Procedural set-piece origin {definition.SetLevelId} references an unknown set level.");
+        }
         var setLevelObjects = content.TryGetTable(
             "set_level_objects.tsv",
             out var setLevelObjectsTable)
@@ -1102,6 +1122,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             QuestDialogueStages = questDialogueStages,
             DialogueMessages = dialogueMessages,
             SetLevelObjects = setLevelObjects,
+            ProceduralSetPieceOrigins = proceduralSetPieceOrigins,
             SetLevelMaps = setLevelMaps,
             NativeDunObjects = nativeDunObjects,
             NativeDunFragments = nativeDunFragments,
@@ -1158,7 +1179,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeDunFragments,
             nativeDunFragmentObjects,
             questSequenceVariants,
-            uniqueMonsterPlacements);
+            uniqueMonsterPlacements,
+            proceduralSetPieceOrigins);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

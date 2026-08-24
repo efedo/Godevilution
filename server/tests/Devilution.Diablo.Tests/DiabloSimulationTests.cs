@@ -11,13 +11,13 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.426.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.427.0"),
             DiabloContentSchema.Current);
     }
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.425.0", true)]
+    [InlineData("devilution.diablo", "1.426.0", true)]
     [InlineData("devilution.diablo", "1.415.0", false)]
     [InlineData("other.game", "1.424.0", false)]
     public void ContentSchemaCompatibilityRetainsThePreviousAdditiveContract(
@@ -58,6 +58,31 @@ public sealed class DiabloSimulationTests
         Assert.Equal((17U, 12), (
             simulation.SetLevelObjectOrigins[6].LevelId,
             simulation.SetLevelObjectOrigins[6].PositionX));
+    }
+
+    [Fact]
+    public void SimulationMaterializesRelativeObjectsFromProceduralOrigins()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                SetLevelObjects = new AuthoritativeSetLevelObjectCatalog([
+                    new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, 1, 1, 0, 0, 2, 2) {
+                        PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+                    },
+                ]),
+                ProceduralSetPieceOrigins = new AuthoritativeProceduralSetPieceOriginCatalog([
+                    new AuthoritativeProceduralSetPieceOriginDefinition(6, 17, 4, 4, 1234),
+                ]),
+                RandomSeed = 99,
+            });
+
+        var origin = simulation.SetLevelObjectOrigins[6];
+        var @object = Assert.Single(simulation.WorldState.Objects.Values);
+        Assert.Equal((origin.LevelId, origin.PositionX + 1, origin.PositionY + 1),
+            (@object.LevelId, @object.PositionX, @object.PositionY));
     }
 
     [Fact]
@@ -550,7 +575,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.426.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.427.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
