@@ -71,6 +71,27 @@ public sealed class AuthoritativeQuestTypeCatalog
     public bool TryGet(uint questId, out AuthoritativeQuestTypeDefinition definition)
         => definitions.TryGetValue(questId, out definition!);
 
+    /** Rejects item-placement anchors that cannot exist on their authored quest level. */
+    public void ValidateWorldItemAnchors(
+        IEnumerable<AuthoritativeQuestState> quests,
+        AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var quest in quests) {
+            if (!TryGet(quest.QuestId, out var definition)
+                || definition.WorldItemAnchorPositionX is not { } positionX
+                || definition.WorldItemAnchorPositionY is not { } positionY) {
+                continue;
+            }
+            if (!world.ContainsPosition(quest.LevelId, positionX, positionY)) {
+                throw new InvalidDataException(
+                    $"Quest type {quest.QuestId} world-item anchor ({positionX},{positionY}) "
+                    + $"is outside quest level {quest.LevelId}.");
+            }
+        }
+    }
+
     public static AuthoritativeQuestTypeCatalog LoadTsv(
         string sourcePath,
         string contents,

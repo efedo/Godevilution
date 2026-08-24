@@ -831,6 +831,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     additionalQuests,
                     questStatesTable.SourcePath);
         }
+        if (world is not null && questTypes is not null && quests is not null)
+            questTypes.ValidateWorldItemAnchors(quests, world);
 
         var questTownerInteractions = content.TryGetTable(
             "quest_towner_interactions.tsv",
