@@ -90,8 +90,14 @@ public static class AuthoritativeStoreSalePolicy
 
     private static bool IsMisc(AuthoritativeItemState state, AuthoritativeItemCatalog? items)
     {
-        if (items is not null && items.TryGetByState(state, out var definition))
-            return definition.ItemClass == 3;
+        if (items is not null) {
+            if (items.TryGetByState(state, out var definition))
+                return definition.ItemClass == 3
+                    || definition.GenerationTags.Contains("Misc", StringComparer.OrdinalIgnoreCase);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Count > 0)
+                return tags.Contains("Misc", StringComparer.OrdinalIgnoreCase);
+        }
         return state.ItemClass == 3 || state.ItemType == 0;
     }
 

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Vendor `Misc` tags now resolve through unambiguous `misc_id` mappings and
+  override conflicting legacy item-classification fields for Smith/Witch
+  admission.
 - Vendor `NoSale` and `Quest` tags now resolve through unambiguous `misc_id`
   mappings when native item identity is unavailable, preventing legacy vendor
   classification from overriding normalized content metadata.

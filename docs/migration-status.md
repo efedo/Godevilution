@@ -241,6 +241,10 @@ Vendor `NoSale` and `Quest` tags now resolve through unambiguous `misc_id`
 mappings when native item identity is unavailable, preventing legacy vendor
 classification from overriding normalized content metadata.
 
+Vendor `Misc` tags now resolve through unambiguous `misc_id` mappings and
+override conflicting legacy item-classification fields for Smith/Witch
+admission.
+
 The shipped spell-book catalog now requires every production book row to carry
 explicit `single_player_excluded` metadata; native Resurrection/Heal Other
 inference remains only a compatibility fallback for older packs.

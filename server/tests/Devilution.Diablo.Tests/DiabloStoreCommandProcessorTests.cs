@@ -2601,6 +2601,49 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MiscIdOnlyMiscTagOverridesLegacyVendorClassification()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            2186,
+            1,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            ItemClass = 1,
+            NativeItemIndex = 101,
+            MiscId = 3,
+            GenerationTags = new HashSet<string>(["Misc", "Belt"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemType = 1,
+            ItemClass = 1,
+            MiscId = 3,
+        };
+
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            state,
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void NormalizedOilActionUsesContentMetadataForVendorFilters()
     {
         var definition = new AuthoritativeItemDefinition(
