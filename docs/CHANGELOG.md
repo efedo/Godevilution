@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Canonicalized native monster, world-item, and object projection ordering by
+  entity ID so overlapping interaction lookups match Godot's deterministic
+  selector order, with focused native regression coverage.
 - Centralized the authoritative level-visibility wildcard in one shared Godot
   protocol projection used by targeting, authored-object/dialogue routing, and
   world presentation, with focused invariant coverage.

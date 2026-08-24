@@ -58,6 +58,18 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 		}) != levelGeometry.end()) {
 		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
 	}
+	// Keep native presentation and interaction lookup order canonical. Godot
+	// selectors use the same entity-ID order when multiple projected entities
+	// occupy one presentation cell.
+	std::sort(monsters.begin(), monsters.end(), [](const auto &left, const auto &right) {
+		return left.entityId < right.entityId;
+	});
+	std::sort(worldItems.begin(), worldItems.end(), [](const auto &left, const auto &right) {
+		return left.entityId < right.entityId;
+	});
+	std::sort(objects.begin(), objects.end(), [](const auto &left, const auto &right) {
+		return left.entityId < right.entityId;
+	});
 	monsters_ = std::move(monsters);
 	worldItems_ = std::move(worldItems);
 	objects_ = std::move(objects);

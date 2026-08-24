@@ -31,6 +31,9 @@ compatibility projections instead of requiring an exact level match.
 The level-visibility wildcard is now centralized in one shared Godot protocol
 projection used by targeting, authored-object/dialogue routing, and world
 presentation, with focused invariant coverage.
+Native monster, world-item, and object projections now use the same entity-ID
+ordering as Godot selectors before presentation and interaction lookup, so
+overlapping projected cells resolve deterministically across clients.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

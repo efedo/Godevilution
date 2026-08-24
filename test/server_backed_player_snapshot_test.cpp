@@ -1814,6 +1814,45 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_EQ(projection.WorldItemAt(4, 5), std::optional<uint32_t>(20));
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldProjectionOrdersOverlappingEntitiesByIdentity)
+{
+	ProjectedMonsterSnapshot higherMonster;
+	higherMonster.entityId = 40;
+	higherMonster.levelId = 1;
+	higherMonster.positionX = 4;
+	higherMonster.positionY = 5;
+	higherMonster.alive = true;
+	ProjectedMonsterSnapshot lowerMonster = higherMonster;
+	lowerMonster.entityId = 39;
+
+	ProjectedWorldItemSnapshot higherItem;
+	higherItem.entityId = 30;
+	higherItem.levelId = 1;
+	higherItem.positionX = 4;
+	higherItem.positionY = 5;
+	ProjectedWorldItemSnapshot lowerItem = higherItem;
+	lowerItem.entityId = 29;
+
+	ProjectedObjectSnapshot higherObject;
+	higherObject.entityId = 20;
+	higherObject.levelId = 1;
+	higherObject.positionX = 4;
+	higherObject.positionY = 5;
+	ProjectedObjectSnapshot lowerObject = higherObject;
+	lowerObject.entityId = 19;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply(
+		{ higherMonster, lowerMonster },
+		{ higherItem, lowerItem },
+		{ higherObject, lowerObject },
+		1)
+		.has_value());
+	EXPECT_EQ(projection.MonsterAt(4, 5), std::optional<uint32_t> { 39 });
+	EXPECT_EQ(projection.WorldItemAt(4, 5), std::optional<uint32_t> { 29 });
+	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t> { 19 });
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterOccupancy)
 {
 	protocol::Snapshot distantDestination;
