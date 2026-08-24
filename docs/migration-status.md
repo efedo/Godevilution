@@ -16,6 +16,8 @@ the managed validators, matching the native protocol representation.
 The shared Domain limit is also applied before activation to authored unique
 monsters, placements, quest state, world-mutation anchors, and native-DUN
 fragment anchors.
+The native player UI now accepts the same omitted zero-length legacy inventory
+grid as the server and Godot paths and clears stale cells before hydration.
 
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,

@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
 - Centralized the same UTF-8 byte boundary in the managed domain so authored
   unique-monster, quest, world-mutation, and native-DUN identities fail during
   content/runtime validation instead of only at protocol projection.
+- Aligned the native player UI with the managed legacy inventory-grid contract:
+  omitted zero-length grids are accepted and stale native cells are cleared.
 - Aligned warp-trigger reference validation across the server mapper, native
   snapshot bridge, and Godot protocol model: source levels must exist and
   nonzero quest gates must reference a quest in the same snapshot.

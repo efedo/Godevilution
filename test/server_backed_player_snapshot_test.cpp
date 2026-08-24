@@ -2451,6 +2451,18 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedSnapshotWithoutMutation)
 	EXPECT_EQ(player._pGold, 42);
 }
 
+TEST(ServerBackedPlayerSnapshot, AcceptsOmittedLegacyInventoryGridAndClearsStaleCells)
+{
+	Player player;
+	player.InvGrid[0] = 1;
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterLevel = 1;
+
+	EXPECT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player.InvGrid[0], 0);
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsReflectChargesOutsideNativeRangeWithoutMutation)
 {
 	Player player;

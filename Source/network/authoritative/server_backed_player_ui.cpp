@@ -162,7 +162,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed held item contains an invalid spell targeting kind.");
 	if (snapshot.heldItem.has_value() && !hasUniqueItemSeed(snapshot.heldItem->itemSeed))
 		return tl::make_unexpected("Server-backed snapshot contains duplicate player item references.");
-	if (snapshot.inventory.size() > InventoryGridCells || snapshot.inventoryGrid.size() != InventoryGridCells)
+	if (snapshot.inventory.size() > InventoryGridCells
+	    || (!snapshot.inventoryGrid.empty() && snapshot.inventoryGrid.size() != InventoryGridCells))
 		return tl::make_unexpected("Server-backed inventory does not fit the native inventory layout.");
 	if (snapshot.heldItem.has_value()
 	    && ((snapshot.heldItem->itemSeed == 0
@@ -353,6 +354,7 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	for (std::size_t index = 0; index < snapshot.inventory.size(); ++index)
 		player.InvList[index] = snapshot.inventory[index].item;
 	player._pNumInv = static_cast<int>(snapshot.inventory.size());
+	std::fill(std::begin(player.InvGrid), std::end(player.InvGrid), 0);
 	for (std::size_t index = 0; index < snapshot.inventoryGrid.size(); ++index) {
 		const int32_t cell = snapshot.inventoryGrid[index];
 		player.InvGrid[index] = cell < 0 ? 0 : static_cast<int8_t>(cell + 1);
