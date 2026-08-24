@@ -1584,6 +1584,46 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, ClearsRemoteInventoryWhenLegacyGridIsOmitted)
+{
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	local.characterClassId = 0;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.characterLevel = 1;
+	remote.inventoryGrid.assign(InventoryGridCells, -1);
+	Item equipped;
+	equipped._itype = ItemType::Sword;
+	remote.equipment.push_back({ .slot = INVLOC_HAND_LEFT, .item = equipped });
+	Item held;
+	held._itype = ItemType::Gold;
+	remote.heldItem = ProjectedInventoryItem { .item = held };
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_EQ(remotePlayer->InvBody[INVLOC_HAND_LEFT]._itype, ItemType::Sword);
+	EXPECT_EQ(remotePlayer->HoldItem._itype, ItemType::Gold);
+
+	remote.equipment.clear();
+	remote.heldItem.reset();
+	remote.inventoryGrid.clear();
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_TRUE(remotePlayer->InvBody[INVLOC_HAND_LEFT].isEmpty());
+	EXPECT_TRUE(remotePlayer->HoldItem.isEmpty());
+	EXPECT_EQ(remotePlayer->_pNumInv, 0);
+	EXPECT_EQ(remotePlayer->InvGrid[0], 0);
+
+	presentation.Clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePosition)
 {
 	ProjectedPlayerSnapshot local;

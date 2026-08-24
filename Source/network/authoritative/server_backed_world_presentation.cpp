@@ -274,34 +274,35 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 		if (visitedLevelId < NUMLEVELS)
 			player._pLvlVisited[visitedLevelId] = true;
 	}
+	for (auto &item : player.InvBody)
+		item.clear();
+	for (auto &item : player.InvList)
+		item.clear();
+	for (auto &item : player.SpdList)
+		item.clear();
+	for (const auto &equipment : snapshot.equipment) {
+		if (equipment.slot < NUM_INVLOC)
+			player.InvBody[equipment.slot] = equipment.item;
+	}
+	for (const auto &beltItem : snapshot.belt) {
+		if (beltItem.slot < MaxBeltItems)
+			player.SpdList[beltItem.slot] = beltItem.item;
+	}
+	for (std::size_t index = 0; index < snapshot.inventory.size() && index < InventoryGridCells; ++index)
+		player.InvList[index] = snapshot.inventory[index].item;
+	player._pNumInv = static_cast<int>(std::min<std::size_t>(snapshot.inventory.size(), InventoryGridCells));
+	std::fill(std::begin(player.InvGrid), std::end(player.InvGrid), 0);
 	if (snapshot.inventoryGrid.size() == InventoryGridCells) {
-		for (auto &item : player.InvBody)
-			item.clear();
-		for (auto &item : player.InvList)
-			item.clear();
-		for (auto &item : player.SpdList)
-			item.clear();
-		for (const auto &equipment : snapshot.equipment) {
-			if (equipment.slot < NUM_INVLOC)
-				player.InvBody[equipment.slot] = equipment.item;
-		}
-		for (const auto &beltItem : snapshot.belt) {
-			if (beltItem.slot < MaxBeltItems)
-				player.SpdList[beltItem.slot] = beltItem.item;
-		}
-		for (std::size_t index = 0; index < snapshot.inventory.size() && index < InventoryGridCells; ++index)
-			player.InvList[index] = snapshot.inventory[index].item;
-		player._pNumInv = static_cast<int>(std::min<std::size_t>(snapshot.inventory.size(), InventoryGridCells));
 		for (std::size_t index = 0; index < InventoryGridCells; ++index) {
 			const int32_t cell = snapshot.inventoryGrid[index];
 			const int32_t clampedCell = std::clamp<int32_t>(cell, -1, std::numeric_limits<int8_t>::max() - 1);
 			player.InvGrid[index] = clampedCell < 0 ? 0 : static_cast<int8_t>(clampedCell + 1);
 		}
-		if (snapshot.heldItem.has_value())
-			player.HoldItem = snapshot.heldItem->item;
-		else
-			player.HoldItem.clear();
 	}
+	if (snapshot.heldItem.has_value())
+		player.HoldItem = snapshot.heldItem->item;
+	else
+		player.HoldItem.clear();
 	if (const uint8_t maximumLevel = player.getMaxCharacterLevel(); maximumLevel > 0)
 		player.setCharacterLevel(static_cast<uint8_t>(std::min<uint32_t>(snapshot.characterLevel, maximumLevel)));
 	player.position.tile = {

@@ -24,6 +24,9 @@ All notable changes to this fork are documented below.
   omitted zero-length grids are accepted and stale native cells are cleared.
 - Cleared stale native character names when an accepted legacy player snapshot
   omits the optional character identity.
+- Aligned remote native player hydration with the local snapshot path: omitted
+  legacy inventory grids now clear stale equipment, belt, inventory, grid, and
+  held-item presentation state before applying the next snapshot.
 - Aligned warp-trigger reference validation across the server mapper, native
   snapshot bridge, and Godot protocol model: source levels must exist and
   nonzero quest gates must reference a quest in the same snapshot.
