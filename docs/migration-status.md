@@ -6,6 +6,9 @@ Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's
 connected-mode no-op to preserve server ownership. Offline sessions retain the
 legacy spell path.
+Native doppelgänger spawning and monster-driven player-attribute reduction now
+also fail closed in connected sessions; these public helpers cannot mutate
+server-owned monster or player state when reached outside the legacy loop.
 The native player action-start helpers now apply the same explicit boundary for
 walking, melee attack, ranged attack, and spell execution; connected sessions
 cannot start a second local player simulation through a direct caller.

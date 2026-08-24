@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Guarded the native doppelgänger-spawn and monster attribute-reduction
+  helpers with the connected-session simulation policy, preventing direct
+  callers from mutating server-owned monster or player state.
 - Guarded the native player-versus-monster, player-versus-player, and
   breakable-object hit helpers with the connected-session simulation policy,
   closing direct combat mutation seams below the action loop.

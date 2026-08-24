@@ -3813,6 +3813,9 @@ unsigned int Monster::level(_difficulty difficulty) const
 
 void Monster::addDoppelganger()
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	Point target = { 0, 0 };
 	for (int d = 0; d < 8; d++) {
 		const Point position = this->position.tile + static_cast<Direction>(d);
@@ -3850,6 +3853,9 @@ void Monster::applyDamage(DamageType damageType, int damage)
 
 void Monster::reducePlayerAttribute(Player &player)
 {
+	if (!LegacyMonsterSimulationAllowed())
+		return;
+
 	if (&player != MyPlayer)
 		return;
 
