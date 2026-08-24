@@ -21,6 +21,10 @@ Paid Cain identification is admitted only through that town-level service (or
 legacy Generic fixtures), preventing connected native clients from using a
 different vendor role as an identification authority.
 
+Connected native Cain identification now opens and closes that authoritative
+Storyteller session around the legacy identification menu; offline Cain remains
+unchanged.
+
 The Godot character setup flow now accepts a validated authoritative server
 host and port; environment-provided endpoints and resume-token launches remain
 unchanged.

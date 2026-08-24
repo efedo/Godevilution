@@ -19,6 +19,7 @@ constexpr uint32_t WitchStoreId = 2;
 constexpr uint32_t WirtStoreId = 3;
 constexpr uint32_t HealerStoreId = 4;
 constexpr uint32_t AdriaStoreId = 10;
+constexpr uint32_t StorytellerStoreId = 11;
 
 bool SameItemReference(const ServerBackedItemReference &left, const ServerBackedItemReference &right)
 {
@@ -284,6 +285,15 @@ tl::expected<void, std::string> ServerBackedRuntime::OpenAdriaStore(uint64_t req
 	if (!session_)
 		return tl::make_unexpected("The server-backed runtime is not connected.");
 	if (auto result = session_->OpenVendor(AdriaStoreId, requestedTick, nowMs); !result.has_value())
+		return result;
+	return EnsureCommandAccepted();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::OpenStorytellerStore(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->OpenVendor(StorytellerStoreId, requestedTick, nowMs); !result.has_value())
 		return result;
 	return EnsureCommandAccepted();
 }

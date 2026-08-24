@@ -78,6 +78,7 @@ public:
 	tl::expected<void, std::string> OpenWirtStore(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OpenHealerStore(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OpenAdriaStore(uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> OpenStorytellerStore(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PurchaseSmith(uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PurchaseWitch(uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PurchaseWirt(uint32_t storeSlot, uint64_t requestedTick, uint64_t nowMs);

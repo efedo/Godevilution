@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Externalize a validated Storyteller service-only store identity for paid Cain
   identification, preserving the previous additive content schema while the
   connected native menu is routed through the authoritative session.
+- Route the connected native Cain identification menu through the Storyteller
+  service session, closing it when the menu is left while retaining offline
+  behavior.
 - Constrain authoritative Repair and Recharge admission to declared Smith and
   Witch vendor roles, reject vendor sale/identification/service mutations
   through Adria, and retain Generic compatibility for legacy custom-store

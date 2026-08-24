@@ -124,6 +124,13 @@ class-ability source and projects the accepted snapshot instead of invoking the
 local recharge rule. Connected stash recharge uses the same authoritative
 page/cell reference path; paid Witch recharge retains its source-zero vendor path.
 
+Cain's connected Storyteller menu now opens a dedicated authoritative
+Storyteller service session before displaying the paid-identification cursor.
+The server owns the town-level service identity and identification admission;
+the native cursor keeps its source-zero vendor command for protocol
+compatibility. Leaving Cain's menu closes that service session. Offline mode
+retains the legacy local menu and pricing behavior.
+
 The Barmaid stash entry now opens the server-owned stash session while
 connected. The native client validates and projects the authoritative 100-page
 10×10 grid, session state, and stash gold into the legacy renderer; gold

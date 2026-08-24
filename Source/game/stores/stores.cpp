@@ -2128,9 +2128,24 @@ void StorytellerEnter()
 		CurrentStoreManager.StartStore(TalkID::Gossip);
 		break;
 	case 14:
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().OpenStorytellerStore(0, GetMillisecondsSinceStartup()); !result.has_value()) {
+				LogError("Failed to open the server-backed Storyteller service: {}", result.error());
+				CurrentStoreManager.activeStore() = TalkID::None;
+				return;
+			}
+		}
+#endif
 		CurrentStoreManager.StartStore(TalkID::StorytellerIdentify);
 		break;
 	case 18:
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().CloseVendor(0, GetMillisecondsSinceStartup()); !result.has_value())
+				LogError("Failed to close the server-backed Storyteller service: {}", result.error());
+		}
+#endif
 		CurrentStoreManager.activeStore() = TalkID::None;
 		break;
 	}
