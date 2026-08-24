@@ -445,7 +445,9 @@ coordinates to quest types; the server completes a matching single-player
 quest when an item is dropped on that level cell while retaining the item in
 authoritative world state. Hellfire now also ships the native `cornerstone.dun`
 fragment at level-21 coordinate `(14,14)`, so the Cornerstone map layer and its
-item-placement quest anchor share one validated content contract. Schema 1.424
+item-placement quest anchor share one validated content contract. Activation
+also rejects anchors outside or on blocked cells and rejects duplicate anchor
+coordinates across quest states. Schema 1.424
 adds deterministic coordinate
 anchors to native DUN fragments and lets fragment object placements inherit
 that anchor; procedural set-piece placement can now be authored without
