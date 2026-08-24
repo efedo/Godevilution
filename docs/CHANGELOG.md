@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Guarded the native player-versus-monster, player-versus-player, and
   breakable-object hit helpers with the connected-session simulation policy,
   closing direct combat mutation seams below the action loop.
+- Guarded native player missile/lifecycle cleanup with the connected-session
+  simulation policy, preventing presentation-only level transitions from
+  mutating server-owned golems or Stone Curse state.
 - Applied the connected-session player-simulation boundary to the native
   per-action execution helpers (`DoWalk`, attacks, block, spell, hit, and
   death), so direct calls cannot advance legacy gameplay beside the server.

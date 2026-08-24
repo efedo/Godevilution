@@ -14,6 +14,9 @@ covering movement completion, combat impacts, blocking, spell execution, hit
 recovery, and death animation state.
 The lower-level native player combat helpers now apply the same guard before
 damage, knockback, resource-steal, and breakable-object mutation can occur.
+The native player level-transition cleanup helper now also fails closed in
+connected sessions, so presentation-only restart/transition cleanup cannot
+kill server-owned golems or restore server-owned Stone Curse state locally.
 
 Native authoritative monster presentation now applies the same alive-only
 visibility rule as Godot. Dead projected monsters are omitted before pool

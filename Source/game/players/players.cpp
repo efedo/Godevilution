@@ -3407,6 +3407,11 @@ void Player::syncKill(DeathReason deathReason)
 
 void Player::removeMissiles() const
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	const Player &player = *this;
 	if (levelType() != DTYPE_TOWN) {
 		Monster *golem;
