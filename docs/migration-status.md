@@ -18,6 +18,10 @@ Godot now applies one authoritative monster presentation visibility predicate
 when hydrating cached positions, drawing monsters, and rendering action-target
 indicators; dead or `SneakHidden` monsters cannot leak through a presentation
 path even when they remain present in the complete snapshot.
+Godot object presentation now follows the native removal boundary as well;
+activated or destroyed objects are removed from cached positions and are not
+drawn while their authoritative state remains available for validation and
+resynchronization.
 
 Godot quest/towner snapshot validation now rejects duplicate level-geometry
 identities through its normal invalid-snapshot boundary before evaluating

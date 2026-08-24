@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
 - Centralized Godot's authoritative monster presentation visibility rule so
   dead or `SneakHidden` monsters are removed from cached presentation
   positions and cannot receive action-indicator target lines.
+- Aligned Godot object presentation with native object-pool removal: activated
+  and destroyed objects no longer retain cached positions or remain rendered.
 - Aligned Godot quest/towner validation with the native duplicate-level
   geometry boundary. Duplicate level identities now fail with the controlled
   invalid-snapshot error before interaction bounds are evaluated, rather than

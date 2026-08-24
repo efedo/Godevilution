@@ -68,7 +68,8 @@ public partial class WorldPresentation : Node2D
             activeEntityIds.Add(item.EntityId);
             UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta, item.LevelId);
         }
-        foreach (var @object in snapshot.Objects) {
+        foreach (var @object in snapshot.Objects.Where(@object =>
+                     AuthoritativeObjectPresentationVisibility.IsVisible(@object, localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(@object.EntityId);
             UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta, @object.LevelId);
         }
@@ -181,7 +182,8 @@ public partial class WorldPresentation : Node2D
             DrawMonster(monster);
         foreach (var item in snapshot.WorldItems.Where(item => AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevel)))
             DrawItem(item, searchActive);
-        foreach (var @object in snapshot.Objects.Where(@object => AuthoritativeLevelVisibility.IsVisible(@object.LevelId, currentLevel)))
+        foreach (var @object in snapshot.Objects.Where(@object =>
+                     AuthoritativeObjectPresentationVisibility.IsVisible(@object, currentLevel)))
             DrawObject(@object);
         foreach (var portal in snapshot.Portals)
             DrawPortal(portal, currentLevel);
