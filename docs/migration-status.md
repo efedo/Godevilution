@@ -28,6 +28,9 @@ Godot world-spell targeting now follows native object/item/monster precedence
 and rejects authored dialogue monsters as Telekinesis-style targets.
 Normal Godot authored-object routing now also accepts native level-`0`
 compatibility projections instead of requiring an exact level match.
+The level-visibility wildcard is now centralized in one shared Godot protocol
+projection used by targeting, authored-object/dialogue routing, and world
+presentation, with focused invariant coverage.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

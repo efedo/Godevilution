@@ -118,7 +118,7 @@ public partial class WorldPresentation : Node2D
         var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
         return snapshot?.WorldItems.FirstOrDefault(item =>
             currentLevelId.HasValue
-            && IsVisible(item.LevelId, currentLevelId.Value)
+            && AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevelId.Value)
             && item.PositionX == target.X
             && item.PositionY == target.Y)?.EntityId;
     }
@@ -167,23 +167,23 @@ public partial class WorldPresentation : Node2D
         var searchActive = localPlayer.StatusEffects.Any(effect =>
             effect.Behavior == StatusEffectBehavior.Search);
         DrawTargetPreview();
-        foreach (var player in snapshot.Players.Where(player => IsVisible(player.LevelId, currentLevel))) {
+        foreach (var player in snapshot.Players.Where(player => AuthoritativeLevelVisibility.IsVisible(player.LevelId, currentLevel))) {
             var isLocal = player.EntityId == localPlayer.EntityId;
             DrawPlayer(player, isLocal ? predictedPlayerPosition : null, isLocal, currentLevel);
         }
         foreach (var monster in snapshot.Monsters.Where(monster =>
-                     IsVisible(monster.LevelId, currentLevel)
+                     AuthoritativeLevelVisibility.IsVisible(monster.LevelId, currentLevel)
                      && monster.Alive
                      && !monster.SneakHidden))
             DrawMonster(monster);
-        foreach (var item in snapshot.WorldItems.Where(item => IsVisible(item.LevelId, currentLevel)))
+        foreach (var item in snapshot.WorldItems.Where(item => AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevel)))
             DrawItem(item, searchActive);
-        foreach (var @object in snapshot.Objects.Where(@object => IsVisible(@object.LevelId, currentLevel)))
+        foreach (var @object in snapshot.Objects.Where(@object => AuthoritativeLevelVisibility.IsVisible(@object.LevelId, currentLevel)))
             DrawObject(@object);
         foreach (var portal in snapshot.Portals)
             DrawPortal(portal, currentLevel);
         foreach (var projectile in snapshot.Projectiles.Where(projectile =>
-                     IsVisible(projectile.LevelId, currentLevel)))
+                     AuthoritativeLevelVisibility.IsVisible(projectile.LevelId, currentLevel)))
             DrawProjectile(projectile);
     }
 
@@ -313,7 +313,7 @@ public partial class WorldPresentation : Node2D
         if (targetLevel is not { } levelId
             || targetX is not { } positionX
             || targetY is not { } positionY
-            || !IsVisible(levelId, currentLevel))
+            || !AuthoritativeLevelVisibility.IsVisible(levelId, currentLevel))
             return;
         DrawLine(
             center,
@@ -512,5 +512,4 @@ public partial class WorldPresentation : Node2D
         (float)(OriginX + (x + 0.5) * TileSize),
         (float)(OriginY + (y + 0.5) * TileSize));
 
-    private static bool IsVisible(uint levelId, uint currentLevel) => levelId == 0 || levelId == currentLevel;
 }

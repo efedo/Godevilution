@@ -27,7 +27,7 @@ public static class AuthoritativeTargetSelector
         var remotePlayer = snapshot.Players.FirstOrDefault(candidate =>
             candidate.EntityId != localPlayer.EntityId
             && candidate.Life > 0
-            && IsVisible(candidate.LevelId, localPlayer.LevelId)
+            && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
             && IsAtPresentationPosition(candidate, targetX, targetY));
         if (remotePlayer is not null)
             return remotePlayer.EntityId;
@@ -70,7 +70,7 @@ public static class AuthoritativeTargetSelector
 
         var worldObject = snapshot.Objects.FirstOrDefault(candidate =>
             candidate.EntityId != 0
-            && IsVisible(candidate.LevelId, localPlayer.LevelId)
+            && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
             && !candidate.Activated
             && !candidate.Destroyed
             && AuthoritativeObjectSelector.HasAuthoritativeInteraction(candidate)
@@ -81,7 +81,7 @@ public static class AuthoritativeTargetSelector
 
         var item = snapshot.WorldItems.FirstOrDefault(candidate =>
             candidate.EntityId != 0
-            && IsVisible(candidate.LevelId, localPlayer.LevelId)
+            && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
             && candidate.PositionX == targetX
             && candidate.PositionY == targetY);
         if (item is not null)
@@ -92,7 +92,7 @@ public static class AuthoritativeTargetSelector
                 && candidate.Alive
                 && !candidate.SneakHidden
                 && candidate.DialogueMessageId == 0
-                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
@@ -119,15 +119,12 @@ public static class AuthoritativeTargetSelector
         return snapshot.Players
             .Where(candidate => candidate.EntityId != localPlayer.EntityId
                 && (includeDead || candidate.Life > 0)
-                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && IsAtPresentationPosition(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
             .FirstOrDefault();
     }
-
-    private static bool IsVisible(uint levelId, uint localLevelId)
-        => levelId == 0 || levelId == localLevelId;
 
     private static uint? SelectMonsterTarget(
         Snapshot snapshot,
@@ -138,7 +135,7 @@ public static class AuthoritativeTargetSelector
         return snapshot.Monsters
             .Where(candidate => candidate.Alive
                 && !candidate.SneakHidden
-                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)

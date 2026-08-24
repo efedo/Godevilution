@@ -14,7 +14,7 @@ public static class AuthoritativeObjectSelector
 
         return snapshot!.Objects
             .Where(@object => @object.EntityId != 0
-                && (@object.LevelId == 0 || @object.LevelId == player.LevelId)
+                && AuthoritativeLevelVisibility.IsVisible(@object.LevelId, player.LevelId)
                 && !@object.Activated
                 && !@object.Destroyed
                 && @object.PositionX == x

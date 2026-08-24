@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Centralized the authoritative level-visibility wildcard in one shared Godot
+  protocol projection used by targeting, authored-object/dialogue routing, and
+  world presentation, with focused invariant coverage.
+
 - Preserve native level-`0` wildcard visibility when Godot routes authored
   object clicks, including ordinary operation and trap-disarm interactions.
 - Match native Telekinesis target precedence in Godot by preferring authored

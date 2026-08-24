@@ -30,7 +30,7 @@ public static class AuthoritativeMonsterDialogueSelector
                 && candidate.DialogueMessageId != 0
                 && candidate.Alive
                 && !candidate.SneakHidden
-                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .FirstOrDefault();
@@ -40,7 +40,7 @@ public static class AuthoritativeMonsterDialogueSelector
         var quest = snapshot.Quests
             .Where(candidate => !candidate.Completed
                 && !candidate.Unavailable
-                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && string.Equals(
                     candidate.CompletionUniqueIdentity,
                     monster.UniqueIdentity,
@@ -52,6 +52,4 @@ public static class AuthoritativeMonsterDialogueSelector
             : new AuthoritativeMonsterDialogueTarget(quest.QuestId, monster.EntityId);
     }
 
-    private static bool IsVisible(uint levelId, uint localLevelId)
-        => levelId == 0 || levelId == localLevelId;
 }
