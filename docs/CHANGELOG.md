@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Server and Godot protocol projections now validate generated set-piece
   origins against supplied authoritative level geometry, while geometry-free
   legacy snapshots retain their compatibility behavior.
+- The native compatibility client now applies the same generated-origin
+  validation before snapshot projection, including duplicate identity checks
+  and geometry-free legacy compatibility.
 - Added schema 1.427's optional `procedural_set_piece_origins.tsv` catalog.
   Generated set-piece origins now derive deterministically from aligned
   walkable authoritative geometry and feed relative set-level object

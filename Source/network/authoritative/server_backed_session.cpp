@@ -497,6 +497,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 {
 	if (auto geometry = ValidateLevelGeometrySnapshots(snapshot); !geometry.has_value())
 		return tl::make_unexpected(geometry.error());
+	if (auto origins = ValidateSetLevelObjectOriginSnapshots(snapshot); !origins.has_value())
+		return tl::make_unexpected(origins.error());
 	if (auto positions = ValidateEntityPositionSnapshots(snapshot); !positions.has_value())
 		return tl::make_unexpected(positions.error());
 	if (auto identities = ValidateEntityIdentitySnapshots(snapshot); !identities.has_value())

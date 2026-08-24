@@ -24,6 +24,10 @@ generated origins against supplied authoritative level geometry before emitting
 or accepting a live snapshot; older geometry-free snapshots retain the
 compatibility path.
 
+The native compatibility client now enforces the same generated-origin
+validation before applying a snapshot, including duplicate set-level identity
+checks and the geometry-free legacy path.
+
 Late-generated level additions and replacements now pass through
 `DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
 before deferred procedural origins are published; direct simulation consumers

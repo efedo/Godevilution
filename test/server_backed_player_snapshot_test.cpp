@@ -1098,6 +1098,33 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(unknownQuest).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, ValidatesGeneratedSetPieceOriginsAgainstProjectedGeometry)
+{
+	protocol::Snapshot valid;
+	auto *level = valid.add_level_geometry();
+	level->set_level_id(17);
+	level->set_width(8);
+	level->set_height(9);
+	auto *origin = valid.add_set_level_object_origins();
+	origin->set_set_level_id(6);
+	origin->set_level_id(17);
+	origin->set_position_x(7);
+	origin->set_position_y(8);
+	EXPECT_TRUE(ValidateSetLevelObjectOriginSnapshots(valid).has_value());
+
+	protocol::Snapshot outside = valid;
+	outside.mutable_set_level_object_origins(0)->set_position_x(8);
+	EXPECT_FALSE(ValidateSetLevelObjectOriginSnapshots(outside).has_value());
+
+	protocol::Snapshot duplicate = valid;
+	duplicate.add_set_level_object_origins()->CopyFrom(*origin);
+	EXPECT_FALSE(ValidateSetLevelObjectOriginSnapshots(duplicate).has_value());
+
+	protocol::Snapshot legacy;
+	legacy.add_set_level_object_origins()->set_set_level_id(6);
+	EXPECT_TRUE(ValidateSetLevelObjectOriginSnapshots(legacy).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)
 {
 	const auto withLevel = [](protocol::Snapshot &snapshot) {

@@ -999,6 +999,34 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 	return {};
 }
 
+tl::expected<void, std::string> ValidateSetLevelObjectOriginSnapshots(const protocol::Snapshot &snapshot)
+{
+	if (snapshot.set_level_object_origins_size() > 4096)
+		return tl::make_unexpected("Server-backed snapshot contains too many set-level object origins.");
+	std::unordered_set<int32_t> setLevelIds;
+	setLevelIds.reserve(snapshot.set_level_object_origins_size());
+	for (const auto &origin : snapshot.set_level_object_origins())
+		if (origin.set_level_id() < 0 || origin.set_level_id() > 8
+		    || !setLevelIds.insert(origin.set_level_id()).second)
+			return tl::make_unexpected("Server-backed snapshot contains invalid or duplicate set-level object origins.");
+	if (snapshot.level_geometry_size() == 0)
+		return {};
+	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;
+	levels.reserve(snapshot.level_geometry_size());
+	for (const auto &level : snapshot.level_geometry())
+		levels.emplace(level.level_id(), &level);
+	for (const auto &origin : snapshot.set_level_object_origins()) {
+		const auto level = levels.find(origin.level_id());
+		if (level == levels.end()
+		    || level->second->width() <= 0 || level->second->height() <= 0
+		    || origin.position_x() < 0 || origin.position_y() < 0
+		    || origin.position_x() >= level->second->width()
+		    || origin.position_y() >= level->second->height())
+			return tl::make_unexpected("Server-backed snapshot contains a set-level object origin outside projected level geometry.");
+	}
+	return {};
+}
+
 tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::Snapshot &snapshot)
 {
 	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;
