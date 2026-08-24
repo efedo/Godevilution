@@ -651,6 +651,9 @@ Protocol item presentation now resolves the active catalog's `Ear` generation
 tag before applying the legacy PvP-ear identity fallback, keeping normalized
 content authoritative for the wire presentation kind while preserving older
 catalog-less snapshots.
+Smith/Witch vendor admission likewise treats non-empty normalized generation
+tags as authoritative for `Misc` and `Quest` classification; legacy item-class
+fallback remains available only for definitions without classification tags.
 
 ## Current state
 

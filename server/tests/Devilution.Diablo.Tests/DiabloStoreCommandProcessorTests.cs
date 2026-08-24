@@ -2644,6 +2644,73 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void NonMiscAndNonQuestTagsOverrideConflictingLegacyVendorClasses()
+    {
+        var miscConflict = new AuthoritativeItemDefinition(
+            2401,
+            1,
+            100,
+            100,
+            1,
+            4,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            ItemClass = 3,
+            NativeItemIndex = 501,
+            MiscId = 131,
+            GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+        };
+        var questConflict = new AuthoritativeItemDefinition(
+            2402,
+            1,
+            100,
+            100,
+            1,
+            4,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true) {
+            ItemClass = 5,
+            NativeItemIndex = 502,
+            MiscId = 132,
+            GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+        };
+        var items = new AuthoritativeItemCatalog([miscConflict, questConflict]);
+
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            miscConflict.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            miscConflict.Generate(0x12345678),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.True(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Smith,
+            questConflict.Generate(0x23456789),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+        Assert.False(AuthoritativeStoreSalePolicy.Accepts(
+            AuthoritativeStoreRole.Witch,
+            questConflict.Generate(0x23456789),
+            items,
+            null,
+            DiabloGameVariant.Diablo));
+    }
+
+    [Fact]
     public void NormalizedOilActionUsesContentMetadataForVendorFilters()
     {
         var definition = new AuthoritativeItemDefinition(

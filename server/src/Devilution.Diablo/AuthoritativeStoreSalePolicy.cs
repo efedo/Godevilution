@@ -91,9 +91,11 @@ public static class AuthoritativeStoreSalePolicy
     private static bool IsMisc(AuthoritativeItemState state, AuthoritativeItemCatalog? items)
     {
         if (items is not null) {
-            if (items.TryGetByState(state, out var definition))
-                return definition.ItemClass == 3
-                    || definition.GenerationTags.Contains("Misc", StringComparer.OrdinalIgnoreCase);
+            if (items.TryGetByState(state, out var definition)) {
+                return definition.GenerationTags.Count > 0
+                    ? definition.GenerationTags.Contains("Misc", StringComparer.OrdinalIgnoreCase)
+                    : definition.ItemClass == 3;
+            }
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
                 && tags.Count > 0)
                 return tags.Contains("Misc", StringComparer.OrdinalIgnoreCase);
@@ -104,9 +106,11 @@ public static class AuthoritativeStoreSalePolicy
     private static bool IsQuest(AuthoritativeItemState state, AuthoritativeItemCatalog? items)
     {
         if (items is not null) {
-            if (items.TryGetByState(state, out var definition))
-                return definition.ItemClass == 5
-                    || definition.GenerationTags.Contains("Quest", StringComparer.OrdinalIgnoreCase);
+            if (items.TryGetByState(state, out var definition)) {
+                return definition.GenerationTags.Count > 0
+                    ? definition.GenerationTags.Contains("Quest", StringComparer.OrdinalIgnoreCase)
+                    : definition.ItemClass == 5;
+            }
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
                 && tags.Count > 0)
                 return tags.Contains("Quest", StringComparer.OrdinalIgnoreCase);
