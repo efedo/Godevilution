@@ -89,6 +89,14 @@ public sealed class AuthoritativeSetLevelObjectCatalog
     public IReadOnlyList<AuthoritativeSetLevelObjectPlacement> GetForSetLevel(int setLevelId)
         => definitions.Where(placement => placement.SetLevelId == setLevelId).ToArray();
 
+    /** Returns a validated view used when a runtime origin is published later. */
+    public AuthoritativeSetLevelObjectCatalog Filter(
+        Func<AuthoritativeSetLevelObjectPlacement, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return new AuthoritativeSetLevelObjectCatalog(definitions.Where(predicate));
+    }
+
     /**
      * Materializes placements whose active native set-level geometry is loaded.
      * Legacy packs may carry the placement catalog before shipping map assets;

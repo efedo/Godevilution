@@ -70,6 +70,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; init; }
 
+    /** Runtime-generated origins for relative set-level object placements. */
+    public IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? SetLevelObjectOrigins { get; init; }
+
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
 
@@ -294,6 +297,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.QuestDialogueStages,
             options.DialogueMessages,
             options.SetLevelObjects,
+            options.SetLevelObjectOrigins,
             options.SetLevelMaps,
             options.NativeDunObjects,
             options.NativeDunFragments,
@@ -327,6 +331,7 @@ public sealed partial class DiabloSimulation
     private readonly ComposedContent? content;
     private readonly HashSet<uint> appliedNativeDunFragments = [];
     private readonly HashSet<uint> materializedProceduralLevels = [];
+    private readonly Dictionary<int, AuthoritativeSetLevelObjectOrigin> setLevelObjectOrigins = [];
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
     internal DiabloSimulation(
@@ -352,6 +357,7 @@ public sealed partial class DiabloSimulation
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
         AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelObjectOrigins = null,
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
@@ -385,12 +391,17 @@ public sealed partial class DiabloSimulation
         QuestDialogueStages = questDialogueStages;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
+        if (setLevelObjectOrigins is not null) {
+            foreach (var (setLevelId, origin) in setLevelObjectOrigins)
+                PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
+        }
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
         this.nativeDunFragments = nativeDunFragments;
         this.nativeDunFragmentObjects = nativeDunFragmentObjects;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         this.content = content;
+        MaterializeRelativeSetLevelObjects();
         ApplyDeferredNativeDunFragments();
         ReconcileProceduralSpawnState();
     }
@@ -419,6 +430,10 @@ public sealed partial class DiabloSimulation
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
 
+    /** Runtime-generated origins used by relative set-level object placements. */
+    public IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin> SetLevelObjectOrigins
+        => setLevelObjectOrigins;
+
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }
 
@@ -438,6 +453,66 @@ public sealed partial class DiabloSimulation
     public DiabloDifficulty Difficulty => difficulty;
 
     public uint RandomState => random.State;
+
+    /** Publishes one generated set-piece origin and materializes its authored objects. */
+    public IReadOnlyList<AuthoritativeWorldObject> PublishSetLevelObjectOrigin(
+        int setLevelId,
+        AuthoritativeSetLevelObjectOrigin origin)
+    {
+        ArgumentNullException.ThrowIfNull(origin);
+        return PublishSetLevelObjectOrigin(setLevelId, origin, materialize: true);
+    }
+
+    private IReadOnlyList<AuthoritativeWorldObject> PublishSetLevelObjectOrigin(
+        int setLevelId,
+        AuthoritativeSetLevelObjectOrigin origin,
+        bool materialize)
+    {
+        if (setLevelId is < 0 or > 8)
+            throw new ArgumentOutOfRangeException(nameof(setLevelId));
+        if (WorldState.World is null)
+            throw new InvalidDataException(
+                "Set-level object origins require an authoritative world geometry catalog.");
+        if (!WorldState.World.ContainsLevel(origin.LevelId)
+            || !WorldState.World.ContainsPosition(origin.LevelId, origin.PositionX, origin.PositionY))
+            throw new InvalidDataException(
+                $"Set-level object origin {setLevelId} is outside runtime level {origin.LevelId}.");
+        if (setLevelObjectOrigins.TryGetValue(setLevelId, out var existing)) {
+            if (existing != origin)
+                throw new InvalidDataException(
+                    $"Set-level object origin {setLevelId} was already published at a different position.");
+            return [];
+        }
+        setLevelObjectOrigins.Add(setLevelId, origin);
+        return materialize ? MaterializeRelativeSetLevelObjects(setLevelId) : [];
+    }
+
+    private IReadOnlyList<AuthoritativeWorldObject> MaterializeRelativeSetLevelObjects(
+        int? setLevelId = null)
+    {
+        if (SetLevelObjects is null || WorldState.World is null || setLevelObjectOrigins.Count == 0)
+            return [];
+        var relativeCatalog = SetLevelObjects.Filter(placement =>
+            placement.PlacementMode == AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset
+            && (!setLevelId.HasValue || placement.SetLevelId == setLevelId.Value));
+        if (relativeCatalog.Definitions.Count == 0)
+            return [];
+        var generated = relativeCatalog.LoadAvailableObjects(
+            WorldState.World,
+            WorldState.Objects.Values,
+            nativeObjectTemplates,
+            setLevelObjectOrigins);
+        foreach (var @object in generated) {
+            if (!WorldState.Objects.TryAdd(@object.EntityId, @object))
+                throw new InvalidDataException(
+                    $"Set-level object entity {@object.EntityId} is already occupied.");
+        }
+        if (generated.Count != 0)
+            AuthoritativeWorldObjectCatalog.ValidateWorld(
+                WorldState.Objects.Values,
+                WorldState.World);
+        return generated;
+    }
 
     public DiabloIntentResult Execute(
         AuthoritativePlayerState player,

@@ -30,6 +30,60 @@ public sealed class DiabloSimulationTests
             DiabloContentSchema.IsCompatible(new ContentSchemaIdentity(schemaId, version)));
     }
 
+    [Fact]
+    public void SimulationMaterializesRelativeSetLevelObjectsFromInitialOrigins()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, 9, 24, 0, 0, 2, 2) {
+                PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+            },
+        ]);
+
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                SetLevelObjects = catalog,
+                SetLevelObjectOrigins = new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+                    [6] = new(17, 12, 7),
+                },
+            });
+
+        var @object = Assert.Single(simulation.WorldState.Objects.Values);
+        Assert.Equal(
+            AuthoritativeSetLevelObjectCatalog.RuntimeObjectEntityIdBase + 1101,
+            @object.EntityId);
+        Assert.Equal((17U, 21, 31), (@object.LevelId, @object.PositionX, @object.PositionY));
+        Assert.Equal((17U, 12), (
+            simulation.SetLevelObjectOrigins[6].LevelId,
+            simulation.SetLevelObjectOrigins[6].PositionX));
+    }
+
+    [Fact]
+    public void SimulationPublishesAndMaterializesRelativeSetLevelObjectsAfterConstruction()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                SetLevelObjects = new AuthoritativeSetLevelObjectCatalog([
+                    new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, -2, 3, 0, 0, 2, 2) {
+                        PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+                    },
+                ]),
+            });
+
+        var generated = simulation.PublishSetLevelObjectOrigin(
+            6,
+            new AuthoritativeSetLevelObjectOrigin(17, 12, 7));
+
+        var @object = Assert.Single(generated);
+        Assert.Equal((10, 10), (@object.PositionX, @object.PositionY));
+        Assert.Same(@object, simulation.WorldState.Objects[@object.EntityId]);
+    }
+
     [Theory]
     [InlineData(DiabloDifficulty.Normal, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 10)]
     [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 130)]

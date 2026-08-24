@@ -8,6 +8,13 @@ external footprint within the native 10x4 grid. Connected native object
 interactions likewise fail closed when an object has no authoritative
 projection; legacy object behavior remains an offline compatibility path.
 
+The authoritative simulation now accepts and publishes generated set-piece
+origins, materializing relative `set_level_objects.tsv` rows at level-entry
+time with deterministic reserved identities and world-bound validation. This
+connects the 1.426 placement contract to runtime state; producing the actual
+Blind, Blood, and Warlord origins from native-compatible level generation and
+persisting those origins through saves remain follow-up work.
+
 Connected native spell and resurrection-beam helpers now fail closed at their
 public entry points, so direct callers cannot rely on the missile factory's
 connected-mode no-op to preserve server ownership. Offline sessions retain the
