@@ -5,8 +5,10 @@ Status date: 2026-08-24
 The Hellfire Na-Krul fragment now materializes its native final lever as an
 anchor-relative authored behavior template. The server gates the lever on the
 three-tome sequence and owns final quest completion; the third tome no longer
-closes the quest prematurely. Native room reconstruction and collision/tile
-definition parity remain compatibility seams.
+closes the quest prematurely. Its three authored tomes and final lever now also
+declare native presentation identities for the compatibility client. Native
+room reconstruction and collision/tile definition parity remain compatibility
+seams.
 The Vile Betrayer center circle now materializes as an authored occupancy
 trigger. After both linked books activate, a player entering the circle applies
 the deferred center replacement, advances native `_qvar1` to 4, and receives the

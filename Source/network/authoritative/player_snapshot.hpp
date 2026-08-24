@@ -163,6 +163,8 @@ struct ProjectedObjectSnapshot {
 	bool missilePassable = false;
 	bool breakable = false;
 	bool destroyed = false;
+	/** Optional native object type used only by compatibility presentations. */
+	uint32_t nativeObjectId = 0;
 	/** Authored quest-state transition identity, when present. */
 	int32_t questTransitionKind = 0;
 	/** Authored item reward identity, when present. */

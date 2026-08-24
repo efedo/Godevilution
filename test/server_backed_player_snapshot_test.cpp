@@ -13,6 +13,7 @@
 #include "network/authoritative/server_backed_world_presentation.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
 #include "tables/playerdat.hpp"
+#include "tables/objdat.h"
 #include "ui/automap.h"
 
 namespace devilution::authoritative {
@@ -566,6 +567,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	auto *second = snapshot.add_objects();
 	second->set_entity_id(20);
 	second->set_object_id(2);
+	second->set_native_object_id(107);
 	second->set_level_id(1);
 	second->set_position_x(8);
 	second->set_position_y(9);
@@ -599,6 +601,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].questId, 30U);
 	EXPECT_EQ((*projected)[1].effectKind, static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
 	EXPECT_EQ((*projected)[1].effectAmount, 2);
+	EXPECT_EQ((*projected)[1].nativeObjectId, 107U);
 	EXPECT_EQ((*projected)[1].questTransitionKind, 6);
 	EXPECT_EQ((*projected)[1].rewardKind, 2);
 	EXPECT_EQ((*projected)[1].questSequenceFollowUpKind, 1);
@@ -1965,6 +1968,13 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_quest_sequence_follow_up_kind(1);
 	invalidFlags->set_quest_sequence_follow_up_amount(1);
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidFollowUp).has_value());
+
+	protocol::Snapshot invalidNativePresentation;
+	invalidFlags = invalidNativePresentation.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(6007);
+	invalidFlags->set_native_object_id(static_cast<uint32_t>(OBJ_LAST) + 1);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidNativePresentation).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)

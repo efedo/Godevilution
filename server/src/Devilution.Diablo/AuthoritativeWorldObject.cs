@@ -40,10 +40,13 @@ public sealed class AuthoritativeWorldObject
             = AuthoritativeObjectProjectileSourceKind.Object,
         uint questSequenceFollowUpWorldMutationId = 0,
         bool activateOnOccupancy = false,
-        int requiredActivatedLinkedObjects = 0)
+        int requiredActivatedLinkedObjects = 0,
+        uint nativeObjectId = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
+        if (nativeObjectId > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(nativeObjectId));
         EntityId = entityId;
         ObjectId = objectId;
         LevelId = levelId;
@@ -138,6 +141,7 @@ public sealed class AuthoritativeWorldObject
         ProjectileSourceKind = projectileSourceKind;
         ActivateOnOccupancy = activateOnOccupancy;
         RequiredActivatedLinkedObjects = requiredActivatedLinkedObjects;
+        NativeObjectId = nativeObjectId;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -186,6 +190,9 @@ public sealed class AuthoritativeWorldObject
 
     /** Optional count of other linked quest objects that must already be active. */
     public int RequiredActivatedLinkedObjects { get; set; }
+
+    /** Optional native object type used only by compatibility presentations. */
+    public uint NativeObjectId { get; set; }
 
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
@@ -240,7 +247,8 @@ public sealed class AuthoritativeWorldObject
             ProjectileSourceKind,
             QuestSequenceFollowUpWorldMutationId,
             ActivateOnOccupancy,
-            RequiredActivatedLinkedObjects);
+            RequiredActivatedLinkedObjects,
+            NativeObjectId);
     }
 
     public static bool IsValidQuestTransition(
@@ -481,7 +489,8 @@ public static class AuthoritativeWorldObjectCatalog
                     projectileSourceKind,
                     row.OptionalUInt32("quest_sequence_follow_up_world_mutation_id"),
                     row.OptionalBoolean("activate_on_occupancy"),
-                    row.OptionalInt32("required_activated_linked_objects")),
+                    row.OptionalInt32("required_activated_linked_objects"),
+                    row.OptionalUInt32("native_object_id")),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();

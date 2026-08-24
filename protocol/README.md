@@ -439,6 +439,10 @@ Windows toolchain command.
   state uses the tagged `godevilution-object-projectile-source-v1` hash
   extension, and clients treat it as projection metadata rather than gameplay
   authority.
+- `ObjectSnapshot.native_object_id` field 33 is optional compatibility metadata
+  for native presentations. Stable `object_id` remains the authoritative
+  server-owned identity; older peers ignore the additive field, and zero keeps
+  the existing numeric presentation path.
 - `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:
   movement state, the adjacent future tile, and petrification. Native
   projection marks the current tile as positive occupancy and the future tile

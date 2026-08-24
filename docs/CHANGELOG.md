@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added additive native presentation identity metadata for authored objects. The
+  Hellfire Na-Krul tomes and final lever now project through their native book
+  and lever visuals while stable authored object IDs remain server-owned.
 - Externalized Hellfire Na-Krul's final lever as an anchor-relative authored
   fragment object. The server now gates it on the three-tome sequence and owns
   the final quest completion; the quest no longer completes prematurely when

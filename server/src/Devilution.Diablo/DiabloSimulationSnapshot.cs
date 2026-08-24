@@ -291,6 +291,9 @@ public sealed record DiabloObjectState(
     public bool ActivateOnOccupancy { get; init; }
 
     public int RequiredActivatedLinkedObjects { get; init; }
+
+    /** Optional native object type used only by compatibility presentations. */
+    public uint NativeObjectId { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -671,6 +674,7 @@ public sealed partial class DiabloSimulation
                     QuestSequenceFollowUpWorldMutationId = @object.QuestSequenceFollowUpWorldMutationId,
                     ActivateOnOccupancy = @object.ActivateOnOccupancy,
                     RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects,
+                    NativeObjectId = @object.NativeObjectId,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -2249,6 +2253,7 @@ public sealed partial class DiabloSimulation
                 target.QuestSequenceFollowUpWorldMutationId = @object.QuestSequenceFollowUpWorldMutationId;
                 target.ActivateOnOccupancy = @object.ActivateOnOccupancy;
                 target.RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects;
+                target.NativeObjectId = @object.NativeObjectId;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2284,7 +2289,8 @@ public sealed partial class DiabloSimulation
                     @object.ProjectileSourceKind,
                     @object.QuestSequenceFollowUpWorldMutationId,
                     @object.ActivateOnOccupancy,
-                    @object.RequiredActivatedLinkedObjects));
+                    @object.RequiredActivatedLinkedObjects,
+                    @object.NativeObjectId));
             }
         }
     }

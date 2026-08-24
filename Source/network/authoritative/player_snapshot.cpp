@@ -486,6 +486,8 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 	for (const auto &source : snapshot.objects()) {
 		if (source.entity_id() == 0 || source.object_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains an object with an invalid entity or object ID.");
+		if (source.native_object_id() > static_cast<uint32_t>(OBJ_LAST))
+			return tl::make_unexpected("Server-backed snapshot contains an invalid native object presentation ID.");
 		const bool transitionSetsVariable = source.quest_transition_kind() >= 3 && source.quest_transition_kind() <= 8;
 		const bool transitionValid = source.quest_transition_kind() == 0
 		    || (source.quest_id() != 0
@@ -555,6 +557,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .missilePassable = source.missile_passable(),
 		    .breakable = source.breakable(),
 		    .destroyed = source.destroyed(),
+		    .nativeObjectId = source.native_object_id(),
 		    .questTransitionKind = source.quest_transition_kind(),
 		    .rewardKind = source.reward_kind(),
 		    .questSequenceFollowUpKind = source.quest_sequence_follow_up_kind(),

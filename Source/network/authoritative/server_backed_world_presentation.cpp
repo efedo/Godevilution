@@ -692,6 +692,11 @@ void RemoveMappedObject(int objectSlot)
 	}
 }
 
+uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot)
+{
+	return snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
+}
+
 } // namespace
 
 player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot)
@@ -805,12 +810,13 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			slot = mapped->second;
 		if (slot < 0) {
 			const Point projectedPosition { snapshot.positionX, snapshot.positionY };
+			const uint32_t nativeObjectId = NativeObjectPresentationId(snapshot);
 			int positionMatchedSlot = -1;
 			for (int activeIndex = 0; activeIndex < ObjectPoolAdapter::ActiveObjectCountValue(); ++activeIndex) {
 				const int candidate = ObjectPoolAdapter::ActiveObjectIndexAt(activeIndex);
 				if (claimedObjectSlots.contains(candidate))
 					continue;
-				if (static_cast<uint32_t>(Objects[candidate]._otype) != snapshot.objectId)
+				if (static_cast<uint32_t>(Objects[candidate]._otype) != nativeObjectId)
 					continue;
 				if (Objects[candidate].position == projectedPosition) {
 					slot = candidate;
@@ -822,8 +828,9 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			if (slot < 0)
 				slot = positionMatchedSlot;
 		}
-		if (slot < 0 && snapshot.objectId <= static_cast<uint32_t>(OBJ_LAST) && ObjectPoolAdapter::HasFreeObjectSlot()) {
-			if (Object *object = AddObject(static_cast<_object_id>(snapshot.objectId), { snapshot.positionX, snapshot.positionY }); object != nullptr)
+		const uint32_t nativeObjectId = NativeObjectPresentationId(snapshot);
+		if (slot < 0 && nativeObjectId <= static_cast<uint32_t>(OBJ_LAST) && ObjectPoolAdapter::HasFreeObjectSlot()) {
+			if (Object *object = AddObject(static_cast<_object_id>(nativeObjectId), { snapshot.positionX, snapshot.positionY }); object != nullptr)
 				slot = static_cast<int>(object - Objects);
 		}
 		if (slot < 0)
