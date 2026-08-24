@@ -35,6 +35,8 @@ All notable changes to this fork are documented below.
 - Aligned Godot monster vitality validation with native Q6 fallback semantics:
   effective maximum hit points now bound effective current hit points even when
   both values arrive through legacy whole-point fields.
+- Aligned Godot visited-level validation with the native 25-level range so
+  out-of-range authored level IDs cannot enter client state.
 - Restored Godot compatibility with legacy stationary monster snapshots whose
   omitted future coordinates default to `(0, 0)` and normalize to the current
   tile, matching the native projection.

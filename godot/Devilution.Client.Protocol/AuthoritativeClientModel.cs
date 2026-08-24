@@ -9,6 +9,7 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumHeight = 112;
     private const int NativeMaximumMegaWidth = 40;
     private const int NativeMaximumMegaHeight = 40;
+    private const uint NativeLevelCount = 25;
     private const uint NativeMaximumObjectId = 108;
     private const uint NativeMaximumQuestId = 23;
 
@@ -1042,6 +1043,7 @@ public sealed class AuthoritativeClientModel
     private static void ValidateVisitedLevels(PlayerSnapshot player)
     {
         if (player.VisitedLevelIds.Count > 256
+            || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
             || (player.VisitedLevelIds.Count > 0
                 && !player.VisitedLevelIds.Contains(player.LevelId))
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
