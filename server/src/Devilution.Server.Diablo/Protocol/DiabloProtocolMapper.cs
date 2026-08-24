@@ -20,9 +20,7 @@ internal static class DiabloProtocolMapper
         ValidateProjectedStoreState(source);
         var projectedLevels = levelGeometry?.ToDictionary(level => level.LevelId)
             ?? new Dictionary<uint, AuthoritativeLevel>();
-        var projectedWarpTargets = (warpTargets ?? [])
-            .Where(warp => projectedLevels.ContainsKey(warp.SourceLevelId))
-            .ToArray();
+        var projectedWarpTargets = (warpTargets ?? []).ToArray();
         ValidateProjectedWorldItemPositions(source.WorldItems, projectedLevels);
         ValidateProjectedObjectPositions(source.Objects, projectedLevels);
         ValidateProjectedQuestStates(source.Quests);
@@ -388,7 +386,7 @@ internal static class DiabloProtocolMapper
             geometry.NativeObjectLayer.Add(level.NativeObjectLayer.Select(value => (uint)value));
             geometry.NativeMegaTileLayer.Add(level.NativeMegaTileLayer.Select(value => (uint)value));
             geometry.NativePieceLayer.Add(level.NativePieceLayer.Select(value => (uint)value));
-            foreach (var warp in (warpTargets ?? [])
+            foreach (var warp in projectedWarpTargets
                          .Where(warp => warp.SourceLevelId == level.LevelId)
                          .OrderBy(warp => warp.WarpId)) {
                 geometry.WarpTriggers.Add(new WarpTriggerSnapshot {
@@ -613,12 +611,13 @@ internal static class DiabloProtocolMapper
         var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
         var warpIds = new HashSet<uint>();
         foreach (var warp in warpTargets) {
-            var sourceLevel = levels[warp.SourceLevelId];
+            var hasSourceLevel = levels.TryGetValue(warp.SourceLevelId, out var sourceLevel);
             if (warp.WarpId == 0
                 || !warpIds.Add(warp.WarpId)
+                || !hasSourceLevel
                 || warp.TriggerX < 0
                 || warp.TriggerY < 0
-                || warp.TriggerX >= sourceLevel.Width
+                || warp.TriggerX >= sourceLevel!.Width
                 || warp.TriggerY >= sourceLevel.Height
                 || !levels.TryGetValue(warp.TargetLevelId, out var targetLevel)
                 || warp.TargetX < 0

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Aligned warp-trigger reference validation across the server mapper, native
+  snapshot bridge, and Godot protocol model: source levels must exist and
+  nonzero quest gates must reference a quest in the same snapshot.
 - Applied validated authoritative level mega-tile, d-piece, and transparency
   layers in the native compatibility presentation bridge. Native DUN object
   layers remain inert until an authored object mapping exists, so behavior and

@@ -915,6 +915,22 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	warp->set_target_level_id(1);
 	warp->set_stable_symbol("bad symbol");
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidSymbol).has_value());
+
+	protocol::Snapshot unknownQuest;
+	level = unknownQuest.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(10);
+	level->set_height(10);
+	warp = level->add_warp_triggers();
+	warp->set_warp_id(1);
+	warp->set_trigger_x(3);
+	warp->set_trigger_y(4);
+	warp->set_target_level_id(1);
+	warp->set_target_x(1);
+	warp->set_target_y(1);
+	warp->set_required_quest_id(9);
+	warp->set_available(true);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(unknownQuest).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)

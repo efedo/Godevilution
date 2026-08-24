@@ -1127,6 +1127,7 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(new AuthoritativeWarpTarget(2, 1, 10, 5, 2, 1, 1));
         AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 2, 10, 1));
         AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 99, 1, 1));
+        AssertRejected(new AuthoritativeWarpTarget(2, 99, 4, 5, 2, 1, 1));
         AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 2, 1, 1, 99));
         AssertRejected(new AuthoritativeWarpTarget(2, 1, 4, 5, 2, 1, 1) {
             StableSymbol = "bad\u0001symbol",

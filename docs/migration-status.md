@@ -7,6 +7,9 @@ bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,
 and Godot protocol validation; d-piece presentation values remain independently
 validated as 16-bit identities. Unmapped native object-layer cells remain inert
 until an explicit authored mapping exists.
+Warp-trigger projection now rejects missing source levels on the server and
+unknown quest-gate identities in the server, native, and Godot validators, so
+all three protocol boundaries enforce the same authored-route references.
 Object snapshot identities now use that same bound before native or Godot
 presentation consumes them.
 Native-DUN mapping activation and mutable authoritative-object updates enforce

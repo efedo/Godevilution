@@ -951,6 +951,9 @@ public sealed class AuthoritativeClientModel
             }
         }
 
+        var questIds = snapshot.Quests
+            .Select(quest => quest.QuestId)
+            .ToHashSet();
         var warpIds = new HashSet<uint>();
         foreach (var level in snapshot.LevelGeometry) {
             foreach (var warp in level.WarpTriggers) {
@@ -966,6 +969,8 @@ public sealed class AuthoritativeClientModel
                     || warp.TargetY < 0
                     || (targetLevel!.Width > 0 && warp.TargetX >= targetLevel.Width)
                     || (targetLevel.Height > 0 && warp.TargetY >= targetLevel.Height)
+                    || warp.RequiredQuestId != 0
+                        && !questIds.Contains(warp.RequiredQuestId)
                     || (warp.RequiredQuestId == 0 && warp.RequiredQuestCompleted)
                     || (warp.RequiredQuestId == 0 && !warp.Available)
                     || warp.StableSymbol.Any(character => character is < (char)0x21 or > (char)0x7e)) {

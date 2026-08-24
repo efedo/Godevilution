@@ -59,6 +59,30 @@ public sealed class ClientModelTests
                     },
                 },
         })));
+
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+                LevelGeometry = {
+                    new LevelGeometrySnapshot {
+                        LevelId = 1,
+                        Width = 10,
+                        Height = 10,
+                        WarpTriggers = {
+                            new WarpTriggerSnapshot {
+                                WarpId = 1,
+                                TriggerX = 3,
+                                TriggerY = 4,
+                                TargetLevelId = 1,
+                                TargetX = 1,
+                                TargetY = 1,
+                                RequiredQuestId = 9,
+                                Available = true,
+                            },
+                        },
+                    },
+                },
+        })));
     }
 
     [Fact]

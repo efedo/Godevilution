@@ -923,6 +923,10 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 		        && static_cast<uint64_t>(level.native_piece_layer_size()) != cellCount))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry cells.");
 	}
+	std::unordered_set<uint32_t> questIds;
+	questIds.reserve(snapshot.quests_size());
+	for (const auto &quest : snapshot.quests())
+		questIds.insert(quest.quest_id());
 	std::unordered_set<uint32_t> warpIds;
 	for (const auto &level : snapshot.level_geometry()) {
 		for (const auto &warp : level.warp_triggers()) {
@@ -935,6 +939,7 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			    || warp.target_x() < 0 || warp.target_y() < 0
 			    || (target->second->width() > 0 && warp.target_x() >= target->second->width())
 			    || (target->second->height() > 0 && warp.target_y() >= target->second->height())
+			    || (warp.required_quest_id() != 0 && questIds.find(warp.required_quest_id()) == questIds.end())
 			    || (warp.required_quest_id() == 0 && warp.required_quest_completed())
 			    || (warp.required_quest_id() == 0 && !warp.available())
 			    || !std::all_of(warp.stable_symbol().begin(), warp.stable_symbol().end(), [](char value) {

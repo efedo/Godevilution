@@ -161,7 +161,8 @@ Windows toolchain command.
 - `LevelGeometrySnapshot.warp_triggers` is additive presentation metadata for
   authored level transitions. Each trigger carries its server-owned source
   cell, destination, stable symbol, quest gate, and current availability;
-  clients may render a marker but never choose or apply the transition.
+  a nonzero quest gate must reference a quest in the same snapshot; clients
+  may render a marker but never choose or apply the transition.
 - `LevelGeometrySnapshot.native_object_layer` is an additive row-major
   projection of server-owned native object-layer values (`0` through native
   `OBJ_LAST`, currently `108`). It is presentation metadata only; clients must
