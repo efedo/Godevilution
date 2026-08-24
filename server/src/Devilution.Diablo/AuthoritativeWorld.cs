@@ -171,6 +171,14 @@ public sealed class AuthoritativeWorld
 
 public sealed class AuthoritativeLevel
 {
+    /** Native compatibility fine-grid dimensions, including the town border. */
+    public const int NativeMaximumWidth = 112;
+    public const int NativeMaximumHeight = 112;
+
+    /** Native coarse mega-tile dimensions when an additive layer is supplied. */
+    public const int NativeMaximumMegaWidth = 40;
+    public const int NativeMaximumMegaHeight = 40;
+
     private readonly HashSet<int> blockedCells;
     private readonly HashSet<int> missileBlockedCells;
     private readonly IReadOnlyList<int> blockedCellList;
@@ -194,6 +202,9 @@ public sealed class AuthoritativeLevel
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
+        if (width > NativeMaximumWidth || height > NativeMaximumHeight)
+            throw new InvalidDataException(
+                $"Level {levelId} exceeds the native fine-grid dimensions.");
         LevelId = levelId;
         Width = width;
         Height = height;
@@ -234,6 +245,10 @@ public sealed class AuthoritativeLevel
         if (megaTiles.Any(value => value > byte.MaxValue))
             throw new InvalidDataException(
                 $"Level {levelId} contains a native mega-tile value outside the compatibility range.");
+        if (megaTiles.Length != 0
+            && (megaWidth > NativeMaximumMegaWidth || megaHeight > NativeMaximumMegaHeight))
+            throw new InvalidDataException(
+                $"Level {levelId} exceeds the native coarse-grid dimensions.");
         NativeMegaTileLayer = Array.AsReadOnly(megaTiles);
         var pieces = (nativePieceLayer ?? []).ToArray();
         if (pieces.Length != 0 && pieces.Length != width * height)

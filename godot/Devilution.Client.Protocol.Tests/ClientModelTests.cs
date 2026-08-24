@@ -162,6 +162,33 @@ public sealed class ClientModelTests
         invalidNativePresentation.LevelGeometry[0].NativeMegaTileLayer.Add(256);
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
+
+        var oversizedFineGeometry = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 113,
+                    Height = 1,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: oversizedFineGeometry)));
+
+        var oversizedCoarseGeometry = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 82,
+                    Height = 82,
+                    NativeMegaTileLayer = { Enumerable.Repeat<uint>(0, 41 * 41) },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: oversizedCoarseGeometry)));
     }
 
     [Fact]

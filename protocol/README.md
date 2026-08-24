@@ -168,8 +168,9 @@ Windows toolchain command.
 - `LevelGeometrySnapshot.native_mega_tile_layer` is an additive row-major
   projection of composed native mega-tile IDs. Values must fit the native
   byte-sized mega-tile identity (`0` through `255`), and its dimensions are the
-  ceiling of the level dimensions divided by two; it is presentation metadata
-  only.
+  ceiling of the level dimensions divided by two. Fine-grid dimensions cannot
+  exceed the native `112x112` arrays, and a supplied coarse layer cannot exceed
+  `40x40`; it is presentation metadata only.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

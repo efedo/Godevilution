@@ -11,8 +11,8 @@ Town-sized 112×112 geometry without a coarse mega-tile layer now remains a
 valid presentation projection; the native 40×40 coarse limit applies only when
 that optional layer is supplied.
 The authoritative C# level model and Godot protocol model enforce the same
-signed-byte transparency and byte-sized mega-tile ranges before those layers
-cross the shared protocol.
+112×112 fine-grid, optional 40×40 coarse-grid, signed-byte transparency, and
+byte-sized mega-tile ranges before those layers cross the shared protocol.
 The Hellfire Na-Krul fragment now materializes its native final lever as an
 anchor-relative authored behavior template. The server gates the lever on the
 three-tome sequence and owns final quest completion; the third tome no longer

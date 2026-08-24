@@ -16,6 +16,8 @@ All notable changes to this fork are documented below.
   and mega-tile identities cannot exceed the native compatibility client's
   signed-byte and byte-sized presentation ranges across the C++ bridge,
   authoritative C# level model, and Godot protocol model.
+- Applied the native 112×112 fine-grid and optional 40×40 coarse-grid geometry
+  limits consistently to authoritative C# levels and Godot snapshots.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

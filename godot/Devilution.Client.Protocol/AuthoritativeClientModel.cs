@@ -5,6 +5,11 @@ namespace Devilution.Client.Protocol;
 /** Main-thread authoritative projection consumed by Godot presentation nodes. */
 public sealed class AuthoritativeClientModel
 {
+    private const int NativeMaximumWidth = 112;
+    private const int NativeMaximumHeight = 112;
+    private const int NativeMaximumMegaWidth = 40;
+    private const int NativeMaximumMegaHeight = 40;
+
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
     private const uint MaximumStableSpellId = byte.MaxValue;
@@ -900,12 +905,19 @@ public sealed class AuthoritativeClientModel
     {
         var levels = new Dictionary<uint, LevelGeometrySnapshot>();
         foreach (var level in snapshot.LevelGeometry) {
+            var coarseWidth = (level.Width + 1L) / 2;
+            var coarseHeight = (level.Height + 1L) / 2;
             if (level.Width < 0
                 || level.Height < 0
+                || level.Width > NativeMaximumWidth
+                || level.Height > NativeMaximumHeight
                 || level.NativeTransparency.Any(value => value > sbyte.MaxValue)
                 || level.NativeObjectLayer.Any(value => value > ushort.MaxValue)
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
-                || level.NativePieceLayer.Any(value => value > ushort.MaxValue)) {
+                || level.NativePieceLayer.Any(value => value > ushort.MaxValue)
+                || level.NativeMegaTileLayer.Count != 0
+                    && (coarseWidth > NativeMaximumMegaWidth
+                        || coarseHeight > NativeMaximumMegaHeight)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid level geometry dimensions.");
             }

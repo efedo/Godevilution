@@ -234,6 +234,12 @@ public sealed class AuthoritativeWorldTests
             1,
             1,
             nativeMegaTileLayer: [256]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(1, 113, 1));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            82,
+            82,
+            nativeMegaTileLayer: Enumerable.Repeat<ushort>(0, 41 * 41)));
     }
 
     [Fact]
