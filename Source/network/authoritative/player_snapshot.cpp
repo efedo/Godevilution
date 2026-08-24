@@ -107,6 +107,50 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		return tl::make_unexpected("Server-backed snapshot contains stash gold outside the native range.");
 	if (player->stash_open() && player->active_store_id() != 0)
 		return tl::make_unexpected("Server-backed snapshot opens both a stash and a vendor.");
+	if (player->inventory_size() > 40 || player->equipment_size() > 7 || player->belt_size() > 8)
+		return tl::make_unexpected("Server-backed snapshot contains player item collections outside the native topology.");
+	if (player->inventory_grid_size() != 0 && player->inventory_grid_size() != 40)
+		return tl::make_unexpected("Server-backed snapshot contains an invalid inventory grid size.");
+	for (const auto cell : player->inventory_grid()) {
+		if (cell < -1 || cell >= player->inventory_size())
+			return tl::make_unexpected("Server-backed snapshot contains an invalid inventory grid reference.");
+	}
+	if (player->inventory_grid_size() > 0) {
+		std::vector<int32_t> expectedInventoryGrid(player->inventory_grid_size(), -1);
+		for (int itemIndex = 0; itemIndex < player->inventory_size(); ++itemIndex) {
+			const auto &state = player->inventory(itemIndex).state();
+			const uint32_t width = std::max(1U, state.inventory_width());
+			const uint32_t height = std::max(1U, state.inventory_height());
+			const auto anchor = std::find(player->inventory_grid().begin(), player->inventory_grid().end(), itemIndex);
+			if (width > 10 || height > 4 || anchor == player->inventory_grid().end())
+				return tl::make_unexpected("Server-backed snapshot contains an invalid inventory footprint topology.");
+			const auto anchorIndex = static_cast<uint32_t>(std::distance(player->inventory_grid().begin(), anchor));
+			const uint32_t column = anchorIndex % 10;
+			const uint32_t row = anchorIndex / 10;
+			if (column + width > 10 || row + height > 4)
+				return tl::make_unexpected("Server-backed snapshot contains an invalid inventory footprint topology.");
+			for (uint32_t y = 0; y < height; ++y) {
+				for (uint32_t x = 0; x < width; ++x) {
+					const auto cellIndex = static_cast<std::size_t>((row + y) * 10 + column + x);
+					if (expectedInventoryGrid[cellIndex] != -1)
+						return tl::make_unexpected("Server-backed snapshot contains overlapping inventory footprints.");
+					expectedInventoryGrid[cellIndex] = itemIndex;
+				}
+			}
+		}
+		if (!std::equal(expectedInventoryGrid.begin(), expectedInventoryGrid.end(), player->inventory_grid().begin()))
+			return tl::make_unexpected("Server-backed snapshot inventory grid does not match item footprints.");
+	}
+	std::set<uint32_t> equipmentSlots;
+	for (const auto &item : player->equipment()) {
+		if (item.slot() >= 7 || !equipmentSlots.insert(item.slot()).second)
+			return tl::make_unexpected("Server-backed snapshot contains invalid or duplicate equipment slots.");
+	}
+	std::set<uint32_t> beltSlots;
+	for (const auto &item : player->belt()) {
+		if (item.slot() >= 8 || !beltSlots.insert(item.slot()).second)
+			return tl::make_unexpected("Server-backed snapshot contains invalid or duplicate belt slots.");
+	}
 	std::set<uint32_t> itemSeeds;
 	const auto hasUniqueItemSeed = [&itemSeeds](uint32_t itemSeed) {
 		return itemSeed == 0 || itemSeeds.insert(itemSeed).second;

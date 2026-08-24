@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Aligned native item scalar representability across server, native, and Godot
   boundaries, including narrowed enum, damage, bonus, requirement, and
   Hellfire-flag fields that must fit their native storage types.
+- Aligned native player-item topology validation with the managed boundaries:
+  inventory-grid references and footprints, equipment slots, belt slots, and
+  collection limits now fail closed consistently.
 - Aligned warp-trigger reference validation across the server mapper, native
   snapshot bridge, and Godot protocol model: source levels must exist and
   nonzero quest gates must reference a quest in the same snapshot.

@@ -7,6 +7,8 @@ requirements in the server mapper and Godot model as in the C++ bridge: both
 runtime names and a byte-representable cursor graphic are required together.
 The same boundaries now reject item scalar values that cannot fit the native
 item storage types before they reach compatibility presentation.
+Native player-item projection now also enforces the managed inventory-grid,
+footprint, equipment-slot, belt-slot, and collection topology checks.
 
 Native object-layer values now use the same native `OBJ_LAST` compatibility
 bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,

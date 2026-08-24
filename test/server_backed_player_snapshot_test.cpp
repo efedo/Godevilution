@@ -64,8 +64,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	search->set_behavior(protocol::STATUS_EFFECT_BEHAVIOR_SEARCH);
 	player->mutable_attributes()->mutable_strength()->set_current(12);
 	player->mutable_attributes()->mutable_strength()->set_base(10);
-	player->mutable_inventory_grid()->Add(0);
-	player->mutable_inventory_grid()->Add(-1);
+	for (int i = 0; i < 40; ++i)
+		player->mutable_inventory_grid()->Add(i == 0 ? 0 : -1);
 	auto *inventory = player->add_inventory();
 	inventory->set_store_id(1);
 	inventory->set_store_slot(2);
@@ -155,7 +155,9 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->heldItem->stableItemId, 703U);
 	EXPECT_EQ(projected->heldItem->item._itype, ItemType::Gold);
 	EXPECT_EQ(projected->heldItem->item._ivalue, 65);
-	EXPECT_EQ(projected->inventoryGrid, std::vector<int32_t>({ 0, -1 }));
+	std::vector<int32_t> expectedInventoryGrid(40, -1);
+	expectedInventoryGrid[0] = 0;
+	EXPECT_EQ(projected->inventoryGrid, expectedInventoryGrid);
 	EXPECT_EQ(projected->stashGold, 350U);
 	EXPECT_TRUE(projected->stashOpen);
 	ASSERT_EQ(projected->stash.size(), 1U);
@@ -230,6 +232,45 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicatePlayerItemSeedsDuringProjection
 	player->add_inventory()->set_item_seed(42);
 	player->add_equipment()->set_item_seed(42);
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerItemTopologyDuringProjection)
+{
+	protocol::Snapshot invalidGridSize;
+	auto *gridSizePlayer = invalidGridSize.add_players();
+	gridSizePlayer->set_entity_id(7);
+	gridSizePlayer->add_inventory_grid(0);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidGridSize, 7).has_value());
+
+	protocol::Snapshot invalidGridReference;
+	auto *gridReferencePlayer = invalidGridReference.add_players();
+	gridReferencePlayer->set_entity_id(7);
+	for (int i = 0; i < 40; ++i)
+		gridReferencePlayer->add_inventory_grid(i == 0 ? 1 : -1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidGridReference, 7).has_value());
+
+	protocol::Snapshot invalidFootprint;
+	auto *footprintPlayer = invalidFootprint.add_players();
+	footprintPlayer->set_entity_id(7);
+	auto *inventory = footprintPlayer->add_inventory();
+	inventory->set_item_seed(42);
+	inventory->mutable_state()->set_inventory_width(2);
+	for (int i = 0; i < 40; ++i)
+		footprintPlayer->add_inventory_grid(i == 0 ? 0 : -1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidFootprint, 7).has_value());
+
+	protocol::Snapshot duplicateEquipmentSlot;
+	auto *equipmentPlayer = duplicateEquipmentSlot.add_players();
+	equipmentPlayer->set_entity_id(7);
+	equipmentPlayer->add_equipment()->set_slot(1);
+	equipmentPlayer->add_equipment()->set_slot(1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(duplicateEquipmentSlot, 7).has_value());
+
+	protocol::Snapshot invalidBeltSlot;
+	auto *beltPlayer = invalidBeltSlot.add_players();
+	beltPlayer->set_entity_id(7);
+	beltPlayer->add_belt()->set_slot(8);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidBeltSlot, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidPlayerItemIdentityDuringProjection)
