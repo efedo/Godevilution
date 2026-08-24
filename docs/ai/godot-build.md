@@ -17,6 +17,16 @@ The protocol-test project builds the current server once as an explicit,
 build-only dependency, then the live tests launch that Debug server without
 starting concurrent rebuilds.
 
+For a focused class or method, invoke the xUnit v3 in-process runner directly;
+this avoids requiring the VSTest testhost package cache:
+
+```powershell
+dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --no-build -- -class Devilution.Client.Protocol.Tests.AuthoritativeTargetSelectorTests -noColor
+```
+
+Replace the class name with the focused test class under investigation. The
+same runner accepts `-method` for one test method.
+
 ## Finding Godot
 
 Use a Godot 4.7.1 Mono console executable. When installed through WinGet it may
