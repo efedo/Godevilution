@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.427.0` schema in
+It declares its identity and `devilution.diablo@1.428.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.426.0` schema so existing manifest-based packs remain
+previous additive `1.427.0` schema so existing manifest-based packs remain
 loadable. The standalone host falls back to legacy command-line identity only
 for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1831,6 +1831,13 @@ origin and its level geometry are available. This keeps generated set-piece
 coordinates outside the content pack while retaining deterministic object
 identity and behavior-template validation.
 
+Schema 1.428 adds the optional `piece_property_overrides` column to
+`world_mutations.tsv`. A mutation may supply validated native `.sol`-style
+flags for d-pieces that it introduces, allowing set-piece room transitions to
+retain authoritative walk and missile geometry when a binary collision bundle
+is deferred. Values use `piece_id:flag|flag` entries separated by semicolons;
+`none` is a valid flag set. Older rows default to no overrides.
+
 Schema 1.427 adds the optional `procedural_set_piece_origins.tsv` table. Each
 row declares a set-level identity, target generated level, rectangular
 footprint, selection seed, and alignment. The Diablo module chooses one
@@ -2895,7 +2902,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.427.0"
+    "version": "1.428.0"
   },
   "dependencyConstraints": [
     {
@@ -2927,7 +2934,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.427.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.428.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

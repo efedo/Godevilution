@@ -101,6 +101,30 @@ public sealed class AuthoritativeWorldMutationPieceRectangle
     public ushort PieceId { get; }
 }
 
+/** A validated native collision flag set for a d-piece used by a mutation. */
+public sealed record AuthoritativeWorldMutationPieceProperty(
+    ushort PieceId,
+    AuthoritativeDunTileFlags Flags)
+{
+    public AuthoritativeWorldMutationPieceProperty Validate()
+    {
+        const AuthoritativeDunTileFlags supportedFlags =
+            AuthoritativeDunTileFlags.Solid
+            | AuthoritativeDunTileFlags.BlockLight
+            | AuthoritativeDunTileFlags.BlockMissile
+            | AuthoritativeDunTileFlags.Transparent
+            | AuthoritativeDunTileFlags.TransparentLeft
+            | AuthoritativeDunTileFlags.TransparentRight
+            | AuthoritativeDunTileFlags.Trap;
+        if (PieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount
+            || (Flags & ~supportedFlags) != 0) {
+            throw new InvalidDataException(
+                $"World mutation d-piece {PieceId} has invalid collision flags.");
+        }
+        return this;
+    }
+}
+
 /** One native mega-tile value assigned by an authored world mutation. */
 public sealed class AuthoritativeWorldMutationMegaTileAssignment
 {
@@ -140,7 +164,8 @@ public sealed class AuthoritativeWorldMutation
         int anchorMegaOffsetY = 0,
         bool createTransparencyLayer = false,
         uint megaTileCopySourceLevelId = 0,
-        IEnumerable<AuthoritativeWorldMutationRectangle>? megaTileCopyRectangles = null)
+        IEnumerable<AuthoritativeWorldMutationRectangle>? megaTileCopyRectangles = null,
+        IEnumerable<AuthoritativeWorldMutationPieceProperty>? piecePropertyOverrides = null)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -173,6 +198,7 @@ public sealed class AuthoritativeWorldMutation
         MegaTileAssignments = NormalizeMegaTileAssignments(megaTileAssignments);
         MegaTileCopySourceLevelId = megaTileCopySourceLevelId;
         MegaTileCopyRectangles = NormalizeRectangles(megaTileCopyRectangles);
+        PiecePropertyOverrides = NormalizePiecePropertyOverrides(piecePropertyOverrides);
         if ((MegaTileCopySourceLevelId == 0) != (MegaTileCopyRectangles.Count == 0)) {
             throw new InvalidDataException(
                 "Mega-tile copy rectangles require exactly one source level.");
@@ -243,6 +269,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Native mega-tile rectangles copied from the source level at matching coordinates. */
     public IReadOnlyList<AuthoritativeWorldMutationRectangle> MegaTileCopyRectangles { get; }
+
+    /** Native .sol-compatible collision flags for d-pieces introduced by this mutation. */
+    public IReadOnlyList<AuthoritativeWorldMutationPieceProperty> PiecePropertyOverrides { get; }
 
     public IReadOnlyList<int> GetBlockedCells(
         int levelWidth,
@@ -406,6 +435,20 @@ public sealed class AuthoritativeWorldMutation
             .ThenBy(rectangle => rectangle.Width)
             .ThenBy(rectangle => rectangle.Height)
             .ToArray();
+
+    private static IReadOnlyList<AuthoritativeWorldMutationPieceProperty>
+        NormalizePiecePropertyOverrides(
+            IEnumerable<AuthoritativeWorldMutationPieceProperty>? overrides)
+    {
+        var values = (overrides ?? [])
+            .Select(@override => @override.Validate())
+            .OrderBy(@override => @override.PieceId)
+            .ToArray();
+        if (values.Select(@override => @override.PieceId).Distinct().Count() != values.Length)
+            throw new InvalidDataException(
+                "World mutation d-piece collision overrides contain duplicate IDs.");
+        return values;
+    }
 
     private static IReadOnlyList<AuthoritativeWorldMutationTransparencyRectangle>
         NormalizeTransparencyRectangles(
@@ -680,7 +723,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 row.OptionalInt32("anchor_mega_offset_y"),
                 row.OptionalBoolean("create_transparency_layer"),
                 row.OptionalUInt32("mega_tile_copy_source_level_id"),
-                ParseRectangles(row, "mega_tile_copy_rects"))));
+                ParseRectangles(row, "mega_tile_copy_rects"),
+                ParsePiecePropertyOverrides(row))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -1000,5 +1044,72 @@ public sealed class AuthoritativeWorldMutationCatalog
                 return new AuthoritativeWorldMutationMegaTileAssignment(x, y, tileId);
             })
             .ToArray();
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationPieceProperty>
+        ParsePiecePropertyOverrides(TsvRow row)
+    {
+        const string column = "piece_property_overrides";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return [];
+        }
+        return value.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(entry => {
+                var fields = entry.Split(
+                    ':',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (fields.Length != 2
+                    || !ushort.TryParse(
+                        fields[0],
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out var pieceId)) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} entry '{entry}'.");
+                }
+                try {
+                    return new AuthoritativeWorldMutationPieceProperty(
+                        pieceId,
+                        ParsePieceFlags(fields[1], row, column, entry));
+                } catch (InvalidDataException) {
+                    throw;
+                } catch (Exception exception) when (exception is ArgumentOutOfRangeException) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} entry '{entry}'.",
+                        exception);
+                }
+            })
+            .ToArray();
+    }
+
+    private static AuthoritativeDunTileFlags ParsePieceFlags(
+        string value,
+        TsvRow row,
+        string column,
+        string entry)
+    {
+        if (string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+            return AuthoritativeDunTileFlags.None;
+        var flags = AuthoritativeDunTileFlags.None;
+        foreach (var token in value.Split(
+                     '|',
+                     StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+            flags |= token.ToLowerInvariant() switch {
+                "solid" => AuthoritativeDunTileFlags.Solid,
+                "block_light" => AuthoritativeDunTileFlags.BlockLight,
+                "block_missile" => AuthoritativeDunTileFlags.BlockMissile,
+                "transparent" => AuthoritativeDunTileFlags.Transparent,
+                "transparent_left" => AuthoritativeDunTileFlags.TransparentLeft,
+                "transparent_right" => AuthoritativeDunTileFlags.TransparentRight,
+                "trap" => AuthoritativeDunTileFlags.Trap,
+                _ => throw new InvalidDataException(
+                    $"World mutation row {row.LineNumber} contains an invalid {column} flag in '{entry}'."),
+            };
+        }
+        return flags;
     }
 }

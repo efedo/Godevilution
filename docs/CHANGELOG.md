@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added schema 1.428's optional `piece_property_overrides` world-mutation
+  column. Mutations can now externalize validated native `.sol`-style
+  collision flags for d-pieces introduced by a set-piece transition; the
+  Hellfire Na-Krul room-opening mutation now preserves its walk and missile
+  geometry contract when the surrounding binary collision bundle is absent.
 - Server and Godot protocol projections now validate generated set-piece
   origins against supplied authoritative level geometry, while geometry-free
   legacy snapshots retain their compatibility behavior.

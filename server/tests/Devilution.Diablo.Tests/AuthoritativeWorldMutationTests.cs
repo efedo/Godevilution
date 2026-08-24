@@ -245,6 +245,54 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void LoadsAndAppliesExternalPieceCollisionFlags()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tpiece_layer_rects\tpiece_property_overrides\n"
+                + "7\t1\t1,1,1,1,299\t299:solid|block_missile\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        var property = Assert.Single(mutation.PiecePropertyOverrides);
+        Assert.Equal((ushort)299, property.PieceId);
+        Assert.Equal(
+            AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile,
+            property.Flags);
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)299, level.NativePieceLayer[5]);
+        Assert.Equal(property.Flags, level.NativePieceProperties[299]);
+        Assert.Contains(5, level.NativePieceCollisionCells);
+        Assert.Contains(5, level.NativePieceMissileBlockedCells);
+        Assert.False(world.IsWalkable(1, 1, 1));
+        Assert.True(world.IsMissileGeometryBlocked(1, 1, 1));
+    }
+
+    [Fact]
+    public void RejectsInvalidOrDuplicateExternalPieceCollisionFlags()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tpiece_property_overrides\n"
+                    + "7\t1\t1379:none\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tpiece_property_overrides\n"
+                    + "7\t1\t299:unknown\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tpiece_property_overrides\n"
+                    + "7\t1\t299:none;299:solid\n"));
+    }
+
+    [Fact]
     public void LoadsAndProjectsAnchoredMegaTileAssignments()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(

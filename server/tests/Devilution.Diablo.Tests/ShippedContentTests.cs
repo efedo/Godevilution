@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.427.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.428.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var placementTable = pack.Tables.Single(
@@ -199,7 +199,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.426.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.427.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -846,8 +846,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\tnone\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -2424,7 +2424,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.427.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.428.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -2833,6 +2833,31 @@ public sealed class ShippedContentTests
             nakrulRoomMutation
                 .GetPieceLayerCells(40, 40, finalNakrulTome.PositionX, finalNakrulTome.PositionY)
                 .Select(entry => (entry.Cell % 40, entry.Cell / 40, entry.PieceId)));
+        Assert.Equal(
+            [(ushort)297, (ushort)298, (ushort)299, (ushort)300],
+            nakrulRoomMutation.PiecePropertyOverrides
+                .Select(property => property.PieceId)
+                .ToArray());
+        Assert.All(
+            nakrulRoomMutation.PiecePropertyOverrides,
+            property => Assert.Equal(AuthoritativeDunTileFlags.None, property.Flags));
+        Assert.True(activation.Simulation.WorldState.ApplyWorldMutation(9200));
+        var projectedNakrulLevel = Assert.Single(
+            activation.Simulation.WorldState.LevelGeometry,
+            level => level.LevelId == 24);
+        Assert.Equal(
+            [(22, 20, (ushort)299), (23, 20, (ushort)300),
+             (24, 20, (ushort)297), (25, 20, (ushort)298)],
+            projectedNakrulLevel.NativePieceLayer
+                .Select((pieceId, cell) => (X: cell % 40, Y: cell / 40, PieceId: pieceId))
+                .Where(entry => entry.PieceId != 0)
+                .ToArray());
+        Assert.All(
+            new[] { 22 + 20 * 40, 23 + 20 * 40, 24 + 20 * 40, 25 + 20 * 40 },
+            cell => {
+                Assert.DoesNotContain(cell, projectedNakrulLevel.BlockedCells);
+                Assert.DoesNotContain(cell, projectedNakrulLevel.MissileBlockedCells);
+            });
         var graveObject = Assert.Single(
             activation.Simulation.WorldState.Objects.Values,
             @object => @object.ObjectId == 6004);

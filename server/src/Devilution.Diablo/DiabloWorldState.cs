@@ -358,6 +358,9 @@ public sealed class DiabloWorldState
             var objectLayer = baseLevel.NativeObjectLayer.ToArray();
             var megaTileLayer = baseLevel.NativeMegaTileLayer.ToArray();
             var pieceLayer = baseLevel.NativePieceLayer.ToArray();
+            var nativePieceProperties = baseLevel.NativePieceProperties.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value);
             var nativePieceCollisionCells = baseLevel.NativePieceCollisionCells.ToHashSet();
             var nativePieceMissileBlockedCells = baseLevel.NativePieceMissileBlockedCells.ToHashSet();
             foreach (var mutationId in activeWorldMutationIds.OrderBy(id => id)) {
@@ -366,6 +369,17 @@ public sealed class DiabloWorldState
                     continue;
                 }
                 var (originX, originY) = ResolveMutationOrigin(mutation);
+                foreach (var pieceProperty in mutation.PiecePropertyOverrides) {
+                    if (nativePieceProperties.TryGetValue(
+                            pieceProperty.PieceId,
+                            out var existingFlags)
+                        && existingFlags != pieceProperty.Flags) {
+                        throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} redefines d-piece "
+                            + $"{pieceProperty.PieceId} with different collision flags.");
+                    }
+                    nativePieceProperties[pieceProperty.PieceId] = pieceProperty.Flags;
+                }
                 blocked.UnionWith(mutation.GetBlockedCells(
                     baseLevel.Width,
                     baseLevel.Height,
@@ -428,7 +442,7 @@ public sealed class DiabloWorldState
                     if (nativePieceMissileBlockedCells.Remove(cell))
                         missileBlocked.Remove(cell);
                     pieceLayer[cell] = pieceId;
-                    if (baseLevel.NativePieceProperties.TryGetValue(
+                    if (nativePieceProperties.TryGetValue(
                             pieceId,
                             out var pieceFlags)) {
                         if (pieceFlags.HasFlag(AuthoritativeDunTileFlags.Solid)) {
@@ -499,8 +513,20 @@ public sealed class DiabloWorldState
                                 pieceLayer[targetPieceCell] = pieceId;
                                 if (!sourceLevel.NativePieceProperties.TryGetValue(
                                         pieceId,
-                                        out var pieceFlags))
+                                        out var pieceFlags)
+                                    && !nativePieceProperties.TryGetValue(
+                                        pieceId,
+                                        out pieceFlags))
                                     continue;
+                                if (nativePieceProperties.TryGetValue(
+                                        pieceId,
+                                        out var existingPieceFlags)
+                                    && existingPieceFlags != pieceFlags) {
+                                    throw new InvalidDataException(
+                                        $"World mutation {mutation.MutationId} redefines d-piece "
+                                        + $"{pieceId} with different collision flags.");
+                                }
+                                nativePieceProperties[pieceId] = pieceFlags;
                                 if (pieceFlags.HasFlag(AuthoritativeDunTileFlags.Solid)) {
                                     blocked.Add(targetPieceCell);
                                     nativePieceCollisionCells.Add(targetPieceCell);
@@ -528,7 +554,7 @@ public sealed class DiabloWorldState
                     objectLayer,
                     megaTileLayer,
                     pieceLayer,
-                    baseLevel.NativePieceProperties,
+                    nativePieceProperties,
                     nativePieceCollisionCells,
                     nativePieceMissileBlockedCells) {
                     StableSymbol = baseLevel.StableSymbol,
