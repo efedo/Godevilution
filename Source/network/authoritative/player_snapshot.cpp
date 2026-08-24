@@ -421,6 +421,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		    .monsterId = source.monster_id(),
 		    .isUnique = source.is_unique(),
 		    .uniqueIdentity = source.unique_identity(),
+		    .dialogueMessageId = source.dialogue_message_id(),
 		    .levelId = source.level_id(),
 		    .positionX = source.position_x(),
 		    .positionY = source.position_y(),

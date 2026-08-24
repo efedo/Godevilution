@@ -104,6 +104,8 @@ struct ProjectedMonsterSnapshot {
 	uint32_t monsterId = 0;
 	bool isUnique = false;
 	std::string uniqueIdentity;
+	/** Server-owned speech identity currently displayed by this unique encounter. */
+	int32_t dialogueMessageId = 0;
 	uint32_t levelId = 0;
 	int32_t positionX = 0;
 	int32_t positionY = 0;

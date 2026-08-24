@@ -8,6 +8,9 @@ base Snotspill Banner dialogue now applies the native opening transparency
 rectangle through an anchored server-owned follow-up, while the hand-in stage
 applies the final mega-tile/transparency transition. Native object/map
 resynchronization and encounter-state presentation remain compatibility seams.
+Authoritative unique-monster dialogue identities now also cross the native
+projection into compatibility monster talk state; native speech/audio timing
+and Banner object/map resynchronization remain seams.
 
 Authoritative store catalogs now carry content-declared native vendor roles;
 server sale admission applies the native Smith and Witch buy filters and

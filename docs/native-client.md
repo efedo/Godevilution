@@ -318,8 +318,9 @@ still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
 - `TalktoMonster` still owns Snotspill's Banner opening object/map
-  resynchronization, encounter-state, and native speech/presentation timing
-  after the initial room placement. The opening transparency rectangle is now
+  resynchronization, encounter-state, and native speech/audio timing after the
+  server-projected dialogue identity and initial room placement. The opening
+  transparency rectangle is now
   server/content-owned, alongside the initial Snotspill encounter,
   encounter-relative sign chest, `banner1.dun` map fragment, and final
   item-gated mega-tile/transparency transition.

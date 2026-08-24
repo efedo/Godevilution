@@ -591,6 +591,13 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	monster.position.last = position;
 	monster.position.future = futurePosition;
 	monster.position.tile = position;
+	// The server owns unique-monster dialogue progression. Keep the native
+	// compatibility pool's talk identity synchronized for interaction affordances
+	// without allowing an out-of-range server value to index the speech table.
+	monster.talkMsg = snapshot.dialogueMessageId > 0
+	        && static_cast<std::size_t>(snapshot.dialogueMessageId) < Speeches.size()
+	    ? static_cast<_speech_id>(snapshot.dialogueMessageId)
+	    : TEXT_NONE;
 	if (snapshot.alive) {
 		monster.occupyTile(position, false);
 		if (snapshot.moving)

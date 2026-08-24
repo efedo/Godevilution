@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project authoritative unique-monster dialogue identities into the native
+  compatibility monster state so talk affordances follow server-owned quest
+  stages; invalid native speech IDs fail closed.
 - Add validated anchored native mega-tile assignments and explicit
   transparency-layer creation to authoritative world mutations; the base
   Snotspill hand-in now applies its final Banner map/transparency transition

@@ -401,6 +401,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_monster_id(12);
 	second->set_is_unique(true);
 	second->set_unique_identity("Defiler");
+	second->set_dialogue_message_id(274);
 	second->set_level_id(2);
 	second->set_position_x(4);
 	second->set_position_y(5);
@@ -435,6 +436,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_EQ((*projected)[1].monsterId, 12U);
 	EXPECT_TRUE((*projected)[1].isUnique);
 	EXPECT_EQ((*projected)[1].uniqueIdentity, "Defiler");
+	EXPECT_EQ((*projected)[1].dialogueMessageId, 274);
 	EXPECT_EQ((*projected)[1].hitPoints, 7);
 	EXPECT_EQ((*projected)[1].hitPointsQ6, 432);
 	EXPECT_EQ((*projected)[1].maxHitPointsQ6, 1280);
