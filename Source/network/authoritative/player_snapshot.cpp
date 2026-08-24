@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include "devilution.pb.h"
+#include "game/levels/dungeon_common_defs.hpp"
 #include "game/players/players.hpp"
 #include "game/quests/quests.hpp"
 #include "network/authoritative/item_snapshot.hpp"
@@ -879,6 +880,10 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 	levels.reserve(snapshot.level_geometry_size());
 	for (const auto &level : snapshot.level_geometry()) {
 		if (level.width() < 0 || level.height() < 0
+		    || level.width() > MAXDUNX || level.height() > MAXDUNY
+		    || (!level.native_mega_tile_layer().empty()
+		        && ((static_cast<uint64_t>(level.width()) + 1) / 2 > DMAXX
+		            || (static_cast<uint64_t>(level.height()) + 1) / 2 > DMAXY))
 		    || !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
 				return value <= static_cast<uint32_t>(std::numeric_limits<int8_t>::max());
 			})

@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   authoritative C# level model, and Godot protocol model.
 - Applied the native 112×112 fine-grid and optional 40×40 coarse-grid geometry
   limits consistently to authoritative C# levels and Godot snapshots.
+- Applied the same fine/coarse geometry limits at the C++ snapshot validation
+  boundary, while retaining coarse-layer-free 112×112 town snapshots.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

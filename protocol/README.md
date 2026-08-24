@@ -170,7 +170,9 @@ Windows toolchain command.
   byte-sized mega-tile identity (`0` through `255`), and its dimensions are the
   ceiling of the level dimensions divided by two. Fine-grid dimensions cannot
   exceed the native `112x112` arrays, and a supplied coarse layer cannot exceed
-  `40x40`; it is presentation metadata only.
+  `40x40`; the native and managed protocol validators reject larger values.
+  A `112x112` town projection without a coarse layer remains valid. This is
+  presentation metadata only.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

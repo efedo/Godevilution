@@ -871,6 +871,23 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->add_native_mega_tile_layer(256);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 
+	protocol::Snapshot invalidNativeDimensions;
+	level = invalidNativeDimensions.add_level_geometry();
+	level->set_width(MAXDUNX + 1);
+	level->set_height(1);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativeDimensions).has_value());
+	level->set_width(82);
+	level->set_height(82);
+	for (int index = 0; index < 41 * 41; ++index)
+		level->add_native_mega_tile_layer(0);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativeDimensions).has_value());
+
+	protocol::Snapshot validNativeTown;
+	level = validNativeTown.add_level_geometry();
+	level->set_width(MAXDUNX);
+	level->set_height(MAXDUNY);
+	EXPECT_TRUE(ValidateLevelGeometrySnapshots(validNativeTown).has_value());
+
 	protocol::Snapshot invalidPieceSize;
 	level = invalidPieceSize.add_level_geometry();
 	level->set_width(2);
