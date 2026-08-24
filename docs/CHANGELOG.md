@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Made the native `CastSpell` and resurrection-beam helpers explicitly
+  offline-only in server-backed sessions, closing their direct-call seams
+  instead of relying on the missile factory's connected-mode no-op.
+- Added focused compatibility coverage for the connected legacy spell
+  simulation policy.
 - Aligned native monster presentation with Godot's alive-only authoritative
   visibility rule: dead projected monsters no longer retain stale compatibility
   pool slots or animation state.

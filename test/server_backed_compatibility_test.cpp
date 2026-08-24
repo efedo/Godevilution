@@ -251,6 +251,12 @@ TEST(ServerBackedCompatibility, ConnectedLegacyCombatMessagesFailClosed)
 	EXPECT_FALSE(ShouldProcessLegacyCombatMessage(true));
 }
 
+TEST(ServerBackedCompatibility, ConnectedLegacySpellSimulationFailsClosed)
+{
+	EXPECT_TRUE(ShouldProcessLegacySpellSimulation(false));
+	EXPECT_FALSE(ShouldProcessLegacySpellSimulation(true));
+}
+
 TEST(ServerBackedCompatibility, ConnectedLegacyDeathDropsFailClosed)
 {
 	EXPECT_TRUE(ShouldProcessLegacyDeathDrops(false));

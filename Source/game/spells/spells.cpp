@@ -220,6 +220,11 @@ SpellCheckResult CheckSpell(const Player &player, SpellID sn, SpellType st, bool
 
 void CastSpell(Player &player, SpellID spl, WorldTilePosition src, WorldTilePosition dst, int spllvl)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySpellSimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	Direction dir = player.direction;
 	if (IsWallSpell(spl)) {
 		dir = player.tempDirection;
@@ -244,6 +249,11 @@ void CastSpell(Player &player, SpellID spl, WorldTilePosition src, WorldTilePosi
 
 void SpawnResurrectBeam(Player &caster, Player &target)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!ShouldProcessLegacySpellSimulation(authoritative::GetServerBackedRuntime().IsConnected()))
+		return;
+#endif
+
 	AddMissile(
 	    target.position.tile,
 	    target.position.tile,

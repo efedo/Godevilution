@@ -11,6 +11,12 @@ constexpr bool ShouldProcessLegacyCombatMessage(bool serverConnected) noexcept
 	return !serverConnected;
 }
 
+/** Native spell and resurrect-beam creation is offline-only while the authoritative server owns effects. */
+constexpr bool ShouldProcessLegacySpellSimulation(bool serverConnected) noexcept
+{
+	return !serverConnected;
+}
+
 /**
  * Native death-drop generation is offline-only while the authoritative server
  * owns gold, equipment, held-item, and ear consequences.
