@@ -250,6 +250,10 @@ creation.
 Left-click remains the cast or item-interaction path; when no cast source or
 item target is available, it submits the additive authoritative target-cell
 movement intent and the server resolves one deterministic path step.
+When a visible unique monster has a server-authored dialogue identity, the
+same left-click path resolves its matching active quest and submits
+`TalkToQuestRequested`; Godot never advances the dialogue or mutates quest
+state locally.
 
 Targeted Firebolt, Charged Bolt, and Bone Spirit casts can also name a living
 same-level remote player. The client supplies any visible remote-player entity

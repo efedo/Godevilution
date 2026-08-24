@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route Godot clicks on visible authored unique monsters through
+  `TalkToQuestRequested` by matching the server-projected dialogue identity to
+  the active quest; the server still owns validation and state changes.
 - Project authoritative unique-monster dialogue identities into the native
   compatibility monster state so talk affordances follow server-owned quest
   stages; invalid native speech IDs fail closed.

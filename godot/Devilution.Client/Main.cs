@@ -361,6 +361,20 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            if (AuthoritativeMonsterDialogueSelector.Select(
+                    model.Snapshot,
+                    player?.EntityId ?? 0,
+                    target.X,
+                    target.Y) is { } monsterDialogue) {
+                QueueInteractionAfterMove(target, new Command {
+                    TalkToQuestRequested = new TalkToQuestRequested {
+                        QuestId = monsterDialogue.QuestId,
+                        TargetEntityId = monsterDialogue.MonsterEntityId,
+                    },
+                });
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             if (model.QuestTownerInteractionAt(target.X, target.Y) is { } interaction) {
                 QueueInteractionAfterMove(target, new Command {
                     TurnInQuestRequested = new TurnInQuestRequested {
@@ -487,6 +501,14 @@ public partial class Main : Node2D
                 model.QuestTownerInteractionAt(pending.Target.X, pending.Target.Y) is { } interaction
                 && interaction.QuestId == pending.Command.TurnInQuestRequested.QuestId
                 && interaction.TownerId == pending.Command.TurnInQuestRequested.TownerId,
+            Command.IntentOneofCase.TalkToQuestRequested =>
+                AuthoritativeMonsterDialogueSelector.Select(
+                    model.Snapshot,
+                    model.PlayerEntityId,
+                    pending.Target.X,
+                    pending.Target.Y) is { } dialogue
+                && dialogue.QuestId == pending.Command.TalkToQuestRequested.QuestId
+                && dialogue.MonsterEntityId == pending.Command.TalkToQuestRequested.TargetEntityId,
             _ => false,
         };
     }

@@ -111,6 +111,86 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void SelectsAnAuthoredUniqueMonsterDialogueTarget()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 4 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 4,
+                    PositionX = 5,
+                    PositionY = 6,
+                    Alive = true,
+                    IsUnique = true,
+                    UniqueIdentity = "Gharbad",
+                    DialogueMessageId = 145,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3003,
+                    LevelId = 4,
+                    CompletionUniqueIdentity = "Gharbad",
+                },
+            },
+        };
+
+        Assert.Equal(
+            new AuthoritativeMonsterDialogueTarget(3003, 20),
+            AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 5, 6));
+    }
+
+    [Fact]
+    public void RejectsDialogueWithoutAnActiveMatchingQuestOrTarget()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 4 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 4,
+                    PositionX = 5,
+                    PositionY = 6,
+                    Alive = true,
+                    IsUnique = true,
+                    UniqueIdentity = "Gharbad",
+                    DialogueMessageId = 145,
+                },
+                new MonsterSnapshot {
+                    EntityId = 21,
+                    LevelId = 4,
+                    PositionX = 6,
+                    PositionY = 6,
+                    Alive = true,
+                    IsUnique = true,
+                    UniqueIdentity = "Zhar",
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3003,
+                    LevelId = 4,
+                    CompletionUniqueIdentity = "Gharbad",
+                    Completed = true,
+                },
+                new QuestSnapshot {
+                    QuestId = 3004,
+                    LevelId = 4,
+                    CompletionUniqueIdentity = "Zhar",
+                },
+            },
+        };
+
+        Assert.Null(AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 5, 6));
+        Assert.Null(AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 6, 6));
+    }
+
+    [Fact]
     public void SelectsWorldEntitiesInServerTelekinesisPrecedenceOrder()
     {
         var snapshot = new Snapshot {
