@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Applied validated authoritative level mega-tile, d-piece, and transparency
+  layers in the native compatibility presentation bridge. Native DUN object
+  layers remain inert until an authored object mapping exists, so behavior and
+  encounter-state ownership cannot be reconstructed locally from presentation
+  data.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The

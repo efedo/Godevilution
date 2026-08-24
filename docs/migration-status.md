@@ -2,6 +2,11 @@
 
 Status date: 2026-08-24
 
+The native compatibility presentation bridge now applies supplied authoritative
+mega-tile, d-piece, and transparency layers to the active level after validating
+their native dimensions and value ranges. This closes the map-layer portion of
+the snapshot resynchronization seam; native DUN object-layer materialization and
+object encounter-state presentation remain server-authored compatibility work.
 The Hellfire Na-Krul fragment now materializes its native final lever as an
 anchor-relative authored behavior template. The server gates the lever on the
 three-tome sequence and owns final quest completion; the third tome no longer

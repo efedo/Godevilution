@@ -697,6 +697,74 @@ uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot)
 	return snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
 }
 
+tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
+	const ProjectedLevelGeometrySnapshot *geometry,
+	uint32_t levelId)
+{
+	if (geometry == nullptr || geometry->levelId != levelId)
+		return {};
+	if (geometry->width < 0 || geometry->height < 0)
+		return tl::make_unexpected("Authoritative level geometry has negative dimensions.");
+
+	// Native dungeon arrays are fixed-size. Keep the presentation bridge from
+	// indexing outside them even when a projection was constructed directly
+	// instead of passing through protocol validation.
+	if (geometry->width > MAXDUNX || geometry->height > MAXDUNY)
+		return tl::make_unexpected("Authoritative level geometry exceeds the native dungeon dimensions.");
+	const auto coarseWidth = (static_cast<uint64_t>(geometry->width) + 1) / 2;
+	const auto coarseHeight = (static_cast<uint64_t>(geometry->height) + 1) / 2;
+	if (coarseWidth > DMAXX || coarseHeight > DMAXY)
+		return tl::make_unexpected("Authoritative level geometry exceeds the native megatile dimensions.");
+
+	const auto cellCount = static_cast<uint64_t>(geometry->width) * static_cast<uint64_t>(geometry->height);
+	const auto coarseCellCount = coarseWidth * coarseHeight;
+	const auto hasInvalidSize = [cellCount, coarseCellCount](const ProjectedLevelGeometrySnapshot &candidate) {
+		return (candidate.width == 0 || candidate.height == 0)
+		        ? (!candidate.nativeTransparency.empty()
+		            || !candidate.nativeObjectLayer.empty()
+		            || !candidate.nativeMegaTileLayer.empty()
+		            || !candidate.nativePieceLayer.empty())
+		        : (( !candidate.nativeTransparency.empty() && candidate.nativeTransparency.size() != cellCount)
+		            || (!candidate.nativeObjectLayer.empty() && candidate.nativeObjectLayer.size() != cellCount)
+		            || (!candidate.nativeMegaTileLayer.empty() && candidate.nativeMegaTileLayer.size() != coarseCellCount)
+		            || (!candidate.nativePieceLayer.empty() && candidate.nativePieceLayer.size() != cellCount));
+	};
+	if (hasInvalidSize(*geometry))
+		return tl::make_unexpected("Authoritative level geometry layer dimensions do not match the projected level.");
+
+	if (std::any_of(geometry->nativeTransparency.begin(), geometry->nativeTransparency.end(), [](uint16_t value) {
+			return value > static_cast<uint16_t>(std::numeric_limits<int8_t>::max());
+		})
+	    || std::any_of(geometry->nativeMegaTileLayer.begin(), geometry->nativeMegaTileLayer.end(), [](uint16_t value) {
+			return value > std::numeric_limits<uint8_t>::max();
+		}))
+		return tl::make_unexpected("Authoritative level geometry contains a value outside the native presentation range.");
+
+	if (!geometry->nativeMegaTileLayer.empty()) {
+		for (int y = 0; y < static_cast<int>(coarseHeight); ++y) {
+			for (int x = 0; x < static_cast<int>(coarseWidth); ++x)
+				megaTileAt(x, y).setCurrent(static_cast<uint8_t>(geometry->nativeMegaTileLayer[static_cast<size_t>(y) * coarseWidth + x]));
+		}
+	}
+	if (!geometry->nativePieceLayer.empty()) {
+		for (int y = 0; y < geometry->height; ++y) {
+			for (int x = 0; x < geometry->width; ++x)
+				tileAt(x, y).setPiece(geometry->nativePieceLayer[static_cast<size_t>(y) * geometry->width + x]);
+		}
+	}
+	if (!geometry->nativeTransparency.empty()) {
+		for (int y = 0; y < geometry->height; ++y) {
+			for (int x = 0; x < geometry->width; ++x)
+				tileAt(x, y).setTransVal(static_cast<int8_t>(geometry->nativeTransparency[static_cast<size_t>(y) * geometry->width + x]));
+		}
+	}
+
+	// nativeObjectLayer values are DUN object-layer IDs, not authoritative
+	// object identities. Authored object snapshots are applied below so that
+	// object behavior cannot be reconstructed locally from presentation data.
+	return {};
+}
+
 } // namespace
 
 player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot)
@@ -720,6 +788,9 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const std::vector<ProjectedPlayerSnapshot> &players,
     uint32_t localEntityId)
 {
+	if (auto result = ApplyAuthoritativeNativeGeometry(projection.CurrentLevelGeometry(), levelId); !result.has_value())
+		return result;
+
 	std::unordered_set<uint32_t> currentMonsterEntities;
 	std::unordered_set<uint32_t> currentItemEntities;
 	std::unordered_set<uint32_t> currentObjectEntities;

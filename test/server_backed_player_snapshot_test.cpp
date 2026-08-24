@@ -1223,6 +1223,49 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	EXPECT_FALSE(projection.IsBlocked(3, 0).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
+{
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 4;
+	geometry.height = 4;
+	geometry.nativeTransparency.assign(16, 0);
+	geometry.nativeTransparency[5] = 9;
+	geometry.nativePieceLayer.assign(16, 42);
+	geometry.nativePieceLayer[5] = 77;
+	geometry.nativeMegaTileLayer = { 12, 13, 14, 15 };
+
+	const auto previousPiece = tileAt(1, 1).piece();
+	const auto previousTransparency = tileAt(1, 1).transVal();
+	const auto previousMegaTile = megaTileAt(0, 0).current();
+	struct RestoreNativeGeometry {
+		uint16_t piece;
+		int8_t transparency;
+		uint8_t megaTile;
+		~RestoreNativeGeometry()
+		{
+			tileAt(1, 1).setPiece(piece);
+			tileAt(1, 1).setTransVal(transparency);
+			megaTileAt(0, 0).setCurrent(megaTile);
+		}
+	} restore { previousPiece, previousTransparency, previousMegaTile };
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, { geometry }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(tileAt(1, 1).piece(), 77);
+	EXPECT_EQ(tileAt(1, 1).transVal(), 9);
+	EXPECT_EQ(megaTileAt(0, 0).current(), 12);
+
+	ProjectedLevelGeometrySnapshot invalid = geometry;
+	invalid.nativeMegaTileLayer[0] = 256;
+	ServerBackedWorldProjection invalidProjection;
+	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
+	const auto result = presentation.Apply(invalidProjection, 1);
+	EXPECT_FALSE(result.has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)
 {
 	ProjectedLevelGeometrySnapshot first;

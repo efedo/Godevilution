@@ -344,9 +344,11 @@ explicit migration seams, not server-authority claims:
   placements now clone authored templates: server activation owns the native
   Phasing projectile source and target offsets plus the authored replacement
   rectangles when the native map bundle is available. The templates declare the
-  native book and center-circle presentation identities, while native object
-  resynchronization and encounter-progress presentation remain compatibility
-  seams. The Vile center circle now uses an authored occupancy trigger gated on
+  native book and center-circle presentation identities, while the native
+  bridge now applies supplied authoritative mega-tile, d-piece, and transparency
+  layers. Native DUN object-layer materialization and encounter-progress
+  presentation remain compatibility seams. The Vile center circle now uses an
+  authored occupancy trigger gated on
   both linked books; the server applies its deferred replacement, advances the
   native quest marker, and launches the activating-player Phasing transition.
   Set-level rows can clone validated
