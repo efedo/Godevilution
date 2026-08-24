@@ -10,6 +10,8 @@ until an explicit authored mapping exists.
 Warp-trigger projection now rejects missing source levels on the server and
 unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.
+Native quest ordinals in projected quest snapshots now share the `0` through
+`23` range and uniqueness checks across server, native, and Godot validation.
 Object snapshot identities now use that same bound before native or Godot
 presentation consumes them.
 Native-DUN mapping activation and mutable authoritative-object updates enforce

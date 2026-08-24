@@ -1034,6 +1034,7 @@ public sealed class DialogueProtocolProjectionTests
         }
 
         AssertQuestRejected(value => value with { QuestId = 0 });
+        AssertQuestRejected(value => value with { NativeQuestId = AuthoritativeQuestTypeCatalog.MaximumNativeQuestId + 1 });
         AssertQuestRejected(value => value with { RequiredProgress = 0 });
         AssertQuestRejected(value => value with { Progress = 3 });
         AssertQuestRejected(value => value with { Unavailable = true, Progress = 1 });
@@ -1053,6 +1054,13 @@ public sealed class DialogueProtocolProjectionTests
         Assert.Throws<InvalidDataException>(() =>
             DiabloProtocolMapper.ToProtocolSnapshot(source with {
                 Quests = [quest, quest],
+            }));
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source with {
+                Quests = [
+                    quest with { QuestId = 1, NativeQuestId = 0 },
+                    quest with { QuestId = 2, NativeQuestId = 0 },
+                ],
             }));
 
         void AssertPortalRejected(Func<DiabloPortalState, DiabloPortalState> mutate)

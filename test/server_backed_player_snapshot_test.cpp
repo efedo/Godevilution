@@ -777,6 +777,24 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestState)
 	quest->set_required_progress(1);
 	quest->set_completion_unique_identity(std::string(129, 'x'));
 	EXPECT_FALSE(ValidateQuestSnapshots(oversizedIdentity).has_value());
+
+	protocol::Snapshot invalidNativeQuestId;
+	quest = invalidNativeQuestId.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(1);
+	quest->set_native_quest_id(MAXQUESTS);
+	EXPECT_FALSE(ValidateQuestSnapshots(invalidNativeQuestId).has_value());
+
+	protocol::Snapshot duplicateNativeQuestIds;
+	quest = duplicateNativeQuestIds.add_quests();
+	quest->set_quest_id(1);
+	quest->set_required_progress(1);
+	quest->set_native_quest_id(0);
+	quest = duplicateNativeQuestIds.add_quests();
+	quest->set_quest_id(2);
+	quest->set_required_progress(1);
+	quest->set_native_quest_id(0);
+	EXPECT_FALSE(ValidateQuestSnapshots(duplicateNativeQuestIds).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestTownerInteractions)

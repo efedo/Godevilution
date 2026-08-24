@@ -563,9 +563,13 @@ internal static class DiabloProtocolMapper
         }
 
         var questIds = new HashSet<uint>();
+        var nativeQuestIds = new HashSet<uint>();
         foreach (var quest in quests) {
             if (quest.QuestId == 0
                 || !questIds.Add(quest.QuestId)
+                || quest.NativeQuestId.HasValue
+                    && (quest.NativeQuestId.Value > AuthoritativeQuestTypeCatalog.MaximumNativeQuestId
+                        || !nativeQuestIds.Add(quest.NativeQuestId.Value))
                 || quest.RequiredProgress == 0
                 || quest.Progress > quest.RequiredProgress
                 || quest.Unavailable && (quest.Completed || quest.Progress != 0)

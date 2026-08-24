@@ -1132,6 +1132,37 @@ public sealed class ClientModelTests
         };
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateIds)));
+
+        var invalidNativeQuestId = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3002,
+                    RequiredProgress = 1,
+                    NativeQuestId = 24,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativeQuestId)));
+
+        var duplicateNativeQuestIds = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3002,
+                    RequiredProgress = 1,
+                    NativeQuestId = 0,
+                },
+                new QuestSnapshot {
+                    QuestId = 3003,
+                    RequiredProgress = 1,
+                    NativeQuestId = 0,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: duplicateNativeQuestIds)));
     }
 
     [Fact]

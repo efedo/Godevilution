@@ -20,6 +20,9 @@ public sealed record AuthoritativeQuestTypeDefinition(
 /** Validated quest metadata used to admit external quest state rows. */
 public sealed class AuthoritativeQuestTypeCatalog
 {
+    /** Highest native quest ordinal accepted by the compatibility protocol. */
+    public const uint MaximumNativeQuestId = 23;
+
     private readonly Dictionary<uint, AuthoritativeQuestTypeDefinition> definitions;
 
     public AuthoritativeQuestTypeCatalog(
@@ -30,7 +33,7 @@ public sealed class AuthoritativeQuestTypeCatalog
         var nativeQuestIds = new HashSet<uint>();
         foreach (var definition in definitions) {
             if (definition.QuestId == 0
-                || definition.NativeQuestId > 23
+                || definition.NativeQuestId > MaximumNativeQuestId
                 || string.IsNullOrWhiteSpace(definition.Name)
                 || definition.SinglePlayerLevel < -1
                 || definition.MultiplayerLevel < -1

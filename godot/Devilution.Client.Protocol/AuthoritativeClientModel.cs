@@ -10,6 +10,7 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumMegaWidth = 40;
     private const int NativeMaximumMegaHeight = 40;
     private const uint NativeMaximumObjectId = 108;
+    private const uint NativeMaximumQuestId = 23;
 
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
@@ -781,9 +782,13 @@ public sealed class AuthoritativeClientModel
         }
 
         var questIds = new HashSet<uint>();
+        var nativeQuestIds = new HashSet<uint>();
         foreach (var quest in snapshot.Quests) {
             if (quest.QuestId == 0
                 || !questIds.Add(quest.QuestId)
+                || quest.HasNativeQuestId
+                    && (quest.NativeQuestId > NativeMaximumQuestId
+                        || !nativeQuestIds.Add(quest.NativeQuestId))
                 || quest.RequiredProgress == 0
                 || quest.Progress > quest.RequiredProgress
                 || (quest.Unavailable && (quest.Completed || quest.Progress != 0))
