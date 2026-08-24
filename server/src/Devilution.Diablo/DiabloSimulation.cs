@@ -527,6 +527,7 @@ public sealed partial class DiabloSimulation
         var targetPool = WorldState.CombatTargets.Values.ToArray();
         var candidates = nativeDunFragments.Definitions
             .Where(definition => definition.AnchorEntityId == 0
+                && definition.AnchorPositionX is null
                 && !appliedNativeDunFragments.Contains(definition.FragmentId))
             .Where(definition => {
                 var matches = targetPool.Where(target => target.IsUnique

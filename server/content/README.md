@@ -1809,6 +1809,9 @@ anchor when no object or unique encounter exists; fragment object placements
 may omit their explicit anchor and inherit this coordinate. Coordinates and
 offsets remain validated against the target level, while older object- and
 unique-anchored rows remain compatible.
+The Hellfire pack now ships the native `cornerstone.dun` fragment at the
+validated level-21 coordinate `(14,14)`, alongside its quest-type world-item
+anchor; this is the first authored Cornerstone placement on the new contract.
 
 Schema 1.425 adds optional `world_item_anchor_position_x` and
 `world_item_anchor_position_y` columns to `quest_types.tsv`. When both are

@@ -2699,7 +2699,14 @@ public sealed class ShippedContentTests
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
         Assert.Equal(24, activation.Simulation.WorldState.Quests.Count);
-        var nakrulFragment = Assert.Single(activation.NativeDunFragments!.Definitions);
+        var cornerstoneQuestType = activation.QuestTypes!.Definitions
+            .Single(definition => definition.QuestId == 3023);
+        Assert.Equal((14, 14), (
+            cornerstoneQuestType.WorldItemAnchorPositionX,
+            cornerstoneQuestType.WorldItemAnchorPositionY));
+        var nativeFragments = activation.NativeDunFragments!.Definitions;
+        Assert.Equal(2, nativeFragments.Count);
+        var nakrulFragment = nativeFragments.Single(definition => definition.FragmentId == 1);
         Assert.Equal((1U, 24U, 2403U, -6, -8), (
             nakrulFragment.FragmentId,
             nakrulFragment.LevelId,
@@ -2717,6 +2724,25 @@ public sealed class ShippedContentTests
             uberroom.TileLayer[^1],
             hellfireLevel.NativeMegaTileLayer[(6 + uberroom.MegaHeight - 1) * 20
                 + 9 + uberroom.MegaWidth - 1]);
+        var cornerstoneFragment = nativeFragments.Single(definition => definition.FragmentId == 2);
+        Assert.Equal((21U, "hellfire_level_21", "nlevels/l5data/cornerstone.dun", 14, 14), (
+            cornerstoneFragment.LevelId,
+            cornerstoneFragment.LevelSymbol,
+            cornerstoneFragment.AssetPath,
+            cornerstoneFragment.AnchorPositionX,
+            cornerstoneFragment.AnchorPositionY));
+        var cornerstoneMap = AuthoritativeDunMapAsset.Load(
+            cornerstoneFragment.AssetPath,
+            composed.GetRequiredAsset(cornerstoneFragment.AssetPath).Contents);
+        var cornerstoneLevel = activation.Simulation.WorldState.World!.Levels
+            .Single(level => level.LevelId == 21);
+        Assert.Equal(
+            cornerstoneMap.TileLayer[0],
+            cornerstoneLevel.NativeMegaTileLayer[7 * 20 + 7]);
+        Assert.Equal(
+            cornerstoneMap.TileLayer[^1],
+            cornerstoneLevel.NativeMegaTileLayer[(7 + cornerstoneMap.MegaHeight - 1) * 20
+                + 7 + cornerstoneMap.MegaWidth - 1]);
         Assert.Equal(
             [(1U, 1U, 2401U, 2403U, -4, 0), (2U, 1U, 2402U, 2403U, -2, 0),
              (3U, 1U, 2409U, 2403U, 3, -1)],

@@ -1081,7 +1081,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     "Native DUN fragments require a world and authored anchors.");
             nativeDunFragments.ValidateAssets(content);
             nativeDunFragments
-                .Filter(definition => definition.AnchorEntityId != 0)
+                .Filter(definition => definition.AnchorEntityId != 0
+                    || definition.AnchorPositionX is not null)
                 .Apply(content, world, objects, combatTargets);
         }
 
