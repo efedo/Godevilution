@@ -215,6 +215,9 @@ public sealed class AuthoritativeLevel
         if (transparency.Length != 0 && transparency.Length != width * height)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native transparency layer with an invalid length.");
+        if (transparency.Any(value => value > sbyte.MaxValue))
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native transparency value outside the compatibility range.");
         NativeTransparency = Array.AsReadOnly(transparency);
         var objects = (nativeObjectLayer ?? [])
             .ToArray();
@@ -228,6 +231,9 @@ public sealed class AuthoritativeLevel
         if (megaTiles.Length != 0 && megaTiles.Length != megaWidth * megaHeight)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native mega-tile layer with an invalid length.");
+        if (megaTiles.Any(value => value > byte.MaxValue))
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native mega-tile value outside the compatibility range.");
         NativeMegaTileLayer = Array.AsReadOnly(megaTiles);
         var pieces = (nativePieceLayer ?? []).ToArray();
         if (pieces.Length != 0 && pieces.Length != width * height)

@@ -143,6 +143,25 @@ public sealed class ClientModelTests
         };
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidTransparency)));
+
+        var invalidNativePresentation = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 1,
+                    Height = 1,
+                    NativeTransparency = { 128 },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
+
+        invalidNativePresentation.LevelGeometry[0].NativeTransparency.Clear();
+        invalidNativePresentation.LevelGeometry[0].NativeMegaTileLayer.Add(256);
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
     }
 
     [Fact]

@@ -902,9 +902,9 @@ public sealed class AuthoritativeClientModel
         foreach (var level in snapshot.LevelGeometry) {
             if (level.Width < 0
                 || level.Height < 0
-                || level.NativeTransparency.Any(value => value > ushort.MaxValue)
+                || level.NativeTransparency.Any(value => value > sbyte.MaxValue)
                 || level.NativeObjectLayer.Any(value => value > ushort.MaxValue)
-                || level.NativeMegaTileLayer.Any(value => value > ushort.MaxValue)
+                || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
                 || level.NativePieceLayer.Any(value => value > ushort.MaxValue)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid level geometry dimensions.");

@@ -7,6 +7,9 @@ mega-tile, d-piece, and transparency layers to the active level after validating
 their native dimensions and value ranges. This closes the map-layer portion of
 the snapshot resynchronization seam; native DUN object-layer materialization and
 object encounter-state presentation remain server-authored compatibility work.
+The authoritative C# level model and Godot protocol model enforce the same
+signed-byte transparency and byte-sized mega-tile ranges before those layers
+cross the shared protocol.
 The Hellfire Na-Krul fragment now materializes its native final lever as an
 anchor-relative authored behavior template. The server gates the lever on the
 three-tome sequence and owns final quest completion; the third tome no longer

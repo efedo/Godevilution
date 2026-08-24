@@ -222,6 +222,21 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RejectsNativePresentationValuesOutsideCompatibilityRanges()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            1,
+            1,
+            nativeTransparency: [128]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            1,
+            1,
+            nativeMegaTileLayer: [256]));
+    }
+
+    [Fact]
     public void MonsterMovementRequiresAnAdjacentFutureOccupancy()
     {
         Assert.Throws<ArgumentException>(() => new AuthoritativeCombatTarget(

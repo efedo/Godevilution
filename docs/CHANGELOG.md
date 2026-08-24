@@ -11,7 +11,8 @@ All notable changes to this fork are documented below.
   data.
 - Tightened native level-geometry protocol validation so transparency regions
   and mega-tile identities cannot exceed the native compatibility client's
-  signed-byte and byte-sized presentation ranges.
+  signed-byte and byte-sized presentation ranges across the C++ bridge,
+  authoritative C# level model, and Godot protocol model.
 - Externalized the Snotspill Banner sign chest as an authored server object. Its
   quest-variable gate and normal-item reward now activate through the shared
   authoritative object path instead of relying on the native local pickup. The
