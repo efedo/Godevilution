@@ -195,6 +195,19 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 }
             }
 
+            var monsterLayer = level.NativeMonsterLayer.ToArray();
+            if (map.MonsterLayer.Any(value => value != 0)) {
+                if (monsterLayer.Length == 0)
+                    monsterLayer = new ushort[checked(level.Width * level.Height)];
+                for (var y = 0; y < map.TileHeight; y++) {
+                    for (var x = 0; x < map.TileWidth; x++) {
+                        var value = map.MonsterLayer[y * map.TileWidth + x];
+                        if (value != 0)
+                            monsterLayer[(originY + y) * level.Width + originX + x] = value;
+                    }
+                }
+            }
+
             var nativePieces = level.NativePieceLayer.ToArray();
 
             var objectLayer = level.NativeObjectLayer.ToArray();
@@ -277,7 +290,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 nativePieces,
                 nativePieceProperties,
                 nativePieceCollisionCells,
-                nativePieceMissileBlockedCells) {
+                nativePieceMissileBlockedCells,
+                monsterLayer) {
                 StableSymbol = level.StableSymbol,
             };
         }

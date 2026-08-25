@@ -247,6 +247,7 @@ public static class AuthoritativeDunGeometryMaterializer
             missileBlocked,
             suppressMultiplayerDeathDrops: suppressMultiplayerDeathDrops,
             nativeTransparency: asset.TransparencyLayer,
+            nativeMonsterLayer: asset.MonsterLayer,
             nativeObjectLayer: asset.ObjectLayer,
             nativeMegaTileLayer: asset.TileLayer,
             nativePieceLayer: nativePieceLayer,

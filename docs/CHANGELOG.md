@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Native DUN geometry materialization now preserves the parsed transparency
   layer in authoritative levels instead of dropping native `dTransVal` values
   when external `.til`/`.sol` geometry is composed.
+- Raw native DUN monster layers now survive authoritative level and fragment
+  composition, including world-mutation rebuilds; monster spawn mapping remains
+  deferred until the validated `MonstConvTbl` content contract is externalized.
 - Deferred native-DUN fragments now refresh effective world geometry and
   reconcile authored object mappings after their anchor appears, so mapped
   set-piece object cells become authoritative instead of remaining inert.

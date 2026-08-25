@@ -107,6 +107,29 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void ComposesNativeMonsterLayerFromFragmentData()
+    {
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tlevel_symbol\tasset_path\tanchor_entity_id\tanchor_offset_x\tanchor_offset_y\n"
+                + "1\t24\thellfire_level_24\tfragment.dun\t9\t-2\t-2\n");
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var anchor = new AuthoritativeWorldObject(9, 6003, 24, 4, 4);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42, monsterId: 155)),
+            ]),
+        ]));
+
+        catalog.Apply(content, world, [anchor]);
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal(64, level.NativeMonsterLayer.Count);
+        Assert.Equal((ushort)155, level.NativeMonsterLayer[2 * 8 + 2]);
+    }
+
+    [Fact]
     public void AppliesAFragmentRelativeToAUniqueEncounter()
     {
         var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
@@ -485,12 +508,16 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         Assert.Empty(level.NativeObjectLayer);
     }
 
-    private static byte[] CreateDun(ushort tileId, ushort objectId = 0)
+    private static byte[] CreateDun(
+        ushort tileId,
+        ushort objectId = 0,
+        ushort monsterId = 0)
     {
         var words = new ushort[19];
         words[0] = 1;
         words[1] = 1;
         words[2] = tileId;
+        words[7] = monsterId;
         words[11] = objectId;
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++) {

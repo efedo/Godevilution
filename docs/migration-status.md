@@ -120,6 +120,12 @@ into the authoritative level alongside its collision, object, mega-tile, and
 d-piece layers, preserving the native `dTransVal` data for protocol projection
 and later presentation parity.
 
+The raw native DUN monster layer is now retained through authoritative level
+materialization, ordinary-level composition, deferred fragment composition, and
+world-mutation rebuilds. Spawn mapping remains a separate follow-up because the
+native layer stores `MonstConvTbl` indices rather than authoritative monster
+entities.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

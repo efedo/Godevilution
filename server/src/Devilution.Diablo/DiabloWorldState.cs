@@ -364,6 +364,7 @@ public sealed class DiabloWorldState
             var blocked = baseLevel.BlockedCells.ToHashSet();
             var missileBlocked = baseLevel.MissileBlockedCells.ToHashSet();
             var transparency = baseLevel.NativeTransparency.ToArray();
+            var monsterLayer = baseLevel.NativeMonsterLayer.ToArray();
             var objectLayer = baseLevel.NativeObjectLayer.ToArray();
             var megaTileLayer = baseLevel.NativeMegaTileLayer.ToArray();
             var pieceLayer = baseLevel.NativePieceLayer.ToArray();
@@ -565,7 +566,8 @@ public sealed class DiabloWorldState
                     pieceLayer,
                     nativePieceProperties,
                     nativePieceCollisionCells,
-                    nativePieceMissileBlockedCells) {
+                    nativePieceMissileBlockedCells,
+                    monsterLayer) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

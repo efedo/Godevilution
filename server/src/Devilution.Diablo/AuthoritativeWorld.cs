@@ -208,7 +208,8 @@ public sealed class AuthoritativeLevel
         IEnumerable<ushort>? nativePieceLayer = null,
         IReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>? nativePieceProperties = null,
         IEnumerable<int>? nativePieceCollisionCells = null,
-        IEnumerable<int>? nativePieceMissileBlockedCells = null)
+        IEnumerable<int>? nativePieceMissileBlockedCells = null,
+        IEnumerable<ushort>? nativeMonsterLayer = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -240,6 +241,12 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains a native transparency value outside the compatibility range.");
         NativeTransparency = Array.AsReadOnly(transparency);
+        var monsters = (nativeMonsterLayer ?? [])
+            .ToArray();
+        if (monsters.Length != 0 && monsters.Length != width * height)
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native monster layer with an invalid length.");
+        NativeMonsterLayer = Array.AsReadOnly(monsters);
         var objects = (nativeObjectLayer ?? [])
             .ToArray();
         if (objects.Length != 0 && objects.Length != width * height)
@@ -306,6 +313,9 @@ public sealed class AuthoritativeLevel
 
     /** Native d-piece transparency values retained separately from collision. */
     public IReadOnlyList<ushort> NativeTransparency { get; }
+
+    /** Raw native DUN monster-layer values retained for authoritative set-piece materialization. */
+    public IReadOnlyList<ushort> NativeMonsterLayer { get; }
 
     /** Native DUN object-layer values retained for explicit content mapping. */
     public IReadOnlyList<ushort> NativeObjectLayer { get; }

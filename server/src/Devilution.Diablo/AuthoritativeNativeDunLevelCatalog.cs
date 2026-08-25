@@ -127,7 +127,8 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                 nativeGeometry?.NativePieceLayer ?? level.NativePieceLayer,
                 nativeGeometry?.NativePieceProperties ?? level.NativePieceProperties,
                 nativeGeometry?.NativePieceCollisionCells ?? level.NativePieceCollisionCells,
-                nativeGeometry?.NativePieceMissileBlockedCells ?? level.NativePieceMissileBlockedCells) {
+                nativeGeometry?.NativePieceMissileBlockedCells ?? level.NativePieceMissileBlockedCells,
+                map.MonsterLayer) {
                 StableSymbol = string.IsNullOrWhiteSpace(definition.LevelSymbol)
                     ? level.StableSymbol
                     : definition.LevelSymbol,

@@ -36,6 +36,7 @@ public sealed class AuthoritativeDunGeometryTests
             AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile,
             level.NativePieceProperties[12]);
         Assert.Equal([10, 11, 12, 13], level.NativePieceLayer);
+        Assert.Equal(new ushort[] { 0, 0, 0, 0 }, level.NativeMonsterLayer);
         Assert.Equal([0, 2], level.NativePieceCollisionCells);
         Assert.Equal([1, 2], level.NativePieceMissileBlockedCells);
         Assert.Equal("SL_SYNTHETIC", level.StableSymbol);
@@ -64,6 +65,31 @@ public sealed class AuthoritativeDunGeometryTests
             properties);
 
         Assert.Equal(new ushort[] { 13, 14, 15, 16 }, level.NativeTransparency);
+    }
+
+    [Fact]
+    public void MaterializerPreservesNativeMonsterLayer()
+    {
+        var asset = AuthoritativeDunMapAsset.Load(
+            "synthetic.dun",
+            CreateDun(1, 1, [7], monsterLayer: [1, 0, 155, 2]));
+        var pieces = new AuthoritativeDunPieceCatalog([
+            new(7, 10, 11, 12, 13),
+        ]);
+        var properties = new AuthoritativeDunTilePropertyCatalog([
+            new(10, AuthoritativeDunTileFlags.None),
+            new(11, AuthoritativeDunTileFlags.None),
+            new(12, AuthoritativeDunTileFlags.None),
+            new(13, AuthoritativeDunTileFlags.None),
+        ]);
+
+        var level = AuthoritativeDunGeometryMaterializer.Materialize(
+            101,
+            asset,
+            pieces,
+            properties);
+
+        Assert.Equal(new ushort[] { 1, 0, 155, 2 }, level.NativeMonsterLayer);
     }
 
     [Fact]
@@ -452,7 +478,8 @@ public sealed class AuthoritativeDunGeometryTests
         int megaHeight,
         ushort[] tiles,
         ushort[]? objectLayer = null,
-        ushort[]? transparencyLayer = null)
+        ushort[]? transparencyLayer = null,
+        ushort[]? monsterLayer = null)
     {
         var megaCount = megaWidth * megaHeight;
         var dPieceCount = megaCount * 4;
@@ -464,6 +491,8 @@ public sealed class AuthoritativeDunGeometryTests
             Array.Copy(objectLayer, 0, words, 2 + megaCount + dPieceCount * 2, objectLayer.Length);
         if (transparencyLayer is not null)
             Array.Copy(transparencyLayer, 0, words, 2 + megaCount + dPieceCount * 3, transparencyLayer.Length);
+        if (monsterLayer is not null)
+            Array.Copy(monsterLayer, 0, words, 2 + megaCount + dPieceCount, monsterLayer.Length);
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++)
             BinaryPrimitives.WriteUInt16LittleEndian(
