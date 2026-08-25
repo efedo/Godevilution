@@ -6501,11 +6501,14 @@ public sealed class DiabloCombatCommandProcessor
             1,
             sneakTuning.Value.DistanceBase
                 - (target.Intelligence * sneakTuning.Value.DistanceIntelligenceScale));
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && target.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = target.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)target.EntityId ^ victim.EntityId);
         // Native SneakAi consumes one GenerateRnd(100) before evaluating its
-        // fade, retreat, and adjacent-attack branches. Seed-zero targets keep
+        // fade, retreat, and adjacent-attack branches. Zero-seed targets keep
         // the deterministic compatibility path and therefore do not advance
         // the shared stream here.
         var actionRoll = usesNativeAiStream
