@@ -13016,6 +13016,55 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedTorchantConsumesNativeAiRangedPostShotDelayRoll()
+    {
+        const uint initSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Torchant",
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        var delayRoll = expected.RandomIntLessThan(20);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([CreateFireballSpell()]),
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Torchant",
+                    "Fireball",
+                    AuthoritativeProjectileBehavior.Fireball,
+                    ProjectileDamage: 3,
+                    RangedDelayBase: 11,
+                    RangedDelayRandomRange: 20),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(11 + delayRoll, monster.RangedDelayTicks);
+        Assert.Single(world.Projectiles);
+    }
+
+    [Fact]
     public void MultiplayerTorchantConsumesNativeAiRangedPostShotDelayRoll()
     {
         const uint aiSeed = 7;

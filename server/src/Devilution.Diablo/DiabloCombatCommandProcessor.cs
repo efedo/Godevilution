@@ -8572,7 +8572,6 @@ public sealed class DiabloCombatCommandProcessor
         var usesNativeRangedAiStream = missile.AttackMode
                 == AuthoritativeMonsterRangedAttackMode.Ranged
             && !isCounselor
-            && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
         var usesNativeCounselorAiStream = isCounselor
             && monster.MonsterAiSeed != 0;
