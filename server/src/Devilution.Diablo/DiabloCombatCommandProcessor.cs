@@ -6024,8 +6024,11 @@ public sealed class DiabloCombatCommandProcessor
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         if (monster.AdvanceSkeletonMeleeDelay())
             return true;
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var delayChanceBase = 35;
         var delayChanceIntelligenceScale = 4;
         if (monsterTypes?.TryGet(monster.MonsterId, out var megaDefinition) == true
@@ -8552,7 +8555,6 @@ public sealed class DiabloCombatCommandProcessor
         var usesNativeAiStream = missile.ProjectileBehavior
                 == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")
-            && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
         var usesNativeRangedAvoidanceAiStream = missile.AttackMode
                 == AuthoritativeMonsterRangedAttackMode.RangedAvoidance

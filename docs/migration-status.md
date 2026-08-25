@@ -69,6 +69,9 @@ healing, retreat, AiAvoidance movement, RandomWalk, and adjacent-admission
 draws under the same compatibility rule.
 Initialized single-player Zombie targets now consume the global native action,
 random-direction, and direct movement draws under the same compatibility rule.
+Initialized single-player Mega targets now consume the global native delegated
+Skeleton fallback and Inferno admission/recovery draws under the same
+compatibility rule.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
 effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy
