@@ -26,6 +26,10 @@ from an open authoritative stash, and casts carry the same stable page/cell/item
 reference used by the server and Godot client. Offline spell selection remains
 inventory/belt-only for compatibility.
 
+Cursor-triggered native scroll and rune casts now use the same open-stash
+stable-reference fallback when the selected source has no inventory or belt
+slot.
+
 Godot's authoritative cast-source selector now includes spell consumables in an
 open stash, carrying page/cell/stable identity through the same cast protocol;
 the server rejects those sources when the stash session is closed.

@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
 - The connected native spell list now exposes validated open-stash scroll and
   rune sources and emits their stable stash references through the cast protocol;
   offline spell selection remains unchanged.
+- Cursor-triggered native scroll and rune casts now resolve the same open-stash
+  stable references when no inventory or belt slot is selected.
 - Connected native stash books, potions, and stash-sourced oils now use open-session
   stable item references as authoritative sources; closed-stash sources fail
   closed without consuming or mutating local state.

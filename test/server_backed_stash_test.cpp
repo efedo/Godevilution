@@ -223,5 +223,29 @@ TEST_F(ServerBackedStashTest, UsesAuthoritativeReferenceForOpenStashScrollCast)
 	EXPECT_TRUE(server.observed());
 }
 
+TEST_F(ServerBackedStashTest, UsesAuthoritativeReferenceForOpenStashScrollCursorCast)
+{
+	StashItemServer server(true);
+	ServerBackedRuntimeConfiguration configuration;
+	configuration.mode = ServerBackedRuntimeConfiguration::GameMode::Authoritative;
+	configuration.enabled = true;
+	configuration.host = "127.0.0.1";
+	configuration.port = server.port();
+	configuration.clientBuildId = "client";
+	configuration.protocolSchemaVersion = "1";
+	configuration.contentManifestHash = "content";
+	auto &runtime = GetServerBackedRuntime();
+	ASSERT_TRUE(runtime.Start(configuration, CurrentStoreManager, *MyPlayer).has_value());
+	ASSERT_TRUE(runtime.IsConnected());
+
+	pcurs = CURSOR_TELEPORT;
+	MyPlayer->inventorySpell = SpellID::Firebolt;
+	MyPlayer->spellFrom = 0;
+	EXPECT_TRUE(TryIconCurs());
+
+	runtime.Stop();
+	EXPECT_TRUE(server.observed());
+}
+
 } // namespace
 } // namespace devilution::authoritative

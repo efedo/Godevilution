@@ -3217,15 +3217,22 @@ std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceFor
 std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForSpellCursor(Player &player, SpellID &spellId)
 {
 	const int itemLocation = player.spellFrom;
-	if (itemLocation < INVITEM_INV_FIRST || itemLocation > INVITEM_BELT_LAST)
-		return std::nullopt;
+	if (itemLocation >= INVITEM_INV_FIRST && itemLocation <= INVITEM_BELT_LAST) {
+		const Item &item = GetInventoryItem(player, itemLocation);
+		if (item.isEmpty() || item._iSpell == SpellID::Null)
+			return std::nullopt;
+		spellId = item._iSpell;
+		return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+	}
 
-	const Item &item = GetInventoryItem(player, itemLocation);
-	if (item.isEmpty() || item._iSpell == SpellID::Null)
+	if (!IsStashOpen)
 		return std::nullopt;
-	spellId = item._iSpell;
-
-	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+	for (const Item &item : Stash.stashList) {
+		if (!item.isScrollOf(spellId) && !item.isRuneOf(spellId))
+			continue;
+		return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+	}
+	return std::nullopt;
 }
 
 std::optional<authoritative::ServerBackedCastSource> ServerBackedSourceForSpellCursor(Player &player, SpellID &spellId)
