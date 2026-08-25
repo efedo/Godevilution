@@ -1561,6 +1561,12 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
 	const auto result = presentation.Apply(invalidProjection, 1);
 	EXPECT_FALSE(result.has_value());
+
+	invalid = geometry;
+	invalid.nativeObjectLayer.assign(16, 0);
+	invalid.nativeObjectLayer[0] = static_cast<uint16_t>(OBJ_LAST) + 1;
+	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
+	EXPECT_FALSE(presentation.Apply(invalidProjection, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)

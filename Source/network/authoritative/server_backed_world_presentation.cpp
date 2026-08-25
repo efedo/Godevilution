@@ -743,6 +743,9 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		})
 	    || std::any_of(geometry->nativeMegaTileLayer.begin(), geometry->nativeMegaTileLayer.end(), [](uint16_t value) {
 			return value > std::numeric_limits<uint8_t>::max();
+		})
+	    || std::any_of(geometry->nativeObjectLayer.begin(), geometry->nativeObjectLayer.end(), [](uint16_t value) {
+			return value > static_cast<uint16_t>(OBJ_LAST);
 		}))
 		return tl::make_unexpected("Authoritative level geometry contains a value outside the native presentation range.");
 

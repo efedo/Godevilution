@@ -54,6 +54,10 @@ The native compatibility client now enforces the same generated-origin
 validation before applying a snapshot, including duplicate set-level identity
 checks and the geometry-free legacy path.
 
+The native presentation bridge independently revalidates DUN object-layer IDs
+before applying directly constructed geometry projections, so malformed
+compatibility data fails closed even when it bypasses protocol validation.
+
 The external geometry contract now preserves all native `.sol` d-piece flags
 when a text property table is used: legacy `solid`/`block_missile` rows remain
 valid, while optional lighting, transparency, and trap flags are validated and

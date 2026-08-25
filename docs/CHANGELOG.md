@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   combat-entity cursor target is missing from the authoritative projection;
   it no longer silently falls back to a tile cast, including scroll and rune
   consumables.
+- Native geometry presentation now independently rejects out-of-range DUN
+  object-layer IDs when applying directly constructed projections.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
