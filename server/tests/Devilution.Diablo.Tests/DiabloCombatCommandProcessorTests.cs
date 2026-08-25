@@ -7427,6 +7427,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedSkeletonMeleeConsumesNativeGlobalRandomStream()
+    {
+        const uint initSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            aggroRange: 5,
+            nativeAi: "SkeletonMelee",
+            intelligence: 0,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(1);
+        var expected = new DiabloRandom(1);
+        Assert.True(expected.RandomIntLessThan(100) >= 35);
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void GargoyleAiUsesContentSelectedAvoidanceMovementWhenHealingMetadataIsPresent()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

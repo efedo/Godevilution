@@ -31,6 +31,9 @@ summoning remains server-owned. Single-player Skeleton King now consumes its
 native action roll for summon and adjacent-attack admission; summons also use
 the live stream for skeleton-type selection, stand-animation timing, initial
 health, and the retained item/AI seeds before entering authoritative simulation.
+Initialized single-player SkeletonMelee/Fallen targets now consume the global
+native stream for SkeletonAi action, delay, and RandomWalk draws; zero-seed
+fixtures and legacy multiplayer snapshots retain the compatibility controller.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
 effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy
