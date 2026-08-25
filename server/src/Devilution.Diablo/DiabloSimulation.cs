@@ -200,7 +200,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Corpses,
             options.WorldMutations,
             nativeDunObjects: options.NativeDunObjects,
-            nativeObjectTemplates: options.NativeObjectTemplates);
+            nativeObjectTemplates: options.NativeObjectTemplates,
+            allowMissingNativeDunLayers: options.NativeDunFragments is not null);
         if (options.NativeDunFragments is not null && options.Content is null)
             throw new InvalidDataException(
                 "Deferred native DUN fragments require their composed content bytes.");
@@ -699,6 +700,11 @@ public sealed partial class DiabloSimulation
             WorldState.World,
             WorldState.Objects.Values,
             targetPool);
+        WorldState.RefreshProjectedGeometry();
+        // The fragment may have introduced mapped native-DUN object cells.
+        // Reconcile after geometry publication so deferred set-piece objects
+        // enter the same authoritative object catalog as initial mappings.
+        WorldState.ReconcileNativeDunObjects();
         foreach (var candidate in candidates)
             appliedNativeDunFragments.Add(candidate.FragmentId);
     }

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Deferred native-DUN fragments now refresh effective world geometry and
+  reconcile authored object mappings after their anchor appears, so mapped
+  set-piece object cells become authoritative instead of remaining inert.
 - Godot and the authoritative combat processor now support spell consumables in
   an open stash as stable cast sources; closed-stash sources fail closed without
   consuming the item.

@@ -806,7 +806,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     nativeDunObjects.LoadAvailableObjects(
                         world,
                         (objects ?? []).Concat(generatedObjects),
-                        objectDefinitions));
+                        objectDefinitions,
+                        allowMissingLayers: nativeDunFragments is not null));
             }
             if (generatedObjects.Count > 0) {
                 objects = (objects ?? []).Concat(generatedObjects).ToArray();

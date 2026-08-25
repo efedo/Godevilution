@@ -110,10 +110,16 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
         IEnumerable<AuthoritativeWorldObject>? templates = null,
-        bool preserveExisting = false)
+        bool preserveExisting = false,
+        bool allowMissingLayers = false)
     {
         ArgumentNullException.ThrowIfNull(world);
-        return LoadAvailableObjects(world.Levels, existingObjects, templates, preserveExisting);
+        return LoadAvailableObjects(
+            world.Levels,
+            existingObjects,
+            templates,
+            preserveExisting,
+            allowMissingLayers);
     }
 
     /** Materializes mapped objects from an already projected level collection. */
@@ -121,7 +127,8 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         IEnumerable<AuthoritativeLevel> levels,
         IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
         IEnumerable<AuthoritativeWorldObject>? templates = null,
-        bool preserveExisting = false)
+        bool preserveExisting = false,
+        bool allowMissingLayers = false)
     {
         ArgumentNullException.ThrowIfNull(levels);
         var existingValues = (existingObjects ?? []).ToArray();
@@ -138,6 +145,8 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         foreach (var definition in definitions) {
             var levelId = definition.GetRuntimeLevelId();
             if (!levelsById.TryGetValue(levelId, out var level))
+                continue;
+            if (level.NativeObjectLayer.Count == 0 && allowMissingLayers)
                 continue;
             if (level.NativeObjectLayer.Count == 0)
                 throw new InvalidDataException(

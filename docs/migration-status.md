@@ -109,6 +109,11 @@ second and third participant remain connected.
 World-item anchor completion now requires an active quest, preventing an
 inactive content quest from being completed by an authoritative item drop.
 
+Deferred native-DUN fragments now refresh the effective world projection after
+their geometry is published and reconcile explicit object mappings afterward.
+Mappings may therefore target a layer introduced by a fixed or unique-anchored
+fragment without creating a presentation-only or inert set-piece object.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

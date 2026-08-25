@@ -181,20 +181,34 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
             uniqueIdentity: "Snotspill");
         var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
             new ContentPack("base", "1", [], assets: [
-                new ContentAsset("fragment.dun", CreateDun(42)),
+                new ContentAsset("fragment.dun", CreateDun(42, 11)),
             ]),
         ]));
-
+        var nativeObjectTemplate = new AuthoritativeWorldObject(100, 97, 0, 0, 0);
+        var nativeDunObjects = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(0, false, 11, 97, 100) {
+                TargetKind = AuthoritativeNativeDunObjectTargetKind.Level,
+                LevelId = 24,
+            },
+        ]);
         var simulation = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
                 World = world,
                 CombatTargets = [target],
                 NativeDunFragments = catalog,
+                NativeDunObjects = nativeDunObjects,
+                NativeObjectTemplates = [nativeObjectTemplate],
                 Content = content,
             });
 
         var level = Assert.Single(simulation.WorldState.World!.Levels);
         Assert.Equal((ushort)42, level.NativeMegaTileLayer[1 * 4 + 1]);
+        var mappedObject = Assert.Single(
+            simulation.WorldState.Objects.Values,
+            @object => @object.ObjectId == 97);
+        Assert.Equal((target.PositionX - 2, target.PositionY - 2), (
+            mappedObject.PositionX,
+            mappedObject.PositionY));
     }
 
     [Fact]
@@ -471,12 +485,13 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         Assert.Empty(level.NativeObjectLayer);
     }
 
-    private static byte[] CreateDun(ushort tileId)
+    private static byte[] CreateDun(ushort tileId, ushort objectId = 0)
     {
         var words = new ushort[19];
         words[0] = 1;
         words[1] = 1;
         words[2] = tileId;
+        words[11] = objectId;
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++) {
             BinaryPrimitives.WriteUInt16LittleEndian(

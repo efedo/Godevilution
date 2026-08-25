@@ -12,6 +12,7 @@ public sealed class DiabloWorldState
     private readonly HashSet<int> fallbackMissileBlockedCells;
     private readonly AuthoritativeNativeDunObjectCatalog? nativeDunObjects;
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
+    private readonly bool allowMissingNativeDunLayers;
     private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
     private readonly HashSet<uint> activeWorldMutationIds = [];
     private ulong? lastPortalTick;
@@ -32,7 +33,8 @@ public sealed class DiabloWorldState
         AuthoritativeWorldMutationCatalog? worldMutations = null,
         IEnumerable<uint>? activeWorldMutationIds = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
-        IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null)
+        IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
+        bool allowMissingNativeDunLayers = false)
     {
         ValidateEntryCount(combatTargets, "combat target");
         ValidateEntryCount(portals, "portal");
@@ -44,6 +46,7 @@ public sealed class DiabloWorldState
         WorldMutations = worldMutations;
         this.nativeDunObjects = nativeDunObjects;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
+        this.allowMissingNativeDunLayers = allowMissingNativeDunLayers;
         foreach (var mutationId in activeWorldMutationIds ?? []) {
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
@@ -141,6 +144,12 @@ public sealed class DiabloWorldState
             throw new InvalidDataException(
                 "Generated level replacement requires an authoritative world geometry catalog.");
         World.ReplaceLevel(level);
+        RebuildProjectedGeometry();
+    }
+
+    /** Rebuilds effective geometry after a catalog mutates the backing world. */
+    public void RefreshProjectedGeometry()
+    {
         RebuildProjectedGeometry();
     }
 
@@ -561,7 +570,7 @@ public sealed class DiabloWorldState
                 });
         }
 
-        SynchronizeNativeDunObjects();
+        ReconcileNativeDunObjects(allowMissingNativeDunLayers);
     }
 
     /** Resolves an authored mutation origin from a fixed object or unique encounter. */
@@ -596,7 +605,7 @@ public sealed class DiabloWorldState
     }
 
     /** Reconciles mapped native object entities with the currently projected object layer. */
-    private void SynchronizeNativeDunObjects()
+    public void ReconcileNativeDunObjects(bool allowMissingLayers = false)
     {
         if (nativeDunObjects is null)
             return;
@@ -604,6 +613,8 @@ public sealed class DiabloWorldState
         foreach (var definition in nativeDunObjects.Definitions) {
             var levelId = definition.GetRuntimeLevelId();
             if (!projectedLevels.TryGetValue(levelId, out var level))
+                continue;
+            if (level.NativeObjectLayer.Count == 0 && allowMissingLayers)
                 continue;
             for (var cell = 0; cell < level.NativeObjectLayer.Count; cell++) {
                 if (level.NativeObjectLayer[cell] == definition.NativeObjectId)
@@ -625,7 +636,8 @@ public sealed class DiabloWorldState
             projectedLevels.Values,
             Objects.Values.ToArray(),
             nativeObjectTemplates,
-            preserveExisting: true);
+            preserveExisting: true,
+            allowMissingLayers: allowMissingLayers);
         foreach (var @object in materialized) {
             if (!Objects.TryAdd(@object.EntityId, @object))
                 throw new InvalidDataException(
