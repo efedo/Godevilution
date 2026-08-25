@@ -7560,6 +7560,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedZombieConsumesNativeActionAndDirectionRolls()
+    {
+        const uint initSeed = 13;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            100,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie",
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(8);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 11,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((4, 5), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void GargoyleAiUsesNativeAvoidanceMovementWhenHealthy()
     {
         var monster = new AuthoritativeCombatTarget(

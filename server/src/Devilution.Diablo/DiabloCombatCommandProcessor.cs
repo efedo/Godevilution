@@ -7162,8 +7162,11 @@ public sealed class DiabloCombatCommandProcessor
         if (!zombieActionTuning.HasValue || !zombieMovementTuning.HasValue)
             return false;
 
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var actionChance = Math.Min(
             100,
