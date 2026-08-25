@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
 - Multiplayer GoatMelee/AiAvoidance now consumes the restored stream for its
   movement, Move-goal, RandomWalk, adjacent-attack, and wounded-special draws;
   legacy seed-zero targets retain compatibility.
+- Multiplayer Gargoyle now consumes the restored stream for healthy
+  AiAvoidance movement, adjacent attacks, wounded retreat RandomWalk, and
+  healing divisor rolls; the native special lock remains server-owned.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

@@ -5040,8 +5040,14 @@ public sealed class DiabloCombatCommandProcessor
                                 * target.Intelligence)))
                     continue;
                 var gargoyleAttackTuning = GetGargoyleAttackTuning(target);
+                var usesGargoyleNativeAiStream = gargoyleAttackTuning.HasValue
+                    && gameMode == DiabloGameMode.Multiplayer
+                    && target.MonsterAiSeed != 0;
+                var gargoyleAttackRoll = usesGargoyleNativeAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)(attackSeed % 100U);
                 if (gargoyleAttackTuning.HasValue
-                    && attackSeed % 100U >= (uint)Math.Min(
+                    && gargoyleAttackRoll >= Math.Min(
                         100,
                         gargoyleAttackTuning.Value.ChanceBase
                             + (gargoyleAttackTuning.Value.IntelligenceScale
@@ -6899,11 +6905,22 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        var direction = GetDirection(
-            monster.PositionX,
-            monster.PositionY,
-            player.PositionX,
-            player.PositionY);
+        return FindNativeRandomWalkStepFromRandom(
+            monster,
+            GetDirection(
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY),
+            players);
+    }
+
+    /** Native RandomWalk ordering from an explicitly selected direction. */
+    private (int X, int Y)? FindNativeRandomWalkStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        int direction,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
         var firstTurn = random.FlipCoin(2) ? 1 : -1;
         var secondTurn = random.FlipCoin(2) ? 2 : -2;
         var directions = new[] {
@@ -6976,6 +6993,8 @@ public sealed class DiabloCombatCommandProcessor
 
         var safeDistance = gargoyleTuning.Value.DistanceBase
             + (gargoyleTuning.Value.IntelligenceScale * monster.Intelligence);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         if (monster.GargoyleSpecialActive) {
             if (distance < safeDistance)
                 monster.GargoyleSpecialActive = false;
@@ -6987,12 +7006,32 @@ public sealed class DiabloCombatCommandProcessor
                 / 100)
             return false;
 
-        if (distance < safeDistance)
-            return TryBeginGargoyleRetreat(monster, player, players, distance);
+        if (distance < safeDistance) {
+            if (!usesNativeAiStream)
+                return TryBeginGargoyleRetreat(monster, player, players, distance);
+
+            var direction = GetDirection(
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY);
+            var retreat = FindNativeRandomWalkStepFromRandom(
+                monster,
+                RotateDirection(direction, 4),
+                players);
+            if (retreat.HasValue) {
+                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                return true;
+            }
+            return false;
+        }
 
         var healSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var healRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(gargoyleTuning.Value.HealDivisorRandomRange)
+            : (int)(healSeed % (uint)gargoyleTuning.Value.HealDivisorRandomRange);
         var divisor = gargoyleTuning.Value.HealDivisorMultiplier
-            * ((int)(healSeed % (uint)gargoyleTuning.Value.HealDivisorRandomRange)
+            * (healRoll
                 + gargoyleTuning.Value.HealDivisorRandomOffset);
         var healingQ6 = DiabloFixedPointQ6.FromWhole(
             monster.MaxHitPoints / divisor);
@@ -7082,12 +7121,25 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (TryAdvanceAiAvoidanceMoveGoal(
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        var advancedMoveGoal = usesNativeAiStream
+            ? TryAdvanceAiAvoidanceMoveGoalFromRandom(
                 monster,
                 player,
                 players,
                 distance,
-                actionSeed))
+                actionRoll)
+            : TryAdvanceAiAvoidanceMoveGoal(
+                monster,
+                player,
+                players,
+                distance,
+                actionSeed);
+        if (advancedMoveGoal)
             return true;
 
         var movementTuning = GetGargoyleMovementTuning(monster);
@@ -7096,17 +7148,15 @@ public sealed class DiabloCombatCommandProcessor
             movementTuning?.ChanceBase ?? 28,
             movementTuning?.IntelligenceScale ?? 2,
             GetAiAvoidanceMovementFreshChanceBonus(monster));
-        if (actionSeed % 100U >= (uint)movementChance)
+        if (actionRoll >= movementChance)
         {
             monster.AdvanceAvoidanceMovementIdle();
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            player,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, player, players)
+            : FindNativeRandomWalkStep(monster, player, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             monster.RecordAvoidanceMovement(

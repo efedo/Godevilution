@@ -18,8 +18,10 @@ Multiplayer Fat/Overlord AI now consumes the stream for its native movement or
 adjacent-attack admission, including RandomWalk coin draws. Remaining native AI
 Multiplayer GoatMelee/AiAvoidance now consumes the stream for its movement,
 Move-goal, RandomWalk, adjacent-attack, and wounded-special draws. Remaining
-native AI controllers and rolls are follow-up work; seed-zero targets retain
-the compatibility path.
+Multiplayer Gargoyle now consumes the stream for healthy AiAvoidance movement,
+adjacent attacks, wounded retreat RandomWalk, and healing divisor rolls; its
+native special lock remains server-owned. Remaining native AI controllers and
+rolls are follow-up work; seed-zero targets retain the compatibility path.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the

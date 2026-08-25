@@ -390,7 +390,10 @@ far-distance movement draw. The multiplayer Fat/Overlord controller likewise
 consumes its native movement or adjacent-attack admission and RandomWalk coin
 draws. The multiplayer GoatMelee/AiAvoidance controller likewise consumes its
 movement, Move-goal, RandomWalk, adjacent-attack, and wounded-special draws.
-Using it for every remaining native AI roll is follow-up work.
+The multiplayer Gargoyle controller likewise consumes its healthy AiAvoidance
+movement, adjacent attacks, wounded retreat RandomWalk, and healing divisor
+draws; its native special lock remains server-owned. Using it for every
+remaining native AI roll is follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 
