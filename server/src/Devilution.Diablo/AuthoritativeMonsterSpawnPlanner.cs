@@ -7,7 +7,11 @@ public sealed record AuthoritativeMonsterSpawn(
     int PositionX,
     int PositionY,
     int HitPoints,
-    int AttackDamage);
+    int AttackDamage)
+{
+    /** Native placement direction selected before monster initialization. */
+    public int Direction { get; init; }
+}
 
 /**
  * Selects level-valid monster types and walkable cells without depending on
@@ -99,6 +103,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         var spawns = new AuthoritativeMonsterSpawn[spawnCount];
         for (var index = 0; index < spawnCount; index++) {
             var definition = orderedCandidates[index % orderedCandidates.Length];
+            var direction = random.Next(8);
             var hitPoints = random.Next(
                 checked(definition.MaximumHitPoints - definition.MinimumHitPoints + 1))
                 + definition.MinimumHitPoints;
@@ -112,7 +117,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 position.X,
                 position.Y,
                 hitPoints,
-                attackDamage);
+                attackDamage) {
+                    Direction = direction,
+                };
         }
         return spawns;
     }
@@ -347,7 +354,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             nativeAi: spawn.Definition.NativeAi,
             intelligence: spawn.Definition.Intelligence,
             knockback: spawn.Definition.Knockback,
-            direction: direction);
+            direction: spawn.Direction);
     }
 
     private static uint CreateDropSeed(uint seed, uint monsterId, int index)

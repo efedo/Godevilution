@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Procedural monster scatter now enforces DevilutionX's native `MaxMonsters -
   10` capacity (190), preserving ten slots for quest and runtime summons while
   retaining caller-provided lower limits.
+- Procedural monster placements now preserve DevilutionX's native deterministic
+  0-to-7 placement direction through authoritative combat targets.
 - Content schema `1.429.0` externalizes the validated native `MonstConvTbl`
   mapping through `native_dun_monsters.tsv` for base and Hellfire packs. The
   authoritative module now selects stable monster identities and materializes

@@ -32,17 +32,20 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
                 spawn.PositionX,
                 spawn.PositionY,
                 spawn.HitPoints,
-                spawn.AttackDamage)),
+                spawn.AttackDamage,
+                spawn.Direction)),
             second.Select(spawn => (
                 spawn.Definition.MonsterId,
                 spawn.PositionX,
                 spawn.PositionY,
                 spawn.HitPoints,
-                spawn.AttackDamage)));
+                spawn.AttackDamage,
+                spawn.Direction)));
         Assert.All(first, spawn => {
             Assert.True(world.IsWalkable(spawn.LevelId, spawn.PositionX, spawn.PositionY));
             Assert.InRange(spawn.HitPoints, spawn.Definition.MinimumHitPoints, spawn.Definition.MaximumHitPoints);
             Assert.InRange(spawn.AttackDamage, spawn.Definition.MinimumDamage, spawn.Definition.MaximumDamage);
+            Assert.InRange(spawn.Direction, 0, 7);
         });
         Assert.Equal(8, first.Select(spawn => (spawn.PositionX, spawn.PositionY)).Distinct().Count());
     }
@@ -150,6 +153,8 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         ]);
         var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
 
+        var spawn = Assert.Single(
+            planner.Plan(1, seed: 4, multiplayer: false, maximumMonsters: 1));
         var target = Assert.Single(
             planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
 
@@ -170,6 +175,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal("SkeletonRanged", target.NativeAi);
         Assert.Equal(2, target.MinDamage);
         Assert.Equal(3, target.MaxDamage);
+        Assert.Equal(spawn.Direction, target.Direction);
     }
 
     [Fact]
