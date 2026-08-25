@@ -2363,9 +2363,18 @@ bool CanUseScroll(Player &player, SpellID spell)
 	if (levelType() == DTYPE_TOWN && !GetSpellData(spell).isAllowedInTown())
 		return false;
 
-	return HasInventoryOrBeltItem(player, [spell](const Item &item) {
+	if (HasInventoryOrBeltItem(player, [spell](const Item &item) {
 		return item.isScrollOf(spell) || item.isRuneOf(spell);
-	});
+	}))
+		return true;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (IsStashOpen && authoritative::GetServerBackedRuntime().IsConnected()) {
+		return std::any_of(Stash.stashList.begin(), Stash.stashList.end(), [spell](const Item &item) {
+			return item.isScrollOf(spell) || item.isRuneOf(spell);
+		});
+	}
+#endif
+	return false;
 }
 
 void ConsumeStaffCharge(Player &player)

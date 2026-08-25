@@ -355,6 +355,16 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	for (std::size_t index = 0; index < snapshot.inventory.size(); ++index)
 		player.InvList[index] = snapshot.inventory[index].item;
 	player._pNumInv = static_cast<int>(snapshot.inventory.size());
+	player.CalcScrolls();
+	if (snapshot.stashOpen) {
+		for (const auto &stashItem : snapshot.stash) {
+			if (stashItem.spellId == 0 || stashItem.spellTargetingKind == ProjectedSpellTargetingKind::Unspecified)
+				continue;
+			const auto spellId = static_cast<SpellID>(stashItem.spellId);
+			if (stashItem.item.isScrollOf(spellId) || stashItem.item.isRuneOf(spellId))
+				player._pScrlSpells |= GetSpellBitmask(spellId);
+		}
+	}
 	std::fill(std::begin(player.InvGrid), std::end(player.InvGrid), 0);
 	for (std::size_t index = 0; index < snapshot.inventoryGrid.size(); ++index) {
 		const int32_t cell = snapshot.inventoryGrid[index];

@@ -23,6 +23,10 @@
 #include "ui/panel/spell_icons.hpp"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
+#include "qol/stash.h"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "utils/algorithm/container.hpp"
 #include "utils/language.h"
 #include "utils/string/str_cat.hpp"
@@ -85,6 +89,21 @@ std::optional<std::string_view> GetHotkeyName(SpellID spellId, SpellType spellTy
 		return GetOptions().Keymapper.KeyNameForAction(quickSpellActionKey);
 	}
 	return {};
+}
+
+int CountAvailableScrolls(const Player &player, SpellID spellId)
+{
+	int count = c_count_if(InventoryAndBeltPlayerItemsRange { player }, [spellId](const Item &item) {
+		return item.isScrollOf(spellId) || item.isRuneOf(spellId);
+	});
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (IsStashOpen && authoritative::GetServerBackedRuntime().IsConnected()) {
+		count += c_count_if(Stash.stashList, [spellId](const Item &item) {
+			return item.isScrollOf(spellId) || item.isRuneOf(spellId);
+		});
+	}
+#endif
+	return count;
 }
 
 } // namespace
@@ -179,9 +198,7 @@ void DrawSpellList(const Surface &out)
 			}
 			PrintSBookSpellType(out, spellListItem.location, _("Scroll"), spellColor);
 			InfoString = fmt::format(fmt::runtime(_("Scroll of {:s}")), pgettext("spell", spellDataItem.sNameText));
-			const int scrollCount = c_count_if(InventoryAndBeltPlayerItemsRange { myPlayer }, [spellId](const Item &item) {
-				return item.isScrollOf(spellId);
-			});
+			const int scrollCount = CountAvailableScrolls(myPlayer, spellId);
 			AddInfoBoxString(fmt::format(fmt::runtime(ngettext("{:d} Scroll", "{:d} Scrolls", scrollCount)), scrollCount));
 		} break;
 		case SpellType::Charges: {

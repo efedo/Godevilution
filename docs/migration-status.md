@@ -21,6 +21,11 @@ Connected native stash books, potions, and stash-sourced oils now use open-sessi
 stable item references as authoritative sources; a closed stash is rejected before
 the source can be consumed or mutate player state.
 
+Connected native spell selection now includes validated scroll and rune sources
+from an open authoritative stash, and casts carry the same stable page/cell/item
+reference used by the server and Godot client. Offline spell selection remains
+inventory/belt-only for compatibility.
+
 Godot's authoritative cast-source selector now includes spell consumables in an
 open stash, carrying page/cell/stable identity through the same cast protocol;
 the server rejects those sources when the stash session is closed.

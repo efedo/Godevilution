@@ -2463,6 +2463,20 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	Item beltItem;
 	beltItem._itype = ItemType::Misc;
 	snapshot.belt.push_back({ .slot = 2, .itemSeed = 44, .item = beltItem });
+	Item stashScroll;
+	stashScroll._itype = ItemType::Misc;
+	stashScroll._iMiscId = IMISC_SCROLL;
+	stashScroll._iSpell = SpellID::Healing;
+	snapshot.stashOpen = true;
+	snapshot.stash.push_back({
+		.page = 0,
+		.cell = 3,
+		.itemSeed = 45,
+		.stableItemId = 46,
+		.spellId = static_cast<uint32_t>(SpellID::Healing),
+		.spellTargetingKind = ProjectedSpellTargetingKind::Tile,
+		.item = stashScroll,
+	});
 	Item heldItem;
 	heldItem._itype = ItemType::Gold;
 	heldItem._iSeed = 99;
@@ -2494,6 +2508,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_EQ(player._pmode, PM_BLOCK);
 	EXPECT_EQ(player._pAblSpells, GetSpellBitmask(SpellID::Search));
 	EXPECT_EQ(player._pMemSpells, GetSpellBitmask(SpellID::Firebolt));
+	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
 	EXPECT_EQ(player._pSplLvl[static_cast<size_t>(SpellID::Firebolt)], 2);
 	EXPECT_EQ(player._pRSpell, SpellID::Firebolt);
 	EXPECT_EQ(player._pRSplType, SpellType::Spell);

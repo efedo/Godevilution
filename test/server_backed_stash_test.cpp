@@ -29,8 +29,9 @@ bool WriteEnvelope(tcp::socket &socket, const protocol::Envelope &envelope)
 
 class StashItemServer {
 public:
-	StashItemServer()
+	explicit StashItemServer(bool expectCast = false)
 	    : acceptor_(serverIo_, { tcp::v4(), 0 })
+	    , expectCast_(expectCast)
 	    , server_([this]() { Run(); })
 	{
 	}
@@ -89,7 +90,7 @@ private:
 			item->mutable_state()->set_stable_item_id(700);
 			item->mutable_state()->set_item_type(static_cast<int32_t>(ItemType::Misc));
 			item->mutable_state()->set_item_index(IDI_BOOK1);
-			item->mutable_state()->set_misc_id(IMISC_BOOK);
+			item->mutable_state()->set_misc_id(expectCast_ ? IMISC_SCROLL : IMISC_BOOK);
 			item->mutable_state()->set_spell_id(static_cast<uint32_t>(SpellID::Firebolt));
 			item->mutable_state()->set_spell_targeting_kind(protocol::SPELL_TARGETING_KIND_COMBAT_ENTITY);
 			item->mutable_state()->set_inventory_width(1);
@@ -106,13 +107,23 @@ private:
 			    || command.command_batch().commands_size() != 1)
 				return;
 			const auto &request = command.command_batch().commands(0);
-			if (!request.has_read_book_requested())
-				return;
-			const auto &reference = request.read_book_requested().item();
-			if (reference.location() != protocol::PLAYER_ITEM_LOCATION_STASH
-			    || reference.slot() != 0
-			    || reference.stable_item_id() != 700
-			    || reference.page() != 0)
+			const protocol::PlayerItemReference *reference = nullptr;
+			if (expectCast_) {
+				if (!request.has_cast_requested()
+				    || request.cast_requested().spell_id() != static_cast<uint32_t>(SpellID::Firebolt)
+				    || request.cast_requested().source() != protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM
+				    || !request.cast_requested().has_source_item())
+					return;
+				reference = &request.cast_requested().source_item();
+			} else {
+				if (!request.has_read_book_requested())
+					return;
+				reference = &request.read_book_requested().item();
+			}
+			if (reference->location() != protocol::PLAYER_ITEM_LOCATION_STASH
+			    || reference->slot() != 0
+			    || reference->stable_item_id() != 700
+			    || reference->page() != 0)
 				return;
 			observed_ = true;
 
@@ -136,6 +147,7 @@ private:
 	asio::io_context serverIo_;
 	tcp::acceptor acceptor_;
 	std::atomic_bool observed_ = false;
+	bool expectCast_ = false;
 	std::thread server_;
 };
 
@@ -182,6 +194,30 @@ TEST_F(ServerBackedStashTest, UsesAuthoritativeReferenceForSpellBook)
 
 	EXPECT_TRUE(UseStashItem(0));
 	EXPECT_EQ(MyPlayer->_pSplLvl[static_cast<int8_t>(SpellID::Firebolt)], fireboltLevelBefore);
+
+	runtime.Stop();
+	EXPECT_TRUE(server.observed());
+}
+
+TEST_F(ServerBackedStashTest, UsesAuthoritativeReferenceForOpenStashScrollCast)
+{
+	StashItemServer server(true);
+	ServerBackedRuntimeConfiguration configuration;
+	configuration.mode = ServerBackedRuntimeConfiguration::GameMode::Authoritative;
+	configuration.enabled = true;
+	configuration.host = "127.0.0.1";
+	configuration.port = server.port();
+	configuration.clientBuildId = "client";
+	configuration.protocolSchemaVersion = "1";
+	configuration.contentManifestHash = "content";
+	auto &runtime = GetServerBackedRuntime();
+	ASSERT_TRUE(runtime.Start(configuration, CurrentStoreManager, *MyPlayer).has_value());
+	ASSERT_TRUE(runtime.IsConnected());
+
+	pcurs = CURSOR_HAND;
+	MyPlayer->_pRSpell = SpellID::Firebolt;
+	MyPlayer->_pRSplType = SpellType::Scroll;
+	CheckPlrSpell(false, SpellID::Firebolt, SpellType::Scroll);
 
 	runtime.Stop();
 	EXPECT_TRUE(server.observed());

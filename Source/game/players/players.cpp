@@ -3753,6 +3753,19 @@ tl::expected<authoritative::ServerBackedCastSource, std::string> MakeServerBacke
 				};
 			}
 		}
+		if (IsStashOpen) {
+			for (const Item &item : Stash.stashList) {
+				if (!item.isScrollOf(spellId) && !item.isRuneOf(spellId))
+					continue;
+				const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+				if (!reference.has_value())
+					return tl::make_unexpected("The authoritative stash scroll source is no longer present.");
+				return ServerBackedCastSource {
+					ServerBackedCastSourceKind::ConsumableItem,
+					*reference,
+				};
+			}
+		}
 		return tl::make_unexpected("The authoritative scroll source is no longer present.");
 	case SpellType::Invalid:
 		return tl::make_unexpected("Cannot submit an invalid authoritative cast source.");
