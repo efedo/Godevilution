@@ -677,6 +677,8 @@ public sealed class DiabloStoreCommandProcessor
         var reference = intent.Item ?? new DiabloPlayerItemReference(
             DiabloPlayerItemLocation.Inventory,
             intent.LegacyInventoryIndex);
+        if (IsClosedStashTarget(player, reference))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (!TryGetItem(
                 player,
                 reference,
@@ -685,7 +687,8 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
         if (reference.Location is not (DiabloPlayerItemLocation.Inventory
-            or DiabloPlayerItemLocation.Belt)) {
+            or DiabloPlayerItemLocation.Belt
+            or DiabloPlayerItemLocation.Stash)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
@@ -775,8 +778,11 @@ public sealed class DiabloStoreCommandProcessor
         AuthoritativePlayerState player,
         DiabloUseConsumableIntent intent)
     {
+        if (IsClosedStashTarget(player, intent.Item))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (intent.Item.Location is not (DiabloPlayerItemLocation.Inventory
-            or DiabloPlayerItemLocation.Belt)
+            or DiabloPlayerItemLocation.Belt
+            or DiabloPlayerItemLocation.Stash)
             || !DiabloPlayerItemAccess.TryGet(player, intent.Item, out var item)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }

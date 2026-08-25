@@ -1145,6 +1145,162 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void OpenStashBookLearnsAndConsumesTheAuthoritativeSource()
+    {
+        var book = new StashStoreItem(
+            0,
+            7,
+            0,
+            0,
+            700,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 700,
+                ItemActionKind = DiabloItemActionKind.ReadBook,
+                MiscId = 25,
+                SpellId = 1,
+                MinimumMagic = 15,
+            });
+        var player = CreatePlayer(
+            mana: 100,
+            manaMaximum: 640,
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 20),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0)));
+        player.Stash.Add(book);
+        player.StashOpen = true;
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+                    ManaCostScale = 64,
+                },
+            ]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloReadBookIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 7, 700, 0),
+                0),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Stash);
+        Assert.Equal(new MemorizedSpellState(1, 1), Assert.Single(player.MemorizedSpells));
+        Assert.Equal(484, player.Mana);
+    }
+
+    [Fact]
+    public void OpenStashConsumableRestoresResourcesAndConsumesTheAuthoritativeSource()
+    {
+        var potion = new StashStoreItem(
+            0,
+            8,
+            0,
+            0,
+            701,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 701,
+                ItemActionKind = DiabloItemActionKind.RestoreFullLife,
+            });
+        var player = CreatePlayer(life: 10);
+        player.Stash.Add(potion);
+        player.StashOpen = true;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 8, 701, 0)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Stash);
+        Assert.Equal(640, player.Life);
+    }
+
+    [Fact]
+    public void OpenStashOilCanTargetInventoryItem()
+    {
+        var oil = new StashStoreItem(
+            0,
+            9,
+            0,
+            0,
+            702,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 702,
+                ItemActionKind = DiabloItemActionKind.ApplyBlacksmithOil,
+                ItemClass = 3,
+            });
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            703,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 703,
+                ItemClass = 1,
+                Durability = 5,
+                MaxDurability = 20,
+            });
+        var player = CreatePlayer(inventory: [target]);
+        player.Stash.Add(oil);
+        player.StashOpen = true;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 9, 702, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 703)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Stash);
+        Assert.Equal(9, Assert.Single(player.Inventory).State.Durability);
+    }
+
+    [Fact]
+    public void ClosedStashConsumableSourceIsRejectedWithoutMutation()
+    {
+        var potion = new StashStoreItem(
+            0,
+            10,
+            0,
+            0,
+            704,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 704,
+                ItemActionKind = DiabloItemActionKind.RestoreFullLife,
+            });
+        var player = CreatePlayer(life: 10);
+        player.Stash.Add(potion);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 10, 704, 0)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Equal(10, player.Life);
+        Assert.Single(player.Stash);
+    }
+
+    [Fact]
     public void FullRejuvenationConsumesInventoryItemAndRestoresBothResources()
     {
         var potion = new OwnedStoreItem(

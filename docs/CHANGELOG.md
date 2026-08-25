@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Connected native stash books, potions, and stash-sourced oils now use open-session
+  stable item references as authoritative sources; closed-stash sources fail
+  closed without consuming or mutating local state.
 - Connected native oil use now routes inventory-sourced oils onto open stash
   targets through the authoritative stable-reference command; closed stash
   targets remain rejected without consuming the source item.

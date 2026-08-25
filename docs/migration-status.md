@@ -17,6 +17,10 @@ Connected native oil use now also routes inventory-sourced oils onto open stash
 items through the authoritative stable-reference command; closed stash targets
 remain rejected without consuming the source item.
 
+Connected native stash books, potions, and stash-sourced oils now use open-session
+stable item references as authoritative sources; a closed stash is rejected before
+the source can be consumed or mutate player state.
+
 The authoritative simulation now accepts and publishes generated set-piece
 origins, materializing relative `set_level_objects.tsv` rows at level-entry
 time with deterministic reserved identities and world-bound validation. These
