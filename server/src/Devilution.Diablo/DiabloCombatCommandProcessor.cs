@@ -5008,14 +5008,21 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
                 var skeletonMeleeAttackTuning = GetSkeletonMeleeAttackTuning(target);
+                var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+                    && target.MonsterAiSeed != 0;
+                var attackRoll = skeletonMeleeAttackTuning.HasValue && usesNativeAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)(attackSeed % 100U);
                 if (skeletonMeleeAttackTuning.HasValue
-                    && attackSeed % 100U >= (uint)Math.Min(
+                    && attackRoll >= Math.Min(
                         100,
                         skeletonMeleeAttackTuning.Value.ChanceBase
                             + (skeletonMeleeAttackTuning.Value.IntelligenceScale
                                 * target.Intelligence))) {
                     target.StartSkeletonMeleeDelay(
-                        ResolveSkeletonMeleeAttackDelay(target, attackSeed));
+                        usesNativeAiStream
+                            ? ResolveSkeletonMeleeAttackDelayFromRandom(target)
+                            : ResolveSkeletonMeleeAttackDelay(target, attackSeed));
                     continue;
                 }
                 var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
@@ -5348,22 +5355,27 @@ public sealed class DiabloCombatCommandProcessor
         if (!skeletonTuning.HasValue || distance <= 1)
             return false;
 
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         var delayBand = Math.Max(
             0,
             skeletonTuning.Value.ChanceBase
                 - (skeletonTuning.Value.IntelligenceScale * monster.Intelligence));
-        if (actionSeed % 100U < (uint)delayBand) {
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        if (actionRoll < delayBand) {
             monster.StartSkeletonMeleeDelay(
-                ResolveSkeletonMeleeMovementDelay(monster, actionSeed));
+                usesNativeAiStream
+                    ? ResolveSkeletonMeleeMovementDelayFromRandom(monster)
+                    : ResolveSkeletonMeleeMovementDelay(monster, actionSeed));
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            victim,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
+            : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             return true;
@@ -6260,6 +6272,28 @@ public sealed class DiabloCombatCommandProcessor
                 + (int)((actionSeed / 100U) % (uint)randomRange)));
     }
 
+    private int ResolveSkeletonMeleeMovementDelayFromRandom(
+        AuthoritativeCombatTarget target)
+    {
+        var delayBase = 15;
+        var intelligenceScale = 2;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonMeleeMovementDelayRandomRange > 0) {
+            delayBase = definition.SkeletonMeleeMovementDelayBase > 0
+                ? definition.SkeletonMeleeMovementDelayBase
+                : delayBase;
+            intelligenceScale = definition.SkeletonMeleeMovementDelayIntelligenceScale > 0
+                ? definition.SkeletonMeleeMovementDelayIntelligenceScale
+                : intelligenceScale;
+            randomRange = definition.SkeletonMeleeMovementDelayRandomRange;
+        }
+        return Math.Max(
+            0,
+            checked(delayBase - (intelligenceScale * target.Intelligence)
+                + random.RandomIntLessThan(randomRange)));
+    }
+
     private int ResolveSkeletonMeleeAttackDelay(
         AuthoritativeCombatTarget target,
         uint attackSeed)
@@ -6281,6 +6315,28 @@ public sealed class DiabloCombatCommandProcessor
             0,
             checked(delayBase - (intelligenceScale * target.Intelligence)
                 + (int)((attackSeed / 100U) % (uint)randomRange)));
+    }
+
+    private int ResolveSkeletonMeleeAttackDelayFromRandom(
+        AuthoritativeCombatTarget target)
+    {
+        var delayBase = 10;
+        var intelligenceScale = 2;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonMeleeAttackDelayRandomRange > 0) {
+            delayBase = definition.SkeletonMeleeAttackDelayBase > 0
+                ? definition.SkeletonMeleeAttackDelayBase
+                : delayBase;
+            intelligenceScale = definition.SkeletonMeleeAttackDelayIntelligenceScale > 0
+                ? definition.SkeletonMeleeAttackDelayIntelligenceScale
+                : intelligenceScale;
+            randomRange = definition.SkeletonMeleeAttackDelayRandomRange;
+        }
+        return Math.Max(
+            0,
+            checked(delayBase - (intelligenceScale * target.Intelligence)
+                + random.RandomIntLessThan(randomRange)));
     }
 
     /** FallenAi delegates its normal state to the native SkeletonAi controller. */

@@ -9,7 +9,10 @@ drop identity across reconnect and restart boundaries. Multiplayer monster ticks
 advance the retained AI seed once per tick, matching native `ProcessMonsters`
 state progression, and restore each monster's stream before its AI random draws.
 Multiplayer Zombie AI now consumes the stream for its action and movement draws;
-using it for every remaining native AI roll is follow-up work.
+Multiplayer SkeletonMelee now consumes the stream for movement and adjacent
+attack admission, native delay rolls, and RandomWalk coin draws. Remaining
+native AI controllers and rolls are follow-up work; seed-zero targets retain
+the compatibility path.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
