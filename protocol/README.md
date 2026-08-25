@@ -166,10 +166,12 @@ Windows toolchain command.
   a nonzero quest gate must reference a quest in the same snapshot; clients
   may render a marker but never choose or apply the transition.
 - `LevelGeometrySnapshot.native_object_layer` is an additive row-major
-  projection of server-owned native object-layer values (`0` through native
-  `OBJ_LAST`, currently `108`). It is presentation metadata only; clients must
-  not infer gameplay authority from it, and larger values are rejected by the
-  native and managed validators.
+  projection of server-owned raw DUN object-layer values (`0` through the
+  current native `DUN_OBJECT_ID_LAST` value `146`). It is presentation metadata
+  only; clients must not infer gameplay authority from it, and larger values
+  are rejected by the native and managed validators. This range is distinct
+  from `ObjectSnapshot.native_object_id`, which carries the converted
+  authoritative object identity and remains bounded by `OBJ_LAST` (`108`).
 - `LevelGeometrySnapshot.native_transparency` values must fit the native
   signed-byte transparency-region representation (`0` through `127`) for the
   compatibility client; out-of-range values are rejected before presentation.

@@ -179,8 +179,15 @@ public sealed class AuthoritativeLevel
     public const int NativeMaximumMegaWidth = 40;
     public const int NativeMaximumMegaHeight = 40;
 
-    /** Highest native object-layer ID defined by Source/tables/objdat.h (OBJ_LAST). */
+    /** Highest native object identity used by authoritative object presentation. */
     public const int NativeMaximumObjectId = 108;
+
+    /**
+     * Highest raw object-layer index accepted by the native ObjTypeConv table.
+     * This is distinct from NativeMaximumObjectId: DUN layers store conversion
+     * indices, while object snapshots store the resulting _object_id value.
+     */
+    public const int NativeMaximumDunObjectLayerId = 146;
 
     private readonly HashSet<int> blockedCells;
     private readonly HashSet<int> missileBlockedCells;
@@ -238,9 +245,9 @@ public sealed class AuthoritativeLevel
         if (objects.Length != 0 && objects.Length != width * height)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native object layer with an invalid length.");
-        if (objects.Any(value => value > NativeMaximumObjectId))
+        if (objects.Any(value => value > NativeMaximumDunObjectLayerId))
             throw new InvalidDataException(
-                $"Level {levelId} contains a native object ID outside the compatibility range.");
+                $"Level {levelId} contains a native DUN object-layer value outside the compatibility range.");
         NativeObjectLayer = Array.AsReadOnly(objects);
         var megaTiles = (nativeMegaTileLayer ?? []).ToArray();
         var megaWidth = (width + 1) / 2;

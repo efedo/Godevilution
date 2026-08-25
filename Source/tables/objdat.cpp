@@ -170,6 +170,10 @@ const _object_id ObjTypeConv[] = {
 	OBJ_L5SARC,
 };
 
+static_assert(
+	std::size(ObjTypeConv) == static_cast<size_t>(DUN_OBJECT_ID_LAST) + 1,
+	"DUN_OBJECT_ID_LAST must match the native ObjTypeConv table.");
+
 /** Contains the data related to each object ID. */
 std::vector<ObjectData> AllObjects;
 

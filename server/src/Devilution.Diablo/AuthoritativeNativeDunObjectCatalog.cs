@@ -38,7 +38,7 @@ public sealed record AuthoritativeNativeDunObjectDefinition(
     {
         if (!Enum.IsDefined(TargetKind)
             || NativeObjectId == 0
-            || NativeObjectId > AuthoritativeLevel.NativeMaximumObjectId
+            || NativeObjectId > AuthoritativeLevel.NativeMaximumDunObjectLayerId
             || ObjectId == 0
             || (TargetKind == AuthoritativeNativeDunObjectTargetKind.SetLevel
                 && SetLevelId is < 0 or > 8)
@@ -260,9 +260,9 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         StableContentIdCatalog? stableIds)
     {
         var nativeObjectId = row.RequiredUInt32("native_object_id");
-        if (nativeObjectId is 0 or > AuthoritativeLevel.NativeMaximumObjectId)
+        if (nativeObjectId is 0 or > AuthoritativeLevel.NativeMaximumDunObjectLayerId)
             throw new InvalidDataException(
-                $"Native DUN object row {row.LineNumber} contains an invalid native object ID.");
+                $"Native DUN object row {row.LineNumber} contains an invalid raw object-layer ID.");
         var hasSetLevel = (row.TryGet("set_level_id", out var setLevelId)
                 && !string.IsNullOrWhiteSpace(setLevelId))
             || (row.TryGet("set_level_symbol", out var setLevelSymbol)

@@ -7,6 +7,12 @@ All notable changes to this fork are documented below.
 - Deferred native-DUN fragments now refresh effective world geometry and
   reconcile authored object mappings after their anchor appears, so mapped
   set-piece object cells become authoritative instead of remaining inert.
+- Raw DUN object-layer conversion indices now preserve the native
+  `ObjTypeConv` range through the C++ bridge, authoritative C# geometry, and
+  Godot validation; converted object presentation identities retain the
+  separate `OBJ_LAST` bound. Warlord's native object-layer value `109` can now
+  cross the compatibility protocol without being mistaken for an object
+  snapshot identity.
 - Godot and the authoritative combat processor now support spell consumables in
   an open stash as stable cast sources; closed-stash sources fail closed without
   consuming the item.
@@ -291,9 +297,9 @@ All notable changes to this fork are documented below.
   limits consistently to authoritative C# levels and Godot snapshots.
 - Applied the same fine/coarse geometry limits at the C++ snapshot validation
   boundary, while retaining coarse-layer-free 112×112 town snapshots.
-- Aligned native object-layer validation across the C++ bridge, authoritative
-  C# levels, and Godot snapshots with the native `OBJ_LAST` range (`0` through
-  `108`), while retaining the broader d-piece value range.
+- Aligned converted native object identity validation across the C++ bridge,
+  authoritative C# levels, and Godot snapshots with the native `OBJ_LAST`
+  range (`0` through `108`), while retaining the broader d-piece value range.
 - Applied the same native object identity bound to object snapshots and server
   object state, preventing values above `OBJ_LAST` from crossing the protocol.
 - Enforced the native object identity bound during native-DUN mapping load and

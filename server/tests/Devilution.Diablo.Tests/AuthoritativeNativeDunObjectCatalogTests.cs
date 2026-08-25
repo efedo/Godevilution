@@ -60,13 +60,24 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
     }
 
     [Fact]
-    public void TsvLoaderRejectsNativeObjectIdOutsideCompatibilityRange()
+    public void TsvLoaderAcceptsRawDunObjectIdBeyondPresentationRange()
+    {
+        var catalog = AuthoritativeNativeDunObjectCatalog.LoadTsv(
+            "native_dun_objects.tsv",
+            "set_level_id\tactive_map\tnative_object_id\tobject_id\n"
+                + "2\t1\t109\t4\n");
+
+        Assert.Equal((ushort)109, Assert.Single(catalog.Definitions).NativeObjectId);
+    }
+
+    [Fact]
+    public void TsvLoaderRejectsRawDunObjectIdOutsideCompatibilityRange()
     {
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeNativeDunObjectCatalog.LoadTsv(
                 "native_dun_objects.tsv",
                 "set_level_id\tactive_map\tnative_object_id\tobject_id\n"
-                    + "2\t1\t109\t4\n"));
+                    + "2\t1\t147\t4\n"));
     }
 
     [Fact]

@@ -227,7 +227,7 @@ public sealed class ClientModelTests
                         LevelId = 1,
                         Width = 2,
                         Height = 2,
-                        NativeObjectLayer = { 0, 97, 100, 99 },
+                        NativeObjectLayer = { 0, 109, 100, 99 },
                         NativeMegaTileLayer = { 115 },
                         NativePieceLayer = { 0, 297, 300, 299 },
                     },
@@ -235,7 +235,7 @@ public sealed class ClientModelTests
             }));
 
         Assert.Equal(
-            [0U, 97U, 100U, 99U],
+            [0U, 109U, 100U, 99U],
             Assert.Single(model.Snapshot!.LevelGeometry).NativeObjectLayer);
         Assert.Equal(
             [115U],
@@ -246,7 +246,7 @@ public sealed class ClientModelTests
     }
 
     [Fact]
-    public void RejectsNativeObjectLayerValuesOutsideCompatibilityRange()
+    public void RejectsRawDunObjectLayerValuesOutsideCompatibilityRange()
     {
         var model = new AuthoritativeClientModel();
         var snapshot = new Snapshot {
@@ -256,7 +256,7 @@ public sealed class ClientModelTests
                     LevelId = 1,
                     Width = 1,
                     Height = 1,
-                    NativeObjectLayer = { 109 },
+                    NativeObjectLayer = { 147 },
                 },
             },
         };

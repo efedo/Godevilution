@@ -459,8 +459,8 @@ message LevelGeometrySnapshot {
 	repeated uint32 native_transparency = 6;
 	// Authored level triggers for presentation-only progression markers.
 	repeated WarpTriggerSnapshot warp_triggers = 7;
-	// Native object-layer values after authoritative world mutations (0 through
-	// native OBJ_LAST, currently 108).
+	// Raw DUN object-layer conversion indices after authoritative world
+	// mutations (0 through native DUN_OBJECT_ID_LAST, currently 146).
 	repeated uint32 native_object_layer = 8;
 	// Native mega-tile IDs after authoritative content composition.
 	repeated uint32 native_mega_tile_layer = 9;

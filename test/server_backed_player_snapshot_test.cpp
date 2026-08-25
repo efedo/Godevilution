@@ -1059,7 +1059,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->add_native_mega_tile_layer(256);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 	level->clear_native_mega_tile_layer();
-	level->add_native_object_layer(static_cast<uint32_t>(OBJ_LAST) + 1);
+	level->add_native_object_layer(static_cast<uint32_t>(DUN_OBJECT_ID_LAST) + 1);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 
 	protocol::Snapshot invalidNativeDimensions;
@@ -1119,6 +1119,18 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	warp->set_required_quest_id(9);
 	warp->set_available(true);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(unknownQuest).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, AcceptsRawDunObjectLayerIndices)
+{
+	protocol::Snapshot snapshot;
+	auto *level = snapshot.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(1);
+	level->set_height(1);
+	level->add_native_object_layer(109);
+
+	EXPECT_TRUE(ValidateLevelGeometrySnapshots(snapshot).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ValidatesGeneratedSetPieceOriginsAgainstProjectedGeometry)
@@ -1564,7 +1576,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 
 	invalid = geometry;
 	invalid.nativeObjectLayer.assign(16, 0);
-	invalid.nativeObjectLayer[0] = static_cast<uint16_t>(OBJ_LAST) + 1;
+	invalid.nativeObjectLayer[0] = static_cast<uint16_t>(DUN_OBJECT_ID_LAST) + 1;
 	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
 	EXPECT_FALSE(presentation.Apply(invalidProjection, 1).has_value());
 }

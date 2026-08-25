@@ -235,11 +235,13 @@ Godot now accepts the same omitted stationary monster destination used by the
 native projection, normalizing legacy `(0, 0)` future coordinates to the
 current tile instead of rejecting an older additive snapshot.
 
-Native object-layer values now use the same native `OBJ_LAST` compatibility
-bound (`0` through `108`) in the C++ snapshot bridge, authoritative C# levels,
-and Godot protocol validation; d-piece presentation values remain independently
-validated as 16-bit identities. Unmapped native object-layer cells remain inert
-until an explicit authored mapping exists.
+Raw native DUN object-layer values now use the same `ObjTypeConv` index bound
+(`0` through `DUN_OBJECT_ID_LAST`, currently `146`) in the C++ snapshot bridge,
+authoritative C# levels, and Godot protocol validation. Converted object
+presentation identities remain independently bounded by `OBJ_LAST` (`108`),
+while d-piece presentation values remain independently validated as 16-bit
+identities. Unmapped native object-layer cells remain inert until an explicit
+authored mapping exists.
 Warp-trigger projection now rejects missing source levels on the server and
 unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.

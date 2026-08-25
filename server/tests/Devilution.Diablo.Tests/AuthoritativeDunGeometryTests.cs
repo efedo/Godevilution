@@ -196,7 +196,7 @@ public sealed class AuthoritativeDunGeometryTests
     [Fact]
     public void NativeBundleLoaderPreservesObjectLayerForExplicitMappings()
     {
-        var dun = CreateDun(1, 1, [0], objectLayer: [17, 0, 0, 19]);
+        var dun = CreateDun(1, 1, [0], objectLayer: [109, 0, 0, 19]);
         var til = new byte[sizeof(ushort) * 4];
         var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
 
@@ -209,7 +209,7 @@ public sealed class AuthoritativeDunGeometryTests
             "l1.sol",
             sol);
 
-        Assert.Equal([17, 0, 0, 19], level.NativeObjectLayer);
+        Assert.Equal([109, 0, 0, 19], level.NativeObjectLayer);
     }
 
     [Fact]

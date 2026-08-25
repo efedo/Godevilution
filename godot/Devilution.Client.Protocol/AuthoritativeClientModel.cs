@@ -10,7 +10,10 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumMegaWidth = 40;
     private const int NativeMaximumMegaHeight = 40;
     private const uint NativeLevelCount = 25;
+    // Object snapshots carry converted _object_id values; geometry carries raw
+    // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = 108;
+    private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumQuestId = 23;
 
     private const int MaxPredictedMoves = 16;
@@ -1008,7 +1011,7 @@ public sealed class AuthoritativeClientModel
                 || level.Width > NativeMaximumWidth
                 || level.Height > NativeMaximumHeight
                 || level.NativeTransparency.Any(value => value > sbyte.MaxValue)
-                || level.NativeObjectLayer.Any(value => value > NativeMaximumObjectId)
+                || level.NativeObjectLayer.Any(value => value > NativeMaximumDunObjectLayerId)
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
                 || level.NativePieceLayer.Any(value => value > ushort.MaxValue)
                 || level.NativeMegaTileLayer.Count != 0
