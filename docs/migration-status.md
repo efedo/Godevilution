@@ -78,6 +78,10 @@ Staged unique-monster dialogue rewards now use the complete participant set
 for world-item placement validation and entity allocation. A blocked reward
 leaves quest progress and world state unchanged until its tile is available.
 
+The non-staged unique-monster dialogue reward path now uses the same boundary,
+including normal and spell-book rewards, before consuming a required dialogue
+item or changing quest state.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

@@ -2009,7 +2009,11 @@ public sealed class DiabloWorldCommandProcessor
                 && (quest.DialogueRewardUniqueId != 0 || quest.DialogueRewardItemId != 0)) {
                 var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
                 var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
-                if (!world.IsWalkable(target.LevelId, rewardX, rewardY))
+                if (!CanPlaceDialogueReward(
+                        target.LevelId,
+                        rewardX,
+                        rewardY,
+                        participants))
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
         }
@@ -2025,7 +2029,11 @@ public sealed class DiabloWorldCommandProcessor
             && (quest.DialogueRewardUniqueId != 0 || quest.DialogueRewardItemId != 0)) {
             var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
             var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
-            if (!world.IsWalkable(target.LevelId, rewardX, rewardY))
+            if (!CanPlaceDialogueReward(
+                    target.LevelId,
+                    rewardX,
+                    rewardY,
+                    participants))
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
@@ -2049,7 +2057,7 @@ public sealed class DiabloWorldCommandProcessor
                 nextQuest.Active = true;
             }
 
-            SpawnDialogueReward(quest, target, player);
+            SpawnDialogueReward(quest, target, participants);
             if (quest.DialogueCompletionDefeatsTarget)
                 target.DefeatForDialogue();
 
@@ -2078,7 +2086,7 @@ public sealed class DiabloWorldCommandProcessor
         quest.Variable2 = Math.Max(quest.Variable2, quest.DialogueVariable2);
         target.DialogueMessageId = quest.MessageId;
         if (rewardOnActivation)
-            SpawnDialogueReward(quest, target, player);
+            SpawnDialogueReward(quest, target, participants);
         return DiabloWorldIntentResult.AcceptedWith(
             new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Dialogue,
@@ -2172,7 +2180,7 @@ public sealed class DiabloWorldCommandProcessor
     private void SpawnDialogueReward(
         AuthoritativeQuestState quest,
         AuthoritativeCombatTarget target,
-        AuthoritativePlayerState player)
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
         var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
@@ -2182,7 +2190,7 @@ public sealed class DiabloWorldCommandProcessor
                 quest.DialogueRewardUniqueId,
                 itemSeed,
                 quest.DialogueRewardItemLevel);
-            var entityId = AllocateWorldItemEntityId([player]);
+            var entityId = AllocateWorldItemEntityId(participants);
             world.WorldItems[entityId] = new AuthoritativeWorldItem(
                 entityId,
                 target.LevelId,
@@ -2206,7 +2214,7 @@ public sealed class DiabloWorldCommandProcessor
                     quest.DialogueRewardItemId,
                     itemSeed,
                     quest.DialogueRewardItemLevel);
-            var entityId = AllocateWorldItemEntityId([player]);
+            var entityId = AllocateWorldItemEntityId(participants);
             world.WorldItems[entityId] = new AuthoritativeWorldItem(
                 entityId,
                 target.LevelId,

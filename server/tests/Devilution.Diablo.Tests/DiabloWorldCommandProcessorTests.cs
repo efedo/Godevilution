@@ -2535,6 +2535,11 @@ public sealed class DiabloWorldCommandProcessorTests
             levelId: 14,
             entityId: 7,
             inventoryGrid: Enumerable.Repeat(-1, 40).ToArray());
+        var otherPlayer = CreatePlayer(
+            positionX: 20,
+            positionY: 21,
+            levelId: 14,
+            entityId: 8);
 
         var initial = processor.Execute(
             player,
@@ -2552,11 +2557,24 @@ public sealed class DiabloWorldCommandProcessorTests
         player.Inventory.Add(new OwnedStoreItem(0, 0, elixir.CreateInfo, 0, 0, elixir));
         player.InventoryGrid[0] = 0;
 
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTalkToQuestIntent(3005, 20),
+                2,
+                [player, otherPlayer]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(quest.Completed);
+        Assert.Single(player.Inventory);
+        Assert.Empty(world.WorldItems);
+
+        otherPlayer.PositionX = 0;
+        otherPlayer.PositionY = 0;
         var completed = processor.Execute(
             player,
             new DiabloTalkToQuestIntent(3005, 20),
             2,
-            [player]);
+            [player, otherPlayer]);
 
         Assert.True(completed.Succeeded);
         Assert.True(quest.Completed);
