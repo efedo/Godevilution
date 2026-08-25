@@ -21,6 +21,29 @@ namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
 namespace {
 
+TEST(ServerBackedPlayerSnapshot, SpellTargetResolutionFailsClosedForMissingEntity)
+{
+	EXPECT_EQ(
+	    ResolveServerBackedSpellTarget(true, true, true, true, false, true),
+	    ServerBackedSpellTargetResolution::MissingAuthoritativeEntity);
+	EXPECT_EQ(
+	    ResolveServerBackedSpellTarget(false, true, false, true, false, false),
+	    ServerBackedSpellTargetResolution::MissingAuthoritativeEntity);
+}
+
+TEST(ServerBackedPlayerSnapshot, SpellTargetResolutionPreservesNativePrecedence)
+{
+	EXPECT_EQ(
+	    ResolveServerBackedSpellTarget(false, false, true, true, false, false),
+	    ServerBackedSpellTargetResolution::Tile);
+	EXPECT_EQ(
+	    ResolveServerBackedSpellTarget(true, true, true, true, true, true),
+	    ServerBackedSpellTargetResolution::Player);
+	EXPECT_EQ(
+	    ResolveServerBackedSpellTarget(false, true, false, true, false, true),
+	    ServerBackedSpellTargetResolution::CombatEntity);
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 {
 	protocol::Snapshot snapshot;

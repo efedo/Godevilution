@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Connected native spell submission now fails closed when a visible player or
+  combat-entity cursor target is missing from the authoritative projection;
+  it no longer silently falls back to a tile cast.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

@@ -8,6 +8,10 @@ external footprint within the native 10x4 grid. Connected native object
 interactions likewise fail closed when an object has no authoritative
 projection; legacy object behavior remains an offline compatibility path.
 
+Connected native spell targeting now also fails closed when a visible player or
+combat-entity cursor target has no authoritative entity projection, preventing
+presentation-only cursor state from becoming an unintended tile cast.
+
 The authoritative simulation now accepts and publishes generated set-piece
 origins, materializing relative `set_level_objects.tsv` rows at level-entry
 time with deterministic reserved identities and world-bound validation. These

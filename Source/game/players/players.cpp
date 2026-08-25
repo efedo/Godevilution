@@ -3864,16 +3864,30 @@ void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 		    || *targetingKind == authoritative::ProjectedSpellTargetingKind::CombatEntity;
 		const bool allowsCombatEntityTarget = preserveLegacyTargeting
 		    || *targetingKind == authoritative::ProjectedSpellTargetingKind::CombatEntity;
-		uint32_t targetEntityId = 0;
-		if (allowsPlayerTarget && PlayerUnderCursor != nullptr) {
-			if (const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
-				targetEntityId = *entityId;
-		} else if (allowsCombatEntityTarget && pcursmonst != -1) {
-			if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
-				targetEntityId = *entityId;
-		}
-		if (allowsPlayerTarget && PlayerUnderCursor != nullptr && targetEntityId == 0)
+		const bool playerUnderCursor = allowsPlayerTarget && PlayerUnderCursor != nullptr;
+		const bool monsterUnderCursor = allowsCombatEntityTarget && pcursmonst != -1;
+		const auto playerEntityId = playerUnderCursor
+		    ? authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y)
+		    : std::nullopt;
+		const auto monsterEntityId = monsterUnderCursor
+		    ? authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y)
+		    : std::nullopt;
+		const auto targetResolution = authoritative::ResolveServerBackedSpellTarget(
+		    allowsPlayerTarget,
+		    allowsCombatEntityTarget,
+		    playerUnderCursor,
+		    monsterUnderCursor,
+		    playerEntityId.has_value(),
+		    monsterEntityId.has_value());
+		if (targetResolution == authoritative::ServerBackedSpellTargetResolution::MissingAuthoritativeEntity) {
 			LogError("Server-backed spell target is not an authoritative entity.");
+			return;
+		}
+		uint32_t targetEntityId = 0;
+		if (targetResolution == authoritative::ServerBackedSpellTargetResolution::Player)
+			targetEntityId = *playerEntityId;
+		else if (targetResolution == authoritative::ServerBackedSpellTargetResolution::CombatEntity)
+			targetEntityId = *monsterEntityId;
 		auto source = MakeServerBackedCastSource(myPlayer, spellID, spellType);
 		if (!source.has_value()) {
 			LogError("Server-backed spell source failed: {}", source.error());

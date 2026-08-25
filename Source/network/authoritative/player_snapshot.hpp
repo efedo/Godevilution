@@ -40,6 +40,40 @@ enum class ProjectedSpellTargetingKind : uint32_t {
 	WorldEntity = 4,
 };
 
+/** Presentation-side result for resolving a cursor target to an authoritative entity. */
+enum class ServerBackedSpellTargetResolution : uint8_t {
+	Tile,
+	Player,
+	CombatEntity,
+	MissingAuthoritativeEntity,
+};
+
+/**
+ * Resolves the native cursor precedence used by connected spell submission.
+ *
+ * A cursor target that is expected to be an authoritative player or combat
+ * entity must not silently fall back to a tile cast when its entity mapping is
+ * absent. Tile-targeted spells intentionally ignore creature cursors.
+ */
+[[nodiscard]] constexpr ServerBackedSpellTargetResolution ResolveServerBackedSpellTarget(
+	bool allowsPlayerTarget,
+	bool allowsCombatEntityTarget,
+	bool playerUnderCursor,
+	bool monsterUnderCursor,
+	bool hasPlayerEntity,
+	bool hasMonsterEntity) noexcept
+{
+	if (allowsPlayerTarget && playerUnderCursor)
+		return hasPlayerEntity
+		    ? ServerBackedSpellTargetResolution::Player
+		    : ServerBackedSpellTargetResolution::MissingAuthoritativeEntity;
+	if (allowsCombatEntityTarget && monsterUnderCursor)
+		return hasMonsterEntity
+		    ? ServerBackedSpellTargetResolution::CombatEntity
+		    : ServerBackedSpellTargetResolution::MissingAuthoritativeEntity;
+	return ServerBackedSpellTargetResolution::Tile;
+}
+
 struct ProjectedInventoryItem {
 	uint32_t storeId = 0;
 	uint32_t storeSlot = 0;
