@@ -5372,13 +5372,14 @@ public sealed class DiabloCombatCommandProcessor
             || !GetFallenFearTuning(target).HasValue)
             return false;
 
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && target.MonsterAiSeed != 0;
+        var usesNativeRandomWalk = gameMode == DiabloGameMode.SinglePlayer
+            || target.MonsterAiSeed != 0;
         (int X, int Y)? retreat;
-        if (usesNativeAiStream) {
+        if (usesNativeRandomWalk) {
             // Native FallenAi uses RandomWalk while fear is active. The
-            // restored stream orders the two side-pair coin draws even when
-            // the straight candidate is available.
+            // process stream orders the two side-pair coin draws even when
+            // the straight candidate is available; multiplayer restores the
+            // per-monster stream before reaching this branch.
             retreat = FindNativeRandomWalkStepFromRandom(
                 target,
                 target.FallenFearDirection,

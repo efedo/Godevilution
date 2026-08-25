@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   Q6 before player resolution and publish the exact applied value through
   `DamageEvent.amount_q6`; legacy whole-life fixtures retain their prior
   compatibility projection.
+- Single-player Fallen fear retreats now consume the native `RandomWalk` coin
+  draws before choosing a retreat cell; seed-zero multiplayer targets retain
+  the deterministic compatibility sweep.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.
