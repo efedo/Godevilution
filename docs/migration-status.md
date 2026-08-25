@@ -96,6 +96,9 @@ Configured monster drops now use the same deterministic placement search before
 their immutable item state is inserted into the world, so combat death drops
 cannot materialize beneath another participant or an existing item.
 
+Validated spell activation now rejects cyclic Jester dispatch graphs, keeping
+recursive dispatch finite before an external content pack can reach combat.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

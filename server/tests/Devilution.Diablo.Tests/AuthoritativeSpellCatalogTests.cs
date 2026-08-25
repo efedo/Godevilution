@@ -308,6 +308,26 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void JesterDispatchRejectsCyclesBeforeActivation()
+    {
+        var first = new AuthoritativeSpellDefinition(1, 5, 0, 0, 0, 0) {
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Jester,
+            ProjectileLifetime = 1,
+            JesterSpellIds = Enumerable.Repeat(2U, 10).ToArray(),
+        };
+        var second = first with {
+            SpellId = 2,
+            JesterSpellIds = Enumerable.Repeat(1U, 10).ToArray(),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([first, second]));
+
+        Assert.Contains("Jester dispatch graph contains a cycle", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedNovaCarriesNativeRadialLightningTuning()
     {
         var path = Path.Combine(

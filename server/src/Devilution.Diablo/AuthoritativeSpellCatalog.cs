@@ -2017,6 +2017,34 @@ public sealed class AuthoritativeSpellCatalog
                     $"Spell {jester.SpellId} references an unknown Jester dispatch spell.");
             }
         }
+        var visitingJesterIds = new HashSet<uint>();
+        var visitedJesterIds = new HashSet<uint>();
+        foreach (var jester in spells.Values.Where(definition =>
+                     definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Jester)) {
+            if (HasJesterDispatchCycle(jester.SpellId)) {
+                throw new InvalidDataException(
+                    $"Jester dispatch graph contains a cycle at spell {jester.SpellId}.");
+            }
+        }
+
+        bool HasJesterDispatchCycle(uint spellId)
+        {
+            if (visitedJesterIds.Contains(spellId))
+                return false;
+            if (!visitingJesterIds.Add(spellId))
+                return true;
+
+            foreach (var dispatchId in spells[spellId].JesterSpellIds) {
+                if (spells[dispatchId].ProjectileBehavior == AuthoritativeProjectileBehavior.Jester
+                    && HasJesterDispatchCycle(dispatchId)) {
+                    return true;
+                }
+            }
+
+            visitingJesterIds.Remove(spellId);
+            visitedJesterIds.Add(spellId);
+            return false;
+        }
         if (spells.Values.Count(definition =>
                 definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ManaShield) > 1) {
             throw new InvalidDataException(

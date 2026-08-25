@@ -51,6 +51,8 @@ All notable changes to this fork are documented below.
   tile when the target position is occupied by another participant or item.
 - Native monster drops now use the same participant-aware open-tile placement
   boundary before entering authoritative world state.
+- Spell catalog activation now rejects cyclic Jester dispatch tables before
+  recursive authoritative cast resolution can exhaust the process stack.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
