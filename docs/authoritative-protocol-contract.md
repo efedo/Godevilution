@@ -403,8 +403,9 @@ adjacent-attack admission, and summons consume the native type-selection and
 `InitMonster` initialization draws before their item/AI seeds are projected;
 multiplayer summoning remains server-owned. Single-player and seeded
 multiplayer ordinary adjacent melee roll the effective native min/max damage
-range from the authoritative stream; seed-zero multiplayer targets retain the
-legacy projection. Remaining native lifecycle and
+range from the authoritative stream, including validated special melee ranges;
+seed-zero multiplayer targets retain the legacy projection. Remaining native
+lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional

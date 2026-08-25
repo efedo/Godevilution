@@ -3359,6 +3359,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerMonsterSpecialMeleeUsesNativeDamageRangeRoll()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            aggroRange: 5,
+            minDamage: 3,
+            maxDamage: 3,
+            minDamageSpecial: 8,
+            maxDamageSpecial: 20,
+            toHit: 100,
+            toHitSpecial: 100,
+            nativeAi: "GoatMelee");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            positionX: 2,
+            positionY: 0,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+        var expected = new DiabloRandom(0xCAFEBABE);
+        var expectedDamage = expected.RandomIntBetween(8, 20);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.InRange(expectedDamage, 8, 20);
+        Assert.Equal(100 - expectedDamage, player.Life);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedMovementChanceTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
@@ -6392,10 +6433,10 @@ public sealed class DiabloCombatCommandProcessorTests
         // 30 ^ 9 ^ 7 = 16, inside the native 15..20 special band.
         var deliveries = processor.AdvanceTick(30, [player]);
 
-        Assert.Equal(89, player.Life);
+        Assert.Equal(92, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(11, damage.Amount);
+        Assert.Equal(8, damage.Amount);
     }
 
     [Fact]
@@ -6541,8 +6582,8 @@ public sealed class DiabloCombatCommandProcessorTests
         // special lower bound, so the validated special range is selected.
         var deliveries = processor.AdvanceTick(1, [player]);
 
-        Assert.Equal(90, player.Life);
-        Assert.Equal(10, Assert.Single(deliveries).Event.Amount);
+        Assert.Equal(92, player.Life);
+        Assert.Equal(8, Assert.Single(deliveries).Event.Amount);
     }
 
     [Fact]
@@ -14851,8 +14892,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(10, damage.Amount);
-        Assert.Equal(90, player.Life);
+        Assert.Equal(8, damage.Amount);
+        Assert.Equal(92, player.Life);
     }
 
     [Fact]
@@ -14888,8 +14929,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(10, damage.Amount);
-        Assert.Equal(90, player.Life);
+        Assert.Equal(8, damage.Amount);
+        Assert.Equal(92, player.Life);
     }
 
     [Fact]
@@ -14949,8 +14990,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(10, damage.Amount);
-        Assert.Equal(90, player.Life);
+        Assert.Equal(8, damage.Amount);
+        Assert.Equal(92, player.Life);
     }
 
     [Fact]
@@ -15010,8 +15051,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(10, damage.Amount);
-        Assert.Equal(90, player.Life);
+        Assert.Equal(8, damage.Amount);
+        Assert.Equal(92, player.Life);
     }
 
     [Fact]
@@ -22991,6 +23032,8 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(attackRoll < 23);
         var specialRoll = expected.RandomIntLessThan(2);
         Assert.Equal(0, specialRoll);
+        var expectedDamage = expected.RandomIntBetween(8, 20);
+        Assert.Equal(17, expectedDamage);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,
@@ -23002,7 +23045,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
         Assert.Equal(expected.State, random.State);
-        Assert.Equal(90, player.Life);
+        Assert.Equal(100 - expectedDamage, player.Life);
         Assert.Single(deliveries);
     }
 

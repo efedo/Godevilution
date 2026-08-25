@@ -32,8 +32,9 @@ native action roll for summon and adjacent-attack admission; summons also use
 the live stream for skeleton-type selection, stand-animation timing, initial
 health, and the retained item/AI seeds before entering authoritative simulation.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
-effective native min/max damage range from the authoritative stream; seed-zero
-multiplayer targets retain the legacy damage projection. Remaining native lifecycle and
+effective native min/max damage range from the authoritative stream, including
+validated special melee ranges; seed-zero multiplayer targets retain the legacy
+damage projection. Remaining native lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
 the stream for native adjacent

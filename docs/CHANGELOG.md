@@ -45,7 +45,8 @@ All notable changes to this fork are documented below.
   the native first action roll instead of a separate compatibility roll.
 - Single-player and seeded multiplayer ordinary adjacent monster melee now roll
   the effective native min/max damage range from the authoritative stream;
-  seed-zero multiplayer targets retain the legacy damage projection.
+  validated special melee damage uses the same stream for its special range.
+  Seed-zero multiplayer targets retain the legacy damage projection.
 - Multiplayer Bat now consumes the restored stream for native adjacent-attack
   admission, two-step retreat, movement, and mapped-charge action/RandomWalk
   draws; mapped charge misses reuse the same action roll without double-consuming

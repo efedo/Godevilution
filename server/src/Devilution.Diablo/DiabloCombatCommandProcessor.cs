@@ -5129,7 +5129,9 @@ public sealed class DiabloCombatCommandProcessor
                     || gameMode == DiabloGameMode.Multiplayer
                         && target.MonsterAiSeed != 0;
                 var attackDamage = usesSpecialAttack
-                    ? SelectNativeSpecialDamage(target, attackSeed)
+                    ? usesNativeDamageStream
+                        ? RollEffectiveMonsterDamage(target, special: true)
+                        : SelectNativeSpecialDamage(target, attackSeed)
                     : usesNativeDamageStream
                         ? RollEffectiveMonsterDamage(target, special: false)
                         : difficulty == DiabloDifficulty.Normal
