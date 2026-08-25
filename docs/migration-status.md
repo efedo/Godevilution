@@ -34,6 +34,8 @@ health, and the retained item/AI seeds before entering authoritative simulation.
 Initialized single-player SkeletonMelee/Fallen targets now consume the global
 native stream for SkeletonAi action, delay, and RandomWalk draws; zero-seed
 fixtures and legacy multiplayer snapshots retain the compatibility controller.
+Initialized single-player GoatMelee/AiAvoidance targets now consume the global
+native action, Move-goal, RandomWalk, and delay draws under the same rule.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
 effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy

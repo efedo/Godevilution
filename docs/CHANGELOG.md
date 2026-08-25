@@ -18,6 +18,9 @@ All notable changes to this fork are documented below.
 - Initialized single-player SkeletonMelee/Fallen targets now consume the global
   native stream for SkeletonAi action, delay, and RandomWalk draws; zero-seed
   fixtures and legacy multiplayer snapshots retain the compatibility path.
+- Initialized single-player GoatMelee/AiAvoidance targets now consume the
+  global native action, Move-goal, RandomWalk, and delay draws under the same
+  compatibility rule.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.

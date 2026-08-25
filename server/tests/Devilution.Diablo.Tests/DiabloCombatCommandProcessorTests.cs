@@ -7465,6 +7465,42 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedGoatMeleeConsumesNativeActionRoll()
+    {
+        const uint initSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            aggroRange: 6,
+            nativeAi: "GoatMelee",
+            intelligence: 0,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(1);
+        var expected = new DiabloRandom(1);
+        Assert.True(expected.RandomIntLessThan(100) >= 28);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.False(monster.IsMoving);
+        Assert.Equal(0, monster.AvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
     public void GargoyleAiUsesContentSelectedAvoidanceMovementWhenHealingMetadataIsPresent()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
