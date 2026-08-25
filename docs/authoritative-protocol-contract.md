@@ -404,7 +404,10 @@ adjacent-attack admission, and summons consume the native type-selection and
 multiplayer summoning remains server-owned. Single-player and seeded
 multiplayer ordinary adjacent melee roll the effective native min/max damage
 range from the authoritative stream, including validated special melee ranges;
-seed-zero multiplayer targets retain the legacy projection. Remaining native
+seed-zero multiplayer targets retain the legacy projection. Single-player and
+seeded multiplayer adjacent monster melee also consume native hit admission,
+shield/class block admission, and damage rolls in native order; seed-zero
+multiplayer targets retain the compatibility controller. Remaining native
 lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work.

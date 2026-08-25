@@ -5125,14 +5125,47 @@ public sealed class DiabloCombatCommandProcessor
                             target,
                             attackSeed,
                             goatMeleeAttackTuning));
-                var usesNativeDamageStream = gameMode == DiabloGameMode.SinglePlayer
+                var usesNativeCombatStream = gameMode == DiabloGameMode.SinglePlayer
                     || gameMode == DiabloGameMode.Multiplayer
                         && target.MonsterAiSeed != 0;
+                var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
+                if (usesNativeCombatStream && attackToHit > 0) {
+                    var hitChance = rules.ResolveMonsterAttackHitChance(
+                        attackToHit,
+                        GetEffectiveMonsterLevel(target),
+                        victim.CharacterLevel,
+                        target.LevelId,
+                        armorClass);
+                    if (random.RandomIntLessThan(100) >= hitChance)
+                        continue;
+
+                    var victimClass = GetPlayerClass(victim);
+                    var canBlock = (victim.CombatMode is DiabloPlayerCombatMode.Stand
+                            or DiabloPlayerCombatMode.Attack)
+                        && CanBlock(victim);
+                    var blockRoll = canBlock
+                        ? random.RandomIntLessThan(100)
+                        : 100;
+                    var blockChance = Math.Clamp(
+                        victim.Attributes.Dexterity.Current
+                            + (victimClass?.BaseBlockChance ?? 0)
+                            + checked((int)victim.CharacterLevel
+                                * rules.MonsterPlayerBlockLevelScale)
+                            - (rules.MonsterPlayerBlockLevelScale
+                                * GetEffectiveMonsterLevel(target)),
+                        0,
+                        100);
+                    if (blockRoll < blockChance) {
+                        StartBlock(victim, victimClass, tick);
+                        continue;
+                    }
+                }
+
                 var attackDamage = usesSpecialAttack
-                    ? usesNativeDamageStream
+                    ? usesNativeCombatStream
                         ? RollEffectiveMonsterDamage(target, special: true)
                         : SelectNativeSpecialDamage(target, attackSeed)
-                    : usesNativeDamageStream
+                    : usesNativeCombatStream
                         ? RollEffectiveMonsterDamage(target, special: false)
                         : difficulty == DiabloDifficulty.Normal
                             ? target.AttackDamage
@@ -5140,20 +5173,21 @@ public sealed class DiabloCombatCommandProcessor
                                 target,
                                 special: false,
                                 seed: attackSeed);
-                var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
-                var damage = attackToHit == 0
-                    ? rules.ResolveAttackDamage(
-                        attackDamage,
-                        armorClass,
-                        attackSeed)
-                    : rules.ResolveMonsterAttackDamage(
-                        attackDamage,
-                        attackToHit,
-                        GetEffectiveMonsterLevel(target),
-                        victim.CharacterLevel,
-                        target.LevelId,
-                        armorClass,
-                        attackSeed);
+                var damage = usesNativeCombatStream && attackToHit > 0
+                    ? rules.ResolveMonsterAttackDamageAfterHit(attackDamage)
+                    : attackToHit == 0
+                        ? rules.ResolveAttackDamage(
+                            attackDamage,
+                            armorClass,
+                            attackSeed)
+                        : rules.ResolveMonsterAttackDamage(
+                            attackDamage,
+                            attackToHit,
+                            GetEffectiveMonsterLevel(target),
+                            victim.CharacterLevel,
+                            target.LevelId,
+                            armorClass,
+                            attackSeed);
                 damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
                     damage,
                     rules.MinimumDamage,

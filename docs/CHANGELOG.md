@@ -46,7 +46,10 @@ All notable changes to this fork are documented below.
 - Single-player and seeded multiplayer ordinary adjacent monster melee now roll
   the effective native min/max damage range from the authoritative stream;
   validated special melee damage uses the same stream for its special range.
-  Seed-zero multiplayer targets retain the legacy damage projection.
+  Seed-zero multiplayer targets retain the legacy damage projection. Those same
+  native-stream paths now consume monster hit admission, shield/class block
+  admission, and damage in native order; seed-zero multiplayer targets retain
+  the compatibility path.
 - Multiplayer Bat now consumes the restored stream for native adjacent-attack
   admission, two-step retreat, movement, and mapped-charge action/RandomWalk
   draws; mapped charge misses reuse the same action roll without double-consuming

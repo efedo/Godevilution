@@ -723,17 +723,13 @@ public sealed class AuthoritativeCombatRules
     }
 
     /** Resolves a native monster's normal physical hit against a player. */
-    public int ResolveMonsterAttackDamage(
-        int baseDamage,
+    public int ResolveMonsterAttackHitChance(
         int monsterToHit,
         int monsterLevel,
         uint targetCharacterLevel,
         uint targetLevelId,
-        int targetArmorClass,
-        uint seed)
+        int targetArmorClass)
     {
-        if (baseDamage <= 0 || monsterToHit <= 0)
-            return 0;
         // Nightmare/Hell add native accuracy bonuses after the byte-sized
         // content value; the final hit chance is clamped below.
         if (monsterToHit < 0 || monsterLevel < 0 || targetArmorClass < 0)
@@ -747,12 +743,41 @@ public sealed class AuthoritativeCombatRules
             MonsterMeleeMinimumHitChance);
         var levelDelta = checked(
             MonsterToHitLevelScale * (monsterLevel - checked((int)targetCharacterLevel)));
-        var hitChance = Math.Max(
-            minimumHitChance,
-            checked(monsterToHit + levelDelta + MonsterToHitBaseBonus - targetArmorClass));
-        if (!ResolveAttackHit(Math.Clamp(hitChance, 0, 100), seed))
+        return Math.Clamp(
+            Math.Max(
+                minimumHitChance,
+                checked(monsterToHit + levelDelta + MonsterToHitBaseBonus - targetArmorClass)),
+            0,
+            100);
+    }
+
+    /** Resolves the damage value after native MonsterAttackPlayer hit/block rolls. */
+    public int ResolveMonsterAttackDamageAfterHit(int baseDamage)
+    {
+        return baseDamage <= 0 ? 0 : Math.Max(1, baseDamage);
+    }
+
+    /** Resolves a native monster's normal physical hit against a player. */
+    public int ResolveMonsterAttackDamage(
+        int baseDamage,
+        int monsterToHit,
+        int monsterLevel,
+        uint targetCharacterLevel,
+        uint targetLevelId,
+        int targetArmorClass,
+        uint seed)
+    {
+        if (baseDamage <= 0 || monsterToHit <= 0)
             return 0;
-        return Math.Max(1, baseDamage);
+        var hitChance = ResolveMonsterAttackHitChance(
+            monsterToHit,
+            monsterLevel,
+            targetCharacterLevel,
+            targetLevelId,
+            targetArmorClass);
+        if (!ResolveAttackHit(hitChance, seed))
+            return 0;
+        return ResolveMonsterAttackDamageAfterHit(baseDamage);
     }
 
     /** Resolves a native monster arrow hit, including its distance penalty. */
