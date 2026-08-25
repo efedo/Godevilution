@@ -7495,6 +7495,11 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
         if (distance < 2) {
             var attackChanceBase = missile.SnakeAdjacentAttackChanceBase > 0
                 ? missile.SnakeAdjacentAttackChanceBase
@@ -7505,9 +7510,14 @@ public sealed class DiabloCombatCommandProcessor
             var attackChance = Math.Min(
                 100,
                 attackChanceBase + (attackChanceIntelligenceScale * monster.Intelligence));
-            if (actionSeed % 100U >= (uint)attackChance) {
+            if (actionRoll >= attackChance) {
                 monster.StartSnakeDelay(
-                    ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: true));
+                    usesNativeAiStream
+                        ? ResolveSnakeDelayFromRandom(
+                            missile,
+                            monster.Intelligence,
+                            adjacent: true)
+                        : ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: true));
                 return true;
             }
             return false;
@@ -7522,18 +7532,30 @@ public sealed class DiabloCombatCommandProcessor
         var delayBand = Math.Max(
             0,
             delayChanceBase - (delayChanceIntelligenceScale * monster.Intelligence));
-        if (actionSeed % 100U < (uint)delayBand) {
+        if (actionRoll < delayBand) {
             monster.StartSnakeDelay(
-                ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: false));
+                usesNativeAiStream
+                    ? ResolveSnakeDelayFromRandom(
+                        missile,
+                        monster.Intelligence,
+                        adjacent: false)
+                    : ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: false));
             return true;
         }
 
-        var drift = FindSnakeDriftStep(
-            monster,
-            player,
-            players,
-            actionSeed,
-            missile.SnakeDriftPattern);
+        var drift = usesNativeAiStream
+            ? FindSnakeDriftStepFromRandom(
+                monster,
+                player,
+                players,
+                actionSeed,
+                missile.SnakeDriftPattern)
+            : FindSnakeDriftStep(
+                monster,
+                player,
+                players,
+                actionSeed,
+                missile.SnakeDriftPattern);
         if (drift.HasValue)
             monster.BeginMovement(drift.Value.X, drift.Value.Y);
         return true;
@@ -7769,6 +7791,45 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     monster.EntityId))
                 return (candidateX, candidateY);
+        }
+        return null;
+    }
+
+    /** Native Snake RandomWalk2 fallback driven by the restored stream. */
+    private (int X, int Y)? FindSnakeDriftStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed,
+        IReadOnlyList<int>? configuredPattern)
+    {
+        var targetDirection = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var pattern = configuredPattern is { Count: > 0 }
+            ? configuredPattern
+            : SnakeDriftPattern;
+        var patternIndex = (int)((seed / 100U) % (uint)pattern.Count);
+        var direction = RotateDirection(
+            targetDirection,
+            pattern[patternIndex]);
+        var drift = FindStepInDirection(monster, direction, players);
+        if (drift.HasValue)
+            return drift;
+
+        // Native RandomWalk2 consumes one coin to order the two lateral
+        // candidates after its straight candidate is unavailable.
+        var fallbackTurn = random.FlipCoin(2) ? 1 : -1;
+        foreach (var candidateDirection in new[] {
+                     targetDirection,
+                     RotateDirection(targetDirection, fallbackTurn),
+                     RotateDirection(targetDirection, -fallbackTurn),
+                 }) {
+            var step = FindStepInDirection(monster, candidateDirection, players);
+            if (step.HasValue)
+                return step;
         }
         return null;
     }
@@ -8569,6 +8630,39 @@ public sealed class DiabloCombatCommandProcessor
             0,
             checked(baseDelay - intelligenceScale * intelligence
                 + (int)((actionSeed / 100U) % (uint)randomRange)));
+    }
+
+    /** Native Snake delay roll driven by the restored per-monster stream. */
+    private int ResolveSnakeDelayFromRandom(
+        AuthoritativeMonsterMissileDefinition? missile,
+        int intelligence,
+        bool adjacent)
+    {
+        var baseDelay = adjacent
+            ? missile?.SnakeAdjacentDelayBase > 0
+                ? missile.SnakeAdjacentDelayBase
+                : 10
+            : missile?.SnakeDistantDelayBase > 0
+                ? missile.SnakeDistantDelayBase
+                : 15;
+        var intelligenceScale = adjacent
+            ? missile?.SnakeAdjacentDelayIntelligenceScale > 0
+                ? missile.SnakeAdjacentDelayIntelligenceScale
+                : 1
+            : missile?.SnakeDistantDelayIntelligenceScale > 0
+                ? missile.SnakeDistantDelayIntelligenceScale
+                : 1;
+        var randomRange = adjacent
+            ? missile?.SnakeAdjacentDelayRandomRange > 0
+                ? missile.SnakeAdjacentDelayRandomRange
+                : 10
+            : missile?.SnakeDistantDelayRandomRange > 0
+                ? missile.SnakeDistantDelayRandomRange
+                : 10;
+        return Math.Max(
+            0,
+            checked(baseDelay - intelligenceScale * intelligence
+                + random.RandomIntLessThan(randomRange)));
     }
 
     private int ResolveAvoidanceDelay(

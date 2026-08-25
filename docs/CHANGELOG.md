@@ -42,6 +42,9 @@ All notable changes to this fork are documented below.
   admission, two-step retreat, movement, and mapped-charge action/RandomWalk
   draws; mapped charge misses reuse the same action roll without double-consuming
   the stream.
+- Multiplayer Snake now consumes the restored stream for distant and adjacent
+  action admission, native delay rolls, and RandomWalk2 fallback draws; mapped
+  charge ticks retain their native no-roll branch and seed-zero compatibility.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

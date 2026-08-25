@@ -8463,6 +8463,181 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerSnakeChargeConsumesNoExtraActionRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Single(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerSnakeConsumesItsNativeAdjacentDelayRoll()
+    {
+        const uint aiSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(37, expected.RandomIntLessThan(100));
+        var delayRoll = expected.RandomIntLessThan(10);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(10 + delayRoll, monster.SnakeDelayTicks);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerSnakeConsumesItsNativeDistantDelayRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        var delayRoll = expected.RandomIntLessThan(10);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(15 + delayRoll, monster.SnakeDelayTicks);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
+    public void MultiplayerSnakeConsumesNativeRandomWalk2FallbackRoll()
+    {
+        const uint aiSeed = 123;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2, 41, 42],
+            combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(88, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(130, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void SnakeAiUsesValidatedDistantDelayAdmissionChance()
     {
         var monster = new AuthoritativeCombatTarget(

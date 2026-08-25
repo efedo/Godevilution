@@ -32,6 +32,9 @@ follow-up work. Multiplayer Bat now consumes the stream for native adjacent
 attack admission, two-step retreat, movement, and mapped-charge action/RandomWalk
 draws; mapped charge misses reuse the same action roll without double-consuming
 the stream.
+Multiplayer Snake now consumes the stream for distant and adjacent action
+admission, native delay rolls, and RandomWalk2 fallback draws; mapped charge
+ticks retain their native no-roll branch and seed-zero compatibility.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
