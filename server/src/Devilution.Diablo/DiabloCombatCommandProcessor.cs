@@ -9790,6 +9790,11 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(attackSeed % 100U);
         if (distance < 2) {
             monster.ClearRhinoMovement();
             return false;
@@ -9798,10 +9803,16 @@ public sealed class DiabloCombatCommandProcessor
         var hasMoveGoal = monster.RhinoMovementTicks >= 0;
         var movementGoalTuning = GetRhinoMovementGoalTuning(monster);
         var startsMoveGoal = distance >= movementGoalTuning.MinimumDistance
-            && (attackSeed / 100U) % (uint)movementGoalTuning.ChanceModulo != 0U;
+            && (hasMoveGoal
+                || (usesNativeAiStream
+                    ? random.RandomIntLessThan(movementGoalTuning.ChanceModulo) != 0
+                    : (attackSeed / 100U) % (uint)movementGoalTuning.ChanceModulo != 0U));
         if (hasMoveGoal || startsMoveGoal) {
             if (!hasMoveGoal)
-                monster.StartRhinoMovement((int)((attackSeed / 100U) % 2U));
+                monster.StartRhinoMovement(
+                    usesNativeAiStream
+                        ? random.RandomIntLessThan(2)
+                        : (int)((attackSeed / 100U) % 2U));
             if (monster.AdvanceRhinoMovement(
                     distance,
                     world.HasLineOfSight(
@@ -9810,19 +9821,31 @@ public sealed class DiabloCombatCommandProcessor
                         monster.PositionY,
                         player.PositionX,
                         player.PositionY))) {
-                var roundWalk = FindNativeStatefulRoundWalkStep(
-                    monster,
-                    player,
-                    players,
-                    attackSeed,
-                    monster.RhinoMovementTurn,
-                    out var nextTurn);
+                var roundWalk = usesNativeAiStream
+                    ? FindNativeStatefulRoundWalkStepFromRandom(
+                        monster,
+                        player,
+                        players,
+                        monster.RhinoMovementTurn,
+                        out var nextTurn)
+                    : FindNativeStatefulRoundWalkStep(
+                        monster,
+                        player,
+                        players,
+                        attackSeed,
+                        monster.RhinoMovementTurn,
+                        out nextTurn);
                 monster.UpdateRhinoMovementTurn(nextTurn);
                 if (roundWalk.HasValue) {
                     monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                     monster.RecordRhinoMovement(
                         roundWalk.Value.X - monster.PositionX,
                         roundWalk.Value.Y - monster.PositionY);
+                } else {
+                    monster.StartRhinoDelay(
+                        usesNativeAiStream
+                            ? ResolveRhinoDelayFromRandom(monster)
+                            : ResolveRhinoDelay(monster, attackSeed));
                 }
                 return true;
             }
@@ -9836,14 +9859,15 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 players,
                 attackSeed,
-                distance);
+                distance,
+                usesNativeAiStream);
         }
 
         var chargeChance = Math.Min(
             100,
             rhinoTuning.Value.ChanceBase
                 + (rhinoTuning.Value.IntelligenceScale * monster.Intelligence));
-        if (attackSeed % 100U >= (uint)chargeChance
+        if (actionRoll >= chargeChance
             || !world.HasLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
@@ -9855,7 +9879,8 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 players,
                 attackSeed,
-                distance);
+                distance,
+                usesNativeAiStream);
 
         var destination = FindRhinoChargeDestination(monster, player, players);
         if (!destination.HasValue)
@@ -9864,7 +9889,8 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 players,
                 attackSeed,
-                distance);
+                distance,
+                usesNativeAiStream);
 
         monster.ApplyKnockback(destination.Value.X, destination.Value.Y);
         var armorClass = player.ArmorClass;
@@ -9919,8 +9945,43 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed,
-        int distance)
+        int distance,
+        bool usesNativeAiStream = false)
     {
+        if (usesNativeAiStream) {
+            var nativeMovementTuning = GetRhinoMovementTuning(monster);
+            var nativeMovementChance = monster.RhinoMovementMode is >= 1 and <= 3
+                && monster.RhinoMovementIdleTicks == 0
+                ? Math.Min(
+                    100,
+                    nativeMovementTuning.ChanceBase
+                        + (nativeMovementTuning.IntelligenceScale * monster.Intelligence)
+                        + nativeMovementTuning.FreshChanceBonus)
+                : Math.Min(
+                    100,
+                    nativeMovementTuning.ChanceBase
+                        + (nativeMovementTuning.IntelligenceScale * monster.Intelligence));
+            var movementRoll = random.RandomIntLessThan(100);
+            if (movementRoll < nativeMovementChance) {
+                var randomWalk = FindNativeRandomWalkStepFromRandom(
+                    monster,
+                    player,
+                    players);
+                if (randomWalk.HasValue) {
+                    monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+                    monster.RecordRhinoMovement(
+                        randomWalk.Value.X - monster.PositionX,
+                        randomWalk.Value.Y - monster.PositionY);
+                } else {
+                    monster.AdvanceRhinoMovementIdle();
+                }
+            } else {
+                monster.AdvanceRhinoMovementIdle();
+                monster.StartRhinoDelay(ResolveRhinoDelayFromRandom(monster));
+            }
+            return true;
+        }
+
         var movementGoalTuning = GetRhinoMovementGoalTuning(monster);
         if (distance >= movementGoalTuning.MinimumDistance
             && (seed / 100U) % (uint)movementGoalTuning.ChanceModulo != 0U) {
@@ -10044,6 +10105,20 @@ public sealed class DiabloCombatCommandProcessor
             randomRange = definition.RhinoDelayRandomRange;
         }
         return checked(delayBase + (int)((seed / 200U) % (uint)randomRange));
+    }
+
+    /** Native Rhino recovery delay driven by the restored per-monster stream. */
+    private int ResolveRhinoDelayFromRandom(AuthoritativeCombatTarget target)
+    {
+        var delayBase = 10;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.RhinoDelayBase > 0
+            && definition.RhinoDelayRandomRange > 0) {
+            delayBase = definition.RhinoDelayBase;
+            randomRange = definition.RhinoDelayRandomRange;
+        }
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private (int X, int Y)? FindRhinoChargeDestination(

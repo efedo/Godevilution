@@ -63,6 +63,9 @@ All notable changes to this fork are documented below.
   its close-range AiRanged admission, native RandomWalk fallback, and post-shot
   delay; long-range and seed-zero compatibility branches retain their native
   no-roll path.
+- Multiplayer Rhino charge and movement now consume the restored stream for
+  initial admission, far-distance Move-goal setup, RoundWalk/RandomWalk
+  fallback, and recovery delay; seed-zero targets retain the compatibility path.
 - Multiplayer Counselor now consumes the restored stream for its initial and
   secondary ranged/movement admissions, adjacent admission, retreat RandomWalk
   coins, and server-owned recovery delays; seed-zero targets retain the
