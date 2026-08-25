@@ -5800,6 +5800,8 @@ public sealed class DiabloCombatCommandProcessor
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         if (monster.AdvanceSkeletonMeleeDelay())
             return true;
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var delayChanceBase = 35;
         var delayChanceIntelligenceScale = 4;
         if (monsterTypes?.TryGet(monster.MonsterId, out var megaDefinition) == true
@@ -5811,17 +5813,20 @@ public sealed class DiabloCombatCommandProcessor
         var delayBand = Math.Max(
             0,
             delayChanceBase - (delayChanceIntelligenceScale * monster.Intelligence));
-        if (actionSeed % 100U < (uint)delayBand) {
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        if (actionRoll < delayBand) {
             monster.StartSkeletonMeleeDelay(
-                ResolveSkeletonMeleeMovementDelay(monster, actionSeed));
+                usesNativeAiStream
+                    ? ResolveSkeletonMeleeMovementDelayFromRandom(monster)
+                    : ResolveSkeletonMeleeMovementDelay(monster, actionSeed));
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            victim,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
+            : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             return true;

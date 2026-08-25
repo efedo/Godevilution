@@ -11453,6 +11453,103 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerMegaConsumesItsNativeFallbackDelayRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        var delayRoll = expected.RandomIntLessThan(10);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(15 + delayRoll, monster.SkeletonMeleeDelayTicks);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerMegaConsumesItsNativeFallbackRandomWalkRolls()
+    {
+        const uint aiSeed = 17;
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(48, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MegaAiUsesNativeRandomWalkAfterAnIntermediateInfernoMiss()
     {
         var monster = new AuthoritativeCombatTarget(
