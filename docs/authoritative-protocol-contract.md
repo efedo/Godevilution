@@ -393,7 +393,9 @@ movement, Move-goal, RandomWalk, adjacent-attack, and wounded-special draws.
 The multiplayer Gargoyle controller likewise consumes its healthy AiAvoidance
 movement, adjacent attacks, wounded retreat RandomWalk, and healing divisor
 draws; its native special lock remains server-owned. Using it for every
-remaining native AI roll is follow-up work.
+remaining native AI roll is follow-up work. The multiplayer ButcherAi
+controller likewise consumes its non-adjacent RandomWalk coin draws; adjacent
+attacks retain their no-roll native admission.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

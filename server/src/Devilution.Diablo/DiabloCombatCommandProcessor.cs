@@ -5326,11 +5326,11 @@ public sealed class DiabloCombatCommandProcessor
         if (!UsesButcherPursuit(monster) || distance <= 1)
             return false;
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            victim,
-            players,
-            unchecked((uint)monster.EntityId ^ victim.EntityId));
+        var actionSeed = unchecked((uint)monster.EntityId ^ victim.EntityId);
+        var randomWalk = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0
+            ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
+            : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             return true;

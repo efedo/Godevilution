@@ -21045,6 +21045,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerButcherAiConsumesItsNativeRandomWalkRolls()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "Butcher",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+
+        processor.AdvanceTick(1, [CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100)]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void ClosedStashConsumableCastIsRejectedWithoutConsumingSource()
     {
         var scroll = AuthoritativeItemState.Empty with {

@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
 - Multiplayer Gargoyle now consumes the restored stream for healthy
   AiAvoidance movement, adjacent attacks, wounded retreat RandomWalk, and
   healing divisor rolls; the native special lock remains server-owned.
+- Multiplayer ButcherAi now consumes the restored stream for its native
+  non-adjacent RandomWalk coin draws; adjacent attacks retain their no-roll
+  native admission and seed-zero compatibility.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.
