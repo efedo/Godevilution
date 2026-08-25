@@ -5067,9 +5067,14 @@ public sealed class DiabloCombatCommandProcessor
                         fatAttackTuning.Value))
                     continue;
                 var batAttackTuning = GetBatAttackTuning(target);
+                var usesBatNativeAiStream = batAttackTuning.HasValue
+                    && gameMode == DiabloGameMode.Multiplayer
+                    && target.MonsterAiSeed != 0;
+                var batAttackRoll = usesBatNativeAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)(attackSeed % 100U);
                 if (batAttackTuning.HasValue
-                    && attackSeed % 100U
-                        >= (uint)Math.Min(
+                    && batAttackRoll >= Math.Min(
                             100,
                             batAttackTuning.Value.ChanceBase
                                 + (batAttackTuning.Value.IntelligenceScale
@@ -5294,6 +5299,27 @@ public sealed class DiabloCombatCommandProcessor
         var batTuning = GetBatAttackTuning(target);
         if (!batTuning.HasValue || target.BatRetreatTicks == 0)
             return false;
+
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && target.MonsterAiSeed != 0;
+        if (usesNativeAiStream) {
+            // Native BatAi consumes its action roll before either retreat
+            // branch. RandomWalk then consumes two side-order coin draws.
+            _ = random.RandomIntLessThan(100);
+            var nativeDirection = target.BatRetreatTicks == batTuning.Value.RetreatDurationTicks
+                ? RotateDirection(target.BatRetreatDirection, 4)
+                : RotateDirection(
+                    target.BatRetreatDirection,
+                    random.FlipCoin(2) ? 1 : -1);
+            var retreat = FindNativeRandomWalkStepFromRandom(
+                target,
+                nativeDirection,
+                players);
+            if (retreat.HasValue)
+                target.BeginMovement(retreat.Value.X, retreat.Value.Y);
+            target.AdvanceBatRetreat();
+            return true;
+        }
 
         var direction = target.BatRetreatTicks == batTuning.Value.RetreatDurationTicks
             ? RotateDirection(target.BatRetreatDirection, 4)

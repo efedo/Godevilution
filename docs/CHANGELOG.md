@@ -38,6 +38,9 @@ All notable changes to this fork are documented below.
   action and movement-admission rolls, delay range, RoundWalk, RandomWalk, and
   adjacent-attack admission; multiplayer summoning remains server-owned and
   seed-zero targets retain the compatibility controller.
+- Multiplayer Bat now consumes the restored stream for native adjacent-attack
+  admission and two-step retreat action/RandomWalk draws; Bat movement and
+  charge paths remain on their existing compatibility controller.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

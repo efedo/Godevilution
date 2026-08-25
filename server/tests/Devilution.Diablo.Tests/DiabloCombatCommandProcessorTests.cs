@@ -3998,6 +3998,87 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerBatConsumesItsNativeAdjacentAttackRoll()
+    {
+        const uint aiSeed = 123;
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 5,
+            aggroRange: 6,
+            nativeAi: "Bat",
+            intelligence: 0,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [bat]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(88, expected.RandomIntLessThan(100));
+        var player = CreatePlayer(
+            positionX: 2,
+            positionY: 0,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, bat.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void MultiplayerBatRetreatConsumesNativeActionAndRandomWalkRolls()
+    {
+        const uint aiSeed = 7;
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            aggroRange: 6,
+            levelId: 0,
+            nativeAi: "Bat",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        bat.StartBatRetreat(7, 2);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [bat]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            positionX: 4,
+            positionY: 4,
+            levelId: 0,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, bat.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(1, bat.BatRetreatTicks);
+        Assert.True(bat.IsMoving);
+    }
+
+    [Fact]
     public void BatUsesValidatedMonsterTypeAttackTuning()
     {
         var nativeWorld = new AuthoritativeWorld();

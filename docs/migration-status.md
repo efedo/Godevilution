@@ -28,7 +28,9 @@ seed-zero targets retain the compatibility path. Multiplayer Skeleton King now
 consumes the stream for its native action and movement-admission rolls, delay
 range, RoundWalk, RandomWalk, and adjacent-attack admission; multiplayer
 summoning remains server-owned. Remaining native AI controllers and rolls are
-follow-up work.
+follow-up work. Multiplayer Bat now consumes the stream for native adjacent
+attack admission and two-step retreat action/RandomWalk draws; its movement
+and charge paths remain follow-up work.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
