@@ -110,7 +110,7 @@ public sealed class AuthoritativeTcpServerTests
                 new PlayerAttributeState(15, 16),
                 new PlayerAttributeState(20, 21)),
             startingEquipment: [new EquippedStoreItem(0, 77)],
-            startingInventoryGrid: [0, -1, 2]);
+            startingInventoryGrid: []);
         var commandServer = new AuthoritativeCommandServer(executor);
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
         await using var server = new AuthoritativeTcpServer(commandServer, handshake, () => 10, snapshotProvider: executor);
@@ -143,7 +143,7 @@ public sealed class AuthoritativeTcpServerTests
         Assert.Equal(0U, initialPlayer.ActiveStoreId);
         Assert.Equal(12, initialPlayer.Attributes.Strength.Current);
         Assert.Equal(77U, Assert.Single(initialPlayer.Equipment).ItemSeed);
-        Assert.Equal(new[] { 0, -1, 2 }, initialPlayer.InventoryGrid);
+        Assert.Empty(initialPlayer.InventoryGrid);
         Assert.Empty(initialPlayer.Inventory);
         Assert.Equal(SnapshotStateHasher.Compute(initialSnapshot.Snapshot), initialSnapshot.Snapshot.StateSha256);
 
@@ -1287,7 +1287,7 @@ public sealed class AuthoritativeTcpServerTests
             new StoreItem(0, 42, 75, AuthoritativeItemState.Empty with { Identified = true, ItemType = 1 }),
             new StoreItem(1, 43, 25, RemainingStockState()),
         });
-        var executor = new StoreSimulationExecutor(catalog, startingGold: 100, startingInventoryGrid: [-1, -1]);
+        var executor = new StoreSimulationExecutor(catalog, startingGold: 100, startingInventoryGrid: []);
         var commandServer = new AuthoritativeCommandServer(executor);
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
         await using var server = new AuthoritativeTcpServer(commandServer, handshake, () => 10, snapshotProvider: executor);

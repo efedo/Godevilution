@@ -70,6 +70,8 @@ All notable changes to this fork are documented below.
 - Extended the focused TCP reconnect regression to four active participants,
   preserving complete self-first snapshots and canonical state hashes while
   the resumed participant rejoins three connected peers.
+- Refreshed TCP store snapshot fixtures to use valid empty inventory grids under
+  the current authoritative topology validation.
 - Added a focused three-participant TCP reconnect regression covering complete
   self-first snapshots and canonical state hashes.
 - World-item anchor completion now requires the target quest to be active;
