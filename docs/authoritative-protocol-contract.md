@@ -559,9 +559,9 @@ ordinary authoritative snapshot state; clients do not simulate the charge.
 Charge misses and blocked lanes retain the native far-distance `RoundWalk` or
 ordinary `33 + 2 * intelligence` `RandomWalk` movement fallback on the server.
 Seeded multiplayer Rhino targets consume the restored per-monster stream for
-the initial admission, conditional far-distance Move-goal setup, native
-RoundWalk/RandomWalk fallback, and recovery delay; seed-zero targets retain the
-compatibility path.
+the initial and adjacent attack admissions, conditional far-distance Move-goal
+setup, native RoundWalk/RandomWalk fallback, and recovery delay; seed-zero
+targets retain the compatibility path.
 
 Validated `AiRangedAvoidance` mappings (including Magma, Storm, Diablo,
 BoneDemon, and Acid families) use a server-owned ranged boundary. Seeded

@@ -9843,7 +9843,10 @@ public sealed class DiabloCombatCommandProcessor
             : (int)(attackSeed % 100U);
         if (distance < 2) {
             monster.ClearRhinoMovement();
-            return false;
+            var adjacentAttackChance = Math.Min(
+                100,
+                28 + (2 * monster.Intelligence));
+            return actionRoll >= adjacentAttackChance;
         }
 
         var hasMoveGoal = monster.RhinoMovementTicks >= 0;

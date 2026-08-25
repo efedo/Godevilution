@@ -6800,6 +6800,82 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerRhinoConsumesNativeAdjacentAdmissionWhenItMisses()
+    {
+        const uint aiSeed = 17;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 5,
+            aggroRange: 8,
+            toHit: 100,
+            nativeAi: "Rhino",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(48, expected.RandomIntLessThan(100));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void MultiplayerRhinoConsumesNativeAdjacentAdmissionWhenItHits()
+    {
+        const uint aiSeed = 16;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 5,
+            aggroRange: 8,
+            toHit: 100,
+            nativeAi: "Rhino",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void RhinoUsesValidatedChargeBoundaryTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
