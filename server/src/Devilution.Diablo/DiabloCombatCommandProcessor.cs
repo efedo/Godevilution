@@ -1700,6 +1700,24 @@ public sealed class DiabloCombatCommandProcessor
                     StringComparison.Ordinal));
     }
 
+    /** Native LazarusMinionAi keeps summoned succubi non-combatant until the single-player quest gate opens. */
+    private bool IsLazarusMinionCombatSuppressed(AuthoritativeCombatTarget target)
+    {
+        if (gameMode == DiabloGameMode.Multiplayer
+            || !UsesNativeAi(target, "LazarusSuccubus"))
+            return false;
+
+        return world.Quests.Values.Any(quest =>
+            quest.Active
+            && !quest.Unavailable
+            && !quest.Completed
+            && quest.Variable1 <= 5
+            && string.Equals(
+                quest.CompletionUniqueIdentity,
+                "Lazarus",
+                StringComparison.Ordinal));
+    }
+
     private bool TryGetPlayerAttackTarget(
         AuthoritativePlayerState player,
         uint targetEntityId,
@@ -4863,6 +4881,8 @@ public sealed class DiabloCombatCommandProcessor
             if (target.IsPetrified)
                 continue;
             if (IsQuestDialogueTarget(target))
+                continue;
+            if (IsLazarusMinionCombatSuppressed(target))
                 continue;
             // Native Lachdanan only exposes quest dialogue, while FireMan has
             // no registered native AI; neither may fall through to generic

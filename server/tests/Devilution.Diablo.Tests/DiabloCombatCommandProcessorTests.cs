@@ -10015,6 +10015,78 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(4 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
     }
 
+    [Theory]
+    [InlineData(DiabloGameMode.SinglePlayer, 5, false)]
+    [InlineData(DiabloGameMode.SinglePlayer, 6, true)]
+    [InlineData(DiabloGameMode.Multiplayer, 5, true)]
+    public void LazarusMinionUsesNativeSinglePlayerQuestCombatGate(
+        DiabloGameMode gameMode,
+        int variable1,
+        bool expectedAttack)
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "LazarusSuccubus",
+            intelligence: 0);
+        var quest = new AuthoritativeQuestState(
+            3016,
+            15,
+            1,
+            active: true,
+            variable1: variable1,
+            completionUniqueIdentity: "Lazarus",
+            completionVariable1: 7);
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            quests: [quest]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(37, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                Range = 112,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.BloodStar,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                MagicDamageDivisor = 2,
+                MagicDamageReductionDivisor = 8,
+                SpellLevelDamage = 3,
+                SelfDamage = 5,
+                ResistantDamageDivisor = 4,
+            },
+        ]);
+        var processor = CreateProcessor(
+            world,
+            spells,
+            gameMode: gameMode,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "LazarusSuccubus",
+                    "BloodStar",
+                    AuthoritativeProjectileBehavior.BloodStar,
+                    SpellId: 37),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        if (expectedAttack)
+            Assert.Single(world.Projectiles.Values);
+        else
+            Assert.Empty(world.Projectiles);
+    }
+
     [Fact]
     public void BloodStarMappingUsesConfiguredProjectileTransportMetadata()
     {

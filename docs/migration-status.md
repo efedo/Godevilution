@@ -41,6 +41,10 @@ The shipped Hellfire FireMan identity now fails closed to passive behavior,
 matching DevilutionX's unregistered native AI instead of entering generic
 authoritative melee until its native behavior is explicitly externalized.
 
+LazarusSuccubus now preserves the native single-player Vile Betrayer gate:
+server-owned Blood Star combat is suppressed through `_qvar1=5`, resumes at
+`_qvar1=6`, and remains active in multiplayer as in `LazarusMinionAi`.
+
 Late-generated level additions and replacements now pass through
 `DiabloWorldState`, which rebuilds effective mutation/native-layer geometry
 before deferred procedural origins are published; direct simulation consumers

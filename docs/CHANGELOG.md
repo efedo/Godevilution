@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - FireMan encounters now fail closed to passive behavior because the native
   registry has no FireMan AI; the server no longer invents generic melee
   behavior for that shipped Hellfire identity.
+- LazarusSuccubus now honors the native single-player Vile Betrayer quest gate:
+  its Blood Star attack remains suppressed through variable 5, resumes at 6,
+  and remains active in multiplayer.
 - Extended the validated text d-piece property loader to preserve the complete
   native `.sol` flag set, while retaining compatibility with older rows that
   provide only `solid` and `block_missile`.
