@@ -6499,7 +6499,8 @@ public sealed class DiabloCombatCommandProcessor
                     positionX,
                     positionY,
                     entityId,
-                    gameMode == DiabloGameMode.Multiplayer);
+                    gameMode == DiabloGameMode.Multiplayer,
+                    direction);
                 if (summon is not null) {
                     DiabloDifficultyMonsterScaling.ApplyInitialHealth(
                         summon,

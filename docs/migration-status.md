@@ -11,6 +11,10 @@ Procedural monster placements now also carry the native pre-initialization
 0-to-7 placement direction through authoritative targets instead of defaulting
 all generated monsters to direction zero.
 
+Skeleton King runtime summons now retain the native direction toward the
+victim when their authoritative targets are created, preserving the
+`SpawnMonster(newPosition, direction, typeIndex)` initialization contract.
+
 Planner-created monster targets now apply native `InitMonster` single-player
 health initialization: current and maximum health are halved with a one-health
 floor, while multiplayer retains full generated health.

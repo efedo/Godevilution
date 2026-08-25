@@ -284,12 +284,14 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
             seed: 7,
             positionX: 2,
             positionY: 2,
-            entityId: 99);
+            entityId: 99,
+            direction: 5);
 
         Assert.NotNull(summon);
         Assert.Equal(99U, summon!.EntityId);
         Assert.Equal(2U, summon.MonsterId);
         Assert.Equal("SkeletonMelee", summon.NativeAi);
+        Assert.Equal(5, summon.Direction);
         Assert.InRange(summon.HitPoints, 2, 3);
         Assert.InRange(summon.MinDamage, 2, 3);
         Assert.InRange(summon.MaxDamage, 2, 3);
@@ -299,6 +301,13 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
             positionX: 2,
             positionY: 2,
             entityId: 100));
+        Assert.Throws<ArgumentOutOfRangeException>(() => planner.CreateSkeletonSummon(
+            levelId: 1,
+            seed: 7,
+            positionX: 2,
+            positionY: 2,
+            entityId: 101,
+            direction: 8));
     }
 
     [Fact]
@@ -325,7 +334,8 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
             seed: 7,
             positionX: 2,
             positionY: 2,
-            entityId: 99);
+            entityId: 99,
+            direction: 3);
 
         Assert.NotNull(summon);
         Assert.Equal(5U, summon!.MonsterId);
@@ -402,11 +412,13 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
             seed: 7,
             positionX: 2,
             positionY: 2,
-            entityId: 99);
+            entityId: 99,
+            direction: 3);
 
         Assert.NotNull(summon);
         Assert.Equal((119U, 117U), (summon!.MonsterId, types.Definitions[0].NativeMonsterId));
         Assert.Equal("SkeletonMelee", summon.NativeAi);
+        Assert.Equal(3, summon.Direction);
         Assert.Equal((15, 10), (summon.HitPoints, summon.MinDamage));
     }
 

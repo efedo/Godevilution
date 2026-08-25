@@ -147,7 +147,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 index,
                 seed,
                 firstEntityId,
-                multiplayer))
+                multiplayer,
+                spawn.Direction))
             .ToArray();
         uniqueMonsters?.ApplyToGenerated(targets);
         return targets;
@@ -226,10 +227,13 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         int positionX,
         int positionY,
         uint entityId,
-        bool multiplayer = false)
+        bool multiplayer = false,
+        int direction = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
+        if (direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(direction));
         if (!world.ContainsLevel(levelId) || levelId > int.MaxValue)
             return null;
 
@@ -260,7 +264,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             0,
             seed,
             entityId,
-            multiplayer);
+            multiplayer,
+            direction);
     }
 
     private static bool IsSkeletonSummonCandidate(
@@ -358,7 +363,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             nativeAi: spawn.Definition.NativeAi,
             intelligence: spawn.Definition.Intelligence,
             knockback: spawn.Definition.Knockback,
-            direction: spawn.Direction);
+            direction: direction);
     }
 
     /** Native InitMonster halves ordinary single-player monster health. */
