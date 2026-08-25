@@ -52,6 +52,9 @@ draws under the same compatibility rule.
 Initialized single-player Rhino targets now consume the global native charge,
 movement, recovery-delay, and adjacent-admission draws under the same
 compatibility rule.
+Initialized single-player Scavenger targets now consume the global native
+corpse-scan direction and corpse-targeted RandomWalk draws under the same
+compatibility rule.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
 effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy

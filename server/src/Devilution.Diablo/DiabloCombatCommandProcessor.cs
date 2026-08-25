@@ -6329,8 +6329,11 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (target.ScavengerHealingTicks == 0)
             target.StartScavengerHealing(scavengerTuning.Value.HealingDurationTicks);
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && target.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = target.MonsterAiSeed != 0;
 
         AuthoritativeCorpse? corpse = null;
         if (target.ScavengerCorpseEntityId != 0)

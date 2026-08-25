@@ -2695,6 +2695,40 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedScavengerConsumesNativeCorpseAndMovementRandomWalkRolls()
+    {
+        const uint initSeed = 7;
+        var scavenger = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            4,
+            maxHitPoints: 20,
+            nativeAi: "Scavenger",
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(
+            combatTargets: [scavenger],
+            corpses: [new AuthoritativeCorpse(10, 0, 4, 0)]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(10U, scavenger.ScavengerCorpseEntityId);
+        Assert.Equal((3, 0), (scavenger.FuturePositionX, scavenger.FuturePositionY));
+    }
+
+    [Fact]
     public void ScavengerDefersWhenItsNativeCorpseSeekingCandidatesAreBlocked()
     {
         var scavenger = new AuthoritativeCombatTarget(
