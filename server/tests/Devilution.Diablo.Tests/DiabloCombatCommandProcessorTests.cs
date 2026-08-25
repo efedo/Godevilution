@@ -20380,6 +20380,46 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerZombieAiConsumesItsNativeMonsterRandomStream()
+    {
+        const uint itemSeed = 1;
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            100,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie",
+            monsterItemSeed: itemSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(8);
+
+        processor.AdvanceTick(1, [CreatePlayer(
+            entityId: 7,
+            positionX: 11,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100)]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((4, 4), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void ClosedStashConsumableCastIsRejectedWithoutConsumingSource()
     {
         var scroll = AuthoritativeItemState.Empty with {

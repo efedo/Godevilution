@@ -6659,12 +6659,17 @@ public sealed class DiabloCombatCommandProcessor
         if (!zombieActionTuning.HasValue || !zombieMovementTuning.HasValue)
             return false;
 
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var actionChance = Math.Min(
             100,
             zombieActionTuning.Value.ChanceBase
                 + (zombieActionTuning.Value.IntelligenceScale * monster.Intelligence));
-        if (actionSeed % 100U >= (uint)actionChance)
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        if (actionRoll >= actionChance)
             return true;
         var longRangeMovementDistance = Math.Max(
             zombieMovementTuning.Value.MinimumDistance,
@@ -6673,13 +6678,24 @@ public sealed class DiabloCombatCommandProcessor
         if (distance < longRangeMovementDistance) {
             if (distance < 2)
                 return false;
-            var randomStep = FindNativeRandomWalkStep(
-                monster,
-                player,
-                players,
-                actionSeed);
+            var randomStep = usesNativeAiStream
+                ? FindNativeRandomWalkStepFromRandom(monster, player, players)
+                : FindNativeRandomWalkStep(monster, player, players, actionSeed);
             if (randomStep.HasValue)
                 monster.BeginMovement(randomStep.Value.X, randomStep.Value.Y);
+            return true;
+        }
+
+        if (usesNativeAiStream) {
+            var direction = monster.Direction;
+            var randomDirectionChance = Math.Min(
+                100,
+                zombieMovementTuning.Value.IntelligenceScale * monster.Intelligence + 20);
+            if (random.RandomIntLessThan(100) < randomDirectionChance)
+                direction = random.RandomIntLessThan(8);
+            var nativeStep = FindStepInDirection(monster, direction, players);
+            if (nativeStep.HasValue)
+                monster.BeginMovement(nativeStep.Value.X, nativeStep.Value.Y);
             return true;
         }
 
@@ -6735,6 +6751,25 @@ public sealed class DiabloCombatCommandProcessor
         return null;
     }
 
+    private (int X, int Y)? FindStepInDirection(
+        AuthoritativeCombatTarget monster,
+        int direction,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var displacement = DirectionDisplacements[direction];
+        var candidateX = checked(monster.PositionX + displacement.X);
+        var candidateY = checked(monster.PositionY + displacement.Y);
+        return world.IsWalkable(monster.LevelId, candidateX, candidateY)
+            && !world.IsOccupied(
+                monster.LevelId,
+                candidateX,
+                candidateY,
+                players,
+                monster.EntityId)
+            ? (candidateX, candidateY)
+            : null;
+    }
+
     /** Native RandomWalk candidate order shared by movement AI controllers. */
     private (int X, int Y)? FindNativeRandomWalkStep(
         AuthoritativeCombatTarget monster,
@@ -6768,6 +6803,34 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     monster.EntityId))
                 return (candidateX, candidateY);
+        }
+        return null;
+    }
+
+    /** Native RandomWalk ordering driven by the restored per-monster stream. */
+    private (int X, int Y)? FindNativeRandomWalkStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var firstTurn = random.FlipCoin(2) ? 1 : -1;
+        var secondTurn = random.FlipCoin(2) ? 2 : -2;
+        var directions = new[] {
+            direction,
+            RotateDirection(direction, firstTurn),
+            RotateDirection(direction, -firstTurn),
+            RotateDirection(direction, secondTurn),
+            RotateDirection(direction, -secondTurn),
+        };
+        foreach (var candidateDirection in directions) {
+            var step = FindStepInDirection(monster, candidateDirection, players);
+            if (step.HasValue)
+                return step;
         }
         return null;
     }
