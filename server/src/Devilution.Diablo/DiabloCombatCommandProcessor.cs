@@ -4882,6 +4882,7 @@ public sealed class DiabloCombatCommandProcessor
                      .ToArray()) {
             if (target.IsMoving && !target.IsPetrified)
                 target.CompleteMovement();
+            AdvanceNativeMonsterAiSeed(target);
             if (target.IsPlayerMinion) {
                 AdvancePlayerMinion(target, tick, players, events);
                 continue;
@@ -5209,6 +5210,16 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */
+    private void AdvanceNativeMonsterAiSeed(AuthoritativeCombatTarget target)
+    {
+        if (gameMode != DiabloGameMode.Multiplayer || target.MonsterAiSeed == 0)
+            return;
+
+        var aiRandom = new DiabloRandom(target.MonsterAiSeed);
+        target.MonsterAiSeed = unchecked((uint)aiRandom.AdvanceRndSeed());
     }
 
     private bool TryAdvanceFallenFear(

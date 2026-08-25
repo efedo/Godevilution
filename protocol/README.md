@@ -613,7 +613,8 @@ Windows toolchain command.
 - Optional `MonsterSnapshot.monster_item_seed` and `monster_ai_seed` fields
   86-87 preserve the two native `InitMonster` runtime seeds across snapshots.
   The item seed is the server-owned loot seed; the AI seed is retained for
-  native multiplayer synchronization parity. Older peers may omit both fields.
+  native multiplayer synchronization parity and advances once per authoritative
+  multiplayer monster tick. Older peers may omit both fields.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

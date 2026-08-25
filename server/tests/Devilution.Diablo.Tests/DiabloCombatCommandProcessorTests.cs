@@ -20339,6 +20339,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerMonsterTicksAdvanceNativeAiSeedWithoutChangingItemSeed()
+    {
+        const uint itemSeed = 0x12345678;
+        const uint aiSeed = 0x87654321;
+        var multiplayerTarget = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            10,
+            monsterItemSeed: itemSeed,
+            monsterAiSeed: aiSeed);
+        var multiplayer = CreateProcessor(
+            new DiabloWorldState(combatTargets: [multiplayerTarget]),
+            gameMode: DiabloGameMode.Multiplayer);
+        var expectedAiSeed = unchecked((uint)new DiabloRandom(aiSeed).AdvanceRndSeed());
+
+        multiplayer.AdvanceTick(1, [CreatePlayer()]);
+
+        Assert.Equal(itemSeed, multiplayerTarget.MonsterItemSeed);
+        Assert.Equal(expectedAiSeed, multiplayerTarget.MonsterAiSeed);
+
+        var singlePlayerTarget = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            10,
+            monsterItemSeed: itemSeed,
+            monsterAiSeed: aiSeed);
+        var singlePlayer = CreateProcessor(
+            new DiabloWorldState(combatTargets: [singlePlayerTarget]));
+
+        singlePlayer.AdvanceTick(1, [CreatePlayer()]);
+
+        Assert.Equal(aiSeed, singlePlayerTarget.MonsterAiSeed);
+    }
+
+    [Fact]
     public void ClosedStashConsumableCastIsRejectedWithoutConsumingSource()
     {
         var scroll = AuthoritativeItemState.Empty with {
