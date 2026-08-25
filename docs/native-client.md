@@ -154,7 +154,7 @@ When a connected cursor visibly targets a player or combat entity but that
 entity is absent from the authoritative projection, submission now fails closed
 instead of silently converting the action into a tile cast. The native
 player-first precedence remains unchanged when both projected target kinds are
-available.
+available, including scroll and rune consumable casts.
 
 The indexed `SellItem`, `RepairItem`, `RechargeItem`, and `IdentifyItem`
 convenience entry points use that same projection lookup before submitting a

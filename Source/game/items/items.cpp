@@ -4468,14 +4468,42 @@ bool TryServerBackedConsumableCast(Player &player, int spellFrom)
 	Point target = cursPosition;
 	if (!InDungeonBounds(target))
 		target = player.position.future + Displacement(player.direction);
-	uint32_t targetEntityId = 0;
-	if (PlayerUnderCursor != nullptr) {
-		if (const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(target.x, target.y); entityId.has_value())
-			targetEntityId = *entityId;
-	} else if (pcursmonst != -1 && levelType() != DTYPE_TOWN) {
-		if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(target.x, target.y); entityId.has_value())
-			targetEntityId = *entityId;
+	const auto targetingKind = authoritative::GetServerBackedRuntime().SpellTargetingKindForSpell(static_cast<uint32_t>(sourceItem._iSpell));
+	const bool preserveLegacyTargeting = !targetingKind.has_value()
+	    || *targetingKind == authoritative::ProjectedSpellTargetingKind::Unspecified
+	    || (*targetingKind != authoritative::ProjectedSpellTargetingKind::Tile
+	        && *targetingKind != authoritative::ProjectedSpellTargetingKind::Player
+	        && *targetingKind != authoritative::ProjectedSpellTargetingKind::CombatEntity
+	        && *targetingKind != authoritative::ProjectedSpellTargetingKind::WorldEntity);
+	const bool allowsPlayerTarget = preserveLegacyTargeting
+	    || *targetingKind == authoritative::ProjectedSpellTargetingKind::Player
+	    || *targetingKind == authoritative::ProjectedSpellTargetingKind::CombatEntity;
+	const bool allowsCombatEntityTarget = preserveLegacyTargeting
+	    || *targetingKind == authoritative::ProjectedSpellTargetingKind::CombatEntity;
+	const bool playerUnderCursor = allowsPlayerTarget && PlayerUnderCursor != nullptr;
+	const bool monsterUnderCursor = allowsCombatEntityTarget && pcursmonst != -1 && levelType() != DTYPE_TOWN;
+	const auto playerEntityId = playerUnderCursor
+	    ? authoritative::GetServerBackedRuntime().PlayerEntityIdAt(target.x, target.y)
+	    : std::nullopt;
+	const auto monsterEntityId = monsterUnderCursor
+	    ? authoritative::GetServerBackedRuntime().MonsterEntityIdAt(target.x, target.y)
+	    : std::nullopt;
+	const auto targetResolution = authoritative::ResolveServerBackedSpellTarget(
+	    allowsPlayerTarget,
+	    allowsCombatEntityTarget,
+	    playerUnderCursor,
+	    monsterUnderCursor,
+	    playerEntityId.has_value(),
+	    monsterEntityId.has_value());
+	if (targetResolution == authoritative::ServerBackedSpellTargetResolution::MissingAuthoritativeEntity) {
+		LogError("Server-backed consumable target is not an authoritative entity.");
+		return true;
 	}
+	uint32_t targetEntityId = 0;
+	if (targetResolution == authoritative::ServerBackedSpellTargetResolution::Player)
+		targetEntityId = *playerEntityId;
+	else if (targetResolution == authoritative::ServerBackedSpellTargetResolution::CombatEntity)
+		targetEntityId = *monsterEntityId;
 
 	if (auto result = authoritative::GetServerBackedRuntime().Cast(
 	        static_cast<uint32_t>(sourceItem._iSpell), targetEntityId, target.x, target.y,
