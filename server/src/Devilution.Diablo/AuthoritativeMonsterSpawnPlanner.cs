@@ -104,6 +104,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         for (var index = 0; index < spawnCount; index++) {
             var definition = orderedCandidates[index % orderedCandidates.Length];
             var direction = random.Next(8);
+            ConsumeNativeInitialAnimationRandom(random, definition);
             var hitPoints = random.Next(
                 checked(definition.MaximumHitPoints - definition.MinimumHitPoints + 1))
                 + definition.MinimumHitPoints;
@@ -377,6 +378,15 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             ^ unchecked(monsterId * 0x9E3779B9U)
             ^ unchecked((uint)(index + 1) * 0x85EBCA6BU);
         return mixed == 0 ? 1U : mixed;
+    }
+
+    /** Native InitMonster consumes stand animation timing before rolling health. */
+    private static void ConsumeNativeInitialAnimationRandom(
+        AuthoritativeLegacyRandom random,
+        AuthoritativeMonsterTypeDefinition definition)
+    {
+        random.Next(definition.StandAnimationTicksPerFrame - 1);
+        random.Next(definition.StandAnimationFrames - 1);
     }
 
     private static void Shuffle<T>(T[] values, AuthoritativeLegacyRandom random)

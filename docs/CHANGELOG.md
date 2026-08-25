@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Content schema `1.430.0` externalizes native standing-animation frame and
+  tick metadata used to preserve the two `InitMonster` RNG draws before
+  procedural health and damage initialization.
 - Procedural monster scatter now enforces DevilutionX's native `MaxMonsters -
   10` capacity (190), preserving ten slots for quest and runtime summons while
   retaining caller-provided lower limits.

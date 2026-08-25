@@ -111,6 +111,33 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void ConsumesNativeStandAnimationRandomBeforeProceduralHealth()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 1, 1));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 1, 100, 1, 1) with {
+                StandAnimationFrames = 8,
+                StandAnimationTicksPerFrame = 4,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var target = Assert.Single(
+            planner.PlanCombatTargets(1, 3, multiplayer: true, maximumMonsters: 1));
+        var random = new AuthoritativeLegacyRandom(3 ^ 1U);
+        random.Next(8);
+        random.Next(4 - 1);
+        random.Next(8 - 1);
+        var expectedHitPoints = random.Next(100) + 1;
+
+        Assert.Equal(expectedHitPoints, target.HitPoints);
+    }
+
+    [Fact]
     public void ReservesNativeMonsterSlotsForRuntimeSummons()
     {
         var world = new AuthoritativeWorld();

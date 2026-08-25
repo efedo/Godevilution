@@ -54,6 +54,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native death-animation duration in authoritative game ticks. */
     public int DeathAnimationTicks { get; init; }
 
+    /** Native standing-animation frame count used during InitMonster seeding. */
+    public int StandAnimationFrames { get; init; }
+
+    /** Native standing-animation ticks per frame used during InitMonster seeding. */
+    public int StandAnimationTicksPerFrame { get; init; }
+
     /** Native experience awarded when this monster is defeated. */
     public uint ExperienceReward { get; init; }
 
@@ -521,6 +527,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.AcidResistanceHell is < -100 or > 100
                 || definition.AggroRange is < 0 or > 64
                 || definition.DeathAnimationTicks is < 0 or > 1024
+                || definition.StandAnimationFrames is < 0 or > 127
+                || definition.StandAnimationTicksPerFrame is < 0 or > 127
                 || definition.ExperienceReward > 1_000_000
                 || definition.ToHit is < 0 or > 255
                 || definition.ToHitSpecial is < 0 or > 255
@@ -948,6 +956,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 AcidResistanceHell = ReadOptionalResistance(row, "acid_resistance_hell"),
                 AggroRange = row.OptionalInt32("aggro_range", 6),
                 DeathAnimationTicks = row.OptionalInt32("death_animation_ticks"),
+                StandAnimationFrames = row.OptionalInt32("stand_animation_frames"),
+                StandAnimationTicksPerFrame = row.OptionalInt32("stand_animation_ticks_per_frame"),
                 ExperienceReward = row.OptionalUInt32("experience_reward"),
                 ToHit = row.OptionalInt32("to_hit"),
                 ToHitSpecial = row.OptionalInt32("to_hit_special"),

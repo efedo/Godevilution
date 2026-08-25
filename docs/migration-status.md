@@ -2,6 +2,11 @@
 
 Status date: 2026-08-25
 
+Content schema `1.430.0` now carries validated native standing-animation frame
+and tick metadata for shipped monster types. Procedural spawning consumes the
+same two stand-animation RNG draws that native `InitMonster` performs before
+rolling initial health and damage.
+
 Ordinary procedural monster population now preserves the native scatter
 capacity: generation is capped at 190 active monsters, leaving the native ten
 reserved slots available for quest and runtime summons. Caller-provided lower
@@ -635,8 +640,8 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.429.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.428.0` schema
+The Diablo content schema is now `1.430.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.429.0` schema
 for existing manifest-based packs. Schema 1.428 adds the optional
 `piece_property_overrides` column to `world_mutations.tsv`, allowing a
 mutation to externalize validated native `.sol`-style collision flags for
