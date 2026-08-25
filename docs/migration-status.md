@@ -102,6 +102,10 @@ recursive dispatch finite before an external content pack can reach combat.
 Quest activation validation now rejects self-referential completion targets;
 valid cross-quest activation routes remain supported.
 
+The generic TCP host now has focused three-participant reconnect coverage,
+preserving complete self-first snapshots and canonical state hashes while a
+second and third participant remain connected.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.
