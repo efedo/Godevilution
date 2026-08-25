@@ -49,6 +49,63 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TelekinesisRejectsCursorReplacementBeforeSpendingManaWhenTheDropTileIsBlocked()
+    {
+        var item = new AuthoritativeWorldItem(
+            100,
+            0,
+            4,
+            0,
+            42,
+            25,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var held = new OwnedStoreItem(
+            0,
+            0,
+            77,
+            65,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(
+            worldItems: [item],
+            combatTargets: [new AuthoritativeCombatTarget(9, 0, 0, 10)]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 2000,
+            manaMaximum: 2000,
+            heldItem: held,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                100,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.NotAllowed);
+        Assert.Equal(2000, player.Mana);
+        Assert.Same(held, player.HeldItem);
+        Assert.Same(item, Assert.Single(world.WorldItems.Values));
+    }
+
+    [Fact]
     public void TelekinesisActivatesAVisibleObject()
     {
         var @object = new AuthoritativeWorldObject(
@@ -20152,6 +20209,8 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(result.Succeeded);
         Assert.Equal(71U, Assert.Single(player.Inventory).ItemSeed);
         Assert.Equal([0, -1, -1, -1], player.InventoryGrid);
+    }
+
     [Fact]
     public void OpenStashConsumableCastRemovesExactAuthoritativeSource()
     {
@@ -20258,8 +20317,6 @@ public sealed class DiabloCombatCommandProcessorTests
 
         AssertRejected(result, DiabloRuleFailure.NotAllowed);
         Assert.Single(player.Stash);
-    }
-
     }
 
     [Fact]

@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
   inventories project the picked item as held state, and a held cursor item is
   atomically dropped at the authoritative player tile before replacement;
   native replay pickup follows the same rules.
+- Telekinesis now validates that a held cursor item can be dropped before the
+  cast consumes mana or its source; failed replacement attempts leave both
+  authoritative items and cast resources unchanged.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

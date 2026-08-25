@@ -777,6 +777,10 @@ public sealed class DiabloWorldCommandProcessor
             itemState.InventoryHeight);
         var participants = players as IReadOnlyList<AuthoritativePlayerState>
             ?? players.ToArray();
+        if (player.HeldItem is not null
+            && !CanDropHeldItemForPickup(player, participants)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
         if (DiabloGoldInventory.HasGoldIdentity(
                 itemState,
                 combatRules,
@@ -789,10 +793,6 @@ public sealed class DiabloWorldCommandProcessor
                 || uint.MaxValue - player.Gold < item.Price) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
             }
-            if (applyEffects && player.HeldItem is not null
-                && !TryDropHeldItemForPickup(player, participants)) {
-                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-            }
             if (DiabloGoldInventory.TryGetTopologyTotal(
                     player,
                     combatRules,
@@ -803,6 +803,8 @@ public sealed class DiabloWorldCommandProcessor
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
                 if (!applyEffects)
                     return DiabloWorldIntentResult.Accepted;
+                if (player.HeldItem is not null)
+                    DropHeldItemForPickup(player, participants);
                 if (!DiabloGoldInventory.TryAddPartial(
                         player,
                         item.Price,
@@ -829,6 +831,8 @@ public sealed class DiabloWorldCommandProcessor
             } else {
                 if (!applyEffects)
                     return DiabloWorldIntentResult.Accepted;
+                if (player.HeldItem is not null)
+                    DropHeldItemForPickup(player, participants);
                 player.Gold += item.Price;
             }
             world.WorldItems.Remove(itemEntityId);
@@ -838,10 +842,8 @@ public sealed class DiabloWorldCommandProcessor
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
-        if (player.HeldItem is not null
-            && !TryDropHeldItemForPickup(player, participants)) {
-            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        }
+        if (player.HeldItem is not null)
+            DropHeldItemForPickup(player, participants);
 
         if (targetCell < 0) {
             player.HeldItem = new OwnedStoreItem(
@@ -875,12 +877,12 @@ public sealed class DiabloWorldCommandProcessor
         return DiabloWorldIntentResult.Accepted;
     }
 
-    /** Drops the cursor item at the native pickup origin before replacing it. */
-    private bool TryDropHeldItemForPickup(
+    /** Validates the native pickup origin for a cursor-item replacement. */
+    private bool CanDropHeldItemForPickup(
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        if (player.HeldItem is not { } heldItem)
+        if (player.HeldItem is null)
             return true;
         var targetX = player.FuturePositionX;
         var targetY = player.FuturePositionY;
@@ -897,6 +899,20 @@ public sealed class DiabloWorldCommandProcessor
                 && item.PositionY == targetY)) {
             return false;
         }
+        return true;
+    }
+
+    /** Drops the cursor item at the native pickup origin before replacing it. */
+    private void DropHeldItemForPickup(
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var heldItem = player.HeldItem
+            ?? throw new InvalidOperationException("A cursor item is required for pickup replacement.");
+        if (!CanDropHeldItemForPickup(player, players))
+            throw new InvalidOperationException("The authoritative pickup origin cannot hold a dropped cursor item.");
+        var targetX = player.FuturePositionX;
+        var targetY = player.FuturePositionY;
 
         var entityId = AllocateWorldItemEntityId(players);
         var droppedItem = new AuthoritativeWorldItem(
@@ -910,7 +926,6 @@ public sealed class DiabloWorldCommandProcessor
         world.WorldItems.Add(entityId, droppedItem);
         player.HeldItem = null;
         ApplyWorldItemAnchorQuest(droppedItem);
-        return true;
     }
 
     private AuthoritativeItemState ResolveWorldItemState(

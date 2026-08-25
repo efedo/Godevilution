@@ -64,6 +64,11 @@ holding another item atomically drops the existing cursor item at the player's
 authoritative tile before replacing it. The native replay projection follows
 the same overflow and cursor-replacement rules.
 
+Telekinesis preflights that cursor replacement, including walkability,
+occupancy, and world-item collision at the authoritative drop tile, before
+consuming mana or a memorized source. A rejected replacement therefore leaves
+the held item, target world item, and cast resources unchanged.
+
 The external geometry contract now preserves all native `.sol` d-piece flags
 when a text property table is used: legacy `solid`/`block_missile` rows remain
 valid, while optional lighting, transparency, and trap flags are validated and
