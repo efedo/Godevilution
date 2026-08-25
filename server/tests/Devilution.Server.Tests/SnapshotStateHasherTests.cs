@@ -857,6 +857,9 @@ public sealed class SnapshotStateHasherTests
         var second = first.Clone();
         second.Monsters[0].FallenFearTicks = 5;
         second.Monsters[0].FallenFearDirection = 7;
+        second.Monsters[0].FallenStandAnimationFrame = 4;
+        second.Monsters[0].FallenStandAnimationTick = 2;
+        second.Monsters[0].FallenRallyTicks = 165;
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(first),

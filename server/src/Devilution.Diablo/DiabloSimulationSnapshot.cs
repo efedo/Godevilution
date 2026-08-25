@@ -110,6 +110,15 @@ public sealed record DiabloMonsterState(
     /** Direction of the native Fallen fear retreat. */
     public int FallenFearDirection { get; init; }
 
+    /** Current native Fallen standing-animation frame. */
+    public int FallenStandAnimationFrame { get; init; }
+
+    /** Current native Fallen standing-animation tick. */
+    public int FallenStandAnimationTick { get; init; }
+
+    /** Remaining native Fallen rally attack ticks. */
+    public int FallenRallyTicks { get; init; }
+
     /** Native Sneak visibility state; hidden monsters are not targetable. */
     public bool SneakHidden { get; init; }
 
@@ -606,6 +615,9 @@ public sealed partial class DiabloSimulation
                     DeathTicksRemaining = target.DeathTicksRemaining,
                     FallenFearTicks = target.FallenFearTicks,
                     FallenFearDirection = target.FallenFearDirection,
+                    FallenStandAnimationFrame = target.FallenStandAnimationFrame,
+                    FallenStandAnimationTick = target.FallenStandAnimationTick,
+                    FallenRallyTicks = target.FallenRallyTicks,
                     SneakHidden = target.SneakHidden,
                     SneakRetreatTicks = target.SneakRetreatTicks,
                     ScavengerHealingTicks = target.ScavengerHealingTicks,
@@ -1008,6 +1020,9 @@ public sealed partial class DiabloSimulation
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.FallenFearTicks is < 0 or > 1024
                 || monster.FallenFearDirection is < 0 or >= 8
+                || monster.FallenStandAnimationFrame is < 0 or > 127
+                || monster.FallenStandAnimationTick is < 0 or > 127
+                || monster.FallenRallyTicks is < 0 or > 4096
                 || monster.Direction is < 0 or >= 8
                 || monster.DialogueMessageId is < 0 or > short.MaxValue
                 || monster.SneakRetreatTicks is < 0 or > 64
@@ -2080,6 +2095,10 @@ public sealed partial class DiabloSimulation
                 target.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
+                target.RestoreFallenAnimation(
+                    monster.FallenStandAnimationFrame,
+                    monster.FallenStandAnimationTick);
+                target.RestoreFallenRally(monster.FallenRallyTicks);
                 target.RestoreSneakState(
                     monster.SneakHidden,
                     monster.SneakRetreatTicks);
@@ -2185,6 +2204,9 @@ public sealed partial class DiabloSimulation
                     nativeAi: monster.NativeAi,
                     intelligence: monster.Intelligence,
                     gargoyleSpecialActive: monster.GargoyleSpecialActive,
+                    initialStandAnimationFrame: monster.FallenStandAnimationFrame,
+                    initialStandAnimationTick: monster.FallenStandAnimationTick,
+                    fallenRallyTicks: monster.FallenRallyTicks,
                     batMovementIdleTicks: monster.BatMovementIdleTicks,
                     batMovementMode: monster.BatMovementMode,
                     rangedAvoidanceMoveTicks: monster.RangedAvoidanceMoveTicks,
@@ -2219,6 +2241,10 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
+                restoredTarget.RestoreFallenAnimation(
+                    monster.FallenStandAnimationFrame,
+                    monster.FallenStandAnimationTick);
+                restoredTarget.RestoreFallenRally(monster.FallenRallyTicks);
                 restoredTarget.RestoreSneakState(
                     monster.SneakHidden,
                     monster.SneakRetreatTicks);

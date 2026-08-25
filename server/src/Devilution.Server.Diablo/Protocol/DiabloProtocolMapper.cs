@@ -144,6 +144,9 @@ internal static class DiabloProtocolMapper
                 GargoyleSpecialActive = monster.GargoyleSpecialActive,
                 FallenFearTicks = monster.FallenFearTicks,
                 FallenFearDirection = monster.FallenFearDirection,
+                FallenStandAnimationFrame = monster.FallenStandAnimationFrame,
+                FallenStandAnimationTick = monster.FallenStandAnimationTick,
+                FallenRallyTicks = monster.FallenRallyTicks,
                 SneakHidden = monster.SneakHidden,
                 SneakRetreatTicks = monster.SneakRetreatTicks,
                 ScavengerHealingTicks = monster.ScavengerHealingTicks,
@@ -897,6 +900,9 @@ internal static class DiabloProtocolMapper
                 || monster.LightningResistance is < -100 or > 100
                 || monster.MagicResistance is < -100 or > 100
                 || monster.AcidResistance is < -100 or > 100
+                || monster.FallenStandAnimationFrame is < 0 or > 127
+                || monster.FallenStandAnimationTick is < 0 or > 127
+                || monster.FallenRallyTicks is < 0 or > 4096
                 || !monster.IsPlayerMinion && monster.OwnerPlayerId != 0) {
                 throw new InvalidDataException(
                     "Authoritative monster state is outside the shared protocol range.");
@@ -1475,6 +1481,9 @@ internal static class DiabloProtocolMapper
                 GargoyleSpecialActive = monster.GargoyleSpecialActive,
                 FallenFearTicks = monster.FallenFearTicks,
                 FallenFearDirection = monster.FallenFearDirection,
+                FallenStandAnimationFrame = monster.FallenStandAnimationFrame,
+                FallenStandAnimationTick = monster.FallenStandAnimationTick,
+                FallenRallyTicks = monster.FallenRallyTicks,
                 SneakHidden = monster.SneakHidden,
                 SneakRetreatTicks = monster.SneakRetreatTicks,
                 ScavengerHealingTicks = monster.ScavengerHealingTicks,

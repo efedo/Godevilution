@@ -927,13 +927,21 @@ public sealed class DiabloSimulationTests
                     nativeAi: "Zombie",
                     monsterLevel: 3,
                     fallenFearTicks: 5,
-                    fallenFearDirection: 7)],
+                    fallenFearDirection: 7,
+                    initialStandAnimationFrame: 4,
+                    initialStandAnimationTick: 2,
+                    fallenRallyTicks: 165)],
             });
         var player = CreatePlayer();
 
         var snapshot = simulation.CaptureSnapshot(player, 1);
         var savedMonster = Assert.Single(snapshot.Monsters);
         Assert.Equal((5, 7), (savedMonster.FallenFearTicks, savedMonster.FallenFearDirection));
+        Assert.Equal(
+            (4, 2, 165),
+            (savedMonster.FallenStandAnimationFrame,
+                savedMonster.FallenStandAnimationTick,
+                savedMonster.FallenRallyTicks));
 
         var replacement = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
@@ -949,6 +957,11 @@ public sealed class DiabloSimulationTests
 
         var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
         Assert.Equal((5, 7), (restored.FallenFearTicks, restored.FallenFearDirection));
+        Assert.Equal(
+            (4, 2, 165),
+            (restored.FallenStandAnimationFrame,
+                restored.FallenStandAnimationTick,
+                restored.FallenRallyTicks));
     }
 
     [Fact]

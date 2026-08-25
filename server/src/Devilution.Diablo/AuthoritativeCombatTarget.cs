@@ -95,7 +95,10 @@ public sealed class AuthoritativeCombatTarget
         int direction = 0,
         int dialogueMessageId = 0,
         uint monsterItemSeed = 0,
-        uint monsterAiSeed = 0)
+        uint monsterAiSeed = 0,
+        int initialStandAnimationFrame = 0,
+        int initialStandAnimationTick = 0,
+        int fallenRallyTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -122,6 +125,12 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(fallenFearTicks));
         if (fallenFearDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(fallenFearDirection));
+        if (initialStandAnimationFrame is < 0 or > 127)
+            throw new ArgumentOutOfRangeException(nameof(initialStandAnimationFrame));
+        if (initialStandAnimationTick is < 0 or > 127)
+            throw new ArgumentOutOfRangeException(nameof(initialStandAnimationTick));
+        if (fallenRallyTicks is < 0 or > 4096)
+            throw new ArgumentOutOfRangeException(nameof(fallenRallyTicks));
         if (sneakRetreatTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
         if (scavengerHealingTicks < 0)
@@ -254,6 +263,9 @@ public sealed class AuthoritativeCombatTarget
         GargoyleSpecialActive = gargoyleSpecialActive;
         FallenFearTicks = fallenFearTicks;
         FallenFearDirection = fallenFearDirection;
+        FallenStandAnimationFrame = initialStandAnimationFrame;
+        FallenStandAnimationTick = initialStandAnimationTick;
+        FallenRallyTicks = fallenRallyTicks;
         SneakHidden = sneakHidden;
         SneakRetreatTicks = sneakRetreatTicks;
         ScavengerHealingTicks = scavengerHealingTicks;
@@ -409,6 +421,18 @@ public sealed class AuthoritativeCombatTarget
 
     /** Direction of the native Fallen fear retreat. */
     public int FallenFearDirection { get; private set; }
+
+    /** Current native Fallen standing-animation frame. */
+    public int FallenStandAnimationFrame { get; private set; }
+
+    /** Current native Fallen standing-animation tick. */
+    public int FallenStandAnimationTick { get; private set; }
+
+    /** Remaining native Fallen rally attack ticks. */
+    public int FallenRallyTicks { get; private set; }
+
+    /** Transient server marker for the current forced rally attack. */
+    public bool FallenRallyAttackPending { get; private set; }
 
     /** Native Sneak visibility state; hidden monsters are not targetable. */
     public bool SneakHidden { get; private set; }
@@ -625,6 +649,65 @@ public sealed class AuthoritativeCombatTarget
             return false;
         FallenFearTicks--;
         return true;
+    }
+
+    internal bool AdvanceFallenStandAnimation(int frameCount, int ticksPerFrame)
+    {
+        if (frameCount <= 0 || ticksPerFrame <= 0)
+            return false;
+        if (FallenStandAnimationTick + 1 < ticksPerFrame) {
+            FallenStandAnimationTick++;
+            return false;
+        }
+        FallenStandAnimationTick = 0;
+        if (FallenStandAnimationFrame + 1 < frameCount) {
+            FallenStandAnimationFrame++;
+            return false;
+        }
+        return true;
+    }
+
+    internal void ResetFallenStandAnimation()
+    {
+        FallenStandAnimationFrame = 0;
+        FallenStandAnimationTick = 0;
+    }
+
+    internal void StartFallenRally(int ticks)
+    {
+        if (ticks < 0)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        FallenRallyTicks = ticks;
+    }
+
+    internal bool AdvanceFallenRally(bool forceAttack)
+    {
+        FallenRallyAttackPending = forceAttack && FallenRallyTicks > 0;
+        if (FallenRallyTicks == 0)
+            return false;
+        FallenRallyTicks--;
+        return true;
+    }
+
+    internal void RestoreFallenRally(int ticks)
+    {
+        if (ticks < 0 || ticks > 4096)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        FallenRallyTicks = ticks;
+        FallenRallyAttackPending = false;
+    }
+
+    internal void RestoreFallenAnimation(int frame, int tick)
+    {
+        if (frame is < 0 or > 127 || tick is < 0 or > 127)
+            throw new ArgumentOutOfRangeException(nameof(frame));
+        FallenStandAnimationFrame = frame;
+        FallenStandAnimationTick = tick;
+    }
+
+    internal void ClearFallenRallyAttack()
+    {
+        FallenRallyAttackPending = false;
     }
 
     internal void SetSneakHidden(bool hidden)

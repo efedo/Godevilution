@@ -53,6 +53,9 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(source.Monsters.ToArray(), restored.Monsters.ToArray());
         Assert.Equal(5, restored.Monsters[0].FallenFearTicks);
         Assert.Equal(7, restored.Monsters[0].FallenFearDirection);
+        Assert.Equal(4, restored.Monsters[0].FallenStandAnimationFrame);
+        Assert.Equal(2, restored.Monsters[0].FallenStandAnimationTick);
+        Assert.Equal(165, restored.Monsters[0].FallenRallyTicks);
         Assert.Equal(source.WorldItems.ToArray(), restored.WorldItems.ToArray());
         Assert.Equal(
             source.WorldItems[0].State.StableItemId,
@@ -962,6 +965,9 @@ public sealed class AuthoritativeSaveCodecTests
                 NativeAi = "Fallen",
                 FallenFearTicks = 5,
                 FallenFearDirection = 7,
+                FallenStandAnimationFrame = 4,
+                FallenStandAnimationTick = 2,
+                FallenRallyTicks = 165,
                 HitPointsQ6 = 0,
             }],
             [new DiabloWorldItemState(

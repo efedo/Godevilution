@@ -17,6 +17,12 @@ public sealed record AuthoritativeMonsterSpawn(
 
     /** Native InitMonster seed used for multiplayer AI synchronization. */
     public uint MonsterAiSeed { get; init; }
+
+    /** Native InitMonster standing-animation frame selected before combat. */
+    public int InitialStandAnimationFrame { get; init; }
+
+    /** Native InitMonster standing-animation tick selected before combat. */
+    public int InitialStandAnimationTick { get; init; }
 }
 
 /**
@@ -110,7 +116,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         for (var index = 0; index < spawnCount; index++) {
             var definition = orderedCandidates[index % orderedCandidates.Length];
             var direction = random.Next(8);
-            ConsumeNativeInitialAnimationRandom(random, definition);
+            var initialAnimation = ConsumeNativeInitialAnimationRandom(random, definition);
             var hitPoints = random.Next(
                 checked(definition.MaximumHitPoints - definition.MinimumHitPoints + 1))
                 + definition.MinimumHitPoints;
@@ -130,6 +136,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                     Direction = direction,
                     MonsterItemSeed = monsterItemSeed,
                     MonsterAiSeed = monsterAiSeed,
+                    InitialStandAnimationFrame = initialAnimation.Frame,
+                    InitialStandAnimationTick = initialAnimation.Tick,
                 };
         }
         return spawns;
@@ -285,7 +293,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         // before InitializeSpawnedMonster captures the selected type.
         var summonSeed = random.State;
         var definition = definitions[random.RandomIntLessThan(definitions.Length)];
-        ConsumeNativeInitialAnimationRandom(random, definition);
+        var initialAnimation = ConsumeNativeInitialAnimationRandom(random, definition);
         var hitPointRange = checked(
             definition.MaximumHitPoints - definition.MinimumHitPoints + 1);
         var hitPoints = random.RandomIntLessThan(hitPointRange)
@@ -313,7 +321,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             multiplayer,
             direction,
             monsterItemSeed: monsterItemSeed,
-            monsterAiSeed: monsterAiSeed);
+            monsterAiSeed: monsterAiSeed,
+            initialStandAnimationFrame: initialAnimation.Frame,
+            initialStandAnimationTick: initialAnimation.Tick);
     }
 
     private static bool IsSkeletonSummonCandidate(
@@ -333,7 +343,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         bool multiplayer,
         int direction = 0,
         uint monsterItemSeed = 0,
-        uint monsterAiSeed = 0)
+        uint monsterAiSeed = 0,
+        int initialStandAnimationFrame = 0,
+        int initialStandAnimationTick = 0)
     {
         var dropDefinition = monsterCatalog?.TryGetDropDefinition(
             spawn.Definition.MonsterId,
@@ -424,7 +436,13 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 : monsterItemSeed,
             monsterAiSeed: spawn.MonsterAiSeed != 0
                 ? spawn.MonsterAiSeed
-                : monsterAiSeed);
+                : monsterAiSeed,
+            initialStandAnimationFrame: spawn.InitialStandAnimationFrame != 0
+                ? spawn.InitialStandAnimationFrame
+                : initialStandAnimationFrame,
+            initialStandAnimationTick: spawn.InitialStandAnimationTick != 0
+                ? spawn.InitialStandAnimationTick
+                : initialStandAnimationTick);
     }
 
     /** Native InitMonster halves ordinary single-player monster health. */
@@ -451,20 +469,22 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     }
 
     /** Native InitMonster consumes stand animation timing before rolling health. */
-    private static void ConsumeNativeInitialAnimationRandom(
+    private static (int Tick, int Frame) ConsumeNativeInitialAnimationRandom(
         AuthoritativeLegacyRandom random,
         AuthoritativeMonsterTypeDefinition definition)
     {
-        random.Next(definition.StandAnimationTicksPerFrame - 1);
-        random.Next(definition.StandAnimationFrames - 1);
+        var tick = random.Next(definition.StandAnimationTicksPerFrame - 1);
+        var frame = random.Next(definition.StandAnimationFrames - 1);
+        return (tick, frame);
     }
 
-    private static void ConsumeNativeInitialAnimationRandom(
+    private static (int Tick, int Frame) ConsumeNativeInitialAnimationRandom(
         DiabloRandom random,
         AuthoritativeMonsterTypeDefinition definition)
     {
-        random.RandomIntLessThan(definition.StandAnimationTicksPerFrame - 1);
-        random.RandomIntLessThan(definition.StandAnimationFrames - 1);
+        var tick = random.RandomIntLessThan(definition.StandAnimationTicksPerFrame - 1);
+        var frame = random.RandomIntLessThan(definition.StandAnimationFrames - 1);
+        return (tick, frame);
     }
 
     private static void Shuffle<T>(T[] values, AuthoritativeLegacyRandom random)

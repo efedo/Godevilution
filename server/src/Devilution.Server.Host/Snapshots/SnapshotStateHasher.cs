@@ -403,6 +403,14 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.FallenFearTicks);
                     hasher.AppendInt32(monster.FallenFearDirection);
                 }
+                if (monster.FallenStandAnimationFrame != 0
+                    || monster.FallenStandAnimationTick != 0
+                    || monster.FallenRallyTicks != 0) {
+                    hasher.AppendString("godevilution-monster-fallen-rally-v1");
+                    hasher.AppendInt32(monster.FallenStandAnimationFrame);
+                    hasher.AppendInt32(monster.FallenStandAnimationTick);
+                    hasher.AppendInt32(monster.FallenRallyTicks);
+                }
                 if (monster.SneakHidden || monster.SneakRetreatTicks != 0) {
                     hasher.AppendString("godevilution-monster-sneak-v1");
                     hasher.AppendBool(monster.SneakHidden);

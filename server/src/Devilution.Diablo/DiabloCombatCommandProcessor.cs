@@ -4924,6 +4924,7 @@ public sealed class DiabloCombatCommandProcessor
         foreach (var target in world.CombatTargets.Values
                      .OrderBy(target => target.EntityId)
                      .ToArray()) {
+            target.ClearFallenRallyAttack();
             if (target.IsMoving && !target.IsPetrified)
                 target.CompleteMovement();
             AdvanceNativeMonsterAiSeed(target);
@@ -4963,11 +4964,14 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceScavengerAi(target, tick, players))
                 continue;
+            if (TryStartFallenRally(target, tick))
+                continue;
             if (TryAdvanceFallenFear(target, players))
                 continue;
             if (TryAdvanceBatRetreat(target, players, tick))
                 continue;
-            if (target.AggroRange <= 0)
+            var fallenRallyActive = target.FallenRallyTicks > 0;
+            if (target.AggroRange <= 0 && !fallenRallyActive)
                 continue;
 
             var victim = players
@@ -4975,20 +4979,26 @@ public sealed class DiabloCombatCommandProcessor
                     && player.CombatMode is not (DiabloPlayerCombatMode.NewLevel
                         or DiabloPlayerCombatMode.Quit)
                     && player.LevelId == target.LevelId
-                    && Math.Max(
+                    && (fallenRallyActive
+                        || Math.Max(
                         Math.Abs(player.PositionX - target.PositionX),
-                        Math.Abs(player.PositionY - target.PositionY)) <= target.AggroRange)
+                        Math.Abs(player.PositionY - target.PositionY)) <= target.AggroRange))
                 .OrderBy(player => Math.Max(
                     Math.Abs(player.PositionX - target.PositionX),
                     Math.Abs(player.PositionY - target.PositionY)))
                 .ThenBy(player => player.EntityId)
                 .FirstOrDefault();
-            if (victim is null)
+            if (victim is null) {
+                if (fallenRallyActive)
+                    target.AdvanceFallenRally(forceAttack: false);
                 continue;
+            }
 
             var distance = Math.Max(
                 Math.Abs(victim.PositionX - target.PositionX),
                 Math.Abs(victim.PositionY - target.PositionY));
+            if (TryAdvanceFallenRally(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSneakAi(target, victim, players, distance))
                 continue;
             if (TryAdvanceButcherAi(target, victim, players, distance))
@@ -5051,7 +5061,9 @@ public sealed class DiabloCombatCommandProcessor
                             rules.HellfireArmorBonusAgainstUndead);
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
-                var skeletonMeleeAttackTuning = GetSkeletonMeleeAttackTuning(target);
+                var skeletonMeleeAttackTuning = target.FallenRallyAttackPending
+                    ? null
+                    : GetSkeletonMeleeAttackTuning(target);
                 var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
                     && target.MonsterAiSeed != 0;
                 var attackRoll = skeletonMeleeAttackTuning.HasValue && usesNativeAiStream
@@ -5416,6 +5428,77 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
+    /** Advances the native Fallen stand animation and admits its rally special. */
+    private bool TryStartFallenRally(
+        AuthoritativeCombatTarget target,
+        ulong tick)
+    {
+        if (!UsesNativeAi(target, "Fallen")
+            || target.HitPointsQ6 == 0
+            || GetFallenStandAnimationTuning(target) is not { } tuning
+            || !target.AdvanceFallenStandAnimation(
+                tuning.Frames,
+                tuning.TicksPerFrame))
+            return false;
+
+        var usesNativeRandom = gameMode == DiabloGameMode.SinglePlayer
+            || target.MonsterAiSeed != 0;
+        var rallies = usesNativeRandom
+            ? random.FlipCoin(4)
+            : (unchecked((uint)tick) ^ target.EntityId) % 4U == 0U;
+        target.ResetFallenStandAnimation();
+        if (!rallies)
+            return true;
+
+        target.ApplyHealingQ6(
+            DiabloFixedPointQ6.FromWhole(
+                checked((2 * target.Intelligence) + 2)));
+        TriggerFallenRally(target);
+        return true;
+    }
+
+    /** Native Fallen attack-goal pursuit after a successful rally special. */
+    private bool TryAdvanceFallenRally(
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (target.FallenRallyTicks == 0)
+            return false;
+        if (distance <= 1) {
+            target.AdvanceFallenRally(forceAttack: true);
+            return false;
+        }
+
+        var usesNativeRandom = gameMode == DiabloGameMode.SinglePlayer
+            || target.MonsterAiSeed != 0;
+        var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
+        var pursuit = usesNativeRandom
+            ? FindNativeRandomWalkStepFromRandom(target, victim, players)
+            : FindNativeRandomWalkStep(target, victim, players, actionSeed);
+        if (pursuit.HasValue)
+            target.BeginMovement(pursuit.Value.X, pursuit.Value.Y);
+        target.AdvanceFallenRally(forceAttack: false);
+        return true;
+    }
+
+    private (int Frames, int TicksPerFrame)? GetFallenStandAnimationTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.StandAnimationFrames > 0
+            && definition.StandAnimationTicksPerFrame > 0) {
+            return (
+                definition.StandAnimationFrames,
+                definition.StandAnimationTicksPerFrame);
+        }
+        return UsesNativeAi(target, "Fallen")
+            ? (11, 3)
+            : null;
+    }
+
     /** Native Bat retreat: move away once, then take one deterministic side step. */
     private bool TryAdvanceBatRetreat(
         AuthoritativeCombatTarget target,
@@ -5522,6 +5605,8 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
+        if (monster.FallenRallyAttackPending)
+            return false;
         if (monster.AdvanceSkeletonMeleeDelay())
             return true;
 
@@ -16209,6 +16294,23 @@ public sealed class DiabloCombatCommandProcessor
                     deceased.PositionY,
                     fallen.PositionX,
                     fallen.PositionY));
+        }
+    }
+
+    private void TriggerFallenRally(AuthoritativeCombatTarget leader)
+    {
+        var radius = checked((2 * leader.Intelligence) + 4);
+        var rallyTicks = checked((30 * leader.Intelligence) + 105);
+        foreach (var fallen in world.CombatTargets.Values
+                     .Where(candidate =>
+                         UsesNativeAi(candidate, "Fallen")
+                         && candidate.HitPointsQ6 > 0
+                         && (candidate.LevelId == 0 || candidate.LevelId == leader.LevelId)
+                         && Math.Max(
+                             Math.Abs(candidate.PositionX - leader.PositionX),
+                             Math.Abs(candidate.PositionY - leader.PositionY)) <= radius)
+                     .OrderBy(candidate => candidate.EntityId)) {
+            fallen.StartFallenRally(rallyTicks);
         }
     }
 

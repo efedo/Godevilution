@@ -11,6 +11,10 @@ All notable changes to this fork are documented below.
 - Single-player Fallen fear retreats now consume the native `RandomWalk` coin
   draws before choosing a retreat cell; seed-zero multiplayer targets retain
   the deterministic compatibility sweep.
+- Fallen targets now retain native stand-animation frame/tick state and use
+  the animation-boundary `FlipCoin(4)` admission for their healing rally;
+  nearby Fallen receive the server-owned attack timer and can pursue players
+  beyond their normal aggro range through native `RandomWalk` ordering.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.

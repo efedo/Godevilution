@@ -1130,6 +1130,9 @@ public sealed class AuthoritativeClientModel
             || monster.LightningResistance is < -100 or > 100
             || monster.MagicResistance is < -100 or > 100
             || monster.AcidResistance is < -100 or > 100
+            || monster.FallenStandAnimationFrame is < 0 or > 127
+            || monster.FallenStandAnimationTick is < 0 or > 127
+            || monster.FallenRallyTicks is < 0 or > 4096
             || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster combat state.");

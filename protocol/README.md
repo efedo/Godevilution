@@ -541,6 +541,10 @@ Windows toolchain command.
   hidden monsters are excluded from authoritative targeting. Fields 50-51
   carry Scavenger healing ticks and its selected corpse identity. These values
   are state metadata only; clients never execute the AI.
+- Optional `MonsterSnapshot` fields 88-90 carry Fallen's standing-animation
+  frame, animation tick, and remaining rally attack timer. The server performs
+  the animation-boundary `FlipCoin(4)` admission, self-healing, and pursuit;
+  clients render these values without simulating the behavior.
 - `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
   identity and position are server-owned and included in canonical hashing.
 - `MonsterSnapshot` fields 52-53 carry server-owned Bat retreat steps and its

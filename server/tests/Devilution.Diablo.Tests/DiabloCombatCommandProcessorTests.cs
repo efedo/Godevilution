@@ -2350,6 +2350,90 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FallenStandRallyHealsAndRalliesNearbyFallen()
+    {
+        var leader = new AuthoritativeCombatTarget(
+            9,
+            2,
+            2,
+            10,
+            maxHitPoints: 20,
+            nativeAi: "Fallen",
+            intelligence: 2,
+            initialStandAnimationFrame: 10,
+            initialStandAnimationTick: 2);
+        var nearby = new AuthoritativeCombatTarget(
+            10,
+            4,
+            2,
+            10,
+            maxHitPoints: 20,
+            nativeAi: "Fallen",
+            intelligence: 1);
+        var distant = new AuthoritativeCombatTarget(
+            11,
+            11,
+            11,
+            10,
+            maxHitPoints: 20,
+            nativeAi: "Fallen",
+            intelligence: 1);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 16, 16, isDefaultStart: true));
+        var world = new DiabloWorldState(
+            nativeWorld,
+            combatTargets: [leader, nearby, distant]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var expected = new DiabloRandom(0);
+        Assert.True(expected.FlipCoin(4));
+
+        processor.AdvanceTick(1, []);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(16, leader.HitPoints);
+        Assert.Equal(165, leader.FallenRallyTicks);
+        Assert.Equal(164, nearby.FallenRallyTicks);
+        Assert.Equal(0, distant.FallenRallyTicks);
+        Assert.Equal((0, 0), (leader.FallenStandAnimationFrame, leader.FallenStandAnimationTick));
+    }
+
+    [Fact]
+    public void FallenRallyPursuesPlayersBeyondNormalAggroRange()
+    {
+        var fallen = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            aggroRange: 0,
+            nativeAi: "Fallen",
+            fallenRallyTicks: 2);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 8, 8, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [fallen]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(entityId: 7, positionX: 5, positionY: 1);
+        var expected = new DiabloRandom(0);
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.True(fallen.IsMoving);
+        Assert.Equal((2, 1), (fallen.FuturePositionX, fallen.FuturePositionY));
+        Assert.Equal(1, fallen.FallenRallyTicks);
+    }
+
+    [Fact]
     public void SneakUsesIntelligenceVisibilityBandAndUnhidesWhenApproached()
     {
         var sneak = new AuthoritativeCombatTarget(

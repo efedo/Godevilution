@@ -796,6 +796,12 @@ message MonsterSnapshot {
 	optional uint32 monster_item_seed = 86;
 	// Native InitMonster seed used for multiplayer AI synchronization.
 	optional uint32 monster_ai_seed = 87;
+	// Current native Fallen standing-animation frame.
+	optional int32 fallen_stand_animation_frame = 88;
+	// Current native Fallen standing-animation tick.
+	optional int32 fallen_stand_animation_tick = 89;
+	// Remaining native Fallen rally attack ticks.
+	optional int32 fallen_rally_ticks = 90;
 }
 
 message WorldItemSnapshot {

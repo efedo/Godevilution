@@ -437,6 +437,11 @@ hidden monsters are excluded from authoritative targeting. Fields 50-51 carry
 Scavenger healing ticks and its selected corpse identity. Clients render these
 values but never execute the corresponding AI.
 
+Optional `MonsterSnapshot` fields 88-90 carry the server-owned Fallen stand
+animation frame, animation tick, and remaining rally attack timer. The server
+advances the animation and performs the native `FlipCoin(4)` rally admission;
+clients render the state and never simulate the rally or its pursuit.
+
 `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
 identity and position are server-owned and included in canonical hashing.
 

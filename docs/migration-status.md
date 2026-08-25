@@ -38,12 +38,11 @@ damage projection. Single-player and seeded multiplayer adjacent monster melee
 also consume native hit admission, shield/class block admission, and damage
 rolls in native order, with the damage range rolled directly in native Q6 and
 the exact applied amount projected through `DamageEvent.amount_q6`; seed-zero
-multiplayer targets retain the compatibility controller. Remaining native lifecycle and
-Monster-arrow impacts now cross the same native Q6 boundary before player
+multiplayer targets retain the compatibility controller. Monster-arrow impacts
+now cross the same native Q6 boundary before player
 damage resolution and carry the exact applied amount in `DamageEvent.amount_q6`;
-legacy whole-life fixtures retain their compatibility projection.
-animation-sensitive special behavior, including pack leadership/group unity
-and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
+legacy whole-life fixtures retain their compatibility projection. Pack
+leadership/group unity remains follow-up work. Multiplayer Bat now consumes
 the stream for native adjacent
 attack admission, two-step retreat, movement, and mapped-charge action/RandomWalk
 draws; mapped charge misses reuse the same action roll without double-consuming
@@ -92,6 +91,11 @@ controller.
 Single-player and seeded multiplayer Fallen fear retreats now consume the
 native RandomWalk coin draws before selecting their retreat cell; seed-zero
 multiplayer targets retain the deterministic compatibility sweep.
+Fallen targets now retain native standing-animation frame/tick state through
+snapshots, saves, and additive protocol fields 88-90. The server performs the
+animation-boundary `FlipCoin(4)` rally admission, applies native self-healing,
+and gives nearby Fallen a server-owned attack timer that pursues players beyond
+their normal aggro range with native `RandomWalk` ordering.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
