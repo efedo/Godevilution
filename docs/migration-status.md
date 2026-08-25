@@ -99,6 +99,9 @@ cannot materialize beneath another participant or an existing item.
 Validated spell activation now rejects cyclic Jester dispatch graphs, keeping
 recursive dispatch finite before an external content pack can reach combat.
 
+Quest activation validation now rejects self-referential completion targets;
+valid cross-quest activation routes remain supported.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

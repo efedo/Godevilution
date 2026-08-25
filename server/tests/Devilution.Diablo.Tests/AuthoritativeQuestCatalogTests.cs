@@ -334,6 +334,21 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestActivationRejectsSelfReference()
+    {
+        var quest = new AuthoritativeQuestState(
+            3001,
+            1,
+            1,
+            completionActivateQuestId: 3001);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestCatalog.ValidateActivationTargets([quest]));
+
+        Assert.Contains("cannot activate itself", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void QuestStateCanLoadRouteActivationVariable()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(

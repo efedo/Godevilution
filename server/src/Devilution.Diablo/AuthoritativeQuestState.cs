@@ -806,6 +806,9 @@ public static class AuthoritativeQuestCatalog
         var values = quests.ToArray();
         var questIds = values.Select(quest => quest.QuestId).ToHashSet();
         foreach (var quest in values.Where(quest => quest.CompletionActivateQuestId != 0)) {
+            if (quest.CompletionActivateQuestId == quest.QuestId)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} cannot activate itself on completion.");
             if (!questIds.Contains(quest.CompletionActivateQuestId))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} activates unknown quest {quest.CompletionActivateQuestId}.");

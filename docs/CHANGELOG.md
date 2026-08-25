@@ -53,6 +53,8 @@ All notable changes to this fork are documented below.
   boundary before entering authoritative world state.
 - Spell catalog activation now rejects cyclic Jester dispatch tables before
   recursive authoritative cast resolution can exhaust the process stack.
+- Quest activation validation now rejects self-referential completion targets
+  while retaining valid follow-on quest routes.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
