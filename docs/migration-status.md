@@ -79,6 +79,9 @@ fallback and RandomWalk draws under the same compatibility rule.
 Initialized single-player Skeleton King targets now consume the global native
 movement, RoundWalk, RandomWalk, and delay draws under the same compatibility
 rule; their existing native action-roll behavior remains unchanged.
+Initialized single-player ranged-avoidance targets now consume the global
+native admission, movement, and projectile/recovery draws under the same
+compatibility rule.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
 effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy

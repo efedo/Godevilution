@@ -66,6 +66,9 @@ All notable changes to this fork are documented below.
 - Initialized single-player Skeleton King targets now consume the global native
   movement, RoundWalk, RandomWalk, and delay draws under the same compatibility
   rule; their existing native action-roll behavior remains unchanged.
+- Initialized single-player ranged-avoidance targets now consume the global
+  native admission, movement, and projectile/recovery draws under the same
+  compatibility rule.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.
