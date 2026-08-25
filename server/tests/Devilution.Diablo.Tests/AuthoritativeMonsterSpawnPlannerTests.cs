@@ -67,6 +67,31 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void HalvesGeneratedMonsterHealthInSinglePlayer()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 8, 10, 1, 1),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 4, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var singlePlayer = Assert.Single(
+            planner.PlanCombatTargets(1, 3, multiplayer: false, maximumMonsters: 1));
+        var multiplayer = Assert.Single(
+            planner.PlanCombatTargets(1, 3, multiplayer: true, maximumMonsters: 1));
+
+        Assert.Equal(
+            (multiplayer.HitPoints / 2, multiplayer.MaxHitPoints / 2),
+            (singlePlayer.HitPoints, singlePlayer.MaxHitPoints));
+        Assert.InRange(multiplayer.HitPoints, 8, 10);
+        Assert.Equal(10, multiplayer.MaxHitPoints);
+    }
+
+    [Fact]
     public void ReservesNativeMonsterSlotsForRuntimeSummons()
     {
         var world = new AuthoritativeWorld();
@@ -161,8 +186,8 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId, target.EntityId);
         Assert.Equal(1U, target.LevelId);
         Assert.Equal(2U, target.MonsterId);
-        Assert.Equal(4, target.HitPoints);
-        Assert.Equal(4, target.MaxHitPoints);
+        Assert.Equal(2, target.HitPoints);
+        Assert.Equal(2, target.MaxHitPoints);
         Assert.Equal(7, target.ArmorClass);
         Assert.Equal(25, target.FireResistance);
         Assert.Equal(6, target.AggroRange);
@@ -265,7 +290,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(99U, summon!.EntityId);
         Assert.Equal(2U, summon.MonsterId);
         Assert.Equal("SkeletonMelee", summon.NativeAi);
-        Assert.InRange(summon.HitPoints, 4, 6);
+        Assert.InRange(summon.HitPoints, 2, 3);
         Assert.InRange(summon.MinDamage, 2, 3);
         Assert.InRange(summon.MaxDamage, 2, 3);
         Assert.Null(planner.CreateSkeletonSummon(
@@ -382,7 +407,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.NotNull(summon);
         Assert.Equal((119U, 117U), (summon!.MonsterId, types.Definitions[0].NativeMonsterId));
         Assert.Equal("SkeletonMelee", summon.NativeAi);
-        Assert.Equal((30, 10), (summon.HitPoints, summon.MinDamage));
+        Assert.Equal((15, 10), (summon.HitPoints, summon.MinDamage));
     }
 
     [Fact]

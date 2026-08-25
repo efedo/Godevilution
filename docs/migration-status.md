@@ -11,6 +11,10 @@ Procedural monster placements now also carry the native pre-initialization
 0-to-7 placement direction through authoritative targets instead of defaulting
 all generated monsters to direction zero.
 
+Planner-created monster targets now apply native `InitMonster` single-player
+health initialization: current and maximum health are halved with a one-health
+floor, while multiplayer retains full generated health.
+
 The inventory contract now preserves native placement order for the shipped
 footprints and uses a deterministic first-fit fallback for any other validated
 external footprint within the native 10x4 grid. Connected native object

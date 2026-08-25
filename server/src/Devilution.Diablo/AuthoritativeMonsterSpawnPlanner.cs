@@ -316,13 +316,17 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             dropPrice = checked((uint)Math.Max(0, dropState.Value));
         }
 
+        var hitPoints = ResolveInitialMonsterHealth(spawn.HitPoints, multiplayer);
+        var maximumHitPoints = ResolveInitialMonsterHealth(
+            spawn.Definition.MaximumHitPoints,
+            multiplayer);
         return new AuthoritativeCombatTarget(
             checked(firstEntityId + (uint)index),
             spawn.PositionX,
             spawn.PositionY,
-            spawn.HitPoints,
+            hitPoints,
             spawn.Definition.ArmorClass,
-            spawn.Definition.MaximumHitPoints,
+            maximumHitPoints,
             spawn.LevelId,
             spawn.Definition.MonsterId,
             dropEntityId,
@@ -356,6 +360,10 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             knockback: spawn.Definition.Knockback,
             direction: spawn.Direction);
     }
+
+    /** Native InitMonster halves ordinary single-player monster health. */
+    private static int ResolveInitialMonsterHealth(int health, bool multiplayer)
+        => multiplayer ? health : Math.Max(health / 2, 1);
 
     private static uint CreateDropSeed(uint seed, uint monsterId, int index)
     {

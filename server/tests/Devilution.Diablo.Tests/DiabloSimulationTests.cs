@@ -703,7 +703,7 @@ public sealed class DiabloSimulationTests
             target => target.LevelId == 2);
         Assert.True(world.IsWalkable(2, generated.PositionX, generated.PositionY));
         Assert.NotEqual(AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId, generated.EntityId);
-        Assert.Equal(130, generated.MaxHitPoints);
+        Assert.Equal(115, generated.MaxHitPoints);
     }
 
     [Fact]
