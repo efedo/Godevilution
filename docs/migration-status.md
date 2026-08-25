@@ -46,6 +46,9 @@ retreat/movement and arrow-admission draws under the same compatibility rule.
 Initialized single-player GoatRanged targets now consume the global native
 close-range retreat, RandomWalk fallback, and post-shot delay draws under the
 same compatibility rule.
+Initialized single-player Succubus/Lazarus Blood Star targets now consume the
+global native close-range retreat, RandomWalk fallback, and post-shot delay
+draws under the same compatibility rule.
 Single-player and seeded multiplayer ordinary adjacent melee now roll the
 effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy

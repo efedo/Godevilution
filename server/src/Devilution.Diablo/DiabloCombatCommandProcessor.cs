@@ -9694,8 +9694,11 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.SourceEntityId == monster.EntityId
                 && projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar))
             return true;
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var retreatTuning = ResolveRangedRetreatTuning(missile);
         var retreatChance = checked(
             retreatTuning.ChanceBase
