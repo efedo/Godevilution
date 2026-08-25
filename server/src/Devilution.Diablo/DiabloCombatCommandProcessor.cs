@@ -4667,6 +4667,26 @@ public sealed class DiabloCombatCommandProcessor
         var maximumDamage = checked(
             spell.GolemDamageLevelMultiplier
                 * (effectiveSpellLevel + spell.GolemMaximumDamageLevelOffset));
+        var golemType = monsterTypes?.TryGetNative(109, out var validatedGolemType) == true
+            ? validatedGolemType
+            : null;
+        var spawnRandom = new DiabloRandom(random.State);
+        // InitializeSpawnedMonster seeds the native Golem after its standing
+        // animation and native health draws, even though InitGolem replaces
+        // the health and damage values with spell-owned formulas. Preserve
+        // those draws so the server's next AI tick starts from the same stream.
+        spawnRandom.GenerateRnd(Math.Max(
+            0,
+            (golemType?.StandAnimationTicksPerFrame ?? 1) - 1));
+        spawnRandom.GenerateRnd(Math.Max(
+            0,
+            (golemType?.StandAnimationFrames ?? 1) - 1));
+        spawnRandom.RandomIntBetween(
+            golemType?.MinimumHitPoints ?? 1,
+            golemType?.MaximumHitPoints ?? 1);
+        var monsterItemSeed = unchecked((uint)spawnRandom.AdvanceRndSeed());
+        var monsterAiSeed = unchecked((uint)spawnRandom.AdvanceRndSeed());
+        random.Restore(spawnRandom.State);
         var golem = new AuthoritativeCombatTarget(
             entityId,
             position.X,
@@ -4675,15 +4695,19 @@ public sealed class DiabloCombatCommandProcessor
             armorClass: spell.GolemArmorClass,
             maxHitPoints: hitPoints,
             levelId: player.LevelId,
+            monsterId: golemType?.MonsterId ?? 0,
             attackDamage: maximumDamage,
             monsterLevel: checked((int)player.CharacterLevel),
             playerMinion: true,
             ownerPlayerId: player.EntityId,
+            nativeAi: "Golem",
             minDamage: minimumDamage,
             maxDamage: maximumDamage,
             minDamageSpecial: minimumDamage,
             maxDamageSpecial: maximumDamage,
-            deathAnimationTicks: deathAnimationTicks);
+            deathAnimationTicks: deathAnimationTicks,
+            monsterItemSeed: monsterItemSeed,
+            monsterAiSeed: monsterAiSeed);
         golem.RestoreHitPointsQ6(hitPointsQ6, hitPointsQ6);
         world.CombatTargets.Add(entityId, golem);
     }

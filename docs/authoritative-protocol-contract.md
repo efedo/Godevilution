@@ -614,6 +614,9 @@ planning cannot produce a step, the server consumes the two native `RandomWalk`
 ordering coins using the restored minion stream and then applies the native
 clockwise eight-direction fallback sweep. Clients receive only the resulting
 movement and direction state; they never path-plan or consume Golem RNG.
+Golem spawn snapshots also carry the native item and AI seeds after the
+server consumes the spawn-time standing-animation and health draws; reconnect
+and restart therefore resume the same minion stream.
 
 The validated Snake charge mapping preserves the native non-charge boundary:
 failed movement and adjacent attack admissions carry a server-owned `AiDelay`

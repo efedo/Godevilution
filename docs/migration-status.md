@@ -66,6 +66,9 @@ branches retain the native no-roll compatibility path.
 Player-owned Golem movement now preserves the native blocked-path
 RandomWalk and clockwise eight-direction fallback before giving up; seeded
 multiplayer minions consume the restored stream for the two RandomWalk coins.
+Authoritative Golem casts now retain the native spawn-time item and AI seeds
+and advance the same animation/health seed draws before the minion enters
+multiplayer simulation.
 Multiplayer Counselor now consumes the stream for its initial and secondary
 ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
 server-owned recovery delays; seed-zero targets retain the compatibility

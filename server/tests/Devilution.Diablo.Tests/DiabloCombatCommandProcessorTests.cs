@@ -18450,6 +18450,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerGolemSpawnRetainsNativeItemAndAiSeeds()
+    {
+        const uint initialRandomState = 0xCAFEBABE;
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(initialRandomState);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateGolemSpell()]),
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 7,
+            characterLevel: 4,
+            memorizedSpells: [new MemorizedSpellState(52, 2)]);
+        var expected = new DiabloRandom(initialRandomState);
+        _ = expected.RandomIntBetween(1, 1);
+        var expectedItemSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(52, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var golem = Assert.Single(world.CombatTargets.Values);
+        Assert.Equal(expectedItemSeed, golem.MonsterItemSeed);
+        Assert.Equal(expectedAiSeed, golem.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal("Golem", golem.NativeAi);
+    }
+
+    [Fact]
     public void GolemCastUsesConfiguredSummonFormulaTerms()
     {
         var world = new DiabloWorldState();
