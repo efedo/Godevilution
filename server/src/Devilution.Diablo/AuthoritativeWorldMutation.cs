@@ -77,6 +77,8 @@ public sealed class AuthoritativeWorldMutationObjectRectangle
         ushort objectId)
         : base(x, y, width, height)
     {
+        if (objectId > AuthoritativeLevel.NativeMaximumDunObjectLayerId)
+            throw new ArgumentOutOfRangeException(nameof(objectId));
         ObjectId = objectId;
     }
 

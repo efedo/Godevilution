@@ -241,7 +241,8 @@ authoritative C# levels, and Godot protocol validation. Converted object
 presentation identities remain independently bounded by `OBJ_LAST` (`108`),
 while d-piece presentation values remain independently validated as 16-bit
 identities. Unmapped native object-layer cells remain inert until an explicit
-authored mapping exists.
+authored mapping exists. Authored object-layer mutation rectangles now enforce
+the same raw-DUN bound during content activation.
 Warp-trigger projection now rejects missing source levels on the server and
 unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.

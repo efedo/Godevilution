@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
   separate `OBJ_LAST` bound. Warlord's native object-layer value `109` can now
   cross the compatibility protocol without being mistaken for an object
   snapshot identity.
+- Authored object-layer mutation values now fail closed during content parsing
+  when they exceed the raw DUN compatibility range, instead of waiting for
+  later projected-geometry reconstruction to reject them.
 - Godot and the authoritative combat processor now support spell consumables in
   an open stash as stable cast sources; closed-stash sources fail closed without
   consuming the item.

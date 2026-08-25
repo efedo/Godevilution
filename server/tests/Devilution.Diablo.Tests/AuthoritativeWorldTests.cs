@@ -259,7 +259,7 @@ public sealed class AuthoritativeWorldTests
             1,
             1,
             1,
-            nativeObjectLayer: [(ushort)(AuthoritativeLevel.NativeMaximumObjectId + 1)]));
+            nativeObjectLayer: [(ushort)(AuthoritativeLevel.NativeMaximumDunObjectLayerId + 1)]));
         var worldObject = new AuthoritativeWorldObject(
             1,
             1,

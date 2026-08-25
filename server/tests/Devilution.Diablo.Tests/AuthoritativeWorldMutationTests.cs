@@ -218,6 +218,16 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void RejectsObjectLayerValuesOutsideRawDunCompatibilityRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tobject_layer_rects\n"
+                    + "7\t1\t0,0,1,1,147\n"));
+    }
+
+    [Fact]
     public void LoadsAndProjectsNativePieceLayerRectangles()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
