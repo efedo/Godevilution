@@ -3321,6 +3321,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerMonsterMeleeUsesNativeDamageRangeRoll()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            armorClass: 0,
+            attackDamage: 99,
+            aggroRange: 5,
+            minDamage: 2,
+            maxDamage: 4,
+            nativeAi: "Diablo");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            positionX: 2,
+            positionY: 0,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+        var expected = new DiabloRandom(0xCAFEBABE);
+        var expectedDamage = expected.RandomIntBetween(2, 4);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.InRange(expectedDamage, 2, 4);
+        Assert.Equal(100 - expectedDamage, player.Life);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedMovementChanceTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
@@ -8840,8 +8878,8 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             20,
             aggroRange: 8,
-            minDamage: 2,
-            maxDamage: 3,
+            minDamage: 0,
+            maxDamage: 0,
             minDamageSpecial: 4,
             maxDamageSpecial: 4,
             monsterLevel: 5,
@@ -8902,8 +8940,8 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             20,
             aggroRange: 8,
-            minDamage: 2,
-            maxDamage: 3,
+            minDamage: 0,
+            maxDamage: 0,
             minDamageSpecial: 4,
             maxDamageSpecial: 4,
             monsterLevel: 5,
@@ -9299,8 +9337,8 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             20,
             aggroRange: 8,
-            minDamage: 2,
-            maxDamage: 3,
+            minDamage: 0,
+            maxDamage: 0,
             minDamageSpecial: 4,
             maxDamageSpecial: 4,
             monsterLevel: 5,
@@ -9956,7 +9994,9 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
         Assert.Equal(AuthoritativeDamageType.Lightning, projectile.DamageType);
         Assert.Equal(3U, projectile.SpellId);
-        Assert.Equal(3, projectile.Damage);
+        // Native single-player melee damage consumes its range roll before the
+        // post-melee Familiar projectile chooses its random damage.
+        Assert.Equal(2, projectile.Damage);
         Assert.Equal(1U, projectile.RemainingTicks);
         Assert.True(monster.BatRetreatTicks > 0);
     }
@@ -14121,8 +14161,8 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             20,
             aggroRange: 8,
-            minDamage: 3,
-            maxDamage: 3,
+            minDamage: 0,
+            maxDamage: 0,
             monsterLevel: 5,
             nativeAi: "Magma",
             intelligence: 0);

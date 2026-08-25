@@ -5125,8 +5125,9 @@ public sealed class DiabloCombatCommandProcessor
                             target,
                             attackSeed,
                             goatMeleeAttackTuning));
-                var usesNativeDamageStream = gameMode == DiabloGameMode.Multiplayer
-                    && target.MonsterAiSeed != 0;
+                var usesNativeDamageStream = gameMode == DiabloGameMode.SinglePlayer
+                    || gameMode == DiabloGameMode.Multiplayer
+                        && target.MonsterAiSeed != 0;
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
                     : usesNativeDamageStream
