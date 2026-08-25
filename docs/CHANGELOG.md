@@ -57,6 +57,8 @@ All notable changes to this fork are documented below.
   while retaining valid follow-on quest routes.
 - Added a focused three-participant TCP reconnect regression covering complete
   self-first snapshots and canonical state hashes.
+- World-item anchor completion now requires the target quest to be active;
+  inactive content cannot be completed by dropping an item on its anchor.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

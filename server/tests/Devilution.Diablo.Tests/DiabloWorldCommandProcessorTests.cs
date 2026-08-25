@@ -1099,6 +1099,60 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void HeldItemDropDoesNotCompleteAnInactiveWorldItemAnchorQuest()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var quest = new AuthoritativeQuestState(
+            3023,
+            21,
+            1,
+            active: false,
+            activateOnRoute: false);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3023,
+                22,
+                "Cornerstone of the World",
+                21,
+                -1,
+                string.Empty,
+                0,
+                true) {
+                WorldItemAnchorPositionX = 14,
+                WorldItemAnchorPositionY = 14,
+            },
+        ]);
+        var world = new DiabloWorldState(
+            fallbackWidth: 40,
+            fallbackHeight: 40,
+            quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            combatRules: rules,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            positionX: 13,
+            positionY: 14,
+            levelId: 21,
+            entityId: 1,
+            gold: 0,
+            heldItem: CreateGoldStack(42, 65, rules));
+
+        var result = processor.Execute(
+            player,
+            new DiabloDropHeldItemIntent(14, 14),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.False(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(0U, quest.Progress);
+        Assert.Single(world.WorldItems);
+    }
+
+    [Fact]
     public void AnchoredWorldItemAndQuestCompletionRoundTripThroughSnapshot()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

@@ -1159,6 +1159,7 @@ public sealed class DiabloWorldCommandProcessor
 
         foreach (var quest in world.Quests.Values) {
             if (quest.Unavailable
+                || !quest.Active
                 || quest.Completed
                 || !questTypes.TryGet(quest.QuestId, out var questType)) {
                 continue;

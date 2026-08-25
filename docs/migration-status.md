@@ -106,6 +106,9 @@ The generic TCP host now has focused three-participant reconnect coverage,
 preserving complete self-first snapshots and canonical state hashes while a
 second and third participant remain connected.
 
+World-item anchor completion now requires an active quest, preventing an
+inactive content quest from being completed by an authoritative item drop.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.
