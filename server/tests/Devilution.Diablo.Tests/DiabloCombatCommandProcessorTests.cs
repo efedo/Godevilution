@@ -1718,8 +1718,17 @@ public sealed class DiabloCombatCommandProcessorTests
             rules: new AuthoritativeCombatRules(10, 1, 100),
             items: items);
         var player = CreatePlayer(entityId: 7, levelId: 17);
+        var otherPlayer = CreatePlayer(
+            positionX: 16,
+            positionY: 1,
+            levelId: 17,
+            entityId: 8);
 
-        var result = processor.Execute(player, new DiabloAttackIntent(16), 1);
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(16),
+            1,
+            [player, otherPlayer]);
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
         Assert.True(quest.Completed);
@@ -1781,6 +1790,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(7, reward.State.SpellId);
         Assert.Equal(DiabloItemActionKind.ReadBook, reward.State.ItemActionKind);
         Assert.Equal("Book of Firebolt", reward.State.BaseName);
+        Assert.NotEqual((16, 1), (reward.PositionX, reward.PositionY));
     }
 
     [Fact]

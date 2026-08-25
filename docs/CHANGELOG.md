@@ -47,6 +47,8 @@ All notable changes to this fork are documented below.
   placement boundary before consuming the dialogue item or advancing the quest.
 - Towner turn-in rewards now use all authoritative participants for entity-ID
   allocation and reject occupied reward tiles before mutating quest state.
+- Monster-defeat quest rewards now search deterministically for an available
+  tile when the target position is occupied by another participant or item.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

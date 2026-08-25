@@ -15073,6 +15073,9 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (quest.CompletionRewardItemId == 0 || items is null)
             return;
+        var position = FindQuestCompletionRewardPosition(target);
+        if (!position.HasValue)
+            return;
         var itemSeed = AllocateWorldItemSeed();
         var state = spellBooks is not null
             && spellBooks.IsBookTemplate(items, quest.CompletionRewardItemId)
@@ -15090,11 +15093,34 @@ public sealed class DiabloCombatCommandProcessor
         world.WorldItems[entityId] = new AuthoritativeWorldItem(
             entityId,
             target.LevelId,
-            target.PositionX,
-            target.PositionY,
+            position.Value.X,
+            position.Value.Y,
             itemSeed,
             checked((uint)Math.Max(0, state.IdentifiedValue)),
             state);
+    }
+
+    /** Finds a deterministic open tile for a monster-defeat quest reward. */
+    private (int X, int Y)? FindQuestCompletionRewardPosition(
+        AuthoritativeCombatTarget target)
+    {
+        return DiabloCrawl.FindClosestValidPosition(
+            target.PositionX,
+            target.PositionY,
+            0,
+            rules.DeathDropSearchRadius,
+            (positionX, positionY) =>
+                world.IsWalkable(target.LevelId, positionX, positionY)
+                && !world.IsOccupied(
+                    target.LevelId,
+                    positionX,
+                    positionY,
+                    activePlayers,
+                    target.EntityId)
+                && !world.WorldItems.Values.Any(item =>
+                    item.LevelId == target.LevelId
+                    && item.PositionX == positionX
+                    && item.PositionY == positionY));
     }
 
     private uint AllocateProjectileEntityId()

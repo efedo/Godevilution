@@ -87,6 +87,11 @@ participant set and preflight other-participant and existing-item occupancy
 before completion, activation, or ordinary item-consuming mutations. The
 interacting player's own reward tile remains compatible with native behavior.
 
+Monster-defeat quest rewards now use the active participant set and existing
+world-item state when selecting their native target tile. If that tile is
+occupied, a deterministic nearby open tile is selected without consuming the
+reward seed until placement is available.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.
