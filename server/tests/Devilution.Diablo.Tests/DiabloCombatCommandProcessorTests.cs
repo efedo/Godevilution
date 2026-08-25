@@ -3430,15 +3430,56 @@ public sealed class DiabloCombatCommandProcessorTests
             lifeMaximum: 100);
         var expected = new DiabloRandom(0xCAFEBABE);
         _ = expected.RandomIntLessThan(100);
-        var expectedDamage = expected.RandomIntBetween(8, 20);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
 
         var deliveries = processor.AdvanceTick(1, [player]);
 
         Assert.Equal(expected.State, random.State);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
         Assert.InRange(expectedDamage, 8, 20);
         Assert.Equal(100 - expectedDamage, player.Life);
+    }
+
+    [Fact]
+    public void SinglePlayerMonsterMeleeAppliesGetHitInNativeQ6Units()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 8,
+            aggroRange: 5,
+            minDamage: 8,
+            maxDamage: 8,
+            toHit: 100,
+            nativeAi: "Diablo");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 2,
+            entityId: 7,
+            life: 100 * DiabloFixedPointQ6.Scale,
+            lifeMaximum: 100 * DiabloFixedPointQ6.Scale,
+            equipment: [new EquippedStoreItem(
+                0,
+                99,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusGetHit = 2,
+                })]);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(90 * DiabloFixedPointQ6.Scale, player.Life);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(10 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
     }
 
     [Fact]
@@ -6475,10 +6516,17 @@ public sealed class DiabloCombatCommandProcessorTests
         // 30 ^ 9 ^ 7 = 16, inside the native 15..20 special band.
         var deliveries = processor.AdvanceTick(30, [player]);
 
-        Assert.Equal(84, player.Life);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
+        Assert.Equal(100 - expectedDamage, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(16, damage.Amount);
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
     }
 
     [Fact]
@@ -6624,8 +6672,16 @@ public sealed class DiabloCombatCommandProcessorTests
         // special lower bound, so the validated special range is selected.
         var deliveries = processor.AdvanceTick(1, [player]);
 
-        Assert.Equal(84, player.Life);
-        Assert.Equal(16, Assert.Single(deliveries).Event.Amount);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
+        Assert.Equal(100 - expectedDamage, player.Life);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
     }
 
     [Fact]
@@ -14935,8 +14991,15 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(16, damage.Amount);
-        Assert.Equal(84, player.Life);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
+        Assert.Equal(100 - expectedDamage, player.Life);
     }
 
     [Fact]
@@ -14972,8 +15035,15 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(16, damage.Amount);
-        Assert.Equal(84, player.Life);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
+        Assert.Equal(100 - expectedDamage, player.Life);
     }
 
     [Fact]
@@ -15033,8 +15103,15 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(16, damage.Amount);
-        Assert.Equal(84, player.Life);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
+        Assert.Equal(100 - expectedDamage, player.Life);
     }
 
     [Fact]
@@ -15094,8 +15171,15 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(16, damage.Amount);
-        Assert.Equal(84, player.Life);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
+        Assert.Equal(100 - expectedDamage, player.Life);
     }
 
     [Fact]
@@ -23078,8 +23162,10 @@ public sealed class DiabloCombatCommandProcessorTests
         var specialRoll = expected.RandomIntLessThan(2);
         Assert.Equal(0, specialRoll);
         _ = expected.RandomIntLessThan(100);
-        var expectedDamage = expected.RandomIntBetween(8, 20);
-        Assert.Equal(16, expectedDamage);
+        var expectedDamageQ6 = expected.RandomIntBetween(
+            8 * DiabloFixedPointQ6.Scale,
+            20 * DiabloFixedPointQ6.Scale);
+        var expectedDamage = DiabloFixedPointQ6.ToWholeTruncated(expectedDamageQ6);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,
@@ -23092,7 +23178,9 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
         Assert.Equal(expected.State, random.State);
         Assert.Equal(100 - expectedDamage, player.Life);
-        Assert.Single(deliveries);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.Equal(expectedDamageQ6, damage.AmountQ6);
     }
 
     [Fact]

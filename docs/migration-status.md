@@ -36,8 +36,9 @@ effective native min/max damage range from the authoritative stream, including
 validated special melee ranges; seed-zero multiplayer targets retain the legacy
 damage projection. Single-player and seeded multiplayer adjacent monster melee
 also consume native hit admission, shield/class block admission, and damage
-rolls in native order; seed-zero multiplayer targets retain the compatibility
-controller. Remaining native lifecycle and
+rolls in native order, with the damage range rolled directly in native Q6 and
+the exact applied amount projected through `DamageEvent.amount_q6`; seed-zero
+multiplayer targets retain the compatibility controller. Remaining native lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
 the stream for native adjacent

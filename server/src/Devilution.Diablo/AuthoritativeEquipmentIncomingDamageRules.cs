@@ -62,6 +62,26 @@ public static class AuthoritativeEquipmentIncomingDamageRules
             checked(incomingDamage + ResolveGetHitBonus(equipment)));
     }
 
+    /** Applies native `_pIGetHit` in the Q6 damage unit used by MonsterAttackPlayer. */
+    public static int ApplyGetHitQ6(
+        int incomingDamageQ6,
+        int minimumDamageQ6,
+        IEnumerable<EquippedStoreItem> equipment)
+    {
+        if (incomingDamageQ6 < 0)
+            throw new ArgumentOutOfRangeException(nameof(incomingDamageQ6));
+        if (minimumDamageQ6 <= 0)
+            throw new ArgumentOutOfRangeException(nameof(minimumDamageQ6));
+        ArgumentNullException.ThrowIfNull(equipment);
+        if (incomingDamageQ6 == 0)
+            return 0;
+
+        return Math.Max(
+            minimumDamageQ6,
+            checked(incomingDamageQ6
+                + DiabloFixedPointQ6.FromWhole(ResolveGetHitBonus(equipment))));
+    }
+
     /** Resolves the native `_pIGetHit` total from eligible equipped items. */
     public static int ResolveGetHitBonus(IEnumerable<EquippedStoreItem> equipment)
     {

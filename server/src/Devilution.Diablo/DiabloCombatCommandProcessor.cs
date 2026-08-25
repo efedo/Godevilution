@@ -269,6 +269,17 @@ public sealed class DiabloCombatCommandProcessor
         return random.RandomIntBetween(range.Minimum, range.Maximum);
     }
 
+    /** Rolls native MonsterAttackPlayer damage in its signed 26.6 unit. */
+    private int RollEffectiveMonsterDamageQ6(
+        AuthoritativeCombatTarget monster,
+        bool special)
+    {
+        var range = GetEffectiveMonsterDamageRange(monster, special);
+        return random.RandomIntBetween(
+            DiabloFixedPointQ6.FromWhole(range.Minimum),
+            DiabloFixedPointQ6.FromWhole(range.Maximum));
+    }
+
     /** Resolves native Monster::exp for the active difficulty and uniqueness. */
     private uint GetEffectiveMonsterExperienceReward(
         AuthoritativeCombatTarget monster)
@@ -5161,21 +5172,28 @@ public sealed class DiabloCombatCommandProcessor
                     }
                 }
 
-                var attackDamage = usesSpecialAttack
-                    ? usesNativeCombatStream
-                        ? RollEffectiveMonsterDamage(target, special: true)
-                        : SelectNativeSpecialDamage(target, attackSeed)
-                    : usesNativeCombatStream
-                        ? RollEffectiveMonsterDamage(target, special: false)
-                        : difficulty == DiabloDifficulty.Normal
-                            ? target.AttackDamage
-                            : SelectEffectiveMonsterDamage(
-                                target,
-                                special: false,
-                                seed: attackSeed);
-                var damage = usesNativeCombatStream && attackToHit > 0
-                    ? rules.ResolveMonsterAttackDamageAfterHit(attackDamage)
-                    : attackToHit == 0
+                var usesNativeFixedPointDamage = usesNativeCombatStream
+                    && attackToHit > 0;
+                int damageQ6;
+                if (usesNativeFixedPointDamage) {
+                    damageQ6 = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHitQ6(
+                        RollEffectiveMonsterDamageQ6(target, usesSpecialAttack),
+                        DiabloFixedPointQ6.Scale,
+                        victim.Equipment);
+                } else {
+                    var attackDamage = usesSpecialAttack
+                        ? usesNativeCombatStream
+                            ? RollEffectiveMonsterDamage(target, special: true)
+                            : SelectNativeSpecialDamage(target, attackSeed)
+                        : usesNativeCombatStream
+                            ? RollEffectiveMonsterDamage(target, special: false)
+                            : difficulty == DiabloDifficulty.Normal
+                                ? target.AttackDamage
+                                : SelectEffectiveMonsterDamage(
+                                    target,
+                                    special: false,
+                                    seed: attackSeed);
+                    var resolvedDamage = attackToHit == 0
                         ? rules.ResolveAttackDamage(
                             attackDamage,
                             armorClass,
@@ -5188,10 +5206,13 @@ public sealed class DiabloCombatCommandProcessor
                             target.LevelId,
                             armorClass,
                             attackSeed);
-                damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
-                    damage,
-                    rules.MinimumDamage,
-                    victim.Equipment);
+                    damageQ6 = DiabloFixedPointQ6.FromWhole(
+                        AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+                            resolvedDamage,
+                            rules.MinimumDamage,
+                            victim.Equipment));
+                }
+                var damage = DiabloFixedPointQ6.ToWholeTruncated(damageQ6);
                 var reflectedDamage = 0;
                 if (damage > 0 && victim.ReflectCharges > 0) {
                     victim.ReflectCharges--;
@@ -5214,17 +5235,30 @@ public sealed class DiabloCombatCommandProcessor
                             events.Add(new DiabloDirectedGameplayEvent(victim, reflectedEvent));
                     }
                 }
-                var damageResult = playerDamage.Apply(
-                    victim,
-                    Math.Max(0, damage - reflectedDamage));
+                var incomingDamageQ6 = Math.Max(
+                    0,
+                    damageQ6 - DiabloFixedPointQ6.FromWhole(reflectedDamage));
+                // Direct compatibility fixtures historically store whole life
+                // points, while authoritative class-backed players store Q6.
+                var usesLegacyWholeLife = victim.LifeMaximum % DiabloFixedPointQ6.Scale != 0;
+                var appliedDamageQ6 = usesLegacyWholeLife
+                    ? DiabloFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
+                    : incomingDamageQ6;
+                var damageResult = playerDamage.Apply(victim, appliedDamageQ6);
                 if (damageResult.IncomingDamageQ6 > 0) {
+                    var eventDamageQ6 = usesLegacyWholeLife
+                        ? incomingDamageQ6
+                        : damageResult.IncomingDamageQ6;
                     events.Add(new DiabloDirectedGameplayEvent(
                         victim,
                         new DiabloGameplayEvent(
                             DiabloGameplayEventKind.Damage,
                             target.EntityId,
                             victim.EntityId,
-                            damageResult.IncomingDamageQ6)));
+                            DiabloFixedPointQ6.ToWholeTruncated(
+                                eventDamageQ6)) {
+                            AmountQ6 = eventDamageQ6,
+                        }));
                 }
                 // Native thorns retaliates after a successful monster hit,
                 // before the player death check, using one content-owned Q6 roll.

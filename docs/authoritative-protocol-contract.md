@@ -406,8 +406,10 @@ multiplayer ordinary adjacent melee roll the effective native min/max damage
 range from the authoritative stream, including validated special melee ranges;
 seed-zero multiplayer targets retain the legacy projection. Single-player and
 seeded multiplayer adjacent monster melee also consume native hit admission,
-shield/class block admission, and damage rolls in native order; seed-zero
-multiplayer targets retain the compatibility controller. Remaining native
+shield/class block admission, and damage rolls in native order, rolling the
+range directly in Q6 and carrying the exact applied amount in
+`DamageEvent.amount_q6`; seed-zero multiplayer targets retain the compatibility
+controller. Remaining native
 lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work.
