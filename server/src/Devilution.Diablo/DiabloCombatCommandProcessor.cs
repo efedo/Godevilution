@@ -5124,7 +5124,6 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var batAttackTuning = GetBatAttackTuning(target);
                 var usesBatNativeAiStream = batAttackTuning.HasValue
-                    && gameMode == DiabloGameMode.Multiplayer
                     && target.MonsterAiSeed != 0;
                 var batAttackRoll = usesBatNativeAiStream
                     ? random.RandomIntLessThan(100)
@@ -5509,8 +5508,11 @@ public sealed class DiabloCombatCommandProcessor
         if (!batTuning.HasValue || target.BatRetreatTicks == 0)
             return false;
 
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && target.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = target.MonsterAiSeed != 0;
         if (usesNativeAiStream) {
             // Native BatAi consumes its action roll before either retreat
             // branch. RandomWalk then consumes two side-order coin draws.
@@ -8334,8 +8336,11 @@ public sealed class DiabloCombatCommandProcessor
                 IntelligenceScale: missile.ChargeChanceIntelligenceScale)
             : (MinimumDistance: 5, ChanceBase: 33, IntelligenceScale: 4);
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(attackSeed % 100U);

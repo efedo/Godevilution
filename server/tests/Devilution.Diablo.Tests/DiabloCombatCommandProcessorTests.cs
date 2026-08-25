@@ -4679,6 +4679,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedBatConsumesNativeChargeAndMovementAdmission()
+    {
+        const uint initSeed = 1;
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 21,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [bat]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        _ = expected.RandomIntLessThan(100);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.False(bat.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void BatSkipsAdjacentAttackOutsideNativeAttackBand()
     {
         var nativeWorld = new AuthoritativeWorld();
