@@ -612,8 +612,8 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.428.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.427.0` schema
+The Diablo content schema is now `1.429.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.428.0` schema
 for existing manifest-based packs. Schema 1.428 adds the optional
 `piece_property_overrides` column to `world_mutations.tsv`, allowing a
 mutation to externalize validated native `.sol`-style collision flags for

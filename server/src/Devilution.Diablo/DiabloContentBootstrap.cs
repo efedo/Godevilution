@@ -45,7 +45,8 @@ public sealed record DiabloContentActivation
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
         AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null,
         AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null,
-        AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOrigins = null)
+        AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOrigins = null,
+        AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -75,6 +76,7 @@ public sealed record DiabloContentActivation
         NativeDunObjects = nativeDunObjects;
         NativeDunFragments = nativeDunFragments;
         NativeDunFragmentObjects = nativeDunFragmentObjects;
+        NativeDunMonsters = nativeDunMonsters;
         QuestSequenceVariants = questSequenceVariants;
         UniqueMonsterPlacements = uniqueMonsterPlacements;
     }
@@ -141,6 +143,9 @@ public sealed record DiabloContentActivation
 
     /** Validated anchor-relative authored objects for native DUN fragments. */
     public AuthoritativeNativeDunFragmentObjectCatalog? NativeDunFragmentObjects { get; }
+
+    /** Validated raw DUN monster-layer conversion mappings. */
+    public AuthoritativeNativeDunMonsterCatalog? NativeDunMonsters { get; }
 
     /** Validated native ordered-quest layout alternatives selected at activation. */
     public AuthoritativeQuestSequenceVariantCatalog? QuestSequenceVariants { get; }
@@ -568,6 +573,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 monsterTypesTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var nativeDunMonsters = content.TryGetTable(
+            "native_dun_monsters.tsv",
+            out var nativeDunMonstersTable)
+            ? AuthoritativeNativeDunMonsterCatalog.LoadTsv(
+                nativeDunMonstersTable.SourcePath,
+                nativeDunMonstersTable.ToCanonicalTsv())
+            : null;
+        if (nativeDunMonsters is not null) {
+            if (monsterTypes is null)
+                throw new InvalidDataException(
+                    "Native DUN monster mappings require monster_types.tsv.");
+            nativeDunMonsters.ValidateMonsterTypes(monsterTypes);
+        }
         if (stableIds is not null && monsterTypes is not null)
             stableIds.ValidateReferences("monster", monsterId => monsterTypes.TryGet(monsterId, out _));
         var monsterMissiles = content.TryGetTable(
@@ -1181,7 +1199,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeDunFragmentObjects,
             questSequenceVariants,
             uniqueMonsterPlacements,
-            proceduralSetPieceOrigins);
+            proceduralSetPieceOrigins,
+            nativeDunMonsters);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

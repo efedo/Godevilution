@@ -18,9 +18,17 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.428.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.429.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
+        var nativeDunMonsterTable = pack.Tables.Single(
+            table => table.SourcePath == "native_dun_monsters.tsv");
+        var nativeDunMonsters = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
+            nativeDunMonsterTable.SourcePath,
+            nativeDunMonsterTable.ToCanonicalTsv());
+        Assert.Equal(4, nativeDunMonsters.Definitions.Count);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(155, out var butcherNativeId));
+        Assert.Equal(51U, butcherNativeId);
         var placementTable = pack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
         var placement = Assert.Single(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
@@ -199,7 +207,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.427.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.428.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -2424,7 +2432,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.428.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.429.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -2540,6 +2548,10 @@ public sealed class ShippedContentTests
             combat.HellfireArmorBonusAgainstUndead));
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
         Assert.NotNull(activation.MonsterMissiles);
+        Assert.NotNull(activation.NativeDunMonsters);
+        Assert.Equal(138, activation.NativeDunMonsters!.Definitions.Count);
+        Assert.True(activation.NativeDunMonsters.TryGetNativeMonsterId(157, out var lordSaytrNativeId));
+        Assert.Equal(33U, lordSaytrNativeId);
         Assert.True(activation.MonsterMissiles!.TryGet("Bat", 43, out var familiar));
         Assert.Equal("FamiliarArc", familiar.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, familiar.ProjectileBehavior);

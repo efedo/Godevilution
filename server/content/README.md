@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.428.0` schema in
+It declares its identity and `devilution.diablo@1.429.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.427.0` schema so existing manifest-based packs remain
+previous additive `1.428.0` schema so existing manifest-based packs remain
 loadable. The standalone host falls back to legacy command-line identity only
 for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -2849,6 +2849,7 @@ activated objects sharing the quest identity.
 | `unique_monsters.tsv` | `entity_id`, `monster_id`, `native_ai` | Native unique-monster identity bound to exactly one matching unique encounter; static entity IDs or validated monster/native-AI selectors are accepted and preserved by server snapshots. Optional spawn health percentage, armor delta, and resistance overrides author deterministic encounter-initialization transitions. |
 | `unique_monster_placements.tsv` | `placement_id` | Optional generated unique encounters with validated identity, monster, level, position, entity, seed, and direction fields. Optional `required_quest_id`/`required_quest_symbol` gates a placement on the active quest's availability after single-player pool selection; unavailable gated quests suppress materialization. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, optional Skeleton King summon-candidate selection, and optional monster AI tuning, including Bat movement bands, Counselor ranged-admission and movement chances, Mega delegated delay-admission chance, Mega intermediate movement chance, SkeletonRanged fresh-mode movement bonus, SkeletonKing and HorkDemon RoundWalk admission modulo, shared AiAvoidance and Fat/Overlord fresh-mode movement bonuses, shared AiAvoidance Move-goal gating, Rhino ordinary movement bands and movement-goal gating. |
+| `native_dun_monsters.tsv` | `native_dun_monster_id` | Raw native DUN monster-layer indices mapped to validated native monster identities. Invalid or unmapped `MonstConvTbl` entries remain inert until their content and spawn behavior are externalized. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, optional initial launch travel advance and projectile count, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission, damage-type, and spell-identity tuning, optional ranged-avoidance distance/chance/movement-goal tuning, optional ranged-avoidance ordinary movement-band and divisor tuning, optional post-melee missile identity, optional ranged-retreat distance/chance tuning, optional Snake adjacent-attack and distance-delay admission tuning, optional monster-Inferno admission tuning, and optional native random-damage bounds; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence`, `QuestItemCompletion`, `WorldMutation`, `GrantSpellLevel`, `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` interactions), linked-quest progress amounts, optional quest activation/completion or `_qvar1`/`_qvar2` transition kind, amount, and required-variable gates, optional normal/unique item rewards with stable ID, item level, and relative offsets (`reward_kind`, `reward_id`, `reward_item_level`, `reward_offset_x`, and `reward_offset_y`), optional `projectile_target_offset_x`/`projectile_target_offset_y` target displacement, optional `projectile_source` (`Object` or `ActivatingPlayer`, defaulting to `Object`), optional quest-sequence/world-mutation follow-up mutation/projectile/native-monster metadata and relative offsets, optional second `quest_sequence_follow_up_world_mutation_id` applied after the primary follow-up, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. Optional `native_object_id` selects the legacy native object type used for compatibility presentation while stable `object_id` remains authoritative. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; spell effects store the validated spell ID in `effect_amount` with optional `effect_spell_symbol` cross-checking; native-monster follow-ups store a validated monster ID or `quest_sequence_follow_up_monster_symbol`; other follow-ups use their own amount and optional spell symbol. Projectile-producing effects currently accept only Phasing and Guardian controller spell behaviors; `ActivatingPlayer` is valid for both native projectile constructions. |
 | `objects.tsv` | `entity_id` | Optional `template_only` rows are validated and available for set-level/native-DUN behavior cloning but are excluded from ordinary world placement; rows omitted from the column or marked `0` retain the full world-object behavior contract. |
@@ -2908,7 +2909,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.428.0"
+    "version": "1.429.0"
   },
   "dependencyConstraints": [
     {
@@ -2940,7 +2941,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.428.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.429.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2953,6 +2954,11 @@ Pack identity, dependency metadata, overlay declarations, and table contents
 contribute to the content manifest and combined ruleset hashes. Clients must use
 the server's printed ruleset identity, not calculate an identity from an
 individual pack.
+
+Schema 1.429 adds the validated `native_dun_monsters.tsv` table. Each raw
+native DUN monster-layer index maps to a native monster identity from the
+active `monster_types.tsv` catalog; invalid or unmapped conversion entries
+remain inert until their spawn behavior is externalized.
 
 Schema 1.81 adds the validated `monster_missiles.tsv` table. Each native AI
 identity maps to its retained native missile ID and authoritative projectile

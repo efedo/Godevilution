@@ -189,6 +189,9 @@ public sealed class AuthoritativeLevel
      */
     public const int NativeMaximumDunObjectLayerId = 146;
 
+    /** Highest raw monster-layer index accepted by the native MonstConvTbl. */
+    public const int NativeMaximumDunMonsterLayerId = 157;
+
     private readonly HashSet<int> blockedCells;
     private readonly HashSet<int> missileBlockedCells;
     private readonly IReadOnlyList<int> blockedCellList;
@@ -246,6 +249,9 @@ public sealed class AuthoritativeLevel
         if (monsters.Length != 0 && monsters.Length != width * height)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native monster layer with an invalid length.");
+        if (monsters.Any(value => value > NativeMaximumDunMonsterLayerId))
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native DUN monster-layer value outside the compatibility range.");
         NativeMonsterLayer = Array.AsReadOnly(monsters);
         var objects = (nativeObjectLayer ?? [])
             .ToArray();
