@@ -3975,6 +3975,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerBatConsumesItsNativeMovementAndRandomWalkRolls()
+    {
+        const uint aiSeed = 7;
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 21,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [bat]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            positionX: 7,
+            positionY: 0,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, bat.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(bat.IsMoving);
+        Assert.Equal(1, bat.BatMovementMode);
+        Assert.Equal(0, bat.BatMovementIdleTicks);
+    }
+
+    [Fact]
     public void BatSkipsAdjacentAttackOutsideNativeAttackBand()
     {
         var nativeWorld = new AuthoritativeWorld();
@@ -9025,6 +9067,62 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
         Assert.True(monster.IsMoving);
         Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void MultiplayerGloomChargeMissReusesItsNativeMovementRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 21,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Empty(world.Projectiles);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.BatMovementMode, monster.BatMovementIdleTicks));
     }
 
     [Fact]

@@ -7877,6 +7877,11 @@ public sealed class DiabloCombatCommandProcessor
                 && projectile.Behavior == AuthoritativeProjectileBehavior.BatCharge))
             return true;
 
+        // Adjacent Bat attacks use the shared melee admission path below; the
+        // mapped charge controller owns only ranged ticks.
+        if (distance < 2)
+            return false;
+
         var chargeTuning = missile.ChargeMinimumDistance > 0
             && missile.ChargeChanceBase > 0
             && missile.ChargeChanceIntelligenceScale > 0
@@ -7886,19 +7891,25 @@ public sealed class DiabloCombatCommandProcessor
                 IntelligenceScale: missile.ChargeChanceIntelligenceScale)
             : (MinimumDistance: 5, ChanceBase: 33, IntelligenceScale: 4);
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(attackSeed % 100U);
         if (distance < chargeTuning.MinimumDistance)
             return TryAdvanceBatMovementFallback(
                 monster,
                 player,
                 players,
                 attackSeed,
-                distance);
+                distance,
+                actionRoll);
 
         var chargeChance = Math.Min(
             100,
             chargeTuning.ChanceBase
                 + (chargeTuning.IntelligenceScale * monster.Intelligence));
-        if (attackSeed % 100U >= (uint)chargeChance
+        if (actionRoll >= chargeChance
             || !world.HasLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
@@ -7910,7 +7921,8 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 players,
                 attackSeed,
-                distance);
+                distance,
+                actionRoll);
         }
 
         var direction = GetDirection(
@@ -7959,7 +7971,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed,
-        int distance)
+        int distance,
+        int? actionRoll = null)
     {
         if (distance < 2)
             return false;
@@ -7983,16 +7996,19 @@ public sealed class DiabloCombatCommandProcessor
                         + movementTuning.FreshChanceBonus
                     : 0;
         movementChance = Math.Min(100, movementChance);
-        if (seed % 100U >= (uint)movementChance) {
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var movementRoll = usesNativeAiStream
+            ? actionRoll ?? random.RandomIntLessThan(100)
+            : (int)(seed % 100U);
+        if (movementRoll >= movementChance) {
             monster.AdvanceBatMovementIdle();
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            player,
-            players,
-            seed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, player, players)
+            : FindNativeRandomWalkStep(monster, player, players, seed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             monster.RecordBatMovement(

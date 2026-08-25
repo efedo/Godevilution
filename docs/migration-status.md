@@ -29,8 +29,9 @@ consumes the stream for its native action and movement-admission rolls, delay
 range, RoundWalk, RandomWalk, and adjacent-attack admission; multiplayer
 summoning remains server-owned. Remaining native AI controllers and rolls are
 follow-up work. Multiplayer Bat now consumes the stream for native adjacent
-attack admission and two-step retreat action/RandomWalk draws; its movement
-and charge paths remain follow-up work.
+attack admission, two-step retreat, movement, and mapped-charge action/RandomWalk
+draws; mapped charge misses reuse the same action roll without double-consuming
+the stream.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
