@@ -570,8 +570,11 @@ defer rather than delegating pursuit to the client or generic navigation.
 The `GoatRanged` identity drives the shared native `AiRanged` boundary. On a
 clear missile lane it emits the server-resolved arrow damage event; inside four
 tiles it first applies the native `10 * (intelligence + 7)` avoidance band and
-selects a deterministic retreat cell when one is available. At long range, a
-blocked lane preserves the native defer rather than generic pursuit.
+selects a native `RandomWalk` retreat cell when one is available. Seeded
+multiplayer targets consume the restored per-monster stream for that admission,
+the two RandomWalk ordering coins, and the post-shot delay; long-range and
+seed-zero branches retain the native no-roll compatibility path. A blocked
+lane preserves the native defer rather than generic pursuit.
 
 The validated Snake charge mapping preserves the native non-charge boundary:
 failed movement and adjacent attack admissions carry a server-owned `AiDelay`

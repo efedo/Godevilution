@@ -7459,16 +7459,33 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var retreatTuning = ResolveRangedRetreatTuning(missile);
         var retreatChance = checked(
             retreatTuning.ChanceBase
             + retreatTuning.IntelligenceScale * monster.Intelligence);
-        if (distance < retreatTuning.MinimumDistance
-            && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
-            var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
-            if (retreat.HasValue) {
-                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
-                return true;
+        if (distance < retreatTuning.MinimumDistance) {
+            var retreatRoll = usesNativeAiStream
+                ? random.RandomIntLessThan(100)
+                : (int)(attackSeed % 100U);
+            if (retreatRoll < Math.Min(100, retreatChance)) {
+                var retreat = usesNativeAiStream
+                    ? FindNativeRandomWalkStepFromRandom(
+                        monster,
+                        RotateDirection(
+                            GetDirection(
+                                monster.PositionX,
+                                monster.PositionY,
+                                player.PositionX,
+                                player.PositionY),
+                            4),
+                        players)
+                    : FindGoatRangedRetreatDestination(monster, player, players, distance);
+                if (retreat.HasValue) {
+                    monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                    return true;
+                }
             }
         }
 
@@ -7491,7 +7508,10 @@ public sealed class DiabloCombatCommandProcessor
             attackSeed,
             missile);
         if (created)
-            monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
+            monster.StartRangedDelay(
+                usesNativeAiStream
+                    ? ResolveRangedDelayFromRandom(missile)
+                    : ResolveRangedDelay(missile, attackSeed));
         return created;
     }
 
@@ -8663,6 +8683,17 @@ public sealed class DiabloCombatCommandProcessor
             : 20;
         var delayBase = missile?.RangedDelayBase ?? 0;
         return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
+    }
+
+    /** Native AiRanged post-shot delay driven by the restored per-monster stream. */
+    private int ResolveRangedDelayFromRandom(
+        AuthoritativeMonsterMissileDefinition? missile)
+    {
+        var randomRange = missile?.RangedDelayRandomRange > 0
+            ? missile.RangedDelayRandomRange
+            : 20;
+        var delayBase = missile?.RangedDelayBase ?? 0;
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private static int ResolveRangedAvoidanceDelay(

@@ -56,6 +56,9 @@ All notable changes to this fork are documented below.
   Skeleton fallback and mapped Inferno admission, including the native action,
   adjacent-choice, intermediate-movement, recovery-delay, and collision draws;
   seed-zero targets retain the compatibility path.
+- Multiplayer GoatRanged now consumes the restored stream for its close-range
+  AiRanged admission, native RandomWalk fallback, and post-shot delay; long
+  range and seed-zero compatibility branches retain their native no-roll path.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

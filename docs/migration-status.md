@@ -45,6 +45,9 @@ Multiplayer Mega now consumes the stream for its far-distance Skeleton fallback
 and mapped Inferno admission, including native action, adjacent-choice,
 intermediate-movement, recovery-delay, and collision draws; seed-zero targets
 retain the compatibility path.
+Multiplayer GoatRanged now consumes the stream for its close-range AiRanged
+admission, native RandomWalk fallback, and post-shot delay; long-range and
+seed-zero branches retain their native no-roll compatibility path.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
