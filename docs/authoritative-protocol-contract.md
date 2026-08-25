@@ -384,7 +384,10 @@ progression, and restores the stream before that monster's AI random draws;
 the multiplayer Zombie controller now consumes its action and movement draws
 from that stream. The multiplayer SkeletonMelee controller likewise consumes
 its movement and adjacent-attack admission, native delay, and RandomWalk coin
-draws. Using it for every remaining native AI roll is follow-up work.
+draws. The multiplayer SkeletonRanged controller likewise consumes its native
+movement/retreat admission and subsequent arrow attack roll, including the
+far-distance movement draw. Using it for every remaining native AI roll is
+follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

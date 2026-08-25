@@ -8875,13 +8875,18 @@ public sealed class DiabloCombatCommandProcessor
             || distance >= skeletonRangedTuning.Value.RetreatMinimumDistance)
             return false;
 
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var retreatChance = GetSkeletonRangedMovementChance(
             monster,
             skeletonRangedTuning.Value.RetreatChanceBase,
             skeletonRangedTuning.Value.RetreatChanceIntelligenceScale,
             skeletonRangedTuning.Value.MovementFreshChanceBonus);
-        if ((actionSeed / 100U) % 100U >= (uint)retreatChance) {
+        var movementRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)((actionSeed / 100U) % 100U);
+        if (movementRoll >= retreatChance) {
             monster.AdvanceSkeletonRangedMovementIdle();
             return false;
         }
@@ -8942,12 +8947,20 @@ public sealed class DiabloCombatCommandProcessor
         if (HasActiveMonsterArrow(monster))
             return true;
 
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var attackChance = Math.Min(
             100,
             skeletonRangedTuning.Value.AttackChanceBase
                 + (skeletonRangedTuning.Value.AttackChanceIntelligenceScale
                     * monster.Intelligence));
+        if (distance >= skeletonRangedTuning.Value.RetreatMinimumDistance
+            && usesNativeAiStream)
+            _ = random.RandomIntLessThan(100);
+        var attackRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(attackSeed % 100U);
         if (!world.HasLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
@@ -8958,7 +8971,7 @@ public sealed class DiabloCombatCommandProcessor
             // lane. Its close-range retreat branch has already run above;
             // preserve the remaining no-op instead of generic navigation.
             return true;
-        if (attackSeed % 100U >= (uint)attackChance)
+        if (attackRoll >= attackChance)
             return true;
 
         return CreateNativeRangedAttackProjectile(

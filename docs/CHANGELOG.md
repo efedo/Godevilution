@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
 - Multiplayer SkeletonMelee movement and adjacent attack admission now consume
   that restored stream, including native delay rolls and RandomWalk coin draws;
   legacy seed-zero targets retain the compatibility controller.
+- Multiplayer SkeletonRanged now consumes the restored stream for its native
+  movement/retreat admission and subsequent arrow attack roll, including the
+  far-distance movement draw; legacy seed-zero targets retain compatibility.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

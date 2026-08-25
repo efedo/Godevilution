@@ -11,8 +11,10 @@ state progression, and restore each monster's stream before its AI random draws.
 Multiplayer Zombie AI now consumes the stream for its action and movement draws;
 Multiplayer SkeletonMelee now consumes the stream for movement and adjacent
 attack admission, native delay rolls, and RandomWalk coin draws. Remaining
-native AI controllers and rolls are follow-up work; seed-zero targets retain
-the compatibility path.
+Multiplayer SkeletonRanged now consumes the stream for its native movement and
+retreat admission plus the subsequent arrow attack roll, including the
+far-distance movement draw. Remaining native AI controllers and rolls are
+follow-up work; seed-zero targets retain the compatibility path.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
