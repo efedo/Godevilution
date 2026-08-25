@@ -23,6 +23,9 @@ All notable changes to this fork are documented below.
   compatibility rule.
 - Initialized single-player Fat/Overlord targets now consume the global native
   movement and RandomWalk draws under the same compatibility rule.
+- Initialized single-player HorkDemon targets now consume the global native
+  spawn/attack and movement admission, recovery delay, RoundWalk, and
+  RandomWalk draws under the same compatibility rule.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.

@@ -7537,6 +7537,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedHorkDemonConsumesNativeActionAndMovementRolls()
+    {
+        const uint initSeed = 7;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.True(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void GargoyleAiUsesContentSelectedAvoidanceMovementWhenHealingMetadataIsPresent()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
