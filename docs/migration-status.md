@@ -2,6 +2,11 @@
 
 Status date: 2026-08-25
 
+Ordinary procedural monster population now preserves the native scatter
+capacity: generation is capped at 190 active monsters, leaving the native ten
+reserved slots available for quest and runtime summons. Caller-provided lower
+limits and the existing density/multiplayer rules remain unchanged.
+
 The inventory contract now preserves native placement order for the shipped
 footprints and uses a deterministic first-fit fallback for any other validated
 external footprint within the native 10x4 grid. Connected native object

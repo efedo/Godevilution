@@ -19,6 +19,12 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     /** Reserved entity range shared with the authoritative combat processor. */
     public const uint FirstGeneratedMonsterEntityId = 0x10000000;
 
+    /**
+     * Native ordinary-level scatter leaves ten of the 200 monster slots
+     * available for quest and runtime summons.
+     */
+    public const int NativeOrdinaryLevelMonsterCapacity = 190;
+
     /** Reserved world-item range for drops attached to generated monsters. */
     public const uint FirstGeneratedDropEntityId = 0x40000000;
 
@@ -80,7 +86,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             levelId,
             positions.Length,
             multiplayer);
-        var spawnCount = Math.Min(maximumMonsters, requestedCount);
+        var spawnCount = Math.Min(
+            Math.Min(maximumMonsters, requestedCount),
+            NativeOrdinaryLevelMonsterCapacity);
         if (spawnCount == 0)
             return [];
 

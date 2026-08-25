@@ -64,6 +64,30 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void ReservesNativeMonsterSlotsForRuntimeSummons()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 40, 40));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 1, 1, 1, 1),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var spawns = planner.Plan(
+            1,
+            seed: 2,
+            multiplayer: false,
+            maximumMonsters: 500);
+
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPlanner.NativeOrdinaryLevelMonsterCapacity,
+            spawns.Count);
+    }
+
+    [Fact]
     public void ReturnsNoSpawnsWhenNoTypeMatchesTheLevel()
     {
         var world = new AuthoritativeWorld();
