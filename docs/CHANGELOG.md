@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native DUN geometry materialization now preserves the parsed transparency
+  layer in authoritative levels instead of dropping native `dTransVal` values
+  when external `.til`/`.sol` geometry is composed.
 - Deferred native-DUN fragments now refresh effective world geometry and
   reconcile authored object mappings after their anchor appears, so mapped
   set-piece object cells become authoritative instead of remaining inert.

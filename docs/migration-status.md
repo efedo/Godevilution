@@ -115,6 +115,11 @@ their geometry is published and reconcile explicit object mappings afterward.
 Mappings may therefore target a layer introduced by a fixed or unique-anchored
 fragment without creating a presentation-only or inert set-piece object.
 
+Native DUN geometry materialization now carries the asset's transparency layer
+into the authoritative level alongside its collision, object, mega-tile, and
+d-piece layers, preserving the native `dTransVal` data for protocol projection
+and later presentation parity.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

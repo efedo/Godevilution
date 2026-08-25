@@ -42,6 +42,31 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void MaterializerPreservesNativeTransparencyLayer()
+    {
+        var asset = AuthoritativeDunMapAsset.Load(
+            "synthetic.dun",
+            CreateDun(1, 1, [7], transparencyLayer: [13, 14, 15, 16]));
+        var pieces = new AuthoritativeDunPieceCatalog([
+            new(7, 10, 11, 12, 13),
+        ]);
+        var properties = new AuthoritativeDunTilePropertyCatalog([
+            new(10, AuthoritativeDunTileFlags.None),
+            new(11, AuthoritativeDunTileFlags.None),
+            new(12, AuthoritativeDunTileFlags.None),
+            new(13, AuthoritativeDunTileFlags.None),
+        ]);
+
+        var level = AuthoritativeDunGeometryMaterializer.Materialize(
+            101,
+            asset,
+            pieces,
+            properties);
+
+        Assert.Equal(new ushort[] { 13, 14, 15, 16 }, level.NativeTransparency);
+    }
+
+    [Fact]
     public void MaterializerRejectsMissingNativeCollisionInputs()
     {
         var asset = AuthoritativeDunMapAsset.Load("synthetic.dun", CreateDun(1, 1, [7]));
@@ -426,7 +451,8 @@ public sealed class AuthoritativeDunGeometryTests
         int megaWidth,
         int megaHeight,
         ushort[] tiles,
-        ushort[]? objectLayer = null)
+        ushort[]? objectLayer = null,
+        ushort[]? transparencyLayer = null)
     {
         var megaCount = megaWidth * megaHeight;
         var dPieceCount = megaCount * 4;
@@ -436,6 +462,8 @@ public sealed class AuthoritativeDunGeometryTests
         Array.Copy(tiles, 0, words, 2, tiles.Length);
         if (objectLayer is not null)
             Array.Copy(objectLayer, 0, words, 2 + megaCount + dPieceCount * 2, objectLayer.Length);
+        if (transparencyLayer is not null)
+            Array.Copy(transparencyLayer, 0, words, 2 + megaCount + dPieceCount * 3, transparencyLayer.Length);
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++)
             BinaryPrimitives.WriteUInt16LittleEndian(
