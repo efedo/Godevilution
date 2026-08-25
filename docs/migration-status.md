@@ -31,7 +31,9 @@ summoning remains server-owned. Single-player Skeleton King now consumes its
 native action roll for summon and adjacent-attack admission; summons also use
 the live stream for skeleton-type selection, stand-animation timing, initial
 health, and the retained item/AI seeds before entering authoritative simulation.
-Remaining native lifecycle and
+Seeded multiplayer ordinary adjacent melee now rolls the effective native
+min/max damage range from that same restored stream; seed-zero targets retain
+the legacy damage projection. Remaining native lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
 the stream for native adjacent

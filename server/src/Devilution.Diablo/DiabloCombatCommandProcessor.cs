@@ -260,6 +260,15 @@ public sealed class DiabloCombatCommandProcessor
         return SelectNativeDamage(range.Minimum, range.Maximum, seed);
     }
 
+    /** Native MonsterAttack rolls the effective min/max range at impact. */
+    private int RollEffectiveMonsterDamage(
+        AuthoritativeCombatTarget monster,
+        bool special)
+    {
+        var range = GetEffectiveMonsterDamageRange(monster, special);
+        return random.RandomIntBetween(range.Minimum, range.Maximum);
+    }
+
     /** Resolves native Monster::exp for the active difficulty and uniqueness. */
     private uint GetEffectiveMonsterExperienceReward(
         AuthoritativeCombatTarget monster)
@@ -5116,14 +5125,18 @@ public sealed class DiabloCombatCommandProcessor
                             target,
                             attackSeed,
                             goatMeleeAttackTuning));
+                var usesNativeDamageStream = gameMode == DiabloGameMode.Multiplayer
+                    && target.MonsterAiSeed != 0;
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
-                    : difficulty == DiabloDifficulty.Normal
-                        ? target.AttackDamage
-                        : SelectEffectiveMonsterDamage(
-                            target,
-                            special: false,
-                            seed: attackSeed);
+                    : usesNativeDamageStream
+                        ? RollEffectiveMonsterDamage(target, special: false)
+                        : difficulty == DiabloDifficulty.Normal
+                            ? target.AttackDamage
+                            : SelectEffectiveMonsterDamage(
+                                target,
+                                special: false,
+                                seed: attackSeed);
                 var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
                 var damage = attackToHit == 0
                     ? rules.ResolveAttackDamage(

@@ -3278,6 +3278,49 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SeededMultiplayerMonsterMeleeUsesNativeDamageRangeRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            armorClass: 0,
+            attackDamage: 99,
+            aggroRange: 5,
+            minDamage: 2,
+            maxDamage: 4,
+            nativeAi: "Diablo",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var player = CreatePlayer(
+            positionX: 2,
+            positionY: 0,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var expectedDamage = expected.RandomIntBetween(2, 4);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(expectedDamage, damage.Amount);
+        Assert.InRange(expectedDamage, 2, 4);
+        Assert.Equal(100 - expectedDamage, player.Life);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedMovementChanceTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
@@ -6951,6 +6994,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var expected = new DiabloRandom(aiSeed);
         var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
         Assert.Equal(4, expected.RandomIntLessThan(100));
+        _ = expected.RandomIntBetween(5, 5);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,
@@ -22695,6 +22739,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var attackRoll = expected.RandomIntLessThan(100);
         Assert.Equal(4, attackRoll);
         Assert.True(attackRoll < 20);
+        _ = expected.RandomIntBetween(5, 5);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,
@@ -22857,6 +22902,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var attackRoll = expected.RandomIntLessThan(100);
         Assert.Equal(4, attackRoll);
         Assert.True(attackRoll < 23);
+        _ = expected.RandomIntBetween(5, 5);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,
@@ -22987,6 +23033,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var attackRoll = expected.RandomIntLessThan(100);
         Assert.Equal(4, attackRoll);
         Assert.True(attackRoll < 23);
+        _ = expected.RandomIntBetween(5, 5);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,

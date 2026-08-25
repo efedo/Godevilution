@@ -43,6 +43,9 @@ All notable changes to this fork are documented below.
   retained item/AI seeds before entering authoritative simulation.
 - Single-player Skeleton King summon and adjacent-attack admission now reuse
   the native first action roll instead of a separate compatibility roll.
+- Seeded multiplayer ordinary adjacent monster melee now rolls the effective
+  native min/max damage range from the restored AI stream; seed-zero targets
+  retain the legacy damage projection.
 - Multiplayer Bat now consumes the restored stream for native adjacent-attack
   admission, two-step retreat, movement, and mapped-charge action/RandomWalk
   draws; mapped charge misses reuse the same action roll without double-consuming

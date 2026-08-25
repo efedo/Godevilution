@@ -401,7 +401,10 @@ retain the deterministic compatibility path.
 Single-player Skeleton King consumes its native action roll for summon and
 adjacent-attack admission, and summons consume the native type-selection and
 `InitMonster` initialization draws before their item/AI seeds are projected;
-multiplayer summoning remains server-owned. Remaining native lifecycle and
+multiplayer summoning remains server-owned. Seeded multiplayer ordinary
+adjacent melee rolls its effective native min/max damage range from the
+restored stream; seed-zero targets retain the legacy projection. Remaining
+native lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
