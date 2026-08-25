@@ -134,7 +134,8 @@ public sealed class DiabloWorldCommandProcessor
             DiabloTurnInQuestIntent turnIn => TurnInQuest(
                 player,
                 turnIn.QuestId,
-                turnIn.TownerId),
+                turnIn.TownerId,
+                players.ToArray()),
             DiabloSetFriendlyModeIntent mode => SetFriendlyMode(player, mode.FriendlyMode),
             DiabloAllocateAttributeIntent allocation => AllocateAttribute(player, allocation),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
@@ -1923,7 +1924,7 @@ public sealed class DiabloWorldCommandProcessor
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
                 var rewardX = checked(target.PositionX + stage.RewardOffsetX);
                 var rewardY = checked(target.PositionY + stage.RewardOffsetY);
-                if (!CanPlaceDialogueReward(
+                if (!CanPlaceWorldItemReward(
                         target.LevelId,
                         rewardX,
                         rewardY,
@@ -2009,7 +2010,7 @@ public sealed class DiabloWorldCommandProcessor
                 && (quest.DialogueRewardUniqueId != 0 || quest.DialogueRewardItemId != 0)) {
                 var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
                 var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
-                if (!CanPlaceDialogueReward(
+                if (!CanPlaceWorldItemReward(
                         target.LevelId,
                         rewardX,
                         rewardY,
@@ -2029,7 +2030,7 @@ public sealed class DiabloWorldCommandProcessor
             && (quest.DialogueRewardUniqueId != 0 || quest.DialogueRewardItemId != 0)) {
             var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
             var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
-            if (!CanPlaceDialogueReward(
+            if (!CanPlaceWorldItemReward(
                     target.LevelId,
                     rewardX,
                     rewardY,
@@ -2114,20 +2115,22 @@ public sealed class DiabloWorldCommandProcessor
         }
     }
 
-    /** Validates a staged conversation reward tile before quest mutation. */
-    private bool CanPlaceDialogueReward(
+    /** Validates an authored world-item reward tile before quest mutation. */
+    private bool CanPlaceWorldItemReward(
         uint levelId,
         int positionX,
         int positionY,
-        IReadOnlyList<AuthoritativePlayerState> participants)
+        IReadOnlyList<AuthoritativePlayerState> participants,
+        uint excludedEntityId = 0,
+        bool requireWalkable = true)
     {
-        return world.IsWalkable(levelId, positionX, positionY)
+        return (!requireWalkable || world.IsWalkable(levelId, positionX, positionY))
             && !world.IsOccupied(
                 levelId,
                 positionX,
                 positionY,
                 participants,
-                excludedEntityId: 0)
+                excludedEntityId)
             && !world.WorldItems.Values.Any(item =>
                 item.LevelId == levelId
                 && item.PositionX == positionX
@@ -2365,8 +2368,11 @@ public sealed class DiabloWorldCommandProcessor
     private DiabloWorldIntentResult TurnInQuest(
         AuthoritativePlayerState player,
         uint questId,
-        uint townerId)
+        uint townerId,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
+        if (!participants.Contains(player))
+            participants = participants.Append(player).ToArray();
         var authoredInteraction = TryQuestTownerInteraction(
             player,
             questId,
@@ -2413,6 +2419,17 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         if (completionStage) {
+            if ((quest.TurnInCompletionRewardUniqueId != 0
+                    || quest.TurnInCompletionRewardItemId != 0)
+                && !CanPlaceWorldItemReward(
+                    quest.TurnInLevelId,
+                    quest.TurnInCompletionRewardPositionX,
+                    quest.TurnInCompletionRewardPositionY,
+                    participants,
+                    player.EntityId,
+                    requireWalkable: false)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
             if (quest.TurnInCompletionVariable2 >= 0)
                 quest.Variable2 = Math.Max(
                     quest.Variable2,
@@ -2434,7 +2451,7 @@ public sealed class DiabloWorldCommandProcessor
                     quest.TurnInCompletionRewardUniqueId,
                     itemSeed,
                     quest.TurnInCompletionRewardItemLevel);
-                var entityId = AllocateWorldItemEntityId([player]);
+                var entityId = AllocateWorldItemEntityId(participants);
                 world.WorldItems[entityId] = new AuthoritativeWorldItem(
                     entityId,
                     quest.TurnInLevelId,
@@ -2450,7 +2467,7 @@ public sealed class DiabloWorldCommandProcessor
                     quest.TurnInCompletionRewardItemId,
                     itemSeed,
                     quest.TurnInCompletionRewardItemLevel);
-                var entityId = AllocateWorldItemEntityId([player]);
+                var entityId = AllocateWorldItemEntityId(participants);
                 world.WorldItems[entityId] = new AuthoritativeWorldItem(
                     entityId,
                     quest.TurnInLevelId,
@@ -2494,6 +2511,20 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         if (quest.TurnInActivationOnly) {
+            var activationRewardRequired = quest.TurnInRewardItemId != 0
+                && items.TryGet(quest.TurnInRewardItemId, out var activationRewardItem)
+                && !player.Inventory.Any(item =>
+                    items.IsStateForDefinition(item.State, activationRewardItem));
+            if (activationRewardRequired
+                && !CanPlaceWorldItemReward(
+                    quest.TurnInLevelId,
+                    quest.TurnInRewardPositionX,
+                    quest.TurnInRewardPositionY,
+                    participants,
+                    player.EntityId,
+                    requireWalkable: false)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
             if (quest.TurnInItemId != 0) {
                 if (!items.TryGet(quest.TurnInItemId, out var requiredActivationItem))
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -2526,7 +2557,7 @@ public sealed class DiabloWorldCommandProcessor
                     quest.TurnInRewardItemId,
                     itemSeed,
                     quest.TurnInRewardItemLevel);
-                var entityId = AllocateWorldItemEntityId([player]);
+                var entityId = AllocateWorldItemEntityId(participants);
                 world.WorldItems[entityId] = new AuthoritativeWorldItem(
                     entityId,
                     quest.TurnInLevelId,
@@ -2619,6 +2650,17 @@ public sealed class DiabloWorldCommandProcessor
         if (inventoryIndex < 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
+        if ((quest.TurnInRewardUniqueId != 0 || quest.TurnInRewardItemId != 0)
+            && !CanPlaceWorldItemReward(
+                quest.TurnInLevelId,
+                quest.TurnInRewardPositionX,
+                quest.TurnInRewardPositionY,
+                participants,
+                player.EntityId,
+                requireWalkable: false)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
         InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, inventoryIndex);
         player.Inventory.RemoveAt(inventoryIndex);
         quest.Logged = true;
@@ -2645,7 +2687,7 @@ public sealed class DiabloWorldCommandProcessor
                 quest.TurnInRewardUniqueId,
                 itemSeed,
                 quest.TurnInRewardItemLevel);
-            var entityId = AllocateWorldItemEntityId([player]);
+            var entityId = AllocateWorldItemEntityId(participants);
             world.WorldItems[entityId] = new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
@@ -2661,7 +2703,7 @@ public sealed class DiabloWorldCommandProcessor
                 quest.TurnInRewardItemId,
                 itemSeed,
                 quest.TurnInRewardItemLevel);
-            var entityId = AllocateWorldItemEntityId([player]);
+            var entityId = AllocateWorldItemEntityId(participants);
             world.WorldItems[entityId] = new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,

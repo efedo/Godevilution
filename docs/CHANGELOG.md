@@ -45,6 +45,8 @@ All notable changes to this fork are documented below.
   set and existing world-item occupancy before advancing the quest stage.
 - Non-staged unique-monster dialogue rewards now use that same participant-aware
   placement boundary before consuming the dialogue item or advancing the quest.
+- Towner turn-in rewards now use all authoritative participants for entity-ID
+  allocation and reject occupied reward tiles before mutating quest state.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

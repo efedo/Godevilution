@@ -2777,12 +2777,16 @@ public sealed class DiabloWorldCommandProcessorTests
             turnInRewardPositionY: 64);
         var world = new DiabloWorldState(quests: [quest]);
         var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var otherPlayer = CreatePlayer(
+            positionX: 61,
+            positionY: 64,
+            entityId: 8);
 
         var started = processor.Execute(
             player,
             new DiabloTurnInQuestIntent(3011, 0),
             1,
-            [player]);
+            [player, otherPlayer]);
 
         Assert.True(started.Succeeded);
         Assert.Equal(1, quest.Variable2);
@@ -2791,11 +2795,24 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(DiabloGameplayEventKind.Dialogue, startDialogue.Kind);
         Assert.Equal(88, startDialogue.MessageId);
 
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3011, 0),
+                2,
+                [player, otherPlayer]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(quest.Completed);
+        Assert.Single(player.Inventory);
+        Assert.Empty(world.WorldItems);
+
+        otherPlayer.PositionX = 0;
+        otherPlayer.PositionY = 0;
         var completed = processor.Execute(
             player,
             new DiabloTurnInQuestIntent(3011, 0),
             2,
-            [player]);
+            [player, otherPlayer]);
 
         Assert.True(completed.Succeeded);
         Assert.True(quest.Completed);

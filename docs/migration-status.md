@@ -82,6 +82,11 @@ The non-staged unique-monster dialogue reward path now uses the same boundary,
 including normal and spell-book rewards, before consuming a required dialogue
 item or changing quest state.
 
+Towner turn-in rewards now allocate world-item identities against the complete
+participant set and preflight other-participant and existing-item occupancy
+before completion, activation, or ordinary item-consuming mutations. The
+interacting player's own reward tile remains compatible with native behavior.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.
