@@ -9897,8 +9897,11 @@ public sealed class DiabloCombatCommandProcessor
             || distance >= skeletonRangedTuning.Value.RetreatMinimumDistance)
             return false;
 
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var retreatChance = GetSkeletonRangedMovementChance(
             monster,
@@ -9969,8 +9972,11 @@ public sealed class DiabloCombatCommandProcessor
         if (HasActiveMonsterArrow(monster))
             return true;
 
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var attackChance = Math.Min(
             100,

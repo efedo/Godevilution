@@ -7582,6 +7582,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedSkeletonRangedConsumesNativeMovementAndAttackRolls()
+    {
+        const uint initSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(100);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.False(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void GargoyleAiUsesContentSelectedAvoidanceMovementWhenHealingMetadataIsPresent()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
