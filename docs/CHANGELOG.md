@@ -29,6 +29,9 @@ All notable changes to this fork are documented below.
 - Initialized single-player SkeletonRanged targets now consume the global
   native retreat/movement and arrow-admission draws under the same
   compatibility rule.
+- Initialized single-player GoatRanged targets now consume the global
+  close-range retreat, RandomWalk fallback, and post-shot delay draws under
+  the same compatibility rule.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.
