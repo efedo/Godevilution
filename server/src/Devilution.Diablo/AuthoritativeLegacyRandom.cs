@@ -12,6 +12,10 @@ public sealed class AuthoritativeLegacyRandom
 
     public uint State => random.State;
 
+    /** Advances the native LCG and returns the seed value used by InitMonster. */
+    public uint AdvanceSeed()
+        => unchecked((uint)random.AdvanceRndSeed());
+
     public int Next(int exclusiveMaximum)
     {
         if (exclusiveMaximum <= 0)

@@ -11,6 +11,12 @@ public sealed record AuthoritativeMonsterSpawn(
 {
     /** Native placement direction selected before monster initialization. */
     public int Direction { get; init; }
+
+    /** Native InitMonster seed used for monster-owned item drops. */
+    public uint MonsterItemSeed { get; init; }
+
+    /** Native InitMonster seed used for multiplayer AI synchronization. */
+    public uint MonsterAiSeed { get; init; }
 }
 
 /**
@@ -108,6 +114,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             var hitPoints = random.Next(
                 checked(definition.MaximumHitPoints - definition.MinimumHitPoints + 1))
                 + definition.MinimumHitPoints;
+            var monsterItemSeed = random.AdvanceSeed();
+            var monsterAiSeed = random.AdvanceSeed();
             var attackDamage = random.Next(
                 checked(definition.MaximumDamage - definition.MinimumDamage + 1))
                 + definition.MinimumDamage;
@@ -120,6 +128,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 hitPoints,
                 attackDamage) {
                     Direction = direction,
+                    MonsterItemSeed = monsterItemSeed,
+                    MonsterAiSeed = monsterAiSeed,
                 };
         }
         return spawns;
@@ -205,7 +215,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             seed,
             entityId,
             multiplayer,
-            direction);
+            direction,
+            monsterItemSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA11CEU),
+            monsterAiSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA17EEDU));
         if (uniqueMonsters?.Definitions.Any(uniqueDefinition =>
                 uniqueDefinition.EntityId == 0
                 && (uniqueDefinition.MonsterId == 0
@@ -266,7 +278,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             seed,
             entityId,
             multiplayer,
-            direction);
+            direction,
+            monsterItemSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA11CEU),
+            monsterAiSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA17EEDU));
     }
 
     private static bool IsSkeletonSummonCandidate(
@@ -284,7 +298,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint seed,
         uint firstEntityId,
         bool multiplayer,
-        int direction = 0)
+        int direction = 0,
+        uint monsterItemSeed = 0,
+        uint monsterAiSeed = 0)
     {
         var dropDefinition = monsterCatalog?.TryGetDropDefinition(
             spawn.Definition.MonsterId,
@@ -299,7 +315,11 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             if (itemCatalog is null)
                 throw new InvalidDataException(
                     "Procedural monster drops require an authoritative item catalog.");
-            dropSeed = CreateDropSeed(seed, spawn.Definition.MonsterId, index);
+            dropSeed = spawn.MonsterItemSeed != 0
+                ? spawn.MonsterItemSeed
+                : monsterItemSeed != 0
+                    ? monsterItemSeed
+                    : CreateDropSeed(seed, spawn.Definition.MonsterId, index);
             dropState = dropDefinition.DropUniqueItemId != 0
                 ? itemCatalog.GenerateUnique(
                     dropDefinition.DropUniqueItemId,
@@ -365,7 +385,13 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             intelligence: spawn.Definition.Intelligence,
             gargoyleSpecialActive: spawn.Definition.NativeAi == "Gargoyle",
             knockback: spawn.Definition.Knockback,
-            direction: direction);
+            direction: direction,
+            monsterItemSeed: spawn.MonsterItemSeed != 0
+                ? spawn.MonsterItemSeed
+                : monsterItemSeed,
+            monsterAiSeed: spawn.MonsterAiSeed != 0
+                ? spawn.MonsterAiSeed
+                : monsterAiSeed);
     }
 
     /** Native InitMonster halves ordinary single-player monster health. */
@@ -377,6 +403,17 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         var mixed = seed
             ^ unchecked(monsterId * 0x9E3779B9U)
             ^ unchecked((uint)(index + 1) * 0x85EBCA6BU);
+        return mixed == 0 ? 1U : mixed;
+    }
+
+    private static uint CreateRuntimeSeed(uint seed, uint salt)
+    {
+        var mixed = seed ^ unchecked(salt * 0x9E3779B9U);
+        mixed ^= mixed >> 16;
+        mixed *= 0x7FEB352DU;
+        mixed ^= mixed >> 15;
+        mixed *= 0x846CA68BU;
+        mixed ^= mixed >> 16;
         return mixed == 0 ? 1U : mixed;
     }
 

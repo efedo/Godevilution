@@ -93,7 +93,7 @@ internal static class DiabloProtocolMapper
             snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks, items));
 
         foreach (var monster in source.Monsters) {
-            snapshot.Monsters.Add(new MonsterSnapshot {
+            var projectedMonster = new MonsterSnapshot {
                 EntityId = monster.EntityId,
                 MonsterId = monster.MonsterId,
                 LevelId = monster.LevelId,
@@ -179,7 +179,12 @@ internal static class DiabloProtocolMapper
                 RangedDelayTicks = monster.RangedDelayTicks,
                 MegaDelayTicks = monster.MegaDelayTicks,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
-            });
+            };
+            if (monster.MonsterItemSeed != 0)
+                projectedMonster.MonsterItemSeed = monster.MonsterItemSeed;
+            if (monster.MonsterAiSeed != 0)
+                projectedMonster.MonsterAiSeed = monster.MonsterAiSeed;
+            snapshot.Monsters.Add(projectedMonster);
         }
         foreach (var item in source.WorldItems) {
             snapshot.WorldItems.Add(new WorldItemSnapshot {

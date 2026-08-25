@@ -302,7 +302,9 @@ public sealed class DiabloSimulationTests
                     10,
                     unique: true,
                     uniqueIdentity: "Gharbad",
-                    dialogueMessageId: 145)],
+                    dialogueMessageId: 145,
+                    monsterItemSeed: 0x12345678,
+                    monsterAiSeed: 0x87654321)],
             });
 
         var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
@@ -311,7 +313,34 @@ public sealed class DiabloSimulationTests
 
         destination.RestoreSnapshot(CreatePlayer(), snapshot);
 
-        Assert.Equal(145, Assert.Single(destination.WorldState.CombatTargets.Values).DialogueMessageId);
+        var restored = Assert.Single(destination.WorldState.CombatTargets.Values);
+        Assert.Equal(145, restored.DialogueMessageId);
+        Assert.Equal((0x12345678U, 0x87654321U),
+            (restored.MonsterItemSeed, restored.MonsterAiSeed));
+    }
+
+    [Fact]
+    public void SnapshotRestoreRejectsOnlyOneMonsterRuntimeSeed()
+    {
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    10,
+                    monsterItemSeed: 0x12345678,
+                    monsterAiSeed: 0x87654321)],
+            });
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+        var malformed = snapshot with {
+            Monsters = [snapshot.Monsters[0] with { MonsterAiSeed = 0 }],
+        };
+        var destination = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+
+        Assert.Throws<InvalidDataException>(() =>
+            destination.RestoreSnapshot(CreatePlayer(), malformed));
     }
 
     [Fact]

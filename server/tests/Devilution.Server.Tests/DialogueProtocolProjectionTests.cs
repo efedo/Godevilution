@@ -8,6 +8,38 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsNativeMonsterRuntimeSeeds()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0) {
+                    MonsterItemSeed = 0x12345678,
+                    MonsterAiSeed = 0x87654321,
+                }],
+            };
+
+        var monster = Assert.Single(
+            DiabloProtocolMapper.ToProtocolSnapshot(source).Monsters);
+
+        Assert.Equal(0x12345678U, monster.MonsterItemSeed);
+        Assert.Equal(0x87654321U, monster.MonsterAiSeed);
+    }
+
+    [Fact]
     public void ProjectsSetLevelObjectOriginsWithinSuppliedGeometry()
     {
         var source = CreateOriginSnapshot(

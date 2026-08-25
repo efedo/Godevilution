@@ -93,10 +93,15 @@ public sealed class AuthoritativeCombatTarget
         int rangedDelayTicks = 0,
         int megaDelayTicks = 0,
         int direction = 0,
-        int dialogueMessageId = 0)
+        int dialogueMessageId = 0,
+        uint monsterItemSeed = 0,
+        uint monsterAiSeed = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
+        if ((monsterItemSeed == 0) != (monsterAiSeed == 0))
+            throw new ArgumentException(
+                "Monster InitMonster seeds must be supplied together.");
         if (hitPoints < 0)
             throw new ArgumentOutOfRangeException(nameof(hitPoints));
         if (attackDamage < 0 || aggroRange < 0)
@@ -284,6 +289,8 @@ public sealed class AuthoritativeCombatTarget
         AvoidanceDelayTicks = avoidanceDelayTicks;
         RangedDelayTicks = rangedDelayTicks;
         MegaDelayTicks = megaDelayTicks;
+        MonsterItemSeed = monsterItemSeed;
+        MonsterAiSeed = monsterAiSeed;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -323,6 +330,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native monster direction used by movement, attacks, and Hork Spawn. */
     public int Direction { get; private set; }
+
+    /** Native InitMonster seed used for monster-owned item drops. */
+    public uint MonsterItemSeed { get; set; }
+
+    /** Native InitMonster seed used for multiplayer AI synchronization. */
+    public uint MonsterAiSeed { get; set; }
 
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; set; }

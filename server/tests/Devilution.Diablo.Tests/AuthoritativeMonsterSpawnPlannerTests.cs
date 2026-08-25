@@ -133,8 +133,12 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         random.Next(4 - 1);
         random.Next(8 - 1);
         var expectedHitPoints = random.Next(100) + 1;
+        var expectedMonsterItemSeed = random.AdvanceSeed();
+        var expectedMonsterAiSeed = random.AdvanceSeed();
 
         Assert.Equal(expectedHitPoints, target.HitPoints);
+        Assert.Equal(expectedMonsterItemSeed, target.MonsterItemSeed);
+        Assert.Equal(expectedMonsterAiSeed, target.MonsterAiSeed);
     }
 
     [Fact]

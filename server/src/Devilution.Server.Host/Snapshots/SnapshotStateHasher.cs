@@ -322,6 +322,11 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-dialogue-message-v1");
                     hasher.AppendInt32(monster.DialogueMessageId);
                 }
+                if (monster.MonsterItemSeed != 0 || monster.MonsterAiSeed != 0) {
+                    hasher.AppendString("godevilution-monster-runtime-seeds-v1");
+                    hasher.AppendUInt32(monster.MonsterItemSeed);
+                    hasher.AppendUInt32(monster.MonsterAiSeed);
+                }
                 if (monster.StoneCurseImmune) {
                     hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
                     hasher.AppendBool(true);

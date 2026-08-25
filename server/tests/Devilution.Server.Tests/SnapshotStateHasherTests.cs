@@ -596,6 +596,33 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void MonsterRuntimeSeedsExtendTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var itemSeed = first.Clone();
+        itemSeed.Monsters[0].MonsterItemSeed = 0x12345678;
+        itemSeed.Monsters[0].MonsterAiSeed = 0x87654321;
+        var aiSeed = itemSeed.Clone();
+        aiSeed.Monsters[0].MonsterAiSeed = 0x87654320;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(itemSeed));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(itemSeed),
+            SnapshotStateHasher.Compute(aiSeed));
+    }
+
+    [Fact]
     public void FractionalMonsterHitPointsExtendHashWithoutChangingLegacyWholeHashes()
     {
         var legacy = new Snapshot {

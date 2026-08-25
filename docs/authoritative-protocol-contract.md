@@ -376,6 +376,13 @@ not advance quest variables or execute monster AI from it. Nonzero values are
 included in the conditional `godevilution-monster-dialogue-message-v1`
 canonical-hash section.
 
+Optional `MonsterSnapshot.monster_item_seed` and `monster_ai_seed` fields 86-87
+preserve the native `InitMonster` runtime seeds. The server uses the item seed
+for authoritative monster-owned loot and retains the AI seed for native
+multiplayer synchronization parity. Older peers may omit both fields; when
+present, the pair is included in the conditional
+`godevilution-monster-runtime-seeds-v1` canonical-hash section.
+
 `MonsterSnapshot.intelligence` field 44 carries the validated native intelligence
 value used by server-owned AI probability bands. Clients do not resolve AI rolls
 from this metadata.
