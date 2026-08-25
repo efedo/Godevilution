@@ -598,6 +598,17 @@ the two RandomWalk ordering coins, and post-shot delay; long-range and
 seed-zero branches retain the native no-roll compatibility path. Clients
 receive only the authoritative projectile, movement, and delay snapshot state.
 
+Generic `AiRanged` identities, including FireBat, Torchant, the Lich family,
+and AcidUnique, use the same server-owned close-range boundary around their
+validated ranged mappings. Inside four tiles the server consumes the native
+`10 * (intelligence + 7)` admission and, when admitted, the two `RandomWalk`
+ordering coins toward the opposite target direction. A clear long-range lane
+emits the authoritative projectile and consumes the native post-shot delay
+draw. Seeded multiplayer targets use the restored per-monster stream for these
+draws; long-range and seed-zero branches retain the native no-roll
+compatibility path. Clients receive only authoritative projectile, movement,
+and delay state.
+
 The validated Snake charge mapping preserves the native non-charge boundary:
 failed movement and adjacent attack admissions carry a server-owned `AiDelay`
 countdown, while admitted lateral drift and attacks are applied by the server

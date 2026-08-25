@@ -8309,6 +8309,11 @@ public sealed class DiabloCombatCommandProcessor
             && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
         var isCounselor = UsesNativeAi(monster, "Counselor");
+        var usesNativeRangedAiStream = missile.AttackMode
+                == AuthoritativeMonsterRangedAttackMode.Ranged
+            && !isCounselor
+            && gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var usesNativeCounselorAiStream = isCounselor
             && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
@@ -8517,16 +8522,31 @@ public sealed class DiabloCombatCommandProcessor
             var retreatChance = checked(
                 retreatTuning.ChanceBase
                 + retreatTuning.IntelligenceScale * monster.Intelligence);
-            if (distance < retreatTuning.MinimumDistance
-                && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
-                var retreat = FindGoatRangedRetreatDestination(
-                    monster,
-                    player,
-                    players,
-                    distance);
-                if (retreat.HasValue) {
-                    monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
-                    return true;
+            if (distance < retreatTuning.MinimumDistance) {
+                var retreatRoll = usesNativeRangedAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)(attackSeed % 100U);
+                if (retreatRoll < Math.Min(100, retreatChance)) {
+                    var retreat = usesNativeRangedAiStream
+                        ? FindNativeRandomWalkStepFromRandom(
+                            monster,
+                            RotateDirection(
+                                GetDirection(
+                                    monster.PositionX,
+                                    monster.PositionY,
+                                    player.PositionX,
+                                    player.PositionY),
+                                4),
+                            players)
+                        : FindGoatRangedRetreatDestination(
+                            monster,
+                            player,
+                            players,
+                            distance);
+                    if (retreat.HasValue) {
+                        monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                        return true;
+                    }
                 }
             }
         }
@@ -8726,7 +8746,10 @@ public sealed class DiabloCombatCommandProcessor
                     : ResolveCounselorAttackDelay(monster, attackSeed));
         else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
-            monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
+            monster.StartRangedDelay(
+                usesNativeRangedAiStream
+                    ? ResolveRangedDelayFromRandom(missile)
+                    : ResolveRangedDelay(missile, attackSeed));
         else if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega"))
             monster.StartMegaDelay(

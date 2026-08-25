@@ -71,6 +71,10 @@ All notable changes to this fork are documented below.
   for their initial 10,000-band admission, Move-goal setup/direction,
   RandomWalk movement, and recovery delay; seed-zero targets retain the
   compatibility path.
+- Seeded multiplayer generic AiRanged mappings (FireBat, Torchant, Lich-family,
+  and AcidUnique) now consume the restored stream for their close-range
+  admission, native RandomWalk fallback, and post-shot delay; long-range and
+  seed-zero compatibility branches retain the native no-roll path.
 - Multiplayer Counselor now consumes the restored stream for its initial and
   secondary ranged/movement admissions, adjacent admission, retreat RandomWalk
   coins, and server-owned recovery delays; seed-zero targets retain the

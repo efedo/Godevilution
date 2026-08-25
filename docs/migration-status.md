@@ -59,6 +59,10 @@ the compatibility path.
 Seeded multiplayer AiRangedAvoidance mappings now consume the stream for their
 initial 10,000-band admission, Move-goal setup/direction, RandomWalk movement,
 and recovery delay; seed-zero targets retain the compatibility path.
+Seeded multiplayer generic AiRanged mappings (FireBat, Torchant, Lich-family,
+and AcidUnique) now consume the stream for their close-range admission,
+native RandomWalk fallback, and post-shot delay; long-range and seed-zero
+branches retain the native no-roll compatibility path.
 Multiplayer Counselor now consumes the stream for its initial and secondary
 ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
 server-owned recovery delays; seed-zero targets retain the compatibility
