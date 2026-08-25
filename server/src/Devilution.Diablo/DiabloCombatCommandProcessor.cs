@@ -6112,11 +6112,14 @@ public sealed class DiabloCombatCommandProcessor
         if (monster.AdvanceCounselorDelay())
             return true;
 
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         // Native CounselorAi always consumes its initial GenerateRnd(100)
-        // before evaluating the current goal. Seeded multiplayer targets use
-        // the restored stream; seed-zero targets retain the compatibility draw.
+        // before evaluating the current goal. Seeded targets use the restored
+        // stream; zero-seed targets retain the compatibility draw.
         var actionRoll = random.GenerateRnd(100);
 
         if (monster.CounselorRetreatTicks != 0) {
@@ -8546,7 +8549,6 @@ public sealed class DiabloCombatCommandProcessor
             && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
         var usesNativeCounselorAiStream = isCounselor
-            && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")

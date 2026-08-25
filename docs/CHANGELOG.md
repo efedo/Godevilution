@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
 - Initialized single-player Scavenger targets now consume the global native
   corpse-scan direction and corpse-targeted RandomWalk draws under the same
   compatibility rule.
+- Initialized single-player Counselor targets now consume the global native
+  ranged/movement admissions, retreat RandomWalk, adjacent admission, and
+  server-owned recovery-delay draws under the same compatibility rule.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.
