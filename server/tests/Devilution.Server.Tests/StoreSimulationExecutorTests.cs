@@ -2372,6 +2372,96 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void PickupPlacesAnInventoryOverflowItemOnTheAuthoritativeCursor()
+    {
+        var fillerState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var inventory = Enumerable.Range(0, 40)
+            .Select(index => new OwnedStoreItem(
+                0,
+                0,
+                checked(100U + (uint)index),
+                0,
+                0,
+                fillerState))
+            .ToArray();
+        var itemState = fillerState with { StableItemId = 900 };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventoryGrid: Enumerable.Range(0, 40).ToArray(),
+            startingInventory: inventory,
+            startingWorldItems: [new AuthoritativeWorldItem(20, 0, 1, 0, 42, 75, itemState)]);
+
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = 20 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        Assert.Equal(40, player.Inventory.Count);
+        Assert.NotNull(player.HeldItem);
+        Assert.Equal(42U, player.HeldItem!.ItemSeed);
+        Assert.Empty(executor.CreateSnapshot("player-a", 7, 1).WorldItems);
+    }
+
+    [Fact]
+    public void PickupReplacesAnAuthoritativeCursorItemByDroppingItAtThePlayerTile()
+    {
+        var fillerState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var inventory = Enumerable.Range(0, 40)
+            .Select(index => new OwnedStoreItem(
+                0,
+                0,
+                checked(100U + (uint)index),
+                0,
+                0,
+                fillerState))
+            .ToArray();
+        var held = new OwnedStoreItem(
+            0,
+            0,
+            77,
+            65,
+            0,
+            fillerState);
+        var itemState = fillerState with {
+            StableItemId = 901,
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventoryGrid: Enumerable.Range(0, 40).ToArray(),
+            startingInventory: inventory,
+            startingHeldItem: held,
+            startingWorldItems: [new AuthoritativeWorldItem(20, 0, 1, 0, 42, 75, itemState)]);
+
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = 20 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var snapshot = executor.CreateSnapshot("player-a", 7, 1);
+        var projectedPlayer = Assert.Single(snapshot.Players);
+        Assert.NotNull(projectedPlayer.HeldItem);
+        Assert.Equal(42U, projectedPlayer.HeldItem!.ItemSeed);
+        var dropped = Assert.Single(snapshot.WorldItems);
+        Assert.Equal(77U, dropped.ItemSeed);
+        Assert.Equal((0, 0), (dropped.PositionX, dropped.PositionY));
+    }
+
+    [Fact]
     public void PickupAppliesServerOwnedMagicRockQuestTransition()
     {
         var items = new AuthoritativeItemCatalog([

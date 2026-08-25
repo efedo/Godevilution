@@ -113,7 +113,8 @@ public sealed class DiabloWorldCommandProcessor
             DiabloPickupWorldItemIntent pickup => PickupWorldItem(
                 player,
                 pickup.ItemEntityId,
-                appliedTick),
+                appliedTick,
+                players),
             DiabloDropHeldItemIntent drop => DropHeldItem(
                 player,
                 drop.TargetX,
@@ -169,6 +170,7 @@ public sealed class DiabloWorldCommandProcessor
                 player,
                 targetEntityId,
                 appliedTick,
+                participants,
                 requireAdjacent: false,
                 applyEffects: applyEffects);
         }
@@ -757,6 +759,7 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         uint itemEntityId,
         ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players,
         bool requireAdjacent = true,
         bool applyEffects = true)
     {
@@ -767,10 +770,13 @@ public sealed class DiabloWorldCommandProcessor
                 Math.Abs(item.PositionY - player.PositionY)) > 1)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if (player.HeldItem is not null)
-            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var itemState = ResolveWorldItemState(player, item);
-
+        var targetCell = InventoryGridLayout.FindFirstPlacement(
+            player.InventoryGrid,
+            itemState.InventoryWidth,
+            itemState.InventoryHeight);
+        var participants = players as IReadOnlyList<AuthoritativePlayerState>
+            ?? players.ToArray();
         if (DiabloGoldInventory.HasGoldIdentity(
                 itemState,
                 combatRules,
@@ -782,6 +788,10 @@ public sealed class DiabloWorldCommandProcessor
                 || !itemState.StatFlag
                 || uint.MaxValue - player.Gold < item.Price) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
+            }
+            if (applyEffects && player.HeldItem is not null
+                && !TryDropHeldItemForPickup(player, participants)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
             if (DiabloGoldInventory.TryGetTopologyTotal(
                     player,
@@ -825,14 +835,25 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Accepted;
         }
 
-        var targetCell = InventoryGridLayout.FindFirstPlacement(
-            player.InventoryGrid,
-            itemState.InventoryWidth,
-            itemState.InventoryHeight);
-        if (targetCell < 0)
-            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
+
+        if (player.HeldItem is not null
+            && !TryDropHeldItemForPickup(player, participants)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        if (targetCell < 0) {
+            player.HeldItem = new OwnedStoreItem(
+                0,
+                0,
+                item.ItemSeed,
+                item.Price,
+                appliedTick,
+                itemState);
+            world.WorldItems.Remove(itemEntityId);
+            return DiabloWorldIntentResult.Accepted;
+        }
 
         var inventoryIndex = player.Inventory.Count;
         player.Inventory.Add(new OwnedStoreItem(
@@ -852,6 +873,44 @@ public sealed class DiabloWorldCommandProcessor
         ApplyItemQuestEffects(itemState);
         ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Drops the cursor item at the native pickup origin before replacing it. */
+    private bool TryDropHeldItemForPickup(
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (player.HeldItem is not { } heldItem)
+            return true;
+        var targetX = player.FuturePositionX;
+        var targetY = player.FuturePositionY;
+        if (!world.IsWalkable(player.LevelId, targetX, targetY)
+            || world.IsOccupied(
+                player.LevelId,
+                targetX,
+                targetY,
+                players,
+                excludedEntityId: player.EntityId)
+            || world.WorldItems.Values.Any(item =>
+                item.LevelId == player.LevelId
+                && item.PositionX == targetX
+                && item.PositionY == targetY)) {
+            return false;
+        }
+
+        var entityId = AllocateWorldItemEntityId(players);
+        var droppedItem = new AuthoritativeWorldItem(
+            entityId,
+            player.LevelId,
+            targetX,
+            targetY,
+            heldItem.ItemSeed,
+            heldItem.Price,
+            heldItem.State);
+        world.WorldItems.Add(entityId, droppedItem);
+        player.HeldItem = null;
+        ApplyWorldItemAnchorQuest(droppedItem);
+        return true;
     }
 
     private AuthoritativeItemState ResolveWorldItemState(

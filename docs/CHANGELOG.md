@@ -27,6 +27,10 @@ All notable changes to this fork are documented below.
   consumables.
 - Native geometry presentation now independently rejects out-of-range DUN
   object-layer IDs when applying directly constructed projections.
+- Authoritative world-item pickup now preserves native cursor behavior: full
+  inventories project the picked item as held state, and a held cursor item is
+  atomically dropped at the authoritative player tile before replacement;
+  native replay pickup follows the same rules.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

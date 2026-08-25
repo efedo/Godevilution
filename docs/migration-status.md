@@ -58,6 +58,12 @@ The native presentation bridge independently revalidates DUN object-layer IDs
 before applying directly constructed geometry projections, so malformed
 compatibility data fails closed even when it bypasses protocol validation.
 
+Authoritative world-item pickup now preserves the native cursor contract: an
+overflow item is projected as the server-owned held item, and picking up while
+holding another item atomically drops the existing cursor item at the player's
+authoritative tile before replacing it. The native replay projection follows
+the same overflow and cursor-replacement rules.
+
 The external geometry contract now preserves all native `.sol` d-piece flags
 when a text property table is used: legacy `solid`/`block_missile` rows remain
 valid, while optional lighting, transparency, and trap flags are validated and

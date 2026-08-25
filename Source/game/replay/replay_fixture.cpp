@@ -6810,45 +6810,77 @@ bool ExecuteReplayFixture(
 				}
 			} else if (command.kind == "PickupWorldItem") {
 				const int distance = std::max(std::abs(state.positionX - state.worldItemPositionX), std::abs(state.positionY - state.worldItemPositionY));
-				if (!state.heldItemDefined
-				    && command.worldItemEntityId == state.worldItemEntityId
+				if (command.worldItemEntityId == state.worldItemEntityId
 				    && state.worldItemSeed != 0
 				    && state.levelId == state.worldItemLevelId
 				    && distance <= 1) {
-					const bool isGold = state.worldItemState.itemType == 11
-					    && state.worldItemState.itemIndex == 0;
+					const ReplayFixtureItemState pickedItemState = state.worldItemState;
+					const uint32_t pickedItemSeed = state.worldItemSeed;
+					const uint32_t pickedItemPrice = state.worldItemPrice;
+					const bool isGold = pickedItemState.itemType == 11
+					    && pickedItemState.itemIndex == 0;
+					if (isGold
+					    && (pickedItemState.value <= 0
+					        || pickedItemState.value > 5000
+					        || pickedItemState.identifiedValue != pickedItemState.value
+					        || !pickedItemState.statFlag
+					        || pickedItemPrice != static_cast<uint32_t>(pickedItemState.value)
+					        || std::numeric_limits<uint32_t>::max() - state.gold < pickedItemPrice))
+						continue;
+					if (state.heldItemDefined) {
+						if (state.positionX == state.worldItemPositionX
+						    && state.positionY == state.worldItemPositionY)
+							continue;
+						state.worldItems.push_back({
+						    AllocateReplayWorldItemEntityId(state),
+						    state.levelId,
+						    state.positionX,
+						    state.positionY,
+						    state.heldItem.itemSeed,
+						    state.heldItem.price,
+						    state.heldItem.state,
+						});
+						state.heldItemDefined = false;
+						state.heldItem = { };
+					}
+					state.worldItemState = pickedItemState;
 					if (isGold) {
-						if (state.worldItemState.value > 0
-						    && state.worldItemState.value <= 5000
-						    && state.worldItemState.identifiedValue == state.worldItemState.value
-						    && state.worldItemState.statFlag
-						    && state.worldItemPrice == static_cast<uint32_t>(state.worldItemState.value)
-						    && std::numeric_limits<uint32_t>::max() - state.gold >= state.worldItemPrice) {
-							if (HasReplayGoldTopology(state)) {
-								const uint32_t remainder = AddReplayGoldPartial(state, state.worldItemPrice);
-								if (remainder != 0) {
-									state.heldItemDefined = true;
-									state.heldItem = {
-									    0,
-									    0,
-									    state.worldItemSeed,
-									    remainder,
-									    command.order.targetTick,
-									    state.worldItemState,
-									};
-									state.heldItem.state.value = static_cast<int32_t>(remainder);
-									state.heldItem.state.identifiedValue = static_cast<int32_t>(remainder);
-								}
-							} else {
-								state.gold += state.worldItemPrice;
+						if (HasReplayGoldTopology(state)) {
+							const uint32_t remainder = AddReplayGoldPartial(state, pickedItemPrice);
+							if (remainder != 0) {
+								state.heldItemDefined = true;
+								state.heldItem = {
+								    0,
+								    0,
+								    pickedItemSeed,
+								    remainder,
+								    command.order.targetTick,
+								    pickedItemState,
+								};
+								state.heldItem.state.value = static_cast<int32_t>(remainder);
+								state.heldItem.state.identifiedValue = static_cast<int32_t>(remainder);
 							}
-							state.worldItemEntityId = 0;
-							accepted = true;
+						} else {
+							state.gold += pickedItemPrice;
 						}
+						state.worldItemEntityId = 0;
+						accepted = true;
 					} else {
-						state.inventory.push_back({ 0, 0, state.worldItemSeed, state.worldItemPrice, command.order.targetTick, state.worldItemState });
-						if (!state.inventoryGrid.empty())
-							state.inventoryGrid[0] = 0;
+						const int targetCell = CanPlaceReplayInventoryItem(
+						    state.inventoryGrid,
+						    0,
+						    pickedItemState.inventoryWidth,
+						    pickedItemState.inventoryHeight)
+						    ? 0
+						    : FindReplayInventoryPlacement(state, pickedItemState);
+						if (targetCell >= 0 && state.inventory.size() < 40) {
+							const size_t inventoryIndex = state.inventory.size();
+							state.inventory.push_back({ 0, 0, pickedItemSeed, pickedItemPrice, command.order.targetTick, pickedItemState });
+							FillReplayInventoryGrid(state, targetCell, inventoryIndex, pickedItemState);
+						} else {
+							state.heldItemDefined = true;
+							state.heldItem = { 0, 0, pickedItemSeed, pickedItemPrice, command.order.targetTick, pickedItemState };
+						}
 						state.worldItemEntityId = 0;
 						accepted = true;
 					}
