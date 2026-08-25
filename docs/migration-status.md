@@ -122,9 +122,11 @@ and later presentation parity.
 
 The raw native DUN monster layer is now retained through authoritative level
 materialization, ordinary-level composition, deferred fragment composition, and
-world-mutation rebuilds. Spawn mapping remains a separate follow-up because the
-native layer stores `MonstConvTbl` indices rather than authoritative monster
-entities.
+world-mutation rebuilds. Content schema 1.429.0 now externalizes each valid
+`MonstConvTbl` index with a native identity and stable monster selector;
+authoritative simulation materializes mapped cells in native row-major order
+after geometry is available, while unsupported or unmapped entries remain
+inert.
 
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards

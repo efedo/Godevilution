@@ -79,6 +79,9 @@ public sealed class DiabloSimulationOptions
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
 
+    /** Validated mappings for native DUN monster-layer materialization. */
+    public AuthoritativeNativeDunMonsterCatalog? NativeDunMonsters { get; init; }
+
     /** Validated native DUN fragments whose unique anchors may materialize on level entry. */
     public AuthoritativeNativeDunFragmentCatalog? NativeDunFragments { get; init; }
 
@@ -306,6 +309,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.NativeDunObjects,
             options.NativeDunFragments,
             options.NativeDunFragmentObjects,
+            options.NativeDunMonsters,
             options.NativeObjectTemplates,
             options.Content,
             questTypes: options.QuestTypes,
@@ -336,6 +340,7 @@ public sealed partial class DiabloSimulation
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeNativeDunFragmentCatalog? nativeDunFragments;
     private readonly AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects;
+    private readonly AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters;
     private readonly AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog;
     private readonly uint proceduralSetPieceOriginSeed;
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
@@ -373,6 +378,7 @@ public sealed partial class DiabloSimulation
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
+        AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters = null,
         IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
         ComposedContent? content = null,
         AuthoritativeQuestTypeCatalog? questTypes = null,
@@ -417,12 +423,14 @@ public sealed partial class DiabloSimulation
         NativeDunObjects = nativeDunObjects;
         this.nativeDunFragments = nativeDunFragments;
         this.nativeDunFragmentObjects = nativeDunFragmentObjects;
+        this.nativeDunMonsters = nativeDunMonsters;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         this.content = content;
         this.proceduralSetPieceOriginCatalog = proceduralSetPieceOriginCatalog;
         this.proceduralSetPieceOriginSeed = proceduralSetPieceOriginSeed;
         MaterializeRelativeSetLevelObjects();
         ApplyDeferredNativeDunFragments();
+        MaterializeNativeDunMonsters();
         ReconcileProceduralSpawnState();
     }
 
@@ -456,6 +464,10 @@ public sealed partial class DiabloSimulation
 
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }
+
+    /** Validated mappings for native DUN monster-layer materialization. */
+    public AuthoritativeNativeDunMonsterCatalog? NativeDunMonsters
+        => nativeDunMonsters;
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
@@ -640,8 +652,40 @@ public sealed partial class DiabloSimulation
             WorldState.CombatTargets.Add(target.EntityId, target);
         }
         ApplyDeferredNativeDunFragments();
+        MaterializeNativeDunMonsters();
         if (targets.Count != 0)
             nextGeneratedMonsterEntityId = checked(targets[^1].EntityId + 1);
+    }
+
+    /** Materializes mapped native DUN monster cells after deferred geometry appears. */
+    private void MaterializeNativeDunMonsters()
+    {
+        if (nativeDunMonsters is null
+            || monsterSpawnPlanner is null
+            || WorldState.World is null)
+            return;
+        var targets = nativeDunMonsters.Materialize(
+            WorldState.World,
+            monsterSpawnPlanner,
+            WorldState.CombatTargets.Values,
+            WorldState.Objects.Values,
+            proceduralMonsterSeed,
+            gameMode == DiabloGameMode.Multiplayer);
+        foreach (var target in targets) {
+            DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+                target,
+                difficulty,
+                CombatRules.GameVariant,
+                gameMode,
+                CombatRules.DifficultyRules);
+            DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+                target,
+                difficulty,
+                monsterTypes);
+            if (!WorldState.CombatTargets.TryAdd(target.EntityId, target))
+                throw new InvalidDataException(
+                    $"Native DUN monster entity {target.EntityId} is already occupied.");
+        }
     }
 
     /** Applies unique-anchored fragments once their generated encounter exists. */

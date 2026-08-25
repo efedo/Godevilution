@@ -6,14 +6,14 @@ All notable changes to this fork are documented below.
 
 - Content schema `1.429.0` externalizes the validated native `MonstConvTbl`
   mapping through `native_dun_monsters.tsv` for base and Hellfire packs. The
-  authoritative module now exposes the mapping while raw-layer spawn
-  materialization remains a separate parity step.
+  authoritative module now selects stable monster identities and materializes
+  mapped cells in native row-major order when geometry is available.
 - Native DUN geometry materialization now preserves the parsed transparency
   layer in authoritative levels instead of dropping native `dTransVal` values
   when external `.til`/`.sol` geometry is composed.
 - Raw native DUN monster layers now survive authoritative level and fragment
-  composition, including world-mutation rebuilds; monster spawn mapping remains
-  deferred until the validated `MonstConvTbl` content contract is externalized.
+  composition, including world-mutation rebuilds; unsupported or unmapped
+  conversion entries remain inert until their content is externalized.
 - Deferred native-DUN fragments now refresh effective world geometry and
   reconcile authored object mappings after their anchor appears, so mapped
   set-piece object cells become authoritative instead of remaining inert.

@@ -148,13 +148,19 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint entityId,
         bool multiplayer = false,
         int direction = 0,
-        bool ignoreDungeonLevelRange = false)
+        bool ignoreDungeonLevelRange = false,
+        uint? stableMonsterId = null)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
         if (!world.ContainsLevel(levelId) || levelId > int.MaxValue)
             return null;
-        if (!monsterTypes.TryGetNative(nativeMonsterId, out var definition)
+        AuthoritativeMonsterTypeDefinition definition;
+        if (stableMonsterId is not null) {
+            if (!monsterTypes.TryGet(stableMonsterId.Value, out definition)
+                || definition.NativeMonsterId != nativeMonsterId)
+                return null;
+        } else if (!monsterTypes.TryGetNative(nativeMonsterId, out definition)
             && !monsterTypes.TryGet(nativeMonsterId, out definition))
             return null;
         if (!ignoreDungeonLevelRange

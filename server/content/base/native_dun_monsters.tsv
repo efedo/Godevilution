@@ -1,5 +1,5 @@
-native_dun_monster_id	native_monster_id
-1	0
-14	13
-49	50
-155	51
+native_dun_monster_id	native_monster_id	monster_id
+1	0	1
+14	13	140
+49	50	52
+155	51	53

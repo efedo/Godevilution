@@ -5,12 +5,14 @@ namespace Devilution.Diablo;
 /** Mapping from a raw native DUN monster-layer value to a native monster identity. */
 public sealed record AuthoritativeNativeDunMonsterDefinition(
     ushort NativeDunMonsterId,
-    uint NativeMonsterId)
+    uint NativeMonsterId,
+    uint MonsterId)
 {
     public AuthoritativeNativeDunMonsterDefinition Validate()
     {
         if (NativeDunMonsterId == 0
-            || NativeDunMonsterId > AuthoritativeLevel.NativeMaximumDunMonsterLayerId) {
+            || NativeDunMonsterId > AuthoritativeLevel.NativeMaximumDunMonsterLayerId
+            || MonsterId == 0) {
             throw new InvalidDataException(
                 "Native DUN monster mappings contain an invalid raw layer identity.");
         }
@@ -22,10 +24,13 @@ public sealed record AuthoritativeNativeDunMonsterDefinition(
  *
  * The native layer stores an index into DevilutionX's MonstConvTbl rather than
  * an authoritative monster identity. This catalog externalizes that conversion
- * without creating gameplay entities; spawn materialization is a separate seam.
+ * and provides deterministic authoritative placement when geometry is ready.
  */
 public sealed class AuthoritativeNativeDunMonsterCatalog
 {
+    /** Reserved entity range for monsters discovered in native DUN layers. */
+    public const uint RuntimeMonsterEntityIdBase = 0x5000_0000;
+
     private readonly IReadOnlyDictionary<ushort, AuthoritativeNativeDunMonsterDefinition>
         definitions;
 
@@ -65,16 +70,110 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
         return true;
     }
 
-    /** Fails activation if a mapping points at an absent native monster type. */
+    public bool TryGetMonsterId(ushort nativeDunMonsterId, out uint monsterId)
+    {
+        if (!definitions.TryGetValue(nativeDunMonsterId, out var definition)) {
+            monsterId = 0;
+            return false;
+        }
+        monsterId = definition.MonsterId;
+        return true;
+    }
+
+    /**
+     * Materializes mapped nonzero DUN cells in native row-major placement order.
+     * Unmapped conversion entries remain inert; mapped cells fail closed when
+     * their level, geometry, occupancy, or authoritative type is invalid.
+     */
+    public IReadOnlyList<AuthoritativeCombatTarget> Materialize(
+        AuthoritativeWorld world,
+        AuthoritativeMonsterSpawnPlanner planner,
+        IEnumerable<AuthoritativeCombatTarget>? existingTargets = null,
+        IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
+        uint seed = 0,
+        bool multiplayer = false)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(planner);
+        var targets = (existingTargets ?? []).ToArray();
+        var objects = (existingObjects ?? []).ToArray();
+        var existingByCell = targets
+            .GroupBy(target => (target.LevelId, target.PositionX, target.PositionY))
+            .ToDictionary(group => group.Key, group => {
+                var values = group.ToArray();
+                if (values.Length != 1)
+                    throw new InvalidDataException(
+                        $"Native DUN monster cell {group.Key} contains duplicate targets.");
+                return values[0];
+            });
+        var occupiedCells = objects
+            .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY))
+            .ToHashSet();
+        var usedEntityIds = targets.Select(target => target.EntityId)
+            .Concat(objects.Select(@object => @object.EntityId))
+            .ToHashSet();
+        var nextEntityId = RuntimeMonsterEntityIdBase;
+        var materialized = new List<AuthoritativeCombatTarget>();
+        foreach (var level in world.Levels.OrderBy(level => level.LevelId)) {
+            if (level.NativeMonsterLayer.Count == 0)
+                continue;
+            if (level.NativeMonsterLayer.Count != level.Width * level.Height)
+                throw new InvalidDataException(
+                    $"Native DUN monster layer for level {level.LevelId} has an invalid length.");
+            for (var cell = 0; cell < level.NativeMonsterLayer.Count; cell++) {
+                var nativeDunMonsterId = level.NativeMonsterLayer[cell];
+                if (nativeDunMonsterId == 0
+                    || !definitions.TryGetValue(nativeDunMonsterId, out var mapping))
+                    continue;
+                var positionX = cell % level.Width;
+                var positionY = cell / level.Width;
+                var cellKey = (level.LevelId, positionX, positionY);
+                if (existingByCell.TryGetValue(cellKey, out var existing)) {
+                    if (existing.MonsterId != mapping.MonsterId)
+                        throw new InvalidDataException(
+                            $"Native DUN monster cell {cellKey} conflicts with monster {existing.MonsterId}.");
+                    continue;
+                }
+                if (!level.IsWalkable(positionX, positionY)
+                    || occupiedCells.Contains(cellKey))
+                    throw new InvalidDataException(
+                        $"Native DUN monster cell {cellKey} is not available for authoritative placement.");
+                while (usedEntityIds.Contains(nextEntityId))
+                    nextEntityId = checked(nextEntityId + 1);
+                var cellSeed = CreateCellSeed(seed, level.LevelId, cell, nativeDunMonsterId);
+                var target = planner.CreateNativeMonsterSummon(
+                    level.LevelId,
+                    mapping.NativeMonsterId,
+                    cellSeed,
+                    positionX,
+                    positionY,
+                    nextEntityId,
+                    multiplayer,
+                    stableMonsterId: mapping.MonsterId);
+                if (target is null)
+                    throw new InvalidDataException(
+                        $"Native DUN monster mapping {nativeDunMonsterId} cannot materialize "
+                        + $"monster {mapping.MonsterId} on level {level.LevelId}.");
+                materialized.Add(target);
+                usedEntityIds.Add(nextEntityId);
+                existingByCell.Add(cellKey, target);
+                nextEntityId = checked(nextEntityId + 1);
+            }
+        }
+        return materialized;
+    }
+
+    /** Fails activation if a mapping points at an absent or mismatched monster type. */
     public void ValidateMonsterTypes(AuthoritativeMonsterTypeCatalog monsterTypes)
     {
         ArgumentNullException.ThrowIfNull(monsterTypes);
         foreach (var definition in Definitions) {
-            if (!monsterTypes.Definitions.Any(
-                    monsterType => monsterType.NativeMonsterId == definition.NativeMonsterId))
+            if (!monsterTypes.TryGet(definition.MonsterId, out var monsterType)
+                || monsterType.NativeMonsterId != definition.NativeMonsterId)
                 throw new InvalidDataException(
                     $"Native DUN monster mapping {definition.NativeDunMonsterId} references "
-                    + $"unknown native monster {definition.NativeMonsterId}.");
+                    + $"incompatible monster {definition.MonsterId} for native monster "
+                    + $"{definition.NativeMonsterId}.");
         }
     }
 
@@ -90,7 +189,21 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                     "Native DUN monster mappings contain an invalid raw layer identity.");
             return new AuthoritativeNativeDunMonsterDefinition(
                 (ushort)rawId,
-                row.RequiredUInt32("native_monster_id"));
+                row.RequiredUInt32("native_monster_id"),
+                row.RequiredUInt32("monster_id"));
         }));
+    }
+
+    private static uint CreateCellSeed(
+        uint seed,
+        uint levelId,
+        int cell,
+        ushort nativeDunMonsterId)
+    {
+        var mixed = seed
+            ^ unchecked(levelId * 0x9E3779B9U)
+            ^ unchecked((uint)cell * 0x85EBCA6BU)
+            ^ unchecked((uint)nativeDunMonsterId * 0xC2B2AE35U);
+        return mixed == 0 ? 1U : mixed;
     }
 }
