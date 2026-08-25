@@ -14959,8 +14959,21 @@ public sealed class DiabloCombatCommandProcessor
             player.EntityId,
             player.EntityId,
             checked((int)experienceReward)));
-        if (target.Drop is not null)
-            world.WorldItems[target.Drop.EntityId] = target.Drop;
+        if (target.Drop is not null
+            && FindAvailableWorldItemPosition(
+                target.LevelId,
+                target.PositionX,
+                target.PositionY,
+                target.EntityId) is { } dropPosition) {
+            world.WorldItems[target.Drop.EntityId] = new AuthoritativeWorldItem(
+                target.Drop.EntityId,
+                target.LevelId,
+                dropPosition.X,
+                dropPosition.Y,
+                target.Drop.ItemSeed,
+                target.Drop.Price,
+                target.Drop.State);
+        }
         if (!target.IsPlayerMinion && target.DeathAnimationTicks == 0)
             ReplaceDeadMonsterWithCorpse(target);
     }
@@ -15073,7 +15086,11 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (quest.CompletionRewardItemId == 0 || items is null)
             return;
-        var position = FindQuestCompletionRewardPosition(target);
+        var position = FindAvailableWorldItemPosition(
+            target.LevelId,
+            target.PositionX,
+            target.PositionY,
+            target.EntityId);
         if (!position.HasValue)
             return;
         var itemSeed = AllocateWorldItemSeed();
@@ -15100,25 +15117,28 @@ public sealed class DiabloCombatCommandProcessor
             state);
     }
 
-    /** Finds a deterministic open tile for a monster-defeat quest reward. */
-    private (int X, int Y)? FindQuestCompletionRewardPosition(
-        AuthoritativeCombatTarget target)
+    /** Finds a deterministic open tile for a monster-origin world item. */
+    private (int X, int Y)? FindAvailableWorldItemPosition(
+        uint levelId,
+        int originX,
+        int originY,
+        uint excludedEntityId)
     {
         return DiabloCrawl.FindClosestValidPosition(
-            target.PositionX,
-            target.PositionY,
+            originX,
+            originY,
             0,
             rules.DeathDropSearchRadius,
             (positionX, positionY) =>
-                world.IsWalkable(target.LevelId, positionX, positionY)
+                world.IsWalkable(levelId, positionX, positionY)
                 && !world.IsOccupied(
-                    target.LevelId,
+                    levelId,
                     positionX,
                     positionY,
                     activePlayers,
-                    target.EntityId)
+                    excludedEntityId)
                 && !world.WorldItems.Values.Any(item =>
-                    item.LevelId == target.LevelId
+                    item.LevelId == levelId
                     && item.PositionX == positionX
                     && item.PositionY == positionY));
     }

@@ -403,8 +403,16 @@ public sealed class DiabloCombatCommandProcessorTests
             world,
             rules: new AuthoritativeCombatRules(10, 1, 100));
         var player = CreatePlayer(entityId: 7);
+        var otherPlayer = CreatePlayer(
+            positionX: 9,
+            positionY: 1,
+            entityId: 8);
 
-        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(9),
+            1,
+            [player, otherPlayer]);
 
         Assert.True(result.Succeeded);
         Assert.Equal(0, target.HitPoints);
@@ -419,6 +427,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var drop = Assert.Single(world.WorldItems.Values);
         Assert.Equal(1009U, drop.EntityId);
         Assert.Equal(6001U, drop.ItemSeed);
+        Assert.NotEqual((9, 1), (drop.PositionX, drop.PositionY));
         Assert.Contains(9U, world.Corpses.Keys);
     }
 

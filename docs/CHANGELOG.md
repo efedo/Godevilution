@@ -49,6 +49,8 @@ All notable changes to this fork are documented below.
   allocation and reject occupied reward tiles before mutating quest state.
 - Monster-defeat quest rewards now search deterministically for an available
   tile when the target position is occupied by another participant or item.
+- Native monster drops now use the same participant-aware open-tile placement
+  boundary before entering authoritative world state.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
