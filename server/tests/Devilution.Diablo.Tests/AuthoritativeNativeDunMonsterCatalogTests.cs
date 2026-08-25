@@ -161,6 +161,42 @@ public sealed class AuthoritativeNativeDunMonsterCatalogTests
             () => catalog.Materialize(world, planner));
     }
 
+    [Fact]
+    public void SimulationMaterializesMappedNativeDunCells()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            1,
+            2,
+            1,
+            nativeMonsterLayer: [1, 0]));
+        var types = new AuthoritativeMonsterTypeCatalog([CreateType(1, 0)]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+            ]));
+        var catalog = new AuthoritativeNativeDunMonsterCatalog([
+            new AuthoritativeNativeDunMonsterDefinition(1, 0, 1),
+        ]);
+
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                MonsterTypes = types,
+                MonsterSpawnPlanner = planner,
+                NativeDunMonsters = catalog,
+            });
+
+        var target = Assert.Single(simulation.WorldState.CombatTargets.Values);
+        Assert.Equal((AuthoritativeNativeDunMonsterCatalog.RuntimeMonsterEntityIdBase, 1U, 0, 1U), (
+            target.EntityId,
+            target.LevelId,
+            target.PositionX,
+            target.MonsterId));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         uint nativeMonsterId)
