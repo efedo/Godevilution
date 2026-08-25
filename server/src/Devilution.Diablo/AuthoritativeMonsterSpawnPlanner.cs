@@ -362,6 +362,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             toHitSpecial: spawn.Definition.ToHitSpecial,
             nativeAi: spawn.Definition.NativeAi,
             intelligence: spawn.Definition.Intelligence,
+            gargoyleSpecialActive: spawn.Definition.NativeAi == "Gargoyle",
             knockback: spawn.Definition.Knockback,
             direction: direction);
     }

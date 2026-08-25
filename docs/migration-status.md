@@ -15,6 +15,10 @@ Skeleton King runtime summons now retain the native direction toward the
 victim when their authoritative targets are created, preserving the
 `SpawnMonster(newPosition, direction, typeIndex)` initialization contract.
 
+Planner-created Gargoyles now begin with the native special lock active, so
+their first authoritative AI ticks preserve DevilutionX's initial stone-state
+admission until the player closes the safety boundary.
+
 Planner-created monster targets now apply native `InitMonster` single-player
 health initialization: current and maximum health are halved with a one-health
 floor, while multiplayer retains full generated health.

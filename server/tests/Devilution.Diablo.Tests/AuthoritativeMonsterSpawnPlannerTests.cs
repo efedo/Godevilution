@@ -92,6 +92,25 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void InitializesNativeGargoyleSpecialLock()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(81, 1, 1, 8, 8, 1, 1) with { NativeAi = "Gargoyle" },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var target = Assert.Single(
+            planner.PlanCombatTargets(1, 3, multiplayer: false, maximumMonsters: 1));
+
+        Assert.True(target.GargoyleSpecialActive);
+    }
+
+    [Fact]
     public void ReservesNativeMonsterSlotsForRuntimeSummons()
     {
         var world = new AuthoritativeWorld();

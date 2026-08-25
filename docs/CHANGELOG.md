@@ -11,6 +11,8 @@ All notable changes to this fork are documented below.
   0-to-7 placement direction through authoritative combat targets.
 - Skeleton King runtime summons now preserve the native direction toward the
   victim through authoritative combat targets instead of defaulting to zero.
+- Planner-created Gargoyles now start with the native special lock active,
+  preserving their initial stone-state AI admission.
 - Planner-created monster targets now apply native single-player health
   initialization (half health with a one-health floor); multiplayer retains full
   generated health.
