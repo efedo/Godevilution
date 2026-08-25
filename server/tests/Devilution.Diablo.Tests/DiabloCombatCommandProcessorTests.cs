@@ -10405,6 +10405,192 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerCounselorConsumesItsRangedAdmissionAndDelayDraws()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Counselor",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "FixedFirebolt",
+                    AuthoritativeProjectileBehavior.Firebolt,
+                    ProjectileDamage: 7),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        var delayRoll = expected.RandomIntLessThan(10);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(5 + delayRoll, monster.CounselorDelayTicks);
+        Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt);
+    }
+
+    [Fact]
+    public void MultiplayerCounselorConsumesItsMoveAdmissionDrawAfterARangedMiss()
+    {
+        const uint aiSeed = 9;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Counselor",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "FixedFirebolt",
+                    AuthoritativeProjectileBehavior.Firebolt,
+                    ProjectileDamage: 7),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(73, expected.RandomIntLessThan(100));
+        Assert.Equal(6, expected.RandomIntLessThan(100));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerCounselorConsumesItsAdjacentAdmissionAndDelayDraws()
+    {
+        const uint aiSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            maxHitPoints: 20,
+            aggroRange: 8,
+            nativeAi: "Counselor",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(37, expected.RandomIntLessThan(100));
+        Assert.Equal(85, expected.RandomIntLessThan(100));
+        var delayRoll = expected.RandomIntLessThan(10);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(10 + delayRoll, monster.CounselorDelayTicks);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerCounselorRetreatConsumesItsRandomWalkCoins()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            4,
+            maxHitPoints: 10,
+            aggroRange: 8,
+            nativeAi: "Counselor",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        _ = expected.RandomIntLessThan(100);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(4, monster.CounselorRetreatTicks);
+
+        var expectedSecond = new DiabloRandom(expectedAiSeed);
+        var expectedSecondAiSeed = unchecked((uint)expectedSecond.AdvanceRndSeed());
+        _ = expectedSecond.RandomIntLessThan(100);
+        _ = expectedSecond.FlipCoin(2);
+        _ = expectedSecond.FlipCoin(2);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(expectedSecondAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expectedSecond.State, random.State);
+        Assert.Equal(3, monster.CounselorRetreatTicks);
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void CounselorChargedBoltUsesTheMonsterOwnedProjectilePath()
     {
         var monster = new AuthoritativeCombatTarget(

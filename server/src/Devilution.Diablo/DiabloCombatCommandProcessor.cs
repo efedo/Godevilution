@@ -5889,18 +5889,21 @@ public sealed class DiabloCombatCommandProcessor
         if (monster.AdvanceCounselorDelay())
             return true;
 
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         // Native CounselorAi always consumes its initial GenerateRnd(100)
-        // before evaluating the current goal. Admission remains server-owned
-        // through the validated deterministic band, but preserve this shared
-        // RNG boundary for subsequent native missile construction.
-        _ = random.GenerateRnd(100);
+        // before evaluating the current goal. Seeded multiplayer targets use
+        // the restored stream; seed-zero targets retain the compatibility draw.
+        var actionRoll = random.GenerateRnd(100);
 
         if (monster.CounselorRetreatTicks != 0) {
-            var retreat = FindNativeCounselorRetreatStep(
-                monster,
-                victim,
-                players,
-                unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId));
+            var retreat = usesNativeAiStream
+                ? FindNativeCounselorRetreatStepFromRandom(monster, victim, players)
+                : FindNativeCounselorRetreatStep(
+                    monster,
+                    victim,
+                    players,
+                    unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId));
             if (retreat.HasValue)
                 monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
             monster.AdvanceCounselorRetreat();
@@ -5932,7 +5935,9 @@ public sealed class DiabloCombatCommandProcessor
                 100,
                 attackChanceBase
                     + (attackChanceIntelligenceScale * monster.Intelligence));
-            if (attackSeed % 100U >= (uint)attackChance
+            if ((usesNativeAiStream
+                    ? actionRoll
+                    : (int)(attackSeed % 100U)) >= attackChance
                 || !world.HasMissileLineOfSight(
                     monster.LevelId,
                     monster.PositionX,
@@ -5948,7 +5953,10 @@ public sealed class DiabloCombatCommandProcessor
                     && counselorDefinition.CounselorMoveChancePercent > 0
                     ? counselorDefinition.CounselorMoveChancePercent
                     : 30;
-                if ((attackSeed / 100U) % 100U < (uint)movementChance) {
+                var movementRoll = usesNativeAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)((attackSeed / 100U) % 100U);
+                if (movementRoll < movementChance) {
                     var roundWalk = FindNativeRoundWalkStep(
                         monster,
                         victim,
@@ -5958,7 +5966,9 @@ public sealed class DiabloCombatCommandProcessor
                         monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                 } else {
                     monster.StartCounselorDelay(
-                        ResolveCounselorDelay(monster, attackSeed));
+                        usesNativeAiStream
+                            ? ResolveCounselorDelayFromRandom(monster)
+                            : ResolveCounselorDelay(monster, attackSeed));
                 }
                 return true;
             }
@@ -5991,13 +6001,20 @@ public sealed class DiabloCombatCommandProcessor
             100,
             adjacentAttackChanceBase
                 + (adjacentAttackChanceIntelligenceScale * monster.Intelligence));
-        if (adjacentAttackSeed % 100U < (uint)adjacentAttackChance) {
+        var adjacentAttackRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(adjacentAttackSeed % 100U);
+        if (adjacentAttackRoll < adjacentAttackChance) {
             CreateMonsterFlashLayers(monster);
             monster.StartCounselorDelay(
-                ResolveCounselorAttackDelay(monster, adjacentAttackSeed));
+                usesNativeAiStream
+                    ? ResolveCounselorAttackDelayFromRandom(monster)
+                    : ResolveCounselorAttackDelay(monster, adjacentAttackSeed));
         } else {
             monster.StartCounselorDelay(
-                ResolveCounselorDelay(monster, adjacentAttackSeed));
+                usesNativeAiStream
+                    ? ResolveCounselorDelayFromRandom(monster)
+                    : ResolveCounselorDelay(monster, adjacentAttackSeed));
         }
         return true;
     }
@@ -6998,6 +7015,42 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     monster.EntityId))
                 return candidate;
+        }
+        return null;
+    }
+
+    /** Native Counselor retreat RandomWalk ordering driven by the restored stream. */
+    private (int X, int Y)? FindNativeCounselorRetreatStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var towardPlayer = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var awayFromPlayer = RotateDirection(towardPlayer, 4);
+        var firstTurn = random.FlipCoin(2) ? 1 : -1;
+        var secondTurn = random.FlipCoin(2) ? 2 : -2;
+        foreach (var candidateDirection in new[] {
+                     awayFromPlayer,
+                     RotateDirection(awayFromPlayer, firstTurn),
+                     RotateDirection(awayFromPlayer, -firstTurn),
+                     RotateDirection(awayFromPlayer, secondTurn),
+                     RotateDirection(awayFromPlayer, -secondTurn),
+                 }) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
         }
         return null;
     }
@@ -8252,6 +8305,9 @@ public sealed class DiabloCombatCommandProcessor
             && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
         var isCounselor = UsesNativeAi(monster, "Counselor");
+        var usesNativeCounselorAiStream = isCounselor
+            && gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")
             && monster.AdvanceMegaDelay())
@@ -8644,7 +8700,9 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (isCounselor)
             monster.StartCounselorDelay(
-                ResolveCounselorAttackDelay(monster, attackSeed));
+                usesNativeCounselorAiStream
+                    ? ResolveCounselorAttackDelayFromRandom(monster)
+                    : ResolveCounselorAttackDelay(monster, attackSeed));
         else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
             monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
@@ -8855,6 +8913,29 @@ public sealed class DiabloCombatCommandProcessor
                 + (int)((actionSeed / 200U) % (uint)randomRange)));
     }
 
+    /** Native Counselor no-action delay driven by the restored stream. */
+    private int ResolveCounselorDelayFromRandom(
+        AuthoritativeCombatTarget target)
+    {
+        var delayBase = 10;
+        var intelligenceScale = 2;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.CounselorDelayRandomRange > 0) {
+            delayBase = definition.CounselorDelayBase > 0
+                ? definition.CounselorDelayBase
+                : delayBase;
+            intelligenceScale = definition.CounselorDelayIntelligenceScale > 0
+                ? definition.CounselorDelayIntelligenceScale
+                : intelligenceScale;
+            randomRange = definition.CounselorDelayRandomRange;
+        }
+        return Math.Max(
+            0,
+            checked(delayBase - (intelligenceScale * target.Intelligence)
+                + random.RandomIntLessThan(randomRange)));
+    }
+
     private int ResolveCounselorAttackDelay(
         AuthoritativeCombatTarget target,
         uint attackSeed)
@@ -8869,6 +8950,22 @@ public sealed class DiabloCombatCommandProcessor
             randomRange = definition.CounselorAttackDelayRandomRange;
         }
         return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
+    }
+
+    /** Native Counselor attack delay driven by the restored stream. */
+    private int ResolveCounselorAttackDelayFromRandom(
+        AuthoritativeCombatTarget target)
+    {
+        var delayBase = 5;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.CounselorAttackDelayRandomRange > 0) {
+            delayBase = definition.CounselorAttackDelayBase > 0
+                ? definition.CounselorAttackDelayBase
+                : delayBase;
+            randomRange = definition.CounselorAttackDelayRandomRange;
+        }
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private static int ResolveMegaDelay(

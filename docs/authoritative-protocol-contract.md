@@ -535,7 +535,11 @@ movement policy to the client.
 Counselor mapped ranged rows use validated base and intelligence-scale
 admission terms, capped at 100, with the native 50/5 fallback for older
 mappings, followed by the 30-percent `RoundWalk` fallback; clients receive
-only the resulting projectile or authoritative movement snapshot.
+only the resulting projectile or authoritative movement snapshot. Seeded
+multiplayer Counselor targets consume the restored per-monster stream for the
+initial and secondary admission rolls, adjacent admission, retreat
+`RandomWalk` ordering, and server-owned recovery delays; seed-zero targets
+retain the compatibility controller.
 
 The `SkeletonKing` identity drives a server-owned summon boundary. When its
 validated single-player admission succeeds, the server selects a level-valid

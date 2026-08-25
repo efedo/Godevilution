@@ -48,6 +48,10 @@ retain the compatibility path.
 Multiplayer GoatRanged now consumes the stream for its close-range AiRanged
 admission, native RandomWalk fallback, and post-shot delay; long-range and
 seed-zero branches retain their native no-roll compatibility path.
+Multiplayer Counselor now consumes the stream for its initial and secondary
+ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
+server-owned recovery delays; seed-zero targets retain the compatibility
+controller.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
