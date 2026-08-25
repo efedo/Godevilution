@@ -1221,9 +1221,6 @@ public sealed class DiabloWorldCommandProcessor
                     && transitionQuest.Variable2 != @object.QuestTransitionRequiredVariable2))) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if (!applyEffects)
-            return DiabloWorldIntentResult.Accepted;
-
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
             && (@object.EffectAmount <= 0
                 || world.WorldMutations?.TryGet((uint)@object.EffectAmount, out _) != true)) {
@@ -1233,6 +1230,8 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!CanApplyObjectSpellEffect(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (!applyEffects)
+            return DiabloWorldIntentResult.Accepted;
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             return ApplyQuestSequence(player, @object);

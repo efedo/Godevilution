@@ -69,6 +69,11 @@ occupancy, and world-item collision at the authoritative drop tile, before
 consuming mana or a memorized source. A rejected replacement therefore leaves
 the held item, target world item, and cast resources unchanged.
 
+Telekinesis object targets now run the same authored world-mutation, reward,
+and spell-projectile validation during preflight. Invalid object projections
+therefore fail before mana or the memorized source is consumed, preserving the
+single authoritative cast transaction.
+
 The external geometry contract now preserves all native `.sol` d-piece flags
 when a text property table is used: legacy `solid`/`block_missile` rows remain
 valid, while optional lighting, transparency, and trap flags are validated and

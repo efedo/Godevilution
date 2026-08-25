@@ -34,6 +34,8 @@ All notable changes to this fork are documented below.
 - Telekinesis now validates that a held cursor item can be dropped before the
   cast consumes mana or its source; failed replacement attempts leave both
   authoritative items and cast resources unchanged.
+- Telekinesis object targets now validate their authored mutation, reward, and
+  spell-projectile requirements before cast resources are consumed.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

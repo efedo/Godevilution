@@ -147,6 +147,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TelekinesisRejectsAnInvalidAuthoredObjectBeforeSpendingMana()
+    {
+        var @object = new AuthoritativeWorldObject(
+            200,
+            1,
+            0,
+            4,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.GrantSpellLevel,
+            effectAmount: 999);
+        var world = new DiabloWorldState(objects: [@object]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 2000,
+            manaMaximum: 2000,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                200,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(2000, player.Mana);
+        Assert.Equal(1U, Assert.Single(player.MemorizedSpells).Level);
+        Assert.False(@object.Activated);
+    }
+
+    [Fact]
     public void TelekinesisKnocksBackAVisibleMonsterOneCell()
     {
         var target = new AuthoritativeCombatTarget(9, 4, 0, 10);
