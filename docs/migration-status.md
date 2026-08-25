@@ -10,15 +10,15 @@ advance the retained AI seed once per tick, matching native `ProcessMonsters`
 state progression, and restore each monster's stream before its AI random draws.
 Multiplayer Zombie AI now consumes the stream for its action and movement draws;
 Multiplayer SkeletonMelee now consumes the stream for movement and adjacent
-attack admission, native delay rolls, and RandomWalk coin draws. Remaining
+attack admission, native delay rolls, and RandomWalk coin draws.
 Multiplayer SkeletonRanged now consumes the stream for its native movement and
 retreat admission plus the subsequent arrow attack roll, including the
-far-distance movement draw. Remaining native AI controllers and rolls are
-Multiplayer Fat/Overlord AI now consumes the stream for its native movement or
-adjacent-attack admission, including RandomWalk coin draws. Remaining native AI
-Multiplayer GoatMelee/AiAvoidance now consumes the stream for its movement,
-Move-goal, RandomWalk, adjacent-attack, and wounded-special draws. Remaining
-Multiplayer Gargoyle now consumes the stream for healthy AiAvoidance movement,
+far-distance movement draw. Multiplayer Fat/Overlord AI now consumes the
+stream for its native movement or adjacent-attack admission, including
+RandomWalk coin draws. Multiplayer GoatMelee/AiAvoidance now consumes the
+stream for its movement, Move-goal, RandomWalk, adjacent-attack, and
+wounded-special draws. Multiplayer Gargoyle now consumes the stream for
+healthy AiAvoidance movement,
 adjacent attacks, wounded retreat RandomWalk, and healing divisor rolls; its
 native special lock remains server-owned. Multiplayer ButcherAi now consumes
 the stream for its non-adjacent RandomWalk coin draws; adjacent attacks retain
@@ -27,8 +27,10 @@ its native action roll, retreat RandomWalk, and adjacent-attack admission;
 seed-zero targets retain the compatibility path. Multiplayer Skeleton King now
 consumes the stream for its native action and movement-admission rolls, delay
 range, RoundWalk, RandomWalk, and adjacent-attack admission; multiplayer
-summoning remains server-owned. Remaining native AI controllers and rolls are
-follow-up work. Multiplayer Bat now consumes the stream for native adjacent
+summoning remains server-owned. Remaining native lifecycle and
+animation-sensitive special behavior, including pack leadership/group unity
+and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
+the stream for native adjacent
 attack admission, two-step retreat, movement, and mapped-charge action/RandomWalk
 draws; mapped charge misses reuse the same action roll without double-consuming
 the stream.
