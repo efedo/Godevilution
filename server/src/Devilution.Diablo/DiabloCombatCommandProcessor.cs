@@ -6082,6 +6082,8 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (target.ScavengerHealingTicks == 0)
             target.StartScavengerHealing(scavengerTuning.Value.HealingDurationTicks);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && target.MonsterAiSeed != 0;
 
         AuthoritativeCorpse? corpse = null;
         if (target.ScavengerCorpseEntityId != 0)
@@ -6098,9 +6100,13 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionY,
                 corpse.PositionX,
                 corpse.PositionY)) {
-            corpse = FindNativeScavengerCorpse(
-                target,
-                scavengerTuning.Value.CorpseSearchRadius);
+            corpse = usesNativeAiStream
+                ? FindNativeScavengerCorpseFromRandom(
+                    target,
+                    scavengerTuning.Value.CorpseSearchRadius)
+                : FindNativeScavengerCorpse(
+                    target,
+                    scavengerTuning.Value.CorpseSearchRadius);
             target.SelectScavengerCorpse(corpse?.EntityId ?? 0);
         }
 
@@ -6136,12 +6142,18 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStepToward(
-            target,
-            corpse.PositionX,
-            corpse.PositionY,
-            players,
-            unchecked((uint)tick ^ target.EntityId ^ corpse.EntityId));
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepTowardFromRandom(
+                target,
+                corpse.PositionX,
+                corpse.PositionY,
+                players)
+            : FindNativeRandomWalkStepToward(
+                target,
+                corpse.PositionX,
+                corpse.PositionY,
+                players,
+                unchecked((uint)tick ^ target.EntityId ^ corpse.EntityId));
         if (randomWalk.HasValue)
             target.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
         target.AdvanceScavengerHealing();
@@ -6981,6 +6993,51 @@ public sealed class DiabloCombatCommandProcessor
                 return candidate;
         }
         return null;
+    }
+
+    /** Native ScavengerFindCorpse scan driven by the restored stream. */
+    private AuthoritativeCorpse? FindNativeScavengerCorpseFromRandom(
+        AuthoritativeCombatTarget scavenger,
+        int searchRadius)
+    {
+        var reverseSearch = random.FlipCoin(2);
+        var first = reverseSearch ? searchRadius : -searchRadius;
+        var last = reverseSearch ? -searchRadius : searchRadius;
+        var increment = reverseSearch ? -1 : 1;
+        for (var y = first; reverseSearch ? y >= last : y <= last; y += increment) {
+            for (var x = first; reverseSearch ? x >= last : x <= last; x += increment) {
+                var candidateX = checked(scavenger.PositionX + x);
+                var candidateY = checked(scavenger.PositionY + y);
+                var corpse = world.Corpses.Values.FirstOrDefault(candidate =>
+                    (candidate.LevelId == 0 || candidate.LevelId == scavenger.LevelId)
+                    && candidate.PositionX == candidateX
+                    && candidate.PositionY == candidateY);
+                if (corpse is not null
+                    && world.HasLineOfSight(
+                        scavenger.LevelId,
+                        scavenger.PositionX,
+                        scavenger.PositionY,
+                        candidateX,
+                        candidateY))
+                    return corpse;
+            }
+        }
+        return null;
+    }
+
+    /** Native Scavenger RandomWalk toward its selected corpse driven by the stream. */
+    private (int X, int Y)? FindNativeRandomWalkStepTowardFromRandom(
+        AuthoritativeCombatTarget monster,
+        int targetX,
+        int targetY,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            targetX,
+            targetY);
+        return FindNativeRandomWalkStepFromRandom(monster, direction, players);
     }
 
     private (int X, int Y)? FindStepInDirection(

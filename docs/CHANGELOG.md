@@ -49,6 +49,9 @@ All notable changes to this fork are documented below.
   movement admission, recovery delay, RoundWalk, and RandomWalk draws; seeded
   targets retain native controller ordering while seed-zero targets retain the
   compatibility path.
+- Multiplayer Scavenger now consumes the restored stream for corpse-scan
+  direction and corpse-targeted RandomWalk draws; seed-zero targets retain the
+  compatibility path.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.
