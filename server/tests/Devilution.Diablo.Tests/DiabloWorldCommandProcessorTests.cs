@@ -1989,6 +1989,36 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ObjectRewardRejectsAWorldItemTileOccupiedByAnotherParticipant()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2136, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var signChest = new AuthoritativeWorldObject(
+            2002,
+            97,
+            4,
+            10,
+            10,
+            rewardKind: AuthoritativeObjectRewardKind.NormalItem,
+            rewardId: 2136);
+        var world = new DiabloWorldState(objects: [signChest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 10, positionY: 9, levelId: 4, entityId: 7);
+        var otherPlayer = CreatePlayer(positionX: 10, positionY: 10, levelId: 4, entityId: 8);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloOperateObjectIntent(signChest.EntityId),
+                1,
+                [player, otherPlayer]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(signChest.Activated);
+        Assert.Empty(world.WorldItems);
+    }
+
+    [Fact]
     public void ItemGatedQuestDialogueAppliesItsWorldMutationFollowUp()
     {
         var items = new AuthoritativeItemCatalog([

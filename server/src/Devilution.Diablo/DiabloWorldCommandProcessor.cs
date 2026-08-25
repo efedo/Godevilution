@@ -120,7 +120,10 @@ public sealed class DiabloWorldCommandProcessor
                 drop.TargetX,
                 drop.TargetY,
                 players.ToArray()),
-            DiabloOperateObjectIntent operation => OperateObject(player, operation.ObjectEntityId),
+            DiabloOperateObjectIntent operation => OperateObject(
+                player,
+                operation.ObjectEntityId,
+                players.ToArray()),
             DiabloDisarmTrapIntent disarm => DisarmTrap(player, disarm.ObjectEntityId),
             DiabloAdvanceQuestIntent quest => AdvanceQuest(player, quest.QuestId),
             DiabloTalkToQuestIntent talk => TalkToQuest(
@@ -184,6 +187,7 @@ public sealed class DiabloWorldCommandProcessor
             return OperateObject(
                 player,
                 targetEntityId,
+                participants,
                 requireAdjacent: false,
                 applyEffects: applyEffects);
         }
@@ -372,6 +376,7 @@ public sealed class DiabloWorldCommandProcessor
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(players);
+        var participants = players.ToArray();
         var events = new List<DiabloGameplayEvent>();
         foreach (var @object in world.Objects.Values
                      .Where(candidate => candidate.ActivateOnOccupancy
@@ -385,6 +390,7 @@ public sealed class DiabloWorldCommandProcessor
             var result = OperateObject(
                 player,
                 @object.EntityId,
+                participants,
                 requireAdjacent: false);
             if (!result.Succeeded)
                 continue;
@@ -1195,9 +1201,12 @@ public sealed class DiabloWorldCommandProcessor
     private DiabloWorldIntentResult OperateObject(
         AuthoritativePlayerState player,
         uint objectEntityId,
+        IReadOnlyList<AuthoritativePlayerState> participants,
         bool requireAdjacent = true,
         bool applyEffects = true)
     {
+        if (!participants.Contains(player))
+            participants = participants.Append(player).ToArray();
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
             || @object.Activated
             || @object.LevelId != player.LevelId
@@ -1226,7 +1235,7 @@ public sealed class DiabloWorldCommandProcessor
                 || world.WorldMutations?.TryGet((uint)@object.EffectAmount, out _) != true)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if (!CanApplyObjectReward(@object, player))
+        if (!CanApplyObjectReward(@object, player, participants))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!CanApplyObjectSpellEffect(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -1260,7 +1269,7 @@ public sealed class DiabloWorldCommandProcessor
             ApplyAuthoredObjectFollowUp(@object, player);
         }
 
-        SpawnObjectReward(@object, player);
+        SpawnObjectReward(@object, participants);
         if (@object.EffectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
             ApplyGrantedSpellLevel(player, checked((uint)@object.EffectAmount));
@@ -1606,7 +1615,8 @@ public sealed class DiabloWorldCommandProcessor
 
     private bool CanApplyObjectReward(
         AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (@object.RewardKind == AuthoritativeObjectRewardKind.None)
             return true;
@@ -1635,7 +1645,7 @@ public sealed class DiabloWorldCommandProcessor
                 @object.LevelId,
                 rewardX,
                 rewardY,
-                [player],
+                participants,
                 excludedEntityId: @object.EntityId)
             && !world.WorldItems.Values.Any(item =>
                 item.LevelId == @object.LevelId
@@ -1645,7 +1655,7 @@ public sealed class DiabloWorldCommandProcessor
 
     private void SpawnObjectReward(
         AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (@object.RewardKind == AuthoritativeObjectRewardKind.None)
             return;
@@ -1655,7 +1665,7 @@ public sealed class DiabloWorldCommandProcessor
             : items!.Generate(@object.RewardId, itemSeed, @object.RewardItemLevel);
         var rewardX = checked(@object.PositionX + @object.RewardOffsetX);
         var rewardY = checked(@object.PositionY + @object.RewardOffsetY);
-        var entityId = AllocateWorldItemEntityId([player]);
+        var entityId = AllocateWorldItemEntityId(participants);
         world.WorldItems[entityId] = new AuthoritativeWorldItem(
             entityId,
             @object.LevelId,

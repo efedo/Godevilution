@@ -36,6 +36,9 @@ All notable changes to this fork are documented below.
   authoritative items and cast resources unchanged.
 - Telekinesis object targets now validate their authored mutation, reward, and
   spell-projectile requirements before cast resources are consumed.
+- Authored object rewards now validate world-item placement against every
+  authoritative participant, preventing multiplayer rewards from spawning on a
+  different player's tile.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
