@@ -525,8 +525,12 @@ opposite-direction `RandomWalk` attempts before resuming mapped ranged
 dispatch; clients render only the resulting movement and snapshot state.
 
 For the `Mega` identity, Inferno admission and its intermediate-distance
-`2 * (5 * intelligence + 25)` RandomWalk fallback are server-owned. A failed or
-blocked mapped Inferno roll never delegates movement policy to the client.
+`2 * (5 * intelligence + 25)` RandomWalk fallback are server-owned. In
+multiplayer, seeded Mega targets consume the restored per-monster stream for
+the native action and adjacent-choice rolls, intermediate movement, recovery
+delay, and immediate segment collision; seed-zero targets retain the legacy
+compatibility path. A failed or blocked mapped Inferno roll never delegates
+movement policy to the client.
 
 Counselor mapped ranged rows use validated base and intelligence-scale
 admission terms, capped at 100, with the native 50/5 fallback for older

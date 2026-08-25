@@ -41,9 +41,10 @@ retain the compatibility path.
 Multiplayer Scavenger now consumes the stream for corpse-scan direction and
 corpse-targeted RandomWalk draws; seed-zero targets retain the compatibility
 path.
-Multiplayer Mega's far-distance Skeleton fallback now consumes the stream for
-native delay and RandomWalk draws; its separate Inferno admission branch
-remains follow-up work.
+Multiplayer Mega now consumes the stream for its far-distance Skeleton fallback
+and mapped Inferno admission, including native action, adjacent-choice,
+intermediate-movement, recovery-delay, and collision draws; seed-zero targets
+retain the compatibility path.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the

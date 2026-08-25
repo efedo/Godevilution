@@ -52,9 +52,10 @@ All notable changes to this fork are documented below.
 - Multiplayer Scavenger now consumes the restored stream for corpse-scan
   direction and corpse-targeted RandomWalk draws; seed-zero targets retain the
   compatibility path.
-- Multiplayer Mega's far-distance Skeleton fallback now consumes the restored
-  stream for its native delay and RandomWalk draws; its separate Inferno
-  admission branch remains a follow-up migration.
+- Multiplayer Mega now consumes the restored stream for its far-distance
+  Skeleton fallback and mapped Inferno admission, including the native action,
+  adjacent-choice, intermediate-movement, recovery-delay, and collision draws;
+  seed-zero targets retain the compatibility path.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

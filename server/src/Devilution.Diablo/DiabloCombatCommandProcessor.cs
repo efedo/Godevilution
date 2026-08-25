@@ -5843,7 +5843,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed,
-        int distance)
+        int distance,
+        bool usesNativeAiStream = false)
     {
         if (!UsesNativeAi(monster, "Mega") || distance < 2)
             return false;
@@ -5860,14 +5861,15 @@ public sealed class DiabloCombatCommandProcessor
             100,
             movementChanceBase
                 + (movementChanceIntelligenceScale * monster.Intelligence));
-        if ((seed / 100U) % 100U >= (uint)movementChance)
+        var movementRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)((seed / 100U) % 100U);
+        if (movementRoll >= movementChance)
             return false;
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            player,
-            players,
-            seed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, player, players)
+            : FindNativeRandomWalkStep(monster, player, players, seed);
         if (!randomWalk.HasValue)
             return false;
         monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
@@ -8224,6 +8226,11 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var usesNativeAiStream = missile.ProjectileBehavior
+                == AuthoritativeProjectileBehavior.InfernoController
+            && UsesNativeAi(monster, "Mega")
+            && gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var isCounselor = UsesNativeAi(monster, "Counselor");
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")
@@ -8251,15 +8258,19 @@ public sealed class DiabloCombatCommandProcessor
             var infernoTuning = ResolveMonsterInfernoTuning(missile);
             if (distance >= infernoTuning.MaximumDistance)
                 return false;
+            var infernoActionRoll = usesNativeAiStream
+                ? random.RandomIntLessThan(100)
+                : (int)(attackSeed % 100U);
             if (distance <= 1) {
                 var adjacentChance = checked(
                     infernoTuning.AdjacentChanceBase
                     + infernoTuning.AdjacentChanceIntelligenceScale
                         * monster.Intelligence);
-                if (attackSeed % 100U
-                    >= (uint)Math.Min(100, adjacentChance)
-                    || (attackSeed / 100U)
-                        % (uint)infernoTuning.AdjacentChoiceModulo != 0)
+                if (infernoActionRoll >= Math.Min(100, adjacentChance)
+                    || (usesNativeAiStream
+                        ? !random.FlipCoin((uint)infernoTuning.AdjacentChoiceModulo)
+                        : (attackSeed / 100U)
+                            % (uint)infernoTuning.AdjacentChoiceModulo != 0))
                     return false;
             } else {
                 var attackBand = checked(
@@ -8269,7 +8280,7 @@ public sealed class DiabloCombatCommandProcessor
                             + (distance >= infernoTuning.RangedFarDistance
                                 ? infernoTuning.RangedFarIntelligenceOffset
                                 : 0)));
-                if (attackSeed % 100U >= (uint)Math.Min(100, attackBand)) {
+                if (infernoActionRoll >= Math.Min(100, attackBand)) {
                     // MegaAi's normal branch may RandomWalk after a missed
                     // Inferno roll. Consume that branch here so the target
                     // does not fall through to generic pursuit.
@@ -8279,8 +8290,12 @@ public sealed class DiabloCombatCommandProcessor
                             player,
                             players,
                             attackSeed,
-                            distance);
-                        monster.StartMegaDelay(ResolveMegaDelay(missile, attackSeed));
+                            distance,
+                            usesNativeAiStream);
+                        monster.StartMegaDelay(
+                            usesNativeAiStream
+                                ? ResolveMegaDelayFromRandom(missile)
+                                : ResolveMegaDelay(missile, attackSeed));
                         return true;
                     }
                     return false;
@@ -8449,8 +8464,12 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     players,
                     attackSeed,
-                    distance);
-                monster.StartMegaDelay(ResolveMegaDelay(missile, attackSeed));
+                    distance,
+                    usesNativeAiStream);
+                monster.StartMegaDelay(
+                    usesNativeAiStream
+                        ? ResolveMegaDelayFromRandom(missile)
+                        : ResolveMegaDelay(missile, attackSeed));
                 return true;
             }
             return missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
@@ -8611,7 +8630,10 @@ public sealed class DiabloCombatCommandProcessor
             monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
         else if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega"))
-            monster.StartMegaDelay(ResolveMegaDelay(missile, attackSeed));
+            monster.StartMegaDelay(
+                usesNativeAiStream
+                    ? ResolveMegaDelayFromRandom(missile)
+                    : ResolveMegaDelay(missile, attackSeed));
         return true;
     }
 
@@ -8829,6 +8851,19 @@ public sealed class DiabloCombatCommandProcessor
             ? missile.MegaDelayBase
             : 5;
         return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
+    }
+
+    /** Native Mega recovery delay driven by the restored per-monster stream. */
+    private int ResolveMegaDelayFromRandom(
+        AuthoritativeMonsterMissileDefinition? missile)
+    {
+        var randomRange = missile?.MegaDelayRandomRange > 0
+            ? missile.MegaDelayRandomRange
+            : 10;
+        var delayBase = missile?.MegaDelayBase > 0
+            ? missile.MegaDelayBase
+            : 5;
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private static (int Speed, int Lifetime) ResolveMappedChargeProjectileTuning(
