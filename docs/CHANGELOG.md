@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native controller interaction now fails closed when a highlighted monster is
+  missing from the authoritative projection; stale monster highlights no longer
+  fall through to positional attacks.
 - Connected native spell submission now fails closed when a visible player or
   combat-entity cursor target is missing from the authoritative projection;
   it no longer silently falls back to a tile cast, including scroll and rune

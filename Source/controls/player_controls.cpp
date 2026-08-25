@@ -544,11 +544,18 @@ void Interact()
 			return;
 		}
 		const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
-		if (entityId.has_value()) {
+		switch (ResolveServerBackedMonsterInteractionRoute(true, entityId.has_value(), true)) {
+		case ServerBackedMonsterInteractionRoute::Submit:
 			if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed monster attack failed: {}", result.error());
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 			return;
+		case ServerBackedMonsterInteractionRoute::FailClosed:
+			LogError("Server-backed controller monster target is not an authoritative entity.");
+			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
+			return;
+		case ServerBackedMonsterInteractionRoute::None:
+			break;
 		}
 		const auto objectEntityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 		switch (ResolveServerBackedObjectInteractionRoute(

@@ -317,11 +317,14 @@ server effect or quest/reward link before consulting the legacy object behavior
 registry. This keeps future set-piece templates on the authoritative path.
 Ordinary doors, chests, and other un-authored objects remain compatible with
 the legacy client behavior offline; connected presentation-only objects fail
-closed before they can mutate local state.
+closed before they can mutate local state. Controller interactions apply the
+same rule to highlighted monsters: if the native cursor still shows a monster
+after the latest authoritative projection dropped its entity, the client stops
+rather than converting the stale highlight into a positional attack.
 
 ## Remaining native-only interaction inventory
 
-The following paths were audited against `Source/game` on 2026-08-18 and are
+The following paths were audited against `Source/game` on 2026-08-24 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
