@@ -20152,6 +20152,114 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(result.Succeeded);
         Assert.Equal(71U, Assert.Single(player.Inventory).ItemSeed);
         Assert.Equal([0, -1, -1, -1], player.InventoryGrid);
+    [Fact]
+    public void OpenStashConsumableCastRemovesExactAuthoritativeSource()
+    {
+        var scroll = AuthoritativeItemState.Empty with {
+            StableItemId = 800,
+            MiscId = 21,
+            SpellId = 1,
+        };
+        var processor = CreateProcessor(new DiabloWorldState());
+        var player = CreatePlayer(life: 10, lifeMaximum: 20);
+        player.Stash.Add(new StashStoreItem(
+            0,
+            7,
+            0,
+            0,
+            801,
+            10,
+            0,
+            scroll));
+        player.StashOpen = true;
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Stash,
+                    7,
+                    800,
+                    0)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Stash);
+    }
+
+    [Fact]
+    public void UnspecifiedCastInfersOpenStashConsumableSource()
+    {
+        var player = CreatePlayer(life: 10, lifeMaximum: 20);
+        player.Stash.Add(new StashStoreItem(
+            0,
+            9,
+            0,
+            0,
+            804,
+            10,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 805,
+                MiscId = 21,
+                SpellId = 1,
+            }));
+        player.StashOpen = true;
+        var processor = CreateProcessor(new DiabloWorldState());
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(1, 0, 0, 0),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Stash);
+    }
+
+    [Fact]
+    public void ClosedStashConsumableCastIsRejectedWithoutConsumingSource()
+    {
+        var scroll = AuthoritativeItemState.Empty with {
+            StableItemId = 802,
+            MiscId = 21,
+            SpellId = 1,
+        };
+        var processor = CreateProcessor(new DiabloWorldState());
+        var player = CreatePlayer(life: 10, lifeMaximum: 20);
+        player.Stash.Add(new StashStoreItem(
+            0,
+            8,
+            0,
+            0,
+            803,
+            10,
+            0,
+            scroll));
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Stash,
+                    8,
+                    802,
+                    0)),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.NotAllowed);
+        Assert.Single(player.Stash);
+    }
+
     }
 
     [Fact]

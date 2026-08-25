@@ -101,6 +101,29 @@ public static class AuthoritativeSpellSourceSelector
                 item.State.SpellTargetingKind);
         }
 
+        if (player.StashOpen) {
+            foreach (var item in player.Stash
+                         .Where(item => item.Item is not null
+                             && IsSpellConsumable(item.Item.State))
+                         .OrderBy(item => item.Page)
+                         .ThenBy(item => item.Cell)) {
+                var state = item.Item!.State!;
+                AddItemSource(
+                    sources,
+                    $"stash:{item.Page}:{item.Cell}",
+                    FormatItemSpellName(state, "stash"),
+                    (uint)state.SpellId,
+                    CastSourceKind.ConsumableItem,
+                    new PlayerItemReference {
+                        Location = PlayerItemLocation.Stash,
+                        Page = item.Page,
+                        Slot = item.Cell,
+                        StableItemId = state.StableItemId,
+                    },
+                    state.SpellTargetingKind);
+            }
+        }
+
         if (player.AbilitySpellId != 0) {
             var abilityName = player.AbilityKind == PlayerAbilityKind.Unspecified
                 ? $"Ability {player.AbilitySpellId}"

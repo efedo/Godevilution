@@ -21,6 +21,10 @@ Connected native stash books, potions, and stash-sourced oils now use open-sessi
 stable item references as authoritative sources; a closed stash is rejected before
 the source can be consumed or mutate player state.
 
+Godot's authoritative cast-source selector now includes spell consumables in an
+open stash, carrying page/cell/stable identity through the same cast protocol;
+the server rejects those sources when the stash session is closed.
+
 The authoritative simulation now accepts and publishes generated set-piece
 origins, materializing relative `set_level_objects.tsv` rows at level-entry
 time with deterministic reserved identities and world-bound validation. These

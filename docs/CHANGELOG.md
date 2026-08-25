@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot and the authoritative combat processor now support spell consumables in
+  an open stash as stable cast sources; closed-stash sources fail closed without
+  consuming the item.
 - Connected native stash books, potions, and stash-sourced oils now use open-session
   stable item references as authoritative sources; closed-stash sources fail
   closed without consuming or mutating local state.

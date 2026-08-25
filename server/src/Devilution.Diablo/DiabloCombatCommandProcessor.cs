@@ -2867,6 +2867,30 @@ public sealed class DiabloCombatCommandProcessor
                 item);
             return true;
         }
+        if (player.StashOpen) {
+            foreach (var stashItem in player.Stash
+                         .OrderBy(item => item.Page)
+                         .ThenBy(item => item.Cell)) {
+                if (!IsMatchingConsumableItem(stashItem.State, spellId))
+                    continue;
+                var reference = new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Stash,
+                    stashItem.Cell,
+                    stashItem.State.StableItemId,
+                    stashItem.Page);
+                source = new ResolvedCastSource(
+                    DiabloCastSourceKind.ConsumableItem,
+                    reference,
+                    new OwnedStoreItem(
+                        stashItem.StoreId,
+                        stashItem.StoreSlot,
+                        stashItem.ItemSeed,
+                        stashItem.Price,
+                        stashItem.PurchasedAtTick,
+                        stashItem.State));
+                return true;
+            }
+        }
 
         source = default;
         return false;
@@ -2906,8 +2930,10 @@ public sealed class DiabloCombatCommandProcessor
         out ResolvedCastSource source)
     {
         source = default;
-        if (reference.Location is not (
-                DiabloPlayerItemLocation.Inventory or DiabloPlayerItemLocation.Belt)
+        if (reference.Location is not (DiabloPlayerItemLocation.Inventory
+                or DiabloPlayerItemLocation.Belt
+                or DiabloPlayerItemLocation.Stash)
+            || (reference.Location == DiabloPlayerItemLocation.Stash && !player.StashOpen)
             || !DiabloPlayerItemAccess.TryGet(player, reference, out var item)
             || !IsMatchingConsumableItem(item.State, spellId)) {
             return false;

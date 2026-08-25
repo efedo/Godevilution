@@ -998,6 +998,45 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void OpenStashSpellConsumablesJoinTheStableSourceSelector()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    StashOpen = true,
+                    Stash = {
+                        new StashItemSnapshot {
+                            Page = 2,
+                            Cell = 7,
+                            Item = new ItemSnapshot {
+                                ItemSeed = 901,
+                                State = new ItemStateSnapshot {
+                                    StableItemId = 902,
+                                    SpellId = 1,
+                                    SpellDisplayName = "Firebolt",
+                                    SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
+                                    SpellTargetingKind = SpellTargetingKind.CombatEntity,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        var source = Assert.Single(
+            AuthoritativeSpellSourceSelector.GetSources(snapshot),
+            candidate => candidate.Key == "stash:2:7");
+
+        Assert.Equal(CastSourceKind.ConsumableItem, source.Kind);
+        Assert.Equal(PlayerItemLocation.Stash, source.SourceItem!.Location);
+        Assert.Equal(2U, source.SourceItem.Page);
+        Assert.Equal(7U, source.SourceItem.Slot);
+        Assert.Equal(902U, source.SourceItem.StableItemId);
+        Assert.Equal(SpellTargetingKind.CombatEntity, source.TargetingKind);
+    }
+
+    [Fact]
     public void AppliesAuthoritativeSnapshotAndEvents()
     {
         var model = new AuthoritativeClientModel();
