@@ -7519,6 +7519,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedGargoyleConsumesNativeHealingDivisorRoll()
+    {
+        const uint initSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            nativeAi: "Gargoyle",
+            intelligence: 2,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        var healRoll = expected.RandomIntLessThan(5);
+        var expectedHealing = 100 / (16 * (healRoll + 4));
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var healing = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(40 + expectedHealing, monster.HitPoints);
+        var healingEvent = Assert.Single(healing).Event;
+        Assert.Equal(expectedHealing, healingEvent.Amount);
+        Assert.True(monster.GargoyleSpecialActive);
+    }
+
+    [Fact]
     public void GargoyleAiUsesNativeAvoidanceMovementWhenHealthy()
     {
         var monster = new AuthoritativeCombatTarget(

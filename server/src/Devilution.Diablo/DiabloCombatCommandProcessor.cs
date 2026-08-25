@@ -5097,7 +5097,6 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var gargoyleAttackTuning = GetGargoyleAttackTuning(target);
                 var usesGargoyleNativeAiStream = gargoyleAttackTuning.HasValue
-                    && gameMode == DiabloGameMode.Multiplayer
                     && target.MonsterAiSeed != 0;
                 var gargoyleAttackRoll = usesGargoyleNativeAiStream
                     ? random.RandomIntLessThan(100)
@@ -7486,8 +7485,11 @@ public sealed class DiabloCombatCommandProcessor
 
         var safeDistance = gargoyleTuning.Value.DistanceBase
             + (gargoyleTuning.Value.IntelligenceScale * monster.Intelligence);
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         if (monster.GargoyleSpecialActive) {
             if (distance < safeDistance)
                 monster.GargoyleSpecialActive = false;
@@ -7614,8 +7616,11 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0;
+        // Initialized single-player targets retain the native InitMonster AI
+        // seed as a marker that their global process stream is authoritative.
+        // Zero-seed fixtures and legacy multiplayer snapshots keep the
+        // deterministic compatibility controller.
+        var usesNativeAiStream = monster.MonsterAiSeed != 0;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(actionSeed % 100U);
