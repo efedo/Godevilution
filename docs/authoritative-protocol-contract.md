@@ -609,6 +609,12 @@ draws; long-range and seed-zero branches retain the native no-roll
 compatibility path. Clients receive only authoritative projectile, movement,
 and delay state.
 
+Player-owned Golems remain server-owned combat targets. When native path
+planning cannot produce a step, the server consumes the two native `RandomWalk`
+ordering coins using the restored minion stream and then applies the native
+clockwise eight-direction fallback sweep. Clients receive only the resulting
+movement and direction state; they never path-plan or consume Golem RNG.
+
 The validated Snake charge mapping preserves the native non-charge boundary:
 failed movement and adjacent attack admissions carry a server-owned `AiDelay`
 countdown, while admitted lateral drift and attacks are applied by the server

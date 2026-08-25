@@ -63,6 +63,9 @@ Seeded multiplayer generic AiRanged mappings (FireBat, Torchant, Lich-family,
 and AcidUnique) now consume the stream for their close-range admission,
 native RandomWalk fallback, and post-shot delay; long-range and seed-zero
 branches retain the native no-roll compatibility path.
+Player-owned Golem movement now preserves the native blocked-path
+RandomWalk and clockwise eight-direction fallback before giving up; seeded
+multiplayer minions consume the restored stream for the two RandomWalk coins.
 Multiplayer Counselor now consumes the stream for its initial and secondary
 ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
 server-owned recovery delays; seed-zero targets retain the compatibility

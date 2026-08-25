@@ -10391,6 +10391,14 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
+        // Native GolumAi refreshes its facing before either path planning or
+        // the blocked-path RandomWalk fallback. Clients only receive the
+        // resulting authoritative direction and movement.
+        minion.RestoreDirection(GetDirection(
+            minion.PositionX,
+            minion.PositionY,
+            enemy.PositionX,
+            enemy.PositionY));
         var distance = Math.Max(
             Math.Abs(enemy.PositionX - minion.PositionX),
             Math.Abs(enemy.PositionY - minion.PositionY));
@@ -10414,6 +10422,23 @@ public sealed class DiabloCombatCommandProcessor
         var nextStep = FindPlayerMinionStep(minion, enemy, players);
         if (nextStep.HasValue)
             minion.BeginMovement(nextStep.Value.X, nextStep.Value.Y);
+        else if (FindNativeRandomWalkStepFromRandom(
+                     minion,
+                     (int)owner.FacingDirection,
+                     players) is { } randomWalk)
+            minion.BeginMovement(randomWalk.X, randomWalk.Y);
+        else {
+            // GolumAi sweeps every direction clockwise from its current
+            // facing after a failed RandomWalk, without invoking generic
+            // navigation. Preserve that bounded native fallback order.
+            for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+                var direction = RotateDirection(minion.Direction, offset);
+                if (FindStepInDirection(minion, direction, players) is not { } step)
+                    continue;
+                minion.BeginMovement(step.X, step.Y);
+                break;
+            }
+        }
     }
 
     private void TryBeginPlayerMinionIdleWalk(

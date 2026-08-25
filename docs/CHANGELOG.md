@@ -75,6 +75,10 @@ All notable changes to this fork are documented below.
   and AcidUnique) now consume the restored stream for their close-range
   admission, native RandomWalk fallback, and post-shot delay; long-range and
   seed-zero compatibility branches retain the native no-roll path.
+- Player-owned Golem movement now preserves native blocked-path `RandomWalk`
+  and the clockwise eight-direction fallback before giving up; seeded
+  multiplayer minions consume the restored stream for the two RandomWalk
+  ordering coins.
 - Multiplayer Counselor now consumes the restored stream for its initial and
   secondary ranged/movement admissions, adjacent admission, retreat RandomWalk
   coins, and server-owned recovery delays; seed-zero targets retain the

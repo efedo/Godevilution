@@ -18583,6 +18583,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerGolemUsesNativeRandomWalkWhenPathPlanningFails()
+    {
+        const uint aiSeed = 7;
+        var enemy = new AuthoritativeCombatTarget(9, 13, 10, 100);
+        var golem = new AuthoritativeCombatTarget(
+            10,
+            10,
+            10,
+            100,
+            playerMinion: true,
+            ownerPlayerId: 7,
+            minDamage: 12,
+            maxDamage: 20,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var blockedCells = new[] {
+            9 * 40 + 12,
+            9 * 40 + 13,
+            9 * 40 + 14,
+            10 * 40 + 12,
+            10 * 40 + 14,
+            11 * 40 + 12,
+            11 * 40 + 13,
+            11 * 40 + 14,
+        };
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: blockedCells,
+            combatTargets: [enemy, golem]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            positionX: 8,
+            positionY: 8,
+            entityId: 7);
+        player.FacingDirection = DiabloPlayerDirection.South;
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, golem.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(golem.IsMoving);
+        Assert.Equal((11, 11), (golem.FuturePositionX, golem.FuturePositionY));
+    }
+
+    [Fact]
     public void GolemWandersInOwnerFacingDirectionWhenNoMonsterIsAvailable()
     {
         var golem = new AuthoritativeCombatTarget(
