@@ -361,6 +361,64 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void SkeletonSummonsConsumeNativeSelectionInitializationAndSeedDraws()
+    {
+        const uint seed = 0x12345678;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 10, 20, 2, 4) with {
+                StandAnimationFrames = 8,
+                StandAnimationTicksPerFrame = 4,
+                NativeAi = "SkeletonMelee",
+            },
+            CreateType(3, 1, 1, 30, 40, 5, 7) with {
+                StandAnimationFrames = 6,
+                StandAnimationTicksPerFrame = 3,
+                NativeAi = "SkeletonMelee",
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var expected = new AuthoritativeLegacyRandom(seed);
+        var summonSeed = expected.State;
+        var candidates = types.GetAvailableForDungeonLevel(1)
+            .OrderBy(definition => definition.MonsterId)
+            .ToArray();
+        var expectedDefinition = candidates[expected.Next(candidates.Length)];
+        expected.Next(expectedDefinition.StandAnimationTicksPerFrame - 1);
+        expected.Next(expectedDefinition.StandAnimationFrames - 1);
+        var expectedHitPoints = expected.Next(
+            expectedDefinition.MaximumHitPoints
+                - expectedDefinition.MinimumHitPoints + 1)
+            + expectedDefinition.MinimumHitPoints;
+        var expectedItemSeed = expected.AdvanceSeed();
+        var expectedAiSeed = expected.AdvanceSeed();
+
+        var summon = planner.CreateSkeletonSummon(
+            levelId: 1,
+            seed: seed,
+            positionX: 2,
+            positionY: 2,
+            entityId: 99,
+            multiplayer: true);
+
+        Assert.NotNull(summon);
+        Assert.Equal(expectedDefinition.MonsterId, summon!.MonsterId);
+        Assert.Equal(expectedHitPoints, summon.HitPoints);
+        var expectedAttackDamage = expectedDefinition.MinimumDamage
+            + (int)((summonSeed / 0x100U)
+                % (uint)(expectedDefinition.MaximumDamage
+                    - expectedDefinition.MinimumDamage + 1));
+        Assert.Equal(expectedAttackDamage, summon.AttackDamage);
+        Assert.Equal(expectedItemSeed, summon.MonsterItemSeed);
+        Assert.Equal(expectedAiSeed, summon.MonsterAiSeed);
+    }
+
+    [Fact]
     public void CreatesSkeletonMeleeSummonsFromCompleteTuningUnderAnAlternateLabel()
     {
         var world = new AuthoritativeWorld();

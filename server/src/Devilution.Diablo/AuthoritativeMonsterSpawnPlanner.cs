@@ -242,7 +242,31 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint entityId,
         bool multiplayer = false,
         int direction = 0)
+        => CreateSkeletonSummon(
+            levelId,
+            new DiabloRandom(seed),
+            positionX,
+            positionY,
+            entityId,
+            multiplayer,
+            direction);
+
+    /**
+     * Creates a SkeletonMelee summon while advancing the supplied native LCG.
+     * The overload is used by the authoritative tick so a single-player
+     * summon leaves the process stream after the same native initialization
+     * draws as InitializeSpawnedMonster.
+     */
+    public AuthoritativeCombatTarget? CreateSkeletonSummon(
+        uint levelId,
+        DiabloRandom random,
+        int positionX,
+        int positionY,
+        uint entityId,
+        bool multiplayer = false,
+        int direction = 0)
     {
+        ArgumentNullException.ThrowIfNull(random);
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
         if (direction is < 0 or >= 8)
@@ -257,15 +281,24 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         if (definitions.Length == 0)
             return null;
 
-        var definition = definitions[(int)(seed % (uint)definitions.Length)];
+        // Native GetRandomSkeletonTypeIndex consumes one GenerateRnd draw
+        // before InitializeSpawnedMonster captures the selected type.
+        var summonSeed = random.State;
+        var definition = definitions[random.RandomIntLessThan(definitions.Length)];
+        ConsumeNativeInitialAnimationRandom(random, definition);
         var hitPointRange = checked(
             definition.MaximumHitPoints - definition.MinimumHitPoints + 1);
+        var hitPoints = random.RandomIntLessThan(hitPointRange)
+            + definition.MinimumHitPoints;
+        var monsterItemSeed = unchecked((uint)random.AdvanceRndSeed());
+        var monsterAiSeed = unchecked((uint)random.AdvanceRndSeed());
+        // AttackDamage remains a legacy projection until the combat target
+        // consumes native min/max damage at attack time. Keep its historical
+        // seed-derived value without adding a non-native RNG draw.
         var damageRange = checked(
             definition.MaximumDamage - definition.MinimumDamage + 1);
-        var hitPoints = definition.MinimumHitPoints
-            + (int)((seed / (uint)definitions.Length) % (uint)hitPointRange);
         var attackDamage = definition.MinimumDamage
-            + (int)((seed / 0x100U) % (uint)damageRange);
+            + (int)((summonSeed / 0x100U) % (uint)damageRange);
         return CreateCombatTarget(
             new AuthoritativeMonsterSpawn(
                 definition,
@@ -275,12 +308,12 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 hitPoints,
                 attackDamage),
             0,
-            seed,
+            random.State,
             entityId,
             multiplayer,
             direction,
-            monsterItemSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA11CEU),
-            monsterAiSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA17EEDU));
+            monsterItemSeed: monsterItemSeed,
+            monsterAiSeed: monsterAiSeed);
     }
 
     private static bool IsSkeletonSummonCandidate(
@@ -424,6 +457,14 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     {
         random.Next(definition.StandAnimationTicksPerFrame - 1);
         random.Next(definition.StandAnimationFrames - 1);
+    }
+
+    private static void ConsumeNativeInitialAnimationRandom(
+        DiabloRandom random,
+        AuthoritativeMonsterTypeDefinition definition)
+    {
+        random.RandomIntLessThan(definition.StandAnimationTicksPerFrame - 1);
+        random.RandomIntLessThan(definition.StandAnimationFrames - 1);
     }
 
     private static void Shuffle<T>(T[] values, AuthoritativeLegacyRandom random)

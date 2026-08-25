@@ -398,8 +398,11 @@ attacks retain their no-roll native admission.
 Seeded multiplayer Fallen fear retreats likewise consume the restored stream's
 two native RandomWalk coin draws before committing movement; seed-zero targets
 retain the deterministic compatibility path.
-Remaining native lifecycle and animation-sensitive special behavior, including
-pack leadership/group unity and Fallen rally behavior, remains follow-up work.
+Single-player Skeleton King summons consume the native type-selection and
+`InitMonster` initialization draws before their item/AI seeds are projected;
+multiplayer summoning remains server-owned. Remaining native lifecycle and
+animation-sensitive special behavior, including pack leadership/group unity
+and Fallen rally behavior, remains follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

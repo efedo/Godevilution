@@ -38,6 +38,9 @@ All notable changes to this fork are documented below.
   action and movement-admission rolls, delay range, RoundWalk, RandomWalk, and
   adjacent-attack admission; multiplayer summoning remains server-owned and
   seed-zero targets retain the compatibility controller.
+- Single-player Skeleton King summons now consume the live native stream for
+  skeleton-type selection, stand-animation timing, initial health, and the
+  retained item/AI seeds before entering authoritative simulation.
 - Multiplayer Bat now consumes the restored stream for native adjacent-attack
   admission, two-step retreat, movement, and mapped-charge action/RandomWalk
   draws; mapped charge misses reuse the same action roll without double-consuming

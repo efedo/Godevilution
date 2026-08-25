@@ -2799,6 +2799,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 SkeletonMeleeDelayChanceIntelligenceScale = 4,
                 SkeletonMeleeAttackChanceBase = 20,
                 SkeletonMeleeAttackChanceIntelligenceScale = 2,
+                StandAnimationFrames = 8,
+                StandAnimationTicksPerFrame = 4,
             },
         ]);
         var generation = new AuthoritativeLevelGenerationCatalog([
@@ -2818,7 +2820,12 @@ public sealed class DiabloCombatCommandProcessorTests
             nativeAi: "SkeletonKing",
             intelligence: 255);
         var world = new DiabloWorldState(nativeWorld, combatTargets: [king]);
-        var processor = CreateProcessor(world, monsterSpawnPlanner: planner);
+        const uint randomSeed = 0x12345678;
+        var random = new DiabloRandom(randomSeed);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            monsterSpawnPlanner: planner);
         var player = CreatePlayer(positionX: 5, positionY: 1, levelId: 1, entityId: 7);
 
         processor.AdvanceTick(1, [player]);
@@ -2829,6 +2836,21 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal("Fallen", summoned.NativeAi);
         Assert.Equal(1U, summoned.LevelId);
         Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));
+        var expected = new DiabloRandom(randomSeed);
+        _ = expected.RandomIntLessThan(100); // summon admission
+        var summonSeed = expected.State;
+        _ = expected.RandomIntLessThan(1); // native skeleton type selection
+        _ = expected.RandomIntLessThan(3); // stand tick
+        _ = expected.RandomIntLessThan(7); // stand frame
+        _ = expected.RandomIntLessThan(4); // initial health
+        var expectedItemSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(
+            2 + (int)((summonSeed / 0x100U) % 2U),
+            summoned.AttackDamage);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(expectedItemSeed, summoned.MonsterItemSeed);
+        Assert.Equal(expectedAiSeed, summoned.MonsterAiSeed);
     }
 
     [Fact]

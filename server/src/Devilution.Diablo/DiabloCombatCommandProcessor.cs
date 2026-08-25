@@ -6788,7 +6788,7 @@ public sealed class DiabloCombatCommandProcessor
                 var entityId = AllocateMonsterEntityId(players);
                 var summon = monsterSpawnPlanner!.CreateSkeletonSummon(
                     target.LevelId,
-                    unchecked((uint)tick ^ target.EntityId ^ victim.EntityId),
+                    random,
                     positionX,
                     positionY,
                     entityId,
