@@ -20675,6 +20675,216 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerGoatMeleeAiConsumesItsNativeMovementAndRandomWalkRolls()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "GoatMelee",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var movementRoll = expected.RandomIntLessThan(100);
+        Assert.Equal(4, movementRoll);
+        Assert.True(movementRoll < 28);
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+
+        processor.AdvanceTick(1, [CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100)]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
+    public void MultiplayerGoatMeleeAiConsumesItsNativeMoveGoalRolls()
+    {
+        const uint aiSeed = 123;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            40,
+            attackDamage: 2,
+            aggroRange: 7,
+            nativeAi: "GoatMelee",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var actionRoll = expected.RandomIntLessThan(100);
+        Assert.Equal(88, actionRoll);
+        Assert.True(expected.FlipCoin(4));
+        _ = expected.RandomIntLessThan(2);
+
+        processor.AdvanceTick(1, [CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100)]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.False(monster.IsMoving);
+        Assert.Equal(1, monster.AvoidanceMovementTicks);
+    }
+
+    [Fact]
+    public void MultiplayerGoatMeleeAiConsumesItsNativeRoundWalkAdmissionRolls()
+    {
+        const uint aiSeed = 16;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            40,
+            attackDamage: 2,
+            aggroRange: 7,
+            nativeAi: "GoatMelee",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var actionRoll = expected.RandomIntLessThan(100);
+        Assert.Equal(4, actionRoll);
+        Assert.True(expected.FlipCoin(4));
+        _ = expected.RandomIntLessThan(2);
+
+        processor.AdvanceTick(1, [CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100)]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((5, 4), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
+    public void MultiplayerGoatMeleeAiConsumesItsNativeAdjacentAttackRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "GoatMelee",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var attackRoll = expected.RandomIntLessThan(100);
+        Assert.Equal(4, attackRoll);
+        Assert.True(attackRoll < 23);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Single(deliveries);
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
+    public void MultiplayerGoatMeleeAiConsumesItsNativeWoundedSpecialRoll()
+    {
+        const uint aiSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            minDamage: 3,
+            maxDamage: 3,
+            minDamageSpecial: 8,
+            maxDamageSpecial: 20,
+            aggroRange: 5,
+            toHit: 100,
+            toHitSpecial: 100,
+            nativeAi: "GoatMelee",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var attackRoll = expected.RandomIntLessThan(100);
+        Assert.Equal(4, attackRoll);
+        Assert.True(attackRoll < 23);
+        var specialRoll = expected.RandomIntLessThan(2);
+        Assert.Equal(0, specialRoll);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(90, player.Life);
+        Assert.Single(deliveries);
+    }
+
+    [Fact]
     public void ClosedStashConsumableCastIsRejectedWithoutConsumingSource()
     {
         var scroll = AuthoritativeItemState.Empty with {

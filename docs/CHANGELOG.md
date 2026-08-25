@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Multiplayer Fat/Overlord AI now consumes the restored stream for its native
   movement or adjacent-attack admission, including RandomWalk coin draws;
   legacy seed-zero targets retain compatibility.
+- Multiplayer GoatMelee/AiAvoidance now consumes the restored stream for its
+  movement, Move-goal, RandomWalk, adjacent-attack, and wounded-special draws;
+  legacy seed-zero targets retain compatibility.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

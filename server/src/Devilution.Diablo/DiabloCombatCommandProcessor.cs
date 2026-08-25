@@ -5026,8 +5026,14 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 }
                 var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
+                var usesGoatNativeAiStream = goatMeleeAttackTuning.HasValue
+                    && gameMode == DiabloGameMode.Multiplayer
+                    && target.MonsterAiSeed != 0;
+                var goatAttackRoll = usesGoatNativeAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)(attackSeed % 100U);
                 if (goatMeleeAttackTuning.HasValue
-                    && attackSeed % 100U >= (uint)Math.Min(
+                    && goatAttackRoll >= Math.Min(
                         100,
                         goatMeleeAttackTuning.Value.ChanceBase
                             + (goatMeleeAttackTuning.Value.IntelligenceScale
@@ -5067,10 +5073,14 @@ public sealed class DiabloCombatCommandProcessor
                     target,
                     fatAttackRoll,
                     fatAttackTuning)
-                    || UsesGoatSpecialAttack(
-                        target,
-                        attackSeed,
-                        goatMeleeAttackTuning);
+                    || (usesGoatNativeAiStream
+                        ? UsesGoatSpecialAttackFromRandom(
+                            target,
+                            goatMeleeAttackTuning)
+                        : UsesGoatSpecialAttack(
+                            target,
+                            attackSeed,
+                            goatMeleeAttackTuning));
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
                     : difficulty == DiabloDifficulty.Normal
@@ -5408,12 +5418,25 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        if (TryAdvanceAiAvoidanceMoveGoal(
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        var advancedMoveGoal = usesNativeAiStream
+            ? TryAdvanceAiAvoidanceMoveGoalFromRandom(
                 monster,
                 victim,
                 players,
                 distance,
-                actionSeed))
+                actionRoll)
+            : TryAdvanceAiAvoidanceMoveGoal(
+                monster,
+                victim,
+                players,
+                distance,
+                actionSeed);
+        if (advancedMoveGoal)
             return true;
 
         var movementChance = GetAiAvoidanceMovementChance(
@@ -5421,17 +5444,15 @@ public sealed class DiabloCombatCommandProcessor
             goatTuning.Value.ChanceBase,
             goatTuning.Value.IntelligenceScale,
             GetAiAvoidanceMovementFreshChanceBonus(monster));
-        if (actionSeed % 100U >= (uint)movementChance)
+        if (actionRoll >= movementChance)
         {
             monster.AdvanceAvoidanceMovementIdle();
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            victim,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
+            : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             monster.RecordAvoidanceMovement(
@@ -7398,6 +7419,71 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
+    /** Native AiAvoidance Move goal driven by the restored monster stream. */
+    private bool TryAdvanceAiAvoidanceMoveGoalFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance,
+        int actionRoll)
+    {
+        var movementMinimumDistance = 4;
+        var movementChanceModulo = 4;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var avoidanceDefinition) == true
+            && avoidanceDefinition.AiAvoidanceMovementMinimumDistance > 0
+            && avoidanceDefinition.AiAvoidanceMovementChanceModulo > 0) {
+            movementMinimumDistance = avoidanceDefinition.AiAvoidanceMovementMinimumDistance;
+            movementChanceModulo = avoidanceDefinition.AiAvoidanceMovementChanceModulo;
+        }
+        if (distance < 2) {
+            monster.ClearAvoidanceMovement();
+            return false;
+        }
+
+        var hasMoveGoal = monster.AvoidanceMovementTicks >= 0;
+        var startsMoveGoal = distance >= movementMinimumDistance
+            && random.FlipCoin((uint)movementChanceModulo);
+        if (!hasMoveGoal && !startsMoveGoal)
+            return false;
+
+        if (!hasMoveGoal)
+            monster.StartAvoidanceMovement(random.RandomIntLessThan(2));
+        if (!monster.AdvanceAvoidanceMovement(
+                distance,
+                world.HasLineOfSight(
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY),
+                IsNativeAvoidanceDirectionAvailable(
+                    monster,
+                    player,
+                    players)))
+            return false;
+
+        var roundWalkChance = Math.Min(100, 5 * (monster.Intelligence + 16));
+        if (actionRoll >= roundWalkChance)
+            return true;
+
+        var roundWalk = FindNativeStatefulRoundWalkStepFromRandom(
+            monster,
+            player,
+            players,
+            monster.AvoidanceMovementTurn,
+            out var nextTurn);
+        monster.UpdateAvoidanceMovementTurn(nextTurn);
+        if (roundWalk.HasValue) {
+            monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+            monster.RecordAvoidanceMovement(
+                roundWalk.Value.X - monster.PositionX,
+                roundWalk.Value.Y - monster.PositionY);
+        } else {
+            monster.StartAvoidanceDelay(ResolveAvoidanceDelayFromRandom(monster));
+        }
+        return true;
+    }
+
     /** Native AiAvoidance ordinary movement admission across var2 bands. */
     private static int GetAiAvoidanceMovementChance(
         AuthoritativeCombatTarget monster,
@@ -8303,6 +8389,21 @@ public sealed class DiabloCombatCommandProcessor
         return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
     }
 
+    private int ResolveAvoidanceDelayFromRandom(
+        AuthoritativeCombatTarget target)
+    {
+        var delayBase = 10;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.AvoidanceDelayRandomRange > 0) {
+            delayBase = definition.AvoidanceDelayBase > 0
+                ? definition.AvoidanceDelayBase
+                : delayBase;
+            randomRange = definition.AvoidanceDelayRandomRange;
+        }
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
+    }
+
     private int ResolveCounselorDelay(
         AuthoritativeCombatTarget target,
         uint actionSeed)
@@ -8534,6 +8635,66 @@ public sealed class DiabloCombatCommandProcessor
             RotateDirection(fallbackDirection, -fallbackTurn),
             RotateDirection(fallbackDirection, 2),
             RotateDirection(fallbackDirection, -2),
+        };
+        foreach (var candidateDirection in fallbackDirections) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
+        }
+        return null;
+    }
+
+    /** Native RoundWalk fallback with restored RandomWalk coin ordering. */
+    private (int X, int Y)? FindNativeStatefulRoundWalkStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int turnState,
+        out int nextTurnState)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var turn = turnState == 0 ? 1 : -1;
+        var turn45 = RotateDirection(direction, turn);
+        var turn90 = RotateDirection(turn45, turn);
+        var primaryDirections = new[] { turn90, turn45, direction };
+        foreach (var candidateDirection in primaryDirections) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId)) {
+                nextTurnState = turnState;
+                return (candidateX, candidateY);
+            }
+        }
+
+        nextTurnState = turnState == 0 ? 1 : 0;
+        var fallbackDirection = RotateDirection(turn90, 4);
+        var firstTurn = random.FlipCoin(2) ? 1 : -1;
+        var secondTurn = random.FlipCoin(2) ? 2 : -2;
+        var fallbackDirections = new[] {
+            fallbackDirection,
+            RotateDirection(fallbackDirection, firstTurn),
+            RotateDirection(fallbackDirection, -firstTurn),
+            RotateDirection(fallbackDirection, secondTurn),
+            RotateDirection(fallbackDirection, -secondTurn),
         };
         foreach (var candidateDirection in fallbackDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
@@ -9446,6 +9607,27 @@ public sealed class DiabloCombatCommandProcessor
             && GetEffectiveMonsterToHit(target, special: true) > 0
             && GetEffectiveMonsterDamageRange(target, special: true).Maximum > 0
             && (attackSeed / 100U) % (uint)tuning.Value.SpecialChanceGroupPeriod == 0U;
+    }
+
+    /** Native GoatMelee wounded-special admission driven by the restored stream. */
+    private bool UsesGoatSpecialAttackFromRandom(
+        AuthoritativeCombatTarget target,
+        (
+            int ChanceBase,
+            int IntelligenceScale,
+            int SpecialHealthThresholdPercent,
+            int SpecialChanceGroupPeriod)? tuning)
+    {
+        if (!tuning.HasValue
+            || (long)target.HitPointsQ6 * 100
+                >= (long)target.MaxHitPointsQ6 * tuning.Value.SpecialHealthThresholdPercent
+            || GetEffectiveMonsterToHit(target, special: true) <= 0
+            || GetEffectiveMonsterDamageRange(target, special: true).Maximum <= 0)
+            return false;
+
+        var groupPeriod = tuning.Value.SpecialChanceGroupPeriod;
+        return groupPeriod <= 1
+            || random.RandomIntLessThan(groupPeriod) == 0;
     }
 
     /** Selects the native inclusive special damage range without adding a new RNG draw. */
