@@ -563,6 +563,13 @@ the initial admission, conditional far-distance Move-goal setup, native
 RoundWalk/RandomWalk fallback, and recovery delay; seed-zero targets retain the
 compatibility path.
 
+Validated `AiRangedAvoidance` mappings (including Magma, Storm, Diablo,
+BoneDemon, and Acid families) use a server-owned ranged boundary. Seeded
+multiplayer targets consume the restored per-monster stream for the initial
+10,000-band admission, conditional Move-goal setup and direction, native
+RandomWalk movement, and recovery delay; clients receive only authoritative
+projectile or movement state.
+
 The validated Gloom `BatCharge` mapping likewise retains the native `BatAi`
 movement branch after a charge miss or blocked lane. The server applies the
 standing-tick compatibility `63 + intelligence` admission and deterministic

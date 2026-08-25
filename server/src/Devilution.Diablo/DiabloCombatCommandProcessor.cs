@@ -8304,6 +8304,10 @@ public sealed class DiabloCombatCommandProcessor
             && UsesNativeAi(monster, "Mega")
             && gameMode == DiabloGameMode.Multiplayer
             && monster.MonsterAiSeed != 0;
+        var usesNativeRangedAvoidanceAiStream = missile.AttackMode
+                == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+            && gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var isCounselor = UsesNativeAi(monster, "Counselor");
         var usesNativeCounselorAiStream = isCounselor
             && gameMode == DiabloGameMode.Multiplayer
@@ -8399,6 +8403,9 @@ public sealed class DiabloCombatCommandProcessor
                 && missile.RangedAvoidanceChanceIntelligenceScale == 0
                 && missile.RangedAvoidanceFarIntelligenceOffset == 0)
                 farIntelligenceOffset = 1;
+            var rangedAvoidanceActionRoll = usesNativeRangedAvoidanceAiStream
+                ? random.RandomIntLessThan(10_000)
+                : (int)(attackSeed % 10_000U);
             if (distance < minimumDistance) {
                 monster.ClearRangedAvoidanceMovement();
                 // Native AiRangedAvoidance falls back to a probabilistic
@@ -8427,7 +8434,7 @@ public sealed class DiabloCombatCommandProcessor
                         adjacentAttackChanceBase
                         + adjacentAttackChanceIntelligenceScale * monster.Intelligence);
                     adjacentAttackBand /= adjacentAttackChanceDivisor;
-                    if (attackSeed % 10_000U
+                    if (rangedAvoidanceActionRoll
                         >= (uint)Math.Min(10_000, adjacentAttackBand))
                         return true;
                 } else {
@@ -8437,10 +8444,13 @@ public sealed class DiabloCombatCommandProcessor
                         players,
                         attackSeed,
                         missile,
-                        useRoundWalk: false);
+                        useRoundWalk: false,
+                        usesNativeAiStream: usesNativeRangedAvoidanceAiStream);
                     if (!moved)
                         monster.StartRangedAvoidanceDelay(
-                            ResolveRangedAvoidanceDelay(missile, attackSeed));
+                            usesNativeRangedAvoidanceAiStream
+                                ? ResolveRangedAvoidanceDelayFromRandom(missile)
+                                : ResolveRangedAvoidanceDelay(missile, attackSeed));
                     return true;
                 }
                 return false;
@@ -8456,11 +8466,15 @@ public sealed class DiabloCombatCommandProcessor
                 : missile.RangedAvoidanceMovementChanceModulo;
             var hasMoveGoal = monster.RangedAvoidanceMoveTicks >= 0;
             var startsMoveGoal = distance >= farDistance
-                && attackSeed % (uint)movementChanceModulo == 0;
+                && (usesNativeRangedAvoidanceAiStream
+                    ? random.FlipCoin((uint)movementChanceModulo)
+                    : attackSeed % (uint)movementChanceModulo == 0);
             if (hasMoveGoal || startsMoveGoal) {
                 if (!hasMoveGoal)
                     monster.StartRangedAvoidanceMovement(
-                        (int)((attackSeed / 100U) % 2U));
+                        usesNativeRangedAvoidanceAiStream
+                            ? random.RandomIntLessThan(2)
+                            : (int)((attackSeed / 100U) % 2U));
                 if (monster.AdvanceRangedAvoidanceMovement(
                         distance,
                         IsNativeRangedAvoidanceDirectionAvailable(
@@ -8480,7 +8494,8 @@ public sealed class DiabloCombatCommandProcessor
                             : 0)));
             attackBand = checked(
                 attackBand * missile.AvoidanceProbabilityPercent / 100);
-            if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand)) {
+            if (rangedAvoidanceActionRoll
+                >= (uint)Math.Min(10_000, attackBand)) {
                 var moved = TryAdvanceRangedAvoidanceMovement(
                     monster,
                     player,
@@ -8488,10 +8503,13 @@ public sealed class DiabloCombatCommandProcessor
                     attackSeed,
                     missile,
                     rangedAvoidanceUsesRoundWalk,
-                    rangedAvoidanceRoundWalkTurn);
+                    rangedAvoidanceRoundWalkTurn,
+                    usesNativeRangedAvoidanceAiStream);
                 if (!moved)
                     monster.StartRangedAvoidanceDelay(
-                        ResolveRangedAvoidanceDelay(missile, attackSeed));
+                        usesNativeRangedAvoidanceAiStream
+                            ? ResolveRangedAvoidanceDelayFromRandom(missile)
+                            : ResolveRangedAvoidanceDelay(missile, attackSeed));
                 return true;
             }
         } else {
@@ -8527,10 +8545,13 @@ public sealed class DiabloCombatCommandProcessor
                     attackSeed,
                     missile,
                     rangedAvoidanceUsesRoundWalk,
-                    rangedAvoidanceRoundWalkTurn);
+                    rangedAvoidanceRoundWalkTurn,
+                    usesNativeRangedAvoidanceAiStream);
                 if (!moved)
                     monster.StartRangedAvoidanceDelay(
-                        ResolveRangedAvoidanceDelay(missile, attackSeed));
+                        usesNativeRangedAvoidanceAiStream
+                            ? ResolveRangedAvoidanceDelayFromRandom(missile)
+                            : ResolveRangedAvoidanceDelay(missile, attackSeed));
                 return true;
             }
             if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
@@ -8765,6 +8786,19 @@ public sealed class DiabloCombatCommandProcessor
             ? missile.RangedAvoidanceDelayBase
             : 5;
         return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
+    }
+
+    /** Native AiRangedAvoidance recovery delay driven by the restored stream. */
+    private int ResolveRangedAvoidanceDelayFromRandom(
+        AuthoritativeMonsterMissileDefinition? missile)
+    {
+        var randomRange = missile?.RangedAvoidanceDelayRandomRange > 0
+            ? missile.RangedAvoidanceDelayRandomRange
+            : 10;
+        var delayBase = missile?.RangedAvoidanceDelayBase > 0
+            ? missile.RangedAvoidanceDelayBase
+            : 5;
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private static int ResolveHorkDemonDelay(
@@ -9028,7 +9062,8 @@ public sealed class DiabloCombatCommandProcessor
         uint seed,
         AuthoritativeMonsterMissileDefinition missile,
         bool useRoundWalk,
-        int roundWalkTurn = -1)
+        int roundWalkTurn = -1,
+        bool usesNativeAiStream = false)
     {
         if (!useRoundWalk) {
             var movementChanceBase = missile.RangedAvoidanceMovementChanceBase == 0
@@ -9046,7 +9081,9 @@ public sealed class DiabloCombatCommandProcessor
                 movementChanceBase,
                 movementChanceIntelligenceScale,
                 movementFreshChanceBonus);
-            var movementRoll = (seed / 100U) % 100U;
+            var movementRoll = usesNativeAiStream
+                ? random.RandomIntLessThan(100)
+                : (int)((seed / 100U) % 100U);
             if (movementRoll >= (uint)movementChance) {
                 monster.AdvanceRangedAvoidanceMovementIdle();
                 return false;
@@ -9055,16 +9092,25 @@ public sealed class DiabloCombatCommandProcessor
 
         (int X, int Y)? movement;
         if (useRoundWalk && roundWalkTurn is 0 or 1) {
-            movement = FindNativeStatefulRoundWalkStep(
-                monster,
-                player,
-                players,
-                seed,
-                roundWalkTurn,
-                out var nextTurn);
+            movement = usesNativeAiStream
+                ? FindNativeStatefulRoundWalkStepFromRandom(
+                    monster,
+                    player,
+                    players,
+                    roundWalkTurn,
+                    out var nextTurn)
+                : FindNativeStatefulRoundWalkStep(
+                    monster,
+                    player,
+                    players,
+                    seed,
+                    roundWalkTurn,
+                    out nextTurn);
             monster.UpdateRangedAvoidanceTurn(nextTurn);
         } else {
-            movement = FindNativeRandomWalkStep(monster, player, players, seed);
+            movement = usesNativeAiStream
+                ? FindNativeRandomWalkStepFromRandom(monster, player, players)
+                : FindNativeRandomWalkStep(monster, player, players, seed);
         }
         if (!movement.HasValue) {
             if (!useRoundWalk)

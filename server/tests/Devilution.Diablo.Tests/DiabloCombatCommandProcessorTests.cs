@@ -13094,6 +13094,162 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerMagmaConsumesNativeRangedAvoidanceAdmissionAndDamageRolls()
+    {
+        const uint aiSeed = 2;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(85, expected.RandomIntLessThan(10_000));
+        Assert.False(expected.FlipCoin(4));
+        _ = expected.RandomIntBetween(3, 3);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal(3, projectile.Damage);
+    }
+
+    [Fact]
+    public void MultiplayerMagmaConsumesNativeRangedAvoidanceRandomWalkDraws()
+    {
+        const uint aiSeed = 9;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(1173, expected.RandomIntLessThan(10_000));
+        Assert.False(expected.FlipCoin(4));
+        Assert.Equal(7, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((6, 5), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerMagmaConsumesNativeRangedAvoidanceRecoveryDelayRoll()
+    {
+        const uint aiSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(2637, expected.RandomIntLessThan(10_000));
+        Assert.False(expected.FlipCoin(4));
+        Assert.Equal(90, expected.RandomIntLessThan(100));
+        var delayRoll = expected.RandomIntLessThan(10);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(5 + delayRoll, monster.RangedAvoidanceDelayTicks);
+        Assert.False(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MagmaAiDefersMagmaBallOutsideItsNativeAvoidanceBand()
     {
         var monster = new AuthoritativeCombatTarget(

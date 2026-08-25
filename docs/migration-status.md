@@ -55,6 +55,9 @@ compatibility path.
 Multiplayer Rhino charge and movement now consume the stream for initial
 admission, far-distance Move-goal setup, RoundWalk/RandomWalk fallback, and
 recovery delay; seed-zero targets retain the compatibility path.
+Seeded multiplayer AiRangedAvoidance mappings now consume the stream for their
+initial 10,000-band admission, Move-goal setup/direction, RandomWalk movement,
+and recovery delay; seed-zero targets retain the compatibility path.
 Multiplayer Counselor now consumes the stream for its initial and secondary
 ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
 server-owned recovery delays; seed-zero targets retain the compatibility
