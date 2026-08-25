@@ -5218,8 +5218,8 @@ public sealed class DiabloCombatCommandProcessor
         if (gameMode != DiabloGameMode.Multiplayer || target.MonsterAiSeed == 0)
             return;
 
-        var aiRandom = new DiabloRandom(target.MonsterAiSeed);
-        target.MonsterAiSeed = unchecked((uint)aiRandom.AdvanceRndSeed());
+        random.Restore(target.MonsterAiSeed);
+        target.MonsterAiSeed = unchecked((uint)random.AdvanceRndSeed());
     }
 
     private bool TryAdvanceFallenFear(

@@ -20350,15 +20350,19 @@ public sealed class DiabloCombatCommandProcessorTests
             10,
             monsterItemSeed: itemSeed,
             monsterAiSeed: aiSeed);
+        var multiplayerRandom = new DiabloRandom(0xCAFEBABE);
         var multiplayer = CreateProcessor(
             new DiabloWorldState(combatTargets: [multiplayerTarget]),
+            random: multiplayerRandom,
             gameMode: DiabloGameMode.Multiplayer);
-        var expectedAiSeed = unchecked((uint)new DiabloRandom(aiSeed).AdvanceRndSeed());
+        var expectedAiRandom = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expectedAiRandom.AdvanceRndSeed());
 
         multiplayer.AdvanceTick(1, [CreatePlayer()]);
 
         Assert.Equal(itemSeed, multiplayerTarget.MonsterItemSeed);
         Assert.Equal(expectedAiSeed, multiplayerTarget.MonsterAiSeed);
+        Assert.Equal(expectedAiRandom.State, multiplayerRandom.State);
 
         var singlePlayerTarget = new AuthoritativeCombatTarget(
             9,

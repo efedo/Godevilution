@@ -380,7 +380,8 @@ Optional `MonsterSnapshot.monster_item_seed` and `monster_ai_seed` fields 86-87
 preserve the native `InitMonster` runtime seeds. The server uses the item seed
 for authoritative monster-owned loot. In multiplayer, the server advances the
 AI seed once per monster tick, matching native `ProcessMonsters` state
-progression; using it for every remaining native AI roll is follow-up work.
+progression, and restores the stream before that monster's AI random draws;
+using it for every remaining native AI roll is follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

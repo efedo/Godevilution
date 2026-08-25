@@ -7,8 +7,8 @@ AI seeds through snapshots, saves, and additive protocol fields 86-87.
 Procedural monster loot uses the retained item seed, preserving the server-owned
 drop identity across reconnect and restart boundaries. Multiplayer monster ticks
 advance the retained AI seed once per tick, matching native `ProcessMonsters`
-state progression; using that seed for every remaining native AI roll is
-follow-up work.
+state progression, and restore each monster's stream before its AI random draws.
+Using that stream for every remaining native AI roll is follow-up work.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
