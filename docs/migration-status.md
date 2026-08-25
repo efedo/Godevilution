@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-24
+Status date: 2026-08-25
 
 The inventory contract now preserves native placement order for the shipped
 footprints and uses a deterministic first-fit fallback for any other validated
@@ -102,9 +102,10 @@ recursive dispatch finite before an external content pack can reach combat.
 Quest activation validation now rejects self-referential completion targets;
 valid cross-quest activation routes remain supported.
 
-The generic TCP host now has focused three-participant reconnect coverage,
+The generic TCP host now has focused four-participant reconnect coverage,
 preserving complete self-first snapshots and canonical state hashes while a
-second and third participant remain connected.
+second, third, and fourth participant remain connected; the resumed
+participant rejoins three active peers without changing the canonical hash.
 
 World-item anchor completion now requires an active quest, preventing an
 inactive content quest from being completed by an authoritative item drop.

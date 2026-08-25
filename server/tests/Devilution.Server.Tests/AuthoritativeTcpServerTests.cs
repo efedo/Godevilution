@@ -1202,6 +1202,84 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task ReconnectPreservesFourParticipantSnapshotAndSelfFirstOrder()
+    {
+        var executor = new ParticipantSnapshotExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        using var firstClient = new TcpClient();
+        using var secondClient = new TcpClient();
+        using var thirdClient = new TcpClient();
+        using var fourthClient = new TcpClient();
+        await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var firstStream = firstClient.GetStream();
+        await SendHelloAsync(firstStream, cancellationToken);
+        var firstHello = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.ServerHello;
+        var firstInitial = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.Snapshot;
+
+        await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var secondStream = secondClient.GetStream();
+        await SendHelloAsync(secondStream, cancellationToken);
+        _ = await EnvelopeCodec.ReadAsync(secondStream, cancellationToken);
+        var secondInitial = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.Snapshot;
+
+        await thirdClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var thirdStream = thirdClient.GetStream();
+        await SendHelloAsync(thirdStream, cancellationToken);
+        _ = await EnvelopeCodec.ReadAsync(thirdStream, cancellationToken);
+        var thirdInitial = (await EnvelopeCodec.ReadAsync(thirdStream, cancellationToken))!.Snapshot;
+
+        await fourthClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var fourthStream = fourthClient.GetStream();
+        await SendHelloAsync(fourthStream, cancellationToken);
+        _ = await EnvelopeCodec.ReadAsync(fourthStream, cancellationToken);
+        var fourthInitial = (await EnvelopeCodec.ReadAsync(fourthStream, cancellationToken))!.Snapshot;
+
+        var firstEntityId = Assert.Single(firstInitial.Players).EntityId;
+        var secondEntityId = secondInitial.Players[0].EntityId;
+        var thirdEntityId = thirdInitial.Players[0].EntityId;
+        var fourthEntityId = fourthInitial.Players[0].EntityId;
+        Assert.NotEqual(firstEntityId, secondEntityId);
+        Assert.NotEqual(secondEntityId, thirdEntityId);
+        Assert.NotEqual(thirdEntityId, fourthEntityId);
+
+        Assert.Equal(
+            [fourthEntityId, firstEntityId, secondEntityId, thirdEntityId],
+            fourthInitial.Players.Select(player => player.EntityId));
+        Assert.Equal(
+            SnapshotStateHasher.Compute(fourthInitial),
+            fourthInitial.StateSha256);
+
+        firstClient.Close();
+        using var resumedClient = new TcpClient();
+        await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var resumedStream = resumedClient.GetStream();
+        await SendHelloAsync(resumedStream, cancellationToken, firstHello.SessionToken);
+        var resumedHello = (await EnvelopeCodec.ReadAsync(resumedStream, cancellationToken))!.ServerHello;
+        var resumedSnapshot = (await EnvelopeCodec.ReadAsync(resumedStream, cancellationToken))!.Snapshot;
+
+        Assert.Equal(firstHello.SessionToken, resumedHello.SessionToken);
+        Assert.Equal(
+            [firstEntityId, secondEntityId, thirdEntityId, fourthEntityId],
+            resumedSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(
+            SnapshotStateHasher.Compute(resumedSnapshot),
+            resumedSnapshot.StateSha256);
+    }
+
+    [Fact]
     public async Task ResumeTokenRestoresPurchasedStoreStateAndDuplicatePurchaseDoesNotMutateIt()
     {
         var catalog = new StoreCatalog();

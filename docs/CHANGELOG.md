@@ -67,6 +67,9 @@ All notable changes to this fork are documented below.
   recursive authoritative cast resolution can exhaust the process stack.
 - Quest activation validation now rejects self-referential completion targets
   while retaining valid follow-on quest routes.
+- Extended the focused TCP reconnect regression to four active participants,
+  preserving complete self-first snapshots and canonical state hashes while
+  the resumed participant rejoins three connected peers.
 - Added a focused three-participant TCP reconnect regression covering complete
   self-first snapshots and canonical state hashes.
 - World-item anchor completion now requires the target quest to be active;
