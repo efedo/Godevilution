@@ -32,8 +32,9 @@ native action roll for summon and adjacent-attack admission; summons also use
 the live stream for skeleton-type selection, stand-animation timing, initial
 health, and the retained item/AI seeds before entering authoritative simulation.
 Initialized single-player SkeletonMelee/Fallen targets now consume the global
-native stream for SkeletonAi action, delay, and RandomWalk draws; zero-seed
-fixtures and legacy multiplayer snapshots retain the compatibility controller.
+native stream for SkeletonAi action, adjacent attack admission/delay, and
+RandomWalk draws; zero-seed fixtures and legacy multiplayer snapshots retain
+the compatibility controller.
 Initialized single-player GoatMelee/AiAvoidance targets now consume the global
 native action, Move-goal, RandomWalk, and delay draws under the same rule.
 Initialized single-player Fat/Overlord targets now consume the global native

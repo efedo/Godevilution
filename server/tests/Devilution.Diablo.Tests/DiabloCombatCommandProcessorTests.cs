@@ -23810,6 +23810,46 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedSkeletonMeleeAdjacentDelayConsumesNativeRandomStream()
+    {
+        const uint initSeed = 1;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "SkeletonMelee",
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        var attackRoll = expected.RandomIntLessThan(100);
+        Assert.True(attackRoll >= 20);
+        var delayRoll = expected.RandomIntLessThan(10);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(10 + delayRoll, monster.SkeletonMeleeDelayTicks);
+    }
+
+    [Fact]
     public void MultiplayerSkeletonMeleeAdjacentDelayConsumesItsNativeMonsterRandomStream()
     {
         const uint aiSeed = 1;

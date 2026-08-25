@@ -5064,8 +5064,11 @@ public sealed class DiabloCombatCommandProcessor
                 var skeletonMeleeAttackTuning = target.FallenRallyAttackPending
                     ? null
                     : GetSkeletonMeleeAttackTuning(target);
-                var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
-                    && target.MonsterAiSeed != 0;
+                // Initialized single-player targets retain the native
+                // InitMonster AI seed as a marker that their global process
+                // stream is authoritative. Zero-seed fixtures and legacy
+                // multiplayer snapshots keep the compatibility controller.
+                var usesNativeAiStream = target.MonsterAiSeed != 0;
                 var attackRoll = skeletonMeleeAttackTuning.HasValue && usesNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);

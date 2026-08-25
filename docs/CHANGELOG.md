@@ -16,8 +16,9 @@ All notable changes to this fork are documented below.
   nearby Fallen receive the server-owned attack timer and can pursue players
   beyond their normal aggro range through native `RandomWalk` ordering.
 - Initialized single-player SkeletonMelee/Fallen targets now consume the global
-  native stream for SkeletonAi action, delay, and RandomWalk draws; zero-seed
-  fixtures and legacy multiplayer snapshots retain the compatibility path.
+  native stream for SkeletonAi action, adjacent attack admission/delay, and
+  RandomWalk draws; zero-seed fixtures and legacy multiplayer snapshots retain
+  the compatibility path.
 - Initialized single-player GoatMelee/AiAvoidance targets now consume the
   global native action, Move-goal, RandomWalk, and delay draws under the same
   compatibility rule.
