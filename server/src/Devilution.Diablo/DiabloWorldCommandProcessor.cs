@@ -129,7 +129,8 @@ public sealed class DiabloWorldCommandProcessor
             DiabloTalkToQuestIntent talk => TalkToQuest(
                 player,
                 talk.QuestId,
-                talk.TargetEntityId),
+                talk.TargetEntityId,
+                players.ToArray()),
             DiabloTurnInQuestIntent turnIn => TurnInQuest(
                 player,
                 turnIn.QuestId,
@@ -1883,8 +1884,11 @@ public sealed class DiabloWorldCommandProcessor
     private DiabloWorldIntentResult TalkToQuest(
         AuthoritativePlayerState player,
         uint questId,
-        uint targetEntityId)
+        uint targetEntityId,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
+        if (!participants.Contains(player))
+            participants = participants.Append(player).ToArray();
         if (!world.Quests.TryGetValue(questId, out var quest)
             || quest.Unavailable
             || quest.Completed
@@ -1919,7 +1923,11 @@ public sealed class DiabloWorldCommandProcessor
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
                 var rewardX = checked(target.PositionX + stage.RewardOffsetX);
                 var rewardY = checked(target.PositionY + stage.RewardOffsetY);
-                if (!world.IsWalkable(target.LevelId, rewardX, rewardY))
+                if (!CanPlaceDialogueReward(
+                        target.LevelId,
+                        rewardX,
+                        rewardY,
+                        participants))
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
@@ -1974,7 +1982,7 @@ public sealed class DiabloWorldCommandProcessor
                 quest.Active = true;
             }
             if (stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None)
-                SpawnDialogueStageReward(stage, target, player);
+                SpawnDialogueStageReward(stage, target, participants);
             ApplyQuestDialogueFollowUp(stage);
             return DiabloWorldIntentResult.AcceptedWith(
                 new DiabloGameplayEvent(
@@ -2098,11 +2106,31 @@ public sealed class DiabloWorldCommandProcessor
         }
     }
 
+    /** Validates a staged conversation reward tile before quest mutation. */
+    private bool CanPlaceDialogueReward(
+        uint levelId,
+        int positionX,
+        int positionY,
+        IReadOnlyList<AuthoritativePlayerState> participants)
+    {
+        return world.IsWalkable(levelId, positionX, positionY)
+            && !world.IsOccupied(
+                levelId,
+                positionX,
+                positionY,
+                participants,
+                excludedEntityId: 0)
+            && !world.WorldItems.Values.Any(item =>
+                item.LevelId == levelId
+                && item.PositionX == positionX
+                && item.PositionY == positionY);
+    }
+
     /** Generates a content-declared staged conversation reward once per stage. */
     private void SpawnDialogueStageReward(
         AuthoritativeQuestDialogueStage stage,
         AuthoritativeCombatTarget target,
-        AuthoritativePlayerState player)
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (items is null || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)
             throw new InvalidDataException("The dialogue stage reward requires an active item catalog.");
@@ -2118,7 +2146,7 @@ public sealed class DiabloWorldCommandProcessor
             gameMode);
         var rewardX = checked(target.PositionX + stage.RewardOffsetX);
         var rewardY = checked(target.PositionY + stage.RewardOffsetY);
-        var entityId = AllocateWorldItemEntityId([player]);
+        var entityId = AllocateWorldItemEntityId(participants);
         world.WorldItems[entityId] = new AuthoritativeWorldItem(
             entityId,
             target.LevelId,

@@ -74,6 +74,10 @@ and spell-projectile validation during preflight. Invalid object projections
 therefore fail before mana or the memorized source is consumed, preserving the
 single authoritative cast transaction.
 
+Staged unique-monster dialogue rewards now use the complete participant set
+for world-item placement validation and entity allocation. A blocked reward
+leaves quest progress and world state unchanged until its tile is available.
+
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.

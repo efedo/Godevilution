@@ -1824,13 +1824,29 @@ public sealed class DiabloWorldCommandProcessorTests
             positionX: 19,
             positionY: 20,
             entityId: 7);
+        var otherPlayer = CreatePlayer(
+            positionX: 21,
+            positionY: 21,
+            entityId: 8);
         quest.Variable1 = 1;
 
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTalkToQuestIntent(3003, 20),
+                1,
+                [player, otherPlayer]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(1, quest.Variable1);
+        Assert.Empty(world.WorldItems);
+
+        otherPlayer.PositionX = 0;
+        otherPlayer.PositionY = 0;
         var result = processor.Execute(
             player,
             new DiabloTalkToQuestIntent(3003, 20),
             1,
-            [player]);
+            [player, otherPlayer]);
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
         var reward = Assert.Single(world.WorldItems.Values);

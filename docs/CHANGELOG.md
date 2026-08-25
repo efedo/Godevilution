@@ -41,6 +41,8 @@ All notable changes to this fork are documented below.
   different player's tile.
 - Authored quest-sequence monster follow-ups now validate their spawn tile
   against every authoritative participant before changing quest state.
+- Staged unique-monster dialogue rewards now validate the complete participant
+  set and existing world-item occupancy before advancing the quest stage.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.
