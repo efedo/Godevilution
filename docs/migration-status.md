@@ -35,6 +35,9 @@ the stream.
 Multiplayer Snake now consumes the stream for distant and adjacent action
 admission, native delay rolls, and RandomWalk2 fallback draws; mapped charge
 ticks retain their native no-roll branch and seed-zero compatibility.
+Multiplayer HorkDemon now consumes the stream for spawn/attack and movement
+admission, recovery delay, RoundWalk, and RandomWalk draws; seed-zero targets
+retain the compatibility path.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the

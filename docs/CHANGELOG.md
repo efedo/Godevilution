@@ -45,6 +45,10 @@ All notable changes to this fork are documented below.
 - Multiplayer Snake now consumes the restored stream for distant and adjacent
   action admission, native delay rolls, and RandomWalk2 fallback draws; mapped
   charge ticks retain their native no-roll branch and seed-zero compatibility.
+- Multiplayer HorkDemon now consumes the restored stream for spawn/attack and
+  movement admission, recovery delay, RoundWalk, and RandomWalk draws; seeded
+  targets retain native controller ordering while seed-zero targets retain the
+  compatibility path.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

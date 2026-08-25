@@ -5651,18 +5651,22 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
         if (distance <= 1) {
             var attackChance = Math.Min(
                 100,
                 horkDemonTuning.Value.AttackChanceBase
                     + (horkDemonTuning.Value.AttackChanceIntelligenceScale
                         * monster.Intelligence));
-            return actionSeed % 100U >= (uint)attackChance;
+            return actionRoll >= attackChance;
         }
 
         if (distance >= horkDemonTuning.Value.SpawnMinimumDistance
-            && actionSeed % 100U
-                < (uint)Math.Min(
+            && actionRoll < Math.Min(
                     100,
                     horkDemonTuning.Value.SpawnChanceBase
                         + (horkDemonTuning.Value.SpawnChanceIntelligenceScale
@@ -5727,9 +5731,14 @@ public sealed class DiabloCombatCommandProcessor
             horkDemonTuning.Value.MovementChanceBase
                 + (horkDemonTuning.Value.MovementChanceIntelligenceScale
                     * monster.Intelligence));
-        if (actionSeed % 100U >= (uint)movementChance) {
+        var movementRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        if (movementRoll >= movementChance) {
             monster.StartHorkDemonDelay(
-                ResolveHorkDemonDelay(missile, actionSeed));
+                usesNativeAiStream
+                    ? ResolveHorkDemonDelayFromRandom(missile)
+                    : ResolveHorkDemonDelay(missile, actionSeed));
             return true;
         }
 
@@ -5738,24 +5747,23 @@ public sealed class DiabloCombatCommandProcessor
             && horkDefinition.HorkDemonRoundWalkChanceModulo > 0) {
             roundWalkChanceModulo = horkDefinition.HorkDemonRoundWalkChanceModulo;
         }
-        if (distance >= 5
-            && (actionSeed / 100U) % (uint)roundWalkChanceModulo != 0U) {
-            var roundWalk = FindNativeRoundWalkStep(
-                monster,
-                victim,
-                players,
-                actionSeed);
+        var roundWalkAdmitted = distance >= 5
+            && (usesNativeAiStream
+                ? !random.FlipCoin((uint)roundWalkChanceModulo)
+                : (actionSeed / 100U) % (uint)roundWalkChanceModulo != 0U);
+        if (roundWalkAdmitted) {
+            var roundWalk = usesNativeAiStream
+                ? FindNativeRoundWalkStepFromRandom(monster, victim, players)
+                : FindNativeRoundWalkStep(monster, victim, players, actionSeed);
             if (roundWalk.HasValue) {
                 monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                 return true;
             }
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            victim,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
+            : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             return true;
@@ -8597,6 +8605,19 @@ public sealed class DiabloCombatCommandProcessor
             ? missile.HorkDemonDelayBase
             : 10;
         return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
+    }
+
+    /** Native HorkDemon recovery delay driven by the restored per-monster stream. */
+    private int ResolveHorkDemonDelayFromRandom(
+        AuthoritativeMonsterMissileDefinition? missile)
+    {
+        var randomRange = missile?.HorkDemonDelayRandomRange > 0
+            ? missile.HorkDemonDelayRandomRange
+            : 10;
+        var delayBase = missile?.HorkDemonDelayBase > 0
+            ? missile.HorkDemonDelayBase
+            : 10;
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private static int ResolveSnakeDelay(
