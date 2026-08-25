@@ -3434,6 +3434,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerInitializedSkeletonKingConsumesNativeMovementAndDelayRolls()
+    {
+        const uint initSeed = 123;
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [king]);
+        var random = new DiabloRandom(initSeed);
+        var expected = new DiabloRandom(initSeed);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(100);
+        var delayRoll = expected.RandomIntLessThan(10);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expected.State, random.State);
+        Assert.False(king.IsMoving);
+        Assert.Equal(10 + delayRoll, king.SkeletonKingDelayTicks);
+    }
+
+    [Fact]
     public void MultiplayerSkeletonKingUsesNativeAdjacentAttackAdmission()
     {
         const uint aiSeed = 123;

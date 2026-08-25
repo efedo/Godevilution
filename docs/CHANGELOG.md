@@ -63,6 +63,9 @@ All notable changes to this fork are documented below.
   delay, and drift draws under the same compatibility rule.
 - Initialized single-player Bat targets now consume the global native movement
   fallback and RandomWalk draws under the same compatibility rule.
+- Initialized single-player Skeleton King targets now consume the global native
+  movement, RoundWalk, RandomWalk, and delay draws under the same compatibility
+  rule; their existing native action-roll behavior remains unchanged.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.
