@@ -5042,10 +5042,16 @@ public sealed class DiabloCombatCommandProcessor
                                 * target.Intelligence)))
                     continue;
                 var fatAttackTuning = GetFatAttackTuning(target);
+                var usesFatNativeAiStream = fatAttackTuning.HasValue
+                    && gameMode == DiabloGameMode.Multiplayer
+                    && target.MonsterAiSeed != 0;
+                var fatAttackRoll = usesFatNativeAiStream
+                    ? random.RandomIntLessThan(100)
+                    : (int)(attackSeed % 100U);
                 if (fatAttackTuning.HasValue
                     && !NativeFatAttackBandAllowsAttack(
                         target,
-                        attackSeed,
+                        fatAttackRoll,
                         fatAttackTuning.Value))
                     continue;
                 var batAttackTuning = GetBatAttackTuning(target);
@@ -5059,7 +5065,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var usesSpecialAttack = UsesFatSpecialAttack(
                     target,
-                    attackSeed,
+                    fatAttackRoll,
                     fatAttackTuning)
                     || UsesGoatSpecialAttack(
                         target,
@@ -5495,22 +5501,25 @@ public sealed class DiabloCombatCommandProcessor
         if (!fatTuning.HasValue || distance <= 1)
             return false;
 
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         var movementChance = GetFatMovementChance(
             monster,
             fatTuning.Value.ChanceBase,
             fatTuning.Value.IntelligenceScale,
             GetFatMovementFreshChanceBonus(monster));
-        if (actionSeed % 100U >= (uint)movementChance) {
+        var movementRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        if (movementRoll >= movementChance) {
             monster.AdvanceFatMovementIdle();
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            monster,
-            victim,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
+            : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             monster.RecordFatMovement(
@@ -9384,7 +9393,7 @@ public sealed class DiabloCombatCommandProcessor
     /** Validated Fat tuning selects its special melee band. */
     private bool UsesFatSpecialAttack(
         AuthoritativeCombatTarget target,
-        uint attackSeed,
+        int attackRoll,
         (
             int AttackChanceBase,
             int AttackChanceIntelligenceScale,
@@ -9394,12 +9403,12 @@ public sealed class DiabloCombatCommandProcessor
         return tuning.HasValue
             && GetEffectiveMonsterToHit(target, special: true) > 0
             && GetEffectiveMonsterDamageRange(target, special: true).Maximum > 0
-            && attackSeed % 100U >= (uint)Math.Min(
+            && attackRoll >= Math.Min(
                 100,
                 tuning.Value.SpecialChanceBase
                     + (tuning.Value.SpecialChanceIntelligenceScale
                         * target.Intelligence))
-            && attackSeed % 100U < (uint)Math.Min(
+            && attackRoll < Math.Min(
                 100,
                 tuning.Value.AttackChanceBase
                     + (tuning.Value.AttackChanceIntelligenceScale
@@ -9408,14 +9417,14 @@ public sealed class DiabloCombatCommandProcessor
 
     private static bool NativeFatAttackBandAllowsAttack(
         AuthoritativeCombatTarget target,
-        uint attackSeed,
+        int attackRoll,
         (
             int AttackChanceBase,
             int AttackChanceIntelligenceScale,
             int SpecialChanceBase,
             int SpecialChanceIntelligenceScale) tuning)
     {
-        return attackSeed % 100U < (uint)Math.Min(
+        return attackRoll < Math.Min(
             100,
             tuning.AttackChanceBase
                 + (tuning.AttackChanceIntelligenceScale * target.Intelligence));
