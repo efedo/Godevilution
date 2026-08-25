@@ -398,7 +398,8 @@ attacks retain their no-roll native admission.
 Seeded multiplayer Fallen fear retreats likewise consume the restored stream's
 two native RandomWalk coin draws before committing movement; seed-zero targets
 retain the deterministic compatibility path.
-Single-player Skeleton King summons consume the native type-selection and
+Single-player Skeleton King consumes its native action roll for summon and
+adjacent-attack admission, and summons consume the native type-selection and
 `InitMonster` initialization draws before their item/AI seeds are projected;
 multiplayer summoning remains server-owned. Remaining native lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity

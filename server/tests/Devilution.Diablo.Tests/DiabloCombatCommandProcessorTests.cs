@@ -3246,6 +3246,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SinglePlayerSkeletonKingUsesNativeActionRollForAdjacentAdmission()
+    {
+        const uint randomSeed = 0x12345678;
+        var king = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 5,
+            aggroRange: 5,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [king]);
+        var random = new DiabloRandom(randomSeed);
+        var processor = CreateProcessor(world, random: random);
+        var player = CreatePlayer(
+            positionX: 2,
+            positionY: 0,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100);
+        var expected = new DiabloRandom(randomSeed);
+        Assert.Equal(97, expected.RandomIntLessThan(100));
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+        Assert.Equal(expected.State, random.State);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedMovementChanceTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

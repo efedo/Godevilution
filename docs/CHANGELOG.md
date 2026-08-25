@@ -41,6 +41,8 @@ All notable changes to this fork are documented below.
 - Single-player Skeleton King summons now consume the live native stream for
   skeleton-type selection, stand-animation timing, initial health, and the
   retained item/AI seeds before entering authoritative simulation.
+- Single-player Skeleton King summon and adjacent-attack admission now reuse
+  the native first action roll instead of a separate compatibility roll.
 - Multiplayer Bat now consumes the restored stream for native adjacent-attack
   admission, two-step retreat, movement, and mapped-charge action/RandomWalk
   draws; mapped charge misses reuse the same action roll without double-consuming

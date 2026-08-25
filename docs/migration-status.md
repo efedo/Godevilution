@@ -27,10 +27,11 @@ its native action roll, retreat RandomWalk, and adjacent-attack admission;
 seed-zero targets retain the compatibility path. Multiplayer Skeleton King now
 consumes the stream for its native action and movement-admission rolls, delay
 range, RoundWalk, RandomWalk, and adjacent-attack admission; multiplayer
-summoning remains server-owned. Single-player Skeleton King summons now use
-the live native stream for skeleton-type selection, stand-animation timing,
-initial health, and the retained item/AI seeds before entering authoritative
-simulation. Remaining native lifecycle and
+summoning remains server-owned. Single-player Skeleton King now consumes its
+native action roll for summon and adjacent-attack admission; summons also use
+the live stream for skeleton-type selection, stand-animation timing, initial
+health, and the retained item/AI seeds before entering authoritative simulation.
+Remaining native lifecycle and
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
 the stream for native adjacent

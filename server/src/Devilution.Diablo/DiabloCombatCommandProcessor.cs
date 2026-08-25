@@ -6746,19 +6746,21 @@ public sealed class DiabloCombatCommandProcessor
 
         var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
             && target.MonsterAiSeed != 0;
+        var usesNativeActionRoll = gameMode == DiabloGameMode.SinglePlayer
+            || usesNativeAiStream;
         var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
         // Native LeoricAi consumes its first GenerateRnd(100) before the
         // summon/attack branches, even when multiplayer quest rules suppress
-        // summoning. Seed-zero targets retain the compatibility path.
-        var actionRoll = usesNativeAiStream
+        // summoning. Single-player uses the process stream; seed-zero
+        // multiplayer targets retain the compatibility path.
+        var actionRoll = usesNativeActionRoll
             ? random.RandomIntLessThan(100)
             : (int)(actionSeed % 100U);
         var canAttemptSummon = summonTuning.HasValue
             && monsterSpawnPlanner is not null
             && gameMode != DiabloGameMode.Multiplayer
             && distance >= summonTuning.Value.MinimumDistance
-            && random.RandomIntLessThan(100)
-                < Math.Min(
+            && actionRoll < Math.Min(
                     100,
                     summonTuning.Value.ChanceBase
                         + (summonTuning.Value.IntelligenceScale * target.Intelligence))
@@ -6814,7 +6816,7 @@ public sealed class DiabloCombatCommandProcessor
         if (distance <= 1) {
             // Native Leoric uses the first action roll for adjacent attack
             // admission once its summon branch is not taken.
-            if (usesNativeAiStream
+            if (usesNativeActionRoll
                 && actionRoll >= Math.Min(100, target.Intelligence + 20))
                 return true;
             return false;
