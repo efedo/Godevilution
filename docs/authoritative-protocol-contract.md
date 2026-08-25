@@ -396,6 +396,9 @@ draws; its native special lock remains server-owned. Using it for every
 remaining native AI roll is follow-up work. The multiplayer ButcherAi
 controller likewise consumes its non-adjacent RandomWalk coin draws; adjacent
 attacks retain their no-roll native admission.
+Seeded multiplayer Fallen fear retreats likewise consume the restored stream's
+two native RandomWalk coin draws before committing movement; seed-zero targets
+retain the deterministic compatibility path.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

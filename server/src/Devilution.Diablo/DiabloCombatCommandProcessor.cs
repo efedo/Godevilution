@@ -5288,28 +5288,45 @@ public sealed class DiabloCombatCommandProcessor
             || !GetFallenFearTuning(target).HasValue)
             return false;
 
-        var direction = target.FallenFearDirection;
-        for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
-            var candidateDirection = offset == 0
-                ? direction
-                : offset % 2 == 1
-                    ? RotateDirection(direction, (offset + 1) / 2)
-                    : RotateDirection(direction, -(offset / 2));
-            var displacement = DirectionDisplacements[candidateDirection];
-            var candidateX = checked(target.PositionX + displacement.X);
-            var candidateY = checked(target.PositionY + displacement.Y);
-            if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
-                || world.IsOccupied(
-                    target.LevelId,
-                    candidateX,
-                    candidateY,
-                    players,
-                    target.EntityId)) {
-                continue;
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && target.MonsterAiSeed != 0;
+        (int X, int Y)? retreat;
+        if (usesNativeAiStream) {
+            // Native FallenAi uses RandomWalk while fear is active. The
+            // restored stream orders the two side-pair coin draws even when
+            // the straight candidate is available.
+            retreat = FindNativeRandomWalkStepFromRandom(
+                target,
+                target.FallenFearDirection,
+                players);
+        } else {
+            // Preserve the deterministic compatibility path for targets
+            // without a native multiplayer stream.
+            retreat = null;
+            for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+                var candidateDirection = offset == 0
+                    ? target.FallenFearDirection
+                    : offset % 2 == 1
+                        ? RotateDirection(target.FallenFearDirection, (offset + 1) / 2)
+                        : RotateDirection(target.FallenFearDirection, -(offset / 2));
+                var displacement = DirectionDisplacements[candidateDirection];
+                var candidateX = checked(target.PositionX + displacement.X);
+                var candidateY = checked(target.PositionY + displacement.Y);
+                if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
+                    || world.IsOccupied(
+                        target.LevelId,
+                        candidateX,
+                        candidateY,
+                        players,
+                        target.EntityId)) {
+                    continue;
+                }
+                retreat = (candidateX, candidateY);
+                break;
             }
-            target.BeginMovement(candidateX, candidateY);
-            break;
         }
+        if (retreat.HasValue)
+            target.BeginMovement(retreat.Value.X, retreat.Value.Y);
         target.AdvanceFallenFear();
         return true;
     }

@@ -2242,6 +2242,42 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerFallenFearConsumesNativeRandomWalkRolls()
+    {
+        const uint aiSeed = 7;
+        var survivor = new AuthoritativeCombatTarget(
+            9,
+            4,
+            2,
+            20,
+            nativeAi: "Fallen",
+            fallenFearTicks: 1,
+            fallenFearDirection: 7,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 8, 8, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [survivor]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+
+        processor.AdvanceTick(1, [CreatePlayer()]);
+
+        Assert.Equal(expectedAiSeed, survivor.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.True(survivor.IsMoving);
+        Assert.Equal((5, 2), (survivor.FuturePositionX, survivor.FuturePositionY));
+        Assert.Equal(0, survivor.FallenFearTicks);
+    }
+
+    [Fact]
     public void SneakUsesIntelligenceVisibilityBandAndUnhidesWhenApproached()
     {
         var sneak = new AuthoritativeCombatTarget(

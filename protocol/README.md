@@ -615,6 +615,8 @@ Windows toolchain command.
   The item seed is the server-owned loot seed; the AI seed is retained for
   native multiplayer synchronization parity and advances once per authoritative
   multiplayer monster tick before that monster's AI random stream is restored.
+  Seeded Fallen fear retreats consume the restored stream's two native
+  `RandomWalk` coin draws; seed-zero targets retain the compatibility path.
   Older peers may omit both fields.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting

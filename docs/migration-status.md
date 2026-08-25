@@ -73,6 +73,9 @@ Multiplayer Counselor now consumes the stream for its initial and secondary
 ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
 server-owned recovery delays; seed-zero targets retain the compatibility
 controller.
+Seeded multiplayer Fallen fear retreats now consume the native RandomWalk coin
+draws before selecting their retreat cell; seed-zero targets retain the
+deterministic compatibility sweep.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the
