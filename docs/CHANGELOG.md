@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
 - Multiplayer ButcherAi now consumes the restored stream for its native
   non-adjacent RandomWalk coin draws; adjacent attacks retain their no-roll
   native admission and seed-zero compatibility.
+- Multiplayer Sneak now consumes the restored stream for its native action
+  roll, retreat RandomWalk, and adjacent-attack admission; seed-zero targets
+  retain the compatibility controller.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

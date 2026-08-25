@@ -2354,6 +2354,91 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerSneakConsumesItsNativeAdjacentAdmissionRoll()
+    {
+        const uint aiSeed = 123;
+        var sneak = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            attackDamage: 5,
+            aggroRange: 5,
+            nativeAi: "Sneak",
+            intelligence: 2,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [sneak]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        var actionRoll = expected.RandomIntLessThan(100);
+        Assert.Equal(88, actionRoll);
+        Assert.True(actionRoll >= 18);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, sneak.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void MultiplayerSneakRetreatConsumesNativeActionAndRandomWalkRolls()
+    {
+        const uint aiSeed = 7;
+        var sneak = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            aggroRange: 5,
+            nativeAi: "Sneak",
+            intelligence: 2,
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        sneak.StartSneakRetreat(1);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [sneak]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var expected = new DiabloRandom(aiSeed);
+        var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
+        Assert.Equal(4, expected.RandomIntLessThan(100));
+        _ = expected.FlipCoin(2);
+        _ = expected.FlipCoin(2);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedAiSeed, sneak.MonsterAiSeed);
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(0, sneak.SneakRetreatTicks);
+        Assert.True(sneak.IsMoving);
+        Assert.Equal((2, 0), (sneak.FuturePositionX, sneak.FuturePositionY));
+    }
+
+    [Fact]
     public void ScavengerSeeksAndEatsACorpseWithNativeHealingTiming()
     {
         var scavenger = new AuthoritativeCombatTarget(

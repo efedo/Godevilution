@@ -6162,6 +6162,16 @@ public sealed class DiabloCombatCommandProcessor
             1,
             sneakTuning.Value.DistanceBase
                 - (target.Intelligence * sneakTuning.Value.DistanceIntelligenceScale));
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && target.MonsterAiSeed != 0;
+        var actionSeed = unchecked((uint)target.EntityId ^ victim.EntityId);
+        // Native SneakAi consumes one GenerateRnd(100) before evaluating its
+        // fade, retreat, and adjacent-attack branches. Seed-zero targets keep
+        // the deterministic compatibility path and therefore do not advance
+        // the shared stream here.
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
         if (target.SneakRetreatTicks != 0) {
             if (distance >= preferredDistance + sneakTuning.Value.RetreatReleaseDistance) {
                 target.StartSneakRetreat(0);
@@ -6173,26 +6183,35 @@ public sealed class DiabloCombatCommandProcessor
                 victim.PositionY,
                 target.PositionX,
                 target.PositionY);
-            for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
-                var candidateDirection = offset == 0
-                    ? direction
-                    : offset % 2 == 1
-                        ? RotateDirection(direction, (offset + 1) / 2)
-                        : RotateDirection(direction, -(offset / 2));
-                var displacement = DirectionDisplacements[candidateDirection];
-                var candidateX = checked(target.PositionX + displacement.X);
-                var candidateY = checked(target.PositionY + displacement.Y);
-                if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
-                    || world.IsOccupied(
-                        target.LevelId,
-                        candidateX,
-                        candidateY,
-                        players,
-                        target.EntityId)) {
-                    continue;
+            (int X, int Y)? retreat;
+            if (usesNativeAiStream) {
+                retreat = FindNativeRandomWalkStepFromRandom(target, direction, players);
+            } else {
+                retreat = null;
+                for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+                    var candidateDirection = offset == 0
+                        ? direction
+                        : offset % 2 == 1
+                            ? RotateDirection(direction, (offset + 1) / 2)
+                            : RotateDirection(direction, -(offset / 2));
+                    var displacement = DirectionDisplacements[candidateDirection];
+                    var candidateX = checked(target.PositionX + displacement.X);
+                    var candidateY = checked(target.PositionY + displacement.Y);
+                    if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
+                        || world.IsOccupied(
+                            target.LevelId,
+                            candidateX,
+                            candidateY,
+                            players,
+                            target.EntityId)) {
+                        continue;
+                    }
+                    retreat = (candidateX, candidateY);
+                    break;
                 }
-                target.BeginMovement(candidateX, candidateY);
-                break;
+            }
+            if (retreat.HasValue) {
+                target.BeginMovement(retreat.Value.X, retreat.Value.Y);
             }
             target.AdvanceSneakRetreat();
             return true;
@@ -6208,6 +6227,14 @@ public sealed class DiabloCombatCommandProcessor
             target.SetSneakHidden(true);
             return true;
         }
+
+        // Native Sneak only starts an adjacent attack when its action roll is
+        // below intelligence + 10 (scaled by four). Returning true suppresses
+        // the generic melee fallback for the admitted no-attack tick.
+        if (usesNativeAiStream
+            && distance <= 1
+            && actionRoll >= Math.Min(100, 4 * target.Intelligence + 10))
+            return true;
         return false;
     }
 
