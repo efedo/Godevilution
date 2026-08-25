@@ -34,6 +34,10 @@ All notable changes to this fork are documented below.
 - Multiplayer Sneak now consumes the restored stream for its native action
   roll, retreat RandomWalk, and adjacent-attack admission; seed-zero targets
   retain the compatibility controller.
+- Multiplayer Skeleton King now consumes the restored stream for its native
+  action and movement-admission rolls, delay range, RoundWalk, RandomWalk, and
+  adjacent-attack admission; multiplayer summoning remains server-owned and
+  seed-zero targets retain the compatibility controller.
 - Content schema `1.430.0` externalizes native standing-animation frame and
   tick metadata used to preserve the two `InitMonster` RNG draws before
   procedural health and damage initialization.

@@ -24,8 +24,11 @@ native special lock remains server-owned. Multiplayer ButcherAi now consumes
 the stream for its non-adjacent RandomWalk coin draws; adjacent attacks retain
 their no-roll native admission. Multiplayer Sneak now consumes the stream for
 its native action roll, retreat RandomWalk, and adjacent-attack admission;
-seed-zero targets retain the compatibility path. Remaining native AI controllers
-and rolls are follow-up work.
+seed-zero targets retain the compatibility path. Multiplayer Skeleton King now
+consumes the stream for its native action and movement-admission rolls, delay
+range, RoundWalk, RandomWalk, and adjacent-attack admission; multiplayer
+summoning remains server-owned. Remaining native AI controllers and rolls are
+follow-up work.
 
 Content schema `1.430.0` now carries validated native standing-animation frame
 and tick metadata for shipped monster types. Procedural spawning consumes the

@@ -5516,6 +5516,46 @@ public sealed class DiabloCombatCommandProcessor
         return null;
     }
 
+    /** Native RoundWalk candidate order driven by the restored monster stream. */
+    private (int X, int Y)? FindNativeRoundWalkStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        // Leoric initializes goalVar2 with GenerateRnd(2) when entering its
+        // Move goal; the value selects the clockwise/counter-clockwise turn.
+        var turn = random.RandomIntLessThan(2) == 0 ? 1 : -1;
+        var turn45 = RotateDirection(direction, turn);
+        var turn90 = RotateDirection(turn45, turn);
+        foreach (var candidateDirection in new[] { turn90, turn45, direction }) {
+            var step = FindStepInDirection(monster, candidateDirection, players);
+            if (step.HasValue)
+                return step;
+        }
+
+        // RoundWalk falls back to RandomWalk in the opposite direction. Keep
+        // its two native coin draws even when the fallback has no open tile.
+        var fallbackDirection = RotateDirection(turn90, 4);
+        var fallbackTurn = random.FlipCoin(2) ? 1 : -1;
+        foreach (var candidateDirection in new[] {
+                     fallbackDirection,
+                     RotateDirection(fallbackDirection, fallbackTurn),
+                     RotateDirection(fallbackDirection, -fallbackTurn),
+                     RotateDirection(fallbackDirection, 2),
+                     RotateDirection(fallbackDirection, -2),
+                 }) {
+            var step = FindStepInDirection(monster, candidateDirection, players);
+            if (step.HasValue)
+                return step;
+        }
+        return null;
+    }
+
     /** Native OverlordAi admits Fat movement through its 20 + 4 * intelligence band. */
     private bool TryAdvanceFatAi(
         AuthoritativeCombatTarget monster,
@@ -6590,6 +6630,18 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var summonTuning = GetSkeletonKingSummonTuning(target);
+        if (!summonTuning.HasValue)
+            return false;
+
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && target.MonsterAiSeed != 0;
+        var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
+        // Native LeoricAi consumes its first GenerateRnd(100) before the
+        // summon/attack branches, even when multiplayer quest rules suppress
+        // summoning. Seed-zero targets retain the compatibility path.
+        var actionRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
         var canAttemptSummon = summonTuning.HasValue
             && monsterSpawnPlanner is not null
             && gameMode != DiabloGameMode.Multiplayer
@@ -6648,17 +6700,28 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
-        if (!summonTuning.HasValue || distance <= 1)
+        if (distance <= 1) {
+            // Native Leoric uses the first action roll for adjacent attack
+            // admission once its summon branch is not taken.
+            if (usesNativeAiStream
+                && actionRoll >= Math.Min(100, target.Intelligence + 20))
+                return true;
             return false;
+        }
 
-        var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
         var movementTuning = GetSkeletonKingMovementTuning(target);
         var movementChance = Math.Min(
             100,
             (movementTuning?.ChanceBase ?? 25)
                 + (movementTuning?.IntelligenceScale ?? 1) * target.Intelligence);
-        if (actionSeed % 100U >= (uint)movementChance) {
-            target.StartSkeletonKingDelay(ResolveSkeletonKingDelay(target, actionSeed));
+        var movementRoll = usesNativeAiStream
+            ? random.RandomIntLessThan(100)
+            : (int)(actionSeed % 100U);
+        if (movementRoll >= (uint)movementChance) {
+            target.StartSkeletonKingDelay(
+                usesNativeAiStream
+                    ? ResolveSkeletonKingDelayFromRandom(target)
+                    : ResolveSkeletonKingDelay(target, actionSeed));
             return true;
         }
 
@@ -6667,13 +6730,14 @@ public sealed class DiabloCombatCommandProcessor
             && skeletonKingDefinition.SkeletonKingRoundWalkChanceModulo > 0) {
             roundWalkChanceModulo = skeletonKingDefinition.SkeletonKingRoundWalkChanceModulo;
         }
-        if (distance >= 3
-            && (actionSeed / 100U) % (uint)roundWalkChanceModulo == 0U) {
-            var roundWalk = FindNativeRoundWalkStep(
-                target,
-                victim,
-                players,
-                actionSeed);
+        var admitsRoundWalk = distance >= 3
+            && (usesNativeAiStream
+                ? random.FlipCoin((uint)roundWalkChanceModulo)
+                : (actionSeed / 100U) % (uint)roundWalkChanceModulo == 0U);
+        if (admitsRoundWalk) {
+            var roundWalk = usesNativeAiStream
+                ? FindNativeRoundWalkStepFromRandom(target, victim, players)
+                : FindNativeRoundWalkStep(target, victim, players, actionSeed);
             if (roundWalk.HasValue) {
                 target.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                 return true;
@@ -6682,15 +6746,16 @@ public sealed class DiabloCombatCommandProcessor
             // Native LeoricAi enters AiDelay when its admitted RoundWalk
             // cannot find a candidate; do not replace that tick with a
             // different movement policy.
-            target.StartSkeletonKingDelay(ResolveSkeletonKingDelay(target, actionSeed));
+            target.StartSkeletonKingDelay(
+                usesNativeAiStream
+                    ? ResolveSkeletonKingDelayFromRandom(target)
+                    : ResolveSkeletonKingDelay(target, actionSeed));
             return true;
         }
 
-        var randomWalk = FindNativeRandomWalkStep(
-            target,
-            victim,
-            players,
-            actionSeed);
+        var randomWalk = usesNativeAiStream
+            ? FindNativeRandomWalkStepFromRandom(target, victim, players)
+            : FindNativeRandomWalkStep(target, victim, players, actionSeed);
         if (randomWalk.HasValue) {
             target.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
             return true;
@@ -6733,6 +6798,20 @@ public sealed class DiabloCombatCommandProcessor
             randomRange = definition.SkeletonKingDelayRandomRange;
         }
         return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
+    }
+
+    /** Native Leoric delay roll driven by the restored per-monster stream. */
+    private int ResolveSkeletonKingDelayFromRandom(AuthoritativeCombatTarget target)
+    {
+        var delayBase = 10;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonKingDelayBase > 0
+            && definition.SkeletonKingDelayRandomRange > 0) {
+            delayBase = definition.SkeletonKingDelayBase;
+            randomRange = definition.SkeletonKingDelayRandomRange;
+        }
+        return checked(delayBase + random.RandomIntLessThan(randomRange));
     }
 
     private (int ChanceBase, int IntelligenceScale)? GetSkeletonKingMovementTuning(
