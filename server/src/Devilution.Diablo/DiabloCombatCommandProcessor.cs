@@ -11168,15 +11168,25 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (resistance > 0)
             damage -= damage * resistance / 100;
-        var damageResult = playerDamage.Apply(target, Math.Max(0, damage));
+        var incomingDamageQ6 = DiabloFixedPointQ6.FromWhole(Math.Max(0, damage));
+        var usesLegacyWholeLife = target.LifeMaximum % DiabloFixedPointQ6.Scale != 0;
+        var appliedDamageQ6 = usesLegacyWholeLife
+            ? DiabloFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
+            : incomingDamageQ6;
+        var damageResult = playerDamage.Apply(target, appliedDamageQ6);
         if (damageResult.IncomingDamageQ6 > 0) {
+            var eventDamageQ6 = usesLegacyWholeLife
+                ? incomingDamageQ6
+                : damageResult.IncomingDamageQ6;
             events.Add(new DiabloDirectedGameplayEvent(
                 target,
                 new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Damage,
                     projectile.SourceEntityId,
                     target.EntityId,
-                    damageResult.IncomingDamageQ6)));
+                    DiabloFixedPointQ6.ToWholeTruncated(eventDamageQ6)) {
+                    AmountQ6 = eventDamageQ6,
+                }));
         }
         if (target.Life == 0)
             StartPlayerDeath(

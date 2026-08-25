@@ -8466,6 +8466,52 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterArrowImpactPublishesExactQ6Damage()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            toHit: 100,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "SkeletonRanged",
+                    "FixedArrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow,
+                    ProjectileSpeed: 1,
+                    ProjectileLifetime: 9,
+                    ProjectileDamage: 7),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100 * DiabloFixedPointQ6.Scale,
+            lifeMaximum: 100 * DiabloFixedPointQ6.Scale);
+
+        processor.AdvanceTick(14, [player]);
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 15; tick < 32 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(93 * DiabloFixedPointQ6.Scale, player.Life);
+        Assert.Equal(7, damage.Amount);
+        Assert.Equal(7 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
+    }
+
+    [Fact]
     public void MonsterArrowUsesConfiguredDamageTypeAndPlayerResistance()
     {
         var monster = new AuthoritativeCombatTarget(

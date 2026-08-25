@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Authoritative monster-arrow impacts now convert physical damage into native
+  Q6 before player resolution and publish the exact applied value through
+  `DamageEvent.amount_q6`; legacy whole-life fixtures retain their prior
+  compatibility projection.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.

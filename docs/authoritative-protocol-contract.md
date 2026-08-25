@@ -314,6 +314,11 @@ Legacy messages with no raw field are interpreted as whole points multiplied by
 `godevilution-monster-hit-points-q6-v1` canonical-hash section; legacy and
 whole-aligned snapshots retain their prior hashes.
 
+Monster-arrow impacts use the same Q6 boundary: the server converts the
+configured physical impact to native fixed-point damage before player
+resolution and populates `amount_q6` with the exact event value. Older clients
+continue to receive the truncated whole-point `amount` projection.
+
 `HealingEvent.amount_q6` field 3 carries the exact applied Q6 healing. The
 pre-existing `amount` field 2 remains the same raw native-resource amount for
 older readers and is populated alongside the new field. New native readers use

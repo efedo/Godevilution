@@ -39,6 +39,9 @@ also consume native hit admission, shield/class block admission, and damage
 rolls in native order, with the damage range rolled directly in native Q6 and
 the exact applied amount projected through `DamageEvent.amount_q6`; seed-zero
 multiplayer targets retain the compatibility controller. Remaining native lifecycle and
+Monster-arrow impacts now cross the same native Q6 boundary before player
+damage resolution and carry the exact applied amount in `DamageEvent.amount_q6`;
+legacy whole-life fixtures retain their compatibility projection.
 animation-sensitive special behavior, including pack leadership/group unity
 and Fallen rally behavior, remains follow-up work. Multiplayer Bat now consumes
 the stream for native adjacent
