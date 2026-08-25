@@ -3478,8 +3478,17 @@ bool TryIconCurs()
 		} else if (pcursstashitem != StashStruct::EmptyCell) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				LogError("Server-backed oil use does not support stash targets.");
-				changeCursor = false;
+				const auto target = ServerBackedReferenceForStashCursor(pcursstashitem);
+				const auto source = authoritative::GetServerBackedRuntime().PendingOilUse();
+				if (!target.has_value() || !source.has_value()) {
+					LogError("Server-backed oil use has no authoritative stash target or source reference.");
+					changeCursor = false;
+				} else if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*source, *target, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+					LogError("Server-backed stash oil use failed: {}", result.error());
+					changeCursor = false;
+				}
+				if (!changeCursor)
+					return true;
 			} else
 #endif
 		{

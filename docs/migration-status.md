@@ -13,6 +13,10 @@ combat-entity cursor target has no authoritative entity projection, preventing
 presentation-only cursor state from becoming an unintended tile cast for both
 memorized/ability spells and scroll/rune consumables.
 
+Connected native oil use now also routes inventory-sourced oils onto open stash
+items through the authoritative stable-reference command; closed stash targets
+remain rejected without consuming the source item.
+
 The authoritative simulation now accepts and publishes generated set-piece
 origins, materializing relative `set_level_objects.tsv` rows at level-entry
 time with deterministic reserved identities and world-bound validation. These

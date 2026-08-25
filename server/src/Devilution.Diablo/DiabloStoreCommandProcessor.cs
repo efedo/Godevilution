@@ -904,9 +904,12 @@ public sealed class DiabloStoreCommandProcessor
         DiabloUseConsumableIntent intent,
         DiabloItemActionKind action)
     {
+        if (IsClosedStashTarget(player, intent.Target))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (intent.Target is not { } targetReference
             || targetReference.Location is not (DiabloPlayerItemLocation.Inventory
-                or DiabloPlayerItemLocation.Equipment)
+                or DiabloPlayerItemLocation.Equipment
+                or DiabloPlayerItemLocation.Stash)
             || SameLocation(intent.Item, targetReference)
             || !DiabloPlayerItemAccess.TryGet(player, targetReference, out var target)
             || target.State.Deleted

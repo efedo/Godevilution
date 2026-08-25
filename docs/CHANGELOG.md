@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Connected native oil use now routes inventory-sourced oils onto open stash
+  targets through the authoritative stable-reference command; closed stash
+  targets remain rejected without consuming the source item.
 - Native controller interaction now fails closed when a highlighted monster is
   missing from the authoritative projection; stale monster highlights no longer
   fall through to positional attacks.

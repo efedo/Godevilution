@@ -182,12 +182,13 @@ the explicit legacy runtime.
 
 Potion, rejuvenation, elixir, and supported oil use now follows the same
 boundary. A connected client sends `UseConsumableRequested` for the projected
-inventory or belt reference; oil application adds the exact selected inventory
-or equipment target. The server applies native Q6 resource restoration, class
-multipliers, elixir stat/resource transitions, Hellfire full-resource effects,
-oil target restrictions and mutations, and `NoMana` suppression before
-consuming the source item. The oil cursor is presentation-only and remains
-armed when the server rejects a target. Other cursor-driven miscellaneous
+inventory or belt reference; oil application adds the exact selected inventory,
+equipment, or open-stash target. The server applies native Q6 resource
+restoration, class multipliers, elixir stat/resource transitions, Hellfire
+full-resource effects, oil target restrictions and mutations, and `NoMana`
+suppression before consuming the source item. Open-stash oil targets use the
+same stable-reference command path; closed-stash targets are rejected and the
+cursor remains armed. Other cursor-driven miscellaneous
 items remain local follow-up seams until their content actions are externalized.
 
 The Hellfire Cathedral Map is also server-backed: when its native adjacent-grave

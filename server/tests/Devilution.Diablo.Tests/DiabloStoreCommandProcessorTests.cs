@@ -1889,6 +1889,98 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void OilCanTargetAnOpenStashItem()
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            80,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 80,
+                ItemActionKind = DiabloItemActionKind.ApplyBlacksmithOil,
+                ItemClass = 3,
+            });
+        var target = new StashStoreItem(
+            0,
+            7,
+            0,
+            0,
+            81,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 81,
+                ItemClass = 1,
+                Durability = 5,
+                MaxDurability = 20,
+            });
+        var player = CreatePlayer(inventory: [oil]);
+        player.Stash.Add(target);
+        player.StashOpen = true;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 7, 81, 0)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Inventory);
+        var applied = Assert.Single(player.Stash);
+        Assert.Equal(9, applied.State.Durability);
+        Assert.Equal(20, applied.State.MaxDurability);
+    }
+
+    [Fact]
+    public void OilRejectsAClosedStashTargetWithoutConsumingTheSource()
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            82,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 82,
+                ItemActionKind = DiabloItemActionKind.ApplyBlacksmithOil,
+                ItemClass = 3,
+            });
+        var target = new StashStoreItem(
+            0,
+            8,
+            0,
+            0,
+            83,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 83,
+                ItemClass = 1,
+                Durability = 5,
+                MaxDurability = 20,
+            });
+        var player = CreatePlayer(inventory: [oil]);
+        player.Stash.Add(target);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Stash, 8, 83, 0)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Single(player.Inventory);
+        Assert.Equal(5, Assert.Single(player.Stash).State.Durability);
+    }
+
+    [Fact]
     public void BlacksmithOilResolvesTargetDurabilityByMiscId()
     {
         var oil = new OwnedStoreItem(
