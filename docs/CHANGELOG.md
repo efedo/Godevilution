@@ -59,6 +59,10 @@ All notable changes to this fork are documented below.
 - Multiplayer GoatRanged now consumes the restored stream for its close-range
   AiRanged admission, native RandomWalk fallback, and post-shot delay; long
   range and seed-zero compatibility branches retain their native no-roll path.
+- Multiplayer Succubus/Lazarus Blood Star now consumes the restored stream for
+  its close-range AiRanged admission, native RandomWalk fallback, and post-shot
+  delay; long-range and seed-zero compatibility branches retain their native
+  no-roll path.
 - Multiplayer Counselor now consumes the restored stream for its initial and
   secondary ranged/movement admissions, adjacent admission, retreat RandomWalk
   coins, and server-owned recovery delays; seed-zero targets retain the

@@ -48,6 +48,10 @@ retain the compatibility path.
 Multiplayer GoatRanged now consumes the stream for its close-range AiRanged
 admission, native RandomWalk fallback, and post-shot delay; long-range and
 seed-zero branches retain their native no-roll compatibility path.
+Multiplayer Succubus/Lazarus Blood Star now consumes the stream for its
+close-range AiRanged admission, native RandomWalk fallback, and post-shot
+delay; long-range and seed-zero branches retain their native no-roll
+compatibility path.
 Multiplayer Counselor now consumes the stream for its initial and secondary
 ranged/movement admissions, adjacent admission, retreat RandomWalk coins, and
 server-owned recovery delays; seed-zero targets retain the compatibility

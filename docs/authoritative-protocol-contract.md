@@ -580,6 +580,13 @@ the two RandomWalk ordering coins, and the post-shot delay; long-range and
 seed-zero branches retain the native no-roll compatibility path. A blocked
 lane preserves the native defer rather than generic pursuit.
 
+The `Succubus` and `LazarusSuccubus` identities use the same native `AiRanged`
+admission around their validated `BloodStar` mappings. Seeded multiplayer
+targets consume the restored per-monster stream for the close-range admission,
+the two RandomWalk ordering coins, and post-shot delay; long-range and
+seed-zero branches retain the native no-roll compatibility path. Clients
+receive only the authoritative projectile, movement, and delay snapshot state.
+
 The validated Snake charge mapping preserves the native non-charge boundary:
 failed movement and adjacent attack admissions carry a server-owned `AiDelay`
 countdown, while admitted lateral drift and attacks are applied by the server

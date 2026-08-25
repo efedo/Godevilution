@@ -9397,16 +9397,33 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.SourceEntityId == monster.EntityId
                 && projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar))
             return true;
+        var usesNativeAiStream = gameMode == DiabloGameMode.Multiplayer
+            && monster.MonsterAiSeed != 0;
         var retreatTuning = ResolveRangedRetreatTuning(missile);
         var retreatChance = checked(
             retreatTuning.ChanceBase
             + retreatTuning.IntelligenceScale * monster.Intelligence);
-        if (distance < retreatTuning.MinimumDistance
-            && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
-            var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
-            if (retreat.HasValue) {
-                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
-                return true;
+        if (distance < retreatTuning.MinimumDistance) {
+            var retreatRoll = usesNativeAiStream
+                ? random.RandomIntLessThan(100)
+                : (int)(attackSeed % 100U);
+            if (retreatRoll < Math.Min(100, retreatChance)) {
+                var retreat = usesNativeAiStream
+                    ? FindNativeRandomWalkStepFromRandom(
+                        monster,
+                        RotateDirection(
+                            GetDirection(
+                                monster.PositionX,
+                                monster.PositionY,
+                                player.PositionX,
+                                player.PositionY),
+                            4),
+                        players)
+                    : FindGoatRangedRetreatDestination(monster, player, players, distance);
+                if (retreat.HasValue) {
+                    monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                    return true;
+                }
             }
         }
 
@@ -9477,7 +9494,10 @@ public sealed class DiabloCombatCommandProcessor
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
-        monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
+        monster.StartRangedDelay(
+            usesNativeAiStream
+                ? ResolveRangedDelayFromRandom(missile)
+                : ResolveRangedDelay(missile, attackSeed));
         return true;
     }
 
