@@ -138,6 +138,20 @@ public sealed class DiabloWorldCommandProcessorTests
             monsterSpawnPlanner: planner,
             monsterTypes: monsterTypes);
         var player = CreatePlayer(positionX: 9, positionY: 10, levelId: 24, entityId: 1);
+        var otherPlayer = CreatePlayer(positionX: 11, positionY: 10, levelId: 24, entityId: 2);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloOperateObjectIntent(@object.EntityId),
+                1,
+                [player, otherPlayer]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(2, quest.Variable1);
+        Assert.Empty(worldState.CombatTargets);
+
+        otherPlayer.PositionX = 0;
+        otherPlayer.PositionY = 0;
 
         var result = processor.Execute(
             player,

@@ -39,6 +39,8 @@ All notable changes to this fork are documented below.
 - Authored object rewards now validate world-item placement against every
   authoritative participant, preventing multiplayer rewards from spawning on a
   different player's tile.
+- Authored quest-sequence monster follow-ups now validate their spawn tile
+  against every authoritative participant before changing quest state.
 - Added the validated Lachdanan native-AI identity and kept his dialogue-only
   encounter passive in authoritative combat ticks, matching the native
   `LachdananAi` behavior outside quest-dialogue handling.

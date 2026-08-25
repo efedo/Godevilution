@@ -1237,13 +1237,13 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!CanApplyObjectReward(@object, player, participants))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!CanApplyObjectSpellEffect(@object, player))
+        if (!CanApplyObjectSpellEffect(@object, player, participants))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
-            return ApplyQuestSequence(player, @object);
+            return ApplyQuestSequence(player, @object, participants);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestItemCompletion)
             return ApplyQuestItemCompletion(player, @object);
 
@@ -1266,7 +1266,7 @@ public sealed class DiabloWorldCommandProcessor
         ApplyQuestTransition(@object);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
             world.ApplyWorldMutation((uint)@object.EffectAmount);
-            ApplyAuthoredObjectFollowUp(@object, player);
+            ApplyAuthoredObjectFollowUp(@object, player, participants);
         }
 
         SpawnObjectReward(@object, participants);
@@ -1347,7 +1347,8 @@ public sealed class DiabloWorldCommandProcessor
 
     private bool CanApplyObjectSpellEffect(
         AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if ((@object.EffectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.GrantSpellLevelAndSpawnProjectile)
@@ -1364,7 +1365,7 @@ public sealed class DiabloWorldCommandProcessor
                 @object.ProjectileTargetOffsetY);
         if (@object.QuestSequenceFollowUpKind
             == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster) {
-            return CanSpawnNativeMonster(@object, player);
+            return CanSpawnNativeMonster(@object, participants);
         }
         if (@object.QuestSequenceFollowUpKind
             != AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
@@ -1379,7 +1380,7 @@ public sealed class DiabloWorldCommandProcessor
 
     private bool CanSpawnNativeMonster(
         AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (monsterSpawnPlanner is null
             || @object.QuestSequenceFollowUpAmount == 0) {
@@ -1393,15 +1394,16 @@ public sealed class DiabloWorldCommandProcessor
                 @object.LevelId,
                 targetX,
                 targetY,
-                [player],
+                participants,
                 0);
     }
 
     private void SpawnNativeMonster(
         AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
-        if (!CanSpawnNativeMonster(@object, player))
+        if (!CanSpawnNativeMonster(@object, participants))
             throw new InvalidDataException(
                 $"Object {@object.EntityId} cannot materialize native monster {@object.QuestSequenceFollowUpAmount}.");
 
@@ -1724,7 +1726,8 @@ public sealed class DiabloWorldCommandProcessor
     /** Applies one ordered quest interaction step, preserving native reset semantics. */
     private DiabloWorldIntentResult ApplyQuestSequence(
         AuthoritativePlayerState player,
-        AuthoritativeWorldObject @object)
+        AuthoritativeWorldObject @object,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (!world.Quests.TryGetValue(@object.QuestId, out var quest)
             || quest.Unavailable
@@ -1758,7 +1761,7 @@ public sealed class DiabloWorldCommandProcessor
                 nextQuest.Active = true;
             }
         }
-        ApplyAuthoredObjectFollowUp(@object, player);
+        ApplyAuthoredObjectFollowUp(@object, player, participants);
         return quest.MessageId == 0
             ? DiabloWorldIntentResult.Accepted
             : DiabloWorldIntentResult.AcceptedWith(
@@ -1775,7 +1778,8 @@ public sealed class DiabloWorldCommandProcessor
     /** Applies a validated follow-up after a quest step or direct world mutation. */
     private void ApplyAuthoredObjectFollowUp(
         AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         switch (@object.QuestSequenceFollowUpKind) {
         case AuthoritativeQuestSequenceFollowUpKind.None:
@@ -1789,7 +1793,7 @@ public sealed class DiabloWorldCommandProcessor
             SpawnObjectSpellProjectile(@object, player);
             break;
         case AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster:
-            SpawnNativeMonster(@object, player);
+            SpawnNativeMonster(@object, player, participants);
             break;
         default:
             throw new InvalidDataException(

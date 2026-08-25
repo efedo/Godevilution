@@ -78,6 +78,10 @@ Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards
 therefore cannot be materialized underneath another participant.
 
+Authored quest-sequence monster follow-ups now use that same participant set for
+spawn validation. A blocked multiplayer spawn leaves the quest step and world
+unchanged until its target tile is authoritatively available.
+
 The external geometry contract now preserves all native `.sol` d-piece flags
 when a text property table is used: legacy `solid`/`block_missile` rows remain
 valid, while optional lighting, transparency, and trap flags are validated and
