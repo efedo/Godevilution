@@ -17,9 +17,9 @@ public sealed class ComposedContent
         Tables = tables;
         Assets = assets;
         tablesByPath = new ReadOnlyDictionary<string, TsvTable>(
-            tables.ToDictionary(table => table.SourcePath, StringComparer.Ordinal));
+            tables.ToDictionary(table => table.SourcePath, StringComparer.OrdinalIgnoreCase));
         assetsByPath = new ReadOnlyDictionary<string, ContentAsset>(
-            assets.ToDictionary(asset => asset.SourcePath, StringComparer.Ordinal));
+            assets.ToDictionary(asset => asset.SourcePath, StringComparer.OrdinalIgnoreCase));
     }
 
     public ContentManifest Manifest { get; }
@@ -60,14 +60,14 @@ public sealed class ComposedContent
     {
         ArgumentNullException.ThrowIfNull(manifest);
         var tableOrder = new List<string>();
-        var effectiveTables = new Dictionary<string, TsvTable>(StringComparer.Ordinal);
+        var effectiveTables = new Dictionary<string, TsvTable>(StringComparer.OrdinalIgnoreCase);
         var assetOrder = new List<string>();
-        var effectiveAssets = new Dictionary<string, ContentAsset>(StringComparer.Ordinal);
+        var effectiveAssets = new Dictionary<string, ContentAsset>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var pack in manifest.Packs) {
             var overlays = pack.Overlays.ToDictionary(
                 overlay => overlay.TablePath,
-                StringComparer.Ordinal);
+                StringComparer.OrdinalIgnoreCase);
             foreach (var table in pack.Tables) {
                 if (!effectiveTables.TryGetValue(table.SourcePath, out var existing)) {
                     if (effectiveAssets.ContainsKey(table.SourcePath)) {

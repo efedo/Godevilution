@@ -65,7 +65,7 @@ public sealed record ContentPack
         var tableList = tables.ToArray();
         if (tableList.Any(table => table is null))
             throw new ArgumentException("Content pack tables cannot be null.", nameof(tables));
-        if (tableList.Select(table => table.SourcePath).Distinct(StringComparer.Ordinal).Count()
+        if (tableList.Select(table => table.SourcePath).Distinct(StringComparer.OrdinalIgnoreCase).Count()
             != tableList.Length) {
             throw new ArgumentException(
                 "Content table paths must be unique within a pack.",
@@ -73,10 +73,10 @@ public sealed record ContentPack
         }
         var assetList = assets?.ToArray() ?? [];
         if (assetList.Any(asset => asset is null)
-            || assetList.Select(asset => asset.SourcePath).Distinct(StringComparer.Ordinal).Count()
+            || assetList.Select(asset => asset.SourcePath).Distinct(StringComparer.OrdinalIgnoreCase).Count()
                 != assetList.Length
             || assetList.Any(asset => tableList.Any(table =>
-                string.Equals(table.SourcePath, asset.SourcePath, StringComparison.Ordinal)))) {
+                string.Equals(table.SourcePath, asset.SourcePath, StringComparison.OrdinalIgnoreCase)))) {
             throw new ArgumentException(
                 "Content asset paths must be non-null, unique, and distinct from table paths.",
                 nameof(assets));
@@ -92,12 +92,13 @@ public sealed record ContentPack
         var overlayList = overlays?.ToArray() ?? [];
         if (overlayList.Any(overlay => overlay is null)
             || overlayList.Select(overlay => overlay.TablePath)
-                    .Distinct(StringComparer.Ordinal).Count() != overlayList.Length) {
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Count() != overlayList.Length) {
             throw new ArgumentException(
                 "Content table overlay paths must be non-null and unique.",
                 nameof(overlays));
         }
-        var tablePaths = tableList.Select(table => table.SourcePath).ToHashSet(StringComparer.Ordinal);
+        var tablePaths = tableList.Select(table => table.SourcePath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (overlayList.Any(overlay => !tablePaths.Contains(overlay.TablePath))) {
             throw new ArgumentException(
                 "Every overlay declaration must reference a table supplied by its pack.",

@@ -89,6 +89,32 @@ public sealed class ContentRuntimeTests
     }
 
     [Fact]
+    public void ContentPackRejectsCaseInsensitiveTableAndAssetDuplicates()
+    {
+        var tables = new[] {
+            TsvTable.Parse("items.tsv", "id\n1\n"),
+            TsvTable.Parse("ITEMS.TSV", "id\n2\n"),
+        };
+        Assert.Throws<ArgumentException>(() => new ContentPack("base", "1", tables));
+
+        var assets = new[] {
+            new ContentAsset("levels/sample.dun", new byte[] { 1 }),
+            new ContentAsset("LEVELS/SAMPLE.DUN", new byte[] { 1 }),
+        };
+        Assert.Throws<ArgumentException>(() => new ContentPack(
+            "base",
+            "1",
+            [],
+            assets: assets));
+
+        Assert.Throws<ArgumentException>(() => new ContentPack(
+            "base",
+            "1",
+            [TsvTable.Parse("items.tsv", "id\n1\n")],
+            assets: [new ContentAsset("ITEMS.TSV", new byte[] { 1 })]));
+    }
+
+    [Fact]
     public void ContentPackDirectoryLoaderUsesStableRelativeTableOrder()
     {
         var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
@@ -226,7 +252,7 @@ public sealed class ContentRuntimeTests
         var same = new ContentManifest("rules", "1", [
             new ContentPack("base", "1", [], assets: [first]),
             new ContentPack("variant", "1", [], ["base"], [], assets: [
-                new ContentAsset("levels/l1data/l1.til", new byte[] { 1, 2 })]),
+                new ContentAsset("LEVELS/L1DATA/L1.TIL", new byte[] { 1, 2 })]),
         ]);
 
         var composed = ComposedContent.Compose(same);
