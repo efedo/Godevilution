@@ -36,6 +36,10 @@ self-first ordering, and canonical snapshot hash when the purchaser resumes.
 The same fixture verifies requested character names for both participants at
 the live authoritative boundary.
 
+The Godot protocol client now exercises the same two-participant store purchase
+and reconnect path, confirming that the presentation-side client preserves the
+authoritative participant set, names, inventory, and gold after resume.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

@@ -2935,6 +2935,81 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotClientReconnectPreservesPurchasedStateAndSecondParticipant()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            startingGoldOverride: 5000);
+        await using var firstClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-store-first", requestedClassId: 0) with {
+                RequestedCharacterName = "Godot-Store-First",
+            });
+        await firstClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var firstInitial = await WaitForMessageAsync(firstClient, message => message.Snapshot is not null);
+        var firstModel = new AuthoritativeClientModel();
+        firstModel.Apply(firstInitial);
+        var firstEntityId = Assert.Single(firstModel.Snapshot!.Players).EntityId;
+
+        await using var secondClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-store-second", requestedClassId: 1) with {
+                RequestedCharacterName = "Godot-Store-Second",
+            });
+        await secondClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var secondInitial = await WaitForMessageAsync(
+            secondClient,
+            message => message.Snapshot is { Players.Count: 2 });
+        var secondSnapshot = secondInitial.Snapshot!;
+        var secondEntityId = secondSnapshot.Players.Single(player => player.EntityId != firstEntityId).EntityId;
+
+        var openSequence = firstClient.Queue(new Command {
+            OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
+        }, firstClient.SuggestedCommandTick(firstModel.CurrentTick));
+        await firstClient.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(firstClient, openSequence)).Status);
+        var opened = await WaitForMessageAsync(
+            firstClient,
+            message => message.Snapshot is { Players.Count: 2, ActiveStore.StoreId: 1 });
+        firstModel.Apply(opened);
+        var initialStockCount = opened.Snapshot!.ActiveStore!.Items.Count;
+        var initialGold = opened.Snapshot.Players.Single(player => player.EntityId == firstEntityId).Gold;
+
+        var purchaseSequence = firstClient.Queue(new Command {
+            PurchaseRequested = new PurchaseRequested { StoreId = 1, StoreSlot = 0 },
+        }, firstClient.SuggestedCommandTick(firstModel.CurrentTick));
+        await firstClient.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(firstClient, purchaseSequence)).Status);
+        var purchased = await WaitForMessageAsync(
+            firstClient,
+            message => message.Snapshot is { Players.Count: 2, ActiveStore.StoreId: 1 }
+                && message.Snapshot.ActiveStore.Items.Count == initialStockCount - 1
+                && message.Snapshot.Players.Single(player => player.EntityId == firstEntityId).Gold < initialGold);
+        firstModel.Apply(purchased);
+        var purchasedSnapshot = purchased.Snapshot!;
+        var purchasedPlayer = purchasedSnapshot.Players.Single(player => player.EntityId == firstEntityId);
+
+        await firstClient.ReconnectAsync(TestContext.Current.CancellationToken);
+        var resumed = await WaitForMessageAsync(
+            firstClient,
+            message => message.Snapshot is { Players.Count: 2 }
+                && message.Snapshot.Players[0].EntityId == firstEntityId
+                && message.Snapshot.Players.Any(player => player.EntityId == secondEntityId)
+                && message.Snapshot.Players.Single(player => player.EntityId == firstEntityId).Gold == purchasedPlayer.Gold);
+        var resumedSnapshot = resumed.Snapshot!;
+
+        Assert.True(secondClient.IsConnected);
+        Assert.Equal([firstEntityId, secondEntityId], resumedSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal("Godot-Store-First", resumedSnapshot.Players[0].CharacterName);
+        Assert.Equal("Godot-Store-Second", resumedSnapshot.Players[1].CharacterName);
+        Assert.Equal(purchasedPlayer.Gold, resumedSnapshot.Players[0].Gold);
+        Assert.Equal(purchasedSnapshot.ActiveStore.Items.Select(item => item.ItemSeed), resumedSnapshot.ActiveStore!.Items.Select(item => item.ItemSeed));
+        Assert.NotEmpty(resumedSnapshot.StateSha256);
+    }
+
+    [Fact]
     public async Task LiveServerCreatesRequestedClassesPerSessionAndResumeStateWins()
     {
         using var server = await StartedServer.StartAsync(

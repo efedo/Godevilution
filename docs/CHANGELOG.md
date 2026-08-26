@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   canonical snapshot hash after resume.
 - Strengthened that reconnect fixture to verify requested character names are
   retained for both participants through the live authoritative initializer.
+- Added live Godot protocol coverage for two participants, a server-owned store
+  purchase, and reconnect state/name preservation through the client boundary.
 - Added a shared Necromorb MonsterMagic replay fixture proving the alternate
   Lich-family missile alias admission and canonical projectile state in both
   runners.
