@@ -133,20 +133,18 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-26,
-the native replay gate contains 71 checked-in JSON fixtures and 97 registered
+the native replay gate contains 72 checked-in JSON fixtures and 98 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
 miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
-HorkDemon target selection, autonomous
-Succubus
-BloodStar admission/impact/block lanes,
-and a Lich-family
+HorkDemon target selection, autonomous Succubus BloodStar admission/impact/
+block lanes, a Succubus BloodStar multiplayer target-selection lane, and a Lich-family
 MonsterMagic admission/hit/miss/secondary-impact lane. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
-`replay_test` executable was rebuilt and the new multiplayer HorkDemon test
-passed, as did its focused managed counterpart. The full suites remain
+`replay_test` executable was rebuilt and the new multiplayer HorkDemon and
+Succubus BloodStar tests passed, as did their focused managed counterparts. The full suites remain
 scheduled for the next periodic verification window.
 
 ## Current Coverage
@@ -501,5 +499,6 @@ already-characterized transitions: broader autonomous monster-arrow, HorkDemon
 delay and summon lifecycle, monster-magic AI branches, monster-magic hit/block
 resolution, multi-actor target selection, mod/content reload ordering, an
 end-to-end Hellfire replay beyond the live overlay and loadout
-activation smoke tests, and broader combat/event ordering. Cursor-held pickup
+activation smoke tests, broader multi-actor target selection, and broader
+combat/event ordering. Cursor-held pickup
 overflow is already covered by `gameplay-gold-pickup-overflow.json`.
