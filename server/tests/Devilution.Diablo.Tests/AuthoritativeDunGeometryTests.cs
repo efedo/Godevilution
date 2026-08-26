@@ -395,6 +395,31 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void SetLevelCatalogPreflightsCompleteBundlesWithoutWorldActivation()
+    {
+        var til = new byte[sizeof(ushort) * 4];
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(1, "pre.dun", "active.dun", "Cathedral", 1, 1) {
+                TileAssetPath = "map.til",
+                SolAssetPath = "map.sol",
+            },
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("pre.dun", CreateDun(1, 1, [43])),
+                new ContentAsset("active.dun", CreateDun(1, 1, [43])),
+                new ContentAsset("map.til", til),
+                new ContentAsset("map.sol", sol),
+            ]),
+        ]));
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.ValidateAssets(content));
+
+        Assert.Contains("unknown mega-tile 43", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SetLevelCatalogRejectsBlockedActiveMapSpawnPoint()
     {
         var dun = CreateDun(1, 1, [0]);

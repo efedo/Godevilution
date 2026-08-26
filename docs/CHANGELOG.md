@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Complete native set-level map bundles now parse and cross-validate during
+  content preflight even before a world is available; malformed geometry and
+  invalid active-map spawn points fail closed rather than remaining deferred.
 - Ordinary native DUN levels now parse and cross-validate their complete
   optional `.til`/`.sol` collision bundle during content activation, so malformed
   level geometry fails closed before publication.

@@ -125,7 +125,7 @@ public sealed class AuthoritativeSetLevelMapCatalog
         return false;
     }
 
-    /** Validates any partially supplied native set-level bundle before activation. */
+    /** Validates any supplied native set-level bundle before activation. */
     public void ValidateAssets(ComposedContent content)
     {
         ArgumentNullException.ThrowIfNull(content);
@@ -137,6 +137,8 @@ public sealed class AuthoritativeSetLevelMapCatalog
             if (present != 0 && present != paths.Length)
                 throw new InvalidDataException(
                     $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle.");
+            if (present == paths.Length)
+                _ = LoadCompleteGeometryBundle(content, definition);
         }
     }
 
@@ -158,53 +160,63 @@ public sealed class AuthoritativeSetLevelMapCatalog
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (present == 0)
                 continue;
-            var preMap = AuthoritativeNativeDunGeometryLoader.Load(
-                content,
-                definition,
-                GetRuntimeLevelId(definition.SetLevelId, activeMap: false),
-                activeMap: false);
-            var activeMap = AuthoritativeNativeDunGeometryLoader.Load(
-                content,
-                definition,
-                GetRuntimeLevelId(definition.SetLevelId, activeMap: true),
-                activeMap: true);
-            if (!activeMap.ContainsPosition(definition.SpawnX, definition.SpawnY)
-                || !activeMap.IsWalkable(definition.SpawnX, definition.SpawnY)) {
-                throw new InvalidDataException(
-                    $"Set-level map {definition.SetLevelId} contains an invalid active-map spawn point.");
-            }
-            if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)) {
-                var transparency = AuthoritativeDunMapAsset.Load(
-                    definition.TransparencyAssetPath,
-                    content.GetRequiredAsset(definition.TransparencyAssetPath).Contents);
-                if (transparency.TileWidth != activeMap.Width
-                    || transparency.TileHeight != activeMap.Height) {
-                    throw new InvalidDataException(
-                        $"Set-level map {definition.SetLevelId} transparency dimensions do not match the active map.");
-                }
-                activeMap = new AuthoritativeLevel(
-                    activeMap.LevelId,
-                    activeMap.Width,
-                    activeMap.Height,
-                    activeMap.BlockedCells,
-                    activeMap.MissileBlockedCells,
-                    activeMap.IsDefaultStart,
-                    activeMap.SuppressMultiplayerDeathDrops,
-                    transparency.TransparencyLayer,
-                    activeMap.NativeObjectLayer,
-                    activeMap.NativeMegaTileLayer,
-                    activeMap.NativePieceLayer,
-                    activeMap.NativePieceProperties,
-                    activeMap.NativePieceCollisionCells,
-                    activeMap.NativePieceMissileBlockedCells,
-                    activeMap.NativeMonsterLayer) {
-                    StableSymbol = activeMap.StableSymbol,
-                };
-            }
+            var (preMap, activeMap) = LoadCompleteGeometryBundle(content, definition);
             levels.Add(preMap);
             levels.Add(activeMap);
         }
         return levels;
+    }
+
+    /** Parses a complete native bundle and validates its entry-point geometry. */
+    private static (AuthoritativeLevel PreMap, AuthoritativeLevel ActiveMap)
+        LoadCompleteGeometryBundle(
+            ComposedContent content,
+            AuthoritativeSetLevelMapDefinition definition)
+    {
+        var preMap = AuthoritativeNativeDunGeometryLoader.Load(
+            content,
+            definition,
+            GetRuntimeLevelId(definition.SetLevelId, activeMap: false),
+            activeMap: false);
+        var activeMap = AuthoritativeNativeDunGeometryLoader.Load(
+            content,
+            definition,
+            GetRuntimeLevelId(definition.SetLevelId, activeMap: true),
+            activeMap: true);
+        if (!activeMap.ContainsPosition(definition.SpawnX, definition.SpawnY)
+            || !activeMap.IsWalkable(definition.SpawnX, definition.SpawnY)) {
+            throw new InvalidDataException(
+                $"Set-level map {definition.SetLevelId} contains an invalid active-map spawn point.");
+        }
+        if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)) {
+            var transparency = AuthoritativeDunMapAsset.Load(
+                definition.TransparencyAssetPath,
+                content.GetRequiredAsset(definition.TransparencyAssetPath).Contents);
+            if (transparency.TileWidth != activeMap.Width
+                || transparency.TileHeight != activeMap.Height) {
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} transparency dimensions do not match the active map.");
+            }
+            activeMap = new AuthoritativeLevel(
+                activeMap.LevelId,
+                activeMap.Width,
+                activeMap.Height,
+                activeMap.BlockedCells,
+                activeMap.MissileBlockedCells,
+                activeMap.IsDefaultStart,
+                activeMap.SuppressMultiplayerDeathDrops,
+                transparency.TransparencyLayer,
+                activeMap.NativeObjectLayer,
+                activeMap.NativeMegaTileLayer,
+                activeMap.NativePieceLayer,
+                activeMap.NativePieceProperties,
+                activeMap.NativePieceCollisionCells,
+                activeMap.NativePieceMissileBlockedCells,
+                activeMap.NativeMonsterLayer) {
+                StableSymbol = activeMap.StableSymbol,
+            };
+        }
+        return (preMap, activeMap);
     }
 
     private static string[] GetNativeAssetPaths(

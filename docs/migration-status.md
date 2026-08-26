@@ -821,6 +821,10 @@ inventing a runtime object solely to carry coordinates. Schema 1.423 adds author
 columns; the Snotspill Banner sign chest uses them with its server-owned
 quest-variable gate.
 
+Complete native set-level map bundles now parse and validate both map variants,
+their optional transparency layer, and the active-map spawn point during
+content preflight, even when world activation is deferred.
+
 Native `SelectChamber()` parity remains intentionally deferred: the native
 `FirstRoom()` pass owns `VerticalLayout` and `HasChamber1/2/3`, while the
 authoritative content packs do not yet contain the corresponding room-synthesis
