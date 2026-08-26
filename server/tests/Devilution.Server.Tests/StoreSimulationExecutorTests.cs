@@ -3467,6 +3467,70 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void AutonomousMultipleMonsterSaveRestoreContinuesInStableEntityOrder()
+    {
+        var targets = new[] {
+            new AuthoritativeCombatTarget(
+                11,
+                3,
+                0,
+                10,
+                levelId: 0,
+                monsterId: 1,
+                attackDamage: 1,
+                aggroRange: 6),
+            new AuthoritativeCombatTarget(
+                9,
+                4,
+                1,
+                10,
+                levelId: 0,
+                monsterId: 1,
+                attackDamage: 1,
+                aggroRange: 6),
+        };
+        var source = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 30,
+            startingLifeMaximum: 30,
+            startingCombatTargets: targets,
+            worldWidth: 6,
+            worldHeight: 6,
+            startingRandomSeed: 0x12345678);
+        source.CreateSnapshot("player-a", 7, 0);
+        source.AdvanceTo(2);
+        var expectedAtSave = source.CreateSnapshot("player-a", 7, 2);
+
+        var replacement = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        replacement.ImportPlayerSave("player-a", source.ExportPlayerSave("player-a"));
+        var restoredAtSave = replacement.CreateSnapshot("player-a", 7, 2);
+
+        Assert.Equal(expectedAtSave.Tick, restoredAtSave.Tick);
+        Assert.Equal(expectedAtSave.StateSha256, restoredAtSave.StateSha256);
+        Assert.Equal(
+            expectedAtSave.Monsters.Select(monster => (
+                monster.EntityId,
+                monster.PositionX,
+                monster.PositionY,
+                monster.HitPointsQ6)),
+            restoredAtSave.Monsters.Select(monster => (
+                monster.EntityId,
+                monster.PositionX,
+                monster.PositionY,
+                monster.HitPointsQ6)));
+
+        source.AdvanceTo(3);
+        replacement.AdvanceTo(3);
+        var expectedAfterResume = source.CreateSnapshot("player-a", 7, 3);
+        var restoredAfterResume = replacement.CreateSnapshot("player-a", 7, 3);
+        Assert.Equal(expectedAfterResume.StateSha256, restoredAfterResume.StateSha256);
+        Assert.Equal(
+            expectedAfterResume.Monsters.Select(monster => monster.EntityId),
+            restoredAfterResume.Monsters.Select(monster => monster.EntityId));
+    }
+
+    [Fact]
     public void AutonomousMonsterAttackCanMissFromExternalCombatRules()
     {
         var executor = new StoreSimulationExecutor(
