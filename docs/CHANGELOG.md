@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the optional `unique_monster_packs.tsv` content contract for generated
+  unique encounters. Validated independent and leashed packs now materialize
+  deterministic minion identities and reserved-cell-aware positions through
+  the authoritative spawn planner.
 - Preserve native `FollowTheLeader` activation timing for authoritative leashed
   packs, including both leader-to-member and member-to-leader propagation and
   snapshot round-trip coverage.

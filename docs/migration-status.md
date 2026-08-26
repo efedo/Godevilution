@@ -2,6 +2,14 @@
 
 Status date: 2026-08-26
 
+Generated unique placements now accept an optional validated
+`unique_monster_packs.tsv` contract. The server materializes deterministic
+independent or leashed minions through the authoritative spawn planner,
+assigns generated entity IDs without colliding with existing targets, avoids
+reserved cells, and preserves the native strict four-tile envelope for leashed
+members. Native random placement parity and the remaining visibility-driven
+activation/interpolation work remain follow-ups.
+
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot
 inherit a generic projectile or movement branch merely because their base type

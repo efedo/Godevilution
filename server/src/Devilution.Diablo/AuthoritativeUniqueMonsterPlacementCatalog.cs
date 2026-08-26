@@ -146,11 +146,27 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
     public IReadOnlyList<AuthoritativeCombatTarget> Materialize(
         AuthoritativeMonsterSpawnPlanner planner,
         AuthoritativeUniqueMonsterCatalog uniqueMonsters,
-        bool multiplayer)
+        bool multiplayer,
+        AuthoritativeUniqueMonsterPackCatalog? packs = null,
+        IEnumerable<AuthoritativeCombatTarget>? existingTargets = null,
+        IEnumerable<(uint LevelId, int X, int Y)>? reservedPositions = null)
     {
         ArgumentNullException.ThrowIfNull(planner);
         ArgumentNullException.ThrowIfNull(uniqueMonsters);
-        return Definitions.Select(placement => {
+        var targets = (existingTargets ?? []).ToList();
+        var occupied = (reservedPositions ?? [])
+            .Select(position => (position.LevelId, position.X, position.Y))
+            .ToHashSet();
+        occupied.UnionWith(targets.Select(target => (
+            target.LevelId,
+            target.PositionX,
+            target.PositionY)));
+        var usedEntityIds = targets
+            .Select(target => target.EntityId)
+            .ToHashSet();
+        var generatedEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
+        var materialized = new List<AuthoritativeCombatTarget>();
+        foreach (var placement in Definitions) {
             var target = planner.CreateNativeMonsterSummon(
                 placement.LevelId,
                 placement.MonsterId,
@@ -166,8 +182,38 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
                     $"Unique placement {placement.PlacementId} could not materialize its monster target.");
             target.IsUnique = true;
             uniqueMonsters.ApplyToExplicit(target, placement.UniqueIdentity);
-            return target;
-        }).ToArray();
+            if (!usedEntityIds.Add(target.EntityId))
+                throw new InvalidDataException(
+                    $"Unique placement {placement.PlacementId} reuses an entity ID during materialization.");
+            if (!occupied.Add((target.LevelId, target.PositionX, target.PositionY)))
+                throw new InvalidDataException(
+                    $"Unique placement {placement.PlacementId} overlaps an occupied cell during materialization.");
+            materialized.Add(target);
+
+            var pack = packs?.FindForPlacement(placement.PlacementId);
+            if (pack is null)
+                continue;
+            while (usedEntityIds.Contains(generatedEntityId))
+                generatedEntityId = checked(generatedEntityId + 1);
+            var members = planner.CreateNativeMonsterPack(
+                target,
+                pack.MinionMonsterId,
+                pack.PackSize,
+                placement.Seed,
+                generatedEntityId,
+                multiplayer,
+                pack.Kind,
+                occupied);
+            foreach (var member in members) {
+                if (!usedEntityIds.Add(member.EntityId))
+                    throw new InvalidDataException(
+                        $"Unique monster pack {pack.PackId} reuses member entity {member.EntityId}.");
+                occupied.Add((member.LevelId, member.PositionX, member.PositionY));
+                materialized.Add(member);
+                generatedEntityId = checked(member.EntityId + 1);
+            }
+        }
+        return materialized;
     }
 
     public static AuthoritativeUniqueMonsterPlacementCatalog LoadTsv(

@@ -48,6 +48,116 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
     }
 
     [Fact]
+    public void MaterializesValidatedLeashedPackMembers()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 12, 12));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 3) with { NativeAi = "SkeletonMelee" },
+            CreateType(3, 1, 3) with { NativeAi = "SkeletonMelee" },
+        ]);
+        var uniqueMonsters = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 2, "Generated Defiler", "SkeletonMelee"),
+        ]);
+        var placements = new AuthoritativeUniqueMonsterPlacementCatalog([
+            new AuthoritativeUniqueMonsterPlacementDefinition(
+                7,
+                "Generated Defiler",
+                2,
+                1,
+                77,
+                6,
+                6,
+                99),
+        ]);
+        var packs = new AuthoritativeUniqueMonsterPackCatalog([
+            new AuthoritativeUniqueMonsterPackDefinition(
+                3,
+                7,
+                3,
+                3,
+                AuthoritativeUniqueMonsterPackKind.Leashed),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            monsterTypes,
+            generation,
+            uniqueMonsters: uniqueMonsters);
+
+        packs.Validate(placements, monsterTypes);
+        var targets = placements.Materialize(
+            planner,
+            uniqueMonsters,
+            multiplayer: false,
+            packs);
+
+        Assert.Equal(4, targets.Count);
+        var leader = Assert.Single(targets, target => target.EntityId == 77);
+        Assert.Equal(3, leader.PackSize);
+        var members = targets.Where(target => target.EntityId != leader.EntityId).ToArray();
+        Assert.Equal(3, members.Length);
+        Assert.All(members, member => {
+            Assert.False(member.IsUnique);
+            Assert.Equal(leader.EntityId, member.LeaderEntityId);
+            Assert.Equal(AuthoritativeMonsterLeaderRelation.Leashed, member.LeaderRelation);
+            Assert.True(Math.Max(
+                Math.Abs(member.PositionX - leader.PositionX),
+                Math.Abs(member.PositionY - leader.PositionY)) < AuthoritativeMonsterGroupUnity.ReunionDistance);
+        });
+        Assert.Equal(
+            members.Length,
+            members.Select(member => (member.PositionX, member.PositionY)).Distinct().Count());
+    }
+
+    [Fact]
+    public void RejectsPackThatReferencesUnknownPlacementOrMonster()
+    {
+        var placements = new AuthoritativeUniqueMonsterPlacementCatalog([
+            new AuthoritativeUniqueMonsterPlacementDefinition(
+                7,
+                "Generated Defiler",
+                2,
+                1,
+                77,
+                6,
+                6,
+                99),
+        ]);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([CreateType(2, 1, 3)]);
+        var unknownPlacement = new AuthoritativeUniqueMonsterPackCatalog([
+            new AuthoritativeUniqueMonsterPackDefinition(1, 8, 2, 1),
+        ]);
+        Assert.Throws<InvalidDataException>(() => unknownPlacement.Validate(placements, monsterTypes));
+
+        var unknownMonster = new AuthoritativeUniqueMonsterPackCatalog([
+            new AuthoritativeUniqueMonsterPackDefinition(1, 7, 3, 1),
+        ]);
+        Assert.Throws<InvalidDataException>(() => unknownMonster.Validate(placements, monsterTypes));
+    }
+
+    [Fact]
+    public void LoadsPackContractFromTsv()
+    {
+        var packs = AuthoritativeUniqueMonsterPackCatalog.LoadTsv(
+            "unique_monster_packs.tsv",
+            "pack_id\tplacement_id\tminion_monster_id\tpack_size\tpack_kind\n"
+                + "3\t7\t2\t8\tLEASHED\n");
+
+        var pack = Assert.Single(packs.Definitions);
+        Assert.Equal((3U, 7U, 2U, 8), (
+            pack.PackId,
+            pack.PlacementId,
+            pack.MinionMonsterId,
+            pack.PackSize));
+        Assert.Equal(
+            AuthoritativeUniqueMonsterPackKind.Leashed,
+            pack.Kind);
+    }
+
+    [Fact]
     public void RejectsPlacementThatOverlapsAnExistingEncounter()
     {
         var world = new AuthoritativeWorld();
@@ -183,6 +293,10 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
             table => table.SourcePath == "unique_monsters.tsv");
         var placementTable = basePack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
+        var packTable = TsvTable.Parse(
+            "unique_monster_packs.tsv",
+            "pack_id\tplacement_id\tminion_monster_id\tpack_size\tpack_kind\n"
+                + "1\t1\t1\t2\tleashed");
         var uniqueHeader = uniqueTable.ToCanonicalTsv().Split('\n')[0];
         var placementHeader = placementTable.ToCanonicalTsv().Split('\n')[0];
         var overlay = new ContentPack(
@@ -197,6 +311,7 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
                     placementTable.SourcePath,
                     placementHeader
                         + "\n1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t10\t10\t99\t0\t0\t0\t "),
+                packTable,
             ],
             ["devilution.base"],
             [
@@ -227,6 +342,9 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
             target.PositionX,
             target.PositionY));
         Assert.Single(activation.UniqueMonsterPlacements!.Definitions);
+        Assert.Single(activation.UniqueMonsterPacks!.Definitions);
+        Assert.Equal(2, activation.Simulation.WorldState.CombatTargets.Values.Count(
+            candidate => candidate.LeaderEntityId == target.EntityId));
     }
 
     private static AuthoritativeMonsterTypeDefinition CreateType(

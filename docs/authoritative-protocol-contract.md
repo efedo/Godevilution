@@ -420,10 +420,11 @@ seeded multiplayer adjacent monster melee also consume native hit admission,
 shield/class block admission, and damage rolls in native order, rolling the
 range directly in Q6 and carrying the exact applied amount in
 `DamageEvent.amount_q6`; seed-zero multiplayer targets retain the compatibility
-controller. Remaining native
-lifecycle and
-animation-sensitive special behavior, including pack leadership/group unity
-and Fallen rally behavior, remains follow-up work.
+controller. Pack leadership and GroupUnity are now server-owned in the
+gameplay module and survive internal snapshots. Additive protocol projection
+for leader identity, relation, and pack size, plus generated pack placement,
+visibility-driven activation, last-position interpolation, and Fallen rally
+behavior remain follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

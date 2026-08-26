@@ -46,7 +46,8 @@ public sealed record DiabloContentActivation
         AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null,
         AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null,
         AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOrigins = null,
-        AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters = null)
+        AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters = null,
+        AuthoritativeUniqueMonsterPackCatalog? uniqueMonsterPacks = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -79,6 +80,7 @@ public sealed record DiabloContentActivation
         NativeDunMonsters = nativeDunMonsters;
         QuestSequenceVariants = questSequenceVariants;
         UniqueMonsterPlacements = uniqueMonsterPlacements;
+        UniqueMonsterPacks = uniqueMonsterPacks;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -152,6 +154,9 @@ public sealed record DiabloContentActivation
 
     /** Validated content-owned placements for generated unique encounters. */
     public AuthoritativeUniqueMonsterPlacementCatalog? UniqueMonsterPlacements { get; }
+
+    /** Validated pack placement metadata for generated unique encounters. */
+    public AuthoritativeUniqueMonsterPackCatalog? UniqueMonsterPacks { get; }
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
@@ -637,6 +642,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 uniqueMonsterPlacementsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var uniqueMonsterPacks = content.TryGetTable(
+            "unique_monster_packs.tsv",
+            out var uniqueMonsterPacksTable)
+            ? AuthoritativeUniqueMonsterPackCatalog.LoadTsv(
+                uniqueMonsterPacksTable.SourcePath,
+                uniqueMonsterPacksTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (uniqueMonsterPacks is not null) {
+            if (uniqueMonsterPlacements is null || monsterTypes is null)
+                throw new InvalidDataException(
+                    "Unique monster packs require unique placements and monster types.");
+            uniqueMonsterPacks.Validate(uniqueMonsterPlacements, monsterTypes);
+        }
         var portals = content.TryGetTable("portals.tsv", out var portalsTable)
             ? AuthoritativePortalCatalog.LoadTsv(
                 portalsTable.SourcePath,
@@ -1081,26 +1100,31 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 throw new InvalidDataException(
                     "Unique monster placements require world, monster types, unique identities, and a spawn planner.");
             }
+            var uniquePlacementReservedPositions = uniqueMonsterPlacements.Definitions
+                .SelectMany(definition => GetReservedPositions(
+                        definition.LevelId,
+                        world,
+                        portals,
+                        objects)
+                    .Select(position => (
+                        definition.LevelId,
+                        position.X,
+                        position.Y)))
+                .ToArray();
             uniqueMonsterPlacements.Validate(
                 world,
                 monsterTypes,
                 uniqueMonsters,
                 combatTargets,
-                uniqueMonsterPlacements.Definitions
-                    .SelectMany(definition => GetReservedPositions(
-                            definition.LevelId,
-                            world,
-                            portals,
-                            objects)
-                        .Select(position => (
-                            definition.LevelId,
-                            position.X,
-                            position.Y))),
+                uniquePlacementReservedPositions,
                 reservedEntityIds: objects?.Select(@object => @object.EntityId));
             var authoredTargets = uniqueMonsterPlacements.Materialize(
                 monsterSpawnPlanner,
                 uniqueMonsters,
-                gameMode == DiabloGameMode.Multiplayer);
+                gameMode == DiabloGameMode.Multiplayer,
+                uniqueMonsterPacks,
+                combatTargets,
+                uniquePlacementReservedPositions);
             combatTargets = (combatTargets ?? [])
                 .Concat(authoredTargets)
                 .ToArray();
@@ -1211,7 +1235,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             questSequenceVariants,
             uniqueMonsterPlacements,
             proceduralSetPieceOrigins,
-            nativeDunMonsters);
+            nativeDunMonsters,
+            uniqueMonsterPacks);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(
