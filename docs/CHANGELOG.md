@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Snapshot restoration now republishes deferred native-DUN fragments after
+  restored unique encounters and fragment objects are hydrated, preserving
+  anchored geometry across process restart and replacement simulations.
 - Deferred native-DUN fragments now apply after native monster-layer targets
   materialize, so unique encounters created from mapped DUN monster cells can
   publish their anchored geometry and objects in the same simulation activation.

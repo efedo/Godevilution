@@ -2,6 +2,10 @@
 
 Status date: 2026-08-25
 
+Snapshot restoration now republishes deferred native-DUN fragments after
+restored unique encounters and fragment objects are hydrated, preserving
+anchored geometry across process restart and replacement simulations.
+
 Authoritative monster targets now retain the native `InitMonster` item-drop and
 AI seeds through snapshots, saves, and additive protocol fields 86-87.
 Procedural monster loot uses the retained item seed, preserving the server-owned

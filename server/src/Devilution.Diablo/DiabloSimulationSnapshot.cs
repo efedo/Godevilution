@@ -1738,6 +1738,10 @@ public sealed partial class DiabloSimulation
         foreach (var corpse in restoredCorpses)
             WorldState.Corpses.Add(corpse.EntityId, corpse);
         RestoreObjects(restoredObjects);
+        // Restored unique encounters can be the first available anchors for
+        // deferred native-DUN fragments. Re-run publication after hydration so
+        // replacement simulations rebuild the same geometry as the source.
+        ApplyDeferredNativeDunFragments();
         setLevelObjectOrigins.Clear();
         foreach (var origin in restoredSetLevelObjectOrigins)
             setLevelObjectOrigins.Add(

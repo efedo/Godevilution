@@ -445,6 +445,35 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         Assert.Equal((target.PositionX - 2, target.PositionY - 2), (
             generatedObject.PositionX,
             generatedObject.PositionY));
+
+        var snapshot = simulation.CaptureSnapshot(player, 2);
+        var restoredWorld = new AuthoritativeWorld();
+        restoredWorld.AddLevel(new AuthoritativeLevel(
+            1,
+            8,
+            8,
+            blockedCells: Enumerable.Range(0, 64)
+                .Where(cell => cell % 8 % 2 != 0 || cell / 8 % 2 != 0)));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = restoredWorld,
+                Content = content,
+                NativeDunFragments = fragments,
+                NativeDunFragmentObjects = fragmentObjects,
+                NativeObjectTemplates = [template],
+            });
+
+        replacement.RestoreSnapshot(player, snapshot);
+
+        var restoredLevel = Assert.Single(replacement.WorldState.World!.Levels);
+        Assert.Equal((ushort)42, restoredLevel.NativeMegaTileLayer[(originY / 2) * megaWidth + originX / 2]);
+        var restoredObject = Assert.Single(
+            replacement.WorldState.Objects.Values,
+            @object => @object.EntityId == 900);
+        Assert.Equal(97U, restoredObject.ObjectId);
+        Assert.Equal((target.PositionX - 2, target.PositionY - 2), (
+            restoredObject.PositionX,
+            restoredObject.PositionY));
     }
 
     [Fact]
