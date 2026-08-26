@@ -2106,8 +2106,6 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeAreaProjectileFamilies)
 		projectile.positionY = 7;
 		projectile.remainingTicks = 4;
 		projectile.behavior = family.behavior;
-		if (family.behavior == 31)
-			projectile.nativeVisual = 27; // NovaBall; explicit metadata is authoritative.
 
 		ServerBackedWorldProjection projection;
 		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());

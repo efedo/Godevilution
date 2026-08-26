@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   damage channel is Lightning, preserving native and Godot presentation parity.
 - Preserved the same Lightning Wall distinction in the native behavior fallback
   used when an older server omits the additive `native_visual` field.
+- Added the native behavior fallback for Nova Ball so older snapshots that omit
+  the additive visual identity still render the server-owned projectile.
 - Corrected the replay-gate documentation to report the current 80 checked-in
   JSON fixtures and 106 native registered tests, including parser and validation
   cases that do not add a fixture file.

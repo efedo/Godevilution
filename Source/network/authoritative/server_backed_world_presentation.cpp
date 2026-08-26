@@ -434,6 +434,8 @@ std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVis
 		return MissileID::BloodStar;
 	case 21: // BoneSpirit
 		return MissileID::BoneSpirit;
+	case 31: // NovaBall
+		return MissileID::NovaBall;
 	case 23: // FireWallSegment
 		// Lightning Wall reuses the shared wall-segment behavior. Older
 		// servers may omit native_visual, so retain the damage-channel
