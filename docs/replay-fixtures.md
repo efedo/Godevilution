@@ -142,7 +142,7 @@ Succubus
 BloodStar admission/impact/block lanes,
 and a Lich-family
 MonsterMagic admission/hit/miss/secondary-impact lane. With
-the native `replay_test` executable rebuilt on 2026-08-21 and run from the
+the native `replay_test` executable rebuilt on 2026-08-26 and run from the
 repository root, all 97 tests pass. The managed replay suite also passes
 locally, so the checked-in native and C# replay projections currently share a
 clean deterministic gate.
