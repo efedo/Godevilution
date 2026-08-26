@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
 - Added managed save/restore coverage proving both participant saves preserve
   the volley trajectory, canonical multiplayer hash, and deterministic removal
   after replacement-runtime continuation.
+- Added a real TCP reconnect fixture combining server-owned store state with a
+  second participant, preserving complete participant ordering and the
+  canonical snapshot hash after resume.
 - Added a shared Necromorb MonsterMagic replay fixture proving the alternate
   Lich-family missile alias admission and canonical projectile state in both
   runners.

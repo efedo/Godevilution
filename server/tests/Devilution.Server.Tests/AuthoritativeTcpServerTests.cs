@@ -1365,6 +1365,89 @@ public sealed class AuthoritativeTcpServerTests
         AssertMatchingStoreSnapshot(purchasedSnapshot, duplicateSnapshot);
     }
 
+    [Fact]
+    public async Task ResumeTokenPreservesPurchasedStateAndCompleteParticipantSet()
+    {
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, new[] {
+            new StoreItem(0, 42, 75, AuthoritativeItemState.Empty with { Identified = true, ItemType = 1 }),
+        });
+        var executor = new StoreSimulationExecutor(catalog, startingGold: 100, startingInventoryGrid: []);
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
+        await using var server = new AuthoritativeTcpServer(commandServer, handshake, () => 10, snapshotProvider: executor);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string firstResumeToken;
+        uint firstEntityId;
+        uint secondEntityId;
+        Snapshot purchasedSnapshot;
+
+        using (var firstClient = new TcpClient())
+        using (var secondClient = new TcpClient()) {
+            await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await SendHelloAsync(firstStream, cancellationToken, requestedCharacterName: "Store-First");
+            firstResumeToken = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.ServerHello.SessionToken;
+            var firstInitial = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.Snapshot;
+            firstEntityId = Assert.Single(firstInitial.Players).EntityId;
+
+            await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var secondStream = secondClient.GetStream();
+            await SendHelloAsync(secondStream, cancellationToken, requestedCharacterName: "Store-Second");
+            _ = await EnvelopeCodec.ReadAsync(secondStream, cancellationToken);
+            var secondInitial = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.Snapshot;
+            secondEntityId = secondInitial.Players[0].EntityId;
+            Assert.NotEqual(firstEntityId, secondEntityId);
+
+            await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+                CommandBatch = new CommandBatch {
+                    Commands = { new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 10,
+                        OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
+                    } },
+                },
+            }, cancellationToken);
+            Assert.Equal(CommandStatus.Accepted, (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.CommandAck.Results.Single().Status);
+            _ = await EnvelopeCodec.ReadAsync(firstStream, cancellationToken);
+
+            await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+                CommandBatch = new CommandBatch {
+                    Commands = { new Command {
+                        ClientSequence = 2,
+                        RequestedTick = 10,
+                        PurchaseRequested = new PurchaseRequested { StoreId = 1, StoreSlot = 0 },
+                    } },
+                },
+            }, cancellationToken);
+            Assert.Equal(CommandStatus.Accepted, (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.CommandAck.Results.Single().Status);
+            purchasedSnapshot = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.Snapshot;
+            Assert.Equal(
+                [firstEntityId, secondEntityId],
+                purchasedSnapshot.Players.Select(player => player.EntityId));
+            Assert.Equal(25U, purchasedSnapshot.Players[0].Gold);
+            Assert.Single(purchasedSnapshot.Players[0].Inventory);
+            Assert.Equal(SnapshotStateHasher.Compute(purchasedSnapshot), purchasedSnapshot.StateSha256);
+        }
+
+        using var resumedClient = new TcpClient();
+        await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var resumedStream = resumedClient.GetStream();
+        await SendHelloAsync(resumedStream, cancellationToken, firstResumeToken);
+        var resumedHello = (await EnvelopeCodec.ReadAsync(resumedStream, cancellationToken))!.ServerHello;
+        var resumedSnapshot = (await EnvelopeCodec.ReadAsync(resumedStream, cancellationToken))!.Snapshot;
+
+        Assert.Equal(firstResumeToken, resumedHello.SessionToken);
+        Assert.Equal(
+            [firstEntityId, secondEntityId],
+            resumedSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(25U, resumedSnapshot.Players[0].Gold);
+        Assert.Single(resumedSnapshot.Players[0].Inventory);
+        Assert.Equal(purchasedSnapshot.StateSha256, resumedSnapshot.StateSha256);
+        Assert.Equal(SnapshotStateHasher.Compute(resumedSnapshot), resumedSnapshot.StateSha256);
+    }
+
     private static void AssertMatchingStoreSnapshot(Snapshot expected, Snapshot actual)
     {
         Assert.Equal(expected.StateSha256, actual.StateSha256);
