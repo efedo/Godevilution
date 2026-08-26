@@ -66,6 +66,15 @@ public sealed record DiabloMonsterState(
     /** Native unique-monster identity retained by the authoritative save boundary. */
     public string UniqueIdentity { get; init; } = string.Empty;
 
+    /** Native leader identity retained for authoritative monster pack unity. */
+    public uint LeaderEntityId { get; init; }
+
+    /** Native leashed/separated relationship retained across save restore. */
+    public AuthoritativeMonsterLeaderRelation LeaderRelation { get; init; }
+
+    /** Native pack size retained on a monster leader. */
+    public int PackSize { get; init; }
+
     public bool IsDiablo { get; init; }
 
     public bool BerserkImmune { get; init; }
@@ -603,6 +612,9 @@ public sealed partial class DiabloSimulation
                     OwnerPlayerId = target.OwnerPlayerId,
                     IsUnique = target.IsUnique,
                     UniqueIdentity = target.UniqueIdentity,
+                    LeaderEntityId = target.LeaderEntityId,
+                    LeaderRelation = target.LeaderRelation,
+                    PackSize = target.PackSize,
                     IsDiablo = target.IsDiablo,
                     BerserkImmune = target.BerserkImmune,
                     MinDamage = target.MinDamage,
@@ -1034,6 +1046,13 @@ public sealed partial class DiabloSimulation
                 || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
                 || (!string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique)
                 || (monster.DialogueMessageId != 0 && !monster.IsUnique)
+                || !Enum.IsDefined(monster.LeaderRelation)
+                || (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.None
+                    ? monster.LeaderEntityId != 0
+                    : monster.LeaderEntityId == 0)
+                || (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None
+                    && monster.IsUnique)
+                || monster.PackSize is < 0 or > 255
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.FallenFearTicks is < 0 or > 1024
@@ -1100,6 +1119,17 @@ public sealed partial class DiabloSimulation
             }
             return monster;
         }).ToArray();
+        var restoredMonsterById = restoredMonsters.ToDictionary(monster => monster.EntityId);
+        foreach (var monster in restoredMonsters.Where(monster =>
+                     monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None)) {
+            if (!restoredMonsterById.TryGetValue(monster.LeaderEntityId, out var leader)
+                || leader.EntityId == monster.EntityId
+                || leader.IsUnique
+                || leader.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative save contains an invalid monster pack leader.");
+            }
+        }
         var restoredCorpseIds = restoredCorpses
             .Select(corpse => corpse.EntityId)
             .ToHashSet();
@@ -2150,6 +2180,10 @@ public sealed partial class DiabloSimulation
                 target.RestoreScavengerHealing(
                     monster.ScavengerHealingTicks,
                     monster.ScavengerCorpseEntityId);
+                target.RestoreGroupUnity(
+                    monster.LeaderEntityId,
+                    monster.LeaderRelation,
+                    monster.PackSize);
                 target.RestoreBatRetreat(
                     monster.BatRetreatTicks,
                     monster.BatRetreatDirection);
@@ -2249,6 +2283,9 @@ public sealed partial class DiabloSimulation
                     nativeAi: monster.NativeAi,
                     intelligence: monster.Intelligence,
                     gargoyleSpecialActive: monster.GargoyleSpecialActive,
+                    leaderEntityId: monster.LeaderEntityId,
+                    leaderRelation: monster.LeaderRelation,
+                    packSize: monster.PackSize,
                     initialStandAnimationFrame: monster.FallenStandAnimationFrame,
                     initialStandAnimationTick: monster.FallenStandAnimationTick,
                     fallenRallyTicks: monster.FallenRallyTicks,

@@ -98,7 +98,10 @@ public sealed class AuthoritativeCombatTarget
         uint monsterAiSeed = 0,
         int initialStandAnimationFrame = 0,
         int initialStandAnimationTick = 0,
-        int fallenRallyTicks = 0)
+        int fallenRallyTicks = 0,
+        uint leaderEntityId = 0,
+        AuthoritativeMonsterLeaderRelation leaderRelation = AuthoritativeMonsterLeaderRelation.None,
+        int packSize = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -131,6 +134,20 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(initialStandAnimationTick));
         if (fallenRallyTicks is < 0 or > 4096)
             throw new ArgumentOutOfRangeException(nameof(fallenRallyTicks));
+        if (!Enum.IsDefined(leaderRelation))
+            throw new ArgumentOutOfRangeException(nameof(leaderRelation));
+        if (packSize is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(packSize));
+        if (leaderRelation == AuthoritativeMonsterLeaderRelation.None
+            ? leaderEntityId != 0
+            : leaderEntityId == 0)
+            throw new ArgumentException(
+                "Monster leader identity and relation must be supplied together.",
+                nameof(leaderEntityId));
+        if (leaderRelation != AuthoritativeMonsterLeaderRelation.None && unique)
+            throw new ArgumentException(
+                "Unique monsters cannot be members of another monster pack.",
+                nameof(leaderRelation));
         if (sneakRetreatTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
         if (scavengerHealingTicks < 0)
@@ -266,6 +283,9 @@ public sealed class AuthoritativeCombatTarget
         FallenStandAnimationFrame = initialStandAnimationFrame;
         FallenStandAnimationTick = initialStandAnimationTick;
         FallenRallyTicks = fallenRallyTicks;
+        LeaderEntityId = leaderEntityId;
+        LeaderRelation = leaderRelation;
+        PackSize = packSize;
         SneakHidden = sneakHidden;
         SneakRetreatTicks = sneakRetreatTicks;
         ScavengerHealingTicks = scavengerHealingTicks;
@@ -378,6 +398,15 @@ public sealed class AuthoritativeCombatTarget
 
     /** Validated native unique-monster identity, distinct from the base monster type. */
     public string UniqueIdentity { get; set; }
+
+    /** Authoritative leader identity for a non-unique monster pack member. */
+    public uint LeaderEntityId { get; private set; }
+
+    /** Native leashed/separated relationship to LeaderEntityId. */
+    public AuthoritativeMonsterLeaderRelation LeaderRelation { get; private set; }
+
+    /** Native count of currently leashed members carried by a pack leader. */
+    public int PackSize { get; private set; }
 
     public bool IsDiablo { get; set; }
 
@@ -1371,6 +1400,47 @@ public sealed class AuthoritativeCombatTarget
             futurePositionX - PositionX,
             futurePositionY - PositionY);
         IsMoving = true;
+    }
+
+    internal void SetLeaderRelation(AuthoritativeMonsterLeaderRelation relation)
+    {
+        if (relation == AuthoritativeMonsterLeaderRelation.None)
+            throw new ArgumentOutOfRangeException(nameof(relation));
+        LeaderRelation = relation;
+    }
+
+    internal void BreakLeaderRelation()
+    {
+        LeaderEntityId = 0;
+        LeaderRelation = AuthoritativeMonsterLeaderRelation.None;
+    }
+
+    internal void IncrementPackSize()
+    {
+        PackSize = Math.Min(255, PackSize + 1);
+    }
+
+    internal void DecrementPackSize()
+    {
+        PackSize = Math.Max(0, PackSize - 1);
+    }
+
+    internal void RestoreGroupUnity(
+        uint leaderEntityId,
+        AuthoritativeMonsterLeaderRelation leaderRelation,
+        int packSize)
+    {
+        if (!Enum.IsDefined(leaderRelation)
+            || packSize is < 0 or > 255
+            || (leaderRelation == AuthoritativeMonsterLeaderRelation.None
+                ? leaderEntityId != 0
+                : leaderEntityId == 0)
+            || (leaderRelation != AuthoritativeMonsterLeaderRelation.None && IsUnique)) {
+            throw new ArgumentException("Invalid monster pack relationship state.");
+        }
+        LeaderEntityId = leaderEntityId;
+        LeaderRelation = leaderRelation;
+        PackSize = packSize;
     }
 
     internal void RestoreDirection(int direction)

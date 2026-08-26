@@ -181,6 +181,9 @@ public sealed class AuthoritativeMonsterCatalog
             var acidResistance = row.TryGet("acid_resistance", out _)
                 ? row.OptionalInt32("acid_resistance")
                 : monsterType?.AcidResistance ?? 0;
+            var leaderEntityId = row.OptionalUInt32("leader_entity_id");
+            var leaderRelation = ParseLeaderRelation(row);
+            var packSize = row.OptionalInt32("pack_size");
             return new AuthoritativeCombatTarget(
                 row.RequiredUInt32("entity_id"),
                 row.RequiredInt32("position_x"),
@@ -238,7 +241,10 @@ public sealed class AuthoritativeMonsterCatalog
                 nativeAi: nativeAi,
                 intelligence: intelligence,
                 animal: animal,
-                knockback: knockback);
+                knockback: knockback,
+                leaderEntityId: leaderEntityId,
+                leaderRelation: leaderRelation,
+                packSize: packSize);
         }).ToArray();
         var dropDefinitions = table.Rows
             .Select(row => ParseDropDefinition(row, stableIds))
@@ -284,6 +290,21 @@ public sealed class AuthoritativeMonsterCatalog
             ReadFlag(row, "drop_only_good", false),
             monsterUnique,
             monsterDiablo);
+    }
+
+    private static AuthoritativeMonsterLeaderRelation ParseLeaderRelation(TsvRow row)
+    {
+        if (!row.TryGet("leader_relation", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return AuthoritativeMonsterLeaderRelation.None;
+        }
+        return value.Trim().ToLowerInvariant() switch {
+            "leashed" => AuthoritativeMonsterLeaderRelation.Leashed,
+            "separated" => AuthoritativeMonsterLeaderRelation.Separated,
+            _ => throw new InvalidDataException(
+                $"Monster row {row.LineNumber} contains an invalid leader relation '{value}'."),
+        };
     }
 
     private static int ReadInt32(TsvRow row, string column, int defaultValue)

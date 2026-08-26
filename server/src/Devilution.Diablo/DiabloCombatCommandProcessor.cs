@@ -4927,6 +4927,10 @@ public sealed class DiabloCombatCommandProcessor
             target.ClearFallenRallyAttack();
             if (target.IsMoving && !target.IsPetrified)
                 target.CompleteMovement();
+            AuthoritativeMonsterGroupUnity.Apply(
+                target,
+                world.CombatTargets,
+                world.HasLineOfSight);
             AdvanceNativeMonsterAiSeed(target);
             if (target.IsPlayerMinion) {
                 AdvancePlayerMinion(target, tick, players, events);

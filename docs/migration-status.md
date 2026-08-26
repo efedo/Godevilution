@@ -249,8 +249,13 @@ the exact applied amount projected through `DamageEvent.amount_q6`; seed-zero
 multiplayer targets retain the compatibility controller. Monster-arrow impacts
 now cross the same native Q6 boundary before player
 damage resolution and carry the exact applied amount in `DamageEvent.amount_q6`;
-legacy whole-life fixtures retain their compatibility projection. Pack
-leadership/group unity remains follow-up work. Multiplayer Bat now consumes
+legacy whole-life fixtures retain their compatibility projection. Authoritative
+monster rows now carry validated leader identity, leashed/separated relation,
+and pack-size state; the server applies the native line-of-sight separation and
+strictly-under-four-tile reunion rule during autonomous ticks and preserves the
+relationship through snapshots. Generated pack placement, leader movement
+admission, and native active-tick FollowTheLeader timing remain follow-up work.
+Multiplayer Bat now consumes
 the stream for native adjacent
 attack admission, two-step retreat, movement, and mapped-charge action/RandomWalk
 draws; mapped charge misses reuse the same action roll without double-consuming

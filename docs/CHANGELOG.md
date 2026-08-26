@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add authoritative monster pack leader/relation state with validated
+  leashed/separated transitions, native line-of-sight separation, strict
+  four-tile reunion, snapshot preservation, and focused autonomous-tick
+  coverage; generated pack placement and active-tick leader following remain
+  explicit follow-up seams.
 - Record the current 1,828/1,839 Debug Diablo-suite verification result and
   enumerate its remaining characterized failures so the historical release
   baseline is not mistaken for current green coverage.
