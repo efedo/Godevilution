@@ -1253,7 +1253,7 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || static_cast<int32_t>(projectile.presentation_kind()) < 0
 		    || static_cast<int32_t>(projectile.presentation_kind()) > 19
 		    || static_cast<int32_t>(projectile.native_visual()) < 0
-		    || static_cast<int32_t>(projectile.native_visual()) > 28)
+		    || static_cast<int32_t>(projectile.native_visual()) > 35)
 			return tl::make_unexpected("Server-backed snapshot contains invalid projectile state.");
 	}
 	return {};

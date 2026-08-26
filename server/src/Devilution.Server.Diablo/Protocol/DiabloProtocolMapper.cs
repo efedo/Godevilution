@@ -372,7 +372,8 @@ internal static class DiabloProtocolMapper
                 DamageMaximum = projectile.DamageMaximum,
                 NativeVisual = ResolveNativeProjectileVisual(
                     projectile.Behavior,
-                    projectile.DamageType),
+                    projectile.DamageType,
+                    projectile.NativeMissileId),
                 PresentationKind = ResolveProjectilePresentationKind(
                     projectile.Behavior,
                     projectile.Phase,
@@ -1695,6 +1696,7 @@ internal static class DiabloProtocolMapper
                 projectile.AreaRadius,
                 projectile.RemainingTicks) {
                 Behavior = (AuthoritativeProjectileBehavior)projectile.Behavior,
+                NativeMissileId = ResolveNativeMonsterMissileId(projectile.NativeVisual),
                 Phase = (AuthoritativeProjectilePhase)projectile.Phase,
                 StartX = projectile.StartX,
                 StartY = projectile.StartY,
@@ -2538,8 +2540,23 @@ internal static class DiabloProtocolMapper
     /** Selects the native compatibility sprite without exposing gameplay IDs to the client. */
     private static NativeProjectileVisual ResolveNativeProjectileVisual(
         AuthoritativeProjectileBehavior behavior,
-        AuthoritativeDamageType damageType)
-        => behavior switch {
+        AuthoritativeDamageType damageType,
+        string? nativeMissileId)
+    {
+        if (behavior == AuthoritativeProjectileBehavior.MonsterMagic) {
+            return nativeMissileId switch {
+                "Lightning" => NativeProjectileVisual.MonsterLightning,
+                "OrangeFlare" => NativeProjectileVisual.MonsterOrangeFlare,
+                "BlueFlare" => NativeProjectileVisual.MonsterBlueFlare,
+                "RedFlare" => NativeProjectileVisual.MonsterRedFlare,
+                "YellowFlare" => NativeProjectileVisual.MonsterYellowFlare,
+                "BlueFlare2" => NativeProjectileVisual.MonsterBlueFlare2,
+                "MagmaBall" => NativeProjectileVisual.MonsterMagmaBall,
+                _ => NativeProjectileVisual.Unspecified,
+            };
+        }
+
+        return behavior switch {
             AuthoritativeProjectileBehavior.ChargedBolt
                 or AuthoritativeProjectileBehavior.MonsterChargedBolt
                 => NativeProjectileVisual.ChargedBolt,
@@ -2554,9 +2571,7 @@ internal static class DiabloProtocolMapper
             AuthoritativeProjectileBehavior.HolyBolt => NativeProjectileVisual.HolyBolt,
             AuthoritativeProjectileBehavior.BloodStar => NativeProjectileVisual.BloodStar,
             AuthoritativeProjectileBehavior.BoneSpirit => NativeProjectileVisual.BoneSpirit,
-            AuthoritativeProjectileBehavior.FireWallSegment
-                when damageType == AuthoritativeDamageType.Lightning
-                => NativeProjectileVisual.LightningWall,
+            AuthoritativeProjectileBehavior.FireWallSegment when damageType == AuthoritativeDamageType.Lightning => NativeProjectileVisual.LightningWall,
             AuthoritativeProjectileBehavior.FireWallSegment => NativeProjectileVisual.FireWall,
             AuthoritativeProjectileBehavior.FlameWaveController => NativeProjectileVisual.FlameWaveControl,
             AuthoritativeProjectileBehavior.FlameWaveSegment => NativeProjectileVisual.FlameWave,
@@ -2571,9 +2586,20 @@ internal static class DiabloProtocolMapper
             AuthoritativeProjectileBehavior.AcidPuddle => NativeProjectileVisual.AcidPuddle,
             AuthoritativeProjectileBehavior.HorkSpawn => NativeProjectileVisual.HorkSpawn,
             AuthoritativeProjectileBehavior.NovaBall => NativeProjectileVisual.NovaBall,
-            AuthoritativeProjectileBehavior.WeaponArrow
-                or AuthoritativeProjectileBehavior.MonsterArrow
-                => NativeProjectileVisual.Arrow,
+            AuthoritativeProjectileBehavior.WeaponArrow or AuthoritativeProjectileBehavior.MonsterArrow => NativeProjectileVisual.Arrow,
             _ => NativeProjectileVisual.Unspecified,
+        };
+    }
+
+    private static string? ResolveNativeMonsterMissileId(NativeProjectileVisual visual)
+        => visual switch {
+            NativeProjectileVisual.MonsterLightning => "Lightning",
+            NativeProjectileVisual.MonsterOrangeFlare => "OrangeFlare",
+            NativeProjectileVisual.MonsterBlueFlare => "BlueFlare",
+            NativeProjectileVisual.MonsterRedFlare => "RedFlare",
+            NativeProjectileVisual.MonsterYellowFlare => "YellowFlare",
+            NativeProjectileVisual.MonsterBlueFlare2 => "BlueFlare2",
+            NativeProjectileVisual.MonsterMagmaBall => "MagmaBall",
+            _ => null,
         };
 }

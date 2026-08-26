@@ -364,6 +364,8 @@ public sealed record DiabloProjectileState(
 {
     public AuthoritativeProjectileBehavior Behavior { get; init; }
 
+    public string? NativeMissileId { get; init; }
+
     public AuthoritativeProjectilePhase Phase { get; init; }
 
     public int StartX { get; init; }
@@ -764,6 +766,7 @@ public sealed partial class DiabloSimulation
                     projectile.AreaRadius,
                     projectile.RemainingTicks) {
                     Behavior = projectile.Behavior,
+                    NativeMissileId = projectile.NativeMissileId,
                     Phase = projectile.Phase,
                     StartX = projectile.StartX,
                     StartY = projectile.StartY,
@@ -1630,6 +1633,7 @@ public sealed partial class DiabloSimulation
                     || (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
                         && restoredMonsters.Any(monster => monster.EntityId == projectile.SourceEntityId))) {
                 Behavior = projectile.Behavior,
+                NativeMissileId = projectile.NativeMissileId,
                 Phase = projectile.Phase,
                 StartX = projectile.Behavior == AuthoritativeProjectileBehavior.Targeted
                     && projectile.StartX == 0

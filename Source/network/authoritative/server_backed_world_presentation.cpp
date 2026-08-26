@@ -402,6 +402,20 @@ std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVis
 			return MissileID::NovaBall;
 		case protocol::NATIVE_PROJECTILE_VISUAL_LIGHTNING_WALL:
 			return MissileID::LightningWall;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_LIGHTNING:
+			return MissileID::Lightning;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_ORANGE_FLARE:
+			return MissileID::OrangeFlare;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_BLUE_FLARE:
+			return MissileID::BlueFlare;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_RED_FLARE:
+			return MissileID::RedFlare;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_YELLOW_FLARE:
+			return MissileID::YellowFlare;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_BLUE_FLARE2:
+			return MissileID::BlueFlare2;
+		case protocol::NATIVE_PROJECTILE_VISUAL_MONSTER_MAGMA_BALL:
+			return MissileID::MagmaBall;
 		default:
 			// An explicit unknown identity must fail closed rather than infer a
 			// different visual from gameplay behavior.

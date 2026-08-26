@@ -1373,7 +1373,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	EXPECT_TRUE(ValidateProjectileSnapshots(lightningWallPresentation).has_value());
 
 	protocol::Snapshot invalidPresentation = makeProjectile();
-	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(29));
+	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(36));
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidPresentation).has_value());
 
 	protocol::Snapshot zeroSpellArrow = makeProjectile();
@@ -2034,6 +2034,42 @@ TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, PresentsContentOwnedMonsterMagicVisualFamilies)
+{
+	struct Family { int nativeVisual; MissileID missileId; };
+	const Family families[] = {
+		{ 29, MissileID::Lightning }, { 30, MissileID::OrangeFlare },
+		{ 31, MissileID::BlueFlare }, { 32, MissileID::RedFlare },
+		{ 33, MissileID::YellowFlare }, { 34, MissileID::BlueFlare2 },
+		{ 35, MissileID::MagmaBall },
+	};
+	LoadMissileData();
+	for (const auto &family : families) {
+		Missiles.clear();
+		ProjectedProjectileSnapshot projectile;
+		projectile.entityId = static_cast<uint32_t>(500 + family.nativeVisual);
+		projectile.sourceEntityId = 1;
+		projectile.spellId = 4;
+		projectile.levelId = 1;
+		projectile.positionX = 4;
+		projectile.positionY = 5;
+		projectile.remainingTicks = 4;
+		projectile.behavior = 50;
+		projectile.nativeVisual = family.nativeVisual;
+		ServerBackedWorldProjection projection;
+		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ServerBackedWorldPresentation presentation;
+		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+		if (!IsMissileDataAvailable(family.missileId)) {
+			EXPECT_TRUE(Missiles.empty());
+			continue;
+		}
+		ASSERT_EQ(Missiles.size(), 1U);
+		EXPECT_EQ(Missiles.front()._mitype, family.missileId);
+		presentation.Clear();
+	}
+	Missiles.clear();
+}
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeMonsterProjectileFamilies)
 {
 	struct Family {
@@ -2066,6 +2102,10 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeMonsterProjectileFamilies)
 		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
 		ServerBackedWorldPresentation presentation;
 		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+		if (!IsMissileDataAvailable(family.missileId)) {
+			EXPECT_TRUE(Missiles.empty());
+			continue;
+		}
 		if (!IsMissileDataAvailable(family.missileId)) {
 			EXPECT_TRUE(Missiles.empty());
 			continue;
@@ -2115,6 +2155,10 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeAreaProjectileFamilies)
 			EXPECT_TRUE(Missiles.empty());
 			continue;
 		}
+		if (!IsMissileDataAvailable(family.missileId)) {
+			EXPECT_TRUE(Missiles.empty());
+			continue;
+		}
 		ASSERT_EQ(Missiles.size(), 1U);
 		EXPECT_EQ(Missiles.front()._mitype, family.missileId);
 		EXPECT_EQ(Missiles.front()._miAuthoritativeEntityId, projectile.entityId);
@@ -2153,6 +2197,10 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeLayeredAndArrowProjectileF
 		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
 		ServerBackedWorldPresentation presentation;
 		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+		if (!IsMissileDataAvailable(family.missileId)) {
+			EXPECT_TRUE(Missiles.empty());
+			continue;
+		}
 		if (!IsMissileDataAvailable(family.missileId)) {
 			EXPECT_TRUE(Missiles.empty());
 			continue;

@@ -5938,6 +5938,7 @@ public sealed class DiabloCombatCommandProcessor
                     0,
                     checked((uint)projectileLifetime)) {
                     Behavior = missile.ProjectileBehavior,
+                    NativeMissileId = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic ? missile.MissileId : null,
                     VelocityX = velocity.X,
                     VelocityY = velocity.Y,
                     OriginalDirection = direction,
@@ -8960,6 +8961,7 @@ public sealed class DiabloCombatCommandProcessor
                     0,
                     checked((uint)lifetime)) {
                     Behavior = missile.ProjectileBehavior,
+                    NativeMissileId = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic ? missile.MissileId : null,
                     VelocityX = velocityX,
                     VelocityY = velocityY,
                     OriginalDirection = direction,

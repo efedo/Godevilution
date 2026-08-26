@@ -92,6 +92,9 @@ public sealed class AuthoritativeProjectile
 
     public AuthoritativeProjectileBehavior Behavior { get; init; }
 
+    /** Content-owned missile identity used for exact native presentation compatibility. */
+    public string? NativeMissileId { get; init; }
+
     public AuthoritativeProjectilePhase Phase { get; set; }
 
     public int StartX { get; init; }

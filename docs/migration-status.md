@@ -6067,3 +6067,5 @@ resistance, lifetime, collision, and deterministic projectile state.
    exists.
 6. Replace the remaining Lua capability destinations and remove Lua only after
    every removal gate is satisfied.
+
+MonsterMagic projectiles now retain validated content missile identities through simulation snapshots, save/restore, and protocol projection. Native presentation maps the seven supported families exactly; unknown identities remain fail-closed.

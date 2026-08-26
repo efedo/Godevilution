@@ -667,3 +667,6 @@ replay behavior is covered by the opt-in CMake test targets.
 
 See `docs/authoritative-protocol-contract.md` for the complete boundary and
 evolution rules.
+
+
+MonsterMagic native visuals 29–35 identify the seven content-owned missile families and remain optional for older clients.
