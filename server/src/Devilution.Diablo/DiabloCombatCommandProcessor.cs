@@ -5375,6 +5375,16 @@ public sealed class DiabloCombatCommandProcessor
                     world.CombatTargets))
                 leader.CancelMovement();
         }
+        foreach (var member in world.CombatTargets.Values
+                     .Where(target => target.IsMoving
+                         && target.LeaderRelation
+                             == AuthoritativeMonsterLeaderRelation.Leashed)
+                     .OrderBy(target => target.EntityId)) {
+            if (!AuthoritativeMonsterGroupUnity.CanLeashedMemberMove(
+                    member,
+                    world.CombatTargets))
+                member.CancelMovement();
+        }
     }
 
     /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */

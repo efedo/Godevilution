@@ -40,6 +40,33 @@ public static class AuthoritativeMonsterGroupUnity
                 Math.Abs(member.PositionY - futureY)) < ReunionDistance);
     }
 
+    /** Native isDirOK gate for a leashed member's candidate movement cell. */
+    public static bool CanLeashedMemberMove(
+        AuthoritativeCombatTarget member,
+        IReadOnlyDictionary<uint, AuthoritativeCombatTarget> monsters)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+        ArgumentNullException.ThrowIfNull(monsters);
+        if (member.LeaderRelation != AuthoritativeMonsterLeaderRelation.Leashed)
+            return true;
+        if (member.LeaderEntityId == 0
+            || member.LeaderEntityId == member.EntityId
+            || !monsters.TryGetValue(member.LeaderEntityId, out var leader)
+            || leader.IsUnique
+            || leader.HitPoints <= 0
+            || leader.LevelId != member.LevelId) {
+            return false;
+        }
+
+        var leaderX = leader.IsMoving ? leader.FuturePositionX : leader.PositionX;
+        var leaderY = leader.IsMoving ? leader.FuturePositionY : leader.PositionY;
+        var memberX = member.IsMoving ? member.FuturePositionX : member.PositionX;
+        var memberY = member.IsMoving ? member.FuturePositionY : member.PositionY;
+        return Math.Max(
+                Math.Abs(memberX - leaderX),
+                Math.Abs(memberY - leaderY)) < ReunionDistance;
+    }
+
     /**
      * Updates one member against its authoritative leader. A missing, dead,
      * cross-level, or self-referential leader breaks the relationship instead

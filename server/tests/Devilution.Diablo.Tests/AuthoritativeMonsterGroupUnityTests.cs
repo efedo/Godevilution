@@ -130,6 +130,48 @@ public sealed class AuthoritativeMonsterGroupUnityTests
     }
 
     [Fact]
+    public void LeashedMemberMovementAdmissionRequiresStrictFourTileEnvelope()
+    {
+        var leader = new AuthoritativeCombatTarget(1, 5, 5, 10, packSize: 1);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            5,
+            8,
+            10,
+            moving: true,
+            futurePositionX: 5,
+            futurePositionY: 9,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+        var world = new DiabloWorldState(combatTargets: [leader, member]);
+
+        Assert.False(AuthoritativeMonsterGroupUnity.CanLeashedMemberMove(
+            member,
+            world.CombatTargets));
+    }
+
+    [Fact]
+    public void LeashedMemberMovementAdmissionAllowsThreeTileEnvelope()
+    {
+        var leader = new AuthoritativeCombatTarget(1, 5, 5, 10, packSize: 1);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            5,
+            7,
+            10,
+            moving: true,
+            futurePositionX: 5,
+            futurePositionY: 8,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+        var world = new DiabloWorldState(combatTargets: [leader, member]);
+
+        Assert.True(AuthoritativeMonsterGroupUnity.CanLeashedMemberMove(
+            member,
+            world.CombatTargets));
+    }
+
+    [Fact]
     public void SimulationRunsGroupUnityForAuthoritativeMembers()
     {
         var leader = new AuthoritativeCombatTarget(1, 5, 5, 10, packSize: 2);

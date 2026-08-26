@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforce native leashed-member movement admission alongside leader admission:
+  a member's candidate cell must remain strictly within four tiles of its
+  leader, with focused boundary coverage for three- and four-tile moves.
 - Enforce native leader movement admission for authoritative leashed packs:
   leaders cannot retain a movement that leaves the validated pack-size count
   or any member outside the strict four-tile envelope; focused coverage covers
