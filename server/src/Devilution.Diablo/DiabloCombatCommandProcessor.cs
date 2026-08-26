@@ -8574,7 +8574,10 @@ public sealed class DiabloCombatCommandProcessor
         var usesNativeRangedAvoidanceAiStream = missile.AttackMode
                 == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
             && monster.MonsterAiSeed != 0;
-        var isCounselor = UsesNativeAi(monster, "Counselor");
+        // Zhar and Lazarus use the native Counselor controller even though
+        // their runtime identities are distinct aliases. Keep the mapped
+        // projectile's delay/RNG branch aligned with that controller.
+        var isCounselor = UsesNativeCounselorAi(monster);
         var usesNativeRangedAiStream = missile.AttackMode
                 == AuthoritativeMonsterRangedAttackMode.Ranged
             && !isCounselor

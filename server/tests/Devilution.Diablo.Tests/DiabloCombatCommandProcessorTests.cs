@@ -11273,6 +11273,54 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(4, projectile.Damage);
     }
 
+    [Theory]
+    [InlineData("Zhar", 107)]
+    [InlineData("Lazarus", 113)]
+    public void SeededCounselorAliasesUseCounselorRecoveryDelay(
+        string nativeAi,
+        int monsterId)
+    {
+        const uint initSeed = 7;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: (uint)monsterId,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: nativeAi,
+            intelligence: 3,
+            monsterItemSeed: initSeed,
+            monsterAiSeed: initSeed);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(initSeed),
+            gameMode: DiabloGameMode.SinglePlayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    nativeAi,
+                    "FixedFireball",
+                    AuthoritativeProjectileBehavior.Fireball,
+                    RangedDelayBase: 30,
+                    RangedDelayRandomRange: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Single(world.Projectiles.Values);
+        Assert.Equal(0, monster.RangedDelayTicks);
+        Assert.InRange(monster.CounselorDelayTicks, 5, 14);
+    }
+
     [Fact]
     public void WoundedCounselorStartsItsFourAttemptRetreatBeforeRangedDispatch()
     {

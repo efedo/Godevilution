@@ -8,6 +8,11 @@ retain their server-owned Skeleton/Fallen combat branches when their encounter
 inherits baseline type metadata, rather than falling through to generic
 movement.
 
+Zhar and Lazarus now retain the native Counselor recovery-delay and RNG branch
+when their validated Fireball mappings are dispatched, rather than being
+treated as generic ranged monsters because their runtime identities are
+aliases.
+
 Lightning Wall segments now carry an explicit server-selected native visual and
 lightning presentation family when their shared wall-segment behavior uses the
 Lightning damage channel; Fire Wall and Ring of Fire segments retain fire
