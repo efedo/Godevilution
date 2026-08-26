@@ -14,6 +14,32 @@ public static class AuthoritativeMonsterGroupUnity
     /** Native reunion admits a separated member strictly below four tiles. */
     public const int ReunionDistance = 4;
 
+    /** Native isDirOK gate for a leader carrying a leashed pack. */
+    public static bool CanLeaderMove(
+        AuthoritativeCombatTarget leader,
+        IReadOnlyDictionary<uint, AuthoritativeCombatTarget> monsters)
+    {
+        ArgumentNullException.ThrowIfNull(leader);
+        ArgumentNullException.ThrowIfNull(monsters);
+        if (leader.PackSize == 0)
+            return true;
+
+        var leashedMembers = monsters.Values
+            .Where(monster => monster.LeaderEntityId == leader.EntityId
+                && monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.Leashed)
+            .ToArray();
+        if (leashedMembers.Length != leader.PackSize)
+            return false;
+
+        var futureX = leader.IsMoving ? leader.FuturePositionX : leader.PositionX;
+        var futureY = leader.IsMoving ? leader.FuturePositionY : leader.PositionY;
+        return leashedMembers.All(member =>
+            member.LevelId == leader.LevelId
+            && Math.Max(
+                Math.Abs(member.PositionX - futureX),
+                Math.Abs(member.PositionY - futureY)) < ReunionDistance);
+    }
+
     /**
      * Updates one member against its authoritative leader. A missing, dead,
      * cross-level, or self-referential leader breaks the relationship instead

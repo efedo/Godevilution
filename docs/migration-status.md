@@ -253,8 +253,10 @@ legacy whole-life fixtures retain their compatibility projection. Authoritative
 monster rows now carry validated leader identity, leashed/separated relation,
 and pack-size state; the server applies the native line-of-sight separation and
 strictly-under-four-tile reunion rule during autonomous ticks and preserves the
-relationship through snapshots. Generated pack placement, leader movement
-admission, and native active-tick FollowTheLeader timing remain follow-up work.
+relationship through snapshots. Generated pack placement and native active-tick
+FollowTheLeader timing remain follow-up work; a post-tick authoritative
+movement-admission pass now prevents a leader from moving beyond its leashed
+pack envelope.
 Multiplayer Bat now consumes
 the stream for native adjacent
 attack admission, two-step retreat, movement, and mapped-charge action/RandomWalk
@@ -933,10 +935,12 @@ Inventory-grid references and memorized-spell IDs/levels are validated at the
 same participant-template boundary.
 
 Legacy item-table spell names now resolve through the validated external
-`native_spells.tsv` namespace during content activation; the compatibility
+
+ative_spells.tsv` namespace during content activation; the compatibility
 fallback remains available to older direct callers.
 Legacy item-table miscellaneous symbols now resolve through the validated
-external `native_item_misc.tsv` namespace as well.
+external 
+ative_item_misc.tsv` namespace as well.
 Legacy charged-staff initialization now resolves the `STAFF` miscellaneous
 identity through that namespace, retaining the native fallback for older
 callers.
@@ -944,20 +948,25 @@ Normalized unique-item and Hellfire affix powers now resolve through the validat
 Hellfire item-effect namespace, retaining native flag fallbacks for direct
 catalogs without that namespace.
 Unique-item and affix powers with matching ordinary effect symbols now resolve through
-the validated `native_item_effects.tsv` namespace as well, including the
+the validated 
+ative_item_effects.tsv` namespace as well, including the
 level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock
 flags; direct catalogs retain native flag fallbacks without that namespace,
 including elemental arrow and damage-channel powers.
 Production content activation now rejects unique and affix power symbols without
 an authoritative C# handler; direct catalogs remain permissive for compatibility.
 Legacy item-table type, class, and equipment-location symbols now resolve
-through the validated external `native_item_topology.tsv` namespace as well.
+through the validated external 
+ative_item_topology.tsv` namespace as well.
 Legacy item-table special-effect symbols now resolve through the validated
-external `native_item_effects.tsv` namespace as well.
+external 
+ative_item_effects.tsv` namespace as well.
 Normalized Hellfire item-effect symbols now resolve through the validated
-external `native_item_hellfire_effects.tsv` namespace as well.
+external 
+ative_item_hellfire_effects.tsv` namespace as well.
 Legacy item-type generation tags now resolve through the validated external
-`native_item_tags.tsv` namespace as well.
+
+ative_item_tags.tsv` namespace as well.
 Spell-book cursor projections now resolve through the validated item cursor
 catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
@@ -1024,7 +1033,8 @@ roles validate native vendor identities for authoritative sale admission;
 legacy rows infer only known Smith/Witch/Wirt/Healer symbols and retain the
 generic role for custom stores.
 
-Schema 1.416 extends ordinary `native_dun_levels.tsv` rows with optional
+Schema 1.416 extends ordinary 
+ative_dun_levels.tsv` rows with optional
 validated `.til`/`.sol` collision assets. Legacy rows remain object/mega-tile
 metadata-only; rows with the pair now retain effective d-piece collision
 provenance for later authoritative mutations.
@@ -1218,7 +1228,13 @@ transient labels from another projected level.
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, strict TSV Boolean parsing, immutable native `.dun`/`.til`/`.sol` asset composition and hashing, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, generation leases with explicit retired-target draining, and reusable bounded grid navigation, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine; participant templates and save restore fail closed on invalid scalar resources/actions, attribute state, item identity metadata and duplicates, equipment/belt slots, and malformed item dimensions or inventory footprints while retaining legacy character-level normalization; save restore remains the authoritative stash placement validation boundary | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
-| External content | Explicitly manifested base and Hellfire variant packs plus schema-aware, dependency-versioned composite-key overlays, including the validated complete native `native_spells.tsv` namespace, native `native_item_misc.tsv` namespace, and native `native_item_topology.tsv`/`native_item_effects.tsv`/`native_item_hellfire_effects.tsv`/`native_item_tags.tsv` namespaces for item compatibility, normalized Hellfire effects, and legacy generation tags, all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, all six validated cursor-driven class capability identities (Repair, Trap Disarm, Recharge, Identify, Search, and Rage), native level-range generation metadata, optional `procedural_levels.tsv` definitions with deterministic connected movement geometry and independently seeded missile occlusion from row and world seeds, validated level-aware monster candidate selection, a bounded server-owned seed-stable spawn planner exposed through Diablo content activation and optionally consumable as generated combat targets with deterministic validated drops, unique/Diablo encounter flags, native death-animation durations, native experience rewards, native normal, special, and magic-projectile monster attack accuracy, native monster resistance metadata, the validated Hellfire Hork Demon AI identity, Hork Spawn missile mapping and server-owned speed-8 nine-tick expiry summon controller, the validated item presentation-name projection, shared item cursor-symbol catalog, unique-item cursor projection, item random-drop minimum-level metadata, weighted drop-rate metadata, explicit usable-item metadata for consumable source admission, normalized item armor-range metadata, symbolic normalized native special-effect metadata, 22 native spell-backed scroll consumable rows, explicit Identify item-action metadata and authoritative consumable-source handling, validated item-action magnitudes, nine Hellfire quest and miscellaneous item identities, the Hellfire full-potion and rejuvenation family, Hellfire oil and elixir consumables, complete normalized base armor, standard weapon, generic ring/amulet, and Arena Potion rows, corrected native scroll projections, four normalized dynamic spell-book templates, validated metadata and deterministic generation for all 23 native bookable spells, authoritative `ReadBookRequested` learning/consumption behavior, integrated store/static-drop/procedural-drop/quest-reward spell-book generation, explicit native DUN object-layer mappings with deterministic object materialization, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Lightning Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, Magi, Mana, Ring of Fire, Immolation, Jester, Berserk, Warp, Golem, and Etherealize spell behaviors | Expand generated geometry toward native map synthesis, externalize remaining native spells, unique Hellfire quest behavior and rewards, and remaining item metadata; ship authored native DUN object mappings for remaining set-piece objects and extend the table reference as new schemas land |
+| External content | Explicitly manifested base and Hellfire variant packs plus schema-aware, dependency-versioned composite-key overlays, including the validated complete native 
+ative_spells.tsv` namespace, native 
+ative_item_misc.tsv` namespace, and native 
+ative_item_topology.tsv`/
+ative_item_effects.tsv`/
+ative_item_hellfire_effects.tsv`/
+ative_item_tags.tsv` namespaces for item compatibility, normalized Hellfire effects, and legacy generation tags, all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, all six validated cursor-driven class capability identities (Repair, Trap Disarm, Recharge, Identify, Search, and Rage), native level-range generation metadata, optional `procedural_levels.tsv` definitions with deterministic connected movement geometry and independently seeded missile occlusion from row and world seeds, validated level-aware monster candidate selection, a bounded server-owned seed-stable spawn planner exposed through Diablo content activation and optionally consumable as generated combat targets with deterministic validated drops, unique/Diablo encounter flags, native death-animation durations, native experience rewards, native normal, special, and magic-projectile monster attack accuracy, native monster resistance metadata, the validated Hellfire Hork Demon AI identity, Hork Spawn missile mapping and server-owned speed-8 nine-tick expiry summon controller, the validated item presentation-name projection, shared item cursor-symbol catalog, unique-item cursor projection, item random-drop minimum-level metadata, weighted drop-rate metadata, explicit usable-item metadata for consumable source admission, normalized item armor-range metadata, symbolic normalized native special-effect metadata, 22 native spell-backed scroll consumable rows, explicit Identify item-action metadata and authoritative consumable-source handling, validated item-action magnitudes, nine Hellfire quest and miscellaneous item identities, the Hellfire full-potion and rejuvenation family, Hellfire oil and elixir consumables, complete normalized base armor, standard weapon, generic ring/amulet, and Arena Potion rows, corrected native scroll projections, four normalized dynamic spell-book templates, validated metadata and deterministic generation for all 23 native bookable spells, authoritative `ReadBookRequested` learning/consumption behavior, integrated store/static-drop/procedural-drop/quest-reward spell-book generation, explicit native DUN object-layer mappings with deterministic object materialization, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Lightning Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, Magi, Mana, Ring of Fire, Immolation, Jester, Berserk, Warp, Golem, and Etherealize spell behaviors | Expand generated geometry toward native map synthesis, externalize remaining native spells, unique Hellfire quest behavior and rewards, and remaining item metadata; ship authored native DUN object mappings for remaining set-piece objects and extend the table reference as new schemas land |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, explicit hash-verified Server packages, and repeated 64-generation replacement/retirement coverage | Add further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable; optional configured factory-ID selection with strict compatibility validation | Add a second production adapter and define its package/discovery policy |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry; server boundary tests reject Lua/sol2 references from the authoritative C# source and project path and reject Lua assets or manifest references in the active base and Hellfire packs | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
@@ -1551,7 +1567,8 @@ scaled hit points), not only the client's difficulty label.
   dead target through authoritative snapshots and saves.
 
 - Hellfire Na-Krul tome objects now use the validated
-  `native_dun_fragment_objects.tsv` contract to follow the encounter anchor;
+  
+ative_dun_fragment_objects.tsv` contract to follow the encounter anchor;
   their behavior remains authored once in `objects.tsv` while placement is
   externalized with the room fragment. The same contract now accepts a unique
   encounter identity, so generated set-piece objects can be positioned after
@@ -2050,7 +2067,8 @@ scaled hit points), not only the client's difficulty label.
   existing identity contract, while ordinary-level mappings use a separate
   reserved entity range and require an explicit level identity.
 
-- Schema 1.380 adds `native_dun_levels.tsv`. Each ordinary runtime level may
+- Schema 1.380 adds 
+ative_dun_levels.tsv`. Each ordinary runtime level may
   explicitly reference one immutable native `.dun` asset; its object layer is
   attached to the existing level geometry without inferring collision behavior.
   Effective d-piece geometry remains supplied by the composed level or a
@@ -2058,7 +2076,8 @@ scaled hit points), not only the client's difficulty label.
   asset paths are validated before activation.
 
 - Schema 1.381 adds optional stable `object_symbol` cross-checks to
-  `native_dun_objects.tsv`. Numeric `object_id` rows remain backward-compatible;
+  
+ative_dun_objects.tsv`. Numeric `object_id` rows remain backward-compatible;
   when a symbol is supplied, it must resolve to the same authored object ID.
 
 - Schema 1.382 ships deterministic `procedural_levels.tsv` rows for ordinary
@@ -2155,7 +2174,8 @@ scaled hit points), not only the client's difficulty label.
   removes the server-side structural blocker for externalizing book/lever
   behaviors; exact native placement and map-effect rows remain content work.
 
-- Schema 1.368 adds the optional `native_dun_objects.tsv` mapping table. It
+- Schema 1.368 adds the optional 
+ative_dun_objects.tsv` mapping table. It
   explicitly maps native DUN object-layer values for each set-level map variant
   to authoritative object identities and optional behavior templates. Complete
   native geometry now retains the object layer through level projection and
@@ -2209,7 +2229,8 @@ scaled hit points), not only the client's difficulty label.
   transparency) from checked-in native fixtures. It deliberately does not
   infer walkability or object behavior from native IDs; collision interpretation
   remains explicit, and object-layer behavior requires the validated
-  `native_dun_objects.tsv` mapping.
+  
+ative_dun_objects.tsv` mapping.
 
 - The geometry boundary now has a validated materializer contract: native
   little-endian `.til` mega-tile records and `.sol` d-piece property bytes can
@@ -2959,7 +2980,8 @@ scaled hit points), not only the client's difficulty label.
   and depth boundary are engine-owned and independently tested.
 
 - Nova and Immolation controllers now consume their validated
-  `nova_projectile_count` and `immolation_projectile_count` fields in native
+  
+ova_projectile_count` and `immolation_projectile_count` fields in native
   radial emission order; the shipped rows retain the native 36-projectile
   fan-out.
 
@@ -3426,7 +3448,8 @@ scaled hit points), not only the client's difficulty label.
   and `Amulet` subtype tags to `items.tsv`; player and monster weapon
   modifiers consume those tags before falling back to native item type.
 
-- Schema 1.147 adds optional `name` and `identified_name` item metadata. The
+- Schema 1.147 adds optional 
+ame` and `identified_name` item metadata. The
   authoritative catalog validates and projects these labels into the existing
   server-owned item state and protocol fields; legacy `itemdat.tsv` names map
   through the same seam.
@@ -3589,7 +3612,8 @@ scaled hit points), not only the client's difficulty label.
   `classes.tsv`. Active IronSkin armor now uses the validated class divisor;
   omitted values retain the native level-divided-by-four behavior.
 
-- Schema 1.186 adds optional `natural_resistance_per_level_percent` and
+- Schema 1.186 adds optional 
+atural_resistance_per_level_percent` and
   `heavy_hit_threshold_bonus_percent` metadata to `classes.tsv`. Active class
   defense now uses the validated percentages; omitted values retain the native
   100% and 25% behavior.
@@ -6058,7 +6082,8 @@ object, or monster through the existing authoritative cast and world rules;
 remote pickup, object effects, and one-cell knockback are deterministic.
 
 Content schema 0.42 adds explicit stable/native spell identity mapping through
-the optional `native_spell_id` column. `spell_id` remains the authoritative
+the optional 
+ative_spell_id` column. `spell_id` remains the authoritative
 content identity; legacy item spell names resolve from native IDs through the
 activated catalog, preserving intentional pairs such as Guardian `7`/`13`, Holy
 Bolt `5`/`31`, and Bone Spirit `38`/`36`.
