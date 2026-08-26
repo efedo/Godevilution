@@ -2242,6 +2242,83 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void AcceptsAndRetainsAuthoritativeMonsterGroupUnityState()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    Alive = true,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    PackSize = 2,
+                    ActiveForTicks = 6,
+                },
+                new MonsterSnapshot {
+                    EntityId = 10,
+                    Alive = true,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    LeaderEntityId = 9,
+                    LeaderRelation = 1,
+                    PackSize = 2,
+                    ActiveForTicks = 5,
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        Assert.Equal(9U, model.Snapshot!.Monsters[1].LeaderEntityId);
+        Assert.Equal(1, model.Snapshot.Monsters[1].LeaderRelation);
+        Assert.Equal(2, model.Snapshot.Monsters[0].PackSize);
+        Assert.Equal(5, model.Snapshot.Monsters[1].ActiveForTicks);
+    }
+
+    [Fact]
+    public void RejectsInvalidAuthoritativeMonsterGroupUnityState()
+    {
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    Alive = true,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                },
+                new MonsterSnapshot {
+                    EntityId = 10,
+                    Alive = true,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    LeaderEntityId = 9,
+                    LeaderRelation = 1,
+                },
+            },
+        };
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<Snapshot>[] {
+            snapshot => snapshot.Monsters[1].LeaderEntityId = 0,
+            snapshot => snapshot.Monsters[1].LeaderEntityId = 11,
+            snapshot => snapshot.Monsters[1].LeaderRelation = 3,
+            snapshot => snapshot.Monsters[0].IsUnique = true,
+            snapshot => snapshot.Monsters[0].Alive = false,
+            snapshot => snapshot.Monsters[1].PackSize = 256,
+            snapshot => snapshot.Monsters[1].ActiveForTicks = -1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void RejectsMalformedAuthoritativeMonsterMovementState()
     {
         var model = new AuthoritativeClientModel();

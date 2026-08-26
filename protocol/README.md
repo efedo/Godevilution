@@ -627,6 +627,10 @@ Windows toolchain command.
   Seeded Fallen fear retreats consume the restored stream's two native
   `RandomWalk` coin draws; seed-zero targets retain the compatibility path.
   Older peers may omit both fields.
+- Optional `MonsterSnapshot` fields 91-94 carry server-owned GroupUnity state:
+  `leader_entity_id`, `leader_relation` (0 none, 1 leashed, 2 separated),
+  `pack_size`, and `active_for_ticks`. The server validates leader references
+  and owns all relationship transitions; older peers may omit these fields.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

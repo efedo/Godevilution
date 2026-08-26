@@ -1,6 +1,7 @@
 using Devilution.Diablo;
 using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
+using Devilution.Server.Snapshots;
 using Xunit;
 
 namespace Devilution.Server.Tests;
@@ -37,6 +38,97 @@ public sealed class DialogueProtocolProjectionTests
 
         Assert.Equal(0x12345678U, monster.MonsterItemSeed);
         Assert.Equal(0x87654321U, monster.MonsterAiSeed);
+    }
+
+    [Fact]
+    public void ProjectsAndRestoresMonsterGroupUnityState()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [
+                    new DiabloMonsterState(
+                        9,
+                        2,
+                        17,
+                        1,
+                        1,
+                        10,
+                        10,
+                        0,
+                        1,
+                        6,
+                        0,
+                        0,
+                        0,
+                        0) {
+                        PackSize = 1,
+                        ActiveForTicks = 6,
+                    },
+                    new DiabloMonsterState(
+                        10,
+                        3,
+                        17,
+                        2,
+                        1,
+                        10,
+                        10,
+                        0,
+                        1,
+                        6,
+                        0,
+                        0,
+                        0,
+                        0) {
+                        LeaderEntityId = 9,
+                        LeaderRelation = AuthoritativeMonsterLeaderRelation.Leashed,
+                        ActiveForTicks = 5,
+                    },
+                ],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var leader = projected.Monsters.Single(monster => monster.EntityId == 9);
+        var member = projected.Monsters.Single(monster => monster.EntityId == 10);
+        Assert.Equal(1, leader.PackSize);
+        Assert.Equal(6, leader.ActiveForTicks);
+        Assert.Equal(9U, member.LeaderEntityId);
+        Assert.Equal(1, member.LeaderRelation);
+        Assert.Equal(5, member.ActiveForTicks);
+
+        var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
+        var restoredMember = restored.Monsters.Single(monster => monster.EntityId == 10);
+        Assert.Equal(9U, restoredMember.LeaderEntityId);
+        Assert.Equal(AuthoritativeMonsterLeaderRelation.Leashed, restoredMember.LeaderRelation);
+        Assert.Equal(5, restoredMember.ActiveForTicks);
+    }
+
+    [Fact]
+    public void RejectsInvalidMonsterGroupUnityRelation()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0)],
+            };
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        snapshot.Monsters[0].LeaderRelation = 3;
+        snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.FromProtocolSnapshot(snapshot));
     }
 
     [Fact]

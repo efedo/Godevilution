@@ -804,6 +804,14 @@ message MonsterSnapshot {
 	optional int32 fallen_stand_animation_tick = 89;
 	// Remaining native Fallen rally attack ticks.
 	optional int32 fallen_rally_ticks = 90;
+	// Server-owned GroupUnity leader entity; zero means no leader relation.
+	optional uint32 leader_entity_id = 91;
+	// Server-owned native leader relation: 0 none, 1 leashed, 2 separated.
+	optional int32 leader_relation = 92;
+	// Server-owned leashed-member count carried by a pack leader.
+	optional int32 pack_size = 93;
+	// Remaining native activation ticks used by FollowTheLeader.
+	optional int32 active_for_ticks = 94;
 }
 
 message WorldItemSnapshot {

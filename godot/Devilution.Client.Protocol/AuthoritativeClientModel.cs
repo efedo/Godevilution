@@ -160,6 +160,7 @@ public sealed class AuthoritativeClientModel
                 ValidateMonsterCombatState(monster);
                 ValidateMonsterMovementState(monster);
             }
+            ValidateMonsterGroupState(message.Snapshot.Monsters);
             foreach (var item in message.Snapshot.WorldItems) {
                 ValidateEntityId(entityIds, item.EntityId);
                 if (item.Price > int.MaxValue) {
@@ -1143,12 +1144,40 @@ public sealed class AuthoritativeClientModel
             || monster.LightningResistance is < -100 or > 100
             || monster.MagicResistance is < -100 or > 100
             || monster.AcidResistance is < -100 or > 100
+            || monster.LeaderRelation is < 0 or > 2
+            || (monster.LeaderRelation == 0
+                ? monster.LeaderEntityId != 0
+                : monster.LeaderEntityId == 0)
+            || monster.LeaderRelation != 0 && monster.IsUnique
+            || monster.PackSize is < 0 or > 255
+            || monster.ActiveForTicks is < 0 or > 255
             || monster.FallenStandAnimationFrame is < 0 or > 127
             || monster.FallenStandAnimationTick is < 0 or > 127
             || monster.FallenRallyTicks is < 0 or > 4096
             || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster combat state.");
+        }
+    }
+
+    private static void ValidateMonsterGroupState(
+        IReadOnlyList<MonsterSnapshot> monsters)
+    {
+        var monstersById = new Dictionary<uint, MonsterSnapshot>();
+        foreach (var monster in monsters) {
+            if (!monstersById.TryAdd(monster.EntityId, monster))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate monster entity IDs.");
+        }
+        foreach (var monster in monsters.Where(monster => monster.LeaderRelation != 0)) {
+            if (!monstersById.TryGetValue(monster.LeaderEntityId, out var leader)
+                || leader.EntityId == monster.EntityId
+                || leader.IsUnique
+                || !leader.Alive
+                || leader.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid monster pack leader.");
+            }
         }
     }
 

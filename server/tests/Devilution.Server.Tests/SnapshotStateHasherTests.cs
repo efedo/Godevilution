@@ -714,6 +714,34 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void MonsterGroupUnityStateExtendsTheStateHash()
+    {
+        var leader = new MonsterSnapshot {
+            EntityId = 1,
+            HitPoints = 5,
+            MaxHitPoints = 5,
+            Alive = true,
+            PackSize = 1,
+        };
+        var member = new MonsterSnapshot {
+            EntityId = 2,
+            HitPoints = 5,
+            MaxHitPoints = 5,
+            Alive = true,
+            LeaderEntityId = 1,
+            LeaderRelation = 1,
+            ActiveForTicks = 4,
+        };
+        var first = new Snapshot { Monsters = { leader, member } };
+        var changed = first.Clone();
+        changed.Monsters[1].ActiveForTicks++;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void MonsterAcidResistanceExtendsTheStateHash()
     {
         var unresistant = new Snapshot {

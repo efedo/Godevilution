@@ -336,6 +336,16 @@ public static class SnapshotStateHasher
                     hasher.AppendUInt32(monster.MonsterItemSeed);
                     hasher.AppendUInt32(monster.MonsterAiSeed);
                 }
+                if (monster.LeaderEntityId != 0
+                    || monster.LeaderRelation != 0
+                    || monster.PackSize != 0
+                    || monster.ActiveForTicks != 0) {
+                    hasher.AppendString("godevilution-monster-group-unity-v1");
+                    hasher.AppendUInt32(monster.LeaderEntityId);
+                    hasher.AppendInt32(monster.LeaderRelation);
+                    hasher.AppendInt32(monster.PackSize);
+                    hasher.AppendInt32(monster.ActiveForTicks);
+                }
                 if (monster.StoneCurseImmune) {
                     hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
                     hasher.AppendBool(true);

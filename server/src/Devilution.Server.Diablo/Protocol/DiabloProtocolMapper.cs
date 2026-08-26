@@ -190,6 +190,14 @@ internal static class DiabloProtocolMapper
                 projectedMonster.MonsterItemSeed = monster.MonsterItemSeed;
             if (monster.MonsterAiSeed != 0)
                 projectedMonster.MonsterAiSeed = monster.MonsterAiSeed;
+            if (monster.LeaderEntityId != 0)
+                projectedMonster.LeaderEntityId = monster.LeaderEntityId;
+            if (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None)
+                projectedMonster.LeaderRelation = (int)monster.LeaderRelation;
+            if (monster.PackSize != 0)
+                projectedMonster.PackSize = monster.PackSize;
+            if (monster.ActiveForTicks != 0)
+                projectedMonster.ActiveForTicks = monster.ActiveForTicks;
             snapshot.Monsters.Add(projectedMonster);
         }
         foreach (var item in source.WorldItems) {
@@ -937,6 +945,14 @@ internal static class DiabloProtocolMapper
                 || monster.LightningResistance is < -100 or > 100
                 || monster.MagicResistance is < -100 or > 100
                 || monster.AcidResistance is < -100 or > 100
+                || !Enum.IsDefined(monster.LeaderRelation)
+                || (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.None
+                    ? monster.LeaderEntityId != 0
+                    : monster.LeaderEntityId == 0)
+                || (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None
+                    && monster.IsUnique)
+                || monster.PackSize is < 0 or > 255
+                || monster.ActiveForTicks is < 0 or > 255
                 || monster.FallenStandAnimationFrame is < 0 or > 127
                 || monster.FallenStandAnimationTick is < 0 or > 127
                 || monster.FallenRallyTicks is < 0 or > 4096
@@ -954,6 +970,24 @@ internal static class DiabloProtocolMapper
                         || monster.FuturePositionY != monster.PositionY)) {
                 throw new InvalidDataException(
                     "Authoritative monster movement state is outside the shared protocol range.");
+            }
+        }
+
+        var monstersById = new Dictionary<uint, DiabloMonsterState>();
+        foreach (var monster in monsters) {
+            if (!monstersById.TryAdd(monster.EntityId, monster))
+                throw new InvalidDataException(
+                    "Authoritative monster state contains duplicate entity IDs.");
+        }
+        foreach (var monster in monsters.Where(monster =>
+                     monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None)) {
+            if (!monstersById.TryGetValue(monster.LeaderEntityId, out var leader)
+                || leader.EntityId == monster.EntityId
+                || leader.IsUnique
+                || leader.HitPoints <= 0
+                || leader.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "Authoritative monster state contains an invalid pack leader.");
             }
         }
     }
@@ -1503,6 +1537,10 @@ internal static class DiabloProtocolMapper
                 OwnerPlayerId = monster.OwnerPlayerId,
                 IsUnique = monster.IsUnique,
                 UniqueIdentity = monster.UniqueIdentity,
+                LeaderEntityId = monster.LeaderEntityId,
+                LeaderRelation = (AuthoritativeMonsterLeaderRelation)monster.LeaderRelation,
+                PackSize = monster.PackSize,
+                ActiveForTicks = monster.ActiveForTicks,
                 IsDiablo = monster.IsDiablo,
                 BerserkImmune = monster.BerserkImmune,
                 MinDamage = monster.MinDamage,

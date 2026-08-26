@@ -10,6 +10,13 @@ reserved cells, and preserves the native strict four-tile envelope for leashed
 members. Native random placement parity and the remaining visibility-driven
 activation/interpolation work remain follow-ups.
 
+Monster group-unity state now crosses the shared snapshot boundary through
+additive leader identity/relation, pack-size, and active-tick fields. The
+server projects and hashes these fields, while Godot validates leader
+relationships and retains the state for presentation. Default values preserve
+legacy snapshot hashes; native visual consumption and interpolation remain
+follow-up work.
+
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot
 inherit a generic projectile or movement branch merely because their base type
