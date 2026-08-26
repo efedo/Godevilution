@@ -20,6 +20,13 @@ public enum ProjectilePresentationKind
     Teleport,
     Phasing,
     MonsterMagic,
+    MonsterLightning,
+    MonsterOrangeFlare,
+    MonsterBlueFlare,
+    MonsterRedFlare,
+    MonsterYellowFlare,
+    MonsterBlueFlare2,
+    MonsterMagmaBall,
     HorkSpawn,
     Flash,
     Hidden,
@@ -75,6 +82,9 @@ public static class ProjectilePresentationStyle
 
     public static ProjectilePresentationKind Resolve(ProjectileSnapshot projectile)
     {
+        if (ResolveNativeVisual(projectile.NativeVisual) is { } nativeVisual)
+            return nativeVisual;
+
         return projectile.PresentationKind switch {
             Devilution.Protocol.V1.ProjectilePresentationKind.Generic
                 => ProjectilePresentationKind.Generic,
@@ -117,6 +127,18 @@ public static class ProjectilePresentationStyle
             _ => Resolve(projectile.Behavior, projectile.Phase, projectile.DamageType),
         };
     }
+
+    private static ProjectilePresentationKind? ResolveNativeVisual(NativeProjectileVisual visual)
+        => visual switch {
+            NativeProjectileVisual.MonsterLightning => ProjectilePresentationKind.MonsterLightning,
+            NativeProjectileVisual.MonsterOrangeFlare => ProjectilePresentationKind.MonsterOrangeFlare,
+            NativeProjectileVisual.MonsterBlueFlare => ProjectilePresentationKind.MonsterBlueFlare,
+            NativeProjectileVisual.MonsterRedFlare => ProjectilePresentationKind.MonsterRedFlare,
+            NativeProjectileVisual.MonsterYellowFlare => ProjectilePresentationKind.MonsterYellowFlare,
+            NativeProjectileVisual.MonsterBlueFlare2 => ProjectilePresentationKind.MonsterBlueFlare2,
+            NativeProjectileVisual.MonsterMagmaBall => ProjectilePresentationKind.MonsterMagmaBall,
+            _ => null,
+        };
 
     public static ProjectilePresentationKind Resolve(int behavior, int phase)
         => Resolve(behavior, phase, 0);

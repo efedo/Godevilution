@@ -5998,3 +5998,5 @@ All notable changes to this fork are documented below.
   identity and complete self-first multiplayer snapshot while another session remains connected.
 
 - Preserved content-owned MonsterMagic missile identities through authoritative snapshots, save/restore, and protocol projection so native clients render exact Lightning, flare, and Magma Ball families.
+
+- Added Godot presentation mapping for the seven additive MonsterMagic native visual identities.

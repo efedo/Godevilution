@@ -6069,3 +6069,6 @@ resistance, lifetime, collision, and deterministic projectile state.
    every removal gate is satisfied.
 
 MonsterMagic projectiles now retain validated content missile identities through simulation snapshots, save/restore, and protocol projection. Native presentation maps the seven supported families exactly; unknown identities remain fail-closed.
+
+
+Godot presentation now consumes the additive native MonsterMagic visual identities, rendering distinct Lightning, flare, and Magma Ball cues while retaining the generic behavior fallback for older snapshots.

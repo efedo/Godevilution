@@ -88,6 +88,27 @@ public sealed class ProjectilePresentationStyleTests
             ProjectilePresentationStyle.Resolve(projectile));
     }
 
+    [Theory]
+    [InlineData(NativeProjectileVisual.MonsterLightning, ProjectilePresentationKind.MonsterLightning)]
+    [InlineData(NativeProjectileVisual.MonsterOrangeFlare, ProjectilePresentationKind.MonsterOrangeFlare)]
+    [InlineData(NativeProjectileVisual.MonsterBlueFlare, ProjectilePresentationKind.MonsterBlueFlare)]
+    [InlineData(NativeProjectileVisual.MonsterRedFlare, ProjectilePresentationKind.MonsterRedFlare)]
+    [InlineData(NativeProjectileVisual.MonsterYellowFlare, ProjectilePresentationKind.MonsterYellowFlare)]
+    [InlineData(NativeProjectileVisual.MonsterBlueFlare2, ProjectilePresentationKind.MonsterBlueFlare2)]
+    [InlineData(NativeProjectileVisual.MonsterMagmaBall, ProjectilePresentationKind.MonsterMagmaBall)]
+    public void ResolvesContentOwnedMonsterMagicNativeVisuals(
+        NativeProjectileVisual nativeVisual,
+        ProjectilePresentationKind expected)
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 50,
+            PresentationKind = ProtocolProjectilePresentationKind.MonsterMagic,
+            NativeVisual = nativeVisual,
+        };
+
+        Assert.Equal(expected, ProjectilePresentationStyle.Resolve(projectile));
+    }
+
     [Fact]
     public void ResolvesServerOwnedHorkSpawnPresentationMetadata()
     {
