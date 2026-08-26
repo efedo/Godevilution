@@ -342,7 +342,7 @@ void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &s
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
-std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVisual)
+std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVisual, int damageType)
 {
 	if (nativeVisual != 0) {
 		switch (static_cast<protocol::NativeProjectileVisual>(nativeVisual)) {
@@ -435,7 +435,10 @@ std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVis
 	case 21: // BoneSpirit
 		return MissileID::BoneSpirit;
 	case 23: // FireWallSegment
-		return MissileID::FireWall;
+		// Lightning Wall reuses the shared wall-segment behavior. Older
+		// servers may omit native_visual, so retain the damage-channel
+		// fallback for native presentation compatibility.
+		return damageType == 2 ? MissileID::LightningWall : MissileID::FireWall;
 	case 24: // FlameWaveController
 		return MissileID::FlameWaveControl;
 	case 25: // FlameWaveSegment
@@ -936,7 +939,10 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	for (const auto &snapshot : projection.Projectiles()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))
 			continue;
-		const auto missileId = NativePresentationMissileId(snapshot.behavior, snapshot.nativeVisual);
+		const auto missileId = NativePresentationMissileId(
+			snapshot.behavior,
+			snapshot.nativeVisual,
+			snapshot.damageType);
 		if (!missileId)
 			continue;
 		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
