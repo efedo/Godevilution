@@ -51,6 +51,8 @@ All notable changes to this fork are documented below.
   spell, confirming server-owned target knockback and mana consumption.
 - Added live Godot coverage for an externally declared memorized Mana Shield
   spell, confirming server-owned activation and mana consumption.
+- Added live Godot coverage for an externally declared memorized Berserk spell,
+  confirming server-owned target mutation and mana consumption.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.
