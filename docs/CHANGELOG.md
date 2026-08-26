@@ -20,6 +20,11 @@ All notable changes to this fork are documented below.
   retained for both participants through the live authoritative initializer.
 - Added live Godot protocol coverage for two participants, a server-owned store
   purchase, and reconnect state/name preservation through the client boundary.
+- Added live Godot coverage for an externally declared memorized Reflect spell,
+  including authoritative charge creation and mana consumption.
+- Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
+  and current stores-table columns so external-pack tests remain runnable after
+  schema evolution.
 - Added a shared Necromorb MonsterMagic replay fixture proving the alternate
   Lich-family missile alias admission and canonical projectile state in both
   runners.

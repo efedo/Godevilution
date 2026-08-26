@@ -40,6 +40,11 @@ The Godot protocol client now exercises the same two-participant store purchase
 and reconnect path, confirming that the presentation-side client preserves the
 authoritative participant set, names, inventory, and gold after resume.
 
+Godot live content-overlay coverage also exercises an externally declared
+memorized Reflect spell: the server validates the loadout, consumes authoritative
+mana, and creates the native level-scaled Reflect charge. Existing overlay
+fixtures now target shipped schema 1.430.0 and the current stores-table shape.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.
