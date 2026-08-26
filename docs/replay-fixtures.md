@@ -501,5 +501,5 @@ already-characterized transitions: broader autonomous monster-arrow, HorkDemon
 delay and summon lifecycle, monster-magic AI branches, monster-magic hit/block
 resolution, multi-actor target selection, mod/content reload ordering, an
 end-to-end Hellfire replay beyond the live overlay and loadout
-activation smoke tests, cursor-held pickup overflow, and broader combat/event
-ordering.
+activation smoke tests, and broader combat/event ordering. Cursor-held pickup
+overflow is already covered by `gameplay-gold-pickup-overflow.json`.
