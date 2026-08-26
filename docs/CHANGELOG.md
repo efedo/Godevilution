@@ -49,6 +49,9 @@ All notable changes to this fork are documented below.
   expanded encounter state.
 - Added live Godot coverage for an externally declared memorized Telekinesis
   spell, confirming server-owned target knockback and mana consumption.
+- Added live Godot coverage for an externally declared memorized Ring of Fire
+  spell, proving that server-owned fire-wall segments and presentation metadata
+  cross the protocol boundary while generated geometry can occlude blocked cells.
 - Added live Godot coverage for an externally declared memorized Mana Shield
   spell, confirming server-owned activation and mana consumption.
 - Added live Godot coverage for an externally declared memorized Berserk spell,

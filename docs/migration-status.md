@@ -19,6 +19,11 @@ Live Godot coverage now also exercises an externally declared memorized Berserk
 spell, proving that target mutation and mana consumption remain server-owned
 while the client observes the authoritative state.
 
+Live Godot coverage now also exercises an externally declared memorized Ring of
+Fire spell, proving that server-owned fire-wall segments and presentation
+metadata cross the protocol boundary while generated geometry can occlude
+blocked cells.
+
 The shared replay gate now covers a two-projectile multiplayer MonsterArrow
 participant volley, multiplayer HorkDemon, SkeletonRanged
 MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb, and BoneDemon
