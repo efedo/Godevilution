@@ -58,6 +58,10 @@ Live Godot coverage now also exercises externally declared memorized Nova,
 confirming the server-owned 36-ball radial fan-out and `NovaBall` presentation
 metadata across the shared protocol.
 
+The same live boundary now exercises an externally declared memorized Teleport,
+confirming that destination resolution, movement, and mana consumption remain
+server-owned while the Godot client observes the resulting snapshot.
+
 The live Godot client also now queues a store purchase, reconnects before
 submission, and verifies that the pending command is retried through the same
 resume session and applied once by the authoritative server.
