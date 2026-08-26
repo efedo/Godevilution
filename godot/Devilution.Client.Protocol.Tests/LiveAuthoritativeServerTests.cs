@@ -3452,6 +3452,98 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesStoneCurseFromExternalMemorizedLoadout()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-StoneCurse-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.stone-curse-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.430.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t8\t\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingManaOverride: 10000,
+                randomSeed: 0);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-stone-curse-overlay", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            var player = Assert.Single(model.Snapshot!.Players);
+            var spell = Assert.Single(
+                player.MemorizedSpells,
+                memorized => memorized.SpellId == 8);
+            Assert.Equal(1U, spell.Level);
+            Assert.Equal("Stone Curse", spell.DisplayName);
+            Assert.Equal(SpellTargetingKind.Tile, spell.TargetingKind);
+            var target = Assert.Single(
+                model.Snapshot.Monsters,
+                monster => monster.EntityId == 9 && monster.Alive);
+            var initialMana = player.Mana;
+
+            var sequence = client.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 8,
+                    TargetX = target.PositionX,
+                    TargetY = target.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+
+            var petrified = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Monsters.Any(
+                    monster => monster.EntityId == target.EntityId && monster.Petrified) == true);
+            var petrifiedTarget = Assert.Single(
+                petrified.Snapshot!.Monsters,
+                monster => monster.EntityId == target.EntityId);
+            Assert.True(petrifiedTarget.Petrified);
+            Assert.True(petrified.Snapshot.Players.Single().Mana < initialMana);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(

@@ -52,6 +52,9 @@ All notable changes to this fork are documented below.
 - Added live Godot coverage for an externally declared memorized Ring of Fire
   spell, proving that server-owned fire-wall segments and presentation metadata
   cross the protocol boundary while generated geometry can occlude blocked cells.
+- Added live Godot coverage for an externally declared memorized Stone Curse
+  spell, proving that tile-targeted petrification and mana consumption remain
+  authoritative across the protocol boundary.
 - Added live Godot coverage for an externally declared memorized Mana Shield
   spell, confirming server-owned activation and mana consumption.
 - Added live Godot coverage for an externally declared memorized Berserk spell,
