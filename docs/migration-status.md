@@ -28,6 +28,10 @@ Live Godot coverage now also exercises an externally declared memorized Stone
 Curse spell, proving that tile-targeted petrification and mana consumption
 remain authoritative across the protocol boundary.
 
+Live Godot coverage now also exercises an externally declared memorized Phasing
+spell, proving that server-owned candidate selection, relocation, and mana use
+cross the protocol boundary.
+
 The shared replay gate now covers a two-projectile multiplayer MonsterArrow
 participant volley, multiplayer HorkDemon, SkeletonRanged
 MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb, and BoneDemon

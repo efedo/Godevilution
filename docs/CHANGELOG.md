@@ -55,6 +55,9 @@ All notable changes to this fork are documented below.
 - Added live Godot coverage for an externally declared memorized Stone Curse
   spell, proving that tile-targeted petrification and mana consumption remain
   authoritative across the protocol boundary.
+- Added live Godot coverage for an externally declared memorized Phasing spell,
+  proving that server-owned candidate selection, relocation, and mana use cross
+  the protocol boundary.
 - Added live Godot coverage for an externally declared memorized Mana Shield
   spell, confirming server-owned activation and mana consumption.
 - Added live Godot coverage for an externally declared memorized Berserk spell,
