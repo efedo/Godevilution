@@ -5564,8 +5564,7 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)monster.EntityId ^ victim.EntityId);
-        var randomWalk = gameMode == DiabloGameMode.Multiplayer
-            && monster.MonsterAiSeed != 0
+        var randomWalk = monster.MonsterAiSeed != 0
             ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
             : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {

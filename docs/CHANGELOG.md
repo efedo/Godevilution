@@ -73,6 +73,8 @@ All notable changes to this fork are documented below.
   compatibility rule.
 - Initialized single-player generic ranged targets now consume the global
   native retreat and post-shot delay draws under the same compatibility rule.
+- Initialized single-player Butcher targets now consume the global native
+  non-adjacent RandomWalk draws under the same compatibility rule.
 - Authoritative monster targets now retain the native `InitMonster` item-drop
   and AI seeds through snapshots, saves, and protocol fields 86-87; procedural
   loot uses the retained item seed instead of deriving a second seed at death.
