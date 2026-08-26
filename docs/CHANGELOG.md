@@ -35,8 +35,8 @@ All notable changes to this fork are documented below.
   FireWallSegment behavior is rendered as lightning when its authoritative
   damage channel is Lightning, preserving native and Godot presentation parity.
 - Preserved the same Lightning Wall distinction in the native behavior fallback
-  used when an older server omits the additive 
-ative_visual` field.
+  used when an older server omits the additive
+`native_visual` field.
 - Added the native behavior fallback for Nova Ball so older snapshots that omit
   the additive visual identity still render the server-owned projectile.
 - Updated Godot's behavior fallback to distinguish Lightning Wall segments by
@@ -362,8 +362,8 @@ ative_visual` field.
   initialization (half health with a one-health floor); multiplayer retains full
   generated health.
 - Content schema `1.429.0` externalizes the validated native `MonstConvTbl`
-  mapping through 
-ative_dun_monsters.tsv` for base and Hellfire packs. The
+  mapping through
+`native_dun_monsters.tsv` for base and Hellfire packs. The
   authoritative module now selects stable monster identities and materializes
   mapped cells in native row-major order when geometry is available.
 - Native DUN geometry materialization now preserves the parsed transparency
@@ -1012,19 +1012,19 @@ ative_dun_monsters.tsv` for base and Hellfire packs. The
   aliases are legacy-mode only; authoritative server-backed mode remains
   native-diagnostics-only.
 - Unique-item and affix powers with matching ordinary effect symbols now resolve through
-  the validated 
-ative_item_effects.tsv` namespace, retaining native flag
+  the validated
+`native_item_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace; the remaining
   level-dependent StealMana, StealLife, FastAttack, FastRecover, and FastBlock
   flags and elemental arrow/damage channel mappings are now covered by the same
   catalog.
 - Hellfire unique-item and affix powers now resolve through the
-  validated 
-ative_item_hellfire_effects.tsv` namespace, retaining native flag
+  validated
+`native_item_hellfire_effects.tsv` namespace, retaining native flag
   fallbacks for direct catalogs without the namespace.
 - Legacy charged-staff initialization now resolves the `STAFF` miscellaneous
-  identity through validated 
-ative_item_misc.tsv` content while retaining
+  identity through validated
+`native_item_misc.tsv` content while retaining
   the native fallback for older callers.
 - Spell-book rows can now author single-player admission through the validated
   `single_player_excluded` field, advancing the Diablo content schema to
@@ -1033,33 +1033,33 @@ ative_item_misc.tsv` content while retaining
   validated `item_cursor_graphics.tsv` catalog, advancing the Diablo content
   schema to `1.413.0` while retaining the native magic-school fallback.
 - Legacy item-type generation tags now resolve through validated external
-  
-ative_item_tags.tsv` data during content activation, advancing the Diablo
+
+`native_item_tags.tsv` data during content activation, advancing the Diablo
   content schema to `1.412.0` while retaining direct-loader compatibility
   fallback.
 - Normalized Hellfire item-effect symbols now resolve through validated external
-  
-ative_item_hellfire_effects.tsv` data during content activation, advancing
+
+`native_item_hellfire_effects.tsv` data during content activation, advancing
   the Diablo content schema to `1.411.0` while retaining direct-loader
   compatibility fallback.
 - Legacy `itemdat.tsv` and normalized item special-effect symbols now resolve
-  through validated external 
-ative_item_effects.tsv` data during content
+  through validated external
+`native_item_effects.tsv` data during content
   activation, advancing the Diablo content schema to `1.410.0` while retaining
   direct-loader compatibility fallback.
 - Legacy `itemdat.tsv` type, class, and equipment-location symbols now resolve
-  through validated external 
-ative_item_topology.tsv` data during production
+  through validated external
+`native_item_topology.tsv` data during production
   activation, advancing the Diablo content schema to `1.409.0` while retaining
   direct-loader compatibility fallback.
 - Legacy `itemdat.tsv` miscellaneous symbols now resolve through a validated
-  external 
-ative_item_misc.tsv` namespace during production content
+  external
+`native_item_misc.tsv` namespace during production content
   activation, preserving the compatibility fallback for older direct callers
   and advancing the Diablo content schema to `1.408.0`.
 - Legacy `itemdat.tsv` spell names now resolve through a validated external
-  
-ative_spells.tsv` namespace during production content activation. The table
+
+`native_spells.tsv` namespace during production content activation. The table
   preserves all 52 native ordinals, rejects duplicate or out-of-range entries,
   and advances the Diablo content schema to `1.407.0`; older direct callers
   retain the compatibility fallback.
@@ -1537,8 +1537,8 @@ ative_spells.tsv` namespace during production content activation. The table
   the six native layouts with the authoritative Diablo RNG before simulation
   state is created.
 
-- Add 
-ative_dun_fragment_objects.tsv` for validated anchor-relative
+- Add
+`native_dun_fragment_objects.tsv` for validated anchor-relative
   placement of existing authored objects. The Hellfire Na-Krul tome rows now
   follow the encounter anchor instead of duplicating absolute coordinates.
 
@@ -1874,19 +1874,19 @@ ative_dun_fragment_objects.tsv` for validated anchor-relative
   16, with explicit variant `levels.tsv` rows taking precedence. Bump the
   Diablo content schema to 1.382.
 
-- Allow 
-ative_dun_objects.tsv` rows to carry an optional stable
+- Allow
+`native_dun_objects.tsv` rows to carry an optional stable
   `object_symbol` cross-check while retaining numeric object-ID compatibility.
   Bump the Diablo content schema to 1.381.
 
-- Add the validated 
-ative_dun_levels.tsv` catalog. Ordinary runtime levels
+- Add the validated
+`native_dun_levels.tsv` catalog. Ordinary runtime levels
   can now acquire their native DUN object layers from immutable content assets,
   preserving authored collision geometry while enabling explicit object
   materialization. Bump the Diablo content schema to 1.380.
 
-- Extend 
-ative_dun_objects.tsv` mappings to ordinary runtime levels as well
+- Extend
+`native_dun_objects.tsv` mappings to ordinary runtime levels as well
   as set-level variants, with separate validated identity ranges. Bump the
   Diablo content schema to 1.379.
 
@@ -1942,8 +1942,8 @@ ative_dun_objects.tsv` mappings to ordinary runtime levels as well
   1.369.
 
 - Preserve native DUN object layers through authoritative geometry and add the
-  optional 
-ative_dun_objects.tsv` mapping table. Explicit mappings now
+  optional
+`native_dun_objects.tsv` mapping table. Explicit mappings now
   materialize deterministic server-owned objects, optionally cloning validated
   `objects.tsv` behavior templates, while unmapped native values remain inert.
   Bump the Diablo content schema to 1.368.
@@ -2019,8 +2019,8 @@ ative_dun_objects.tsv` mapping table. Explicit mappings now
   arrows, Acid, Hork Spawn, monster Charged Bolt, and monster Arrow families,
   while unsupported or content-missing missile rows remain projection-only.
 
-- Add the server-owned 
-ative_visual` projectile presentation identity. The
+- Add the server-owned
+`native_visual` projectile presentation identity. The
   native compatibility client now consumes exact sprite metadata rather than
   inferring visuals from gameplay behavior values; zero-valued metadata retains
   older-server fallback behavior and unknown explicit values fail closed.
@@ -5287,7 +5287,7 @@ ova_projectile_count` and `immolation_projectile_count`
 - Separate stable authoritative spell-ID bounds from the legacy native-ID
   ceiling, allowing external loadouts, saves, and replay state to carry stable
   Etherealize identity `53` (
-ative SpellID` `26`).
+`native SpellID` `26`).
 - Extend live Godot protocol coverage through Etherealize selected by an
   external memorized loadout, including source admission and typed status
   projection.
@@ -5370,8 +5370,8 @@ ative SpellID` `26`).
   effects, one-cell monster knockback, line-of-sight validation, and deterministic
   source/resource handling.
 - Advance the Diablo content schema to 0.42 with explicit stable/native spell
-  identity mapping. `spells.tsv` now records 
-ative_spell_id`, rejects duplicate
+  identity mapping. `spells.tsv` now records
+`native_spell_id`, rejects duplicate
   native identities, and resolves legacy item spell names to stable content IDs
   before cast-source validation.
 - Advance the Diablo content schema to 0.41 with the externally validated
