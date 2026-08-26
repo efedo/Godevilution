@@ -133,7 +133,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-26,
-the native replay gate contains 79 checked-in JSON fixtures and 105 registered
+the native replay gate contains 80 checked-in JSON fixtures and 106 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -142,13 +142,15 @@ breakable-object removal, primary-player Hork Spawn block, multiplayer
 HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
 selection, autonomous Succubus BloodStar admission/impact/block lanes, a
 Succubus BloodStar multiplayer target-selection lane, ArchLich, Psychorb,
-Necromorb, and BoneDemon alias admission, and Lich-family
+Necromorb, BoneDemon, and two-projectile multiplayer MonsterArrow participant
+volley coverage, and Lich-family
 MonsterMagic admission/hit/miss/block/nearest-participant/secondary-impact
 lanes. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
-and BoneDemon MonsterMagic tests passed, including the new Lich block lane, as did
+and BoneDemon MonsterMagic tests passed, including the new Lich block lane and
+the two-projectile MonsterArrow volley, as did
 the focused managed counterparts. The full suites remain
 scheduled for the next periodic verification window.
 
@@ -169,7 +171,8 @@ block and impact, current-tile breakable-object removal, primary-player block,
 a BoneDemon alias and Lich-family
 MonsterMagic
 impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
-impact against the secondary participant. The native and C# runners
+impact against the secondary participant, plus a two-projectile participant
+volley. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and

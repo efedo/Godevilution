@@ -100,6 +100,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-secondary-block.json" Link="Fixtures/gameplay-monster-magic-secondary-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-multiplayer-target.json" Link="Fixtures/gameplay-monster-arrow-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow.json" Link="Fixtures/gameplay-multiplayer-monster-arrow.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow-volley.json" Link="Fixtures/gameplay-multiplayer-monster-arrow-volley.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-status-expiry.json" Link="Fixtures/gameplay-status-expiry.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multi-level-occupancy.json" Link="Fixtures/gameplay-multi-level-occupancy.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../protocol/test-vectors/command-delivery-retry.json" Link="Vectors/command-delivery-retry.json" CopyToOutputDirectory="PreserveNewest" />

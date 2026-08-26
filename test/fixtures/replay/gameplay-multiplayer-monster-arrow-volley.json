@@ -1,0 +1,90 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/multiplayer-monster-arrow-volley",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "multiplayer-monster-arrow-volley-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 80,
+      "life_maximum": 80,
+      "position_x": 0,
+      "position_y": 1,
+      "level_id": 1
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 1,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483649,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "level_id": 1,
+      "position_x": 2,
+      "position_y": 1,
+      "target_x": 0,
+      "target_y": 1,
+      "damage": 4,
+      "damage_type": 0,
+      "remaining_ticks": 4,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 1
+    },
+    {
+      "entity_id": 2147483650,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "level_id": 1,
+      "position_x": 2,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 4,
+      "damage_type": 0,
+      "remaining_ticks": 4,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "8ee897b3f0a513032cc2c02c34dfca00f454f10c81aadcda3ee29ee9e53c28e8" },
+    { "tick": 2, "state_sha256": "adde83974c86292cea0b20729c50c96c850f2f4d54f667896cb53140eeee720a" },
+    { "tick": 3, "state_sha256": "5507e3e23207ffa6107a1e10337aecfe21ab77d3cd5945a5526956a6fee2df94" }
+  ]
+}

@@ -2,7 +2,8 @@
 
 Status date: 2026-08-26
 
-The shared replay gate now covers multiplayer HorkDemon, SkeletonRanged
+The shared replay gate now covers a two-projectile multiplayer MonsterArrow
+participant volley, multiplayer HorkDemon, SkeletonRanged
 MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb, and BoneDemon
 MonsterMagic alias admission, and Lich MonsterMagic target selection, plus
 Lich MonsterMagic secondary-player block resolution: native and C# runners

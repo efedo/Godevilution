@@ -2852,6 +2852,79 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerMonsterArrowVolleyRoutesBothImpactsDeterministically()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-monster-arrow-volley.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel);
+        var projectiles = fixture.InitialProjectiles.Select(definition => new AuthoritativeProjectile(
+            definition.EntityId,
+            definition.SourceEntityId,
+            definition.TargetEntityId,
+            definition.SpellId,
+            definition.LevelId,
+            definition.PositionX,
+            definition.PositionY,
+            definition.TargetX,
+            definition.TargetY,
+            definition.Damage,
+            (AuthoritativeDamageType)definition.DamageType,
+            definition.AreaRadius,
+            definition.RemainingTicks,
+            allowZeroSpellId: true) {
+            Behavior = (AuthoritativeProjectileBehavior)definition.Behavior,
+            Phase = (AuthoritativeProjectilePhase)definition.Phase,
+            Speed = definition.Speed,
+            ImpactLifetime = definition.ImpactLifetime,
+            DamageMinimum = definition.DamageMinimum,
+            DamageMaximum = definition.DamageMaximum,
+        }).ToArray();
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCombatTargets: [target],
+            startingProjectiles: projectiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(96, primary.Life);
+        Assert.Equal(76, secondary.Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(3UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayStatusExpiryFixtureAdvancesEffectsByAuthoritativeTick()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-status-expiry.json");
