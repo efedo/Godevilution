@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Ordinary native DUN levels now parse and cross-validate their complete
+  optional `.til`/`.sol` collision bundle during content activation, so malformed
+  level geometry fails closed before publication.
 - Deferred native DUN fragments now parse and cross-validate their optional
   `.til`/`.sol` collision bundle during content activation, before a unique
   encounter can publish the fragment; malformed deferred geometry fails closed

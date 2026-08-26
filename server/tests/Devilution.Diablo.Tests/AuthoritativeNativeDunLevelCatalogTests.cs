@@ -122,6 +122,27 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
     }
 
     [Fact]
+    public void ValidatesCollisionBundleBeforeLevelActivation()
+    {
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("level.dun", CreateDun([0, 0, 0, 0], megaTileId: 43)),
+                new ContentAsset("level.til", CreateTil([1, 2, 3, 4])),
+                new ContentAsset(
+                    "level.sol",
+                    new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount]),
+            ]),
+        ]));
+        var catalog = new AuthoritativeNativeDunLevelCatalog([
+            new AuthoritativeNativeDunLevelDefinition(2, "level.dun", "level.til", "level.sol"),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.ValidateAssets(content));
+
+        Assert.Contains("unknown mega-tile 43", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsIncompleteCollisionAssetPair()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
@@ -174,7 +195,7 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
         Assert.Contains("dimensions", exception.Message, StringComparison.Ordinal);
     }
 
-    private static byte[] CreateDun(ushort[] objectLayer)
+    private static byte[] CreateDun(ushort[] objectLayer, ushort megaTileId = 0)
     {
         if (objectLayer.Length != 4 && objectLayer.Length != 16)
             throw new ArgumentException("Test DUN layers must be 2x2 or 4x4.", nameof(objectLayer));
@@ -185,6 +206,7 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
         var words = new ushort[2 + megaCount + dPieceCount * 4];
         words[0] = (ushort)megaWidth;
         words[1] = (ushort)megaHeight;
+        words[2] = megaTileId;
         Array.Copy(objectLayer, 0, words, 2 + megaCount + dPieceCount * 2, objectLayer.Length);
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++) {

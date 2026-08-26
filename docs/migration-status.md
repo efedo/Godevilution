@@ -870,6 +870,8 @@ native-owned movement and missile cells without changing authored geometry.
 Deferred fragments now parse and cross-validate their complete `.dun`/`.til`/
 `.sol` bundle during content activation, before a unique encounter can publish
 the fragment; malformed collision inputs therefore fail closed at pack load.
+Ordinary native DUN levels now apply the same cross-asset validation to their
+optional collision bundle before level replacements are published.
 The historical `uberroom.dun` fragment entry denotes its native layer payload;
 effective d-piece collision behavior still depends on the optional validated
 `.til`/`.sol` definitions.
