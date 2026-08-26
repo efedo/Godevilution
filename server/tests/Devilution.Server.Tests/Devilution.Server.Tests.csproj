@@ -92,6 +92,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous.json" Link="Fixtures/gameplay-monster-magic-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-miss.json" Link="Fixtures/gameplay-monster-magic-miss.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-secondary-impact.json" Link="Fixtures/gameplay-monster-magic-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-magic-multiplayer-target.json" Link="Fixtures/gameplay-monster-magic-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow.json" Link="Fixtures/gameplay-multiplayer-monster-arrow.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-status-expiry.json" Link="Fixtures/gameplay-status-expiry.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multi-level-occupancy.json" Link="Fixtures/gameplay-multi-level-occupancy.json" CopyToOutputDirectory="PreserveNewest" />

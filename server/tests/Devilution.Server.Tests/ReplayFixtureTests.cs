@@ -2291,6 +2291,38 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicMultiplayerTargetSelectionMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-magic-multiplayer-target.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(6400, Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1).Life);
+        Assert.Equal(6400, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(255U, projectile.RemainingTicks);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -2932,6 +2964,60 @@ public sealed class ReplayFixtureTests
         Assert.Equal(
             "Replay fixture equipment contains invalid or duplicate item state.",
             exception.Message);
+    }
+
+    private static StoreSimulationExecutor CreateMonsterMagicExecutor(ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            attackDamage: initial.CombatTargetAttackDamage,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            toHit: initial.CombatTargetToHit,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                initial.CombatTargetNativeAi,
+                "OrangeFlare",
+                AuthoritativeProjectileBehavior.MonsterMagic,
+                SpellId: 1,
+                ProjectileSpeed: 16,
+                ProjectileLifetime: 256,
+                DamageType: AuthoritativeDamageType.Magic,
+                RangedRetreatMinimumDistance: 4,
+                RangedRetreatChanceBase: 70,
+                RangedRetreatChanceIntelligenceScale: 10,
+                ProjectileDamage: 4,
+                ProjectileImpactLifetime: 1,
+                RangedDelayRandomRange: 20),
+        ]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
     }
 
     private static StoreSimulationExecutor CreateHorkSpawnExecutor(
