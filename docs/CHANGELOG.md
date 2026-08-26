@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Ordinary-level native DUN object mappings now fail closed during content
+  activation when their target level is absent from the composed world;
+  deferred set-level mappings remain eligible for later geometry publication.
 - Complete native set-level map bundles now parse and cross-validate during
   content preflight even before a world is available; malformed geometry and
   invalid active-map spawn points fail closed rather than remaining deferred.

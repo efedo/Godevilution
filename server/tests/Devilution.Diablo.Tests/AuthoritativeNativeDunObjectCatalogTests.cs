@@ -214,4 +214,33 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
 
         Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableObjects(world));
     }
+
+    [Fact]
+    public void RejectsOrdinaryMappingForUnknownWorldLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(7, 2, 2));
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(0, false, 9, 4, 0) {
+                TargetKind = AuthoritativeNativeDunObjectTargetKind.Level,
+                LevelId = 8,
+            },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateWorld(world));
+
+        Assert.Contains("unknown level 8", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AllowsDeferredSetLevelMappingWhenWorldDoesNotContainItsRuntimeLevel()
+    {
+        var world = new AuthoritativeWorld();
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(2, true, 9, 4, 0),
+        ]);
+
+        catalog.ValidateWorld(world);
+    }
 }

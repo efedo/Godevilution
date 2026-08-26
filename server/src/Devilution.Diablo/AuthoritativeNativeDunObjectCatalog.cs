@@ -101,6 +101,18 @@ public sealed class AuthoritativeNativeDunObjectCatalog
     public IReadOnlyList<AuthoritativeNativeDunObjectDefinition> Definitions
         => definitions;
 
+    /** Fails activation when an ordinary-level mapping targets an unknown level. */
+    public void ValidateWorld(AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var definition in definitions.Where(definition =>
+                     definition.TargetKind == AuthoritativeNativeDunObjectTargetKind.Level)) {
+            if (!world.ContainsLevel(definition.LevelId))
+                throw new InvalidDataException(
+                    $"Native DUN object definition {definition.NativeObjectId} references an unknown level {definition.LevelId}.");
+        }
+    }
+
     /**
      * Materializes every explicitly mapped nonzero native DUN object cell in a
      * loaded runtime level. Unmapped native IDs remain inert and are not
