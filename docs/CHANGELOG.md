@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve native `FollowTheLeader` activation timing for authoritative leashed
+  packs, including both leader-to-member and member-to-leader propagation and
+  snapshot round-trip coverage.
 - Enforce native leashed-member movement admission alongside leader admission:
   a member's candidate cell must remain strictly within four tiles of its
   leader, with focused boundary coverage for three- and four-tile moves.

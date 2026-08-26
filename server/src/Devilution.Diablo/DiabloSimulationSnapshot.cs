@@ -75,6 +75,9 @@ public sealed record DiabloMonsterState(
     /** Native pack size retained on a monster leader. */
     public int PackSize { get; init; }
 
+    /** Native activation countdown propagated through leashed pack members. */
+    public int ActiveForTicks { get; init; }
+
     public bool IsDiablo { get; init; }
 
     public bool BerserkImmune { get; init; }
@@ -615,6 +618,7 @@ public sealed partial class DiabloSimulation
                     LeaderEntityId = target.LeaderEntityId,
                     LeaderRelation = target.LeaderRelation,
                     PackSize = target.PackSize,
+                    ActiveForTicks = target.ActiveForTicks,
                     IsDiablo = target.IsDiablo,
                     BerserkImmune = target.BerserkImmune,
                     MinDamage = target.MinDamage,
@@ -1053,6 +1057,7 @@ public sealed partial class DiabloSimulation
                 || (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None
                     && monster.IsUnique)
                 || monster.PackSize is < 0 or > 255
+                || monster.ActiveForTicks is < 0 or > 255
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.FallenFearTicks is < 0 or > 1024
@@ -2184,6 +2189,7 @@ public sealed partial class DiabloSimulation
                     monster.LeaderEntityId,
                     monster.LeaderRelation,
                     monster.PackSize);
+                target.RestoreActiveForTicks(monster.ActiveForTicks);
                 target.RestoreBatRetreat(
                     monster.BatRetreatTicks,
                     monster.BatRetreatDirection);
@@ -2286,6 +2292,7 @@ public sealed partial class DiabloSimulation
                     leaderEntityId: monster.LeaderEntityId,
                     leaderRelation: monster.LeaderRelation,
                     packSize: monster.PackSize,
+                    activeForTicks: monster.ActiveForTicks,
                     initialStandAnimationFrame: monster.FallenStandAnimationFrame,
                     initialStandAnimationTick: monster.FallenStandAnimationTick,
                     fallenRallyTicks: monster.FallenRallyTicks,

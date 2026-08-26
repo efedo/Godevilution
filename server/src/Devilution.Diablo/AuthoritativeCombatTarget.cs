@@ -101,7 +101,8 @@ public sealed class AuthoritativeCombatTarget
         int fallenRallyTicks = 0,
         uint leaderEntityId = 0,
         AuthoritativeMonsterLeaderRelation leaderRelation = AuthoritativeMonsterLeaderRelation.None,
-        int packSize = 0)
+        int packSize = 0,
+        int activeForTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -138,6 +139,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(leaderRelation));
         if (packSize is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(packSize));
+        if (activeForTicks is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(activeForTicks));
         if (leaderRelation == AuthoritativeMonsterLeaderRelation.None
             ? leaderEntityId != 0
             : leaderEntityId == 0)
@@ -286,6 +289,7 @@ public sealed class AuthoritativeCombatTarget
         LeaderEntityId = leaderEntityId;
         LeaderRelation = leaderRelation;
         PackSize = packSize;
+        ActiveForTicks = activeForTicks;
         SneakHidden = sneakHidden;
         SneakRetreatTicks = sneakRetreatTicks;
         ScavengerHealingTicks = scavengerHealingTicks;
@@ -407,6 +411,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native count of currently leashed members carried by a pack leader. */
     public int PackSize { get; private set; }
+
+    /** Native activation countdown propagated through leashed pack members. */
+    public int ActiveForTicks { get; private set; }
 
     public bool IsDiablo { get; set; }
 
@@ -1441,6 +1448,13 @@ public sealed class AuthoritativeCombatTarget
         LeaderEntityId = leaderEntityId;
         LeaderRelation = leaderRelation;
         PackSize = packSize;
+    }
+
+    internal void RestoreActiveForTicks(int activeForTicks)
+    {
+        if (activeForTicks is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(activeForTicks));
+        ActiveForTicks = activeForTicks;
     }
 
     internal void RestoreDirection(int direction)

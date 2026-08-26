@@ -67,6 +67,24 @@ public static class AuthoritativeMonsterGroupUnity
                 Math.Abs(memberY - leaderY)) < ReunionDistance;
     }
 
+    /** Native FollowTheLeader activation timing for a leashed member. */
+    public static bool ApplyFollowTheLeader(
+        AuthoritativeCombatTarget member,
+        IReadOnlyDictionary<uint, AuthoritativeCombatTarget> monsters)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+        ArgumentNullException.ThrowIfNull(monsters);
+        if (member.LeaderRelation != AuthoritativeMonsterLeaderRelation.Leashed
+            || member.LeaderEntityId == 0
+            || member.LeaderEntityId == member.EntityId
+            || !monsters.TryGetValue(member.LeaderEntityId, out var leader))
+            return false;
+
+        if (leader.ActiveForTicks > member.ActiveForTicks)
+            member.RestoreActiveForTicks(leader.ActiveForTicks - 1);
+        return true;
+    }
+
     /**
      * Updates one member against its authoritative leader. A missing, dead,
      * cross-level, or self-referential leader breaks the relationship instead
@@ -114,6 +132,11 @@ public static class AuthoritativeMonsterGroupUnity
         } else if (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.Leashed) {
             leader.DecrementPackSize();
             monster.SetLeaderRelation(AuthoritativeMonsterLeaderRelation.Separated);
+        }
+
+        if (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.Leashed
+            && monster.ActiveForTicks > leader.ActiveForTicks) {
+            leader.RestoreActiveForTicks(monster.ActiveForTicks - 1);
         }
 
         return true;

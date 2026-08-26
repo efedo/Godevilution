@@ -172,6 +172,89 @@ public sealed class AuthoritativeMonsterGroupUnityTests
     }
 
     [Fact]
+    public void FollowTheLeaderPropagatesActivationFromLeaderToMember()
+    {
+        var leader = new AuthoritativeCombatTarget(
+            1,
+            5,
+            5,
+            10,
+            packSize: 1,
+            activeForTicks: 5);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            5,
+            6,
+            10,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+        var world = new DiabloWorldState(combatTargets: [leader, member]);
+
+        Assert.True(AuthoritativeMonsterGroupUnity.ApplyFollowTheLeader(
+            member,
+            world.CombatTargets));
+
+        Assert.Equal(4, member.ActiveForTicks);
+    }
+
+    [Fact]
+    public void GroupUnityPropagatesActivationFromMemberToLeader()
+    {
+        var leader = new AuthoritativeCombatTarget(
+            1,
+            5,
+            5,
+            10,
+            packSize: 1,
+            activeForTicks: 1);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            5,
+            6,
+            10,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed,
+            activeForTicks: 5);
+        var world = new DiabloWorldState(combatTargets: [leader, member]);
+
+        Assert.True(AuthoritativeMonsterGroupUnity.Apply(
+            member,
+            world.CombatTargets,
+            world.HasLineOfSight));
+
+        Assert.Equal(4, leader.ActiveForTicks);
+    }
+
+    [Fact]
+    public void SimulationRunsFollowTheLeaderBeforeMonsterAi()
+    {
+        var leader = new AuthoritativeCombatTarget(
+            1,
+            5,
+            5,
+            10,
+            packSize: 1,
+            activeForTicks: 5);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            5,
+            6,
+            10,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                CombatTargets = [leader, member],
+            });
+
+        simulation.AdvanceTick(1, []);
+
+        Assert.Equal(4, member.ActiveForTicks);
+    }
+
+    [Fact]
     public void SimulationRunsGroupUnityForAuthoritativeMembers()
     {
         var leader = new AuthoritativeCombatTarget(1, 5, 5, 10, packSize: 2);
@@ -198,14 +281,21 @@ public sealed class AuthoritativeMonsterGroupUnityTests
     [Fact]
     public void SnapshotRoundTripsPackRelationshipState()
     {
-        var leader = new AuthoritativeCombatTarget(1, 5, 5, 10, packSize: 2);
+        var leader = new AuthoritativeCombatTarget(
+            1,
+            5,
+            5,
+            10,
+            packSize: 2,
+            activeForTicks: 7);
         var member = new AuthoritativeCombatTarget(
             2,
             5,
             7,
             10,
             leaderEntityId: leader.EntityId,
-            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed,
+            activeForTicks: 3);
         var source = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(
                 new StoreCatalog(),
@@ -222,6 +312,8 @@ public sealed class AuthoritativeMonsterGroupUnityTests
         var restoredLeader = destination.WorldState.CombatTargets[leader.EntityId];
         var restoredMember = destination.WorldState.CombatTargets[member.EntityId];
         Assert.Equal(2, restoredLeader.PackSize);
+        Assert.Equal(7, restoredLeader.ActiveForTicks);
+        Assert.Equal(3, restoredMember.ActiveForTicks);
         Assert.Equal(
             (leader.EntityId, AuthoritativeMonsterLeaderRelation.Leashed),
             (restoredMember.LeaderEntityId, restoredMember.LeaderRelation));

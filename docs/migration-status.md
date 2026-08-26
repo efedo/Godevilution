@@ -253,8 +253,10 @@ legacy whole-life fixtures retain their compatibility projection. Authoritative
 monster rows now carry validated leader identity, leashed/separated relation,
 and pack-size state; the server applies the native line-of-sight separation and
 strictly-under-four-tile reunion rule during autonomous ticks and preserves the
-relationship through snapshots. Generated pack placement and native active-tick
-FollowTheLeader timing remain follow-up work; post-tick authoritative
+relationship through snapshots. Native active-tick FollowTheLeader propagation
+now runs for leashed members and survives snapshots. Generated pack placement,
+visibility-driven activation, and native last-position interpolation remain
+follow-up work; post-tick authoritative
 movement-admission passes now prevent either a leader or a leashed member from
 moving beyond the strict four-tile pack envelope.
 Multiplayer Bat now consumes

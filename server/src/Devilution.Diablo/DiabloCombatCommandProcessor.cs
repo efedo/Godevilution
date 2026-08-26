@@ -4924,6 +4924,9 @@ public sealed class DiabloCombatCommandProcessor
         foreach (var target in world.CombatTargets.Values
                      .OrderBy(target => target.EntityId)
                      .ToArray()) {
+            AuthoritativeMonsterGroupUnity.ApplyFollowTheLeader(
+                target,
+                world.CombatTargets);
             target.ClearFallenRallyAttack();
             if (target.IsMoving && !target.IsPetrified)
                 target.CompleteMovement();
