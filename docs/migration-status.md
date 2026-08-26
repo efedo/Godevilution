@@ -54,6 +54,10 @@ authoritative cast, the client receives the native 36-projectile fire burst and
 the server-selected fire presentation metadata rather than simulating the fan
 out locally.
 
+The live Godot client also now queues a store purchase, reconnects before
+submission, and verifies that the pending command is retried through the same
+resume session and applied once by the authoritative server.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

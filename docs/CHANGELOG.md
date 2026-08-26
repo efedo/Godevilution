@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
 - Added live Godot coverage for an externally declared memorized Immolation
   burst, including the server-owned 36-projectile fire fan-out and presentation
   metadata.
+- Added live Godot reconnect coverage proving a queued store purchase retries
+  after reconnect and is applied once by the authoritative server.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.
