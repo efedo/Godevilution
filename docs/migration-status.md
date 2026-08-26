@@ -49,6 +49,11 @@ The same live Godot boundary now exercises an externally declared memorized
 Golem spell, proving that the server creates an alive player-owned minion and
 projects its owner identity through the protocol for presentation.
 
+It also exercises externally declared memorized Immolation: after the
+authoritative cast, the client receives the native 36-projectile fire burst and
+the server-selected fire presentation metadata rather than simulating the fan
+out locally.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

@@ -24,6 +24,9 @@ All notable changes to this fork are documented below.
   including authoritative charge creation and mana consumption.
 - Added live Godot coverage for an externally declared memorized Golem spell,
   including server-owned minion creation and owner identity projection.
+- Added live Godot coverage for an externally declared memorized Immolation
+  burst, including the server-owned 36-projectile fire fan-out and presentation
+  metadata.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.
