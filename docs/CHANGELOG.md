@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added an explicit Lightning Wall projectile visual identity so shared
+  FireWallSegment behavior is rendered as lightning when its authoritative
+  damage channel is Lightning, preserving native and Godot presentation parity.
 - Corrected the replay-gate documentation to report the current 80 checked-in
   JSON fixtures and 106 native registered tests, including parser and validation
   cases that do not add a fixture file.

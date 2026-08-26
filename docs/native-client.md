@@ -21,7 +21,7 @@ The native authoritative world projection retains the sorted, validated server
 projectile snapshots alongside monsters, items, and objects. The presentation
 bridge now materializes the first supported families (Charged Bolt, Firebolt,
 Lightning, Lightning segments, Flash layers, Resurrection beam, Phasing,
-Fireball, Holy Bolt, Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno,
+Fireball, Holy Bolt, Blood Star, Bone Spirit, Fire Wall, Lightning Wall, Flame Wave, Inferno,
 Apocalypse impact, Chain Lightning, Elemental, Guardian, Etherealize, Acid,
 Acid Splat, Acid Puddle, player arrows, monster Charged Bolt, Hork Spawn, and
 monster Arrow) into legacy missile sprites when

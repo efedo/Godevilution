@@ -370,10 +370,13 @@ internal static class DiabloProtocolMapper
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
                 DamageMinimum = projectile.DamageMinimum,
                 DamageMaximum = projectile.DamageMaximum,
-                NativeVisual = ResolveNativeProjectileVisual(projectile.Behavior),
+                NativeVisual = ResolveNativeProjectileVisual(
+                    projectile.Behavior,
+                    projectile.DamageType),
                 PresentationKind = ResolveProjectilePresentationKind(
                     projectile.Behavior,
-                    projectile.Phase),
+                    projectile.Phase,
+                    projectile.DamageType),
             });
         }
         foreach (var portal in source.Portals.OrderBy(portal => portal.PortalId)) {
@@ -2461,7 +2464,8 @@ internal static class DiabloProtocolMapper
 
     private static ProjectilePresentationKind ResolveProjectilePresentationKind(
         AuthoritativeProjectileBehavior behavior,
-        AuthoritativeProjectilePhase phase)
+        AuthoritativeProjectilePhase phase,
+        AuthoritativeDamageType damageType)
     {
         if (behavior == AuthoritativeProjectileBehavior.ResurrectionBeam)
             return ProjectilePresentationKind.Beam;
@@ -2483,7 +2487,6 @@ internal static class DiabloProtocolMapper
                 ? ProjectilePresentationKind.FireImpact
                 : ProjectilePresentationKind.Fire;
         if (behavior is AuthoritativeProjectileBehavior.FireWallController
-                or AuthoritativeProjectileBehavior.FireWallSegment
                 or AuthoritativeProjectileBehavior.FlameWaveController
                 or AuthoritativeProjectileBehavior.FlameWaveSegment
                 or AuthoritativeProjectileBehavior.InfernoController
@@ -2493,6 +2496,10 @@ internal static class DiabloProtocolMapper
                 or AuthoritativeProjectileBehavior.ApocalypseController
                 or AuthoritativeProjectileBehavior.Elemental)
             return ProjectilePresentationKind.Fire;
+        if (behavior == AuthoritativeProjectileBehavior.FireWallSegment)
+            return damageType == AuthoritativeDamageType.Lightning
+                ? ProjectilePresentationKind.Lightning
+                : ProjectilePresentationKind.Fire;
         if (behavior == AuthoritativeProjectileBehavior.ApocalypseBoom)
             return ProjectilePresentationKind.FireImpact;
         if (behavior == AuthoritativeProjectileBehavior.GuardianController)
@@ -2530,7 +2537,8 @@ internal static class DiabloProtocolMapper
 
     /** Selects the native compatibility sprite without exposing gameplay IDs to the client. */
     private static NativeProjectileVisual ResolveNativeProjectileVisual(
-        AuthoritativeProjectileBehavior behavior)
+        AuthoritativeProjectileBehavior behavior,
+        AuthoritativeDamageType damageType)
         => behavior switch {
             AuthoritativeProjectileBehavior.ChargedBolt
                 or AuthoritativeProjectileBehavior.MonsterChargedBolt
@@ -2546,6 +2554,9 @@ internal static class DiabloProtocolMapper
             AuthoritativeProjectileBehavior.HolyBolt => NativeProjectileVisual.HolyBolt,
             AuthoritativeProjectileBehavior.BloodStar => NativeProjectileVisual.BloodStar,
             AuthoritativeProjectileBehavior.BoneSpirit => NativeProjectileVisual.BoneSpirit,
+            AuthoritativeProjectileBehavior.FireWallSegment
+                when damageType == AuthoritativeDamageType.Lightning
+                => NativeProjectileVisual.LightningWall,
             AuthoritativeProjectileBehavior.FireWallSegment => NativeProjectileVisual.FireWall,
             AuthoritativeProjectileBehavior.FlameWaveController => NativeProjectileVisual.FlameWaveControl,
             AuthoritativeProjectileBehavior.FlameWaveSegment => NativeProjectileVisual.FlameWave,

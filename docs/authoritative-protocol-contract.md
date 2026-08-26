@@ -775,7 +775,10 @@ Fireball behavior `16` use `Fire` during travel and `FireImpact` during impact.
 compatibility sprite identity for presentation-only rendering. A zero value
 retains the behavior-based fallback for older servers; an unknown nonzero value
 is rejected by the native presentation bridge rather than being interpreted as
-gameplay state.
+gameplay state. Lightning Wall's shared `FireWallSegment` behavior uses the
+explicit `LIGHTNING_WALL` identity and the Lightning presentation family when
+its damage channel is Lightning; ordinary Fire Wall and Ring of Fire segments
+continue to use the Fire Wall identity.
 `ItemStateSnapshot.presentation_kind` is additive server-owned metadata for
 world-item presentation. `Gold` and `Ear` identify the shipped currency and
 dynamic PvP-ear families; zero or unknown values retain generic item rendering,

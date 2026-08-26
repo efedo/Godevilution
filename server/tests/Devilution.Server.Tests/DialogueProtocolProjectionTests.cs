@@ -1892,6 +1892,55 @@ public sealed class DialogueProtocolProjectionTests
             Assert.Equal(ProjectilePresentationKind.NovaBall, Assert.Single(snapshot.Projectiles).PresentationKind);
     }
 
+    [Fact]
+    public void ProjectsLightningWallSegmentsAsLightningInsteadOfFire()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [new DiabloProjectileState(
+                2,
+                1,
+                0,
+                2,
+                1,
+                4,
+                4,
+                4,
+                4,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                3) {
+                Behavior = AuthoritativeProjectileBehavior.FireWallSegment,
+            }],
+            null);
+
+        var projectile = Assert.Single(DiabloProtocolMapper.ToProtocolSnapshot(source).Projectiles);
+
+        Assert.Equal(NativeProjectileVisual.LightningWall, projectile.NativeVisual);
+        Assert.Equal(ProjectilePresentationKind.Lightning, projectile.PresentationKind);
+    }
+
     [Theory]
     [InlineData(AuthoritativeProjectileBehavior.Targeted)]
     [InlineData(AuthoritativeProjectileBehavior.Flash)]
