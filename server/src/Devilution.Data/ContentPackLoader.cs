@@ -152,6 +152,12 @@ public static class ContentPackLoader
 
     private static void RejectReparsePoints(string directory, string displayPath)
     {
+        var directoryAttributes = File.GetAttributes(directory);
+        if ((directoryAttributes & FileAttributes.ReparsePoint) != 0) {
+            throw new InvalidDataException(
+                $"Content pack directory '{displayPath}' is a reparse-point entry.");
+        }
+
         foreach (var entry in Directory.EnumerateFileSystemEntries(directory)) {
             var attributes = File.GetAttributes(entry);
             if ((attributes & FileAttributes.ReparsePoint) != 0) {

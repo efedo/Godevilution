@@ -72,6 +72,7 @@ packs constrained to their declared relative content tree.
 
 Directory-pack loading also rejects reparse-point entries before reading a pack,
 so symbolic links and junctions cannot widen the external content boundary.
+The root directory is covered by the same fail-closed check.
 
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
