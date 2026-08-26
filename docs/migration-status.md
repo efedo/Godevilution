@@ -1230,6 +1230,14 @@ The Diablo module suite was rerun after the Na-Krul parity-characterization
 correction and passed 1,452 of 1,452 tests; the other counts above remain from
 the original Release baseline.
 
+On 2026-08-26, the current Debug Diablo module suite ran 1,828 of 1,839
+tests successfully. The 11 remaining failures are isolated to eight combat
+tuning expectations, one lethal gold-stack seed expectation, one rejected
+pickup validation expectation, and one Na-Krul follow-up spawn-health
+expectation. This local run supersedes the older count for current-state
+tracking, but is not a release gate until those failures are resolved or
+explicitly characterized.
+
 The live Godot protocol suite also verifies that a Hell difficulty selected by
 the server changes the authoritative Hellfire monster snapshot (including its
 scaled hit points), not only the client's difficulty label.
