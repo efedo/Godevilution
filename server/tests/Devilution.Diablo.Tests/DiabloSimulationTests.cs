@@ -3428,6 +3428,25 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRejectsUnvalidatedMonsterMissileIdentity()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        var player = CreatePlayer();
+        var snapshot = simulation.CaptureSnapshot(player, 1) with {
+            Projectiles = [new DiabloProjectileState(
+                50, player.EntityId, 0, 4, 0, 1, 1, 1, 1, 1,
+                AuthoritativeDamageType.Magic, 0, 3) {
+                Behavior = AuthoritativeProjectileBehavior.MonsterMagic,
+                NativeMissileId = "NotInActiveContent",
+            }],
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), snapshot));
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsMalformedGoldWorldItem()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

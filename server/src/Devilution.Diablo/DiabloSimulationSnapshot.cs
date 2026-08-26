@@ -1157,7 +1157,12 @@ public sealed partial class DiabloSimulation
         var restoredProjectiles = snapshot.Projectiles.Select(projectile => {
             var isMonsterArrow = projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
                 && restoredMonsters.Any(monster => monster.EntityId == projectile.SourceEntityId);
+            var nativeMissileIdentityValid = projectile.NativeMissileId is null
+                || projectile.Behavior == AuthoritativeProjectileBehavior.MonsterMagic
+                    && MonsterMissiles is not null
+                    && MonsterMissiles.TryGetByMissileId(projectile.NativeMissileId, out _);
             if (projectile.SourceEntityId == 0
+                || !nativeMissileIdentityValid
                 || (projectile.SpellId == 0
                     && projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow
                     && !isMonsterArrow)

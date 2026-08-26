@@ -365,6 +365,25 @@ public sealed class AuthoritativeMonsterMissileCatalog
             .ThenBy(definition => definition.MonsterId)
             .ToArray();
 
+    /** Finds a validated missile identity independent of its native-AI owner. */
+    public bool TryGetByMissileId(
+        string missileId,
+        out AuthoritativeMonsterMissileDefinition definition)
+    {
+        if (string.IsNullOrWhiteSpace(missileId)) {
+            definition = null!;
+            return false;
+        }
+        var match = definitions.Values.FirstOrDefault(candidate =>
+            string.Equals(candidate.MissileId, missileId, StringComparison.Ordinal));
+        if (match is null) {
+            definition = null!;
+            return false;
+        }
+        definition = match;
+        return true;
+    }
+
     public bool TryGet(
         string nativeAi,
         out AuthoritativeMonsterMissileDefinition definition)

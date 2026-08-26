@@ -1696,7 +1696,9 @@ internal static class DiabloProtocolMapper
                 projectile.AreaRadius,
                 projectile.RemainingTicks) {
                 Behavior = (AuthoritativeProjectileBehavior)projectile.Behavior,
-                NativeMissileId = ResolveNativeMonsterMissileId(projectile.NativeVisual),
+                NativeMissileId = (AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.MonsterMagic
+                    ? ResolveNativeMonsterMissileId(projectile.NativeVisual)
+                    : null,
                 Phase = (AuthoritativeProjectilePhase)projectile.Phase,
                 StartX = projectile.StartX,
                 StartY = projectile.StartY,

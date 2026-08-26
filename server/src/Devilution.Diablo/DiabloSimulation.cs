@@ -299,6 +299,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Items,
             options.Difficulty,
             options.MonsterTypes,
+            options.MonsterMissiles,
             options.SpellBooks,
             options.QuestTownerInteractions,
             options.QuestDialogueStages,
@@ -338,6 +339,7 @@ public sealed partial class DiabloSimulation
     private readonly DiabloGameMode gameMode;
     private readonly DiabloDifficulty difficulty;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
+    private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativeNativeDunFragmentCatalog? nativeDunFragments;
     private readonly AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects;
     private readonly AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters;
@@ -368,6 +370,7 @@ public sealed partial class DiabloSimulation
         AuthoritativeItemCatalog? items = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
@@ -405,6 +408,7 @@ public sealed partial class DiabloSimulation
             : throw new ArgumentOutOfRangeException(nameof(difficulty));
         Items = items;
         this.monsterTypes = monsterTypes;
+        this.monsterMissiles = monsterMissiles;
         QuestTypes = questTypes;
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
@@ -445,6 +449,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated native dynamic spell-book metadata used for presentation names. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; }
+
+    /** Validated native AI-to-missile mappings used by snapshot restore validation. */
+    public AuthoritativeMonsterMissileCatalog? MonsterMissiles => monsterMissiles;
 
     /** Validated native quest identity mapping used by compatibility projections. */
     public AuthoritativeQuestTypeCatalog? QuestTypes { get; }

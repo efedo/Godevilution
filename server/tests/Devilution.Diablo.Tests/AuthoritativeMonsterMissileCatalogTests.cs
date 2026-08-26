@@ -21,6 +21,9 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.Ranged, succubus.AttackMode);
         Assert.Equal(100, succubus.AvoidanceProbabilityPercent);
+        Assert.True(catalog.TryGetByMissileId("BloodStar", out var byIdentity));
+        Assert.Equal("Succubus", byIdentity.NativeAi);
+        Assert.False(catalog.TryGetByMissileId("Unknown", out _));
     }
 
     [Fact]
