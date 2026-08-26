@@ -70,6 +70,9 @@ The validated data boundary now has regression coverage for rooted,
 drive-qualified, and directory-traversing native asset paths, keeping external
 packs constrained to their declared relative content tree.
 
+Directory-pack loading also rejects reparse-point entries before reading a pack,
+so symbolic links and junctions cannot widen the external content boundary.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

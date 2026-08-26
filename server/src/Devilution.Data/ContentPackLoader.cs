@@ -14,6 +14,8 @@ public static class ContentPackLoader
         if (!Directory.Exists(root))
             throw new DirectoryNotFoundException($"Content pack directory '{rootDirectory}' does not exist.");
 
+        RejectReparsePoints(root, rootDirectory);
+
         var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
             .Select(path => new {
                 FullPath = path,
@@ -146,6 +148,20 @@ public static class ContentPackLoader
         return string.Equals(extension, ".dun", StringComparison.OrdinalIgnoreCase)
             || string.Equals(extension, ".til", StringComparison.OrdinalIgnoreCase)
             || string.Equals(extension, ".sol", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void RejectReparsePoints(string directory, string displayPath)
+    {
+        foreach (var entry in Directory.EnumerateFileSystemEntries(directory)) {
+            var attributes = File.GetAttributes(entry);
+            if ((attributes & FileAttributes.ReparsePoint) != 0) {
+                throw new InvalidDataException(
+                    $"Content pack directory '{displayPath}' contains a reparse-point entry '{entry}'.");
+            }
+
+            if ((attributes & FileAttributes.Directory) != 0)
+                RejectReparsePoints(entry, displayPath);
+        }
     }
 
     private sealed record ContentOverlayDocument(

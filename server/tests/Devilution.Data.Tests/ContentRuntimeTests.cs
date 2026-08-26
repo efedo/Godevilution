@@ -126,6 +126,32 @@ public sealed class ContentRuntimeTests
     }
 
     [Fact]
+    public void ContentPackDirectoryLoaderRejectsReparsePointEntries()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
+        var outside = Path.Combine(Path.GetTempPath(), $"godevilution-outside-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(outside);
+        try {
+            File.WriteAllText(Path.Combine(outside, "rules.tsv"), "id\nexternal\n");
+            try {
+                Directory.CreateSymbolicLink(Path.Combine(root, "linked"), outside);
+            } catch (Exception exception) when (exception is UnauthorizedAccessException
+                or PlatformNotSupportedException
+                or IOException) {
+                return;
+            }
+
+            var error = Assert.Throws<InvalidDataException>(() =>
+                ContentPackLoader.LoadDirectory("base", "1", root));
+            Assert.Contains("reparse-point", error.Message, StringComparison.Ordinal);
+        } finally {
+            Directory.Delete(root, recursive: true);
+            Directory.Delete(outside, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ContentPackDirectoryLoaderRejectsAnEmptyPack()
     {
         var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
