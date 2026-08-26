@@ -86,6 +86,28 @@ public sealed class AuthoritativeSetLevelObjectCatalog
     public IReadOnlyList<AuthoritativeSetLevelObjectPlacement> Definitions
         => definitions;
 
+    /** Validates behavior-template references before set-level geometry is loaded. */
+    public void ValidateTemplates(IEnumerable<AuthoritativeWorldObject> templates)
+    {
+        ArgumentNullException.ThrowIfNull(templates);
+        IReadOnlyDictionary<uint, AuthoritativeWorldObject> templatesById;
+        try {
+            templatesById = templates.ToDictionary(@object => @object.EntityId);
+        } catch (ArgumentException exception) {
+            throw new InvalidDataException(
+                "Set-level object templates contain duplicate entity IDs.",
+                exception);
+        }
+        foreach (var placement in definitions.Where(placement => placement.TemplateEntityId != 0)) {
+            if (!templatesById.TryGetValue(placement.TemplateEntityId, out var template))
+                throw new InvalidDataException(
+                    $"Set-level object placement {placement.PlacementId} references unknown template entity {placement.TemplateEntityId}.");
+            if (template.ObjectId != placement.ObjectId)
+                throw new InvalidDataException(
+                    $"Set-level object placement {placement.PlacementId} template {placement.TemplateEntityId} uses object {template.ObjectId}, expected {placement.ObjectId}.");
+        }
+    }
+
     public IReadOnlyList<AuthoritativeSetLevelObjectPlacement> GetForSetLevel(int setLevelId)
         => definitions.Where(placement => placement.SetLevelId == setLevelId).ToArray();
 

@@ -800,7 +800,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                         "Ordinary-level native DUN object mappings require an active world.");
                 nativeDunObjects.ValidateWorld(world);
             }
+            nativeDunObjects.ValidateTemplates(objectDefinitions);
         }
+        setLevelObjects?.ValidateTemplates(objectDefinitions);
         var setLevelMaps = content.TryGetTable(
             "set_level_maps.tsv",
             out var setLevelMapsTable)

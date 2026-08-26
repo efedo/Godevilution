@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Set-level and native-DUN object template references now validate during
+  content activation, even when their geometry remains deferred; unknown or
+  mismatched templates fail closed before a later map publication.
 - Ordinary-level native DUN object mappings now fail closed during content
   activation when their target level is absent from the composed world;
   deferred set-level mappings remain eligible for later geometry publication.

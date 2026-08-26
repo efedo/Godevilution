@@ -298,6 +298,10 @@ Ordinary-level native DUN object mappings now validate their target level during
 content activation and fail closed when the composed world does not contain it;
 deferred set-level mappings remain eligible for later geometry publication.
 
+Set-level and native-DUN object behavior templates now validate during content
+activation before deferred geometry is loaded, including unknown-template and
+object-identity mismatches.
+
 Native DUN geometry materialization now carries the asset's transparency layer
 into the authoritative level alongside its collision, object, mega-tile, and
 d-piece layers, preserving the native `dTransVal` data for protocol projection

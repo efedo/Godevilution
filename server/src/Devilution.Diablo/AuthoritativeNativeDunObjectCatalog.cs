@@ -113,6 +113,28 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         }
     }
 
+    /** Validates behavior-template references before native geometry is loaded. */
+    public void ValidateTemplates(IEnumerable<AuthoritativeWorldObject> templates)
+    {
+        ArgumentNullException.ThrowIfNull(templates);
+        IReadOnlyDictionary<uint, AuthoritativeWorldObject> templatesById;
+        try {
+            templatesById = templates.ToDictionary(@object => @object.EntityId);
+        } catch (ArgumentException exception) {
+            throw new InvalidDataException(
+                "Native DUN object templates contain duplicate entity IDs.",
+                exception);
+        }
+        foreach (var definition in definitions.Where(definition => definition.TemplateEntityId != 0)) {
+            if (!templatesById.TryGetValue(definition.TemplateEntityId, out var template))
+                throw new InvalidDataException(
+                    $"Native DUN object mapping for level {definition.GetRuntimeLevelId()} references unknown template entity {definition.TemplateEntityId}.");
+            if (template.ObjectId != definition.ObjectId)
+                throw new InvalidDataException(
+                    $"Native DUN object mapping for level {definition.GetRuntimeLevelId()} template {definition.TemplateEntityId} uses object {template.ObjectId}, expected {definition.ObjectId}.");
+        }
+    }
+
     /**
      * Materializes every explicitly mapped nonzero native DUN object cell in a
      * loaded runtime level. Unmapped native IDs remain inert and are not

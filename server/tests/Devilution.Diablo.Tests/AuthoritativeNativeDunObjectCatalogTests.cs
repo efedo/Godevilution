@@ -243,4 +243,31 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
 
         catalog.ValidateWorld(world);
     }
+
+    [Fact]
+    public void RejectsUnknownTemplateBeforeNativeGeometryIsLoaded()
+    {
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(2, true, 9, 4, 3001),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateTemplates([]));
+
+        Assert.Contains("unknown template entity 3001", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RejectsTemplateWithDifferentObjectIdentityBeforeGeometryIsLoaded()
+    {
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(2, true, 9, 4, 3001),
+        ]);
+        var template = new AuthoritativeWorldObject(3001, 5, 0, 0, 0);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateTemplates([template]));
+
+        Assert.Contains("uses object 5, expected 4", exception.Message, StringComparison.Ordinal);
+    }
 }

@@ -226,4 +226,35 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
         Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableObjects(world));
     }
 
+    [Fact]
+    public void RejectsUnknownTemplateBeforeSetLevelGeometryIsLoaded()
+    {
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1) {
+                TemplateEntityId = 3001,
+            },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateTemplates([]));
+
+        Assert.Contains("unknown template entity 3001", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RejectsTemplateWithDifferentObjectIdentityBeforeSetLevelGeometryIsLoaded()
+    {
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1) {
+                TemplateEntityId = 3001,
+            },
+        ]);
+        var template = new AuthoritativeWorldObject(3001, 9, 0, 0, 0);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateTemplates([template]));
+
+        Assert.Contains("uses object 9, expected 2", exception.Message, StringComparison.Ordinal);
+    }
+
 }
