@@ -2,6 +2,11 @@
 
 Status date: 2026-08-26
 
+Explicit runtime AI identities now also select their native missile mapping
+before a generic monster-type catalog row. Aliased unique encounters therefore
+cannot inherit a generic projectile or movement branch merely because their
+base type remains generic.
+
 Explicit native AI identities on unique encounters now take precedence over a
 generic monster-type catalog row. Warlord, Snotspill, and Fallen therefore
 retain their server-owned Skeleton/Fallen combat branches when their encounter

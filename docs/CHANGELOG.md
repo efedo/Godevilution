@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Prefer explicit runtime AI identities when resolving native monster missiles,
+  preventing aliased unique encounters from inheriting generic projectiles or
+  movement branches; add catalog-backed Counselor alias coverage.
 - Preserve explicit Warlord, Snotspill, and Fallen native AI identities when a
   unique encounter inherits a generic monster-type catalog row; add a
   catalog-backed Warlord SkeletonAi regression test.

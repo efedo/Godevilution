@@ -11322,6 +11322,70 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ExplicitCounselorAliasWinsOverGenericCatalogMissileMapping()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 107,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Zhar",
+            intelligence: 20);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                107,
+                107,
+                "Generic Counselor Base",
+                1,
+                16,
+                1,
+                1,
+                4,
+                0,
+                2,
+                3,
+                0,
+                3,
+                false,
+                false,
+                false) {
+                NativeAi = "Zombie",
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Zhar",
+                    "AliasFirebolt",
+                    AuthoritativeProjectileBehavior.Firebolt,
+                    ProjectileDamage: 7),
+                new AuthoritativeMonsterMissileDefinition(
+                    "Zombie",
+                    "GenericFirebolt",
+                    AuthoritativeProjectileBehavior.Firebolt,
+                    ProjectileDamage: 99),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(7, projectile.Damage);
+    }
+
+    [Fact]
     public void WoundedCounselorStartsItsFourAttemptRetreatBeforeRangedDispatch()
     {
         var monster = new AuthoritativeCombatTarget(

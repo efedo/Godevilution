@@ -5593,8 +5593,10 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true)
             return monster.NativeAi == nativeAi
-                || !definition.HasCompleteAiTuning
-                    && definition.NativeAi == nativeAi;
+                || (monster.NativeAi is "Zhar" or "Lazarus"
+                    ? false
+                    : !definition.HasCompleteAiTuning
+                        && definition.NativeAi == nativeAi);
         return monster.NativeAi == nativeAi;
     }
 
@@ -10086,7 +10088,7 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
-    /** Resolves mapped missiles through active content before the runtime-label fallback. */
+    /** Resolves mapped missiles through explicit runtime identity before catalog fallback. */
     private bool TryGetMonsterMissile(
         AuthoritativeCombatTarget monster,
         out AuthoritativeMonsterMissileDefinition missile)
@@ -10095,19 +10097,28 @@ public sealed class DiabloCombatCommandProcessor
             missile = null!;
             return false;
         }
+        // A unique encounter may retain a generic monster type while its
+        // explicit runtime AI identity selects a different native missile.
+        // Resolve that identity first; catalog metadata remains the fallback
+        // for older targets that do not carry an explicit label.
+        if (!string.IsNullOrWhiteSpace(monster.NativeAi)
+            && monsterMissiles.TryGet(
+                monster.NativeAi,
+                monster.MonsterId,
+                out missile))
+            return true;
         if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true
             && monsterMissiles.TryGet(
                 definition.NativeAi,
                 monster.MonsterId,
                 out missile))
             return true;
-        if (monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out missile))
-            return true;
         // Native Zhar and Lazarus use CounselorAi's intelligence-selected
         // missile family; legacy aliases retain the validated Counselor row
         // when an older target has no alias-specific mapping.
         if (monster.NativeAi is "Zhar" or "Lazarus")
             return monsterMissiles.TryGet("Counselor", monster.MonsterId, out missile);
+        missile = null!;
         return false;
     }
 
