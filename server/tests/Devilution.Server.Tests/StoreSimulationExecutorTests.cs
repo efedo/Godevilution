@@ -3634,6 +3634,39 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void AuthoritativeSessionSavesRestoreMultipleParticipantsWithCanonicalHash()
+    {
+        var source = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 100,
+            startingLifeMaximum: 100,
+            startingLevelId: 1);
+        source.InitializeParticipant(
+            "player-b",
+            DiabloPlayerTemplate.CreateDefault(0, 100, 0, 1));
+        _ = source.CreateSnapshot("player-a", 1, 0);
+        _ = source.CreateSnapshot("player-b", 2, 0);
+        source.AdvanceTo(5);
+        var expected = source.CreateSnapshot("player-a", 1, 5);
+        var playerASave = source.ExportSessionState("player-a");
+        var playerBSave = source.ExportSessionState("player-b");
+
+        var replacement = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 100,
+            startingLifeMaximum: 100,
+            startingLevelId: 1);
+        replacement.ImportSessionState("player-a", playerASave);
+        replacement.ImportSessionState("player-b", playerBSave);
+
+        var restored = replacement.CreateSnapshot("player-a", 1, 5);
+        Assert.Equal(expected.StateSha256, restored.StateSha256);
+        Assert.Equal([1U, 2U], restored.Players.Select(player => player.EntityId));
+    }
+
+    [Fact]
     public void AuthoritativeSaveRoundTripRetainsMultiLevelWorldEntities()
     {
         var world = new AuthoritativeWorld();

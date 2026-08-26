@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
   save imports to resume the runtime clock at that tick; active Lich
   MonsterMagic projectile trajectory and post-restore continuation are now
   covered by a focused test.
+- Added focused two-participant session-save recovery coverage, preserving
+  self-first entity ordering and the canonical multiplayer snapshot hash after
+  importing both participant saves into a replacement simulation.
 - Reconciled the replay-fixture backlog with current coverage, removing the
   already-tested HorkDemon delay/summon and MonsterMagic hit/block priorities
   and retaining the remaining AI, multi-actor, reload, Hellfire, and ordering

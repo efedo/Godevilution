@@ -23,6 +23,10 @@ well: the saved authoritative tick, projectile trajectory, target identity,
 phase, and remaining lifetime survive import, and the replacement runtime
 continues from that tick without replaying earlier world ticks.
 
+Per-participant session saves are also covered across a two-player recovery:
+importing both saved participants into one replacement simulation preserves
+self-first entity ordering and the canonical multiplayer snapshot hash.
+
 Snapshot restoration now rebuilds transient procedural-spawn tracking and the
 generated monster identity cursor from the restored world, so replaying an
 earlier snapshot can materialize a later level encounter again with the same
