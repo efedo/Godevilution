@@ -828,6 +828,15 @@ public sealed partial class DiabloSimulation
         }
     }
 
+    /** Rebuilds transient procedural tracking from the restored world state. */
+    private void ResetProceduralSpawnState()
+    {
+        appliedNativeDunFragments.Clear();
+        materializedProceduralLevels.Clear();
+        nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
+        ReconcileProceduralSpawnState();
+    }
+
     public DiabloCombatIntentResult Execute(
         AuthoritativePlayerState player,
         DiabloCombatIntent intent,

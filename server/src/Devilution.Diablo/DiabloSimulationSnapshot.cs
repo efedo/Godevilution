@@ -854,6 +854,9 @@ public sealed partial class DiabloSimulation
         ArgumentNullException.ThrowIfNull(snapshot);
         var previousWorldMutationIds = WorldState.ActiveWorldMutationIds.ToArray();
         var previousSetLevelObjectOrigins = setLevelObjectOrigins.ToArray();
+        var previousAppliedNativeDunFragments = appliedNativeDunFragments.ToArray();
+        var previousMaterializedProceduralLevels = materializedProceduralLevels.ToArray();
+        var previousNextGeneratedMonsterEntityId = nextGeneratedMonsterEntityId;
         try {
             RestoreSnapshotCore(destination, snapshot);
         }
@@ -862,6 +865,11 @@ public sealed partial class DiabloSimulation
             setLevelObjectOrigins.Clear();
             foreach (var (setLevelId, origin) in previousSetLevelObjectOrigins)
                 setLevelObjectOrigins.Add(setLevelId, origin);
+            appliedNativeDunFragments.Clear();
+            appliedNativeDunFragments.UnionWith(previousAppliedNativeDunFragments);
+            materializedProceduralLevels.Clear();
+            materializedProceduralLevels.UnionWith(previousMaterializedProceduralLevels);
+            nextGeneratedMonsterEntityId = previousNextGeneratedMonsterEntityId;
             throw;
         }
     }
@@ -1730,7 +1738,7 @@ public sealed partial class DiabloSimulation
 
         RestorePlayer(source, destination);
         RestoreMonsters(restoredMonsters);
-        ReconcileProceduralSpawnState();
+        ResetProceduralSpawnState();
         WorldState.WorldItems.Clear();
         foreach (var item in restoredWorldItems)
             WorldState.WorldItems.Add(item.EntityId, item);

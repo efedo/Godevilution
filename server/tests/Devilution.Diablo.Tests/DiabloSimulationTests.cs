@@ -717,6 +717,7 @@ public sealed class DiabloSimulationTests
         player.LevelId = 1;
         player.PositionX = 0;
         player.PositionY = 0;
+        var preEntrySnapshot = simulation.CaptureSnapshot(player, 0);
 
         var result = simulation.Execute(
             player,
@@ -733,6 +734,22 @@ public sealed class DiabloSimulationTests
         Assert.True(world.IsWalkable(2, generated.PositionX, generated.PositionY));
         Assert.NotEqual(AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId, generated.EntityId);
         Assert.Equal(115, generated.MaxHitPoints);
+
+        simulation.RestoreSnapshot(player, preEntrySnapshot);
+
+        var replayResult = simulation.Execute(
+            player,
+            new DiabloUsePortalIntent(portal.PortalId),
+            2,
+            [player]);
+
+        Assert.True(replayResult.Succeeded);
+        Assert.Equal(2U, player.LevelId);
+        Assert.Equal(2, simulation.WorldState.CombatTargets.Count);
+        var replayedGenerated = Assert.Single(
+            simulation.WorldState.CombatTargets.Values,
+            target => target.LevelId == 2);
+        Assert.Equal(generated.EntityId, replayedGenerated.EntityId);
     }
 
     [Fact]

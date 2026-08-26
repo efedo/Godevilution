@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Snapshot restoration now rebuilds transient procedural-spawn tracking and
+  the generated monster identity cursor from the restored world, so replaying
+  an earlier snapshot can materialize a later level encounter again with the
+  same authoritative identities.
 - Snapshot restoration now republishes deferred native-DUN fragments after
   restored unique encounters and fragment objects are hydrated, preserving
   anchored geometry across process restart and replacement simulations.
