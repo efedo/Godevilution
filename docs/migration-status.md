@@ -5,7 +5,9 @@ Status date: 2026-08-26
 Lightning Wall segments now carry an explicit server-selected native visual and
 lightning presentation family when their shared wall-segment behavior uses the
 Lightning damage channel; Fire Wall and Ring of Fire segments retain fire
-presentation. Native and Godot bridges both consume the new identity.
+presentation. Native and Godot bridges both consume the new identity, and both
+retain behavior/damage-channel fallbacks for older snapshots that omit additive
+presentation metadata.
 
 Live Godot combat fixtures now select authored base targets by authoritative
 entity identity, so generated unique encounters can be projected without
