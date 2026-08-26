@@ -6074,3 +6074,5 @@ MonsterMagic projectiles now retain validated content missile identities through
 Godot presentation now consumes the additive native MonsterMagic visual identities, rendering distinct Lightning, flare, and Magma Ball cues while retaining the generic behavior fallback for older snapshots.
 
 Snapshot restore now validates content-owned MonsterMagic missile identities against the active external monster-missile catalog and rejects unknown or misplaced identities.
+
+The protocol mapper now rejects unknown or misplaced content-owned MonsterMagic identities instead of silently degrading them.

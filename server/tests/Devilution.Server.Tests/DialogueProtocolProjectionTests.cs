@@ -1940,6 +1940,20 @@ public sealed class DialogueProtocolProjectionTests
 
         var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
         Assert.Equal(missileId, Assert.Single(restored.Projectiles).NativeMissileId);
+
+        var unknown = source with {
+            Projectiles = [source.Projectiles[0] with { NativeMissileId = "Unknown" }],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(unknown));
+
+        var misplaced = source with {
+            Projectiles = [source.Projectiles[0] with {
+                Behavior = AuthoritativeProjectileBehavior.Firebolt,
+            }],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(misplaced));
     }
     [Fact]
     public void ProjectsLightningWallSegmentsAsLightningInsteadOfFire()

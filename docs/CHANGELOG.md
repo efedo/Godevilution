@@ -6002,3 +6002,5 @@ All notable changes to this fork are documented below.
 - Added Godot presentation mapping for the seven additive MonsterMagic native visual identities.
 
 - Hardened snapshot restore so MonsterMagic visual identities must resolve through active validated content.
+
+- Hardened protocol projection to reject unknown or misplaced MonsterMagic visual identities.

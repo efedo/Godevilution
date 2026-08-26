@@ -821,6 +821,16 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
         foreach (var projectile in projectiles) {
+            if (projectile.NativeMissileId is not null
+                && (projectile.Behavior != AuthoritativeProjectileBehavior.MonsterMagic
+                    || ResolveNativeProjectileVisual(
+                        projectile.Behavior,
+                        projectile.DamageType,
+                        projectile.NativeMissileId) == NativeProjectileVisual.Unspecified)) {
+                throw new InvalidDataException(
+                    "Authoritative projectile contains an unknown or misplaced native missile identity.");
+            }
+
             ValidateProjectedEntityPosition(
                 projectile.LevelId,
                 projectile.PositionX,
