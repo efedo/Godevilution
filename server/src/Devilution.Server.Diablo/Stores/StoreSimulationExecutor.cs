@@ -459,7 +459,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         var snapshot = runtime.Capture(
             sessionId,
             tick,
-            state => simulation.CaptureSnapshot(state, 0));
+            state => simulation.CaptureSnapshot(state, tick));
         return saveCodec.Serialize(snapshot);
     }
 
@@ -484,6 +484,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 return savedTemplate.CreatePlayer();
             },
             player => simulation.RestoreSnapshot(player, snapshot));
+        runtime.RestoreAtTick(snapshot.Tick);
     }
 
     /** Restores the complete player and authoritative world state for migration. */

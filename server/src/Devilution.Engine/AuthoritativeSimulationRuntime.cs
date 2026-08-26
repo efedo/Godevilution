@@ -57,6 +57,13 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
         }
     }
 
+    /** Synchronizes the runtime clock with a module snapshot loaded from persistence. */
+    public void RestoreAtTick(ulong tick)
+    {
+        lock (synchronization)
+            lastAdvancedTick = tick;
+    }
+
     /** Registers module-created state before any implicit participant access. */
     public void AddParticipant(string sessionId, TState state)
     {

@@ -52,6 +52,22 @@ public sealed class AuthoritativeSimulationRuntimeTests
     }
 
     [Fact]
+    public void RestoreAtTickResumesWithoutReplayingEarlierTicks()
+    {
+        var lifecycle = new TestLifecycle();
+        var runtime = new AuthoritativeSimulationRuntime<TestState, string>(lifecycle);
+        runtime.Read("player", state => state);
+
+        runtime.AdvanceTo(3);
+        runtime.RestoreAtTick(7);
+        runtime.AdvanceTo(8);
+
+        Assert.Equal(8UL, runtime.LastAdvancedTick);
+        Assert.Equal([1UL, 2UL, 3UL, 8UL], lifecycle.AdvancedTicks);
+        Assert.Equal(8UL, runtime.Read("player", state => state.LastAdvancedTick));
+    }
+
+    [Fact]
     public void CaptureAdvancesExistingStatesBeforeCreatingNewParticipant()
     {
         var lifecycle = new TestLifecycle();

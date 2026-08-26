@@ -18,6 +18,11 @@ after save/restart; canonical snapshot hashing includes the state.
 Hork Spawn expiry materialization is also covered through save/restore, retaining
 the spawned monster identity, position, hit points, and consumed projectile.
 
+Active Lich MonsterMagic projectiles are now covered through save/restore as
+well: the saved authoritative tick, projectile trajectory, target identity,
+phase, and remaining lifetime survive import, and the replacement runtime
+continues from that tick without replaying earlier world ticks.
+
 Snapshot restoration now rebuilds transient procedural-spawn tracking and the
 generated monster identity cursor from the restored world, so replaying an
 earlier snapshot can materialize a later level encounter again with the same

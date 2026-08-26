@@ -21,6 +21,10 @@ All notable changes to this fork are documented below.
 - Added focused save/restore coverage for Hork Spawn expiry materialization,
   retaining the spawned monster identity, position, hit points, and consumed
   projectile.
+- Fixed authoritative save exports to retain the current simulation tick and
+  save imports to resume the runtime clock at that tick; active Lich
+  MonsterMagic projectile trajectory and post-restore continuation are now
+  covered by a focused test.
 - Removed cursor-held pickup overflow from the replay backlog because the
   shared `gameplay-gold-pickup-overflow.json` fixture already covers it.
 - Added a shared multiplayer HorkDemon replay fixture that proves the native

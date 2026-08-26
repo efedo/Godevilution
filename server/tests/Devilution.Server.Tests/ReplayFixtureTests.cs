@@ -2323,6 +2323,52 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicActiveProjectilePersistsAcrossSaveRestore()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-magic-miss.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var expected = result.FinalSnapshot;
+        var expectedProjectile = Assert.Single(expected.Projectiles);
+        var save = executor.ExportPlayerSave(fixture.InitialState.Player);
+
+        var replacement = CreateMonsterMagicExecutor(fixture);
+        replacement.ImportPlayerSave(fixture.InitialState.Player, save);
+
+        var restored = replacement.CreateSnapshot(
+            fixture.InitialState.Player,
+            1,
+            expected.Tick);
+        var restoredProjectile = Assert.Single(restored.Projectiles);
+        Assert.Equal(expected.StateSha256, restored.StateSha256);
+        Assert.Equal(expectedProjectile.SourceEntityId, restoredProjectile.SourceEntityId);
+        Assert.Equal(expectedProjectile.TargetEntityId, restoredProjectile.TargetEntityId);
+        Assert.Equal(expectedProjectile.Behavior, restoredProjectile.Behavior);
+        Assert.Equal(expectedProjectile.Phase, restoredProjectile.Phase);
+        Assert.Equal(expectedProjectile.RemainingTicks, restoredProjectile.RemainingTicks);
+
+        executor.AdvanceTo(expected.Tick + 1);
+        replacement.AdvanceTo(expected.Tick + 1);
+        var continued = executor.CreateSnapshot(
+            fixture.InitialState.Player,
+            1,
+            expected.Tick + 1);
+        var restoredContinued = replacement.CreateSnapshot(
+            fixture.InitialState.Player,
+            1,
+            expected.Tick + 1);
+        Assert.Equal(continued.StateSha256, restoredContinued.StateSha256);
+    }
+
+    [Fact]
     public void GameplaySkeletonRangedMonsterArrowMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(

@@ -177,6 +177,11 @@ casts and distinguish free class abilities from mana-consuming memorized spells;
 protocol-level managed and native-client tests separately cover exact charged
 and consumable item references.
 
+The managed persistence gate also restores an active Lich MonsterMagic
+projectile from a versioned save, checks the canonical snapshot hash and
+trajectory state, and advances both source and replacement simulations through
+the next tick for continuation parity.
+
 `gameplay-player-action-lifecycle.json` follows a Warrior through an eight-frame
 reserved walk, a deferred unarmed strike, chaining at the native ready boundary,
 and a deferred memorized healing cast. Seven shared checkpoints prove action
