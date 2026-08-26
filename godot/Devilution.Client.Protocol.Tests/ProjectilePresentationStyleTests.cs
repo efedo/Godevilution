@@ -41,6 +41,17 @@ public sealed class ProjectilePresentationStyleTests
     }
 
     [Theory]
+    [InlineData(23, 2, ProjectilePresentationKind.Lightning)]
+    [InlineData(23, 0, ProjectilePresentationKind.Fire)]
+    public void ResolvesLegacyWallFallbackByDamageType(
+        int behavior,
+        int damageType,
+        ProjectilePresentationKind expected)
+    {
+        Assert.Equal(expected, ProjectilePresentationStyle.Resolve(behavior, 0, damageType));
+    }
+
+    [Theory]
     [InlineData(11, ProjectilePresentationKind.Beam)]
     [InlineData(13, ProjectilePresentationKind.StoneCurse)]
     [InlineData(999, ProjectilePresentationKind.Generic)]
@@ -152,6 +163,15 @@ public sealed class ProjectilePresentationStyleTests
 
         Assert.Equal(
             ProjectilePresentationKind.FireImpact,
+            ProjectilePresentationStyle.Resolve(projectile));
+
+        projectile = new ProjectileSnapshot {
+            Behavior = 23,
+            DamageType = 2,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.Lightning,
             ProjectilePresentationStyle.Resolve(projectile));
     }
 }

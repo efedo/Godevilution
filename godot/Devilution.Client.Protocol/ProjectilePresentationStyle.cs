@@ -49,6 +49,7 @@ public static class ProjectilePresentationStyle
     private const int BoneSpirit = 21;
     private const int FireWallController = 22;
     private const int FireWallSegment = 23;
+    private const int LightningDamageType = 2;
     private const int FlameWaveController = 24;
     private const int FlameWaveSegment = 25;
     private const int InfernoController = 26;
@@ -113,11 +114,14 @@ public static class ProjectilePresentationStyle
                 => ProjectilePresentationKind.Teleport,
             Devilution.Protocol.V1.ProjectilePresentationKind.Phasing
                 => ProjectilePresentationKind.Phasing,
-            _ => Resolve(projectile.Behavior, projectile.Phase),
+            _ => Resolve(projectile.Behavior, projectile.Phase, projectile.DamageType),
         };
     }
 
     public static ProjectilePresentationKind Resolve(int behavior, int phase)
+        => Resolve(behavior, phase, 0);
+
+    public static ProjectilePresentationKind Resolve(int behavior, int phase, int damageType)
     {
         if (behavior == ResurrectionBeam)
             return ProjectilePresentationKind.Beam;
@@ -135,8 +139,11 @@ public static class ProjectilePresentationStyle
             return phase == ImpactPhase
                 ? ProjectilePresentationKind.FireImpact
                 : ProjectilePresentationKind.Fire;
+        if (behavior == FireWallSegment)
+            return damageType == LightningDamageType
+                ? ProjectilePresentationKind.Lightning
+                : ProjectilePresentationKind.Fire;
         if (behavior is FireWallController
-                or FireWallSegment
                 or FlameWaveController
                 or FlameWaveSegment
                 or InfernoController
