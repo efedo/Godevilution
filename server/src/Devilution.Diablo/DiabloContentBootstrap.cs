@@ -1129,6 +1129,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (world is null || objects is null)
                 throw new InvalidDataException(
                     "Native DUN fragments require a world and authored anchors.");
+            nativeDunFragments.ValidateWorld(world);
             nativeDunFragments.ValidateAssets(content);
             nativeDunFragments
                 .Filter(definition => definition.AnchorEntityId != 0

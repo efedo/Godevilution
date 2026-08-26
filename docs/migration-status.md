@@ -302,6 +302,9 @@ Set-level and native-DUN object behavior templates now validate during content
 activation before deferred geometry is loaded, including unknown-template and
 object-identity mismatches.
 
+Native DUN fragments now validate their target levels before activation even
+when unique encounter anchors defer world projection.
+
 Native DUN geometry materialization now carries the asset's transparency layer
 into the authoritative level alongside its collision, object, mega-tile, and
 d-piece layers, preserving the native `dTransVal` data for protocol projection

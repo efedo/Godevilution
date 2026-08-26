@@ -29,6 +29,47 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void RejectsDeferredFragmentForUnknownWorldLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                25,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorUniqueIdentity: "Snotspill"),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateWorld(world));
+
+        Assert.Contains("unknown level 25", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AllowsUniqueAnchorDeferralWhenTargetLevelIsKnown()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorUniqueIdentity: "Snotspill"),
+        ]);
+
+        catalog.ValidateWorld(world);
+    }
+
+    [Fact]
     public void LoadsAndAppliesAnAnchorRelativeMegaTileFragment()
     {
         var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(

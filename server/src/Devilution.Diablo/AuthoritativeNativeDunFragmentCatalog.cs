@@ -95,6 +95,17 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
     public IReadOnlyList<AuthoritativeNativeDunFragmentDefinition> Definitions
         => definitions;
 
+    /** Fails activation when any deferred fragment targets an unknown level. */
+    public void ValidateWorld(AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var definition in definitions) {
+            if (!world.ContainsLevel(definition.LevelId))
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} references unknown level {definition.LevelId}.");
+        }
+    }
+
     /** Returns a validated view containing only definitions accepted by a lifecycle phase. */
     public AuthoritativeNativeDunFragmentCatalog Filter(
         Func<AuthoritativeNativeDunFragmentDefinition, bool> predicate)

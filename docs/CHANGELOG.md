@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native DUN fragments now validate every target level during content
+  activation, including unique-anchored fragments whose encounter anchor is
+  still deferred; impossible level identities fail closed early.
 - Set-level and native-DUN object template references now validate during
   content activation, even when their geometry remains deferred; unknown or
   mismatched templates fail closed before a later map publication.
