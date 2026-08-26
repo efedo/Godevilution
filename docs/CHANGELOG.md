@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Deferred native-DUN fragments now apply after native monster-layer targets
+  materialize, so unique encounters created from mapped DUN monster cells can
+  publish their anchored geometry and objects in the same simulation activation.
 - Native DUN fragments now validate every target level during content
   activation, including unique-anchored fragments whose encounter anchor is
   still deferred; impossible level identities fail closed early.

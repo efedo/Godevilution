@@ -305,6 +305,10 @@ object-identity mismatches.
 Native DUN fragments now validate their target levels before activation even
 when unique encounter anchors defer world projection.
 
+Native-DUN monster materialization now reruns deferred unique-fragment
+publication after mapped monster targets exist, preserving same-activation
+set-piece geometry for native monster-layer encounters.
+
 Native DUN geometry materialization now carries the asset's transparency layer
 into the authoritative level alongside its collision, object, mega-tile, and
 d-piece layers, preserving the native `dTransVal` data for protocol projection

@@ -686,6 +686,8 @@ public sealed partial class DiabloSimulation
                 throw new InvalidDataException(
                     $"Native DUN monster entity {target.EntityId} is already occupied.");
         }
+        if (targets.Count != 0)
+            ApplyDeferredNativeDunFragments();
     }
 
     /** Applies unique-anchored fragments once their generated encounter exists. */
