@@ -18,6 +18,32 @@ public sealed class MonsterPresentationStyleTests
         Assert.Equal(MonsterPresentationKind.Dialogue, MonsterPresentationStyle.Resolve(monster));
     }
 
+    [Fact]
+    public void MarksAnAlivePlayerMinionAsOwnedPresentation()
+    {
+        var monster = new MonsterSnapshot {
+            Alive = true,
+            IsPlayerMinion = true,
+            OwnerPlayerId = 7,
+        };
+
+        Assert.Equal(MonsterPresentationKind.PlayerMinion, MonsterPresentationStyle.Resolve(monster));
+    }
+
+    [Fact]
+    public void PlayerMinionPresentationTakesPrecedenceOverDialogueMetadata()
+    {
+        var monster = new MonsterSnapshot {
+            Alive = true,
+            IsPlayerMinion = true,
+            OwnerPlayerId = 7,
+            IsUnique = true,
+            DialogueMessageId = 145,
+        };
+
+        Assert.Equal(MonsterPresentationKind.PlayerMinion, MonsterPresentationStyle.Resolve(monster));
+    }
+
     [Theory]
     [InlineData(false, true, 145)]
     [InlineData(true, false, 145)]

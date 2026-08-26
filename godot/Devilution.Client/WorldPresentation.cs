@@ -353,6 +353,8 @@ public partial class WorldPresentation : Node2D
             ? new Color("aeb7c4")
             : presentation == MonsterPresentationKind.Dialogue
                 ? new Color("e5bd52")
+                : presentation == MonsterPresentationKind.PlayerMinion
+                    ? new Color("63d6a0")
                 : new Color("d95151");
         DrawTextureOrRect("monster", center, new Vector2(24, 24), color);
         var health = MonsterHealthBarProjection.Resolve(monster);
@@ -368,6 +370,8 @@ public partial class WorldPresentation : Node2D
             DrawArc(center, 15, 0, Mathf.Tau, 20, new Color("dce3eb"), 2);
         else if (presentation == MonsterPresentationKind.Dialogue)
             DrawArc(center, 16, 0, Mathf.Tau, 24, new Color("fff0a8"), 3);
+        else if (presentation == MonsterPresentationKind.PlayerMinion)
+            DrawArc(center, 16, 0, Mathf.Tau, 24, new Color("8ff0be"), 3);
     }
 
     private void DrawItem(WorldItemSnapshot item, bool searchActive)

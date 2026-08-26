@@ -29,6 +29,8 @@ All notable changes to this fork are documented below.
   metadata.
 - Added live Godot reconnect coverage proving a queued store purchase retries
   after reconnect and is applied once by the authoritative server.
+- Added a distinct Godot presentation family for server-owned player minions,
+  rendering their authoritative ownership cue separately from hostile monsters.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.

@@ -58,6 +58,10 @@ The live Godot client also now queues a store purchase, reconnects before
 submission, and verifies that the pending command is retried through the same
 resume session and applied once by the authoritative server.
 
+Godot now resolves alive `is_player_minion` snapshots to a dedicated
+presentation family and renders them with an owned green cue; dialogue metadata
+cannot misclassify a server-owned minion as a hostile or interactive monster.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.
