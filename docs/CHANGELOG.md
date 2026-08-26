@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a shared multiplayer HorkDemon replay fixture that proves the native
+  and C# runners choose the nearest participant and preserve the canonical
+  target identity.
 - Godot and native snapshot boundaries now reject duplicate materialized
   procedural level IDs, matching the server's additive field-19 validation.
 - Procedural encounter materialization is now persisted through additive

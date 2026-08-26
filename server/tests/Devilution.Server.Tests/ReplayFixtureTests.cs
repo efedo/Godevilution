@@ -1764,6 +1764,32 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonMultiplayerTargetSelectionMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-multiplayer-target.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, executor.GetPlayerState(secondary.Player).Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayHorkDemonDelayMatchesNativeLifecycle()
     {
         var path = Path.Combine(
