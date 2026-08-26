@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Record the current 1,828/1,839 Debug Diablo-suite verification result and
   enumerate its remaining characterized failures so the historical release
   baseline is not mistaken for current green coverage.
+- Treat explicit runtime AI identities as authoritative for all unique
+  encounters while preserving alternate-AI catalog precedence for non-unique
+  compatibility targets.
 - Prefer explicit runtime AI identities when resolving native monster missiles,
   preventing aliased unique encounters from inheriting generic projectiles or
   movement branches; add catalog-backed Counselor alias coverage.

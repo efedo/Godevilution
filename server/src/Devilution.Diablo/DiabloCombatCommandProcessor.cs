@@ -5591,12 +5591,14 @@ public sealed class DiabloCombatCommandProcessor
     /** Active monster content owns fallback native-AI identity; direct targets retain the label path. */
     private bool UsesNativeAi(AuthoritativeCombatTarget monster, string nativeAi)
     {
+        // Unique encounters carry an explicit runtime identity that must not
+        // be replaced by an incomplete generic base-type catalog row.
+        if (monster.IsUnique && !string.IsNullOrWhiteSpace(monster.NativeAi))
+            return monster.NativeAi == nativeAi;
         if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true)
             return monster.NativeAi == nativeAi
-                || (monster.NativeAi is "Zhar" or "Lazarus"
-                    ? false
-                    : !definition.HasCompleteAiTuning
-                        && definition.NativeAi == nativeAi);
+                || !definition.HasCompleteAiTuning
+                    && definition.NativeAi == nativeAi;
         return monster.NativeAi == nativeAi;
     }
 

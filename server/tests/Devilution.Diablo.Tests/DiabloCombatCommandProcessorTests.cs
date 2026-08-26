@@ -11334,7 +11334,9 @@ public sealed class DiabloCombatCommandProcessorTests
             minDamage: 4,
             maxDamage: 4,
             nativeAi: "Zhar",
-            intelligence: 20);
+            intelligence: 20,
+            unique: true,
+            uniqueIdentity: "Zhar");
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
             new AuthoritativeMonsterTypeDefinition(
                 107,
