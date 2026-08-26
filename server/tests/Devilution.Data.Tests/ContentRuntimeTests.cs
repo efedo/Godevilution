@@ -4,6 +4,16 @@ namespace Devilution.Data.Tests;
 
 public sealed class ContentRuntimeTests
 {
+    [Theory]
+    [InlineData("../outside.dun")]
+    [InlineData("levels/../../outside.dun")]
+    [InlineData("/absolute/level.dun")]
+    [InlineData("C:/absolute/level.dun")]
+    public void ContentAssetsRejectPathsOutsideThePack(string sourcePath)
+    {
+        Assert.Throws<ArgumentException>(() => new ContentAsset(sourcePath, ReadOnlyMemory<byte>.Empty));
+    }
+
     [Fact]
     public void TsvLoaderPreservesRowsAndRejectsMalformedValues()
     {

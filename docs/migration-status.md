@@ -66,6 +66,10 @@ Godot now resolves alive `is_player_minion` snapshots to a dedicated
 presentation family and renders them with an owned green cue; dialogue metadata
 cannot misclassify a server-owned minion as a hostile or interactive monster.
 
+The validated data boundary now has regression coverage for rooted,
+drive-qualified, and directory-traversing native asset paths, keeping external
+packs constrained to their declared relative content tree.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

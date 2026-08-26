@@ -33,6 +33,8 @@ All notable changes to this fork are documented below.
   after reconnect and is applied once by the authoritative server.
 - Added a distinct Godot presentation family for server-owned player minions,
   rendering their authoritative ownership cue separately from hostile monsters.
+- Added focused content-runtime coverage rejecting rooted, drive-qualified, and
+  directory-traversing binary asset paths in external packs.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.
