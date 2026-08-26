@@ -1705,6 +1705,7 @@ public sealed class ClientModelTests
                     Behavior = 60,
                     Phase = 2,
                     PresentationKind = (Devilution.Protocol.V1.ProjectilePresentationKind)99,
+                    NativeVisual = (Devilution.Protocol.V1.NativeProjectileVisual)36,
                 },
             },
         };

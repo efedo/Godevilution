@@ -6004,3 +6004,5 @@ All notable changes to this fork are documented below.
 - Hardened snapshot restore so MonsterMagic visual identities must resolve through active validated content.
 
 - Hardened protocol projection to reject unknown or misplaced MonsterMagic visual identities.
+
+- Added Godot-model validation coverage for out-of-range native projectile visuals.

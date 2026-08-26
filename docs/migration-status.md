@@ -6076,3 +6076,5 @@ Godot presentation now consumes the additive native MonsterMagic visual identiti
 Snapshot restore now validates content-owned MonsterMagic missile identities against the active external monster-missile catalog and rejects unknown or misplaced identities.
 
 The protocol mapper now rejects unknown or misplaced content-owned MonsterMagic identities instead of silently degrading them.
+
+Godot snapshot validation now explicitly rejects native projectile visual IDs outside the additive 0–35 protocol range, matching native projection.
