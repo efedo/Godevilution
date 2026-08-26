@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Added a shared multiplayer MonsterArrow volley replay fixture proving two
   simultaneous server-owned projectiles route deterministic impacts to the
   primary and secondary participants in both runners.
+- Added managed save/restore coverage proving both participant saves preserve
+  the volley trajectory, canonical multiplayer hash, and deterministic removal
+  after replacement-runtime continuation.
 - Added a shared Necromorb MonsterMagic replay fixture proving the alternate
   Lich-family missile alias admission and canonical projectile state in both
   runners.

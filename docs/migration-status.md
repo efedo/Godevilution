@@ -25,6 +25,11 @@ well: the saved authoritative tick, projectile trajectory, target identity,
 phase, and remaining lifetime survive import, and the replacement runtime
 continues from that tick without replaying earlier world ticks.
 
+The shared multiplayer MonsterArrow volley now also survives importing both
+participant saves: trajectory, participant ordering, canonical hash, impact
+phase, and final removal remain deterministic after replacement-runtime
+continuation.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

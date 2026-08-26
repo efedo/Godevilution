@@ -2925,6 +2925,99 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerMonsterArrowVolleyContinuesAfterBothParticipantSavesRestore()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-monster-arrow-volley.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel);
+        var projectiles = fixture.InitialProjectiles.Select(definition => new AuthoritativeProjectile(
+            definition.EntityId,
+            definition.SourceEntityId,
+            definition.TargetEntityId,
+            definition.SpellId,
+            definition.LevelId,
+            definition.PositionX,
+            definition.PositionY,
+            definition.TargetX,
+            definition.TargetY,
+            definition.Damage,
+            (AuthoritativeDamageType)definition.DamageType,
+            definition.AreaRadius,
+            definition.RemainingTicks,
+            allowZeroSpellId: true) {
+            Behavior = (AuthoritativeProjectileBehavior)definition.Behavior,
+            Phase = (AuthoritativeProjectilePhase)definition.Phase,
+            Speed = definition.Speed,
+            ImpactLifetime = definition.ImpactLifetime,
+            DamageMinimum = definition.DamageMinimum,
+            DamageMaximum = definition.DamageMaximum,
+        }).ToArray();
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var source = new StoreSimulationExecutor(
+            catalog,
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCombatTargets: [target],
+            startingProjectiles: projectiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+        source.CreateSnapshot("player-b", 8, 0);
+        source.AdvanceTo(1);
+        var expectedAtSave = source.CreateSnapshot("player-a", 1, 1);
+        var primarySave = source.ExportPlayerSave("player-a");
+        var secondarySave = source.ExportPlayerSave("player-b");
+
+        var replacement = new StoreSimulationExecutor(new StoreCatalog(), startingGold: 0);
+        replacement.ImportPlayerSave("player-a", primarySave);
+        replacement.ImportPlayerSave("player-b", secondarySave);
+        var restoredAtSave = replacement.CreateSnapshot("player-a", 1, 1);
+
+        Assert.Equal(expectedAtSave.StateSha256, restoredAtSave.StateSha256);
+        Assert.Equal(
+            expectedAtSave.Players.Select(player => (player.EntityId, player.Life)),
+            restoredAtSave.Players.Select(player => (player.EntityId, player.Life)));
+        Assert.Equal(
+            expectedAtSave.Projectiles.Select(projectile => (projectile.EntityId, projectile.TargetEntityId, projectile.RemainingTicks)),
+            restoredAtSave.Projectiles.Select(projectile => (projectile.EntityId, projectile.TargetEntityId, projectile.RemainingTicks)));
+
+        source.AdvanceTo(2);
+        replacement.AdvanceTo(2);
+        var expectedAfterResume = source.CreateSnapshot("player-a", 1, 2);
+        var restoredAfterResume = replacement.CreateSnapshot("player-a", 1, 2);
+        Assert.Equal(expectedAfterResume.StateSha256, restoredAfterResume.StateSha256);
+        Assert.Equal(
+            expectedAfterResume.Players.Select(player => (player.EntityId, player.Life)),
+            restoredAfterResume.Players.Select(player => (player.EntityId, player.Life)));
+        Assert.Equal(
+            expectedAfterResume.Projectiles.Select(projectile => (projectile.EntityId, projectile.TargetEntityId, projectile.Phase, projectile.RemainingTicks)),
+            restoredAfterResume.Projectiles.Select(projectile => (projectile.EntityId, projectile.TargetEntityId, projectile.Phase, projectile.RemainingTicks)));
+
+        source.AdvanceTo(4);
+        replacement.AdvanceTo(4);
+        var expectedAfterImpact = source.CreateSnapshot("player-a", 1, 4);
+        var restoredAfterImpact = replacement.CreateSnapshot("player-a", 1, 4);
+        Assert.Equal(expectedAfterImpact.StateSha256, restoredAfterImpact.StateSha256);
+        Assert.Empty(restoredAfterImpact.Projectiles);
+    }
+
+    [Fact]
     public void GameplayStatusExpiryFixtureAdvancesEffectsByAuthoritativeTick()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-status-expiry.json");

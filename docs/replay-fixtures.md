@@ -172,7 +172,8 @@ a BoneDemon alias and Lich-family
 MonsterMagic
 impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
 impact against the secondary participant, plus a two-projectile participant
-volley. The native and C# runners
+volley whose managed counterpart also exercises both-participant save/restore
+continuation. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
