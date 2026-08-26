@@ -258,6 +258,36 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void ValidatesDeferredFragmentCollisionBundleBeforeEncounterMaterialization()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                "fragment.til",
+                "fragment.sol",
+                AnchorUniqueIdentity: "Snotspill"),
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest(
+            "rules",
+            "1",
+            [new ContentPack("base", "1", [], assets: [
+                // Tile 43 is outside this deliberately short .til bundle.
+                new ContentAsset("fragment.dun", CreateDun(43)),
+                new ContentAsset("fragment.til", CreateTil()),
+                new ContentAsset("fragment.sol", CreateSol()),
+            ])]));
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateAssets(content));
+        Assert.Contains("unknown mega-tile 43", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AppliesDeferredUniqueFragmentAfterProceduralLevelEntrySpawn()
     {
         var world = new AuthoritativeWorld();

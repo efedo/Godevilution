@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Deferred native DUN fragments now parse and cross-validate their optional
+  `.til`/`.sol` collision bundle during content activation, before a unique
+  encounter can publish the fragment; malformed deferred geometry fails closed
+  at pack load.
 - Authoritative monster-arrow impacts now convert physical damage into native
   Q6 before player resolution and publish the exact applied value through
   `DamageEvent.amount_q6`; legacy whole-life fixtures retain their prior

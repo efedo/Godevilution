@@ -109,10 +109,29 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         ArgumentNullException.ThrowIfNull(content);
         foreach (var definition in definitions) {
             RequireAsset(content, definition.FragmentId, definition.AssetPath);
-            if (!string.IsNullOrWhiteSpace(definition.TileAssetPath))
+            var map = AuthoritativeDunMapAsset.Load(
+                definition.AssetPath,
+                content.GetRequiredAsset(definition.AssetPath).Contents);
+            if (!string.IsNullOrWhiteSpace(definition.TileAssetPath)) {
                 RequireAsset(content, definition.FragmentId, definition.TileAssetPath!);
-            if (!string.IsNullOrWhiteSpace(definition.SolAssetPath))
                 RequireAsset(content, definition.FragmentId, definition.SolAssetPath!);
+                var pieces = AuthoritativeDunPieceCatalog.LoadTil(
+                    definition.TileAssetPath,
+                    content.GetRequiredAsset(definition.TileAssetPath).Contents);
+                var solAssetPath = definition.SolAssetPath!;
+                var tileProperties = AuthoritativeDunTilePropertyCatalog.LoadSol(
+                    solAssetPath,
+                    content.GetRequiredAsset(solAssetPath).Contents);
+                // Validate the complete deferred bundle before an encounter
+                // anchor makes the fragment live. Materialization is used only
+                // as a cross-asset validator here; Apply performs the actual
+                // world projection once the anchor resolves.
+                _ = AuthoritativeDunGeometryMaterializer.Materialize(
+                    definition.LevelId,
+                    map,
+                    pieces,
+                    tileProperties);
+            }
         }
     }
 
