@@ -25,6 +25,10 @@ All notable changes to this fork are documented below.
   save imports to resume the runtime clock at that tick; active Lich
   MonsterMagic projectile trajectory and post-restore continuation are now
   covered by a focused test.
+- Reconciled the replay-fixture backlog with current coverage, removing the
+  already-tested HorkDemon delay/summon and MonsterMagic hit/block priorities
+  and retaining the remaining AI, multi-actor, reload, Hellfire, and ordering
+  gaps.
 - Removed cursor-held pickup overflow from the replay backlog because the
   shared `gameplay-gold-pickup-overflow.json` fixture already covers it.
 - Added a shared multiplayer HorkDemon replay fixture that proves the native

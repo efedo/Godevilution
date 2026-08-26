@@ -504,10 +504,9 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 ```
 
 Future fixtures should prioritize uncovered legacy parity rather than repeat
-already-characterized transitions: broader autonomous monster-arrow, HorkDemon
-delay and summon lifecycle, monster-magic AI branches, monster-magic hit/block
-resolution, multi-actor target selection, mod/content reload ordering, an
-end-to-end Hellfire replay beyond the live overlay and loadout
-activation smoke tests, broader multi-actor target selection, and broader
-combat/event ordering. Cursor-held pickup
+already-characterized transitions: broader autonomous MonsterArrow and
+MonsterMagic AI branches, additional melee/avoidance AI branches, multi-actor
+target selection beyond the current projectile lanes, mod/content reload
+ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
+activation smoke tests, and broader combat/event ordering. Cursor-held pickup
 overflow is already covered by `gameplay-gold-pickup-overflow.json`.
