@@ -36,9 +36,11 @@ native stream for SkeletonAi action, adjacent attack admission/delay, and
 RandomWalk draws; zero-seed fixtures and legacy multiplayer snapshots retain
 the compatibility controller.
 Initialized single-player GoatMelee/AiAvoidance targets now consume the global
-native action, Move-goal, RandomWalk, and delay draws under the same rule.
+native action, Move-goal, adjacent attack/special, RandomWalk, and delay draws
+under the same rule.
 Initialized single-player Fat/Overlord targets now consume the global native
-movement and RandomWalk draws under the same compatibility rule.
+movement, adjacent attack, and RandomWalk draws under the same compatibility
+rule.
 Initialized single-player HorkDemon targets now consume the global native
 spawn/attack and movement admission, recovery delay, RoundWalk, and RandomWalk
 draws under the same compatibility rule.

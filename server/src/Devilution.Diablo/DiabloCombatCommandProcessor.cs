@@ -5086,7 +5086,6 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
                 var usesGoatNativeAiStream = goatMeleeAttackTuning.HasValue
-                    && gameMode == DiabloGameMode.Multiplayer
                     && target.MonsterAiSeed != 0;
                 var goatAttackRoll = usesGoatNativeAiStream
                     ? random.RandomIntLessThan(100)
@@ -5113,7 +5112,6 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var fatAttackTuning = GetFatAttackTuning(target);
                 var usesFatNativeAiStream = fatAttackTuning.HasValue
-                    && gameMode == DiabloGameMode.Multiplayer
                     && target.MonsterAiSeed != 0;
                 var fatAttackRoll = usesFatNativeAiStream
                     ? random.RandomIntLessThan(100)
