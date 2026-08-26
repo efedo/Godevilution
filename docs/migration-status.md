@@ -13,6 +13,9 @@ Procedural encounter materialization is now persisted through additive
 snapshot/protocol field 19, so defeated generated encounters do not respawn
 after save/restart; canonical snapshot hashing includes the state.
 
+Hork Spawn expiry materialization is also covered through save/restore, retaining
+the spawned monster identity, position, hit points, and consumed projectile.
+
 Snapshot restoration now rebuilds transient procedural-spawn tracking and the
 generated monster identity cursor from the restored world, so replaying an
 earlier snapshot can materialize a later level encounter again with the same

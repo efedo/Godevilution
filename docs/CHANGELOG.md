@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Added a shared multiplayer Succubus BloodStar replay fixture that proves the
   native and C# runners choose the nearest participant and preserve the
   canonical target identity.
+- Added focused save/restore coverage for Hork Spawn expiry materialization,
+  retaining the spawned monster identity, position, hit points, and consumed
+  projectile.
 - Removed cursor-held pickup overflow from the replay backlog because the
   shared `gameplay-gold-pickup-overflow.json` fixture already covers it.
 - Added a shared multiplayer HorkDemon replay fixture that proves the native

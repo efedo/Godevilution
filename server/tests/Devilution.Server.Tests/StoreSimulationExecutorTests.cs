@@ -1871,6 +1871,95 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void HorkSpawnExpiryPersistsTheMaterializedMonsterAcrossSaveRestore()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 40, 40));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                117,
+                117,
+                "Hork Spawn",
+                0,
+                100,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "HorkDemon",
+                AggroRange = 6,
+            },
+        ]);
+        var spawnPlanner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            monsterTypes,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(0, 100, 100, 100, 0),
+            ]));
+        var horkSpawn = new AuthoritativeProjectile(
+            0x80000000,
+            9,
+            1,
+            117,
+            1,
+            1,
+            1,
+            5,
+            1,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            1) {
+            Behavior = AuthoritativeProjectileBehavior.HorkSpawn,
+            Speed = 8,
+            ImpactLifetime = 1,
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 100,
+            startingLifeMaximum: 100,
+            startingPositionX: 5,
+            startingPositionY: 1,
+            startingLevelId: 1,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                9,
+                1,
+                1,
+                120,
+                levelId: 1,
+                monsterId: 119)],
+            startingWorld: world,
+            startingProjectiles: [horkSpawn],
+            startingMonsterSpawnPlanner: spawnPlanner);
+
+        executor.AdvanceTo(1);
+        var spawned = Assert.Single(
+            executor.CreateSnapshot("player-a", 1, 1).Monsters,
+            monster => monster.EntityId != 9);
+        Assert.Equal(117U, spawned.MonsterId);
+        Assert.Equal((1, 2), (spawned.PositionX, spawned.PositionY));
+        Assert.Empty(executor.CreateSnapshot("player-a", 1, 1).Projectiles);
+
+        var replacement = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        replacement.ImportPlayerSave("player-a", executor.ExportPlayerSave("player-a"));
+        var restored = Assert.Single(
+            replacement.CreateSnapshot("player-a", 1, 1).Monsters,
+            monster => monster.EntityId != 9);
+        Assert.Equal(spawned.EntityId, restored.EntityId);
+        Assert.Equal(spawned.MonsterId, restored.MonsterId);
+        Assert.Equal(spawned.HitPointsQ6, restored.HitPointsQ6);
+        Assert.Equal((spawned.PositionX, spawned.PositionY), (restored.PositionX, restored.PositionY));
+    }
+
+    [Fact]
     public void ChargedBoltPublishesAndPersistsExactQ6MonsterDamage()
     {
         var target = new AuthoritativeCombatTarget(
