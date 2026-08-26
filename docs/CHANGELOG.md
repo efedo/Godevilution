@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Corrected the replay-gate documentation to report the current 71 checked-in
+  JSON fixtures and 97 native registered tests, including parser and validation
+  cases that do not add a fixture file.
 - Added a shared multiplayer HorkDemon replay fixture that proves the native
   and C# runners choose the nearest participant and preserve the canonical
   target identity.
