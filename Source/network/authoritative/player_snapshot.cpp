@@ -1027,6 +1027,18 @@ tl::expected<void, std::string> ValidateSetLevelObjectOriginSnapshots(const prot
 	return {};
 }
 
+tl::expected<void, std::string> ValidateMaterializedProceduralLevelSnapshots(const protocol::Snapshot &snapshot)
+{
+	if (snapshot.materialized_procedural_level_ids_size() > 4096)
+		return tl::make_unexpected("Server-backed snapshot contains too many materialized procedural levels.");
+	std::unordered_set<uint32_t> levelIds;
+	levelIds.reserve(snapshot.materialized_procedural_level_ids_size());
+	for (const uint32_t levelId : snapshot.materialized_procedural_level_ids())
+		if (!levelIds.insert(levelId).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate materialized procedural levels.");
+	return {};
+}
+
 tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::Snapshot &snapshot)
 {
 	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;

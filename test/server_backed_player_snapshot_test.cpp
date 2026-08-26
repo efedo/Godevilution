@@ -1160,6 +1160,18 @@ TEST(ServerBackedPlayerSnapshot, ValidatesGeneratedSetPieceOriginsAgainstProject
 	EXPECT_TRUE(ValidateSetLevelObjectOriginSnapshots(legacy).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsDuplicateMaterializedProceduralLevels)
+{
+	protocol::Snapshot valid;
+	valid.add_materialized_procedural_level_ids(0);
+	valid.add_materialized_procedural_level_ids(17);
+	EXPECT_TRUE(ValidateMaterializedProceduralLevelSnapshots(valid).has_value());
+
+	protocol::Snapshot duplicate = valid;
+	duplicate.add_materialized_procedural_level_ids(17);
+	EXPECT_FALSE(ValidateMaterializedProceduralLevelSnapshots(duplicate).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)
 {
 	const auto withLevel = [](protocol::Snapshot &snapshot) {

@@ -188,6 +188,7 @@ public sealed class AuthoritativeClientModel
                 ValidateEntityId(entityIds, corpse.EntityId);
             ValidateWarpTriggers(message.Snapshot);
             ValidateSetLevelObjectOrigins(message.Snapshot);
+            ValidateMaterializedProceduralLevels(message.Snapshot);
             ValidateEntityPositions(message.Snapshot);
             ValidateQuestTownerInteractions(message.Snapshot);
             var portalIds = new HashSet<uint>();
@@ -997,6 +998,18 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException(
                     $"The authoritative snapshot contains a set-level object origin outside level {origin.LevelId}.");
             }
+        }
+    }
+
+    /** Validates the server-owned procedural encounter materialization set. */
+    private static void ValidateMaterializedProceduralLevels(Snapshot snapshot)
+    {
+        if (snapshot.MaterializedProceduralLevelIds.Count > 4096
+            || snapshot.MaterializedProceduralLevelIds
+                .Distinct()
+                .Count() != snapshot.MaterializedProceduralLevelIds.Count) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains duplicate materialized procedural levels.");
         }
     }
 

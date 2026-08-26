@@ -575,6 +575,17 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsDuplicateMaterializedProceduralLevels()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+                MaterializedProceduralLevelIds = { 17, 17 },
+            })));
+    }
+
+    [Fact]
     public void SelectsItemlessAuthoredDialogueAfterQuestCompletion()
     {
         var snapshot = new Snapshot {

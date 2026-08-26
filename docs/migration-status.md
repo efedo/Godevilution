@@ -2,6 +2,9 @@
 
 Status date: 2026-08-25
 
+Godot and native snapshot boundaries now reject duplicate materialized
+procedural level IDs, matching the server's additive field-19 validation.
+
 Procedural encounter materialization is now persisted through additive
 snapshot/protocol field 19, so defeated generated encounters do not respawn
 after save/restart; canonical snapshot hashing includes the state.

@@ -453,6 +453,10 @@ void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &
 [[nodiscard]] tl::expected<void, std::string> ValidateSetLevelObjectOriginSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates the server-owned procedural encounter materialization set. */
+[[nodiscard]] tl::expected<void, std::string> ValidateMaterializedProceduralLevelSnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+
 /** Validates projected entity positions against native coordinates and supplied geometry. */
 [[nodiscard]] tl::expected<void, std::string> ValidateEntityPositionSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
