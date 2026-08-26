@@ -16770,6 +16770,64 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void WarlordNativeAiOverrideRetainsSkeletonBranchWithCatalog()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            nativeAi: "Warlord",
+            intelligence: 3,
+            monsterId: 1);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                0,
+                "Base Monster",
+                1,
+                16,
+                1,
+                1,
+                4,
+                0,
+                2,
+                3,
+                0,
+                3,
+                false,
+                false,
+                false) {
+                NativeAi = "Zombie",
+                ZombieActionChanceBase = 10,
+                ZombieActionChanceIntelligenceScale = 2,
+                ZombieMovementDistanceMinimum = 2,
+                ZombieMovementDistanceBase = 4,
+                ZombieMovementDistanceIntelligenceScale = 2,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, which is inside Warlord's native SkeletonAi
+        // movement-delay band (35 - 4 * intelligence). A generic catalog
+        // fallback would move toward the player on this tick instead.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.True(monster.SkeletonMeleeDelayTicks > 0);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void StagedUniqueDialogueSuppressesCombatUntilAuthoredTerminalMarker()
     {
         var quest = new AuthoritativeQuestState(

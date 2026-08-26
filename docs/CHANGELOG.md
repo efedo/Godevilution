@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve explicit Warlord, Snotspill, and Fallen native AI identities when a
+  unique encounter inherits a generic monster-type catalog row; add a
+  catalog-backed Warlord SkeletonAi regression test.
+
 - Added an explicit Lightning Wall projectile visual identity so shared
   FireWallSegment behavior is rendered as lightning when its authoritative
   damage channel is Lightning, preserving native and Godot presentation parity.

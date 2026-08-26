@@ -2,6 +2,12 @@
 
 Status date: 2026-08-26
 
+Explicit native AI identities on unique encounters now take precedence over a
+generic monster-type catalog row. Warlord, Snotspill, and Fallen therefore
+retain their server-owned Skeleton/Fallen combat branches when their encounter
+inherits baseline type metadata, rather than falling through to generic
+movement.
+
 Lightning Wall segments now carry an explicit server-selected native visual and
 lightning presentation family when their shared wall-segment behavior uses the
 Lightning damage channel; Fire Wall and Ring of Fire segments retain fire
