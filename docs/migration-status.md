@@ -3,7 +3,8 @@
 Status date: 2026-08-26
 
 The shared replay gate now covers multiplayer HorkDemon, SkeletonRanged
-MonsterArrow, Succubus BloodStar, and Lich MonsterMagic target selection, plus
+MonsterArrow, Succubus BloodStar, BoneDemon MonsterMagic alias admission, and
+Lich MonsterMagic target selection, plus
 Lich MonsterMagic secondary-player block resolution: native and C# runners choose
 the nearest participant, preserve the canonical target identity, and retain the
 native block mode/timing.

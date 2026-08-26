@@ -133,7 +133,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-26,
-the native replay gate contains 75 checked-in JSON fixtures and 101 registered
+the native replay gate contains 76 checked-in JSON fixtures and 102 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -141,14 +141,15 @@ miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
 HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
 selection, autonomous Succubus BloodStar admission/impact/block lanes, a
-Succubus BloodStar multiplayer target-selection lane, and Lich-family
+Succubus BloodStar multiplayer target-selection lane, BoneDemon alias admission,
+and Lich-family
 MonsterMagic admission/hit/miss/block/nearest-participant/secondary-impact
 lanes. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
-SkeletonRanged MonsterArrow, Succubus BloodStar, and Lich MonsterMagic tests
-passed, including the new Lich block lane, as did their focused managed
-counterparts. The full suites remain
+SkeletonRanged MonsterArrow, Succubus BloodStar, BoneDemon MonsterMagic, and
+Lich MonsterMagic tests passed, including the new Lich block lane, as did their
+focused managed counterparts. The full suites remain
 scheduled for the next periodic verification window.
 
 ## Current Coverage
@@ -165,7 +166,7 @@ travel, player impact, and secondary-player block, Hellfire HorkDemon Hork Spawn
 admission, multiplayer target selection, decision-delay state,
 miss-before-expiry lifecycle, secondary-player
 block and impact, current-tile breakable-object removal, primary-player block,
-a Lich-family
+a BoneDemon alias and Lich-family
 MonsterMagic
 impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
 impact against the secondary participant. The native and C# runners
