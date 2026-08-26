@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
   purchase, and reconnect state/name preservation through the client boundary.
 - Added live Godot coverage for an externally declared memorized Reflect spell,
   including authoritative charge creation and mana consumption.
+- Added live Godot coverage for an externally declared memorized Golem spell,
+  including server-owned minion creation and owner identity projection.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.

@@ -45,6 +45,10 @@ memorized Reflect spell: the server validates the loadout, consumes authoritativ
 mana, and creates the native level-scaled Reflect charge. Existing overlay
 fixtures now target shipped schema 1.430.0 and the current stores-table shape.
 
+The same live Godot boundary now exercises an externally declared memorized
+Golem spell, proving that the server creates an alive player-owned minion and
+projects its owner identity through the protocol for presentation.
+
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves
 self-first entity ordering and the canonical multiplayer snapshot hash.

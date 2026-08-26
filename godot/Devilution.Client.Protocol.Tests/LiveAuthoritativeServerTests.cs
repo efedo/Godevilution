@@ -2708,6 +2708,95 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesGolemFromExternalMemorizedLoadout()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Golem-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.golem-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.430.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t52\t\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingManaOverride: 10000,
+                randomSeed: 1);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-golem-overlay", requestedClassId: 2));
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            var initial = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null);
+            var model = new AuthoritativeClientModel();
+            model.Apply(initial);
+            var player = Assert.Single(model.Snapshot!.Players);
+            var spell = Assert.Single(
+                player.MemorizedSpells,
+                memorized => memorized.SpellId == 52);
+            Assert.Equal(1U, spell.Level);
+            Assert.Equal("Golem", spell.DisplayName);
+            var initialMana = player.Mana;
+
+            var sequence = client.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 52,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+            var summoned = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Monsters.Any(monster =>
+                    monster.IsPlayerMinion
+                    && monster.OwnerPlayerId == player.EntityId) == true);
+            var golem = Assert.Single(
+                summoned.Snapshot!.Monsters,
+                monster => monster.IsPlayerMinion
+                    && monster.OwnerPlayerId == player.EntityId);
+            Assert.True(golem.Alive);
+            Assert.True(golem.HitPoints > 0);
+            Assert.True(summoned.Snapshot.Players.Single().Mana < initialMana);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(
