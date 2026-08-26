@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   authoritative entity identity when generated unique encounters are also
   projected, and refreshed the charged-source RNG checkpoint for that
   expanded encounter state.
+- Added live Godot coverage for an externally declared memorized Telekinesis
+  spell, confirming server-owned target knockback and mana consumption.
+- Added live Godot coverage for an externally declared memorized Telekinesis
+  spell, confirming server-owned target knockback and mana consumption.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.

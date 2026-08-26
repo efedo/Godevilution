@@ -3073,6 +3073,108 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesTelekinesisFromExternalMemorizedLoadout()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Telekinesis-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.telekinesis-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.430.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t33\t\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingManaOverride: 10000,
+                gameMode: "single-player",
+                randomSeed: 0);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-telekinesis-overlay", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            var player = Assert.Single(model.Snapshot!.Players);
+            var spell = Assert.Single(
+                player.MemorizedSpells,
+                memorized => memorized.SpellId == 33);
+            Assert.Equal(1U, spell.Level);
+            Assert.Equal("Telekinesis", spell.DisplayName);
+            Assert.Equal(SpellTargetingKind.WorldEntity, spell.TargetingKind);
+            var target = Assert.Single(
+                model.Snapshot.Monsters,
+                monster => monster.EntityId == 9 && monster.Alive);
+            var initialPosition = (target.PositionX, target.PositionY);
+            var directionX = Math.Sign(target.PositionX - player.PositionX);
+            var directionY = Math.Sign(target.PositionY - player.PositionY);
+            var expectedPosition = (
+                target.PositionX + directionX,
+                target.PositionY + directionY);
+            var initialMana = player.Mana;
+
+            var sequence = client.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 33,
+                    TargetEntityId = target.EntityId,
+                    TargetX = target.PositionX,
+                    TargetY = target.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+
+            var moved = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Monsters.Any(
+                    monster => monster.EntityId == target.EntityId
+                        && (monster.PositionX, monster.PositionY) == expectedPosition) == true);
+            var movedTarget = Assert.Single(
+                moved.Snapshot!.Monsters,
+                monster => monster.EntityId == target.EntityId);
+            Assert.Equal(expectedPosition, (movedTarget.PositionX, movedTarget.PositionY));
+            Assert.NotEqual(initialPosition, expectedPosition);
+            Assert.True(moved.Snapshot.Players.Single().Mana < initialMana);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(

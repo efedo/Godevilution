@@ -2,10 +2,18 @@
 
 Status date: 2026-08-26
 
+Live Godot coverage now also exercises an externally declared memorized
+Telekinesis spell, proving that target knockback and mana consumption remain
+server-owned while the client observes the resulting snapshot.
+
 Live Godot combat fixtures now select authored base targets by authoritative
 entity identity, so generated unique encounters can be projected without
 making target selection ambiguous; the charged-source checkpoint tracks the
 current expanded encounter state.
+
+Live Godot coverage now also exercises an externally declared memorized
+Telekinesis spell, proving that target knockback and mana consumption remain
+server-owned while the client observes the resulting snapshot.
 
 The shared replay gate now covers a two-projectile multiplayer MonsterArrow
 participant volley, multiplayer HorkDemon, SkeletonRanged
