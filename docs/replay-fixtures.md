@@ -133,18 +133,20 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-26,
-the native replay gate contains 73 checked-in JSON fixtures and 99 registered
+the native replay gate contains 74 checked-in JSON fixtures and 100 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
 miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
-HorkDemon target selection, autonomous Succubus BloodStar admission/impact/
-block lanes, a Succubus BloodStar multiplayer target-selection lane, and Lich-family
+HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
+selection, autonomous Succubus BloodStar admission/impact/block lanes, a
+Succubus BloodStar multiplayer target-selection lane, and Lich-family
 MonsterMagic admission/hit/miss/nearest-participant/secondary-impact lanes. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
-`replay_test` executable was rebuilt and the new multiplayer HorkDemon, Succubus
-BloodStar, and Lich MonsterMagic tests passed, as did their focused managed
+`replay_test` executable was rebuilt and the new multiplayer HorkDemon,
+SkeletonRanged MonsterArrow, Succubus BloodStar, and Lich MonsterMagic tests
+passed, as did their focused managed
 counterparts. The full suites remain
 scheduled for the next periodic verification window.
 
