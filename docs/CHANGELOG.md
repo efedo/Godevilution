@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
   any directory contents are enumerated.
 - Table and native-asset paths now use case-insensitive identity during pack
   validation and composition, matching native Windows path semantics.
+- Updated live Godot combat fixtures to select the authored base monster by
+  authoritative entity identity when generated unique encounters are also
+  projected, and refreshed the charged-source RNG checkpoint for that
+  expanded encounter state.
 - Refreshed Godot live content-overlay fixtures to the shipped schema 1.430.0
   and current stores-table columns so external-pack tests remain runnable after
   schema evolution.

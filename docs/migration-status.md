@@ -2,6 +2,11 @@
 
 Status date: 2026-08-26
 
+Live Godot combat fixtures now select authored base targets by authoritative
+entity identity, so generated unique encounters can be projected without
+making target selection ambiguous; the charged-source checkpoint tracks the
+current expanded encounter state.
+
 The shared replay gate now covers a two-projectile multiplayer MonsterArrow
 participant volley, multiplayer HorkDemon, SkeletonRanged
 MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb, and BoneDemon

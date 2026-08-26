@@ -508,7 +508,8 @@ public sealed class LiveAuthoritativeServerTests
         var chargedStaff = Assert.Single(player.Equipment, item => item.State?.SpellId == 30);
         Assert.Equal("Charged Bolt", chargedStaff.State!.SpellDisplayName);
         Assert.Equal(SpellTargetingKind.CombatEntity, chargedStaff.State.SpellTargetingKind);
-        var monster = model.Snapshot.Monsters.Single(monster => monster.Alive);
+        var monster = model.Snapshot.Monsters.Single(
+            monster => monster.EntityId == 9 && monster.Alive);
 
         var moveSequence = client.Queue(new Command {
             MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
@@ -549,7 +550,8 @@ public sealed class LiveAuthoritativeServerTests
         model.Apply(initial);
         Assert.Single(model.Snapshot!.Players);
         var player = model.Snapshot.Players.Single();
-        var monster = model.Snapshot.Monsters.Single(monster => monster.Alive);
+        var monster = model.Snapshot.Monsters.Single(
+            monster => monster.EntityId == 9 && monster.Alive);
 
         var castSequence = client.Queue(new Command {
             CastRequested = new CastRequested {
@@ -690,7 +692,7 @@ public sealed class LiveAuthoritativeServerTests
             var player = Assert.Single(model.Snapshot!.Players);
             var target = Assert.Single(
                 model.Snapshot.Monsters,
-                candidate => candidate.Alive);
+                candidate => candidate.EntityId == 9 && candidate.Alive);
             Assert.Equal(0U, player.LevelId);
             Assert.Equal((0, 0), (player.PositionX, player.PositionY));
             Assert.Equal((1, 0), (target.PositionX, target.PositionY));
@@ -918,7 +920,7 @@ public sealed class LiveAuthoritativeServerTests
         var player = Assert.Single(model.Snapshot!.Players);
         var target = Assert.Single(
             model.Snapshot.Monsters,
-            monster => monster.Alive);
+            monster => monster.EntityId == 9 && monster.Alive);
 
         var sequence = client.Queue(new Command {
             AttackRequested = new AttackRequested {
@@ -3089,7 +3091,9 @@ public sealed class LiveAuthoritativeServerTests
         Assert.Equal(2U, player.CharacterClassId);
         Assert.Equal(27U, player.AbilitySpellId);
         Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
-        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.Alive);
+        var target = Assert.Single(
+            model.Snapshot.Monsters,
+            monster => monster.EntityId == 9 && monster.Alive);
         var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
         Assert.Equal(30, staff.State.SpellId);
         Assert.Equal(40, staff.State.Charges);
@@ -3158,7 +3162,9 @@ public sealed class LiveAuthoritativeServerTests
         model.Apply(initial);
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
-        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.Alive);
+        var target = Assert.Single(
+            model.Snapshot.Monsters,
+            monster => monster.EntityId == 9 && monster.Alive);
         var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
         var stableItemId = staff.State.StableItemId;
         Assert.Equal(30, staff.State.SpellId);
@@ -3269,7 +3275,9 @@ public sealed class LiveAuthoritativeServerTests
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
         var player = Assert.Single(model.Snapshot!.Players);
-        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.Alive);
+        var target = Assert.Single(
+            model.Snapshot.Monsters,
+            monster => monster.EntityId == 9 && monster.Alive);
         Assert.Equal(target.HitPoints * 64, target.HitPointsQ6);
         Assert.Equal(target.MaxHitPoints * 64, target.MaxHitPointsQ6);
         var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
@@ -3301,9 +3309,9 @@ public sealed class LiveAuthoritativeServerTests
         Assert.Equal(player.Mana, updatedPlayer.Mana);
         Assert.Equal(initialCharges - 1,
             Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4).State.Charges);
-        Assert.Equal(0x858FBDECU, consumed.Snapshot.RandomState);
-        Assert.InRange(consumed.Snapshot.Projectiles.Count, 3, 4);
-        Assert.Equal([7, 8, 6],
+        Assert.Equal(0x46185DD5U, consumed.Snapshot.RandomState);
+        Assert.InRange(consumed.Snapshot.Projectiles.Count, 2, 4);
+        Assert.Equal([1, 5],
             consumed.Snapshot.Projectiles.Select(projectile => projectile.Damage).Distinct());
         Assert.All(consumed.Snapshot.Projectiles, projectile => Assert.Equal(1, projectile.Behavior));
     }
