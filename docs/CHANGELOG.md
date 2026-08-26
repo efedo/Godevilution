@@ -4,9 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Corrected the replay-gate documentation to report the current 76 checked-in
-  JSON fixtures and 102 native registered tests, including parser and validation
+- Corrected the replay-gate documentation to report the current 77 checked-in
+  JSON fixtures and 103 native registered tests, including parser and validation
   cases that do not add a fixture file.
+- Added a shared ArchLich MonsterMagic replay fixture proving the alternate
+  Lich-family missile alias admission and canonical projectile state in both
+  runners.
 - Added a shared BoneDemon MonsterMagic replay fixture proving the native
   Lich-family alias admission and canonical projectile state in both runners.
 - Added a shared Lich MonsterMagic secondary-player block replay fixture that

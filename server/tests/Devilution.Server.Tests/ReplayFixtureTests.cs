@@ -2396,6 +2396,33 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayArchLichMonsterMagicMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-magic-arch-lich.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal((int)AuthoritativeDamageType.Magic, projectile.DamageType);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(255U, projectile.RemainingTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySkeletonRangedMonsterArrowMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
