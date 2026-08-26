@@ -33,6 +33,8 @@ continuation.
 Real TCP reconnect coverage now combines a purchased server-owned store state
 with a second live participant, preserving the complete participant set,
 self-first ordering, and canonical snapshot hash when the purchaser resumes.
+The same fixture verifies requested character names for both participants at
+the live authoritative boundary.
 
 Per-participant session saves are also covered across a two-player recovery:
 importing both saved participants into one replacement simulation preserves

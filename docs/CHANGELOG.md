@@ -16,6 +16,8 @@ All notable changes to this fork are documented below.
 - Added a real TCP reconnect fixture combining server-owned store state with a
   second participant, preserving complete participant ordering and the
   canonical snapshot hash after resume.
+- Strengthened that reconnect fixture to verify requested character names are
+  retained for both participants through the live authoritative initializer.
 - Added a shared Necromorb MonsterMagic replay fixture proving the alternate
   Lich-family missile alias admission and canonical projectile state in both
   runners.

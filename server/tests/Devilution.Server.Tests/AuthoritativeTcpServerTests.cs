@@ -1375,7 +1375,12 @@ public sealed class AuthoritativeTcpServerTests
         var executor = new StoreSimulationExecutor(catalog, startingGold: 100, startingInventoryGrid: []);
         var commandServer = new AuthoritativeCommandServer(executor);
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
-        await using var server = new AuthoritativeTcpServer(commandServer, handshake, () => 10, snapshotProvider: executor);
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor,
+            participantInitializer: executor);
         server.Start();
         var cancellationToken = TestContext.Current.CancellationToken;
         string firstResumeToken;
@@ -1442,6 +1447,8 @@ public sealed class AuthoritativeTcpServerTests
         Assert.Equal(
             [firstEntityId, secondEntityId],
             resumedSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal("Store-First", resumedSnapshot.Players[0].CharacterName);
+        Assert.Equal("Store-Second", resumedSnapshot.Players[1].CharacterName);
         Assert.Equal(25U, resumedSnapshot.Players[0].Gold);
         Assert.Single(resumedSnapshot.Players[0].Inventory);
         Assert.Equal(purchasedSnapshot.StateSha256, resumedSnapshot.StateSha256);
