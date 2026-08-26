@@ -1368,8 +1368,12 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	invalidLifecycle.mutable_projectiles(0)->set_behavior(60);
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidLifecycle).has_value());
 
+	protocol::Snapshot lightningWallPresentation = makeProjectile();
+	lightningWallPresentation.mutable_projectiles(0)->set_native_visual(protocol::NATIVE_PROJECTILE_VISUAL_LIGHTNING_WALL);
+	EXPECT_TRUE(ValidateProjectileSnapshots(lightningWallPresentation).has_value());
+
 	protocol::Snapshot invalidPresentation = makeProjectile();
-	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(28));
+	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(29));
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidPresentation).has_value());
 
 	protocol::Snapshot zeroSpellArrow = makeProjectile();
