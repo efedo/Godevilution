@@ -54,6 +54,10 @@ authoritative cast, the client receives the native 36-projectile fire burst and
 the server-selected fire presentation metadata rather than simulating the fan
 out locally.
 
+Live Godot coverage now also exercises externally declared memorized Nova,
+confirming the server-owned 36-ball radial fan-out and `NovaBall` presentation
+metadata across the shared protocol.
+
 The live Godot client also now queues a store purchase, reconnects before
 submission, and verifies that the pending command is retried through the same
 resume session and applied once by the authoritative server.

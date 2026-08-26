@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
 - Added live Godot coverage for an externally declared memorized Immolation
   burst, including the server-owned 36-projectile fire fan-out and presentation
   metadata.
+- Added live Godot coverage for an externally declared memorized Nova burst,
+  including the server-owned 36-ball radial fan-out and presentation metadata.
 - Added live Godot reconnect coverage proving a queued store purchase retries
   after reconnect and is applied once by the authoritative server.
 - Added a distinct Godot presentation family for server-owned player minions,
