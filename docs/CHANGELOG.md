@@ -4,9 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Corrected the replay-gate documentation to report the current 74 checked-in
-  JSON fixtures and 100 native registered tests, including parser and validation
+- Corrected the replay-gate documentation to report the current 75 checked-in
+  JSON fixtures and 101 native registered tests, including parser and validation
   cases that do not add a fixture file.
+- Added a shared Lich MonsterMagic secondary-player block replay fixture that
+  preserves native damage prevention, block mode, and timing in both runners.
 - Added a shared multiplayer SkeletonRanged MonsterArrow replay fixture that
   proves the native and C# runners choose the nearest participant and preserve
   the canonical target identity.
