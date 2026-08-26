@@ -702,11 +702,12 @@ public sealed class DiabloSimulationTests
                 new AuthoritativeLevelGenerationRule(1, 2, 2, 100, 0),
             ]));
         var portal = new AuthoritativePortal(5, 1, 0, 0, 2, 0, 0);
+        var returnPortal = new AuthoritativePortal(6, 2, 0, 0, 1, 0, 0);
         var initialTargets = planner.PlanCombatTargets(1, 0x1234, false, 1);
         var simulation = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
                 World = world,
-                Portals = [portal],
+                Portals = [portal, returnPortal],
                 CombatTargets = initialTargets,
                 MonsterSpawnPlanner = planner,
                 ProceduralMonsterSpawns = new DiabloMonsterSpawnConfiguration(1),
@@ -750,6 +751,31 @@ public sealed class DiabloSimulationTests
             simulation.WorldState.CombatTargets.Values,
             target => target.LevelId == 2);
         Assert.Equal(generated.EntityId, replayedGenerated.EntityId);
+
+        simulation.WorldState.CombatTargets.Remove(generated.EntityId);
+        var defeatedSnapshot = simulation.CaptureSnapshot(player, 3);
+
+        simulation.RestoreSnapshot(player, defeatedSnapshot);
+        var returnToStart = simulation.Execute(
+            player,
+            new DiabloUsePortalIntent(returnPortal.PortalId),
+            4,
+            [player]);
+        Assert.True(returnToStart.Succeeded, returnToStart.Failure?.ToString());
+        Assert.Equal(1U, player.LevelId);
+        Assert.True(simulation.Execute(
+            player,
+            new DiabloUsePortalIntent(portal.PortalId),
+            5,
+            [player]).Succeeded);
+
+        Assert.Equal(2U, player.LevelId);
+        Assert.Single(
+            simulation.WorldState.CombatTargets.Values,
+            target => target.LevelId == 1);
+        Assert.DoesNotContain(
+            simulation.WorldState.CombatTargets.Values,
+            target => target.LevelId == 2);
     }
 
     [Fact]

@@ -493,6 +493,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Runtime-generated set-piece origins persisted with the session. */
     public IReadOnlyList<DiabloSetLevelObjectOriginState> SetLevelObjectOrigins { get; init; } = [];
+
+    /** Procedural encounter levels already materialized by the server. */
+    public IReadOnlyList<uint> MaterializedProceduralLevelIds { get; init; } = [];
 }
 
 public sealed partial class DiabloSimulation
@@ -842,6 +845,9 @@ public sealed partial class DiabloSimulation
                     pair.Value.PositionX,
                     pair.Value.PositionY))
                 .ToArray(),
+            MaterializedProceduralLevelIds = materializedProceduralLevels
+                .OrderBy(levelId => levelId)
+                .ToArray(),
         };
     }
 
@@ -893,7 +899,8 @@ public sealed partial class DiabloSimulation
             || snapshot.Portals is null
             || snapshot.Corpses is null
             || snapshot.ActiveWorldMutationIds is null
-            || snapshot.SetLevelObjectOrigins is null) {
+            || snapshot.SetLevelObjectOrigins is null
+            || snapshot.MaterializedProceduralLevelIds is null) {
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
@@ -1708,6 +1715,9 @@ public sealed partial class DiabloSimulation
         var restoredStore = ValidateSavedStore(source, snapshot.ActiveStore);
         var restoredSetLevelObjectOrigins = ValidateSavedSetLevelObjectOrigins(
             snapshot.SetLevelObjectOrigins);
+        var restoredMaterializedProceduralLevelIds =
+            ValidateSavedMaterializedProceduralLevelIds(
+                snapshot.MaterializedProceduralLevelIds);
 
         DiabloWorldState.ValidateOccupancy(
             source.LevelId,
@@ -1739,6 +1749,7 @@ public sealed partial class DiabloSimulation
         RestorePlayer(source, destination);
         RestoreMonsters(restoredMonsters);
         ResetProceduralSpawnState();
+        materializedProceduralLevels.UnionWith(restoredMaterializedProceduralLevelIds);
         WorldState.WorldItems.Clear();
         foreach (var item in restoredWorldItems)
             WorldState.WorldItems.Add(item.EntityId, item);
@@ -1898,6 +1909,19 @@ public sealed partial class DiabloSimulation
         return origins
             .OrderBy(origin => origin.SetLevelId)
             .ToArray();
+    }
+
+    private IReadOnlySet<uint> ValidateSavedMaterializedProceduralLevelIds(
+        IReadOnlyList<uint> levelIds)
+    {
+        if (levelIds.Count > DiabloWorldState.MaximumWorldStateEntries
+            || levelIds.Distinct().Count() != levelIds.Count
+            || WorldState.World is not null
+                && levelIds.Any(levelId => !WorldState.World.ContainsLevel(levelId))) {
+            throw new InvalidDataException(
+                "The authoritative save contains invalid materialized procedural levels.");
+        }
+        return levelIds.ToHashSet();
     }
 
     private DiabloStoreState? ValidateSavedStore(

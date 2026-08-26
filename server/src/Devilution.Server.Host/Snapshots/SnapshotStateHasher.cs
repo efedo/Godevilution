@@ -32,6 +32,15 @@ public static class SnapshotStateHasher
             foreach (var mutationId in activeWorldMutationIds)
                 hasher.AppendUInt32(mutationId);
         }
+        var materializedProceduralLevelIds = snapshot.MaterializedProceduralLevelIds
+            .OrderBy(levelId => levelId)
+            .ToArray();
+        if (materializedProceduralLevelIds.Length > 0) {
+            hasher.AppendString("godevilution-materialized-procedural-levels-v1");
+            hasher.AppendUInt64((ulong)materializedProceduralLevelIds.Length);
+            foreach (var levelId in materializedProceduralLevelIds)
+                hasher.AppendUInt32(levelId);
+        }
         var setLevelObjectOrigins = snapshot.SetLevelObjectOrigins
             .OrderBy(origin => origin.SetLevelId)
             .ToArray();

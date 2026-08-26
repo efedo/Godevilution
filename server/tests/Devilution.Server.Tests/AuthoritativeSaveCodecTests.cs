@@ -128,6 +128,7 @@ public sealed class AuthoritativeSaveCodecTests
     public void VersionOneRoundTripsSetLevelObjectOrigins()
     {
         var source = CreateSnapshot() with {
+            MaterializedProceduralLevelIds = [1, 17],
             SetLevelObjectOrigins = [
                 new DiabloSetLevelObjectOriginState(2, 17, 31, 42),
                 new DiabloSetLevelObjectOriginState(5, 23, 12, 19),
@@ -138,6 +139,7 @@ public sealed class AuthoritativeSaveCodecTests
             new AuthoritativeSaveCodec().Serialize(source));
 
         Assert.Equal(source.SetLevelObjectOrigins.ToArray(), restored.SetLevelObjectOrigins.ToArray());
+        Assert.Equal(source.MaterializedProceduralLevelIds.ToArray(), restored.MaterializedProceduralLevelIds.ToArray());
     }
 
     [Fact]

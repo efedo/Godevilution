@@ -2,6 +2,10 @@
 
 Status date: 2026-08-25
 
+Procedural encounter materialization is now persisted through additive
+snapshot/protocol field 19, so defeated generated encounters do not respawn
+after save/restart; canonical snapshot hashing includes the state.
+
 Snapshot restoration now rebuilds transient procedural-spawn tracking and the
 generated monster identity cursor from the restored world, so replaying an
 earlier snapshot can materialize a later level encounter again with the same

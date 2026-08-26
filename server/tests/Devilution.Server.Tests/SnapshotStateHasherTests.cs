@@ -11,6 +11,7 @@ public sealed class SnapshotStateHasherTests
     public void SetLevelObjectOriginsAreCanonicalAndHashRelevant()
     {
         var first = new Snapshot {
+            MaterializedProceduralLevelIds = { 17, 1 },
             SetLevelObjectOrigins = {
                 new SetLevelObjectOriginSnapshot {
                     SetLevelId = 5,
@@ -32,9 +33,17 @@ public sealed class SnapshotStateHasherTests
         reordered.SetLevelObjectOrigins.Add(origins.Reverse());
         var changed = first.Clone();
         changed.SetLevelObjectOrigins[0].PositionX++;
+        var changedProceduralLevel = first.Clone();
+        changedProceduralLevel.MaterializedProceduralLevelIds[0]++;
+        var reorderedProceduralLevels = first.Clone();
+        var proceduralLevels = reorderedProceduralLevels.MaterializedProceduralLevelIds.ToArray();
+        reorderedProceduralLevels.MaterializedProceduralLevelIds.Clear();
+        reorderedProceduralLevels.MaterializedProceduralLevelIds.Add(proceduralLevels.Reverse());
 
         Assert.Equal(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(reordered));
         Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(changed));
+        Assert.Equal(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(reorderedProceduralLevels));
+        Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(changedProceduralLevel));
     }
 
     [Fact]

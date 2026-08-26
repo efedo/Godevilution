@@ -440,6 +440,8 @@ message Snapshot {
 	repeated uint32 active_world_mutation_ids = 17;
 	// Runtime-generated set-piece origins persisted by the server.
 	repeated SetLevelObjectOriginSnapshot set_level_object_origins = 18;
+	// Procedural encounter levels that have already been materialized.
+	repeated uint32 materialized_procedural_level_ids = 19;
 }
 
 message SetLevelObjectOriginSnapshot {

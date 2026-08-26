@@ -35,6 +35,8 @@ internal static class DiabloProtocolMapper
             source.Quests,
             projectedLevels);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
+        ValidateProjectedMaterializedProceduralLevelIds(
+            source.MaterializedProceduralLevelIds);
         ValidateProjectedSetLevelObjectOrigins(
             source.SetLevelObjectOrigins,
             levelGeometry is null ? null : projectedLevels);
@@ -81,6 +83,7 @@ internal static class DiabloProtocolMapper
             Difficulty = ToProtocolDifficulty(source.Difficulty),
         };
         snapshot.ActiveWorldMutationIds.Add(source.ActiveWorldMutationIds);
+        snapshot.MaterializedProceduralLevelIds.Add(source.MaterializedProceduralLevelIds);
         foreach (var origin in source.SetLevelObjectOrigins.OrderBy(origin => origin.SetLevelId)) {
             snapshot.SetLevelObjectOrigins.Add(new SetLevelObjectOriginSnapshot {
                 SetLevelId = origin.SetLevelId,
@@ -708,6 +711,26 @@ internal static class DiabloProtocolMapper
             || mutationIds.Distinct().Count() != mutationIds.Count) {
             throw new InvalidDataException(
                 "Authoritative active world mutations contain invalid or duplicate identities.");
+        }
+    }
+
+    private static void ValidateProjectedMaterializedProceduralLevelIds(
+        IReadOnlyList<uint> levelIds)
+    {
+        if (levelIds.Count > DiabloWorldState.MaximumWorldStateEntries
+            || levelIds.Distinct().Count() != levelIds.Count) {
+            throw new InvalidDataException(
+                "Authoritative materialized procedural levels contain duplicate identities.");
+        }
+    }
+
+    private static void ValidateProjectedMaterializedProceduralLevelIds(
+        Google.Protobuf.Collections.RepeatedField<uint> levelIds)
+    {
+        if (levelIds.Count > DiabloWorldState.MaximumWorldStateEntries
+            || levelIds.Distinct().Count() != levelIds.Count) {
+            throw new InvalidDataException(
+                "Authoritative materialized procedural levels contain duplicate identities.");
         }
     }
 
@@ -1404,6 +1427,8 @@ internal static class DiabloProtocolMapper
         ValidateProtocolSnapshotHash(source);
         ValidateEntityIds(source, allowZeroPlayerEntityId: true);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
+        ValidateProjectedMaterializedProceduralLevelIds(
+            source.MaterializedProceduralLevelIds);
         ValidateProjectedSetLevelObjectOrigins(
             source.SetLevelObjectOrigins,
             source.LevelGeometry.Count == 0
@@ -1734,6 +1759,7 @@ internal static class DiabloProtocolMapper
             VictoryTriggered = source.VictoryTriggered,
             Difficulty = FromProtocolDifficulty(source.Difficulty),
             ActiveWorldMutationIds = source.ActiveWorldMutationIds.ToArray(),
+            MaterializedProceduralLevelIds = source.MaterializedProceduralLevelIds.ToArray(),
             SetLevelObjectOrigins = source.SetLevelObjectOrigins
                 .OrderBy(origin => origin.SetLevelId)
                 .Select(origin => new DiabloSetLevelObjectOriginState(

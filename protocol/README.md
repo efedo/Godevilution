@@ -188,6 +188,11 @@ Windows toolchain command.
   set-level ID and include the runtime level plus origin cell; relative
   `set_level_objects.tsv` placements are materialized from this state. The
   field is additive and absent/empty preserves older snapshot behavior.
+- `Snapshot.materialized_procedural_level_ids` carries the server-owned set of
+  levels whose procedural encounter population has already been created. It
+  prevents a save/restart from respawning an encounter after its monsters have
+  been defeated. The field is additive and absent/empty preserves older
+  snapshot behavior.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs
