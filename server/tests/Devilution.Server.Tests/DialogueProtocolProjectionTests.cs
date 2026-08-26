@@ -1892,6 +1892,55 @@ public sealed class DialogueProtocolProjectionTests
             Assert.Equal(ProjectilePresentationKind.NovaBall, Assert.Single(snapshot.Projectiles).PresentationKind);
     }
 
+    [Theory]
+    [InlineData("Lightning", NativeProjectileVisual.MonsterLightning)]
+    [InlineData("OrangeFlare", NativeProjectileVisual.MonsterOrangeFlare)]
+    [InlineData("BlueFlare", NativeProjectileVisual.MonsterBlueFlare)]
+    [InlineData("RedFlare", NativeProjectileVisual.MonsterRedFlare)]
+    [InlineData("YellowFlare", NativeProjectileVisual.MonsterYellowFlare)]
+    [InlineData("BlueFlare2", NativeProjectileVisual.MonsterBlueFlare2)]
+    [InlineData("MagmaBall", NativeProjectileVisual.MonsterMagmaBall)]
+    public void ProjectsAndRestoresContentOwnedMonsterMagicIdentity(
+        string missileId,
+        NativeProjectileVisual expectedVisual)
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [new DiabloProjectileState(
+                2, 1, 0, 2, 1, 4, 4, 4, 4, 0,
+                AuthoritativeDamageType.Magic, 0, 3) {
+                Behavior = AuthoritativeProjectileBehavior.MonsterMagic,
+                NativeMissileId = missileId,
+            }],
+            null);
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var projectile = Assert.Single(projected.Projectiles);
+        Assert.Equal(expectedVisual, projectile.NativeVisual);
+
+        var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
+        Assert.Equal(missileId, Assert.Single(restored.Projectiles).NativeMissileId);
+    }
     [Fact]
     public void ProjectsLightningWallSegmentsAsLightningInsteadOfFire()
     {
