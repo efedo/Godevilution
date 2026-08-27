@@ -280,6 +280,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             var sessionId = session.Id;
             var entityId = session.EntityId;
             var currentTick = clock.CurrentTick;
+            SaveSession(session);
             await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
             while (!cancellationToken.IsCancellationRequested) {
                 var envelope = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
