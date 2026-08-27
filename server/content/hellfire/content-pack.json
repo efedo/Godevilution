@@ -162,14 +162,7 @@
         "power",
         "power.value1",
         "power.value2",
-        "minLevel",
-        "itemTypes",
-        "alignment",
-        "chance",
-        "useful",
-        "minVal",
-        "maxVal",
-        "multVal"
+        "minLevel"
       ],
       "mode": "upsert"
     },
@@ -178,8 +171,7 @@
       "keys": [
         "name",
         "power",
-        "minLevel",
-        "itemTypes"
+        "minLevel"
       ],
       "mode": "upsert"
     }

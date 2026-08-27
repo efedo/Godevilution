@@ -5503,6 +5503,36 @@ public sealed class ShippedContentTests
             suffixes["bashing"].RequiredInt32("power.value2")));
     }
 
+    [Fact]
+    public void HellfireOverlayReplacesNativeAffixEligibilityRows()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        var prefixes = composed.GetRequiredTable("item_prefixes.tsv").Rows
+            .Where(row => row.Required("name") is "Useless" or "Bent" or "Weak" or "Jagged" or "Deadly"
+                or "Heavy" or "Vicious" or "Brutal" or "Massive")
+            .ToArray();
+        Assert.Equal(9, prefixes.Length);
+        Assert.All(prefixes, row => Assert.Equal("Weapon,Staff,Bow", row.Required("itemTypes")));
+
+        var suffixes = composed.GetRequiredTable("item_suffixes.tsv").Rows
+            .Where(row => row.Required("name") is "quality" or "maiming" or "weakness" or "strength"
+                or "atrophy" or "dexterity" or "illness" or "disease" or "vitality" or "trouble"
+                or "the pit" or "the sky" or "the moon" or "sturdiness" or "craftsmanship" or "structure"
+                or "the ages")
+            .ToArray();
+        Assert.Equal(17, suffixes.Length);
+        Assert.All(suffixes, row => Assert.Contains("Staff", row.Required("itemTypes"), StringComparison.Ordinal));
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

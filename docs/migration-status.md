@@ -5100,6 +5100,9 @@ atural_resistance_per_level_percent` and
 - The Hellfire overlay now replaces the native `piercing`, `puncturing`, and
   `bashing` target-accuracy suffix ranges with their Hellfire values while
   retaining the shared validated suffix schema.
+- Hellfire's staff-capable legacy affix eligibility rows now replace their base
+  counterparts through deterministic composite-key overlays, avoiding duplicate
+  candidates during authoritative generation.
 - The Hellfire overlay now also ships the native `devastation`, `decay`, and
   `peril` weapon/staff/bow suffixes with their authoritative effect mappings.
 - Native item life/mana bonuses and Hellfire mana-to-life and life-to-mana
