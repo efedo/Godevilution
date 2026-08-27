@@ -64,7 +64,8 @@ public partial class WorldPresentation : Node2D
         foreach (var monster in snapshot.Monsters.Where(monster =>
                      AuthoritativeMonsterPresentationVisibility.IsVisible(monster, localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(monster.EntityId);
-            UpdatePosition(monster.EntityId, ToScreen(monster.PositionX, monster.PositionY), delta, monster.LevelId);
+            var projected = AuthoritativeMonsterPositionProjection.ResolvePresentation(monster);
+            UpdatePosition(monster.EntityId, ToScreen(projected.X, projected.Y), delta, monster.LevelId);
         }
         foreach (var item in snapshot.WorldItems.Where(item =>
                      AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(

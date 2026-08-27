@@ -20,8 +20,9 @@ Monster group-unity state now crosses the shared snapshot boundary through
 additive leader identity/relation, pack-size, and active-tick fields. The
 server projects and hashes these fields, while Godot and the native
 compatibility client validate and retain the state for presentation. Default
-values preserve legacy snapshot hashes; native and presentation-side visual
-interpolation remain follow-up work.
+values preserve legacy snapshot hashes. Godot monster presentation now moves
+toward the server's authoritative future tile while native last-position
+interpolation remains follow-up work.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot

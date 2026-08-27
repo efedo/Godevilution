@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Use authoritative monster future positions for Godot presentation
+  interpolation while retaining the occupied-tile fallback for stationary or
+  legacy snapshots.
 - Allow validated overlays to introduce optional tables that are absent from
   earlier packs, enabling external pack-only contracts such as
   `unique_monster_packs.tsv` without changing the base table set.
