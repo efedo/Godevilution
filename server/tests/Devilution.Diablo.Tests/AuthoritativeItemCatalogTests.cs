@@ -1506,6 +1506,31 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AppliesDoppelgangersAffixPowerToHellfireDamageArmorFlags()
+    {
+        var affixes = new AuthoritativeItemAffixCatalog(
+            [new AuthoritativeItemAffix(
+                "Doppelganger's",
+                "DOPPELGANGER",
+                81,
+                95,
+                11,
+                new HashSet<string>(["Weapon", "Staff"], StringComparer.OrdinalIgnoreCase),
+                1,
+                true)],
+            [],
+            new AuthoritativeItemGenerationRules(10, 1, 1, 15, 4, 100, 0, 100, 59, 74));
+
+        var result = affixes.Apply(
+            AuthoritativeItemState.Empty,
+            42,
+            12,
+            new HashSet<string>(["Staff"], StringComparer.OrdinalIgnoreCase));
+
+        Assert.Equal(AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag, result.HellfireDamageArmorFlags);
+    }
+
+    [Fact]
     public void LegacyUniquePowersUseNativeFixedPointAndSignConventions()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

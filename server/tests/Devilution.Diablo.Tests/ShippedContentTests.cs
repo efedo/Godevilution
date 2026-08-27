@@ -5428,6 +5428,29 @@ public sealed class ShippedContentTests
         Assert.Equal("Weapon", jesters.Required("itemTypes"));
     }
 
+    [Fact]
+    public void HellfireOverlayExternalizesTheDoppelgangersWeaponStaffPrefix()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        var doppelganger = Assert.Single(
+            composed.GetRequiredTable("item_prefixes.tsv").Rows,
+            row => row.Required("name") == "Doppelganger's");
+
+        Assert.Equal("DOPPELGANGER", doppelganger.Required("power"));
+        Assert.Equal(81, doppelganger.RequiredInt32("power.value1"));
+        Assert.Equal(95, doppelganger.RequiredInt32("power.value2"));
+        Assert.Equal("Weapon,Staff", doppelganger.Required("itemTypes"));
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

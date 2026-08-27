@@ -1,3 +1,4 @@
 name	power	power.value1	power.value2	minLevel	itemTypes	alignment	chance	useful	minVal	maxVal	multVal
 Crystalline	CRYSTALLINE	30	70	5	Weapon	Any	1	true	1000	3000	3
 Jester's	JESTERS	1	1	7	Weapon	Any	1	true	1200	1200	3
+Doppelganger's	DOPPELGANGER	81	95	11	Weapon,Staff	Any	1	true	2000	2400	10
