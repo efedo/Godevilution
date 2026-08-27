@@ -49,6 +49,17 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsOmittedAndPrintablePlayerNames()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 1 },
+                new PlayerSnapshot { EntityId = 2, CharacterName = "Godevilution" },
+            },
+        });
+    }
+
+    [Fact]
     public void RejectsMalformedNonEmptyStateHashes()
     {
         foreach (var hash in new[] {
@@ -109,5 +120,19 @@ public sealed class AuthoritativeSnapshotValidatorTests
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
+    public void RejectsInvalidPlayerNameShapes()
+    {
+        foreach (var name in new[] {
+            new string('A', 32),
+            "bad\nname",
+            "bad\0name",
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                    Players = { new PlayerSnapshot { EntityId = 1, CharacterName = name } },
+                }));
     }
 }

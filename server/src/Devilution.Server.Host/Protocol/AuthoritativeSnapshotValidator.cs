@@ -12,12 +12,24 @@ public static class AuthoritativeSnapshotValidator
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ValidateSessionMetadata(snapshot);
+        ValidatePlayerNames(snapshot);
         ValidateEntityIds(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
 
         throw new InvalidDataException(
             "The authoritative snapshot contains an invalid SHA-256 state hash.");
+    }
+
+    private static void ValidatePlayerNames(Snapshot snapshot)
+    {
+        foreach (var player in snapshot.Players) {
+            if (player.CharacterName.Length > 31
+                || player.CharacterName.Any(character => character is < (char)0x21 or > (char)0x7e)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid character name.");
+            }
+        }
     }
 
     private static void ValidateSessionMetadata(Snapshot snapshot)

@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   identities at the generic TCP host boundary.
 - Align native snapshot projection with Godot by rejecting malformed player-name
   shapes while retaining omitted-name compatibility.
+- Align generic TCP host snapshot emission with the shared player-name shape,
+  rejecting malformed names before wire serialization.
 - Make authoritative save and world-seed writes durable before atomic
   replacement, isolate concurrent temporary files, and clean up failed writes;
   add focused coverage for temporary-artifact cleanup.
