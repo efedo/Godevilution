@@ -152,6 +152,9 @@ module retains independent native validation to preserve its dependency
 boundary. The generic host rejects malformed names before wire serialization,
 and the Godot setup form applies the same 31-character printable-ASCII limit
 before sending a new-session request.
+The generic host also rejects command batches larger than the bounded transport
+limit before command admission, preventing oversized client payloads from
+reaching authoritative execution.
 
 Godot event-batch ingress now rejects unknown event kinds, impossible signed
 damage/healing values, invalid dialogue message/text payloads, and batches

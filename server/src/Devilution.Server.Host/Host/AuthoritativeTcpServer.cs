@@ -288,6 +288,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     return;
 
                 if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandBatch) {
+                    AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
                     currentTick = clock.CurrentTick;
                     var acknowledgement = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
                     SaveSession(session);

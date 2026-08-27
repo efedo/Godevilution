@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject oversized authoritative command batches at the generic host boundary
+  before they reach command admission or game execution.
 - Make the Godot transport own cloned queued commands, preventing caller
   mutation from changing commands retained for send and retry.
 - Make the Godot protocol model own cloned validated snapshots and event
