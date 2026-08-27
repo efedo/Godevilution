@@ -1395,6 +1395,24 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AppliesLegacyUniqueDurabilityCurseWithNativeMinimum()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Fragile Ward", 7, 1, 3650, [
+                new AuthoritativeUniqueItemPower("DUR_CURSE", 75, 75),
+            ]),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ], uniqueItems: uniques);
+
+        var item = items.GenerateUnique(1001, 42, 1);
+
+        Assert.Equal(5, item.MaxDurability);
+        Assert.Equal(5, item.Durability);
+    }
+
+    [Fact]
     public void LegacyUniquePowersUseNativeFixedPointAndSignConventions()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend normalized and legacy unique-item power handling with native
+  `DUR_CURSE` minimum-durability semantics and focused coverage.
 - Validate and bound Godot authoritative event batches while retaining
   compatibility with zero-ID untargeted events.
 - Apply the same event-batch validation to generic TCP host output before
