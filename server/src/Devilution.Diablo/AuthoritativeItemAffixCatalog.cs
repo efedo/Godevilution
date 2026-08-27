@@ -78,7 +78,7 @@ public sealed class AuthoritativeItemAffixCatalog
             "ATTRIBS_CURSE", "FIRERES", "LIGHTRES", "MAGICRES", "FIRERES_CURSE",
             "LIGHTRES_CURSE", "MAGICRES_CURSE", "ALLRES", "LIFE", "LIFE_CURSE", "MANA",
             "MANA_CURSE", "GETHIT", "GETHIT_CURSE", "LIGHT", "LIGHT_CURSE", "SPLLVLADD",
-            "CHARGES", "SPELL", "DUR", "DUR_CURSE", "FIREDAM", "LIGHTDAM", "DEVASTATION",
+            "CHARGES", "SPELL", "DUR", "DUR_CURSE", "CRYSTALLINE", "FIREDAM", "LIGHTDAM", "DEVASTATION",
             "PERIL", "JESTERS", "DOPPELGANGER", "DECAY", "INDESTRUCTIBLE", "FIRE_ARROWS",
             "LIGHT_ARROWS", "MULT_ARROWS", "THORNS", "NOMANA", "ABSHALFTRAP", "KNOCKBACK",
             "3XDAMVDEM", "ALLRESZERO", "STEALMANA", "STEALLIFE", "TARGAC", "FASTATTACK",
@@ -461,6 +461,11 @@ public sealed class AuthoritativeItemAffixCatalog
                 SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
             },
             "DUR" => state with { Durability = state.MaxDurability + state.MaxDurability * value / 100, MaxDurability = state.MaxDurability + state.MaxDurability * value / 100 },
+            "CRYSTALLINE" => state with {
+                PlusDamage = state.PlusDamage + 140 + value * 2,
+                Durability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100),
+                MaxDurability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100),
+            },
             "DUR_CURSE" => state with { Durability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100), MaxDurability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100) },
             "FIREDAM" => state with {
                 FireMinDamage = affix.Value1,

@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add native Hellfire `CRYSTALLINE` damage and durability semantics to
+  authoritative affix and unique-item generation.
 - Extend normalized and legacy unique-item power handling with native
   `CHARGES` multiplier semantics while preserving depleted current charges.
 - Extend normalized and legacy unique-item power handling with native

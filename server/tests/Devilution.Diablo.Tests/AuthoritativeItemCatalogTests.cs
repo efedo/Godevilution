@@ -1434,6 +1434,53 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AppliesCrystallineUniquePowerWithNativeDamageAndDurabilityRules()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Crystalline Edge", 7, 1, 3650, [
+                new AuthoritativeUniqueItemPower("CRYSTALLINE", 40, 40),
+            ]),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 50, 1, 1, true),
+        ], uniqueItems: uniques);
+
+        var item = items.GenerateUnique(1001, 42, 1);
+
+        Assert.Equal(220, item.PlusDamage);
+        Assert.Equal(30, item.MaxDurability);
+        Assert.Equal(30, item.Durability);
+    }
+
+    [Fact]
+    public void AppliesCrystallineAffixPowerWithNativeDamageAndDurabilityRules()
+    {
+        var affixes = new AuthoritativeItemAffixCatalog(
+            [new AuthoritativeItemAffix(
+                "Crystalline",
+                "CRYSTALLINE",
+                40,
+                40,
+                1,
+                new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase),
+                1,
+                true)],
+            [],
+            new AuthoritativeItemGenerationRules(10, 1, 1, 15, 4, 100, 0, 100, 59, 74));
+        var item = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            Durability = 20,
+            MaxDurability = 50,
+        };
+
+        var result = affixes.Apply(item, 42, 10, new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase));
+
+        Assert.Equal(220, result.PlusDamage);
+        Assert.Equal(30, result.MaxDurability);
+        Assert.Equal(30, result.Durability);
+    }
+
+    [Fact]
     public void LegacyUniquePowersUseNativeFixedPointAndSignConventions()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

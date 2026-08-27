@@ -61,7 +61,7 @@ public sealed class AuthoritativeUniqueItemCatalog
             "RNDARROWVEL", "RNDSTEALLIFE", "STEALMANA", "STEALLIFE", "DRAINLIFE",
             "NOMANA", "FASTATTACK", "FASTRECOVER", "FASTBLOCK", "KNOCKBACK", "THORNS",
             "3XDAMVDEM", "ABSHALFTRAP", "ALLRESZERO", "ACDEMON", "ACUNDEAD", "NOMINSTR",
-            "ONEHAND", "DUR_CURSE",
+            "ONEHAND", "DUR_CURSE", "CRYSTALLINE",
         };
     private readonly Dictionary<uint, AuthoritativeUniqueItemDefinition> definitions;
     private readonly AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog;
@@ -522,6 +522,11 @@ public sealed class AuthoritativeUniqueItemCatalog
                 MaxDurability = state.MaxDurability + state.MaxDurability * value / 100,
             },
             "DUR_CURSE" => state with {
+                Durability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100),
+                MaxDurability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100),
+            },
+            "CRYSTALLINE" => state with {
+                PlusDamage = state.PlusDamage + 140 + value * 2,
                 Durability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100),
                 MaxDurability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100),
             },
