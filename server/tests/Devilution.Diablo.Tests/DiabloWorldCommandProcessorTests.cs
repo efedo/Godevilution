@@ -1295,7 +1295,7 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
-    public void RejectedPickupLeavesWorldAndInventoryUnchanged()
+    public void PickupUsesHeldCursorWhenInventoryHasNoPlacement()
     {
         var item = new AuthoritativeWorldItem(
             20,
@@ -1315,9 +1315,12 @@ public sealed class DiabloWorldCommandProcessorTests
             27,
             [player]);
 
-        AssertRejected(result, DiabloRuleFailure.NotAllowed);
+        Assert.True(result.Succeeded);
         Assert.Empty(player.Inventory);
-        Assert.Same(item, world.WorldItems[20]);
+        Assert.Equal(item.ItemSeed, player.HeldItem?.ItemSeed);
+        Assert.Equal(item.Price, player.HeldItem?.Price);
+        Assert.Equal(item.State, player.HeldItem?.State);
+        Assert.DoesNotContain(20U, world.WorldItems.Keys);
     }
 
     [Fact]

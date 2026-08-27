@@ -1295,11 +1295,13 @@ correction and passed 1,452 of 1,452 tests; the other counts above remain from
 the original Release baseline.
 
 On 2026-08-26, the current Debug Diablo module suite ran 1,828 of 1,839
-tests successfully. The 11 remaining failures are isolated to eight combat
-tuning expectations, one lethal gold-stack seed expectation, one rejected
-pickup validation expectation, and one Na-Krul follow-up spawn-health
-expectation. This local run supersedes the older count for current-state
-tracking, but is not a release gate until those failures are resolved or
+tests successfully. Three failures were stale characterization expectations:
+the lethal gold-stack seed now follows the monster attack's preceding native
+RNG draw, a full inventory intentionally uses the held cursor for pickup, and
+authored Na-Krul health must not receive single-player halving twice. Those
+three cases now pass in focused verification; eight combat-tuning expectations
+remain. This local run supersedes the older count for current-state tracking,
+but is not a release gate until the remaining failures are resolved or
 explicitly characterized.
 
 The live Godot protocol suite also verifies that a Hell difficulty selected by

@@ -572,7 +572,9 @@ public sealed class DiabloPlayerActionLifecycleTests
 
         var drops = world.WorldItems.Values.OrderBy(item => item.EntityId).ToArray();
         Assert.Equal([7U, 4U, 14U], drops.Select(item => item.Price).ToArray());
-        Assert.Equal([102U, 103U, 1U], drops.Select(item => item.ItemSeed).ToArray());
+        // The monster's autonomous attack consumes the first native RNG draw;
+        // death-gold allocation therefore receives the second draw.
+        Assert.Equal([102U, 103U, 22695478U], drops.Select(item => item.ItemSeed).ToArray());
         Assert.Equal([(0, 1), (0, 2), (1, 2)], drops
             .Select(item => (item.PositionX, item.PositionY))
             .ToArray());
