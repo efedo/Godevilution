@@ -31,6 +31,24 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsDefinedDifficultyAndValidPortalState()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Difficulty = GameDifficulty.Normal,
+            Portals = {
+                new PortalSnapshot {
+                    PortalId = 1,
+                    Bidirectional = true,
+                    OwnerEntityId = 2,
+                    RemainingTicks = 3,
+                },
+                new PortalSnapshot { PortalId = 4 },
+            },
+            ActiveWorldMutationIds = { 5, 6 },
+        });
+    }
+
+    [Fact]
     public void RejectsMalformedNonEmptyStateHashes()
     {
         foreach (var hash in new[] {
@@ -58,5 +76,38 @@ public sealed class AuthoritativeSnapshotValidatorTests
         };
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeSnapshotValidator.Validate(duplicate));
+    }
+
+    [Fact]
+    public void RejectsInvalidSnapshotMetadata()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                Difficulty = (GameDifficulty)99,
+            }));
+
+        foreach (var snapshot in new[] {
+            new Snapshot { Portals = { new PortalSnapshot() } },
+            new Snapshot {
+                Portals = {
+                    new PortalSnapshot { PortalId = 1 },
+                    new PortalSnapshot { PortalId = 1 },
+                },
+            },
+            new Snapshot {
+                Portals = {
+                    new PortalSnapshot { PortalId = 1, Bidirectional = true },
+                },
+            },
+            new Snapshot {
+                Portals = {
+                    new PortalSnapshot { PortalId = 1, OwnerEntityId = 2 },
+                },
+            },
+            new Snapshot { ActiveWorldMutationIds = { 0 } },
+            new Snapshot { ActiveWorldMutationIds = { 7, 7 } },
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
     }
 }

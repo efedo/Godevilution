@@ -9,7 +9,8 @@ verification remain server-owned. The generic TCP host now validates the same
 shape before serializing adapter snapshots, so malformed non-empty hashes fail
 closed before reaching either presentation client. It also rejects zero or
 duplicate entity IDs across the projected entity collections, matching the
-Godot and native compatibility boundaries.
+Godot and native compatibility boundaries. It also validates difficulty,
+portal-route state, and active world-mutation identities before emission.
 
 Godot event-batch ingress now rejects unknown event kinds, impossible signed
 damage/healing values, invalid dialogue message/text payloads, and batches

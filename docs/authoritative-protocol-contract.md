@@ -315,7 +315,9 @@ SHA-256 digest; the generic TCP host, Godot presentation boundary, and native
 compatibility boundary reject malformed values while still accepting an omitted
 value from legacy snapshots. Entity IDs are non-zero and unique across players,
 monsters, world items, objects, projectiles, and corpses. Digest computation and
-content verification remain server-owned.
+content verification remain server-owned. Snapshot difficulty must be a defined
+protocol value; portal IDs and active world-mutation IDs are non-zero and unique,
+and portal owner/lifetime fields must agree with bidirectional state.
 
 `Snapshot.random_state` field 10 carries the module-owned Diablo gameplay RNG.
 `Snapshot.portals` field 11 carries the complete authoritative portal route

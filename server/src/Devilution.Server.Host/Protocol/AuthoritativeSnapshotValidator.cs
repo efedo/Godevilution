@@ -11,12 +11,40 @@ public static class AuthoritativeSnapshotValidator
     public static void Validate(Snapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        ValidateSessionMetadata(snapshot);
         ValidateEntityIds(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
 
         throw new InvalidDataException(
             "The authoritative snapshot contains an invalid SHA-256 state hash.");
+    }
+
+    private static void ValidateSessionMetadata(Snapshot snapshot)
+    {
+        if (!Enum.IsDefined(snapshot.Difficulty))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid game difficulty.");
+
+        var mutationIds = new HashSet<uint>();
+        foreach (var mutationId in snapshot.ActiveWorldMutationIds) {
+            if (mutationId == 0 || !mutationIds.Add(mutationId))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate world-mutation identities.");
+        }
+
+        var portalIds = new HashSet<uint>();
+        foreach (var portal in snapshot.Portals) {
+            if (portal.PortalId == 0
+                || !portalIds.Add(portal.PortalId)
+                || portal.Bidirectional
+                    && (portal.OwnerEntityId == 0 || portal.RemainingTicks == 0)
+                || !portal.Bidirectional
+                    && (portal.OwnerEntityId != 0 || portal.RemainingTicks != 0)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid portal route state.");
+            }
+        }
     }
 
     private static void ValidateEntityIds(Snapshot snapshot)
