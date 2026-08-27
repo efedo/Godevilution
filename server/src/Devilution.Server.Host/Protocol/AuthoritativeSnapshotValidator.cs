@@ -43,6 +43,10 @@ public static class AuthoritativeSnapshotValidator
                 || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
                 || player.VisitedLevelIds.Count > 0
                     && !player.VisitedLevelIds.Contains(player.LevelId)
+                || !Enum.IsDefined(player.FacingDirection)
+                || !Enum.IsDefined(player.CombatMode)
+                || !Enum.IsDefined(player.AbilityKind)
+                || !Enum.IsDefined(player.AbilityTargetingKind)
                 || player.DiabloKillLevel > byte.MaxValue)
                 throw new InvalidDataException(
                     "The authoritative snapshot contains player state outside the native range.");

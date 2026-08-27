@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject authoritative player snapshots with undefined direction, combat-mode,
+  ability-kind, or ability-targeting enum values at the generic host boundary.
 - Reject player snapshots whose current level ID is outside the native 25-level
   range, including when no visited-level list is supplied.
 - Reject server handshakes that declare an unspecified or unknown game mode

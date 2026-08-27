@@ -165,6 +165,19 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsUndefinedPlayerEnums()
+    {
+        foreach (var player in new[] {
+            new PlayerSnapshot { EntityId = 1, FacingDirection = (PlayerDirection)99 },
+            new PlayerSnapshot { EntityId = 1, CombatMode = (PlayerCombatMode)99 },
+            new PlayerSnapshot { EntityId = 1, AbilityKind = (PlayerAbilityKind)99 },
+            new PlayerSnapshot { EntityId = 1, AbilityTargetingKind = (SpellTargetingKind)99 },
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(new Snapshot { Players = { player } }));
+    }
+
+    [Fact]
     public void AcceptsMovementTimingOnlyForAnActiveMovingMonster()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

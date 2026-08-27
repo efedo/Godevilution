@@ -105,6 +105,8 @@ or multiplayer execution mode.
 Current player level IDs are now validated against the native 25-level range
 at the Diablo mapper, generic host, Godot model, and native projection
 boundaries, including snapshots that omit visited-level entries.
+The generic host also rejects undefined player direction, combat-mode,
+ability-kind, and ability-targeting enum values before wire serialization.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 
