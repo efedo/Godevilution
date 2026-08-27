@@ -5093,6 +5093,8 @@ atural_resistance_per_level_percent` and
   and unique-item definitions.
 - The Hellfire pack now ships the native `Crystalline` weapon prefix through
   an explicit validated `item_prefixes.tsv` overlay.
+- The same overlay now ships the distinct Hellfire `Jester's` weapon prefix;
+  duplicate-name legacy variants remain intentionally unmerged.
 - Native item life/mana bonuses and Hellfire mana-to-life and life-to-mana
   effects apply their Q6 values and independently truncated conversions to newly
   created authoritative player templates and after every accepted equip/unequip

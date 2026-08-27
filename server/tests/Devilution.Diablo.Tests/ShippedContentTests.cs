@@ -5417,6 +5417,15 @@ public sealed class ShippedContentTests
         Assert.Equal(30, prefix.RequiredInt32("power.value1"));
         Assert.Equal(70, prefix.RequiredInt32("power.value2"));
         Assert.Equal("Weapon", prefix.Required("itemTypes"));
+
+        var jesters = Assert.Single(
+            composed.GetRequiredTable("item_prefixes.tsv").Rows,
+            row => row.Required("name") == "Jester's");
+
+        Assert.Equal("JESTERS", jesters.Required("power"));
+        Assert.Equal(1, jesters.RequiredInt32("power.value1"));
+        Assert.Equal(1, jesters.RequiredInt32("power.value2"));
+        Assert.Equal("Weapon", jesters.Required("itemTypes"));
     }
 
     private static string FindRepositoryRoot()

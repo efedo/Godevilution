@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Hellfire's distinct `Jester's` weapon prefix through the
+  validated item-prefix overlay.
 - Externalize Hellfire's native `Crystalline` weapon prefix through the
   validated Hellfire content overlay.
 - Add native Hellfire `CRYSTALLINE` damage and durability semantics to
