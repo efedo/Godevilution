@@ -33,8 +33,16 @@ public static class AuthoritativePlayerPositionProjection
     public static ClientPresentationPosition ResolvePresentation(
         PlayerSnapshot player,
         ulong snapshotTick)
+        => ResolvePresentation(player, (double)snapshotTick);
+
+    /** Resolves an in-progress walk at a fractional presentation tick. */
+    public static ClientPresentationPosition ResolvePresentation(
+        PlayerSnapshot player,
+        double snapshotTick)
     {
         ArgumentNullException.ThrowIfNull(player);
+        if (!double.IsFinite(snapshotTick) || snapshotTick < 0)
+            return ResolvePresentation(player, 0UL);
 
         var x = (double)player.PositionX;
         var y = (double)player.PositionY;
@@ -47,11 +55,10 @@ public static class AuthoritativePlayerPositionProjection
         if (action.EffectTick <= action.StartedAtTick)
             return new ClientPresentationPosition(destinationX, destinationY);
 
-        var elapsed = snapshotTick <= action.StartedAtTick
-            ? 0UL
-            : Math.Min(snapshotTick - action.StartedAtTick, action.EffectTick - action.StartedAtTick);
+        var startedTick = (double)action.StartedAtTick;
         var duration = action.EffectTick - action.StartedAtTick;
-        var progress = (double)elapsed / duration;
+        var elapsed = Math.Clamp(snapshotTick - startedTick, 0, (double)duration);
+        var progress = elapsed / duration;
         return new ClientPresentationPosition(
             x + action.DirectionX * progress,
             y + action.DirectionY * progress);
@@ -65,6 +72,13 @@ public static class AuthoritativePlayerPositionProjection
     public static ClientPresentationPosition ResolvePresentation(
         PlayerSnapshot player,
         ulong snapshotTick,
+        ClientPosition? predicted)
+        => ResolvePresentation(player, (double)snapshotTick, predicted);
+
+    /** Resolves a local fractional presentation position with bounded prediction. */
+    public static ClientPresentationPosition ResolvePresentation(
+        PlayerSnapshot player,
+        double snapshotTick,
         ClientPosition? predicted)
     {
         ArgumentNullException.ThrowIfNull(player);

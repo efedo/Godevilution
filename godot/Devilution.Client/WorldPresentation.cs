@@ -74,7 +74,7 @@ public partial class WorldPresentation : Node2D
             activeEntityIds.Add(player.EntityId);
             var projected = AuthoritativePlayerPositionProjection.ResolvePresentation(
                 player,
-                snapshot.Tick,
+                presentationTick,
                 player.EntityId == localPlayer?.EntityId ? predicted : null);
             var reset = displayedPlayerSnapshots.TryGetValue(player.EntityId, out var previous)
                 && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player);

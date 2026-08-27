@@ -11,7 +11,7 @@ public sealed class AuthoritativePresentationClock
 
     /**
      * Advances from the latest authoritative snapshot while allowing at most
-     * one additional server tick of presentation lead for timed monster walks.
+     * one additional server tick of presentation lead for timed walks.
      */
     public double Advance(ulong authoritativeTick, double deltaSeconds, uint tickRateHz)
     {

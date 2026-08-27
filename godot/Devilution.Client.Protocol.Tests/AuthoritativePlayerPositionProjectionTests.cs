@@ -76,6 +76,26 @@ public sealed class AuthoritativePlayerPositionProjectionTests
     }
 
     [Fact]
+    public void PresentsAWalkAtAFractionalPresentationTick()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                StartedAtTick = 10,
+                EffectTick = 14,
+                DirectionX = 1,
+            },
+        };
+
+        var position = AuthoritativePlayerPositionProjection.ResolvePresentation(player, 10.5);
+
+        Assert.Equal(4.125, position.X, precision: 6);
+        Assert.Equal(5, position.Y, precision: 6);
+    }
+
+    [Fact]
     public void ClampsPresentationToTheReservedDestinationAtTheEffectTick()
     {
         var player = new PlayerSnapshot {

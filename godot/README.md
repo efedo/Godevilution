@@ -103,7 +103,8 @@ The world presentation also advances a bounded fractional presentation tick
 between snapshots at the server-declared tick rate through the
 engine-independent protocol projection layer, allowing a timed monster walk to
 finish smoothly when the authoritative snapshot cadence is coarser than the
-render cadence. Occupancy, targeting, and all gameplay decisions remain
+render cadence for both monster and remote-player walks. Occupancy, targeting,
+and all gameplay decisions remain
 discrete snapshot state; the presentation clock is reset when the local
 authoritative level changes.
 After terminal Death, Escape sends `RestartTownRequested`. The server chooses

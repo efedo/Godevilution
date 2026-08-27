@@ -4,9 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Advance Godot monster presentation on a bounded fractional server-tick clock
-  between snapshots, preserving discrete authoritative occupancy while timed
-  walks finish smoothly at render cadence.
+- Advance Godot monster and remote-player presentation on a bounded fractional
+  server-tick clock between snapshots, preserving discrete authoritative
+  occupancy while timed walks finish smoothly at render cadence.
 - Keep the fractional presentation clock in the engine-independent Godot
   protocol projection layer with direct reset, rate, and horizon coverage.
 - Reset the Godot presentation clock across authoritative local-level changes
