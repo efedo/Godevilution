@@ -118,6 +118,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
             var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
                 ?? throw new EndOfStreamException("The server closed the connection before the initial snapshot.");
+            if (initialSnapshot.PayloadCase == Envelope.PayloadOneofCase.Error)
+                throw new InvalidDataException(initialSnapshot.Error.Detail);
+            if (initialSnapshot.PayloadCase != Envelope.PayloadOneofCase.Snapshot)
+                throw new InvalidDataException("The second server response must be an authoritative snapshot.");
             Enqueue(initialSnapshot);
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);

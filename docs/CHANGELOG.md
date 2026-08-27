@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make the Godot client reject an error or unexpected payload in the required
+  initial-snapshot handshake frame instead of entering a false connected state.
 - Reject oversized authoritative command batches at the generic host boundary
   before they reach command admission or game execution.
 - Make the Godot transport own cloned queued commands, preventing caller

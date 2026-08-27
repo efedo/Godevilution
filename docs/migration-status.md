@@ -82,6 +82,9 @@ authoritative boundary has accepted them.
 The Godot transport likewise owns cloned queued commands, so caller mutation
 cannot change a command retained for send or retry after it crosses the client
 boundary.
+The Godot handshake now also requires an authoritative snapshot immediately
+after `ServerHello`; an error or unexpected payload fails closed before the
+client reports itself connected.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 

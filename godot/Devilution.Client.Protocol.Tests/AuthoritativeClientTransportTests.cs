@@ -123,6 +123,26 @@ public sealed class AuthoritativeClientTransportTests
         await serverTask;
     }
 
+    [Fact]
+    public async Task RejectsAnErrorBeforeTheInitialSnapshot()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunInitialSnapshotErrorServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash"));
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => client.ConnectAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("snapshot unavailable", exception.Message);
+        Assert.False(client.IsConnected);
+        await serverTask;
+    }
+
     private static async Task RunServerAsync(TcpListener listener)
     {
         using var tcpClient = await listener.AcceptTcpClientAsync();
@@ -205,6 +225,28 @@ public sealed class AuthoritativeClientTransportTests
         Assert.Equal(13UL, command.RequestedTick);
         Assert.Equal(1, command.MoveRequested.DirectionX);
         Assert.Equal(-1, command.MoveRequested.DirectionY);
+        listener.Stop();
+    }
+
+    private static async Task RunInitialSnapshotErrorServerAsync(TcpListener listener)
+    {
+        using var tcpClient = await listener.AcceptTcpClientAsync();
+        await using var stream = tcpClient.GetStream();
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            ServerHello = new ServerHello {
+                ServerBuildId = "test-server",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = "content-hash",
+                TickRateHz = 20,
+            },
+        });
+        await WriteEnvelopeAsync(stream, new Envelope {
+            Error = new ProtocolError {
+                Code = ProtocolErrorCode.InvalidMessage,
+                Detail = "snapshot unavailable",
+            },
+        });
         listener.Stop();
     }
 
