@@ -51,6 +51,11 @@
       "mode": "upsert"
     },
     {
+      "table": "native_missile_sprites.tsv",
+      "keys": ["missile_id"],
+      "mode": "upsert"
+    },
+    {
       "table": "content_ids.tsv",
       "keys": ["kind", "symbol"],
       "mode": "upsert"

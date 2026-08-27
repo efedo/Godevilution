@@ -36,4 +36,15 @@ public sealed class AuthoritativeNativeMissileSpriteCatalogTests
             new("Fireball", 96, 16, "fireba", 1, "", [.. Enumerable.Repeat(0, 16)], [.. Enumerable.Repeat(1, 16)]),
         ]));
     }
+
+    [Fact]
+    public void AllowsNativeNegativeAlternateWidthOffsets()
+    {
+        var values = Enumerable.Repeat(1, 16).ToArray();
+        var catalog = new AuthoritativeNativeMissileSpriteCatalog([
+            new("OrangeFlareExplosion", 96, -12, "ex_ora1", 1, "MonsterOwned", values, values),
+        ]);
+
+        Assert.Equal(-12, catalog.GetRequired("OrangeFlareExplosion").AlternateWidth);
+    }
 }

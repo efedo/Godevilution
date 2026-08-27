@@ -34,7 +34,6 @@ public sealed class AuthoritativeNativeMissileSpriteCatalog
         foreach (var definition in ordered) {
             if (!IsIdentifier(definition.MissileId)
                 || definition.Width < 0
-                || definition.AlternateWidth < 0
                 || definition.FrameCount is < 1 or > NativeDirectionCount
                 || definition.FrameDelay.Count != NativeDirectionCount
                 || definition.FrameLength.Count != NativeDirectionCount

@@ -15,9 +15,10 @@ handler, movement, and expiry-link metadata for both server and presentation
 bridges.
 
 The native `missile_sprites.tsv` contract is now externalized as validated
-`native_missile_sprites.tsv` content, preserving all 46 sprite definitions,
-dimensions, names, direction counts, flags, and 16-direction frame timing for
-the presentation clients.
+`native_missile_sprites.tsv` content, preserving all 46 base sprite definitions
+and the 13 Hellfire-only overlay definitions, including dimensions, names,
+direction counts, flags, and 16-direction frame timing for presentation
+clients.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility

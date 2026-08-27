@@ -340,6 +340,41 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void HellfireNativeMissileSpritesMatchNativeOverlayRows()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var native = TsvTable.Parse(
+            "mods/Hellfire/txtdata/missiles/missile_sprites.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "mods",
+                "Hellfire",
+                "txtdata",
+                "missiles",
+                "missile_sprites.tsv")));
+        var external = hellfirePack.Tables.Single(
+            table => table.SourcePath == "native_missile_sprites.tsv");
+        var fields = new[] {
+            (External: "missile_id", Native: "id"),
+            (External: "width", Native: "width"),
+            (External: "alternate_width", Native: "width2"),
+            (External: "name", Native: "name"),
+            (External: "frame_count", Native: "numFrames"),
+            (External: "flags", Native: "flags"),
+            (External: "frame_delay", Native: "frameDelay"),
+            (External: "frame_length", Native: "frameLength"),
+        };
+
+        Assert.Equal(59, native.Rows.Count);
+        Assert.Equal(13, external.Rows.Count);
+        foreach (var (nativeRow, externalRow) in native.Rows.Skip(46).Zip(external.Rows))
+            foreach (var (externalColumn, nativeColumn) in fields)
+                Assert.Equal(nativeRow[nativeColumn], externalRow[externalColumn]);
+    }
+
+    [Fact]
     public void BaseNativeSpellNamespaceMatchesNativeSpellData()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -2848,6 +2883,11 @@ public sealed class ShippedContentTests
             [basePack, hellfirePack]);
 
         var composed = ComposedContent.Compose(manifest);
+        var composedSpriteTable = composed.GetRequiredTable("native_missile_sprites.tsv");
+        Assert.Equal(59, composedSpriteTable.Rows.Count);
+        Assert.Equal(
+            composedSpriteTable.Rows.Count,
+            composedSpriteTable.Rows.Select(row => row.Required("missile_id")).Distinct().Count());
         var stableIds = StableContentIdCatalog.LoadTsv(
             "content_ids.tsv",
             composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
@@ -2865,6 +2905,13 @@ public sealed class ShippedContentTests
         Assert.Equal(3, combat.MultipleArrowsCount);
         Assert.Equal(2, combat.MultipleArrowsDelayTicks);
         Assert.Equal(1, combat.MultipleArrowsSpreadDistance);
+        var nativeMissileSprites = AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
+            "native_missile_sprites.tsv",
+            composed.GetRequiredTable("native_missile_sprites.tsv").ToCanonicalTsv());
+        Assert.Equal(59, nativeMissileSprites.Definitions.Count);
+        Assert.Equal("ms_ora", nativeMissileSprites.GetRequired("OrangeFlare").Name);
+        Assert.Equal(8, nativeMissileSprites.GetRequired("HorkSpawn").FrameCount);
+        Assert.Equal(-12, nativeMissileSprites.GetRequired("OrangeFlareExplosion").AlternateWidth);
         var counselorCatalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());

@@ -95,7 +95,11 @@ presentation aliases that are declared by native monster data but do not have
 their own `misdat.tsv` rows.
 `native_missile_sprites.tsv` preserves native `missile_sprites.tsv` dimensions,
 sprite names, direction counts, flags, and all 16 directional frame-delay and
-frame-length values for presentation clients.
+frame-length values for presentation clients. The Hellfire overlay adds its 13
+native-only rows, including the colored flare, Hork Spawn, Rune, and Reflect
+presentation definitions, while retaining the base rows through keyed upsert.
+The signed native alternate-width offset is preserved for effects such as
+`OrangeFlareExplosion`.
 
 `classes.tsv` defines the native-compatible class IDs `0` through `5`, their
 base-game or Hellfire availability, exactly one active default, class flags,
