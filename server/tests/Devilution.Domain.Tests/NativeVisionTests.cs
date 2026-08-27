@@ -1,4 +1,4 @@
-using Devilution.Domain;
+using Devilution.Shared;
 using Xunit;
 
 namespace Devilution.Domain.Tests;

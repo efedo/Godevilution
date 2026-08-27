@@ -4,4 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../../protocol/Devilution.Protocol/NativeVision.cs" Link="NativeVision.cs" />
+  </ItemGroup>
 </Project>

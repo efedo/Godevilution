@@ -1,5 +1,5 @@
-using Devilution.Domain;
 using Devilution.Protocol.V1;
+using Devilution.Shared;
 
 namespace Devilution.Client.Protocol;
 

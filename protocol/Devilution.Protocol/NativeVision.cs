@@ -1,4 +1,4 @@
-namespace Devilution.Domain;
+namespace Devilution.Shared;
 
 /** Native DoVision ray-table visibility shared by authoritative consumers. */
 public static class NativeVision

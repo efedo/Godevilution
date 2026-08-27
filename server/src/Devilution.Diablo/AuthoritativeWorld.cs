@@ -1,7 +1,7 @@
 namespace Devilution.Diablo;
 
 using Devilution.Data;
-using Devilution.Domain;
+using Devilution.Shared;
 using System.Collections.ObjectModel;
 using System.Globalization;
 
