@@ -85,6 +85,15 @@ authoritative C# handler; direct catalogs remain permissive for compatibility.
 symbols and bit flags used by normalized item loading and Hellfire affix
 generation.
 
+`native_missiles.tsv` preserves the complete native `misdat.tsv` missile
+identity namespace, including add/process handlers, sounds, graphics, flags,
+movement distribution, and expiry-missile links. Monster missile mappings are
+validated against this namespace during activation so presentation identities
+cannot silently drift from the native contract. The separate
+`native_missile_aliases.tsv` table explicitly carries the five monster-color
+presentation aliases that are declared by native monster data but do not have
+their own `misdat.tsv` rows.
+
 `classes.tsv` defines the native-compatible class IDs `0` through `5`, their
 base-game or Hellfire availability, exactly one active default, class flags,
 base and maximum attributes, combat modifiers, and life/mana fixed-point

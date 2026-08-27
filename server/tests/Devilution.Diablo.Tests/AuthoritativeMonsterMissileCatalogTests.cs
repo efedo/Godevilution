@@ -27,6 +27,25 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void ValidatesReferencedMissileIdentitiesAgainstNativeCatalog()
+    {
+        var mappings = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\n"
+                + "GoatRanged\tArrow\tMonsterArrow\n");
+        var native = new AuthoritativeNativeMissileCatalog([
+            new("Arrow", "AddArrow", "ProcessArrow", "", "", "Arrow", "Physical,Arrow", "Blockable", null),
+        ]);
+        mappings.ValidateMissileReferences(native);
+
+        var missing = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\n"
+                + "GoatRanged\tMissing\tMonsterArrow\n");
+        Assert.Throws<InvalidDataException>(() => missing.ValidateMissileReferences(native));
+    }
+
+    [Fact]
     public void LoadsOptionalProjectileDamageRandomRange()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

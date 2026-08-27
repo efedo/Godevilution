@@ -7,6 +7,13 @@ catalog in activated content, preserving all 50 native cumulative thresholds;
 programmatic compatibility callers retain their legacy fallback until they
 provide an active catalog.
 
+The native `misdat.tsv` missile identity namespace is now externalized as
+validated `native_missiles.tsv` content. Monster missile mappings must resolve
+through those 68 native identities plus five explicitly declared monster-color
+compatibility aliases during activation, preserving source-owned visual, sound,
+handler, movement, and expiry-link metadata for both server and presentation
+bridges.
+
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility
 and rune-alias entries outside the native spell-data table.
@@ -1391,6 +1398,7 @@ transient labels from another projected level.
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine; participant templates and save restore fail closed on invalid scalar resources/actions, attribute state, item identity metadata and duplicates, equipment/belt slots, and malformed item dimensions or inventory footprints while retaining legacy character-level normalization; save restore remains the authoritative stash placement validation boundary | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
 | External content | Explicitly manifested base and Hellfire variant packs plus schema-aware, dependency-versioned composite-key overlays, including the validated complete native
 `native_spells.tsv` namespace, native
+`native_missiles.tsv` namespace, native
 `native_item_misc.tsv` namespace, and native
 `native_item_topology.tsv`/
 `native_item_effects.tsv`/

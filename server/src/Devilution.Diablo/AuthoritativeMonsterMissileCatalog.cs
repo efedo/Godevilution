@@ -423,6 +423,18 @@ public sealed class AuthoritativeMonsterMissileCatalog
         }
     }
 
+    /** Validates every referenced missile identity against native misdat metadata. */
+    public void ValidateMissileReferences(AuthoritativeNativeMissileCatalog nativeMissiles)
+    {
+        ArgumentNullException.ThrowIfNull(nativeMissiles);
+        foreach (var definition in Definitions) {
+            if (!nativeMissiles.TryGet(definition.MissileId, out _))
+                throw new InvalidDataException(
+                    $"Monster missile '{definition.NativeAi}'/{definition.MissileId} "
+                    + "references an unknown native missile identity.");
+        }
+    }
+
     /** Validates monster-specific selectors against the active monster catalog. */
     public void ValidateMonsterSelectorReferences(AuthoritativeMonsterTypeCatalog monsterTypes)
     {

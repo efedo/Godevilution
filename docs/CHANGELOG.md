@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
 
 - Externalize native 1–50 character experience thresholds, wire active
   simulations to server-owned progression data, and add source parity coverage.
+- Externalize all 68 native `misdat.tsv` missile identities, retain five
+  explicit monster-color compatibility aliases, and validate every active
+  monster missile mapping against the shared namespace.
 - Add exhaustive source coverage for all 36 native spell-data identities in
   the 52-entry normalized native spell namespace.
 - Add exhaustive parity coverage for the normalized item-generation rules and

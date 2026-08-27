@@ -263,6 +263,49 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseNativeMissileMetadataMatchesNativeTable()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var native = TsvTable.Parse(
+            "assets/txtdata/missiles/misdat.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "assets",
+                "txtdata",
+                "missiles",
+                "misdat.tsv")));
+        var external = basePack.Tables.Single(table => table.SourcePath == "native_missiles.tsv");
+        var fields = new[] {
+            (External: "missile_id", Native: "id"),
+            (External: "add_function", Native: "addFn"),
+            (External: "process_function", Native: "processFn"),
+            (External: "cast_sound", Native: "castSound"),
+            (External: "hit_sound", Native: "hitSound"),
+            (External: "graphic", Native: "graphic"),
+            (External: "flags", Native: "flags"),
+            (External: "movement_distribution", Native: "movementDistribution"),
+            (External: "on_expiry_missile", Native: "onExpiryMissile"),
+        };
+
+        Assert.Equal(68, native.Rows.Count);
+        Assert.Equal(native.Rows.Count, external.Rows.Count);
+        foreach (var (nativeRow, externalRow) in native.Rows.Zip(external.Rows))
+            foreach (var (externalColumn, nativeColumn) in fields)
+                Assert.Equal(nativeRow[nativeColumn], externalRow[externalColumn]);
+
+        var aliases = basePack.Tables
+            .Single(table => table.SourcePath == "native_missile_aliases.tsv")
+            .Rows
+            .Select(row => row.Required("missile_id"))
+            .ToArray();
+        Assert.Equal(
+            ["OrangeFlare", "YellowFlare", "BlueFlare", "RedFlare", "BlueFlare2"],
+            aliases);
+    }
+
+    [Fact]
     public void BaseNativeSpellNamespaceMatchesNativeSpellData()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -2566,6 +2609,17 @@ public sealed class ShippedContentTests
             target.Drop!.EntityId);
         Assert.NotEqual(0U, target.Drop.ItemSeed);
         Assert.Equal(1, target.Drop.State.ItemIndex);
+        var nativeMissiles = Assert.IsType<AuthoritativeNativeMissileCatalog>(
+            activation.NativeMissiles);
+        Assert.Same(nativeMissiles, activation.Simulation.NativeMissiles);
+        Assert.Equal(73, nativeMissiles.Definitions.Count);
+        Assert.Equal("Fireball", nativeMissiles.GetRequired("Firebolt").Graphic);
+        Assert.Equal(
+            "MagmaBallExplosion",
+            nativeMissiles.GetRequired("Firebolt").OnExpiryMissile);
+        Assert.All(
+            ["OrangeFlare", "YellowFlare", "BlueFlare", "RedFlare", "BlueFlare2"],
+            alias => Assert.True(nativeMissiles.GetRequired(alias).CompatibilityAlias));
         Assert.NotNull(activation.MonsterMissiles);
         Assert.True(activation.MonsterMissiles!.TryGet("GoatRanged", out var goatRanged));
         Assert.Equal("Arrow", goatRanged.MissileId);
