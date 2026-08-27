@@ -1815,6 +1815,14 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedG
 	projectile.positionY = 2;
 	projectile.remainingTicks = 1;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+
+	ProjectedWorldItemSnapshot invalidNativeCoordinate;
+	invalidNativeCoordinate.entityId = 16;
+	invalidNativeCoordinate.positionX = -1;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { invalidNativeCoordinate }, { }, 1).has_value());
+	invalidNativeCoordinate.entityId = 17;
+	invalidNativeCoordinate.positionX = 256;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { invalidNativeCoordinate }, { }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonsters)

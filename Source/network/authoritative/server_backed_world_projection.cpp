@@ -1,12 +1,20 @@
 #include "network/authoritative/server_backed_world_projection.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <unordered_set>
 #include <utility>
 
 namespace devilution::authoritative {
 
 namespace {
+
+bool IsValidNativeTileCoordinate(int32_t x, int32_t y)
+{
+	return x >= 0 && y >= 0
+	    && x <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max())
+	    && y <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max());
+}
 
 bool UsesDirectionalPresentation(const ProjectedProjectileSnapshot &projectile)
 {
@@ -95,6 +103,8 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
 	}
 	const auto isInBounds = [&levelGeometry](uint32_t projectedLevelId, int32_t x, int32_t y) {
+		if (!IsValidNativeTileCoordinate(x, y))
+			return false;
 		const auto geometry = std::find_if(levelGeometry.begin(), levelGeometry.end(), [projectedLevelId](const auto &candidate) {
 			return candidate.levelId == projectedLevelId;
 		});
