@@ -5105,6 +5105,8 @@ atural_resistance_per_level_percent` and
   candidates during authoritative generation.
 - The Hellfire overlay now also ships the native `devastation`, `decay`, and
   `peril` weapon/staff/bow suffixes with their authoritative effect mappings.
+- The Hellfire overlay now ships the previously missing native `The Grizzly`
+  unique item with its five validated powers and cursor identity.
 - Native item life/mana bonuses and Hellfire mana-to-life and life-to-mana
   effects apply their Q6 values and independently truncated conversions to newly
   created authoritative player templates and after every accepted equip/unequip

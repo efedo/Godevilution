@@ -5533,6 +5533,38 @@ public sealed class ShippedContentTests
         Assert.All(suffixes, row => Assert.Contains("Staff", row.Required("itemTypes"), StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void HellfireOverlayExternalizesTheGrizzlyUniqueItem()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        var rows = composed.GetRequiredTable("unique_items.tsv").Rows
+            .Where(row => row.Required("unique_symbol") == "the_grizzly")
+            .ToArray();
+
+        Assert.Equal(5, rows.Length);
+        Assert.All(rows, row => {
+            Assert.Equal(1112U, row.RequiredUInt32("unique_id"));
+            Assert.Equal("The Grizzly", row.Required("name"));
+            Assert.Equal(136, row.RequiredInt32("base_item_id"));
+            Assert.Equal("two_handed_sword", row.Required("base_item_symbol"));
+            Assert.Equal(23, row.RequiredInt32("min_level"));
+            Assert.Equal(50000, row.RequiredInt32("value"));
+            Assert.Equal("THE_GRIZZLY", row.Required("cursor_graphic"));
+        });
+        Assert.Equal(
+            new[] { "STR", "VIT_CURSE", "DAMP", "KNOCKBACK", "DUR" },
+            rows.Select(row => row.Required("power")).ToArray());
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

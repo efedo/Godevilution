@@ -428,3 +428,8 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	ACDEMON	0	0	-
 1110	acolyte_s_amulet	Acolyte's Amulet	171	amulet	10	10000	MANATOLIFE	50	50	-
 1111	gladiator_s_ring	Gladiator's Ring	113	hellfire_ring_base	10	10000	LIFETOMANA	40	40	-
+1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	STR	20	20	THE_GRIZZLY
+1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	VIT_CURSE	5	5	THE_GRIZZLY
+1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	DAMP	200	200	THE_GRIZZLY
+1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	KNOCKBACK	0	0	THE_GRIZZLY
+1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	DUR	100	100	THE_GRIZZLY

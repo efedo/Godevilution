@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Hellfire's native `The Grizzly` unique item with its validated
+  five-power definition through the unique-item overlay.
 - Externalize Hellfire's native affix eligibility rows, including staff-capable
   prefixes and suffixes, through deterministic composite-key overlays.
 - Externalize Hellfire's native `piercing`, `puncturing`, and `bashing`
