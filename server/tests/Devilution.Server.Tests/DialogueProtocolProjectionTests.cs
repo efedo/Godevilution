@@ -10,6 +10,18 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsPlayerLightRadiusThroughTheProtocolSnapshot()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8));
+        source = source with { Player = source.Player with { LightRadius = 14 } };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        Assert.Equal(14, Assert.Single(projected.Players).LightRadius);
+    }
+
+    [Fact]
     public void ProjectsNativeMonsterRuntimeSeeds()
     {
         var source = CreateOriginSnapshot(
