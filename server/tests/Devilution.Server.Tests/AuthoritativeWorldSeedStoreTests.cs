@@ -39,6 +39,29 @@ public sealed class AuthoritativeWorldSeedStoreTests
     }
 
     [Fact]
+    public async Task ConcurrentStoreInstancesShareOneGeneratedSeed()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-world-seed-tests",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try {
+            var stores = Enumerable.Range(0, 16)
+                .Select(_ => new AuthoritativeWorldSeedStore(root))
+                .ToArray();
+            var seeds = await Task.WhenAll(stores.Select(store =>
+                Task.Run(() => store.LoadOrCreate())));
+
+            Assert.NotEmpty(seeds);
+            Assert.All(seeds, seed => Assert.Equal(seeds[0], seed));
+            Assert.Equal(seeds[0], new AuthoritativeWorldSeedStore(root).LoadOrCreate());
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
     public void RejectsConflictingExplicitSeedAndMalformedPersistence()
     {
         var root = CreateRoot();

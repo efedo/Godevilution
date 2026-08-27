@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Make authoritative save and world-seed writes durable before atomic
   replacement, isolate concurrent temporary files, and clean up failed writes;
   add focused coverage for temporary-artifact cleanup.
+- Make world-seed initialization first-writer-wins across concurrent store
+  instances and add a concurrent initialization regression test.
 - Give validated monster controller tuning precedence over legacy AI labels,
   restoring the authored Gargoyle, Skeleton King, and Rhino behavior paths.
 - Preserve authored unique-monster health percentages when materializing

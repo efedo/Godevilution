@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,8 +10,9 @@ public sealed class AuthoritativeWorldSeedStore
 {
     public const string FileName = "world-seed.txt";
 
+    private static readonly ConcurrentDictionary<string, object> PathLocks = new(
+        StringComparer.OrdinalIgnoreCase);
     private readonly string rootDirectory;
-    private readonly object synchronization = new();
 
     public AuthoritativeWorldSeedStore(string rootDirectory)
     {
@@ -23,15 +25,10 @@ public sealed class AuthoritativeWorldSeedStore
     public uint LoadOrCreate(uint? requestedSeed = null)
     {
         var path = Path.Combine(rootDirectory, FileName);
-        lock (synchronization) {
+        var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
+        lock (pathLock) {
             if (File.Exists(path)) {
-                var persistedSeed = Parse(File.ReadAllText(path));
-                if (requestedSeed is uint explicitSeed && explicitSeed != persistedSeed) {
-                    throw new InvalidDataException(
-                        $"The configured world seed {explicitSeed} does not match "
-                        + $"the persisted world seed {persistedSeed}.");
-                }
-                return persistedSeed;
+                return ReadExisting(path, requestedSeed);
             }
 
             var seed = requestedSeed
@@ -50,13 +47,28 @@ public sealed class AuthoritativeWorldSeedStore
                     stream.Write(bytes);
                     stream.Flush(flushToDisk: true);
                 }
-                File.Move(temporaryPath, path, overwrite: true);
+                File.Move(temporaryPath, path, overwrite: false);
+            } catch (IOException) when (File.Exists(path)) {
+                // Another process won first initialization between our existence
+                // check and the atomic move. Its seed is now authoritative.
+                return ReadExisting(path, requestedSeed);
             } finally {
                 if (File.Exists(temporaryPath))
                     File.Delete(temporaryPath);
             }
             return seed;
         }
+    }
+
+    private static uint ReadExisting(string path, uint? requestedSeed)
+    {
+        var persistedSeed = Parse(File.ReadAllText(path));
+        if (requestedSeed is uint explicitSeed && explicitSeed != persistedSeed) {
+            throw new InvalidDataException(
+                $"The configured world seed {explicitSeed} does not match "
+                + $"the persisted world seed {persistedSeed}.");
+        }
+        return persistedSeed;
     }
 
     private static uint Parse(string contents)

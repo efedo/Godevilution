@@ -9,6 +9,10 @@ save, and focused store tests verify that normal writes leave no temporary
 artifacts. This strengthens the server-owned recovery boundary without
 changing the version-1 save envelope.
 
+World-seed initialization now coordinates all store instances sharing a path
+and uses first-writer-wins atomic creation, so concurrent server starts cannot
+replace a previously selected deterministic world seed.
+
 Generated unique placements now accept an optional validated
 `unique_monster_packs.tsv` contract. The server materializes deterministic
 independent or leashed minions through the authoritative spawn planner,
