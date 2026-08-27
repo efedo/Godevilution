@@ -22,7 +22,8 @@ server projects and hashes these fields, while Godot and the native
 compatibility client validate and retain the state for presentation. Default
 values preserve legacy snapshot hashes. Godot monster presentation now moves
 toward the server's authoritative future tile while native last-position
-interpolation remains follow-up work.
+interpolation remains follow-up work. The native compatibility validator now
+accepts authored unique leaders in the same pack relationship contract.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot

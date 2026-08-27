@@ -1402,6 +1402,38 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupActiveTicks).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, AcceptsAuthoredUniqueMonsterPackLeader)
+{
+	protocol::Snapshot snapshot;
+	auto *leader = snapshot.add_monsters();
+	leader->set_entity_id(100);
+	leader->set_level_id(1);
+	leader->set_position_x(10);
+	leader->set_position_y(10);
+	leader->set_hit_points(10);
+	leader->set_max_hit_points(10);
+	leader->set_alive(true);
+	leader->set_is_unique(true);
+	leader->set_pack_size(2);
+	auto *member = snapshot.add_monsters();
+	member->set_entity_id(0x10000001);
+	member->set_level_id(1);
+	member->set_position_x(11);
+	member->set_position_y(10);
+	member->set_hit_points(10);
+	member->set_max_hit_points(10);
+	member->set_alive(true);
+	member->set_leader_entity_id(100);
+	member->set_leader_relation(1);
+
+	EXPECT_TRUE(ValidateMonsterSnapshots(snapshot).has_value());
+	auto projected = ProjectMonsterSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 2U);
+	EXPECT_TRUE((*projected)[0].isUnique);
+	EXPECT_EQ((*projected)[1].leaderEntityId, 100U);
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 {
 	const auto makeProjectile = []() {

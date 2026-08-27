@@ -512,7 +512,6 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		});
 		if (leader == projected.end()
 		    || leader->entityId == monster.entityId
-		    || leader->isUnique
 		    || !leader->alive
 		    || leader->levelId != monster.levelId) {
 			return tl::make_unexpected("Server-backed snapshot contains an invalid monster pack leader.");
@@ -1273,7 +1272,6 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		const auto leader = monstersById.find(monster.leader_entity_id());
 		if (leader == monstersById.end()
 		    || leader->second->entity_id() == monster.entity_id()
-		    || leader->second->is_unique()
 		    || !leader->second->alive()
 		    || leader->second->level_id() != monster.level_id()) {
 			return tl::make_unexpected("Server-backed snapshot contains an invalid monster pack leader.");
