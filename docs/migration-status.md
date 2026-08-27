@@ -5086,6 +5086,8 @@ atural_resistance_per_level_percent` and
   item generation, affixes, and unique items for the current shipped slice.
 - Unique-item `DUR_CURSE` now uses the native percentage reduction and clamps
   both current and maximum durability to the native minimum of one.
+- Unique-item `CHARGES` now multiplies maximum charges using the native power
+  parameter while retaining zero current charges for depleted items.
 - Native item life/mana bonuses and Hellfire mana-to-life and life-to-mana
   effects apply their Q6 values and independently truncated conversions to newly
   created authoritative player templates and after every accepted equip/unequip

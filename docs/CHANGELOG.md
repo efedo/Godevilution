@@ -5,6 +5,8 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Extend normalized and legacy unique-item power handling with native
+  `CHARGES` multiplier semantics while preserving depleted current charges.
+- Extend normalized and legacy unique-item power handling with native
   `DUR_CURSE` minimum-durability semantics and focused coverage.
 - Validate and bound Godot authoritative event batches while retaining
   compatibility with zero-ID untargeted events.

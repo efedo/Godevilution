@@ -57,7 +57,7 @@ public sealed class AuthoritativeUniqueItemCatalog
             "LIGHT", "LIGHT_CURSE", "TARGAC", "FIREDAM", "LIGHTDAM", "FIRERES_CURSE",
             "LIGHTRES_CURSE", "MAGICRES_CURSE", "DEVASTATION", "PERIL", "JESTERS",
             "DOPPELGANGER", "DECAY", "FIREBALL", "SPLLVLADD", "DUR", "SETDUR",
-            "INDESTRUCTIBLE", "SPELL", "FIRE_ARROWS", "LIGHT_ARROWS", "MULT_ARROWS",
+            "INDESTRUCTIBLE", "SPELL", "CHARGES", "FIRE_ARROWS", "LIGHT_ARROWS", "MULT_ARROWS",
             "RNDARROWVEL", "RNDSTEALLIFE", "STEALMANA", "STEALLIFE", "DRAINLIFE",
             "NOMANA", "FASTATTACK", "FASTRECOVER", "FASTBLOCK", "KNOCKBACK", "THORNS",
             "3XDAMVDEM", "ABSHALFTRAP", "ALLRESZERO", "ACDEMON", "ACUNDEAD", "NOMINSTR",
@@ -532,6 +532,10 @@ public sealed class AuthoritativeUniqueItemCatalog
                 Charges = power.Value2,
                 MaxCharges = power.Value2,
                 SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+            "CHARGES" => state with {
+                Charges = state.Charges * Math.Max(1, power.Value1),
+                MaxCharges = state.MaxCharges * Math.Max(1, power.Value1),
             },
             "FIRE_ARROWS" => state with {
                 Flags = (state.Flags

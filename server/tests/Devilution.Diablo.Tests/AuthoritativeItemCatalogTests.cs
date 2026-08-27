@@ -1413,6 +1413,27 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AppliesUniqueChargesMultiplierWithoutRevivingDepletedCharges()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Charged Ward", 7, 1, 3650, [
+                new AuthoritativeUniqueItemPower("CHARGES", 2, 2),
+            ]),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true) {
+                Charges = 0,
+                MaxCharges = 3,
+            },
+        ], uniqueItems: uniques);
+
+        var item = items.GenerateUnique(1001, 42, 1);
+
+        Assert.Equal(0, item.Charges);
+        Assert.Equal(6, item.MaxCharges);
+    }
+
+    [Fact]
     public void LegacyUniquePowersUseNativeFixedPointAndSignConventions()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([
