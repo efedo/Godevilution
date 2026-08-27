@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   add focused coverage for temporary-artifact cleanup.
 - Make world-seed initialization first-writer-wins across concurrent store
   instances and add a concurrent initialization regression test.
+- Extend TCP restart recovery coverage across four fresh host/adapter cycles,
+  preserving the resume token, player identity, character name, and canonical
+  snapshot hash while confirming each retired adapter is disposed.
 - Give validated monster controller tuning precedence over legacy AI labels,
   restoring the authored Gargoyle, Skeleton King, and Rhino behavior paths.
 - Preserve authored unique-monster health percentages when materializing
