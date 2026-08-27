@@ -93,6 +93,54 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void ShippedLoadoutMetadataMatchesNativeStartingLoadoutTables()
+    {
+        var root = FindRepositoryRoot();
+        var externalRows = TsvTable.Parse(
+                "class_loadouts.tsv",
+                ReadBase(root, "class_loadouts.tsv"))
+            .Rows
+            .ToDictionary(row => row.Required("class_symbol"), StringComparer.Ordinal);
+        var expectedAbilities = new Dictionary<string, string>(StringComparer.Ordinal) {
+            ["warrior"] = "repair",
+            ["rogue"] = "trap_disarm",
+            ["sorcerer"] = "recharge",
+            ["monk"] = "search",
+            ["bard"] = "identify",
+            ["barbarian"] = "rage",
+        };
+        string[] nativeClasses = ["warrior", "rogue", "sorcerer", "monk", "bard", "barbarian"];
+
+        Assert.Equal(nativeClasses.Length, externalRows.Count);
+        foreach (var classSymbol in nativeClasses) {
+            var nativeValues = TsvTable.Parse(
+                    $"assets/txtdata/classes/{classSymbol}/starting_loadout.tsv",
+                    File.ReadAllText(Path.Combine(
+                        root,
+                        "assets",
+                        "txtdata",
+                        "classes",
+                        classSymbol,
+                        "starting_loadout.tsv")))
+                .Rows
+                .ToDictionary(
+                    row => row.Required("Variable"),
+                    row => row.Required("Value"),
+                    StringComparer.Ordinal);
+            var external = externalRows[classSymbol];
+
+            Assert.Equal(nativeValues["gold"], external.Required("starting_gold"));
+            Assert.Equal(nativeValues["spellLevel"], external.Required("starting_spell_level"));
+            Assert.Equal(expectedAbilities[classSymbol], external.Required("ability_spell_symbol"));
+            Assert.Equal(
+                nativeValues["spell"].Equals("Null", StringComparison.Ordinal)
+                    ? string.Empty
+                    : nativeValues["spell"].ToLowerInvariant(),
+                external["starting_spell_symbol"]);
+        }
+    }
+
+    [Fact]
     public void SymbolicLoadoutSpellIdsResolveThroughStableContentIds()
     {
         var root = FindRepositoryRoot();

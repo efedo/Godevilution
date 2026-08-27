@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a native-source parity guard for all six class starting-loadout metadata
+  rows, covering ability identity, starting spell, spell level, and gold.
 - Add exhaustive parity coverage for all 27 exposed animation fields across
   the six normalized base classes and their native animation tables.
 - Guard the retained 168-row legacy `itemdat.tsv` compatibility fallback

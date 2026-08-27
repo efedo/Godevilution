@@ -2,6 +2,11 @@
 
 Status date: 2026-08-27
 
+The six external class-loadout metadata rows are now checked directly against
+their native `starting_loadout.tsv` sources for ability identity, starting
+spell, spell level, and gold; intentional item aliases remain covered by the
+runtime loadout and stable-ID tests.
+
 The external base prefix and suffix catalogs are now guarded exhaustively
 against the inherited native tables, including row ordering and every field;
 future content edits therefore fail focused shipped-content verification when
