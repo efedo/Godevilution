@@ -94,6 +94,11 @@ public sealed class ProtocolHandshake
             || string.IsNullOrWhiteSpace(clientHello.ContentManifestHash))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.InvalidMessage, "Client hello is missing required identity fields."));
 
+        if (!AuthoritativePlayerNameRules.IsValidShape(clientHello.RequestedCharacterName))
+            return HandshakeResult.Failure(Error(
+                ProtocolErrorCode.InvalidMessage,
+                "Client hello contains an invalid requested character name."));
+
         if (!string.Equals(clientHello.ProtocolSchemaVersion, currentIdentity.ProtocolSchemaVersion, StringComparison.Ordinal))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.UnsupportedSchema, "The client protocol schema version is not supported."));
 

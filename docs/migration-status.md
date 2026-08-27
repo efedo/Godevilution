@@ -158,6 +158,9 @@ before sending a new-session request.
 The generic host also rejects command batches larger than the bounded transport
 limit before command admission, preventing oversized client payloads from
 reaching authoritative execution.
+The generic handshake now applies the same shared character-name shape rule to
+optional requested names before participant initialization, keeping malformed
+identity input outside the game module.
 
 Godot event-batch ingress now rejects unknown event kinds, impossible signed
 damage/healing values, invalid dialogue message/text payloads, and batches

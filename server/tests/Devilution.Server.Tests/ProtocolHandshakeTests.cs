@@ -74,6 +74,22 @@ public sealed class ProtocolHandshakeTests
         Assert.Equal(ProtocolErrorCode.InvalidMessage, result.Error!.Code);
     }
 
+    [Theory]
+    [InlineData("bad name")]
+    [InlineData("bad\nname")]
+    [InlineData("bad\0name")]
+    public void InvalidRequestedCharacterNamesAreRejected(string name)
+    {
+        var result = CreateHandshake().Validate(new ClientHello {
+            ProtocolSchemaVersion = "0.1.0",
+            ContentManifestHash = "content-hash",
+            RequestedCharacterName = name,
+        });
+
+        Assert.False(result.Accepted);
+        Assert.Equal(ProtocolErrorCode.InvalidMessage, result.Error!.Code);
+    }
+
     [Fact]
     public void ValidatesOptionalRulesetIdentityWithoutBreakingLegacyClients()
     {
