@@ -23,6 +23,7 @@ public partial class WorldPresentation : Node2D
     private readonly LevelLayoutCatalog levels = new();
     private readonly AuthoritativePresentationClock presentationClock = new();
     private Snapshot? snapshot;
+    private uint? presentationLevelId;
     private ClientPosition? predictedPlayerPosition;
     private Vector2I? targetPreview;
     private LevelLayout currentLevel = LevelLayout.Empty;
@@ -42,19 +43,24 @@ public partial class WorldPresentation : Node2D
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
+            presentationLevelId = null;
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
             currentLevel = LevelLayout.Empty;
             QueueRedraw();
             return;
         }
 
+        var localPlayer = snapshot.Players.FirstOrDefault();
+        if (presentationLevelId != localPlayer?.LevelId) {
+            presentationClock.Reset();
+            presentationLevelId = localPlayer?.LevelId;
+        }
         var presentationTick = presentationClock.Advance(
             snapshot.Tick,
             delta,
             serverTickRateHz);
 
         var activeEntityIds = new HashSet<uint>();
-        var localPlayer = snapshot.Players.FirstOrDefault();
         levels.ApplyAuthoritative(snapshot.LevelGeometry);
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
         var localGeometry = localPlayer is null

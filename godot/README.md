@@ -104,7 +104,8 @@ between snapshots at the server-declared tick rate through the
 engine-independent protocol projection layer, allowing a timed monster walk to
 finish smoothly when the authoritative snapshot cadence is coarser than the
 render cadence. Occupancy, targeting, and all gameplay decisions remain
-discrete snapshot state.
+discrete snapshot state; the presentation clock is reset when the local
+authoritative level changes.
 After terminal Death, Escape sends `RestartTownRequested`. The server chooses
 the destination and resource reset; Godot accepts action kind 6 only as an
 already-applied NewLevel transition and renders the returned town snapshot.

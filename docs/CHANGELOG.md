@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   walks finish smoothly at render cadence.
 - Keep the fractional presentation clock in the engine-independent Godot
   protocol projection layer with direct reset, rate, and horizon coverage.
+- Reset the Godot presentation clock across authoritative local-level changes
+  so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,
   matching the Godot, Diablo adapter, and native compatibility checks.
 - Carry authoritative monster movement start/effect ticks through snapshots,

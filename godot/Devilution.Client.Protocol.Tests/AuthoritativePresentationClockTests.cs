@@ -46,4 +46,17 @@ public sealed class AuthoritativePresentationClockTests
         Assert.Equal(11, clock.Advance(10, 1, 0));
         Assert.Equal(11, clock.Advance(10, -1, 0));
     }
+
+    [Fact]
+    public void ResetClearsThePresentationStream()
+    {
+        var clock = new AuthoritativePresentationClock();
+
+        clock.Advance(10, 0.1, 20);
+        clock.Reset();
+
+        Assert.Null(clock.CurrentTick);
+        Assert.Null(clock.AuthoritativeSnapshotTick);
+        Assert.Equal(4, clock.Advance(4, 0, 20));
+    }
 }
