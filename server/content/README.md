@@ -100,6 +100,8 @@ native-only rows, including the colored flare, Hork Spawn, Rune, and Reflect
 presentation definitions, while retaining the base rows through keyed upsert.
 The signed native alternate-width offset is preserved for effects such as
 `OrangeFlareExplosion`.
+Every non-alias native missile graphic is also required to resolve through the
+active `native_missile_sprites.tsv` catalog during activation.
 
 `classes.tsv` defines the native-compatible class IDs `0` through `5`, their
 base-game or Hellfire availability, exactly one active default, class flags,

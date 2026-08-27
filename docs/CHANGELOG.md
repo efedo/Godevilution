@@ -13,6 +13,8 @@ All notable changes to this fork are documented below.
   dimensions and 16-direction frame timing, for presentation-owned rendering.
 - Externalize the 13 Hellfire-only native missile sprite rows, including
   colored flares, Hork Spawn, Rune, and Reflect, through the validated overlay.
+- Validate every non-alias native missile graphic against the active sprite
+  catalog during content activation.
 - Add exhaustive source coverage for all 36 native spell-data identities in
   the 52-entry normalized native spell namespace.
 - Add exhaustive parity coverage for the normalized item-generation rules and

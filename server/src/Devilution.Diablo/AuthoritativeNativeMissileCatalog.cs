@@ -108,6 +108,20 @@ public sealed class AuthoritativeNativeMissileCatalog
         return definition;
     }
 
+    /** Ensures native missile graphics resolve through the active sprite catalog. */
+    public void ValidateGraphicReferences(AuthoritativeNativeMissileSpriteCatalog sprites)
+    {
+        ArgumentNullException.ThrowIfNull(sprites);
+        foreach (var definition in definitions.Where(definition =>
+                     !definition.CompatibilityAlias
+                     && !string.IsNullOrWhiteSpace(definition.Graphic))) {
+            if (!sprites.TryGet(definition.Graphic, out _))
+                throw new InvalidDataException(
+                    $"Native missile '{definition.MissileId}' references unknown graphic "
+                    + $"'{definition.Graphic}'.");
+        }
+    }
+
     public static AuthoritativeNativeMissileCatalog LoadTsv(
         string sourcePath,
         string contents,

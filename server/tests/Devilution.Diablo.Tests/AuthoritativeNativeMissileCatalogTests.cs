@@ -66,4 +66,23 @@ public sealed class AuthoritativeNativeMissileCatalogTests
         Assert.True(alias.CompatibilityAlias);
         Assert.True(catalog.TryGet("OrangeFlare", out _));
     }
+
+    [Fact]
+    public void RejectsUnknownGraphicReferences()
+    {
+        var missileCatalog = AuthoritativeNativeMissileCatalog.LoadTsv(
+            "native_missiles.tsv",
+            "missile_id\tgraphic\nFirebolt\tFireball\n");
+        var spriteCatalog = AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
+            "native_missile_sprites.tsv",
+            "missile_id\twidth\talternate_width\tname\tframe_count\tflags\tframe_delay\tframe_length\n"
+                + "Lightning\t96\t16\tlghning\t1\t\t"
+                + string.Join(',', Enumerable.Repeat("0", 16)) + "\t"
+                + string.Join(',', Enumerable.Repeat("8", 16)) + "\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            missileCatalog.ValidateGraphicReferences(spriteCatalog));
+        Assert.Contains("Firebolt", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Fireball", exception.Message, StringComparison.Ordinal);
+    }
 }

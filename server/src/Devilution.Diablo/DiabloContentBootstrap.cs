@@ -301,6 +301,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeMissileSpritesTable.SourcePath,
                 nativeMissileSpritesTable.ToCanonicalTsv())
             : null;
+        if (nativeMissiles is not null && nativeMissileSprites is not null)
+            nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
         var nativeMisc = content.TryGetTable(
             "native_item_misc.tsv",
             out var nativeMiscTable)
