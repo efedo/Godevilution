@@ -23,6 +23,9 @@ All notable changes to this fork are documented below.
   projection, with fail-closed validation and enum/behavior fallback.
 - Advance authoritative monster walk animations in the connected native loop
   without re-enabling legacy monster simulation.
+- Advance authoritative missile sprite animations in the connected native loop
+  without re-enabling legacy projectile simulation, collision, or lifetime
+  mutation.
 - Add exhaustive source coverage for all 36 native spell-data identities in
   the 52-entry normalized native spell namespace.
 - Add exhaustive parity coverage for the normalized item-generation rules and

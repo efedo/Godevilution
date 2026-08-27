@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <list>
 #include <optional>
@@ -418,6 +419,12 @@ void ProcessBoneSpirit(Missile &missile);
 void ProcessResurrectBeam(Missile &missile);
 void ProcessRedPortal(Missile &missile);
 void ProcessMissiles();
+
+/**
+ * Advances animation state for server-owned presentation missiles without
+ * running any native projectile behavior, collision, or lifetime logic.
+ */
+std::size_t AdvanceAuthoritativePresentationMissileAnimations() noexcept;
 void SetUpMissileAnimationData();
 void RedoMissileFlags();
 

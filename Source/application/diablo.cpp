@@ -1870,6 +1870,7 @@ void GameLogic()
 		// presentation data until their authoritative projection is consumed by
 		// the renderer; running them locally would create a second simulation.
 		authoritative::GetServerBackedRuntime().AdvancePresentationAnimations();
+		AdvanceAuthoritativePresentationMissileAnimations();
 		CurrentLightManager.ProcessLightList();
 		CurrentLightManager.ProcessVisionList();
 	} else if (levelType() != DTYPE_TOWN) {

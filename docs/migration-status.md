@@ -29,9 +29,10 @@ behavior fallbacks required by older snapshots.
 The native compatibility projection now retains and prefers that identity as
 well; malformed or misplaced values fail closed before presentation, while
 empty values retain the legacy native enum/behavior fallback.
-The connected native loop now advances only the projected walk animation each
-game tick, so current/future authoritative tiles interpolate visually without
-running legacy monster AI, movement, combat, or regeneration.
+The connected native loop now advances projected walk and missile sprite
+animations each game tick, so authoritative current/future tiles and active
+projectile visuals continue to animate without running legacy AI, movement,
+combat, collision, lifetime, or regeneration logic.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility

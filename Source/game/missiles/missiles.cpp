@@ -4223,6 +4223,32 @@ static void DeleteMissiles()
 	Missiles.remove_if([](Missile &missile) { return missile._miDelFlag; });
 }
 
+std::size_t AdvanceAuthoritativePresentationMissileAnimations() noexcept
+{
+	std::size_t advanced = 0;
+	for (auto &missile : Missiles) {
+		if (missile._miAuthoritativeEntityId == 0
+		    || missile._miAnimFlags == MissileGraphicsFlags::NotAnimated
+		    || missile._miAnimLen <= 0) {
+			continue;
+		}
+
+		// Native data uses a zero delay for frame changes on every game tick.
+		const int animationDelay = std::max(missile._miAnimDelay, 1);
+		missile._miAnimCnt++;
+		if (missile._miAnimCnt >= animationDelay) {
+			missile._miAnimCnt = 0;
+			missile._miAnimFrame += missile._miAnimAdd;
+			if (missile._miAnimFrame > missile._miAnimLen)
+				missile._miAnimFrame = 1;
+			else if (missile._miAnimFrame < 1)
+				missile._miAnimFrame = missile._miAnimLen;
+		}
+		++advanced;
+	}
+	return advanced;
+}
+
 void ProcessManaShield()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -4266,21 +4292,15 @@ void ProcessMissiles()
 	DeleteMissiles();
 
 	MissilePreFlag = false;
+	// Preserve the historical mixed-pool behavior for callers that still run
+	// ProcessMissiles while an authoritative presentation missile is present.
+	// Connected GameLogic invokes this presentation-only step directly because
+	// it must not enter the rest of the native missile loop.
+	AdvanceAuthoritativePresentationMissileAnimations();
 
 	for (auto &missile : Missiles) {
 		const MissileData &missileData = GetMissileData(missile._mitype);
 		if (missile._miAuthoritativeEntityId != 0) {
-			if (missile._miAnimFlags != MissileGraphicsFlags::NotAnimated) {
-				missile._miAnimCnt++;
-				if (missile._miAnimCnt >= missile._miAnimDelay) {
-					missile._miAnimCnt = 0;
-					missile._miAnimFrame += missile._miAnimAdd;
-					if (missile._miAnimFrame > missile._miAnimLen)
-						missile._miAnimFrame = 1;
-					else if (missile._miAnimFrame < 1)
-						missile._miAnimFrame = missile._miAnimLen;
-				}
-			}
 			continue;
 		}
 		if (!ShouldProcessLegacySimulation(serverConnected)) {

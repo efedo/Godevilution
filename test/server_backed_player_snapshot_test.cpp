@@ -1923,6 +1923,41 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 	Missiles.clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMissileAnimationWithoutSimulation)
+{
+	LoadMissileData();
+	Missiles.clear();
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 102;
+	projectile.sourceEntityId = 1;
+	projectile.spellId = 1;
+	projectile.levelId = 1;
+	projectile.positionX = 4;
+	projectile.positionY = 4;
+	projectile.remainingTicks = 5;
+	projectile.behavior = 2; // Firebolt
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(Missiles.size(), 1U);
+	ASSERT_NE(Missiles.front()._miAnimFlags, MissileGraphicsFlags::NotAnimated);
+
+	const int initialFrame = Missiles.front()._miAnimFrame;
+	const int initialDuration = Missiles.front().duration;
+	const int initialAnimationCount = Missiles.front()._miAnimCnt;
+	const std::size_t advanced = AdvanceAuthoritativePresentationMissileAnimations();
+	EXPECT_EQ(advanced, 1U);
+	EXPECT_EQ(Missiles.front().duration, initialDuration);
+	EXPECT_TRUE(Missiles.front()._miAnimFrame != initialFrame
+	    || Missiles.front()._miAnimCnt != initialAnimationCount);
+
+	presentation.Clear();
+	Missiles.clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 {
 	LoadPlayerDataFiles();

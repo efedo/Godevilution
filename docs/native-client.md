@@ -27,8 +27,9 @@ Acid Splat, Acid Puddle, player arrows, monster Charged Bolt, Hork Spawn, and
 monster Arrow) into legacy missile sprites when
 the active native content pack defines the corresponding missile data. These
 objects are marked presentation-only: authoritative positions and lifetimes
-are applied directly, while local process, collision, and damage logic is
-skipped. Unsupported families or content-missing sprites remain
+are applied directly, while local process, collision, damage, and lifetime
+logic is skipped. Their sprite animation advances locally as presentation
+state only. Unsupported families or content-missing sprites remain
 projection-only until their native presentation mapping is available.
 
 On Windows, initialize the matching Visual Studio developer environment first.
