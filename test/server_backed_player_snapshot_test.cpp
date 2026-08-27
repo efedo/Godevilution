@@ -1692,6 +1692,28 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { }, { first, duplicate }, 1).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonsters)
+{
+	ProjectedMonsterSnapshot invalid;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalid }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot first;
+	first.entityId = 11;
+	ProjectedMonsterSnapshot duplicate = first;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first, duplicate }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot invalidDirection = first;
+	invalidDirection.entityId = 12;
+	invalidDirection.direction = 8;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidDirection }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot nonAdjacent = first;
+	nonAdjacent.entityId = 13;
+	nonAdjacent.moving = true;
+	nonAdjacent.futurePositionX = 2;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ nonAdjacent }, { }, { }, 1).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjectiles)
 {
 	ProjectedProjectileSnapshot second;

@@ -1,6 +1,7 @@
 #include "network/authoritative/server_backed_world_projection.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 #include <utility>
 
 namespace devilution::authoritative {
@@ -38,6 +39,24 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	uint32_t levelId,
 	std::optional<uint64_t> serverTick)
 {
+	// This boundary is also used by compatibility callers that do not pass
+	// through the protocol-session validators. Keep the structural invariants
+	// that native interaction and presentation rely on enforced here as well.
+	std::unordered_set<uint32_t> monsterEntityIds;
+	monsterEntityIds.reserve(monsters.size());
+	for (const auto &monster : monsters) {
+		if (monster.entityId == 0 || !monsterEntityIds.insert(monster.entityId).second)
+			return tl::make_unexpected("Authoritative monster projection contains invalid or duplicate entity IDs.");
+		if (monster.direction < 0 || monster.direction > 7)
+			return tl::make_unexpected("Authoritative monster projection contains an invalid direction.");
+		if (monster.moving) {
+			const int64_t deltaX = static_cast<int64_t>(monster.futurePositionX) - monster.positionX;
+			const int64_t deltaY = static_cast<int64_t>(monster.futurePositionY) - monster.positionY;
+			const int64_t distance = std::max(deltaX < 0 ? -deltaX : deltaX, deltaY < 0 ? -deltaY : deltaY);
+			if (distance != 1)
+				return tl::make_unexpected("Authoritative moving monster projection must target an adjacent tile.");
+		}
+	}
 	if (std::any_of(projectiles.begin(), projectiles.end(), [](const auto &projectile) {
 			return projectile.entityId == 0
 			    || projectile.sourceEntityId == 0

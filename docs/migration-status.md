@@ -34,6 +34,12 @@ authoritative snapshot tick into presentation and ignores older complete world
 projections, preventing delayed server state from regressing native entities;
 legacy callers that do not provide a tick remain accepted.
 
+The protocol-free native world projection path now repeats the structural
+monster invariants needed by compatibility presentation: non-zero unique
+identities, native direction range, and one-tile movement destinations. This
+keeps legacy callers safe even when they bypass the richer protocol-session
+validator; full protocol validation remains the authoritative ingress check.
+
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot
 inherit a generic projectile or movement branch merely because their base type
