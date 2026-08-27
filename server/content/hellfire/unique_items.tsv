@@ -1,5 +1,6 @@
 unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power	value1	value2	cursor_graphic
 1003	the_undead_crown	The Undead Crown	111	the_undead_crown	1	16650	RNDSTEALLIFE	0	0	HELM_OF_SPIRITS
+1003	the_undead_crown	The Undead Crown	111	the_undead_crown	1	16650	SETAC	8	8	HELM_OF_SPIRITS
 1004	empyrean_band	Empyrean Band	113	hellfire_ring_base	1	8000	ATTRIBS	2	2	-
 1004	empyrean_band	Empyrean Band	113	hellfire_ring_base	1	8000	LIGHT	2	2	-
 1004	empyrean_band	Empyrean Band	113	hellfire_ring_base	1	8000	FASTRECOVER	1	1	-
@@ -370,64 +371,64 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1091	ring_of_engagement	Ring of Engagement	113	hellfire_ring_base	11	12476	THORNS	1	3	RING_OF_ENGAGEMENT
 1091	ring_of_engagement	Ring of Engagement	113	hellfire_ring_base	11	12476	SETAC	5	5	RING_OF_ENGAGEMENT
 1091	ring_of_engagement	Ring of Engagement	113	hellfire_ring_base	11	12476	TARGAC	2	2	RING_OF_ENGAGEMENT
-1092	giant_s_knuckle	Giant's Knuckle	113	hellfire_ring_base	8	8000	STR	60	60	-
-1092	giant_s_knuckle	Giant's Knuckle	113	hellfire_ring_base	8	8000	DEX_CURSE	30	30	-
-1093	mercurial_ring	Mercurial Ring	113	hellfire_ring_base	8	8000	DEX	60	60	-
-1093	mercurial_ring	Mercurial Ring	113	hellfire_ring_base	8	8000	STR_CURSE	30	30	-
-1094	xorine_s_ring	Xorine's Ring	113	hellfire_ring_base	8	8000	MAG	60	60	-
-1094	xorine_s_ring	Xorine's Ring	113	hellfire_ring_base	8	8000	STR_CURSE	30	30	-
-1095	karik_s_ring	Karik's Ring	113	hellfire_ring_base	8	8000	VIT	60	60	-
-1095	karik_s_ring	Karik's Ring	113	hellfire_ring_base	8	8000	MAG_CURSE	30	30	-
-1096	ring_of_magma	Ring of Magma	113	hellfire_ring_base	8	8000	FIRERES	60	60	-
-1096	ring_of_magma	Ring of Magma	113	hellfire_ring_base	8	8000	LIGHTRES_CURSE	30	30	-
-1096	ring_of_magma	Ring of Magma	113	hellfire_ring_base	8	8000	MAGICRES_CURSE	30	30	-
-1097	ring_of_the_mystics	Ring of the Mystics	113	hellfire_ring_base	8	8000	MAGICRES	60	60	-
-1097	ring_of_the_mystics	Ring of the Mystics	113	hellfire_ring_base	8	8000	FIRERES_CURSE	30	30	-
-1097	ring_of_the_mystics	Ring of the Mystics	113	hellfire_ring_base	8	8000	LIGHTRES_CURSE	30	30	-
-1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	LIGHTRES	60	60	-
-1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	FIRERES_CURSE	30	30	-
-1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	MAGICRES_CURSE	30	30	-
-1099	amulet_of_warding	Amulet of Warding	171	amulet	12	30000	ALLRES	40	40	-
-1099	amulet_of_warding	Amulet of Warding	171	amulet	12	30000	LIFE_CURSE	100	100	-
-1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	MULT_ARROWS	3	3	-
-1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	SETDAM	1	2	-
-1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	FASTATTACK	1	1	-
-1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	INDESTRUCTIBLE	0	0	-
-1101	flambeau	Flambeau	123	long_bow	11	30000	FIREBALL	15	20	-
-1101	flambeau	Flambeau	123	long_bow	11	30000	SETDAM	0	0	-
-1101	flambeau	Flambeau	123	long_bow	11	30000	INDESTRUCTIBLE	0	0	-
-1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	NOMINSTR	0	0	-
-1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	SETAC	225	225	-
-1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	ALLRESZERO	0	0	-
-1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	LIGHT_CURSE	2	2	-
-1103	blitzen	Blitzen	123	long_bow	13	30000	ADDACLIFE	10	15	-
-1103	blitzen	Blitzen	123	long_bow	13	30000	SETDAM	0	0	-
-1103	blitzen	Blitzen	123	long_bow	13	30000	INDESTRUCTIBLE	0	0	-
-1104	thunderclap	Thunderclap	146	war_hammer	13	30000	ADDMANAAC	3	6	-
-1104	thunderclap	Thunderclap	146	war_hammer	13	30000	STR	20	20	-
-1104	thunderclap	Thunderclap	146	war_hammer	13	30000	LIGHTRES	30	30	-
-1104	thunderclap	Thunderclap	146	war_hammer	13	30000	LIGHT	2	2	-
-1104	thunderclap	Thunderclap	146	war_hammer	13	30000	INDESTRUCTIBLE	0	0	-
+1092	giant_s_knuckle	Giant's Knuckle	113	hellfire_ring_base	8	8000	STR	60	60	GIANTS_KNUCKLE
+1092	giant_s_knuckle	Giant's Knuckle	113	hellfire_ring_base	8	8000	DEX_CURSE	30	30	GIANTS_KNUCKLE
+1093	mercurial_ring	Mercurial Ring	113	hellfire_ring_base	8	8000	DEX	60	60	MERCURIAL_RING
+1093	mercurial_ring	Mercurial Ring	113	hellfire_ring_base	8	8000	STR_CURSE	30	30	MERCURIAL_RING
+1094	xorine_s_ring	Xorine's Ring	113	hellfire_ring_base	8	8000	MAG	60	60	XORINES_RING
+1094	xorine_s_ring	Xorine's Ring	113	hellfire_ring_base	8	8000	STR_CURSE	30	30	XORINES_RING
+1095	karik_s_ring	Karik's Ring	113	hellfire_ring_base	8	8000	VIT	60	60	KARIKS_RING
+1095	karik_s_ring	Karik's Ring	113	hellfire_ring_base	8	8000	MAG_CURSE	30	30	KARIKS_RING
+1096	ring_of_magma	Ring of Magma	113	hellfire_ring_base	8	8000	FIRERES	60	60	RING_OF_MAGMA
+1096	ring_of_magma	Ring of Magma	113	hellfire_ring_base	8	8000	LIGHTRES_CURSE	30	30	RING_OF_MAGMA
+1096	ring_of_magma	Ring of Magma	113	hellfire_ring_base	8	8000	MAGICRES_CURSE	30	30	RING_OF_MAGMA
+1097	ring_of_the_mystics	Ring of the Mystics	113	hellfire_ring_base	8	8000	MAGICRES	60	60	RING_OF_THE_MYSTICS
+1097	ring_of_the_mystics	Ring of the Mystics	113	hellfire_ring_base	8	8000	FIRERES_CURSE	30	30	RING_OF_THE_MYSTICS
+1097	ring_of_the_mystics	Ring of the Mystics	113	hellfire_ring_base	8	8000	LIGHTRES_CURSE	30	30	RING_OF_THE_MYSTICS
+1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	LIGHTRES	60	60	RING_OF_THUNDER
+1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	FIRERES_CURSE	30	30	RING_OF_THUNDER
+1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	MAGICRES_CURSE	30	30	RING_OF_THUNDER
+1099	amulet_of_warding	Amulet of Warding	171	amulet	12	30000	ALLRES	40	40	AMULET_OF_WARDING
+1099	amulet_of_warding	Amulet of Warding	171	amulet	12	30000	LIFE_CURSE	100	100	AMULET_OF_WARDING
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	MULT_ARROWS	3	3	GNAT_STING
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	SETDAM	1	2	GNAT_STING
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	FASTATTACK	1	1	GNAT_STING
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	INDESTRUCTIBLE	0	0	GNAT_STING
+1101	flambeau	Flambeau	123	long_bow	11	30000	FIREBALL	15	20	FLAMBEAU
+1101	flambeau	Flambeau	123	long_bow	11	30000	SETDAM	0	0	FLAMBEAU
+1101	flambeau	Flambeau	123	long_bow	11	30000	INDESTRUCTIBLE	0	0	FLAMBEAU
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	NOMINSTR	0	0	ARMOR_OF_GLOOM
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	SETAC	225	225	ARMOR_OF_GLOOM
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	ALLRESZERO	0	0	ARMOR_OF_GLOOM
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	LIGHT_CURSE	2	2	ARMOR_OF_GLOOM
+1103	blitzen	Blitzen	123	long_bow	13	30000	ADDACLIFE	10	15	BLITZEN
+1103	blitzen	Blitzen	123	long_bow	13	30000	SETDAM	0	0	BLITZEN
+1103	blitzen	Blitzen	123	long_bow	13	30000	INDESTRUCTIBLE	0	0	BLITZEN
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	ADDMANAAC	3	6	THUNDERCLAP
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	STR	20	20	THUNDERCLAP
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	LIGHTRES	30	30	THUNDERCLAP
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	LIGHT	2	2	THUNDERCLAP
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	INDESTRUCTIBLE	0	0	THUNDERCLAP
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	ONEHAND	0	0	-
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	FASTATTACK	4	4	-
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	TARGAC	2	2	-
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	LIGHTDAM	6	6	-
-1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	INDESTRUCTIBLE	0	0	-
-1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	LIFE	50	50	-
-1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	STEALLIFE	5	5	-
-1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	STEALMANA	5	5	-
-1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	DRAINLIFE	0	0	-
-1107	diamondedge	Diamondedge	131	long_sword	17	42000	SETDUR	10	10	-
-1107	diamondedge	Diamondedge	131	long_sword	17	42000	TOHIT	50	50	-
-1107	diamondedge	Diamondedge	131	long_sword	17	42000	DAMP	100	100	-
-1107	diamondedge	Diamondedge	131	long_sword	17	42000	LIGHTRES	50	50	-
-1107	diamondedge	Diamondedge	131	long_sword	17	42000	SETAC	10	10	-
-1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	SETAC	40	40	-
-1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	ACUNDEAD	0	0	-
-1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	SETAC	80	80	-
-1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	ACDEMON	0	0	-
-1110	acolyte_s_amulet	Acolyte's Amulet	171	amulet	10	10000	MANATOLIFE	50	50	-
-1111	gladiator_s_ring	Gladiator's Ring	113	hellfire_ring_base	10	10000	LIFETOMANA	40	40	-
+1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	INDESTRUCTIBLE	0	0	EATER_OF_SOULS
+1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	LIFE	50	50	EATER_OF_SOULS
+1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	STEALLIFE	5	5	EATER_OF_SOULS
+1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	STEALMANA	5	5	EATER_OF_SOULS
+1106	eater_of_souls	Eater of Souls	135	bastard_sword	23	42000	DRAINLIFE	0	0	EATER_OF_SOULS
+1107	diamondedge	Diamondedge	131	long_sword	17	42000	SETDUR	10	10	DIAMONDEDGE
+1107	diamondedge	Diamondedge	131	long_sword	17	42000	TOHIT	50	50	DIAMONDEDGE
+1107	diamondedge	Diamondedge	131	long_sword	17	42000	DAMP	100	100	DIAMONDEDGE
+1107	diamondedge	Diamondedge	131	long_sword	17	42000	LIGHTRES	50	50	DIAMONDEDGE
+1107	diamondedge	Diamondedge	131	long_sword	17	42000	SETAC	10	10	DIAMONDEDGE
+1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	SETAC	40	40	BONE_CHAIN_ARMOR
+1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	ACUNDEAD	0	0	BONE_CHAIN_ARMOR
+1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	SETAC	80	80	DEMON_PLATE_ARMOR
+1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	ACDEMON	0	0	DEMON_PLATE_ARMOR
+1110	acolyte_s_amulet	Acolyte's Amulet	171	amulet	10	10000	MANATOLIFE	50	50	ACOLYTES_AMULET
+1111	gladiator_s_ring	Gladiator's Ring	113	hellfire_ring_base	10	10000	LIFETOMANA	40	40	GLADIATORS_RING
 1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	STR	20	20	THE_GRIZZLY
 1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	VIT_CURSE	5	5	THE_GRIZZLY
 1112	the_grizzly	The Grizzly	136	two_handed_sword	23	50000	DAMP	200	200	THE_GRIZZLY

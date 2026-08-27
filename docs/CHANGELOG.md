@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore The Undead Crown's native `SETAC 8–8` unique power in the Hellfire
+  overlay and guard the complete native unique-power projection against drift.
+- Restore the 19 remaining native Hellfire unique cursor projections through
+  the validated shared cursor-symbol catalog.
 - Guard the complete 52-entry native spell namespace, including unused legacy
   identities, service capabilities, and rune aliases that intentionally do not
   create additional cast-behavior rows.

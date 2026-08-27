@@ -3877,7 +3877,7 @@ public sealed class ShippedContentTests
         Assert.Equal("The Undead Crown", crown.IdentifiedName);
         Assert.Equal(77, crown.NativeCursorGraphic);
         Assert.Equal(16650, crown.Value);
-        Assert.Equal(15, crown.ArmorClass);
+        Assert.Equal(8, crown.ArmorClass);
         Assert.Equal(0x00000002U, crown.Flags);
         var band = hellfireItems.GenerateUnique(1004, 0x12345678, 1);
         Assert.Equal(1004, band.UniqueId);
@@ -5621,6 +5621,48 @@ public sealed class ShippedContentTests
         Assert.Equal((2, 2), (attributes.Value1, attributes.Value2));
         var trapResistance = Assert.Single(empyreanBand.Powers, power => power.Power == "ABSHALFTRAP");
         Assert.Equal((0, 0), (trapResistance.Value1, trapResistance.Value2));
+
+        var nativeUniqueTable = TsvTable.Parse(
+            "mods/Hellfire/txtdata/items/unique_itemdat.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "mods",
+                "Hellfire",
+                "txtdata",
+                "items",
+                "unique_itemdat.tsv")));
+        Assert.Equal(110, nativeUniqueTable.Rows.Count);
+        foreach (var nativeRow in nativeUniqueTable.Rows) {
+            var definition = Assert.Single(
+                catalog.Definitions,
+                candidate => candidate.Name == nativeRow.Required("name"));
+            Assert.Equal(nativeRow.RequiredInt32("minLevel"), definition.MinimumLevel);
+            Assert.Equal(nativeRow.RequiredInt32("value"), definition.Value);
+            var nativeCursor = nativeRow.TryGet("cursorGraphic", out var cursorGraphic)
+                ? cursorGraphic
+                : string.Empty;
+            Assert.Equal(
+                nativeCursor is "-" or "" ? string.Empty : nativeCursor,
+                definition.CursorGraphic);
+
+            var nativePowers = new List<(string Power, int Value1, int Value2)>();
+            for (var powerIndex = 0; powerIndex < 6; powerIndex++) {
+                var powerColumn = $"power{powerIndex}";
+                if (!nativeRow.TryGet(powerColumn, out var power)
+                    || string.IsNullOrWhiteSpace(power))
+                    continue;
+                nativePowers.Add((
+                    power,
+                    nativeRow.OptionalInt32($"{powerColumn}.value1"),
+                    nativeRow.OptionalInt32($"{powerColumn}.value2")));
+            }
+            Assert.Equal(
+                nativePowers,
+                definition.Powers.Select(power => (
+                    power.Power,
+                    power.Value1,
+                    power.Value2)).ToArray());
+        }
     }
 
     [Fact]

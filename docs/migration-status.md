@@ -10,7 +10,10 @@ these native combat metadata values.
 The complete external Hellfire unique catalog retains all 110 native
 definitions. Native blank numeric cells on flag-style powers are intentionally
 normalized to explicit `0,0` values; populated ranges remain source-faithful,
-with focused coverage guarding both forms.
+with focused coverage guarding both forms. The Undead Crown also restores its
+native `SETAC 8–8` power, and the shipped test compares every native unique
+definition's level, value, cursor, and power rows against the external catalog;
+the remaining 19 native cursor projections are now explicit in the overlay.
 
 The Godot protocol model now validates the shape of non-empty authoritative
 snapshot hashes (64 hexadecimal characters) while retaining compatibility with

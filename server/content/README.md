@@ -821,8 +821,11 @@ Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.
 It also adds the normalized Undead Crown base item and unique definition
-(`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
-is a separate normalized row. The Empyrean Band (`unique_id=1004`) and its
+(`unique_id=1003`), including its native `SETAC 8–8` armor bonus; unique
+overlays use `(unique_id, power)` because each power is a separate normalized
+row, and every native unique cursor projection is repeated on each normalized
+power row so the active catalog preserves the native presentation identity.
+The Empyrean Band (`unique_id=1004`) and its
 ring base item are also externalized with native attribute, light, recovery,
 and trap-resistance powers; the broader Hellfire item and quest migration
 remains incremental.
