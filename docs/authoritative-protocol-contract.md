@@ -373,6 +373,10 @@ window only to interpolate presentation; native occupancy and all targeting
 decisions remain discrete and server-owned. Both zero values preserve
 compatibility with older snapshots. Every current wire boundary rejects timing
 on a stationary monster or a non-increasing nonzero window.
+Godot may evaluate the window at a fractional presentation tick advanced by the
+engine-independent client protocol projection from the server-declared tick
+rate between snapshots; this is presentation-only and does not alter
+authoritative occupancy or targeting.
 
 `MonsterSnapshot.stone_curse_immune` field 22 carries an immutable external-
 content capability needed by future authoritative casts and version-1 save

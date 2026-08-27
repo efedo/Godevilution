@@ -21,12 +21,17 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, ProjectileSnapshot> displayedProjectileSnapshots = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
+    private readonly AuthoritativePresentationClock presentationClock = new();
     private Snapshot? snapshot;
     private ClientPosition? predictedPlayerPosition;
     private Vector2I? targetPreview;
     private LevelLayout currentLevel = LevelLayout.Empty;
 
-    public void Apply(Snapshot? next, double delta, ClientPosition? predicted = null)
+    public void Apply(
+        Snapshot? next,
+        double delta,
+        ClientPosition? predicted = null,
+        uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz)
     {
         snapshot = next;
         predictedPlayerPosition = predicted;
@@ -36,11 +41,17 @@ public partial class WorldPresentation : Node2D
             displayedPlayerSnapshots.Clear();
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
+            presentationClock.Reset();
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
             currentLevel = LevelLayout.Empty;
             QueueRedraw();
             return;
         }
+
+        var presentationTick = presentationClock.Advance(
+            snapshot.Tick,
+            delta,
+            serverTickRateHz);
 
         var activeEntityIds = new HashSet<uint>();
         var localPlayer = snapshot.Players.FirstOrDefault();
@@ -85,7 +96,7 @@ public partial class WorldPresentation : Node2D
                 && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster);
             var projected = AuthoritativeMonsterPositionProjection.ResolvePresentation(
                 monster,
-                snapshot.Tick);
+                presentationTick);
             UpdatePosition(
                 monster.EntityId,
                 ToScreen(projected.X, projected.Y),

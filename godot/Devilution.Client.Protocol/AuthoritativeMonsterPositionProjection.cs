@@ -21,8 +21,20 @@ public static class AuthoritativeMonsterPositionProjection
     public static ClientPresentationPosition ResolvePresentation(
         MonsterSnapshot monster,
         ulong snapshotTick)
+        => ResolvePresentation(monster, (double)snapshotTick);
+
+    /**
+     * Resolves a monster at a fractional presentation tick. The fractional
+     * tick lets a presentation client advance a timed walk between network
+     * snapshots without changing the discrete authoritative occupancy.
+     */
+    public static ClientPresentationPosition ResolvePresentation(
+        MonsterSnapshot monster,
+        double snapshotTick)
     {
         ArgumentNullException.ThrowIfNull(monster);
+        if (!double.IsFinite(snapshotTick) || snapshotTick < 0)
+            return ResolvePresentation(monster);
         if (!monster.Moving
             || monster.MovementStartedTick == 0
                 && monster.MovementEffectTick == 0
@@ -30,13 +42,10 @@ public static class AuthoritativeMonsterPositionProjection
             return ResolvePresentation(monster);
         }
 
-        var elapsed = snapshotTick <= monster.MovementStartedTick
-            ? 0UL
-            : Math.Min(
-                snapshotTick - monster.MovementStartedTick,
-                monster.MovementEffectTick - monster.MovementStartedTick);
+        var startedTick = (double)monster.MovementStartedTick;
         var duration = monster.MovementEffectTick - monster.MovementStartedTick;
-        var progress = (double)elapsed / duration;
+        var elapsed = Math.Clamp(snapshotTick - startedTick, 0, (double)duration);
+        var progress = elapsed / duration;
         return new ClientPresentationPosition(
             monster.PositionX
                 + (monster.FuturePositionX - monster.PositionX) * progress,

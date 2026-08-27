@@ -192,7 +192,11 @@ public partial class Main : Node2D
                 StartReconnect(force: false);
         }
 
-        world?.Apply(model.Snapshot, delta, model.PredictedPlayerPosition);
+        world?.Apply(
+            model.Snapshot,
+            delta,
+            model.PredictedPlayerPosition,
+            client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz);
         TrySubmitPendingWorldInteraction();
         var spellSources = AuthoritativeSpellSourceSelector.GetSources(model.Snapshot);
         var selectedSpell = AuthoritativeSpellSourceSelector.Select(

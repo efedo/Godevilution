@@ -163,8 +163,8 @@ native doubled maximum health and inherit the leader's intelligence used by
 authoritative AI decisions. Placement now follows the native bounded retry and
 transparency-region rules when native transparency data is available. Unique
 leaders retain their pack relationships across authoritative ticks. Remaining
-visibility-driven activation and broader cross-snapshot position prediction
-work remain follow-ups.
+visibility-driven activation and broader cross-snapshot prediction/soak
+coverage remain follow-ups.
 
 The authoritative monster AI selector now preserves explicit native
 SkeletonAi-compatible `SkeletonMelee`, `Snotspill`, and `Warlord` identities
@@ -198,8 +198,10 @@ toward the server's authoritative future tile. Native authoritative monster
 presentation now maps server-declared movement directions to the native
 movement modes and walk animation consumed by the renderer, while stationary
 snapshots clear stale movement modes; the connected loop advances that walk
-animation without running legacy simulation. Cross-snapshot position
-prediction remains follow-up work. The native compatibility validator now accepts
+animation without running legacy simulation. The bounded fractional
+presentation clock now advances timed monster walks between snapshots; broader
+cross-snapshot prediction and soak coverage remain follow-up work. The native
+compatibility validator now accepts
 authored unique leaders in the same pack relationship contract.
 Godot also snaps monster presentation on level changes or large authoritative
 relocations, preventing stale interpolation from carrying entities across

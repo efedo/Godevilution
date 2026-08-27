@@ -99,6 +99,12 @@ the server-owned `started_at_tick`/`effect_tick` interval so reconciliation does
 not snap the player to a tile. Death and portal transitions arrive already
 applied with server-owned Death or NewLevel modes; Godot never resolves their
 damage or destination effects itself.
+The world presentation also advances a bounded fractional presentation tick
+between snapshots at the server-declared tick rate through the
+engine-independent protocol projection layer, allowing a timed monster walk to
+finish smoothly when the authoritative snapshot cadence is coarser than the
+render cadence. Occupancy, targeting, and all gameplay decisions remain
+discrete snapshot state.
 After terminal Death, Escape sends `RestartTownRequested`. The server chooses
 the destination and resource reset; Godot accepts action kind 6 only as an
 already-applied NewLevel transition and renders the returned town snapshot.

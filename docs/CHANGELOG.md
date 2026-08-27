@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Advance Godot monster presentation on a bounded fractional server-tick clock
+  between snapshots, preserving discrete authoritative occupancy while timed
+  walks finish smoothly at render cadence.
+- Keep the fractional presentation clock in the engine-independent Godot
+  protocol projection layer with direct reset, rate, and horizon coverage.
 - Validate authoritative monster movement timing at the generic host boundary,
   matching the Godot, Diablo adapter, and native compatibility checks.
 - Carry authoritative monster movement start/effect ticks through snapshots,
