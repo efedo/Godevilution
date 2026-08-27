@@ -332,6 +332,9 @@ struct ProjectedLevelGeometrySnapshot {
 	std::vector<uint16_t> nativePieceLayer;
 };
 
+/** Returns whether a content-owned native missile identity has valid wire syntax. */
+[[nodiscard]] bool IsValidNativeMissileIdentity(const std::string &value);
+
 struct ProjectedPlayerActionSnapshot {
 	uint32_t kind = 0;
 	uint64_t startedAtTick = 0;

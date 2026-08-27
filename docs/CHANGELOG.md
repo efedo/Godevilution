@@ -14,6 +14,8 @@ All notable changes to this fork are documented below.
   presentation-identity changes.
 - Extend the native protocol-free world projection guard to reject malformed
   projectile lifecycle, visual-ID, and directional metadata.
+- Reject malformed or misplaced native missile identities in the same native
+  protocol-free projection path.
 - Externalize native 1–50 character experience thresholds, wire active
   simulations to server-owned progression data, and add source parity coverage.
 - Externalize all 68 native `misdat.tsv` missile identities, retain five

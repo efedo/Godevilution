@@ -123,7 +123,10 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.phase < 0 || projectile.phase > 1
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > 35
 			    || UsesDirectionalPresentation(projectile)
-			        && (projectile.originalDirection < 0 || projectile.originalDirection > 7);
+			        && (projectile.originalDirection < 0 || projectile.originalDirection > 7)
+			    || !projectile.nativeMissileId.empty()
+			        && (projectile.behavior != 50
+			            || !IsValidNativeMissileIdentity(projectile.nativeMissileId));
 		})) {
 		return tl::make_unexpected("Authoritative projectile projection contains invalid identity, lifecycle, or presentation data.");
 	}

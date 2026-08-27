@@ -46,23 +46,6 @@ bool IsValidSpellTargetingKind(uint32_t value)
 	return value <= static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY);
 }
 
-bool IsValidNativeMissileIdentity(const std::string &value)
-{
-	if (value.empty())
-		return true;
-	const auto isLetter = [](char character) {
-		return character >= 'A' && character <= 'Z'
-		    || character >= 'a' && character <= 'z';
-	};
-	const auto isPart = [&](char character) {
-		return isLetter(character)
-		    || character >= '0' && character <= '9'
-		    || character == '_' || character == '-';
-	};
-	return (isLetter(value.front()) || value.front() == '_')
-	    && std::all_of(value.begin() + 1, value.end(), isPart);
-}
-
 bool IsValidObjectPresentationKind(protocol::ObjectPresentationKind value)
 {
 	switch (value) {
@@ -109,6 +92,23 @@ bool IsValidCharacterName(std::string_view value)
 }
 
 } // namespace
+
+bool IsValidNativeMissileIdentity(const std::string &value)
+{
+	if (value.empty())
+		return true;
+	const auto isLetter = [](char character) {
+		return character >= 'A' && character <= 'Z'
+		    || character >= 'a' && character <= 'z';
+	};
+	const auto isPart = [&](char character) {
+		return isLetter(character)
+		    || character >= '0' && character <= '9'
+		    || character == '_' || character == '-';
+	};
+	return (isLetter(value.front()) || value.front() == '_')
+	    && std::all_of(value.begin() + 1, value.end(), isPart);
+}
 
 tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const protocol::Snapshot &snapshot, uint32_t entityId)
 {

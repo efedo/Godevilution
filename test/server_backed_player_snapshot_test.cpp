@@ -1887,6 +1887,18 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProject
 	invalidDirection.behavior = 2; // Firebolt
 	invalidDirection.originalDirection = 8;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidDirection }, 1).has_value());
+
+	ProjectedProjectileSnapshot invalidNativeMissile = first;
+	invalidNativeMissile.entityId = 14;
+	invalidNativeMissile.behavior = 50; // MonsterMagic
+	invalidNativeMissile.nativeMissileId = "Invalid?";
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidNativeMissile }, 1).has_value());
+
+	ProjectedProjectileSnapshot misplacedNativeMissile = first;
+	misplacedNativeMissile.entityId = 15;
+	misplacedNativeMissile.behavior = 2; // Firebolt
+	misplacedNativeMissile.nativeMissileId = "Lightning";
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { misplacedNativeMissile }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimulation)
