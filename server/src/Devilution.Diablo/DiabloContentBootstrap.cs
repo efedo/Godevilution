@@ -49,7 +49,8 @@ public sealed record DiabloContentActivation
         AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters = null,
         AuthoritativeUniqueMonsterPackCatalog? uniqueMonsterPacks = null,
         AuthoritativeExperienceCatalog? experience = null,
-        AuthoritativeNativeMissileCatalog? nativeMissiles = null)
+        AuthoritativeNativeMissileCatalog? nativeMissiles = null,
+        AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -85,6 +86,7 @@ public sealed record DiabloContentActivation
         UniqueMonsterPacks = uniqueMonsterPacks;
         Experience = experience;
         NativeMissiles = nativeMissiles;
+        NativeMissileSprites = nativeMissileSprites;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -116,6 +118,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native missile identities and presentation metadata. */
     public AuthoritativeNativeMissileCatalog? NativeMissiles { get; }
+
+    /** Validated native missile sprite dimensions and animation timing. */
+    public AuthoritativeNativeMissileSpriteCatalog? NativeMissileSprites { get; }
 
     /** Service-only store identity supplied by the active world rules. */
     public uint AdriaStoreId { get; }
@@ -288,6 +293,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeMissilesTable.SourcePath,
                 nativeMissilesTable.ToCanonicalTsv(),
                 nativeMissileAliases)
+            : null;
+        var nativeMissileSprites = content.TryGetTable(
+            "native_missile_sprites.tsv",
+            out var nativeMissileSpritesTable)
+            ? AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
+                nativeMissileSpritesTable.SourcePath,
+                nativeMissileSpritesTable.ToCanonicalTsv())
             : null;
         var nativeMisc = content.TryGetTable(
             "native_item_misc.tsv",
@@ -1235,6 +1247,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             PlayerAnimations = playerAnimations,
             MonsterMissiles = monsterMissiles,
             NativeMissiles = nativeMissiles,
+            NativeMissileSprites = nativeMissileSprites,
             MonsterTypes = monsterTypes,
             UseNativePlayerActionTiming = true,
             RandomSeed = randomSeed,
@@ -1274,7 +1287,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeDunMonsters,
             uniqueMonsterPacks,
             experience,
-            nativeMissiles);
+            nativeMissiles,
+            nativeMissileSprites);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

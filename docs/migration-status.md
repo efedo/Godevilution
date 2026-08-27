@@ -14,6 +14,11 @@ compatibility aliases during activation, preserving source-owned visual, sound,
 handler, movement, and expiry-link metadata for both server and presentation
 bridges.
 
+The native `missile_sprites.tsv` contract is now externalized as validated
+`native_missile_sprites.tsv` content, preserving all 46 sprite definitions,
+dimensions, names, direction counts, flags, and 16-direction frame timing for
+the presentation clients.
+
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility
 and rune-alias entries outside the native spell-data table.
@@ -1399,6 +1404,7 @@ transient labels from another projected level.
 | External content | Explicitly manifested base and Hellfire variant packs plus schema-aware, dependency-versioned composite-key overlays, including the validated complete native
 `native_spells.tsv` namespace, native
 `native_missiles.tsv` namespace, native
+`native_missile_sprites.tsv` timing metadata, native
 `native_item_misc.tsv` namespace, and native
 `native_item_topology.tsv`/
 `native_item_effects.tsv`/

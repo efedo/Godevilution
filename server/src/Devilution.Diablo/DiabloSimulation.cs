@@ -122,6 +122,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native missile identities and presentation metadata. */
     public AuthoritativeNativeMissileCatalog? NativeMissiles { get; init; }
 
+    /** Validated native missile sprite dimensions and animation timing. */
+    public AuthoritativeNativeMissileSpriteCatalog? NativeMissileSprites { get; init; }
+
     /** Validated monster type metadata supplied by active content. */
     public AuthoritativeMonsterTypeCatalog? MonsterTypes { get; init; }
 
@@ -328,7 +331,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             proceduralSetPieceOriginCatalog: options.ProceduralSetPieceOrigins,
             proceduralSetPieceOriginSeed: options.RandomSeed,
             experience: options.Experience,
-            nativeMissiles: options.NativeMissiles);
+            nativeMissiles: options.NativeMissiles,
+            nativeMissileSprites: options.NativeMissileSprites);
     }
 }
 
@@ -399,7 +403,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog = null,
         uint proceduralSetPieceOriginSeed = 0,
         AuthoritativeExperienceCatalog? experience = null,
-        AuthoritativeNativeMissileCatalog? nativeMissiles = null)
+        AuthoritativeNativeMissileCatalog? nativeMissiles = null,
+        AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -409,6 +414,7 @@ public sealed partial class DiabloSimulation
         Spells = spells ?? throw new ArgumentNullException(nameof(spells));
         Experience = experience;
         NativeMissiles = nativeMissiles;
+        NativeMissileSprites = nativeMissileSprites;
         this.random = random ?? throw new ArgumentNullException(nameof(random));
         CombatRules = combatRules ?? throw new ArgumentNullException(nameof(combatRules));
         PlayerClasses = playerClasses;
@@ -466,6 +472,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated native missile identities and presentation metadata. */
     public AuthoritativeNativeMissileCatalog? NativeMissiles { get; }
+
+    /** Validated native missile sprite dimensions and animation timing. */
+    public AuthoritativeNativeMissileSpriteCatalog? NativeMissileSprites { get; }
 
     /** Validated native dynamic spell-book metadata used for presentation names. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; }

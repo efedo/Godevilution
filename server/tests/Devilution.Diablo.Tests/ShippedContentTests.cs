@@ -306,6 +306,40 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseNativeMissileSpritesMatchNativeTable()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var native = TsvTable.Parse(
+            "assets/txtdata/missiles/missile_sprites.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "assets",
+                "txtdata",
+                "missiles",
+                "missile_sprites.tsv")));
+        var external = basePack.Tables.Single(
+            table => table.SourcePath == "native_missile_sprites.tsv");
+        var fields = new[] {
+            (External: "missile_id", Native: "id"),
+            (External: "width", Native: "width"),
+            (External: "alternate_width", Native: "width2"),
+            (External: "name", Native: "name"),
+            (External: "frame_count", Native: "numFrames"),
+            (External: "flags", Native: "flags"),
+            (External: "frame_delay", Native: "frameDelay"),
+            (External: "frame_length", Native: "frameLength"),
+        };
+
+        Assert.Equal(46, native.Rows.Count);
+        Assert.Equal(native.Rows.Count, external.Rows.Count);
+        foreach (var (nativeRow, externalRow) in native.Rows.Zip(external.Rows))
+            foreach (var (externalColumn, nativeColumn) in fields)
+                Assert.Equal(nativeRow[nativeColumn], externalRow[externalColumn]);
+    }
+
+    [Fact]
     public void BaseNativeSpellNamespaceMatchesNativeSpellData()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -2620,6 +2654,13 @@ public sealed class ShippedContentTests
         Assert.All(
             ["OrangeFlare", "YellowFlare", "BlueFlare", "RedFlare", "BlueFlare2"],
             alias => Assert.True(nativeMissiles.GetRequired(alias).CompatibilityAlias));
+        var nativeMissileSprites = Assert.IsType<AuthoritativeNativeMissileSpriteCatalog>(
+            activation.NativeMissileSprites);
+        Assert.Same(nativeMissileSprites, activation.Simulation.NativeMissileSprites);
+        Assert.Equal(46, nativeMissileSprites.Definitions.Count);
+        Assert.Equal("fireba", nativeMissileSprites.GetRequired("Fireball").Name);
+        Assert.Equal(16, nativeMissileSprites.GetRequired("Fireball").FrameCount);
+        Assert.Equal(14, nativeMissileSprites.GetRequired("Fireball").FrameLength[0]);
         Assert.NotNull(activation.MonsterMissiles);
         Assert.True(activation.MonsterMissiles!.TryGet("GoatRanged", out var goatRanged));
         Assert.Equal("Arrow", goatRanged.MissileId);

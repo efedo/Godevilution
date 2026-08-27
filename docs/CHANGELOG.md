@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
 - Externalize all 68 native `misdat.tsv` missile identities, retain five
   explicit monster-color compatibility aliases, and validate every active
   monster missile mapping against the shared namespace.
+- Externalize all 46 native `missile_sprites.tsv` definitions, including
+  dimensions and 16-direction frame timing, for presentation-owned rendering.
 - Add exhaustive source coverage for all 36 native spell-data identities in
   the 52-entry normalized native spell namespace.
 - Add exhaustive parity coverage for the normalized item-generation rules and
