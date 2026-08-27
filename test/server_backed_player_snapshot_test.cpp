@@ -3235,6 +3235,13 @@ TEST(ServerBackedPlayerSnapshot, ClearsStaleStashScrollSourcesOnSnapshotRefresh)
 	snapshot.entityId = 7;
 	snapshot.characterLevel = 1;
 	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	Item inventoryScroll;
+	inventoryScroll._itype = ItemType::Misc;
+	inventoryScroll._iMiscId = IMISC_SCROLL;
+	inventoryScroll._iSpell = SpellID::Firebolt;
+	inventoryScroll._iStatFlag = true;
+	snapshot.inventory.push_back({ .itemSeed = 2, .item = inventoryScroll });
+	snapshot.inventoryGrid[0] = 0;
 	snapshot.stashOpen = true;
 	Item scroll;
 	scroll._itype = ItemType::Misc;
@@ -3254,11 +3261,13 @@ TEST(ServerBackedPlayerSnapshot, ClearsStaleStashScrollSourcesOnSnapshotRefresh)
 
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
+	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Firebolt), 0U);
 
 	snapshot.stashOpen = false;
 	snapshot.stash.clear();
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
-	EXPECT_EQ(player._pScrlSpells, 0U);
+	EXPECT_EQ(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
+	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Firebolt), 0U);
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesTimedMoveDestinationToNativeFuturePosition)

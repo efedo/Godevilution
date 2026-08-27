@@ -364,9 +364,6 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 		player.InvList[index] = snapshot.inventory[index].item;
 	player._pNumInv = static_cast<int>(snapshot.inventory.size());
 	player.CalcScrolls();
-	// Rebuild the stash-derived scroll mask from each complete snapshot so a
-	// closed stash or replaced page cannot leave stale spell sources available.
-	player._pScrlSpells = 0;
 	if (snapshot.stashOpen) {
 		for (const auto &stashItem : snapshot.stash) {
 			if (stashItem.spellId == 0 || stashItem.spellTargetingKind == ProjectedSpellTargetingKind::Unspecified)
