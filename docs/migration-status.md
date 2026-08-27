@@ -7,6 +7,11 @@ values for all previously divergent rows and preserves the four Fallen-family
 special attacks as non-damaging ranges. Focused shipped-content coverage guards
 these native combat metadata values.
 
+The complete external Hellfire unique catalog retains all 110 native
+definitions. Native blank numeric cells on flag-style powers are intentionally
+normalized to explicit `0,0` values; populated ranges remain source-faithful,
+with focused coverage guarding both forms.
+
 The Godot protocol model now validates the shape of non-empty authoritative
 snapshot hashes (64 hexadecimal characters) while retaining compatibility with
 legacy snapshots that omit the additive hash field. Digest computation and

@@ -810,6 +810,9 @@ Validated unique and affix rows can now express all native Hellfire
 damage/armor powers—`DEVASTATION`, `DECAY`, `PERIL`, `JESTERS`,
 `DOPPELGANGER`, `ACDEMON`, and `ACUNDEAD`—which resolve to the same
 authoritative effect flags used by combat.
+The normalized Hellfire unique catalog retains all 110 native definitions;
+blank native numeric cells on flag-style powers are represented explicitly as
+`value1=0` and `value2=0`, while populated native ranges remain unchanged.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

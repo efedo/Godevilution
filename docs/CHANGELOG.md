@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Characterize the complete Hellfire unique catalog's native blank numeric
+  power fields: normalized flag-style rows use explicit `0,0` values while
+  retaining all populated native ranges.
 - Correct the external Hellfire monster catalog's native armor-class values
   and Fallen-family special-damage ranges against `monstdat.tsv`, covering
   the 25 affected armor rows and four non-damaging special attacks.

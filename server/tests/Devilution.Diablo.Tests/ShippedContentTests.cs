@@ -5566,6 +5566,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void HellfireUniqueCatalogNormalizesNativeBlankPowerValues()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+        var catalog = AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            composed.GetRequiredTable("unique_items.tsv").ToCanonicalTsv());
+
+        // Hellfire's native unique_itemdat.tsv has 110 definitions. Empty
+        // numeric cells on flag-style powers are represented as 0,0 in the
+        // normalized table, while populated ranges retain their values.
+        Assert.Equal(110, catalog.Definitions.Count(definition => definition.UniqueId >= 1003));
+        var grandfather = Assert.Single(catalog.Definitions, definition => definition.UniqueId == 1037);
+        var oneHand = Assert.Single(grandfather.Powers, power => power.Power == "ONEHAND");
+        Assert.Equal((0, 0), (oneHand.Value1, oneHand.Value2));
+        var empyreanBand = Assert.Single(catalog.Definitions, definition => definition.UniqueId == 1004);
+        var attributes = Assert.Single(empyreanBand.Powers, power => power.Power == "ATTRIBS");
+        Assert.Equal((2, 2), (attributes.Value1, attributes.Value2));
+        var trapResistance = Assert.Single(empyreanBand.Powers, power => power.Power == "ABSHALFTRAP");
+        Assert.Equal((0, 0), (trapResistance.Value1, trapResistance.Value2));
+    }
+
+    [Fact]
     public void HellfireOverlayPreservesNativeArmorAndSpecialDamage()
     {
         var repositoryRoot = FindRepositoryRoot();
