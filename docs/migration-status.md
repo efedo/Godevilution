@@ -161,6 +161,9 @@ reaching authoritative execution.
 The generic handshake now applies the same shared character-name shape rule to
 optional requested names before participant initialization, keeping malformed
 identity input outside the game module.
+The authoritative Diablo victory rank now applies the native byte-sized range
+at C# projection, generic-host, Godot, and native compatibility boundaries,
+preventing malformed values from being narrowed into presentation state.
 
 Godot event-batch ingress now rejects unknown event kinds, impossible signed
 damage/healing values, invalid dialogue message/text payloads, and batches

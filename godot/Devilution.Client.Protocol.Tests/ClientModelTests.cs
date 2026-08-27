@@ -1755,6 +1755,17 @@ public sealed class ClientModelTests
         };
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidProgression)));
+
+        var invalidDiabloKillLevel = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    DiabloKillLevel = byte.MaxValue + 1U,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidDiabloKillLevel)));
     }
 
     [Fact]

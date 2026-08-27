@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject authoritative Diablo victory ranks above the native byte range across
+  C#, Godot, generic-host, and native compatibility boundaries.
 - Validate requested character names at the generic handshake boundary using
   the shared printable wire-shape rule before participant initialization.
 - Make the Godot client reject an error or unexpected payload in the required

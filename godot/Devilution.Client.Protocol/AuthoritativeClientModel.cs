@@ -24,6 +24,7 @@ public sealed class AuthoritativeClientModel
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
     private const uint MaximumNativeCharacterLevel = 50;
+    private const uint MaximumNativeDiabloKillLevel = byte.MaxValue;
     private const uint MaximumNativeReflectCharges = ushort.MaxValue;
     private const int MinimumNativeLightRadius = 2;
     private const int MaximumNativeLightRadius = 15;
@@ -705,7 +706,8 @@ public sealed class AuthoritativeClientModel
             || player.ReflectCharges > MaximumNativeReflectCharges
             || (player.LightRadius != 0
                 && (player.LightRadius is < MinimumNativeLightRadius or > MaximumNativeLightRadius))
-            || player.CharacterLevel > MaximumNativeCharacterLevel) {
+            || player.CharacterLevel > MaximumNativeCharacterLevel
+            || player.DiabloKillLevel > MaximumNativeDiabloKillLevel) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid player resources.");
         }

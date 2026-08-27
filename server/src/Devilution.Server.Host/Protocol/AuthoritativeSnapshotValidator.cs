@@ -14,6 +14,7 @@ public static class AuthoritativeSnapshotValidator
         ArgumentNullException.ThrowIfNull(snapshot);
         ValidateSessionMetadata(snapshot);
         ValidatePlayerNames(snapshot);
+        ValidatePlayerNativeRanges(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
@@ -30,6 +31,15 @@ public static class AuthoritativeSnapshotValidator
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid character name.");
             }
+        }
+    }
+
+    private static void ValidatePlayerNativeRanges(Snapshot snapshot)
+    {
+        foreach (var player in snapshot.Players) {
+            if (player.DiabloKillLevel > byte.MaxValue)
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an out-of-range Diablo kill level.");
         }
     }
 

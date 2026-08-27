@@ -3666,6 +3666,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsReflectChargesOutsideNativeRangeWithoutM
 	EXPECT_EQ(player.wReflections, 3);
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsDiabloKillLevelOutsideNativeRangeWithoutMutation)
+{
+	Player player;
+	player.pDiabloKillLevel = 2;
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.diabloKillLevel = static_cast<uint32_t>(UINT8_MAX) + 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player.pDiabloKillLevel, 2);
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsLevelOutsideNativeRangeWithoutMutation)
 {
 	Player player;

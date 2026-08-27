@@ -1157,6 +1157,7 @@ internal static class DiabloProtocolMapper
             || state.StashGold > int.MaxValue
             || state.StatPoints > int.MaxValue
             || state.ReflectCharges > ushort.MaxValue
+            || state.DiabloKillLevel > byte.MaxValue
             || state.CharacterLevel > 50) {
             throw new InvalidDataException(
                 "Authoritative player resources exceed the shared protocol range.");

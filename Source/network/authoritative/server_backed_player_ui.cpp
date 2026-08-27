@@ -40,6 +40,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player resources are outside the native range.");
 	if (snapshot.stashGold > static_cast<uint32_t>(INT_MAX) || snapshot.stash.size() > 10000)
 		return tl::make_unexpected("Server-backed stash resources are outside the native range.");
+	if (snapshot.diabloKillLevel > UINT8_MAX)
+		return tl::make_unexpected("Server-backed player rank is outside the native range.");
 	if (snapshot.characterClassId > static_cast<uint32_t>(HeroClass::LAST))
 		return tl::make_unexpected("Server-backed player class is outside the native range.");
 	if (snapshot.characterName.size() >= PlayerNameLength

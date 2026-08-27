@@ -137,6 +137,20 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsDiabloKillLevelsOutsideNativeRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 1,
+                        DiabloKillLevel = byte.MaxValue + 1U,
+                    },
+                },
+            }));
+    }
+
+    [Fact]
     public void AcceptsMovementTimingOnlyForAnActiveMovingMonster()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
