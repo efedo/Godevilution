@@ -831,4 +831,23 @@ public sealed class AuthoritativeWorldTests
         Assert.True(new AuthoritativeLevel(2, 2, 2)
             .IsSameTransparencyRegion(0, 0, 1, 1));
     }
+
+    [Fact]
+    public void NativeVisionLineOfSightHonorsDunBlockLightPieces()
+    {
+        var pieces = new ushort[5];
+        pieces[1] = 7;
+        var level = new AuthoritativeLevel(
+            1,
+            5,
+            1,
+            nativeTransparency: [1, 1, 1, 1, 1],
+            nativePieceLayer: pieces,
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [7] = AuthoritativeDunTileFlags.BlockLight,
+            });
+
+        Assert.False(level.HasNativeVisionLineOfSight(0, 0, 4, 0));
+        Assert.True(level.HasNativeVisionLineOfSight(0, 0, 1, 0));
+    }
 }

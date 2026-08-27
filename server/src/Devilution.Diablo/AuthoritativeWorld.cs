@@ -411,8 +411,8 @@ public sealed class AuthoritativeLevel
             var movesX = doubledError > -deltaY;
             var movesY = doubledError < deltaX;
             if (movesX && movesY
-                && !IsWalkable(x + stepX, y)
-                && !IsWalkable(x, y + stepY))
+                && !PassesNativeVision(x + stepX, y)
+                && !PassesNativeVision(x, y + stepY))
                 return false;
             if (movesX) {
                 error -= deltaY;
@@ -423,11 +423,25 @@ public sealed class AuthoritativeLevel
                 y += stepY;
             }
             if (x != endX || y != endY) {
-                if (!IsWalkable(x, y))
+                if (!PassesNativeVision(x, y))
                     return false;
             }
         }
         return true;
+    }
+
+    private bool PassesNativeVision(int positionX, int positionY)
+    {
+        if (!ContainsPosition(positionX, positionY))
+            return false;
+        var cell = positionY * Width + positionX;
+        if (NativePieceLayer.Count != 0
+            && NativePieceProperties.TryGetValue(
+                NativePieceLayer[cell],
+                out var pieceFlags)
+            && pieceFlags.HasFlag(AuthoritativeDunTileFlags.BlockLight))
+            return false;
+        return IsWalkable(positionX, positionY);
     }
 
     /** Native monster placement room check; absent transparency retains legacy behavior. */

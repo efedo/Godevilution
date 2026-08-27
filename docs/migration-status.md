@@ -177,6 +177,8 @@ occluded monsters with no active tick remain inactive while connected players
 are present, using the authoritative walkability layer as a bounded native
 radius-10 line-of-sight approximation when native transparency is supplied.
 The approximation now also rejects native-style diagonal corner occlusion.
+Native DUN piece metadata marked `BlockLight` now participates in the same
+vision blocker path, rather than relying only on movement collision.
 Geometry-free compatibility fixtures and no-player simulation ticks retain
 their legacy behavior; player light-radius data, exact ray-table parity, and
 broader activation timing remain follow-up work.
