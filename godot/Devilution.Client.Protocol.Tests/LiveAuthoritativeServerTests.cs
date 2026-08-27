@@ -985,6 +985,131 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerRestoresTwoParticipantsAfterProcessRestart()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Multiplayer-Persistence-Test-"
+                + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(saveRoot);
+        try {
+            string firstResumeToken;
+            string secondResumeToken;
+            uint firstEntityId;
+            uint secondEntityId;
+            int movedPositionY;
+
+            using (var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                saveRootOverride: saveRoot,
+                deleteSaveRootOnDispose: false)) {
+                await using var firstClient = new AuthoritativeClient(
+                    CreateOptions(server, "godot-multiplayer-persistence-first", requestedClassId: 0) with {
+                        RequestedCharacterName = "Godot-Restart-First",
+                    });
+                await firstClient.ConnectAsync(TestContext.Current.CancellationToken);
+                var firstInitial = await WaitForMessageAsync(
+                    firstClient,
+                    message => message.Snapshot is not null);
+                var firstModel = new AuthoritativeClientModel();
+                firstModel.Apply(firstInitial);
+                firstEntityId = Assert.Single(firstModel.Snapshot!.Players).EntityId;
+                firstResumeToken = firstClient.SessionToken;
+
+                await using var secondClient = new AuthoritativeClient(
+                    CreateOptions(server, "godot-multiplayer-persistence-second", requestedClassId: 1) with {
+                        RequestedCharacterName = "Godot-Restart-Second",
+                    });
+                await secondClient.ConnectAsync(TestContext.Current.CancellationToken);
+                var secondInitial = await WaitForMessageAsync(
+                    secondClient,
+                    message => message.Snapshot is { Players.Count: 2 });
+                secondEntityId = secondInitial.Snapshot!.Players[0].EntityId;
+                Assert.NotEqual(firstEntityId, secondEntityId);
+                Assert.Equal(
+                    [secondEntityId, firstEntityId],
+                    secondInitial.Snapshot.Players.Select(player => player.EntityId));
+                secondResumeToken = secondClient.SessionToken;
+
+                var moveSequence = firstClient.Queue(new Command {
+                    MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+                }, firstClient.SuggestedCommandTick(firstModel.CurrentTick));
+                await firstClient.PollAsync(TestContext.Current.CancellationToken);
+                Assert.Equal(
+                    CommandStatus.Accepted,
+                    (await WaitForAcknowledgementAsync(firstClient, moveSequence)).Status);
+                var moved = await WaitForMessageAsync(
+                    firstClient,
+                    message => message.Snapshot is { Players.Count: 2 }
+                        && message.Snapshot.Players.Single(
+                            player => player.EntityId == firstEntityId).PositionY
+                            == firstModel.Snapshot.Players.Single(
+                                player => player.EntityId == firstEntityId).PositionY + 1);
+                movedPositionY = moved.Snapshot!.Players.Single(
+                    player => player.EntityId == firstEntityId).PositionY;
+
+                for (var attempt = 0; attempt < 200
+                    && Directory.EnumerateFiles(saveRoot, "*.json").Count() < 2; attempt++) {
+                    await Task.Delay(25, TestContext.Current.CancellationToken);
+                }
+                Assert.True(Directory.EnumerateFiles(saveRoot, "*.json").Count() >= 2);
+                await Task.Delay(500, TestContext.Current.CancellationToken);
+            }
+
+            using var restartedServer = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                saveRootOverride: saveRoot);
+            await using var resumedFirst = new AuthoritativeClient(
+                CreateOptions(restartedServer, "godot-multiplayer-persistence-resumed-first", requestedClassId: 2) with {
+                    ResumeToken = firstResumeToken,
+                });
+            await resumedFirst.ConnectAsync(TestContext.Current.CancellationToken);
+            var restoredFirst = await WaitForMessageAsync(
+                resumedFirst,
+                message => message.Snapshot is not null);
+            var restoredFirstPlayer = Assert.Single(restoredFirst.Snapshot!.Players);
+            Assert.Equal(firstEntityId, restoredFirstPlayer.EntityId);
+            Assert.Equal("Godot-Restart-First", restoredFirstPlayer.CharacterName);
+            Assert.Equal(movedPositionY, restoredFirstPlayer.PositionY);
+            Assert.Equal(0U, restoredFirstPlayer.CharacterClassId);
+
+            await using var resumedSecond = new AuthoritativeClient(
+                CreateOptions(restartedServer, "godot-multiplayer-persistence-resumed-second", requestedClassId: 2) with {
+                    ResumeToken = secondResumeToken,
+                });
+            await resumedSecond.ConnectAsync(TestContext.Current.CancellationToken);
+            var restoredSecond = await WaitForMessageAsync(
+                resumedSecond,
+                message => message.Snapshot is { Players.Count: 2 });
+            Assert.Equal(
+                [secondEntityId, firstEntityId],
+                restoredSecond.Snapshot!.Players.Select(player => player.EntityId));
+            var restoredSecondPlayer = restoredSecond.Snapshot.Players[0];
+            var restoredFirstParticipant = restoredSecond.Snapshot.Players[1];
+            Assert.Equal("Godot-Restart-Second", restoredSecondPlayer.CharacterName);
+            Assert.Equal(1U, restoredSecondPlayer.CharacterClassId);
+            Assert.Equal("Godot-Restart-First", restoredFirstParticipant.CharacterName);
+            Assert.Equal(movedPositionY, restoredFirstParticipant.PositionY);
+            Assert.Equal(0U, restoredFirstParticipant.CharacterClassId);
+            Assert.NotEmpty(restoredSecond.Snapshot.StateSha256);
+
+            var restoredFirstComplete = await WaitForMessageAsync(
+                resumedFirst,
+                message => message.Snapshot is { Players.Count: 2 });
+            Assert.Equal(
+                [firstEntityId, secondEntityId],
+                restoredFirstComplete.Snapshot!.Players.Select(player => player.EntityId));
+            Assert.Equal(
+                movedPositionY,
+                restoredFirstComplete.Snapshot.Players.Single(
+                    player => player.EntityId == firstEntityId).PositionY);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerAdmitsEntityTargetedAttackAndPublishesActionState()
     {
         using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);

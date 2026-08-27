@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
   no temporary artifacts.
 - Persist initialized or restored TCP sessions immediately after handshake so
   idle participants remain recoverable across process restart.
+- Add live Godot coverage that restarts the server process and restores two
+  participants through resume tokens, preserving identity and moved position.
 - Give validated monster controller tuning precedence over legacy AI labels,
   restoring the authored Gargoyle, Skeleton King, and Rhino behavior paths.
 - Preserve authored unique-monster health percentages when materializing
