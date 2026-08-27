@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   adapter events cross the shared protocol boundary.
 - Apply matching event-batch validation before native compatibility-client
   event application.
+- Add a loopback TCP regression test proving malformed adapter events are
+  rejected as protocol errors before wire serialization.
 - Validate non-empty authoritative snapshot hashes at the Godot protocol
   boundary while preserving legacy snapshots that omit the additive hash.
 - Make authoritative save and world-seed writes durable before atomic

@@ -16,6 +16,9 @@ The generic TCP host applies the same event-batch validation to adapter output
 before writing it to the shared protocol, and the native compatibility client
 applies the same checks before event-driven resource/presentation updates;
 malformed module or wire events therefore fail closed at every current boundary.
+Loopback host coverage now drives a malformed adapter batch through the live
+handshake and command path, confirming the host returns an invalid-message
+error instead of serializing the event batch.
 
 Authoritative save and world-seed writes now use unique temporary files with
 `WriteThrough` and an explicit disk flush before atomic replacement. Failed
