@@ -2542,6 +2542,31 @@ TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerEquipmentToNativeGraphicBits)
 	EXPECT_EQ(GetRemotePlayerEquipmentGraphicBits(snapshot), static_cast<uint8_t>(PlayerWeaponGraphic::Bow) | (1 << 5));
 }
 
+TEST(ServerBackedPlayerSnapshot, RefreshesProjectedPlayerGraphicsFromAuthoritativeEquipment)
+{
+	LoadPlayerDataFiles();
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.characterClassId = static_cast<uint32_t>(HeroClass::Warrior);
+	ProjectedEquippedItem sword;
+	sword.slot = INVLOC_HAND_LEFT;
+	sword.item._itype = ItemType::Sword;
+	sword.item._iClass = ICLASS_WEAPON;
+	ProjectedEquippedItem shield;
+	shield.slot = INVLOC_HAND_RIGHT;
+	shield.item._itype = ItemType::Shield;
+	shield.item._iClass = ICLASS_ARMOR;
+	snapshot.equipment = { sword, shield };
+	Player player;
+	player._pClass = HeroClass::Warrior;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player._pNFrames = 0;
+
+	RefreshProjectedPlayerGraphics(player, snapshot);
+
+	EXPECT_EQ(player._pgfxnum, static_cast<uint8_t>(PlayerWeaponGraphic::SwordShield));
+	EXPECT_EQ(player._pNFrames, 20);
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
 {
 	LoadMissileData();

@@ -30,6 +30,9 @@ namespace devilution::authoritative {
 /** Maps authoritative equipment to the native weapon/armor sprite bitmask. */
 [[nodiscard]] uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snapshot);
 
+/** Refreshes native player graphics from authoritative equipment only. */
+void RefreshProjectedPlayerGraphics(Player &player, const ProjectedPlayerSnapshot &snapshot);
+
 /** Applies an authoritative player action to native animation state only. */
 void ApplyProjectedPlayerAnimation(
 	Player &player,

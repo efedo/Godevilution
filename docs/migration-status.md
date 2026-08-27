@@ -35,6 +35,9 @@ double-advancing time already consumed by the render loop. The same loop now
 drives the local player's server-declared action animation without re-entering
 legacy `ProcessPlayers` mutation, and resets that presentation state across
 authoritative level changes.
+Authoritative local equipment and class changes now also refresh the native
+sprite family and animation data through a presentation-only path; inventory
+and gameplay statistics remain snapshot-owned.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,

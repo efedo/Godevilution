@@ -1060,13 +1060,16 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
 	const player_graphic graphic = GetRemotePlayerGraphic(*snapshot);
+	const bool classChanged = player_->_pClass != static_cast<HeroClass>(snapshot->characterClassId);
+	const bool equipmentChanged = player_->_pgfxnum != GetRemotePlayerEquipmentGraphicBits(*snapshot);
 	const std::optional<uint32_t> actionKind = snapshot->currentAction.has_value()
 	    ? std::optional<uint32_t>(snapshot->currentAction->kind)
 	    : std::nullopt;
 	const std::optional<uint64_t> actionStartedAtTick = snapshot->currentAction.has_value()
 	    ? std::optional<uint64_t>(snapshot->currentAction->startedAtTick)
 	    : std::nullopt;
-	const bool animationChanged = !playerPresentationGraphic_.has_value()
+	const bool animationChanged = classChanged || equipmentChanged
+	    || !playerPresentationGraphic_.has_value()
 	    || *playerPresentationGraphic_ != graphic
 	    || playerPresentationActionKind_ != actionKind
 	    || playerPresentationActionStartedAtTick_ != actionStartedAtTick
@@ -1104,6 +1107,8 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	}
 	if (auto result = ApplyServerBackedPlayerSnapshot(*player_, *snapshot); !result.has_value())
 		return result;
+	if (classChanged || equipmentChanged)
+		RefreshProjectedPlayerGraphics(*player_, *snapshot);
 	ApplyProjectedPlayerAnimation(
 	    *player_,
 	    *snapshot,

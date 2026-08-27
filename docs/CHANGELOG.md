@@ -19,6 +19,8 @@ All notable changes to this fork are documented below.
   server-backed presentation loop while keeping `ProcessPlayers` disabled.
 - Reset local native presentation animation state when the authoritative level
   changes.
+- Refresh the local native sprite family and animation data when authoritative
+  equipment or class state changes, without recalculating gameplay locally.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

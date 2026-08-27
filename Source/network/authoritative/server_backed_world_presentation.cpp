@@ -105,11 +105,9 @@ void InitializeRemotePlayer(Player &player, const ProjectedPlayerSnapshot &snaps
 {
 	player = {};
 	player._pClass = static_cast<HeroClass>(snapshot.characterClassId);
-	player._pgfxnum = GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
 	player.life.current = snapshot.life;
 	player.life.maximum = snapshot.lifeMaximum;
-	player.setAnimations();
-	player.initGraphics();
+	RefreshProjectedPlayerGraphics(player, snapshot);
 }
 
 Direction GetRemotePlayerDirection(const ProjectedPlayerSnapshot &snapshot)
@@ -340,10 +338,7 @@ void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &s
 {
 	player.life.current = snapshot.life;
 	player.life.maximum = snapshot.lifeMaximum;
-	player._pgfxnum = GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
-	player.resetGraphics();
-	player.setAnimations();
-	player.initGraphics();
+	RefreshProjectedPlayerGraphics(player, snapshot);
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
@@ -864,6 +859,19 @@ player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot)
 uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snapshot)
 {
 	return GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
+}
+
+void RefreshProjectedPlayerGraphics(Player &player, const ProjectedPlayerSnapshot &snapshot)
+{
+	const uint8_t graphicBits = GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
+	player._pgfxnum = graphicBits;
+	player.resetGraphics();
+	player.setAnimations();
+	player.initGraphics();
+	// initGraphics intentionally removes the armor bits from a death sprite.
+	// Keep the authoritative equipment identity on the player so a later live
+	// snapshot can detect the transition without restarting every death tick.
+	player._pgfxnum = graphicBits;
 }
 
 void ApplyProjectedPlayerAnimation(
