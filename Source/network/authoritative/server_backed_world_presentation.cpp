@@ -635,6 +635,17 @@ int FindActiveObjectListIndex(int objectSlot)
 	return -1;
 }
 
+template <typename SlotMap, typename Slot>
+void RebindPresentationSlot(SlotMap &slots, uint32_t entityId, Slot slot)
+{
+	for (auto it = slots.begin(); it != slots.end();) {
+		if (it->first != entityId && it->second == slot)
+			it = slots.erase(it);
+		else
+			++it;
+	}
+}
+
 void ClearMonsterTile(unsigned monsterSlot, const Point &position)
 {
 	if (InDungeonBounds(position)
@@ -1005,6 +1016,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		if (slot == std::numeric_limits<unsigned>::max())
 			continue;
 		claimedMonsterSlots.insert(slot);
+		RebindPresentationSlot(monsterSlots_, snapshot.entityId, slot);
 		monsterSlots_[snapshot.entityId] = slot;
 		ApplyMonsterSnapshot(Monsters[slot], snapshot);
 	}
@@ -1053,6 +1065,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			slot = PlaceItemInWorld(Item { snapshot.item }, { static_cast<WorldTileCoord>(snapshot.positionX), static_cast<WorldTileCoord>(snapshot.positionY) });
 		}
 		claimedItemSlots.insert(slot);
+		RebindPresentationSlot(itemSlots_, snapshot.entityId, slot);
 		itemSlots_[snapshot.entityId] = slot;
 		ApplyItemSnapshot(Items[slot], snapshot);
 	}
@@ -1099,6 +1112,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		if (slot < 0)
 			continue;
 		claimedObjectSlots.insert(slot);
+		RebindPresentationSlot(objectSlots_, snapshot.entityId, slot);
 		objectSlots_[snapshot.entityId] = slot;
 		ApplyObjectSnapshot(Objects[slot], slot, snapshot);
 	}

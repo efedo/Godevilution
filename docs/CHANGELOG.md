@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Rebind native compatibility-pool item and object mappings when a level reload
+  reuses a slot, preventing stale entity identities from deleting newly
+  projected presentation state; add focused item/object reuse coverage.
 - Remove unclaimed native compatibility-pool world items and objects after
   authoritative snapshot application so omitted legacy level entities cannot
   remain as connected-client ghosts; add focused item/object pool regression

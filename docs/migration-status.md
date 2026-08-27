@@ -58,6 +58,9 @@ world-item and object slots after each authoritative snapshot, clearing their
 tile references so omitted legacy level entities cannot remain as connected
 client ghosts. Focused coverage verifies that claimed item/object slots remain
 while stale compatibility slots are removed.
+Presentation mappings now also rebind safely when a native level reload reuses
+a compatibility-pool slot for a different authoritative entity, preventing an
+old entity mapping from deleting the newly projected presentation state.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,

@@ -966,6 +966,95 @@ TEST(ServerBackedPlayerSnapshot, RemovesUnclaimedCompatibilityWorldEntitySlots)
 	ObjectPoolAdapter::ResetLegacyObjectPools();
 }
 
+TEST(ServerBackedPlayerSnapshot, RebindsPresentationMappingsAfterNativePoolReload)
+{
+	InitializeItemPool();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+
+	ProjectedWorldItemSnapshot firstItem;
+	firstItem.entityId = 1;
+	firstItem.levelId = 1;
+	firstItem.positionX = 14;
+	firstItem.positionY = 14;
+	firstItem.itemSeed = 101;
+	firstItem.item._iSeed = 101;
+	firstItem.item._itype = ItemType::Gold;
+	ServerBackedWorldProjection firstItemProjection;
+	ASSERT_TRUE(firstItemProjection.Apply({}, { firstItem }, {}, 1).has_value());
+	ServerBackedWorldPresentation itemPresentation;
+	ASSERT_TRUE(itemPresentation.Apply(firstItemProjection, 1).has_value());
+
+	// A native level reload can reuse slot zero while the authoritative mapping
+	// still refers to the previous entity. The new entity must take ownership of
+	// that slot without the old mapping deleting it during reconciliation.
+	InitializeItemPool();
+	Items[0] = {};
+	Items[0]._iSeed = 202;
+	Items[0].position = { 15, 15 };
+	ActiveItems[0] = 0;
+	ActiveItemCount = 1;
+	tileAt(15, 15).setItem(1);
+
+	ProjectedWorldItemSnapshot secondItem = firstItem;
+	secondItem.entityId = 2;
+	secondItem.positionX = 15;
+	secondItem.positionY = 15;
+	secondItem.itemSeed = 202;
+	secondItem.item._iSeed = 202;
+	ServerBackedWorldProjection secondItemProjection;
+	ASSERT_TRUE(secondItemProjection.Apply({}, { secondItem }, {}, 1).has_value());
+	ASSERT_TRUE(itemPresentation.Apply(secondItemProjection, 1).has_value());
+	ASSERT_EQ(ActiveItemCount, 1);
+	EXPECT_EQ(Items[0]._iSeed, 202U);
+	EXPECT_EQ(tileAt(15, 15).item(), 1);
+	itemPresentation.Clear();
+
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	const int firstObjectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_EQ(firstObjectSlot, 0);
+	Objects[firstObjectSlot] = {};
+	Objects[firstObjectSlot]._otype = OBJ_BARREL;
+	Objects[firstObjectSlot].position = { 18, 18 };
+	tileAt(18, 18).setObject(firstObjectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+
+	ProjectedObjectSnapshot firstObject;
+	firstObject.entityId = 3;
+	firstObject.objectId = OBJ_BARREL;
+	firstObject.nativeObjectId = OBJ_BARREL;
+	firstObject.levelId = 1;
+	firstObject.positionX = 18;
+	firstObject.positionY = 18;
+	ServerBackedWorldProjection firstObjectProjection;
+	ASSERT_TRUE(firstObjectProjection.Apply({}, {}, { firstObject }, 1).has_value());
+	ServerBackedWorldPresentation objectPresentation;
+	ASSERT_TRUE(objectPresentation.Apply(firstObjectProjection, 1).has_value());
+
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	const int secondObjectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_EQ(secondObjectSlot, 0);
+	Objects[secondObjectSlot] = {};
+	Objects[secondObjectSlot]._otype = OBJ_BARREL;
+	Objects[secondObjectSlot].position = { 19, 19 };
+	tileAt(19, 19).setObject(secondObjectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+
+	ProjectedObjectSnapshot secondObject = firstObject;
+	secondObject.entityId = 4;
+	secondObject.positionX = 19;
+	secondObject.positionY = 19;
+	ServerBackedWorldProjection secondObjectProjection;
+	ASSERT_TRUE(secondObjectProjection.Apply({}, {}, { secondObject }, 1).has_value());
+	ASSERT_TRUE(objectPresentation.Apply(secondObjectProjection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectIndexAt(0), 0);
+	EXPECT_EQ(tileAt(19, 19).object(), 1);
+	objectPresentation.Clear();
+
+	InitializeItemPool();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
 {
 	protocol::Snapshot snapshot;
