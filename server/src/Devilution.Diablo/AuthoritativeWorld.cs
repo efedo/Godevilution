@@ -391,4 +391,15 @@ public sealed class AuthoritativeLevel
             }
         }
     }
+
+    /** Native monster placement room check; absent transparency retains legacy behavior. */
+    public bool IsSameTransparencyRegion(int startX, int startY, int endX, int endY)
+    {
+        if (!ContainsPosition(startX, startY) || !ContainsPosition(endX, endY))
+            return false;
+        if (NativeTransparency.Count == 0)
+            return true;
+        return NativeTransparency[startY * Width + startX]
+            == NativeTransparency[endY * Width + endX];
+    }
 }

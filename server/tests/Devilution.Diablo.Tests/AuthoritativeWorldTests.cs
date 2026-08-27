@@ -816,4 +816,19 @@ public sealed class AuthoritativeWorldTests
         Assert.False(level.HasLineOfSight(0, 1, 4, 1));
         Assert.True(level.HasLineOfSight(0, 0, 4, 0));
     }
+
+    [Fact]
+    public void NativeTransparencyRegionsMatchNativePlacementSemantics()
+    {
+        var level = new AuthoritativeLevel(
+            1,
+            3,
+            2,
+            nativeTransparency: [4, 4, 7, 4, 7, 7]);
+
+        Assert.True(level.IsSameTransparencyRegion(0, 0, 1, 0));
+        Assert.False(level.IsSameTransparencyRegion(0, 0, 2, 0));
+        Assert.True(new AuthoritativeLevel(2, 2, 2)
+            .IsSameTransparencyRegion(0, 0, 1, 1));
+    }
 }

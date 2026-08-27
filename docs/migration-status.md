@@ -160,8 +160,9 @@ assigns generated monster and loot entity IDs without colliding with existing
 targets or drops, avoids reserved cells, and preserves the native strict
 four-tile envelope for leashed members. Generated minions now also restore the
 native doubled maximum health and inherit the leader's intelligence used by
-authoritative AI decisions. Unique leaders retain their pack relationships
-across authoritative ticks. Native random placement parity and the remaining
+authoritative AI decisions. Placement now follows the native bounded retry and
+transparency-region rules when native transparency data is available. Unique
+leaders retain their pack relationships across authoritative ticks. Remaining
 visibility-driven activation and cross-snapshot position prediction work remain
 follow-ups.
 

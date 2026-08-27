@@ -280,77 +280,87 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             throw new InvalidDataException(
                 $"Unique monster pack references unknown minion monster {minionMonsterId}.");
 
-        var occupied = (reservedPositions ?? [])
+        var reserved = (reservedPositions ?? [])
             .Select(position => (position.LevelId, position.X, position.Y))
             .ToHashSet();
-        occupied.Add((leader.LevelId, leader.PositionX, leader.PositionY));
+        reserved.Add((leader.LevelId, leader.PositionX, leader.PositionY));
 
         var random = new AuthoritativeLegacyRandom(seed ^ leader.EntityId ^ minionMonsterId);
         var members = new List<AuthoritativeCombatTarget>(packSize);
-        var cursorX = leader.PositionX;
-        var cursorY = leader.PositionY;
-        for (var index = 0; index < packSize; index++) {
-            (int X, int Y)? position = null;
-            for (var attempt = 0; attempt < 1000 && position is null; attempt++) {
-                var direction = random.Next(8);
-                var displacement = DiabloPlayerDirections.GetDisplacement(
-                    (DiabloPlayerDirection)direction);
+        var level = world.Levels.Single(level => level.LevelId == leader.LevelId);
+        for (var groupAttempt = 0; groupAttempt < 10 && members.Count < packSize; groupAttempt++) {
+            members.Clear();
+            var occupied = reserved.ToHashSet();
+            var anchorDirection = random.Next(8);
+            var anchorDisplacement = DiabloPlayerDirections.GetDisplacement(
+                (DiabloPlayerDirection)anchorDirection);
+            var anchorX = checked(leader.PositionX + anchorDisplacement.X);
+            var anchorY = checked(leader.PositionY + anchorDisplacement.Y);
+            var cursorX = anchorX;
+            var cursorY = anchorY;
+
+            for (var placementAttempt = 0;
+                members.Count < packSize && placementAttempt < 100;
+                placementAttempt++) {
+                var xDisplacement = DiabloPlayerDirections.GetDisplacement(
+                    (DiabloPlayerDirection)random.Next(8));
+                var yDisplacement = DiabloPlayerDirections.GetDisplacement(
+                    (DiabloPlayerDirection)random.Next(8));
                 var candidate = (
-                    X: checked(cursorX + displacement.X),
-                    Y: checked(cursorY + displacement.Y));
+                    X: checked(cursorX + xDisplacement.X),
+                    Y: checked(cursorY + yDisplacement.Y));
                 cursorX = candidate.X;
                 cursorY = candidate.Y;
                 if (!world.ContainsPosition(leader.LevelId, candidate.X, candidate.Y)
                     || !world.IsWalkable(leader.LevelId, candidate.X, candidate.Y)
                     || occupied.Contains((leader.LevelId, candidate.X, candidate.Y))
-                    || !world.Levels.Single(level => level.LevelId == leader.LevelId)
-                        .HasLineOfSight(
-                            leader.PositionX,
-                            leader.PositionY,
-                            candidate.X,
-                            candidate.Y))
+                    || !level.IsSameTransparencyRegion(anchorX, anchorY, candidate.X, candidate.Y))
                     continue;
                 if (kind == AuthoritativeUniqueMonsterPackKind.Leashed
-                    && Math.Max(
-                        Math.Abs(candidate.X - leader.PositionX),
-                        Math.Abs(candidate.Y - leader.PositionY)) >= AuthoritativeMonsterGroupUnity.ReunionDistance)
+                    && (Math.Max(
+                            Math.Abs(candidate.X - anchorX),
+                            Math.Abs(candidate.Y - anchorY)) >= AuthoritativeMonsterGroupUnity.ReunionDistance
+                        || Math.Max(
+                            Math.Abs(candidate.X - leader.PositionX),
+                            Math.Abs(candidate.Y - leader.PositionY)) >= AuthoritativeMonsterGroupUnity.ReunionDistance))
                     continue;
-                position = candidate;
-            }
-            if (position is not (int X, int Y) validPosition)
-                throw new InvalidDataException(
-                    $"Unique monster leader {leader.EntityId} could not place pack member {index + 1}.");
 
-            var memberEntityId = checked(firstEntityId + (uint)index);
-            if (memberEntityId == leader.EntityId)
-                throw new InvalidDataException(
-                    $"Unique monster pack member {index + 1} reuses leader entity {leader.EntityId}.");
-            var member = CreateNativeMonsterSummon(
-                leader.LevelId,
-                minionMonsterId,
-                random.AdvanceSeed(),
-                validPosition.X,
-                validPosition.Y,
-                memberEntityId,
-                multiplayer,
-                random.Next(8),
-                ignoreDungeonLevelRange: true,
-                applyUniqueSelector: false,
-                intelligenceOverride: leader.Intelligence);
-            if (member is null)
-                throw new InvalidDataException(
-                    $"Unique monster leader {leader.EntityId} could not materialize pack member {index + 1}.");
-            member.RestoreHitPointsQ6(
-                checked(member.MaxHitPointsQ6 * 2),
-                checked(member.MaxHitPointsQ6 * 2));
-            if (kind == AuthoritativeUniqueMonsterPackKind.Leashed)
-                member.RestoreGroupUnity(
-                    leader.EntityId,
-                    AuthoritativeMonsterLeaderRelation.Leashed,
-                    0);
-            occupied.Add((leader.LevelId, validPosition.X, validPosition.Y));
-            members.Add(member);
+                var memberIndex = members.Count;
+                var memberEntityId = checked(firstEntityId + (uint)memberIndex);
+                if (memberEntityId == leader.EntityId)
+                    throw new InvalidDataException(
+                        $"Unique monster pack member {memberIndex + 1} reuses leader entity {leader.EntityId}.");
+                var member = CreateNativeMonsterSummon(
+                    leader.LevelId,
+                    minionMonsterId,
+                    random.AdvanceSeed(),
+                    candidate.X,
+                    candidate.Y,
+                    memberEntityId,
+                    multiplayer,
+                    random.Next(8),
+                    ignoreDungeonLevelRange: true,
+                    applyUniqueSelector: false,
+                    intelligenceOverride: leader.Intelligence);
+                if (member is null)
+                    throw new InvalidDataException(
+                        $"Unique monster leader {leader.EntityId} could not materialize pack member {memberIndex + 1}.");
+                member.RestoreHitPointsQ6(
+                    checked(member.MaxHitPointsQ6 * 2),
+                    checked(member.MaxHitPointsQ6 * 2));
+                if (kind == AuthoritativeUniqueMonsterPackKind.Leashed)
+                    member.RestoreGroupUnity(
+                        leader.EntityId,
+                        AuthoritativeMonsterLeaderRelation.Leashed,
+                        0);
+                occupied.Add((leader.LevelId, candidate.X, candidate.Y));
+                members.Add(member);
+            }
         }
+
+        if (members.Count < packSize)
+            throw new InvalidDataException(
+                $"Unique monster leader {leader.EntityId} could not place pack member {members.Count + 1}.");
 
         leader.RestoreGroupUnity(
             leaderEntityId: 0,

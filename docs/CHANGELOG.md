@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align generated unique-pack placement with native `PlaceGroup` retry and
+  transparency-region rules while retaining deterministic server occupancy and
+  entity allocation.
 - Align generated native unique-pack minions with `PlaceGroup` initialization:
   minion health is restored to the native doubled maximum and minions inherit
   the leader's intelligence for authoritative AI decisions.
