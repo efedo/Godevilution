@@ -3302,7 +3302,11 @@ public sealed class StoreSimulationExecutorTests
             4,
             blockedCells: [6],
             missileBlockedCells: [5],
-            nativeTransparency: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]));
+            nativeTransparency: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+            nativePieceLayer: [0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [7] = AuthoritativeDunTileFlags.BlockLight,
+            }));
         var executor = new StoreSimulationExecutor(
             CreateCatalog(),
             startingGold: 100,
@@ -3323,6 +3327,7 @@ public sealed class StoreSimulationExecutorTests
         Assert.Equal(4, geometry.Height);
         Assert.Equal([6], geometry.BlockedCells);
         Assert.Equal([5], geometry.MissileBlockedCells);
+        Assert.Equal([1, 6], geometry.NativeVisionBlockedCells);
         Assert.Equal([10U, 11U, 12U, 13U, 14U, 15U, 16U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U], geometry.NativeTransparency);
         Assert.Equal(SnapshotStateHasher.Compute(snapshot), snapshot.StateSha256);
 

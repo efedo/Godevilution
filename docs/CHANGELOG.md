@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   presentation, including radius, line-of-sight, and diagonal corner checks.
 - Honor native DUN `BlockLight` piece metadata in geometry-backed monster
   visibility, including diagonal corner occlusion.
+- Carry derived native vision-blocked cells through authoritative level geometry
+  so Godot can reproduce DUN `BlockLight` visibility without native piece metadata.
 - Preserve native diagonal corner occlusion when geometry-backed monster
   visibility follows the server's radius-10 line-of-sight boundary.
 - Extend geometry-backed monster visibility activation with the native default

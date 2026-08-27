@@ -468,6 +468,8 @@ message LevelGeometrySnapshot {
 	repeated uint32 native_mega_tile_layer = 9;
 	// Native d-piece IDs after authoritative world mutations.
 	repeated uint32 native_piece_layer = 10;
+	// Derived native vision blockers, including DUN BlockLight pieces.
+	repeated int32 native_vision_blocked_cells = 11;
 }
 
 message WarpTriggerSnapshot {

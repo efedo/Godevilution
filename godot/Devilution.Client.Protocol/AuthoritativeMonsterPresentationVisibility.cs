@@ -82,5 +82,7 @@ public static class AuthoritativeMonsterPresentationVisibility
 
     private static bool IsBlocked(LevelGeometrySnapshot geometry, int x, int y)
         => !Contains(geometry, x, y)
-            || geometry.BlockedCells.Contains(y * geometry.Width + x);
+            || (geometry.NativeVisionBlockedCells.Count != 0
+                ? geometry.NativeVisionBlockedCells.Contains(y * geometry.Width + x)
+                : geometry.BlockedCells.Contains(y * geometry.Width + x));
 }

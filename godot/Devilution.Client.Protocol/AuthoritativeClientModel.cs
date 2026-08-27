@@ -1040,11 +1040,15 @@ public sealed class AuthoritativeClientModel
                 var cellCount = checked((long)level.Width * level.Height);
                 if (level.BlockedCells.Count > cellCount
                     || level.MissileBlockedCells.Count > cellCount
+                    || level.NativeVisionBlockedCells.Count > cellCount
                     || level.BlockedCells.Any(cell => cell < 0 || cell >= cellCount)
                     || level.MissileBlockedCells.Any(cell => cell < 0 || cell >= cellCount)
+                    || level.NativeVisionBlockedCells.Any(cell => cell < 0 || cell >= cellCount)
                     || level.BlockedCells.Distinct().Count() != level.BlockedCells.Count
                     || level.MissileBlockedCells.Distinct().Count()
                         != level.MissileBlockedCells.Count
+                    || level.NativeVisionBlockedCells.Distinct().Count()
+                        != level.NativeVisionBlockedCells.Count
                     || level.NativeTransparency.Count != 0
                         && level.NativeTransparency.Count != cellCount
                     || level.NativeObjectLayer.Count != 0

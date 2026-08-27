@@ -2589,6 +2589,25 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedNativeVisionBlockerCell()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 2,
+                    Width = 2,
+                    Height = 2,
+                    NativeVisionBlockedCells = { 1, 1 },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void BoundsUnacknowledgedMovementPrediction()
     {
         var model = new AuthoritativeClientModel();

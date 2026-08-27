@@ -196,6 +196,7 @@ public sealed class AuthoritativeLevel
     private readonly HashSet<int> missileBlockedCells;
     private readonly IReadOnlyList<int> blockedCellList;
     private readonly IReadOnlyList<int> missileBlockedCellList;
+    private readonly IReadOnlyList<int> nativeVisionBlockedCellList;
 
     public AuthoritativeLevel(
         uint levelId,
@@ -284,6 +285,15 @@ public sealed class AuthoritativeLevel
         var pieceProperties = (nativePieceProperties ?? new Dictionary<ushort, AuthoritativeDunTileFlags>())
             .ToDictionary(pair => pair.Key, pair => pair.Value);
         NativePieceProperties = new ReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>(pieceProperties);
+        var nativeVisionBlockedCells = this.blockedCells.ToHashSet();
+        for (var cell = 0; cell < pieces.Length; cell++) {
+            if (pieces[cell] != 0
+                && pieceProperties.TryGetValue(pieces[cell], out var flags)
+                && flags.HasFlag(AuthoritativeDunTileFlags.BlockLight))
+                nativeVisionBlockedCells.Add(cell);
+        }
+        nativeVisionBlockedCellList = Array.AsReadOnly(
+            nativeVisionBlockedCells.OrderBy(cell => cell).ToArray());
         var pieceCollisionCells = (nativePieceCollisionCells ?? [])
             .Distinct()
             .OrderBy(cell => cell)
@@ -337,6 +347,9 @@ public sealed class AuthoritativeLevel
 
     /** Cells whose blocked state was materialized from native d-piece flags. */
     public IReadOnlyList<int> NativePieceCollisionCells { get; }
+
+    /** Derived native vision blockers, including movement-blocked cells. */
+    public IReadOnlyList<int> NativeVisionBlockedCells => nativeVisionBlockedCellList;
 
     /** Cells whose missile state was materialized from native d-piece flags. */
     public IReadOnlyList<int> NativePieceMissileBlockedCells { get; }
