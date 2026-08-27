@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reconcile native `_pLvlChanging` state from authoritative `PM_NEWLVL`
+  snapshots for local and remote player presentation, preventing stale level
+  transition gates from leaking across snapshots.
 - Rebind native compatibility-pool item and object mappings when a level reload
   reuses a slot, preventing stale entity identities from deleting newly
   projected presentation state; add focused item/object reuse coverage.

@@ -301,6 +301,10 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.friendlyMode = snapshot.friendlyMode;
 	player.direction = static_cast<Direction>(snapshot.facingDirection);
 	player._pmode = static_cast<PLR_MODE>(snapshot.combatMode);
+	// The authoritative transition mode owns this presentation gate. Keeping
+	// the legacy flag in sync prevents stale level-change state from leaking
+	// into lighting, automap, and input paths between snapshots.
+	player._pLvlChanging = player._pmode == PM_NEWLVL;
 	// Block animation admission is presentation state in the authoritative
 	// client. Do not retain a legacy value across server-owned action changes.
 	player._pBlockFlag = snapshot.combatMode == static_cast<uint32_t>(PM_BLOCK);

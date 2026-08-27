@@ -349,6 +349,9 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player._pmode = snapshot.life <= 0 || snapshot.combatMode == PM_DEATH
 	    ? PM_DEATH
 	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode) : PM_STAND;
+	// Remote players are presentation-only, but native lighting and automap
+	// still consult this transition gate while drawing them.
+	player._pLvlChanging = player._pmode == PM_NEWLVL;
 }
 
 void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &snapshot)

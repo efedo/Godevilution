@@ -2360,6 +2360,12 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	EXPECT_EQ(visitedEntityId, remote.entityId);
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
+	remote.combatMode = PM_NEWLVL;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_TRUE(remotePlayer->_pLvlChanging);
+
 	remote.combatMode = PM_STAND;
 	remote.life = 160;
 	remote.mana = 100;
@@ -2370,6 +2376,7 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
 	EXPECT_FALSE(remotePlayer->_pBlockFlag);
+	EXPECT_FALSE(remotePlayer->_pLvlChanging);
 	EXPECT_EQ(remotePlayer->life.percentage, 12);
 	EXPECT_EQ(remotePlayer->mana.percentage, 16);
 	EXPECT_EQ(remotePlayer->_pISpells, 0U);
@@ -3576,6 +3583,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesDeathAndLevelTransitionActions)
 	                transition)
 	                .has_value());
 	EXPECT_EQ(transitioningPlayer._pmode, PM_NEWLVL);
+	EXPECT_TRUE(transitioningPlayer._pLvlChanging);
 	EXPECT_TRUE(transitioningPlayer.isOnLevel(2));
 	EXPECT_EQ(transitioningPlayer.position.tile.x, 3);
 	EXPECT_EQ(transitioningPlayer.position.tile.y, 4);
@@ -3591,8 +3599,15 @@ TEST(ServerBackedPlayerSnapshot, AppliesDeathAndLevelTransitionActions)
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(restartedPlayer, restartTown).has_value());
 	EXPECT_TRUE(restartedPlayer.isOnLevel(0));
 	EXPECT_EQ(restartedPlayer._pmode, PM_NEWLVL);
+	EXPECT_TRUE(restartedPlayer._pLvlChanging);
 	EXPECT_EQ(restartedPlayer.position.tile.x, 75);
 	EXPECT_EQ(restartedPlayer.position.tile.y, 68);
+
+	transition.combatMode = static_cast<uint32_t>(PM_STAND);
+	transition.combatModeEndTick = 0;
+	transition.currentAction.reset();
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(transitioningPlayer, transition).has_value());
+	EXPECT_FALSE(transitioningPlayer._pLvlChanging);
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedSnapshotWithoutMutation)

@@ -61,6 +61,10 @@ while stale compatibility slots are removed.
 Presentation mappings now also rebind safely when a native level reload reuses
 a compatibility-pool slot for a different authoritative entity, preventing an
 old entity mapping from deleting the newly projected presentation state.
+Authoritative local and remote player projections now also derive the native
+`_pLvlChanging` presentation gate from the server-declared `PM_NEWLVL` mode,
+so lighting, automap, and input gates cannot retain stale transition state
+across server snapshots.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,
