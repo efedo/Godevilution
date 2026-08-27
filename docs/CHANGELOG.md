@@ -6,7 +6,8 @@ All notable changes to this fork are documented below.
 
 - Harden the protocol-free native world projection boundary by rejecting
   zero/duplicate monster identities, invalid native directions, and
-  non-adjacent authoritative movement targets before publishing state.
+  non-adjacent authoritative movement targets before publishing state; reject
+  duplicate nonzero identities across projected entity collections as well.
 - Carry the authoritative snapshot tick through the native world projection
   and ignore older complete world projections at the presentation boundary,
   preventing delayed server state from regressing native entity visuals while

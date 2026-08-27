@@ -42,10 +42,10 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	// This boundary is also used by compatibility callers that do not pass
 	// through the protocol-session validators. Keep the structural invariants
 	// that native interaction and presentation rely on enforced here as well.
-	std::unordered_set<uint32_t> monsterEntityIds;
-	monsterEntityIds.reserve(monsters.size());
+	std::unordered_set<uint32_t> projectedEntityIds;
+	projectedEntityIds.reserve(monsters.size() + worldItems.size() + objects.size() + projectiles.size());
 	for (const auto &monster : monsters) {
-		if (monster.entityId == 0 || !monsterEntityIds.insert(monster.entityId).second)
+		if (monster.entityId == 0 || !projectedEntityIds.insert(monster.entityId).second)
 			return tl::make_unexpected("Authoritative monster projection contains invalid or duplicate entity IDs.");
 		if (monster.direction < 0 || monster.direction > 7)
 			return tl::make_unexpected("Authoritative monster projection contains an invalid direction.");
@@ -57,6 +57,17 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 				return tl::make_unexpected("Authoritative moving monster projection must target an adjacent tile.");
 		}
 	}
+	const auto hasDuplicateProjectedEntity = [&projectedEntityIds](const auto &entities) {
+		for (const auto &entity : entities) {
+			// World-item and object compatibility callers historically used zero
+			// IDs for non-interactive placeholders; retain that behavior.
+			if (entity.entityId != 0 && !projectedEntityIds.insert(entity.entityId).second)
+				return true;
+		}
+		return false;
+	};
+	if (hasDuplicateProjectedEntity(worldItems) || hasDuplicateProjectedEntity(objects) || hasDuplicateProjectedEntity(projectiles))
+		return tl::make_unexpected("Authoritative projection contains duplicate entity IDs across projected collections.");
 	if (std::any_of(projectiles.begin(), projectiles.end(), [](const auto &projectile) {
 			return projectile.entityId == 0
 			    || projectile.sourceEntityId == 0

@@ -1712,6 +1712,10 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonster
 	nonAdjacent.moving = true;
 	nonAdjacent.futurePositionX = 2;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ nonAdjacent }, { }, { }, 1).has_value());
+
+	ProjectedWorldItemSnapshot item;
+	item.entityId = first.entityId;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first }, { item }, { }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjectiles)
