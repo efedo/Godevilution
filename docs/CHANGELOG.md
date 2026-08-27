@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   occupancy while timed walks finish smoothly at render cadence.
 - Keep the fractional presentation clock in the engine-independent Godot
   protocol projection layer with direct reset, rate, and horizon coverage.
+- Cover a remote-player walk across a coarse snapshot boundary by composing
+  the presentation clock with the authoritative action-tick projection.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

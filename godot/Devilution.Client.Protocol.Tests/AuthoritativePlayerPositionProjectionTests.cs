@@ -96,6 +96,42 @@ public sealed class AuthoritativePlayerPositionProjectionTests
     }
 
     [Fact]
+    public void PresentsARemoteWalkThroughACoarseSnapshotBoundary()
+    {
+        var clock = new AuthoritativePresentationClock();
+        var moving = new PlayerSnapshot {
+            EntityId = 17,
+            PositionX = 4,
+            PositionY = 5,
+            CurrentAction = new PlayerActionSnapshot {
+                Kind = PlayerActionKind.Move,
+                StartedAtTick = 100,
+                EffectTick = 104,
+                DirectionX = 1,
+            },
+        };
+
+        var atStart = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            moving,
+            clock.Advance(100, 0, 20));
+        var betweenSnapshots = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            moving,
+            clock.Advance(100, 0.025, 20));
+
+        Assert.Equal(new ClientPresentationPosition(4, 5), atStart);
+        Assert.Equal(new ClientPresentationPosition(4.125, 5), betweenSnapshots);
+
+        var completed = moving.Clone();
+        completed.PositionX = 5;
+        completed.CurrentAction.EffectApplied = true;
+        var atNextSnapshot = AuthoritativePlayerPositionProjection.ResolvePresentation(
+            completed,
+            clock.Advance(104, 0, 20));
+
+        Assert.Equal(new ClientPresentationPosition(5, 5), atNextSnapshot);
+    }
+
+    [Fact]
     public void ClampsPresentationToTheReservedDestinationAtTheEffectTick()
     {
         var player = new PlayerSnapshot {
