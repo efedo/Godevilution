@@ -47,4 +47,17 @@ public sealed class AuthoritativeNativeMissileSpriteCatalogTests
 
         Assert.Equal(-12, catalog.GetRequired("OrangeFlareExplosion").AlternateWidth);
     }
+
+    [Fact]
+    public void RejectsUnknownSpriteFlags()
+    {
+        var values = string.Join(',', Enumerable.Repeat("0", 16));
+        var header = "missile_id\twidth\talternate_width\tname\tframe_count\tflags\tframe_delay\tframe_length\n";
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
+                "native_missile_sprites.tsv",
+                header + $"Fireball\t96\t16\tfireba\t1\tUnknown\t{values}\t{values}\n"));
+        Assert.Contains("unknown flag", exception.Message, StringComparison.Ordinal);
+    }
 }

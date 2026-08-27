@@ -17,6 +17,9 @@ public sealed record AuthoritativeNativeMissileSpriteDefinition(
 public sealed class AuthoritativeNativeMissileSpriteCatalog
 {
     public const int NativeDirectionCount = 16;
+    private static readonly IReadOnlySet<string> KnownFlags = new HashSet<string>(
+        ["MonsterOwned", "NotAnimated"],
+        StringComparer.Ordinal);
 
     private readonly IReadOnlyList<AuthoritativeNativeMissileSpriteDefinition> definitions;
     private readonly IReadOnlyDictionary<string, AuthoritativeNativeMissileSpriteDefinition> byId;
@@ -43,6 +46,10 @@ public sealed class AuthoritativeNativeMissileSpriteCatalog
                 throw new InvalidDataException(
                     $"Native missile sprite definition '{definition.MissileId}' is invalid or duplicated.");
             }
+            var flags = ParseFlags(definition.Flags);
+            if (flags.Any(flag => !KnownFlags.Contains(flag)))
+                throw new InvalidDataException(
+                    $"Native missile sprite '{definition.MissileId}' contains an unknown flag.");
         }
 
         this.definitions = Array.AsReadOnly(ordered);
@@ -100,6 +107,11 @@ public sealed class AuthoritativeNativeMissileSpriteCatalog
 
     private static string OptionalText(TsvRow row, string column)
         => row.TryGet(column, out var value) ? value : string.Empty;
+
+    private static IReadOnlyList<string> ParseFlags(string flags)
+        => string.IsNullOrWhiteSpace(flags)
+            ? []
+            : flags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private static bool IsIdentifier(string value)
         => !string.IsNullOrEmpty(value)
