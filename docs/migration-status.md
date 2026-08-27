@@ -12,10 +12,11 @@ field-for-field guard against the native variant tables: all 86 prefixes and
 98 suffixes must remain present under their validated composite keys after
 overlay replacement.
 
-The external Hellfire monster catalog now matches native `monstdat.tsv` armor
-values for all previously divergent rows and preserves the four Fallen-family
-special attacks as non-damaging ranges. Focused shipped-content coverage guards
-these native combat metadata values.
+The external Hellfire monster catalog now matches native `monstdat.tsv` core
+metadata for all 138 variant rows, including the 26 Hellfire-only standing
+animation frame/timing pairs, previously divergent armor values, and the four
+Fallen-family special attacks as non-damaging ranges. Focused shipped-content
+coverage guards these native combat and presentation metadata values.
 
 The complete external Hellfire unique catalog retains all 110 native
 definitions. Native blank numeric cells on flag-style powers are intentionally

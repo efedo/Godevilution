@@ -272,6 +272,56 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void HellfireMonsterTypesMatchNativeCoreMetadata()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var native = TsvTable.Parse(
+            "mods/Hellfire/txtdata/monsters/monstdat.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "mods",
+                "Hellfire",
+                "txtdata",
+                "monsters",
+                "monstdat.tsv")));
+        var external = hellfirePack.Tables.Single(table => table.SourcePath == "monster_types.tsv");
+        var externalRows = external.Rows.ToDictionary(
+            row => row.RequiredInt32("native_monster_id"));
+        Assert.Equal(native.Rows.Count, externalRows.Count);
+
+        var fields = new[] {
+            (External: "name", Native: "name"),
+            (External: "minimum_dungeon_level", Native: "minDunLvl"),
+            (External: "maximum_dungeon_level", Native: "maxDunLvl"),
+            (External: "monster_level", Native: "level"),
+            (External: "minimum_hit_points", Native: "hitPointsMinimum"),
+            (External: "maximum_hit_points", Native: "hitPointsMaximum"),
+            (External: "minimum_damage", Native: "minDamage"),
+            (External: "maximum_damage", Native: "maxDamage"),
+            (External: "minimum_special_damage", Native: "minDamageSpecial"),
+            (External: "maximum_special_damage", Native: "maxDamageSpecial"),
+            (External: "armor_class", Native: "armorClass"),
+            (External: "to_hit", Native: "toHit"),
+            (External: "to_hit_special", Native: "toHitSpecial"),
+            (External: "intelligence", Native: "intelligence"),
+            (External: "experience_reward", Native: "exp"),
+        };
+        for (var nativeId = 0; nativeId < native.Rows.Count; nativeId++) {
+            var nativeRow = native.Rows[nativeId];
+            var externalRow = externalRows[nativeId];
+            foreach (var (externalColumn, nativeColumn) in fields)
+                Assert.Equal(nativeRow.Required(nativeColumn), externalRow.Required(externalColumn));
+
+            var nativeFrames = nativeRow.Required("frames[6]").Split(',')[0];
+            var nativeRate = nativeRow.Required("rate[6]").Split(',')[0];
+            Assert.Equal(nativeFrames, externalRow.Required("stand_animation_frames"));
+            Assert.Equal(nativeRate, externalRow.Required("stand_animation_ticks_per_frame"));
+        }
+    }
+
+    [Fact]
     public void BaseContentPackDeclaresNativeSetLevelObjectPlacements()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore native standing-animation frame and timing metadata for all 26
+  Hellfire-only monster types and guard the complete 138-row variant catalog
+  against `monstdat.tsv` core metadata.
 - Add exhaustive Hellfire affix parity coverage against the native variant
   prefix and suffix tables, guarding all 86 prefixes and 98 suffixes after
   base-pack composition and overlay replacement.
