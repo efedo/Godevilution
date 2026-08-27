@@ -2545,6 +2545,38 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsMaterializedSetLevelWithoutRegularVisitedMarker()
+    {
+        var runtimeLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(0, activeMap: true);
+        var simulation = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+        });
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.LevelId = runtimeLevelId;
+        sourcePlayer.VisitedLevelIds.Clear();
+
+        var snapshot = simulation.CaptureSnapshot(sourcePlayer, 5);
+
+        Assert.Equal(runtimeLevelId, snapshot.Player.LevelId);
+        Assert.Empty(snapshot.Player.VisitedLevelIds);
+
+        var destination = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+        });
+        var destinationPlayer = CreatePlayer();
+        destination.RestoreSnapshot(destinationPlayer, snapshot);
+
+        Assert.Equal(runtimeLevelId, destinationPlayer.LevelId);
+        Assert.Empty(destinationPlayer.VisitedLevelIds);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsFireballImpactState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

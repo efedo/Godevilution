@@ -1,3 +1,5 @@
+using Devilution.Domain.Protocol;
+
 namespace Devilution.Diablo;
 
 /** Native-compatible authoritative player action modes. Numeric values mirror `PLR_MODE`. */
@@ -389,11 +391,17 @@ public sealed class AuthoritativePlayerState(
 
     /** Server-owned native _pLvlVisited flags, keyed by authored level ID. */
     public HashSet<uint> VisitedLevelIds { get; } =
-        (visitedLevelIds ?? [levelId]).ToHashSet();
+        (visitedLevelIds ?? [levelId])
+            .Where(AuthoritativeLevelIdentityRules.IsRegularLevel)
+            .ToHashSet();
 
     public bool HasVisitedLevel(uint levelId) => VisitedLevelIds.Contains(levelId);
 
-    public void MarkLevelVisited(uint levelId) => VisitedLevelIds.Add(levelId);
+    public void MarkLevelVisited(uint levelId)
+    {
+        if (AuthoritativeLevelIdentityRules.IsRegularLevel(levelId))
+            VisitedLevelIds.Add(levelId);
+    }
 
     /** True while the player has not opted into hostile player targeting. */
     public bool FriendlyMode { get; set; } = friendlyMode;

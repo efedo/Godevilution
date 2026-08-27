@@ -549,9 +549,11 @@ public sealed partial class DiabloSimulation
             ReflectCharges = player.ReflectCharges,
             DiabloKillLevel = player.DiabloKillLevel,
             StatPoints = player.StatPoints,
-            VisitedLevelIds = player.VisitedLevelIds
-                .Append(player.LevelId)
+            VisitedLevelIds = (AuthoritativeLevelIdentityRules.IsRegularLevel(player.LevelId)
+                    ? player.VisitedLevelIds.Append(player.LevelId)
+                    : player.VisitedLevelIds)
                 .Distinct()
+                .Where(AuthoritativeLevelIdentityRules.IsRegularLevel)
                 .OrderBy(levelId => levelId)
                 .ToArray(),
             AbilitySpellId = player.AbilitySpellId,
@@ -2030,10 +2032,13 @@ public sealed partial class DiabloSimulation
         destination.DiabloKillLevel = source.DiabloKillLevel;
         destination.StatPoints = source.StatPoints;
         destination.VisitedLevelIds.Clear();
-        destination.VisitedLevelIds.UnionWith(
-            source.VisitedLevelIds is { Count: > 0 }
-                ? source.VisitedLevelIds
-                : [source.LevelId]);
+        var restoredVisitedLevelIds = source.VisitedLevelIds
+            .Where(AuthoritativeLevelIdentityRules.IsRegularLevel)
+            .ToHashSet();
+        if (restoredVisitedLevelIds.Count == 0
+            && AuthoritativeLevelIdentityRules.IsRegularLevel(source.LevelId))
+            restoredVisitedLevelIds.Add(source.LevelId);
+        destination.VisitedLevelIds.UnionWith(restoredVisitedLevelIds);
         destination.FriendlyMode = source.FriendlyMode;
         destination.FacingDirection = source.FacingDirection;
         destination.CombatMode = source.CombatMode;
@@ -2592,8 +2597,11 @@ public sealed partial class DiabloSimulation
             || source.MemorizedSpells is null
             || source.StatusEffects is null
             || source.VisitedLevelIds is null
+            || !AuthoritativeLevelIdentityRules.IsSupported(source.LevelId)
             || source.VisitedLevelIds.Count > 256
-            || (source.VisitedLevelIds.Count > 0
+            || source.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdentityRules.IsRegularLevel(levelId))
+            || (AuthoritativeLevelIdentityRules.IsRegularLevel(source.LevelId)
+                && source.VisitedLevelIds.Count > 0
                 && !source.VisitedLevelIds.Contains(source.LevelId))
             || source.VisitedLevelIds.Distinct().Count() != source.VisitedLevelIds.Count
             || source.Life > expectedResources.LifeQ6

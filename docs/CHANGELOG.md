@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   generic host, Diablo mapper, Godot model, and native compatibility boundary;
   native presentation now decodes runtime IDs to `_setlevels`, while visited
   flags remain limited to ordinary native levels.
+- Keep the same regular-only visited-level invariant in the Diablo player state
+  and snapshot capture/restore paths, so set-level runtime identities survive
+  persistence without being mis-recorded as `_pLvlVisited` entries.
 - Clarify that geometry-backed visibility activation is shipped, while broader
   activation timing, interpolation, rally behavior, and soak coverage remain
   follow-up work.

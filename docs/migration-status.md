@@ -117,6 +117,9 @@ ability-kind, and ability-targeting enum values before wire serialization.
 The native player application boundary now decodes reserved runtime set-level
 IDs to `_setlevels` before applying them, while still rejecting unsupported
 identities before narrowing ordinary IDs into the legacy 8-bit field.
+The Diablo simulation state and snapshot codec now apply the same rule during
+capture and restore, preserving set-level runtime identities without placing
+them in the regular `_pLvlVisited` collection.
 Active world-mutation metadata now has the same 4,096-entry bound at the host,
 Godot, and native session-metadata boundaries.
 Godot projectile presentation now snaps on authoritative level, phase, or
@@ -927,8 +930,9 @@ contradictory dead/alive state cannot cross either client boundary.
 Godot monster vitality validation now also compares effective current and
 maximum Q6 hit points after the same fallback, rejecting legacy snapshots that
 would be refused by native projection.
-Godot visited-level validation now rejects IDs outside the native 25-level
-range, matching native projection before `_pLvlVisited` hydration.
+Godot visited-level validation now rejects IDs outside the ordinary native
+25-level `_pLvlVisited` range while accepting the reserved runtime set-level
+identities used for the current player level, matching native projection.
 Godot session metadata validation now rejects unknown difficulties and zero or
 duplicate active world-mutation identities, matching native projection.
 Godot now accepts the same omitted stationary monster destination used by the
