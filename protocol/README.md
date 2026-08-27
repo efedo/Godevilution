@@ -386,6 +386,11 @@ Windows toolchain command.
   presentation-only metadata instead of inferring a sprite from gameplay
   behavior; zero retains the legacy behavior fallback and unknown nonzero
   values fail closed.
+  `ProjectileSnapshot.native_missile_id` field 57 carries the validated
+  content-owned native missile identity when a presentation client needs the
+  source row rather than only its compatibility visual. Empty retains the
+  legacy enum/behavior fallback, and the field is only valid for native
+  monster-magic projectiles. Older peers ignore this additive field.
   Blood Star uses behavior value `20` for its fixed native magic projectile;
   Bone Spirit uses behavior value `21` for its native homing projectile and
   seven-tick impact phase. Both remain server-owned, including resistance,

@@ -809,6 +809,10 @@ gameplay state. Lightning Wall's shared `FireWallSegment` behavior uses the
 explicit `LIGHTNING_WALL` identity and the Lightning presentation family when
 its damage channel is Lightning; ordinary Fire Wall and Ring of Fire segments
 continue to use the Fire Wall identity.
+`ProjectileSnapshot.native_missile_id` field 57 carries the validated
+content-owned native missile identity for native monster-magic projectiles.
+An empty value preserves the enum/behavior compatibility fallback, and older
+peers ignore this additive field.
 `ItemStateSnapshot.presentation_kind` is additive server-owned metadata for
 world-item presentation. `Gold` and `Ear` identify the shipped currency and
 dynamic PvP-ear families; zero or unknown values retain generic item rendering,

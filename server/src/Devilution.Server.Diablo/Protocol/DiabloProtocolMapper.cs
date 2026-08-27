@@ -382,6 +382,7 @@ internal static class DiabloProtocolMapper
                     projectile.Behavior,
                     projectile.DamageType,
                     projectile.NativeMissileId),
+                NativeMissileId = projectile.NativeMissileId ?? string.Empty,
                 PresentationKind = ResolveProjectilePresentationKind(
                     projectile.Behavior,
                     projectile.Phase,
@@ -1744,7 +1745,9 @@ internal static class DiabloProtocolMapper
                 projectile.RemainingTicks) {
                 Behavior = (AuthoritativeProjectileBehavior)projectile.Behavior,
                 NativeMissileId = (AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.MonsterMagic
-                    ? ResolveNativeMonsterMissileId(projectile.NativeVisual)
+                    ? string.IsNullOrEmpty(projectile.NativeMissileId)
+                        ? ResolveNativeMonsterMissileId(projectile.NativeVisual)
+                        : projectile.NativeMissileId
                     : null,
                 Phase = (AuthoritativeProjectilePhase)projectile.Phase,
                 StartX = projectile.StartX,

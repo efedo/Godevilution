@@ -1290,10 +1290,24 @@ public sealed class AuthoritativeClientModel
             || projectile.Behavior is < 0 or > MaximumProjectileBehavior
             || projectile.Phase is < 0 or > MaximumProjectilePhase
             || !Enum.IsDefined(projectile.PresentationKind)
-            || !Enum.IsDefined(projectile.NativeVisual)) {
+            || !Enum.IsDefined(projectile.NativeVisual)
+            || !IsValidNativeMissileIdentity(projectile)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid projectile state.");
         }
+    }
+
+    private static bool IsValidNativeMissileIdentity(ProjectileSnapshot projectile)
+    {
+        if (string.IsNullOrEmpty(projectile.NativeMissileId))
+            return true;
+        if (projectile.Behavior != 50
+            || !char.IsLetter(projectile.NativeMissileId[0])
+                && projectile.NativeMissileId[0] != '_') {
+            return false;
+        }
+        return projectile.NativeMissileId.Skip(1).All(character =>
+            char.IsLetterOrDigit(character) || character is '_' or '-');
     }
 
     private static bool HasValidItemIdentity(

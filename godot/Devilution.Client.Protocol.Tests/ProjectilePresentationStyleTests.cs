@@ -110,6 +110,21 @@ public sealed class ProjectilePresentationStyleTests
     }
 
     [Fact]
+    public void PrefersContentOwnedNativeMissileIdentity()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 50,
+            PresentationKind = ProtocolProjectilePresentationKind.MonsterMagic,
+            NativeVisual = NativeProjectileVisual.MonsterOrangeFlare,
+            NativeMissileId = "BlueFlare2",
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.MonsterBlueFlare2,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
     public void ResolvesServerOwnedHorkSpawnPresentationMetadata()
     {
         var projectile = new ProjectileSnapshot {

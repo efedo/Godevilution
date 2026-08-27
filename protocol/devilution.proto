@@ -1027,6 +1027,8 @@ message ProjectileSnapshot {
 	optional int32 damage_maximum = 55;
 	// Native compatibility visual identity; zero preserves behavior-based fallback.
 	NativeProjectileVisual native_visual = 56;
+	// Content-owned native missile identity; empty preserves compatibility fallback.
+	string native_missile_id = 57;
 }
 
 enum ProjectilePresentationKind {

@@ -82,6 +82,8 @@ public static class ProjectilePresentationStyle
 
     public static ProjectilePresentationKind Resolve(ProjectileSnapshot projectile)
     {
+        if (ResolveNativeMissile(projectile.NativeMissileId) is { } nativeMissile)
+            return nativeMissile;
         if (ResolveNativeVisual(projectile.NativeVisual) is { } nativeVisual)
             return nativeVisual;
 
@@ -137,6 +139,19 @@ public static class ProjectilePresentationStyle
             NativeProjectileVisual.MonsterYellowFlare => ProjectilePresentationKind.MonsterYellowFlare,
             NativeProjectileVisual.MonsterBlueFlare2 => ProjectilePresentationKind.MonsterBlueFlare2,
             NativeProjectileVisual.MonsterMagmaBall => ProjectilePresentationKind.MonsterMagmaBall,
+            _ => null,
+        };
+
+    private static ProjectilePresentationKind? ResolveNativeMissile(string missileId)
+        => missileId switch {
+            "Lightning" => ProjectilePresentationKind.MonsterLightning,
+            "OrangeFlare" => ProjectilePresentationKind.MonsterOrangeFlare,
+            "BlueFlare" => ProjectilePresentationKind.MonsterBlueFlare,
+            "RedFlare" => ProjectilePresentationKind.MonsterRedFlare,
+            "YellowFlare" => ProjectilePresentationKind.MonsterYellowFlare,
+            "BlueFlare2" => ProjectilePresentationKind.MonsterBlueFlare2,
+            "MagmaBall" => ProjectilePresentationKind.MonsterMagmaBall,
+            "HorkSpawn" => ProjectilePresentationKind.HorkSpawn,
             _ => null,
         };
 

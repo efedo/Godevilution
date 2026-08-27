@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using Devilution.Diablo;
 using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
@@ -2029,6 +2030,10 @@ public sealed class DialogueProtocolProjectionTests
         var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
         var projectile = Assert.Single(projected.Projectiles);
         Assert.Equal(expectedVisual, projectile.NativeVisual);
+        Assert.Equal(missileId, projectile.NativeMissileId);
+
+        var wireRoundTrip = Snapshot.Parser.ParseFrom(projected.ToByteArray());
+        Assert.Equal(missileId, Assert.Single(wireRoundTrip.Projectiles).NativeMissileId);
 
         var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
         Assert.Equal(missileId, Assert.Single(restored.Projectiles).NativeMissileId);

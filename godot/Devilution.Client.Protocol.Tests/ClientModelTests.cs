@@ -1784,6 +1784,28 @@ public sealed class ClientModelTests
         };
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidCodes)));
+
+        var invalidNativeMissile = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 10,
+                    SourceEntityId = 11,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                    Behavior = 50,
+                    NativeMissileId = "-invalid",
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativeMissile)));
+
+        var misplacedNativeMissile = invalidNativeMissile.Clone();
+        misplacedNativeMissile.Projectiles[0].Behavior = 49;
+        misplacedNativeMissile.Projectiles[0].NativeMissileId = "Lightning";
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: misplacedNativeMissile)));
     }
 
     [Fact]
