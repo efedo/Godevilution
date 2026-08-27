@@ -823,27 +823,7 @@ void WalkInDirection(Monster &monster, Direction endDir)
 	const auto fx = static_cast<WorldTileCoord>(monster.position.tile.x + dir.x);
 	const auto fy = static_cast<WorldTileCoord>(monster.position.tile.y + dir.y);
 
-	MonsterMode mode;
-	switch (endDir) {
-	case Direction::NorthWest:
-	case Direction::North:
-	case Direction::NorthEast:
-		mode = MonsterMode::MoveNorthwards;
-		break;
-	case Direction::West:
-	case Direction::East:
-		mode = MonsterMode::MoveSideways;
-		break;
-	case Direction::SouthWest:
-	case Direction::South:
-	case Direction::SouthEast:
-		mode = MonsterMode::MoveSouthwards;
-		break;
-	case Direction::NoDirection:
-		DVL_UNREACHABLE();
-		break;
-	}
-	monster.mode = mode;
+	monster.mode = GetMonsterMovementMode(endDir);
 	monster.position.old = monster.position.tile;
 	monster.position.future = { fx, fy };
 	monster.occupyTile(monster.position.future, true);
@@ -3732,6 +3712,27 @@ bool IsMonsterModeMove(MonsterMode mode)
 		return true;
 	default:
 		return false;
+	}
+}
+
+MonsterMode GetMonsterMovementMode(Direction direction)
+{
+	switch (direction) {
+	case Direction::NorthWest:
+	case Direction::North:
+	case Direction::NorthEast:
+		return MonsterMode::MoveNorthwards;
+	case Direction::West:
+	case Direction::East:
+		return MonsterMode::MoveSideways;
+	case Direction::SouthWest:
+	case Direction::South:
+	case Direction::SouthEast:
+		return MonsterMode::MoveSouthwards;
+	case Direction::NoDirection:
+		return MonsterMode::Stand;
+	default:
+		return MonsterMode::Stand;
 	}
 }
 

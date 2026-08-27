@@ -132,6 +132,10 @@ enum class MonsterMode : uint8_t {
 
 bool IsMonsterModeMove(MonsterMode mode);
 
+// Maps an eight-way movement direction to the native renderer's movement mode.
+// NoDirection is only a presentation fallback and maps to Stand.
+[[nodiscard]] MonsterMode GetMonsterMovementMode(Direction direction);
+
 enum class MonsterGoal : uint8_t {
 	None,
 	Normal,

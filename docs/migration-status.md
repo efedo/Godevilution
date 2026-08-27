@@ -21,9 +21,12 @@ additive leader identity/relation, pack-size, and active-tick fields. The
 server projects and hashes these fields, while Godot and the native
 compatibility client validate and retain the state for presentation. Default
 values preserve legacy snapshot hashes. Godot monster presentation now moves
-toward the server's authoritative future tile while native last-position
-interpolation remains follow-up work. The native compatibility validator now
-accepts authored unique leaders in the same pack relationship contract.
+toward the server's authoritative future tile. Native authoritative monster
+presentation now maps server-declared movement directions to the native
+movement modes and walk animation consumed by the renderer, while stationary
+snapshots clear stale movement modes; native last-position interpolation
+remains follow-up work. The native compatibility validator now accepts
+authored unique leaders in the same pack relationship contract.
 Godot also snaps monster presentation on level changes or large authoritative
 relocations, preventing stale interpolation from carrying entities across
 discontinuous server state.

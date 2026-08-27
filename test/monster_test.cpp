@@ -17,6 +17,20 @@ TEST(MonsterTest, IsMonsterModeMove)
 	EXPECT_FALSE(IsMonsterModeMove(MonsterMode::Petrified));
 }
 
+TEST(MonsterTest, GetMonsterMovementModeMatchesDirection)
+{
+	EXPECT_EQ(GetMonsterMovementMode(Direction::NorthWest), MonsterMode::MoveNorthwards);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::North), MonsterMode::MoveNorthwards);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::NorthEast), MonsterMode::MoveNorthwards);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::West), MonsterMode::MoveSideways);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::East), MonsterMode::MoveSideways);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::SouthWest), MonsterMode::MoveSouthwards);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::South), MonsterMode::MoveSouthwards);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::SouthEast), MonsterMode::MoveSouthwards);
+	EXPECT_EQ(GetMonsterMovementMode(Direction::NoDirection), MonsterMode::Stand);
+	EXPECT_EQ(GetMonsterMovementMode(static_cast<Direction>(255)), MonsterMode::Stand);
+}
+
 TEST(MonsterTest, IsSkel)
 {
 	EXPECT_TRUE(IsSkel(MT_WSKELAX));

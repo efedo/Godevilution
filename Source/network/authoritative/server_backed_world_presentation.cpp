@@ -604,12 +604,30 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	const Point futurePosition { snapshot.futurePositionX, snapshot.futurePositionY };
 	const Point oldPosition { monster.position.tile.x, monster.position.tile.y };
 	const Point oldFuturePosition { monster.position.future.x, monster.position.future.y };
+	const Direction previousDirection = monster.direction;
+	const Direction authoritativeDirection = static_cast<Direction>(snapshot.direction);
 	ClearMonsterTile(static_cast<unsigned>(monster.getId()), oldPosition);
 	if (oldFuturePosition != oldPosition)
 		ClearMonsterTile(static_cast<unsigned>(monster.getId()), oldFuturePosition);
-	monster.direction = static_cast<Direction>(snapshot.direction);
+	monster.direction = authoritativeDirection;
 	if (!snapshot.petrified && monster.mode == MonsterMode::Petrified)
 		monster.startStand(monster.direction);
+	if (snapshot.moving && !snapshot.petrified) {
+		const MonsterMode movementMode = GetMonsterMovementMode(authoritativeDirection);
+		if (monster.mode != movementMode || previousDirection != authoritativeDirection) {
+			monster.mode = movementMode;
+			// Keep the animation phase intact for consecutive snapshots that
+			// describe the same movement; changing only the sprite direction is
+			// sufficient when the authoritative direction changes.
+			monster.changeAnimationData(MonsterGraphic::Walk, authoritativeDirection);
+		}
+	} else if (!snapshot.moving && !snapshot.petrified && IsMonsterModeMove(monster.mode)) {
+		monster.mode = MonsterMode::Stand;
+		const MonsterGraphic standingGraphic = monster.type().type == MT_GOLEM
+		    ? MonsterGraphic::Walk
+		    : MonsterGraphic::Stand;
+		monster.changeAnimationData(standingGraphic, authoritativeDirection);
+	}
 	monster.position.old = position;
 	monster.position.last = position;
 	monster.position.future = futurePosition;

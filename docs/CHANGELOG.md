@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Map authoritative monster movement directions to the native renderer's
+  movement modes and walk animation, clear stale movement modes when snapshots
+  become stationary, and share the direction classification with native walks.
 - Use authoritative monster future positions for Godot presentation
   interpolation while retaining the occupied-tile fallback for stationary or
   legacy snapshots.
