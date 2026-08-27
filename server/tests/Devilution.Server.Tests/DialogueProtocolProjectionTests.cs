@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using Devilution.Diablo;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
 using Devilution.Server.Snapshots;
@@ -695,6 +696,39 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected([1, 1]);
         AssertRejected([2]);
         AssertRejected(Enumerable.Range(0, 257).Select(value => (uint)value).ToArray());
+    }
+
+    [Fact]
+    public void ProjectsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = AuthoritativeLevelIdRules.RuntimeSetLevelIdBase + 1,
+            VisitedLevelIds = [],
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        Assert.Equal(AuthoritativeLevelIdRules.RuntimeSetLevelIdBase + 1, snapshot.Players.Single().LevelId);
     }
 
     [Fact]

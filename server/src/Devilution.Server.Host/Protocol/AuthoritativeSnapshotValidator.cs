@@ -8,7 +8,6 @@ namespace Devilution.Server.Protocol;
 public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
-    private const uint NativeLevelCount = 25;
     private const int MaximumWorldMutationCount = 4096;
 
     public static void Validate(Snapshot snapshot)
@@ -39,11 +38,12 @@ public static class AuthoritativeSnapshotValidator
     private static void ValidatePlayerNativeRanges(Snapshot snapshot)
     {
         foreach (var player in snapshot.Players) {
-            if (player.LevelId >= NativeLevelCount
+            if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
                 || player.VisitedLevelIds.Count > 256
-                || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
+                || player.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
                 || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count
                 || player.VisitedLevelIds.Count > 0
+                    && AuthoritativeLevelIdRules.IsRegularLevel(player.LevelId)
                     && !player.VisitedLevelIds.Contains(player.LevelId)
                 || !Enum.IsDefined(player.FacingDirection)
                 || !Enum.IsDefined(player.CombatMode)

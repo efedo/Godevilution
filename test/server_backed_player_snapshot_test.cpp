@@ -14,6 +14,7 @@
 #include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
+#include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
 #include "network/authoritative/server_backed_world_presentation.hpp"
@@ -240,6 +241,18 @@ TEST(ServerBackedPlayerSnapshot, RejectsPlayerLevelOutsideNativeRange)
 	player->set_level_id(NUMLEVELS);
 
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, ProjectsMaterializedSetLevelIdentity)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_level_id(AuthoritativeRuntimeSetLevelIdBase + 1);
+
+	auto projected = ProjectPlayerSnapshot(snapshot, 7);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	EXPECT_EQ(projected->levelId, AuthoritativeRuntimeSetLevelIdBase + 1);
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidCharacterNameShape)
@@ -3625,6 +3638,18 @@ TEST(ServerBackedPlayerSnapshot, AppliesDeathAndLevelTransitionActions)
 	transition.currentAction.reset();
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(transitioningPlayer, transition).has_value());
 	EXPECT_FALSE(transitioningPlayer._pLvlChanging);
+}
+
+TEST(ServerBackedPlayerSnapshot, AppliesMaterializedSetLevelIdentityToNativePlayer)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.levelId = AuthoritativeRuntimeSetLevelIdBase + 1;
+	snapshot.characterLevel = 1;
+
+	Player player;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_TRUE(player.isOnLevel(SL_SKELKING));
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedSnapshotWithoutMutation)

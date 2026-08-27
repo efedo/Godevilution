@@ -239,6 +239,15 @@ entity ID, so receiver-relative player ordering cannot change the hash. The
 snapshot remains a per-session projection: receiver-scoped fields such as the
 singular active-store view may legitimately produce a different overall hash.
 
+`PlayerSnapshot.level_id` accepts the 25 ordinary native level IDs and the
+reserved runtime identities for materialized set-level map variants. The
+`visited_level_ids` projection remains the native `_pLvlVisited` state and may
+therefore contain only ordinary level IDs; a player on a set-level variant does
+not need its runtime identity repeated in that list. Native compatibility
+clients decode the runtime identity to the corresponding `_setlevels` value,
+while older peers that do not implement this additive boundary must not be
+used for set-level sessions.
+
 `EventBatch` contains presentation-friendly deltas such as damage, healing,
 experience, and validated quest dialogue. `DialogueEvent` carries the source
 player, unique encounter entity, quest identity, and content-owned message ID.

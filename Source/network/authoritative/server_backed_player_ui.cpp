@@ -11,6 +11,7 @@
 #include "engine/cursor.h"
 #include "engine/lighting.h"
 #include "game/spells/spells.hpp"
+#include "network/authoritative/authoritative_level_id.hpp"
 #include "qol/stash.h"
 #include "ui/automap.h"
 #include "utils/string/utf8.hpp"
@@ -32,8 +33,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 {
 	if (snapshot.entityId == 0)
 		return tl::make_unexpected("Server-backed player snapshot has an invalid entity ID.");
-	if (snapshot.levelId >= NUMLEVELS)
-		return tl::make_unexpected("Server-backed player level is outside the native range.");
+	if (!IsAuthoritativeSupportedLevel(snapshot.levelId))
+		return tl::make_unexpected("Server-backed player level identity is unsupported.");
 	if (snapshot.positionX < 0 || snapshot.positionX > UINT8_MAX || snapshot.positionY < 0 || snapshot.positionY > UINT8_MAX)
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
 	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX) || snapshot.statPoints > static_cast<uint32_t>(INT_MAX) || snapshot.reflectCharges > UINT16_MAX)
@@ -117,10 +118,10 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player ability contains an invalid targeting kind.");
 	std::set<uint32_t> visitedLevelIds;
 	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds) {
-		if (visitedLevelId >= NUMLEVELS || !visitedLevelIds.insert(visitedLevelId).second)
-			return tl::make_unexpected("Server-backed visited levels contain an invalid or duplicate native level.");
+		if (!IsAuthoritativeRegularLevel(visitedLevelId) || !visitedLevelIds.insert(visitedLevelId).second)
+			return tl::make_unexpected("Server-backed visited levels contain an invalid or duplicate regular level.");
 	}
-	if (!snapshot.visitedLevelIds.empty()
+	if (IsAuthoritativeRegularLevel(snapshot.levelId) && !snapshot.visitedLevelIds.empty()
 	    && std::find(snapshot.visitedLevelIds.begin(), snapshot.visitedLevelIds.end(), snapshot.levelId)
 	        == snapshot.visitedLevelIds.end()) {
 		return tl::make_unexpected("Server-backed visited levels omit the player's current native level.");
@@ -274,7 +275,10 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.position.last = player.position.tile;
 	player.position.old = player.position.tile;
 	player.position.temp = player.position.tile;
-	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
+	if (const auto setLevel = AuthoritativeNativeSetLevel(snapshot.levelId); setLevel.has_value())
+		player.setLevel(*setLevel);
+	else
+		player.setLevel(static_cast<uint8_t>(snapshot.levelId));
 	if (snapshot.lightRadius != 0) {
 		if (player._pLightRad != snapshot.lightRadius && player.isOnActiveLevel()) {
 			CurrentLightManager.ChangeLightRadius(player.lightId, snapshot.lightRadius);

@@ -18,6 +18,7 @@
 #include "engine/render/world_renderer.h"
 #include "devilution.pb.h"
 #include "game/spells/spells.hpp"
+#include "network/authoritative/authoritative_level_id.hpp"
 #include "tables/objdat.h"
 
 namespace devilution::authoritative {
@@ -343,7 +344,10 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.position.last = player.position.tile;
 	player.position.old = player.position.tile;
 	player.position.temp = player.position.tile;
-	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
+	if (const auto setLevel = AuthoritativeNativeSetLevel(snapshot.levelId); setLevel.has_value())
+		player.setLevel(*setLevel);
+	else
+		player.setLevel(static_cast<uint8_t>(snapshot.levelId));
 	player.direction = GetRemotePlayerDirection(snapshot);
 	player._pBlockFlag = snapshot.combatMode == static_cast<uint32_t>(PM_BLOCK);
 	player._pmode = snapshot.life <= 0 || snapshot.combatMode == PM_DEATH

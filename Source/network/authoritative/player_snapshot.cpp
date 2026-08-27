@@ -14,6 +14,7 @@
 #include "game/levels/dungeon_common_defs.hpp"
 #include "game/players/players.hpp"
 #include "game/quests/quests.hpp"
+#include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "qol/floatingnumbers.h"
 #include "tables/objdat.h"
@@ -127,8 +128,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	if (player == nullptr)
 		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
-	if (player->level_id() >= NUMLEVELS)
-		return tl::make_unexpected("Server-backed snapshot contains a player level outside the native range.");
+	if (!IsAuthoritativeSupportedLevel(player->level_id()))
+		return tl::make_unexpected("Server-backed snapshot contains an unsupported player level identity.");
 	if (!IsValidCharacterName(player->character_name()))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid character name.");
 	if (player->visited_level_ids_size() > 256) {
@@ -136,12 +137,12 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	std::unordered_set<uint32_t> visitedLevelIds;
 	for (const auto levelId : player->visited_level_ids()) {
-		if (levelId >= NUMLEVELS)
-			return tl::make_unexpected("Server-backed snapshot contains a visited level outside the native range.");
+		if (!IsAuthoritativeRegularLevel(levelId))
+			return tl::make_unexpected("Server-backed snapshot contains a visited level outside the regular native range.");
 		if (!visitedLevelIds.insert(levelId).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate visited levels.");
 	}
-	if (player->visited_level_ids_size() > 0
+	if (IsAuthoritativeRegularLevel(player->level_id()) && player->visited_level_ids_size() > 0
 	    && std::find(player->visited_level_ids().begin(), player->visited_level_ids().end(), player->level_id())
 	        == player->visited_level_ids().end()) {
 		return tl::make_unexpected("Server-backed snapshot omits the player's current visited level.");

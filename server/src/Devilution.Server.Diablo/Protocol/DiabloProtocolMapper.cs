@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Domain.Protocol;
 using Devilution.Server.Snapshots;
@@ -1404,9 +1405,11 @@ internal static class DiabloProtocolMapper
     private static void ValidateProjectedVisitedLevels(StorePlayerSnapshot state)
     {
         if (state.VisitedLevelIds is null
-            || state.LevelId >= 25
+            || !AuthoritativeLevelIdRules.IsSupported(state.LevelId)
             || state.VisitedLevelIds.Count > 256
+            || state.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
             || state.VisitedLevelIds.Count > 0
+                && AuthoritativeLevelIdRules.IsRegularLevel(state.LevelId)
                 && !state.VisitedLevelIds.Contains(state.LevelId)
             || state.VisitedLevelIds.Distinct().Count() != state.VisitedLevelIds.Count) {
             throw new InvalidDataException(

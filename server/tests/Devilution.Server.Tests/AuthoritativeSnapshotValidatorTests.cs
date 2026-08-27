@@ -1,4 +1,5 @@
 using Devilution.Protocol.V1;
+using Devilution.Protocol;
 using Devilution.Server.Protocol;
 using Xunit;
 
@@ -210,6 +211,36 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         });
+    }
+
+    [Fact]
+    public void AcceptsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    LevelId = AuthoritativeLevelIdRules.RuntimeSetLevelIdBase + 1,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMaterializedSetLevelIdentityInRegularVisitedFlags()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 1,
+                        LevelId = 4,
+                        VisitedLevelIds = {
+                            AuthoritativeLevelIdRules.RuntimeSetLevelIdBase,
+                        },
+                    },
+                },
+            }));
     }
 
     [Fact]

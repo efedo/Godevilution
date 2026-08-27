@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Share regular and materialized set-level runtime-ID rules across the protocol,
+  generic host, Diablo mapper, Godot model, and native compatibility boundary;
+  native presentation now decodes runtime IDs to `_setlevels`, while visited
+  flags remain limited to ordinary native levels.
 - Clarify that geometry-backed visibility activation is shipped, while broader
   activation timing, interpolation, rally behavior, and soak coverage remain
   follow-up work.

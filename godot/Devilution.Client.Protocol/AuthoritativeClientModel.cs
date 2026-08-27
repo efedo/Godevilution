@@ -10,7 +10,6 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumHeight = 112;
     private const int NativeMaximumMegaWidth = 40;
     private const int NativeMaximumMegaHeight = 40;
-    private const uint NativeLevelCount = 25;
     // Object snapshots carry converted _object_id values; geometry carries raw
     // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = 108;
@@ -1110,10 +1109,11 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateVisitedLevels(PlayerSnapshot player)
     {
-        if (player.LevelId >= NativeLevelCount
+        if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
             || player.VisitedLevelIds.Count > 256
-            || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
+            || player.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
             || (player.VisitedLevelIds.Count > 0
+                && AuthoritativeLevelIdRules.IsRegularLevel(player.LevelId)
                 && !player.VisitedLevelIds.Contains(player.LevelId))
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
             throw new InvalidDataException(

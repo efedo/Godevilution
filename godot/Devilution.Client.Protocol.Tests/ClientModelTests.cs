@@ -1,4 +1,5 @@
 using Devilution.Client.Protocol;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Xunit;
 using ProtocolItemPresentationKind = Devilution.Protocol.V1.ItemPresentationKind;
@@ -758,6 +759,24 @@ public sealed class ClientModelTests
                     },
                 },
             })));
+    }
+
+    [Fact]
+    public void AcceptsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = AuthoritativeLevelIdRules.RuntimeSetLevelIdBase + 1,
+                },
+            },
+        }));
+
+        Assert.Equal(
+            AuthoritativeLevelIdRules.RuntimeSetLevelIdBase + 1,
+            model.Snapshot!.Players[0].LevelId);
     }
 
     [Fact]

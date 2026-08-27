@@ -106,13 +106,17 @@ status/reason mismatches.
 The Godot handshake now also rejects unspecified or unknown server game modes,
 so the client cannot enter a connected session without a valid single-player
 or multiplayer execution mode.
-Current player level IDs are now validated against the native 25-level range
-at the Diablo mapper, generic host, Godot model, and native projection
-boundaries, including snapshots that omit visited-level entries.
+Current player level IDs now share one protocol rule: the native 25 regular
+levels plus the reserved runtime IDs for materialized set-level variants are
+accepted by the Diablo mapper, generic host, Godot model, and native
+projection boundaries. Regular `_pLvlVisited` entries remain limited to the
+25 ordinary levels, and set-level runtime IDs are decoded to the native
+`_setlevels` enum before compatibility presentation.
 The generic host also rejects undefined player direction, combat-mode,
 ability-kind, and ability-targeting enum values before wire serialization.
-The native player application boundary now repeats the regular-level range
-check before narrowing an authoritative level ID into the legacy 8-bit field.
+The native player application boundary now decodes reserved runtime set-level
+IDs to `_setlevels` before applying them, while still rejecting unsupported
+identities before narrowing ordinary IDs into the legacy 8-bit field.
 Active world-mutation metadata now has the same 4,096-entry bound at the host,
 Godot, and native session-metadata boundaries.
 Godot projectile presentation now snaps on authoritative level, phase, or
