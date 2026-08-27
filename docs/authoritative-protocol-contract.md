@@ -371,7 +371,8 @@ window through version-1 saves. The timing is derived presentation metadata
 and is deliberately excluded from canonical gameplay hashing. Godot uses the
 window only to interpolate presentation; native occupancy and all targeting
 decisions remain discrete and server-owned. Both zero values preserve
-compatibility with older snapshots.
+compatibility with older snapshots. Every current wire boundary rejects timing
+on a stationary monster or a non-increasing nonzero window.
 
 `MonsterSnapshot.stone_curse_immune` field 22 carries an immutable external-
 content capability needed by future authoritative casts and version-1 save

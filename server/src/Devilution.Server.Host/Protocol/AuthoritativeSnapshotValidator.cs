@@ -14,6 +14,7 @@ public static class AuthoritativeSnapshotValidator
         ArgumentNullException.ThrowIfNull(snapshot);
         ValidateSessionMetadata(snapshot);
         ValidatePlayerNames(snapshot);
+        ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
@@ -74,6 +75,21 @@ public static class AuthoritativeSnapshotValidator
             ValidateEntityId(projectile.EntityId, entityIds);
         foreach (var corpse in snapshot.Corpses)
             ValidateEntityId(corpse.EntityId, entityIds);
+    }
+
+    private static void ValidateMonsterMovementTiming(Snapshot snapshot)
+    {
+        foreach (var monster in snapshot.Monsters) {
+            if ((!monster.Moving
+                    && (monster.MovementStartedTick != 0
+                        || monster.MovementEffectTick != 0))
+                || (monster.MovementStartedTick != 0
+                    || monster.MovementEffectTick != 0)
+                    && monster.MovementEffectTick <= monster.MovementStartedTick) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid monster movement timing.");
+            }
+        }
     }
 
     private static void ValidateEntityId(uint entityId, HashSet<uint> entityIds)

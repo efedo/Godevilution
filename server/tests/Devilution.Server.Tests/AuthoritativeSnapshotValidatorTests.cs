@@ -135,4 +135,40 @@ public sealed class AuthoritativeSnapshotValidatorTests
                     Players = { new PlayerSnapshot { EntityId = 1, CharacterName = name } },
                 }));
     }
+
+    [Fact]
+    public void AcceptsMovementTimingOnlyForAnActiveMovingMonster()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    Moving = true,
+                    MovementStartedTick = 12,
+                    MovementEffectTick = 13,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsInvalidMonsterMovementTiming()
+    {
+        foreach (var monster in new[] {
+            new MonsterSnapshot {
+                EntityId = 1,
+                Moving = true,
+                MovementStartedTick = 12,
+                MovementEffectTick = 11,
+            },
+            new MonsterSnapshot {
+                EntityId = 1,
+                MovementEffectTick = 13,
+            },
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                    Monsters = { monster },
+                }));
+    }
 }

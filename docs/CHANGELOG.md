@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Validate authoritative monster movement timing at the generic host boundary,
+  matching the Godot, Diablo adapter, and native compatibility checks.
 - Carry authoritative monster movement start/effect ticks through snapshots,
   saves, the shared protocol, Godot interpolation, and native compatibility
   projection while retaining zero-valued legacy snapshot compatibility.
