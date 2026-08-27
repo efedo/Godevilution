@@ -245,11 +245,12 @@ player, unique encounter entity, quest identity, and content-owned message ID.
 Optional field 5 carries server-owned text for the active content locale; an
 empty value preserves ID-only compatibility for older packs and peers. It does
 not carry mutable quest state. Events are not a second source of truth. A
-reconnect or dropped event cannot invalidate the next snapshot. Godot accepts
-at most 4096 events in one batch and rejects unknown event kinds, negative
-damage/healing amounts, negative dialogue message IDs, or dialogue text
-containing NUL characters; zero entity IDs remain tolerated for compatibility
-with events that do not target the local presentation.
+reconnect or dropped event cannot invalidate the next snapshot. The generic
+host, Godot client, and native compatibility client each accept at most 4096
+events in one batch and reject unknown event kinds, negative damage/healing
+amounts, negative dialogue message IDs, or dialogue text containing NUL
+characters; zero entity IDs remain tolerated for compatibility with events that
+do not target the local presentation.
 
 `QuestSnapshot` fields 9-13 preserve native quest variables and completion
 identities. Optional proto3 field 14, `turn_in_towner_id`, carries the validated

@@ -485,6 +485,10 @@ void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &
 [[nodiscard]] tl::expected<void, std::string> ValidateProjectileSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
+/** Validates server-authored combat and experience events before native application. */
+[[nodiscard]] tl::expected<void, std::string> ValidateServerBackedEventBatch(
+    const ::devilution::protocol::v1::EventBatch &eventBatch);
+
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */
 void ApplyServerBackedEventBatch(
     Player &player,

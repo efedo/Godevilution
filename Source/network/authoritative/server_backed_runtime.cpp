@@ -1064,6 +1064,8 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	for (const auto &eventBatch : session_->TakePendingEventBatches()) {
 		if (eventBatch.tick() < snapshot->serverTick)
 			continue;
+		if (auto result = ValidateServerBackedEventBatch(eventBatch); !result.has_value())
+			return result;
 		ApplyServerBackedEventBatch(*player_, eventBatch, session_->EntityId());
 	}
 	if (auto result = ApplyServerBackedPlayerSnapshot(*player_, *snapshot); !result.has_value())

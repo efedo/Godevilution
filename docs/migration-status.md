@@ -13,8 +13,9 @@ larger than 4096 entries while retaining zero-ID compatibility for untargeted
 events.
 
 The generic TCP host applies the same event-batch validation to adapter output
-before writing it to the shared protocol, keeping malformed module events from
-crossing the server boundary.
+before writing it to the shared protocol, and the native compatibility client
+applies the same checks before event-driven resource/presentation updates;
+malformed module or wire events therefore fail closed at every current boundary.
 
 Authoritative save and world-seed writes now use unique temporary files with
 `WriteThrough` and an explicit disk flush before atomic replacement. Failed

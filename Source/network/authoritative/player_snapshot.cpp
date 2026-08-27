@@ -1307,6 +1307,36 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 	return {};
 }
 
+tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::EventBatch &eventBatch)
+{
+	if (eventBatch.events_size() > 4096)
+		return tl::make_unexpected("Server-backed event batch is too large.");
+	for (const auto &event : eventBatch.events()) {
+		if (event.has_damage()) {
+			if (event.damage().amount() < 0 || event.damage().amount_q6() < 0)
+				return tl::make_unexpected("Server-backed event batch contains invalid damage.");
+			continue;
+		}
+		if (event.has_experience())
+			continue;
+		if (event.has_healing()) {
+			if (event.healing().amount() < 0 || event.healing().amount_q6() < 0)
+				return tl::make_unexpected("Server-backed event batch contains invalid healing.");
+			continue;
+		}
+		if (event.has_dialogue()) {
+			if (event.dialogue().message_id() < 0
+			    || event.dialogue().text().find('\0') != std::string::npos)
+				return tl::make_unexpected("Server-backed event batch contains invalid dialogue.");
+			continue;
+		}
+		if (event.has_victory())
+			continue;
+		return tl::make_unexpected("Server-backed event batch contains an unknown event kind.");
+	}
+	return {};
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {

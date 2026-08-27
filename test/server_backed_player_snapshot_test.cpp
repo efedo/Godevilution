@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <limits>
 #include <string>
 
@@ -405,6 +406,30 @@ TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedbac
 	ApplyServerBackedEventBatch(player, events, 7);
 
 	EXPECT_EQ(player.life.current, 100);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
+{
+	const std::array<void (*)(protocol::EventBatch *), 7> configure = {
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount(-1); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount_q6(-1); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount(-1); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount_q6(-1); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_message_id(-1); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_text(std::string("bad\0text", 8)); },
+		[](protocol::EventBatch *batch) { batch->add_events(); },
+	};
+	for (const auto &configureEvent : configure) {
+		protocol::EventBatch invalid;
+		configureEvent(&invalid);
+		auto result = ValidateServerBackedEventBatch(invalid);
+		EXPECT_FALSE(result.has_value());
+	}
+
+	protocol::EventBatch oversized;
+	for (int index = 0; index <= 4096; index++)
+		oversized.add_events()->mutable_experience()->set_amount(index);
+	EXPECT_FALSE(ValidateServerBackedEventBatch(oversized).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)

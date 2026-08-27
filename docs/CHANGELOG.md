@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   compatibility with zero-ID untargeted events.
 - Apply the same event-batch validation to generic TCP host output before
   adapter events cross the shared protocol boundary.
+- Apply matching event-batch validation before native compatibility-client
+  event application.
 - Validate non-empty authoritative snapshot hashes at the Godot protocol
   boundary while preserving legacy snapshots that omit the additive hash.
 - Make authoritative save and world-seed writes durable before atomic
