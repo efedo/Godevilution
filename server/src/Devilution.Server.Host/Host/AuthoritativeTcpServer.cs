@@ -434,6 +434,15 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         var events = eventProvider?.DrainEvents(sessionId, entityId, tick);
         return events is null || events.Events.Count == 0
             ? ValueTask.CompletedTask
-            : EnvelopeCodec.WriteAsync(stream, new Envelope { EventBatch = events }, cancellationToken);
+            : WriteEventBatchAsync(stream, events, cancellationToken);
+    }
+
+    private static ValueTask WriteEventBatchAsync(
+        Stream stream,
+        EventBatch events,
+        CancellationToken cancellationToken)
+    {
+        AuthoritativeEventBatchValidator.Validate(events);
+        return EnvelopeCodec.WriteAsync(stream, new Envelope { EventBatch = events }, cancellationToken);
     }
 }

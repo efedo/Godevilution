@@ -12,6 +12,10 @@ damage/healing values, invalid dialogue message/text payloads, and batches
 larger than 4096 entries while retaining zero-ID compatibility for untargeted
 events.
 
+The generic TCP host applies the same event-batch validation to adapter output
+before writing it to the shared protocol, keeping malformed module events from
+crossing the server boundary.
+
 Authoritative save and world-seed writes now use unique temporary files with
 `WriteThrough` and an explicit disk flush before atomic replacement. Failed
 writes clean up their temporary file without changing the previous committed
