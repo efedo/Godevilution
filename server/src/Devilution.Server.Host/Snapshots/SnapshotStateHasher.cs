@@ -72,6 +72,10 @@ public static class SnapshotStateHasher
                 hasher.AppendInt32(player.BaseManaMaximum);
                 hasher.AppendInt32(player.BaseLifeMaximum);
             }
+            if (player.LightRadius != 0 && player.LightRadius != 10) {
+                hasher.AppendString("godevilution-player-light-radius-v1");
+                hasher.AppendInt32(player.LightRadius);
+            }
             hasher.AppendUInt32(player.CharacterLevel);
             hasher.AppendUInt32(player.LevelId);
             var historicalVisitedLevelIds = player.VisitedLevelIds

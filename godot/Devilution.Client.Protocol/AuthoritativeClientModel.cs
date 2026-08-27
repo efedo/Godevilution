@@ -25,6 +25,8 @@ public sealed class AuthoritativeClientModel
     private const int MaximumMemorizedSpellCount = 51;
     private const uint MaximumNativeCharacterLevel = 50;
     private const uint MaximumNativeReflectCharges = ushort.MaxValue;
+    private const int MinimumNativeLightRadius = 2;
+    private const int MaximumNativeLightRadius = 15;
     private const int MaximumProjectileDamageType = 4;
     private const int MaximumProjectileBehavior = 59;
     private const int MaximumProjectilePhase = 1;
@@ -699,6 +701,8 @@ public sealed class AuthoritativeClientModel
             || player.StashGold > int.MaxValue
             || player.StatPoints > int.MaxValue
             || player.ReflectCharges > MaximumNativeReflectCharges
+            || (player.LightRadius != 0
+                && (player.LightRadius is < MinimumNativeLightRadius or > MaximumNativeLightRadius))
             || player.CharacterLevel > MaximumNativeCharacterLevel) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid player resources.");

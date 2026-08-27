@@ -327,6 +327,25 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void SnapshotProjectsNativeEquipmentLightRadius()
+    {
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            startingGold: 0,
+            startingEquipment: [new EquippedStoreItem(
+                4,
+                77,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusLight = 4,
+                })]);
+
+        var player = Assert.Single(executor.CreateSnapshot("player-a", 7, 0).Players);
+
+        Assert.Equal(14, player.LightRadius);
+    }
+
+    [Fact]
     public void ModuleOwnedStoreTransactionsSupportIdentificationRepairRechargeMoveAndSale()
     {
         var itemState = new AuthoritativeItemState(

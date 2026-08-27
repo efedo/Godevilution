@@ -10,11 +10,13 @@ All notable changes to this fork are documented below.
   visibility, including diagonal corner occlusion.
 - Carry derived native vision-blocked cells through authoritative level geometry
   so Godot can reproduce DUN `BlockLight` visibility without native piece metadata.
+- Project native equipment-derived player light radius through the shared player
+  snapshot and use it consistently for server activation and Godot presentation.
 - Preserve native diagonal corner occlusion when geometry-backed monster
-  visibility follows the server's radius-10 line-of-sight boundary.
+  visibility follows the server's equipment-derived light-radius boundary.
 - Extend geometry-backed monster visibility activation with the native default
-  radius-10 line-of-sight boundary, while preserving geometry-free compatibility
-  behavior and documenting the remaining exact-ray/light-radius follow-up.
+  light radius and equipment modifiers, while preserving geometry-free
+  compatibility behavior and documenting the remaining exact-ray follow-up.
 - Add the first server-side visibility activation gate for geometry-backed
   worlds: occluded monsters remain inactive when connected players are present,
   while geometry-free compatibility fixtures retain their legacy behavior.

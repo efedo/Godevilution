@@ -561,6 +561,7 @@ public sealed partial class DiabloSimulation
             Stash = player.Stash.ToArray(),
             StashGold = player.StashGold,
             StashOpen = player.StashOpen,
+            LightRadius = player.LightRadius,
         };
         return ResolveSnapshotItemFootprints(snapshot);
     }

@@ -1219,6 +1219,13 @@ admission before mana or source mutation, but does not reject free class
 abilities or charged/consumable sources; it also disables Mana Shield
 absorption through the shared damage resolver.
 
+`PlayerSnapshot.light_radius` field 41 carries the native-clamped player vision
+radius derived from identified, usable equipped `+light` modifiers. The server
+owns the calculation and clients use it only for presentation and visibility;
+zero preserves compatibility with snapshots written before this field existed.
+Non-default values are included in the canonical state hash under the tagged
+`godevilution-player-light-radius-v1` section.
+
 `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
 carry the unmodified native maxima used by Hellfire equipment conversions. A
 zero value falls back to the effective maximum for snapshots written before

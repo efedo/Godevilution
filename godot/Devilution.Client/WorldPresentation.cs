@@ -49,6 +49,9 @@ public partial class WorldPresentation : Node2D
         var localGeometry = localPlayer is null
             ? null
             : snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
+        var localLightRadius = localPlayer?.LightRadius is >= 2 and <= 15
+            ? localPlayer.LightRadius
+            : 10;
 
         foreach (var player in snapshot.Players) {
             activeEntityIds.Add(player.EntityId);
@@ -75,7 +78,8 @@ public partial class WorldPresentation : Node2D
                          localPlayer.LevelId,
                          localGeometry,
                          localPlayer.PositionX,
-                         localPlayer.PositionY))) {
+                         localPlayer.PositionY,
+                         localLightRadius))) {
             activeEntityIds.Add(monster.EntityId);
             var reset = displayedMonsterSnapshots.TryGetValue(monster.EntityId, out var previous)
                 && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster);
@@ -218,15 +222,33 @@ public partial class WorldPresentation : Node2D
 
         var localPlayer = snapshot.Players[0];
         var currentLevel = localPlayer.LevelId;
+        var localGeometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == currentLevel);
+        var localLightRadius = localPlayer.LightRadius is >= 2 and <= 15
+            ? localPlayer.LightRadius
+            : 10;
         var searchActive = localPlayer.StatusEffects.Any(effect =>
             effect.Behavior == StatusEffectBehavior.Search);
         DrawTargetPreview();
         foreach (var player in snapshot.Players.Where(player => AuthoritativeLevelVisibility.IsVisible(player.LevelId, currentLevel))) {
             var isLocal = player.EntityId == localPlayer.EntityId;
-            DrawPlayer(player, isLocal ? predictedPlayerPosition : null, isLocal, currentLevel);
+            DrawPlayer(
+                player,
+                isLocal ? predictedPlayerPosition : null,
+                isLocal,
+                currentLevel,
+                localGeometry,
+                localPlayer.PositionX,
+                localPlayer.PositionY,
+                localLightRadius);
         }
         foreach (var monster in snapshot.Monsters.Where(monster =>
-                     AuthoritativeMonsterPresentationVisibility.IsVisible(monster, currentLevel)))
+                     AuthoritativeMonsterPresentationVisibility.IsVisible(
+                         monster,
+                         currentLevel,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius)))
             DrawMonster(monster);
         foreach (var item in snapshot.WorldItems.Where(item => AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevel)))
             DrawItem(item, searchActive);
@@ -290,7 +312,15 @@ public partial class WorldPresentation : Node2D
         DrawLine(rectangle.Position + new Vector2(TileSize / 2, 6), rectangle.Position + new Vector2(TileSize / 2, TileSize - 6), color, 2);
     }
 
-    private void DrawPlayer(PlayerSnapshot player, ClientPosition? predicted, bool isLocal, uint currentLevel)
+    private void DrawPlayer(
+        PlayerSnapshot player,
+        ClientPosition? predicted,
+        bool isLocal,
+        uint currentLevel,
+        LevelGeometrySnapshot? localGeometry,
+        int localViewerX,
+        int localViewerY,
+        int localLightRadius)
     {
         var center = predicted is { } position
             ? ToScreen(position.X, position.Y)
@@ -336,11 +366,25 @@ public partial class WorldPresentation : Node2D
             DrawArc(center, 25, 0, Mathf.Tau, 32, new Color("dce3eb", 0.8f), 2);
         if (!isLocal)
             DrawArc(center, 14, 0, Mathf.Tau, 24, color, 2);
-        DrawActionIndicator(player, center, currentLevel);
+        DrawActionIndicator(
+            player,
+            center,
+            currentLevel,
+            localGeometry,
+            localViewerX,
+            localViewerY,
+            localLightRadius);
     }
 
     /** Renders server-owned action timing without advancing or predicting it. */
-    private void DrawActionIndicator(PlayerSnapshot player, Vector2 center, uint currentLevel)
+    private void DrawActionIndicator(
+        PlayerSnapshot player,
+        Vector2 center,
+        uint currentLevel,
+        LevelGeometrySnapshot? localGeometry,
+        int localViewerX,
+        int localViewerY,
+        int localLightRadius)
     {
         var action = player.CurrentAction;
         if (action is null || action.Kind == PlayerActionKind.Unspecified)
@@ -359,7 +403,13 @@ public partial class WorldPresentation : Node2D
             return;
         var targetMonster = snapshot.Monsters.FirstOrDefault(monster =>
             monster.EntityId == action.TargetEntityId
-            && AuthoritativeMonsterPresentationVisibility.IsVisible(monster, currentLevel));
+            && AuthoritativeMonsterPresentationVisibility.IsVisible(
+                monster,
+                currentLevel,
+                localGeometry,
+                localViewerX,
+                localViewerY,
+                localLightRadius));
         var targetPlayer = targetMonster is null
             ? snapshot.Players.FirstOrDefault(candidate =>
                 candidate.EntityId == action.TargetEntityId && candidate.Life > 0)

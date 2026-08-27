@@ -9,6 +9,7 @@
 #include <set>
 
 #include "engine/cursor.h"
+#include "engine/lighting.h"
 #include "game/spells/spells.hpp"
 #include "qol/stash.h"
 #include "ui/automap.h"
@@ -272,6 +273,13 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.position.old = player.position.tile;
 	player.position.temp = player.position.tile;
 	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
+	if (snapshot.lightRadius != 0) {
+		if (player._pLightRad != snapshot.lightRadius && player.isOnActiveLevel()) {
+			CurrentLightManager.ChangeLightRadius(player.lightId, snapshot.lightRadius);
+			CurrentLightManager.ChangeVisionRadius(player.getId(), snapshot.lightRadius);
+		}
+		player._pLightRad = static_cast<int8_t>(snapshot.lightRadius);
+	}
 	player._pGold = static_cast<int>(snapshot.gold);
 	player._pExperience = snapshot.experience;
 	player.pDiabloKillLevel = snapshot.diabloKillLevel;

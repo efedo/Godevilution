@@ -21,13 +21,25 @@ public static class AuthoritativeMonsterPresentationVisibility
         LevelGeometrySnapshot? geometry,
         int viewerX,
         int viewerY)
+        => IsVisible(monster, currentLevelId, geometry, viewerX, viewerY, 10);
+
+    /** Applies the server's geometry-backed vision boundary for one radius. */
+    public static bool IsVisible(
+        MonsterSnapshot monster,
+        uint currentLevelId,
+        LevelGeometrySnapshot? geometry,
+        int viewerX,
+        int viewerY,
+        int viewerLightRadius)
     {
         if (!IsVisible(monster, currentLevelId)
             || geometry is null
             || geometry.NativeTransparency.Count == 0)
             return IsVisible(monster, currentLevelId);
 
-        const int nativeVisionRadius = 10;
+        var nativeVisionRadius = viewerLightRadius is >= 2 and <= 15
+            ? viewerLightRadius
+            : 10;
         var deltaX = monster.PositionX - viewerX;
         var deltaY = monster.PositionY - viewerY;
         if ((long)deltaX * deltaX + (long)deltaY * deltaY

@@ -2608,6 +2608,23 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsInvalidProjectedPlayerLightRadius()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LightRadius = 16,
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void BoundsUnacknowledgedMovementPrediction()
     {
         var model = new AuthoritativeClientModel();

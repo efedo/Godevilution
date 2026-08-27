@@ -580,6 +580,9 @@ message PlayerSnapshot {
 	repeated StashItemSnapshot stash = 38;
 	uint32 stash_gold = 39;
 	bool stash_open = 40;
+	// Native-clamped player vision radius derived from identified equipment.
+	// Zero preserves compatibility with snapshots written before this field.
+	int32 light_radius = 41;
 }
 
 message StashItemSnapshot {

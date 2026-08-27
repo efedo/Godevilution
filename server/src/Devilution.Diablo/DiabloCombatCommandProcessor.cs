@@ -5422,18 +5422,17 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Native ProcessMonsters normally receives a visibility flag from the
-     * player's radius-10 vision pass. Until player light radius is external,
-     * retain that native default for geometry-backed levels and use the
-     * authoritative walkability layer as the vision blocker. */
+     * player's equipment-derived light-radius vision pass. */
     private static bool IsWithinNativeVision(
         AuthoritativeLevel level,
         AuthoritativeCombatTarget target,
         AuthoritativePlayerState player)
     {
-        const int nativeVisionRadius = 10;
         var deltaX = target.PositionX - player.PositionX;
         var deltaY = target.PositionY - player.PositionY;
-        if (deltaX * deltaX + deltaY * deltaY > nativeVisionRadius * nativeVisionRadius)
+        var nativeVisionRadius = player.LightRadius;
+        if ((long)deltaX * deltaX + (long)deltaY * deltaY
+            > (long)nativeVisionRadius * nativeVisionRadius)
             return false;
         return level.HasNativeVisionLineOfSight(
             player.PositionX,

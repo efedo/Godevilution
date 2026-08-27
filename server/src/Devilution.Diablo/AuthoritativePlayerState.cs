@@ -201,6 +201,9 @@ public sealed record StorePlayerSnapshot(
     /** Whether the player has an authoritative stash session open. */
     public bool StashOpen { get; init; }
 
+    /** Native-clamped light radius derived from identified equipment. */
+    public int LightRadius { get; init; }
+
     public int PositionX { get; init; }
     public int PositionY { get; init; }
     public int LifeMaximum { get; init; }
@@ -327,6 +330,9 @@ public sealed class AuthoritativePlayerState(
 
     /** Effective native player armor after equipment and dexterity. */
     public int ArmorClass { get; private set; } = Math.Max(0, armorClass);
+
+    /** Native-clamped light radius derived from identified equipment. */
+    public int LightRadius => AuthoritativeEquipmentLightRules.CalculateLightRadius(Equipment);
 
     public uint CharacterClassId { get; set; } = characterClassId;
 

@@ -60,6 +60,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_mana(32);
 	player->set_mana_maximum(640);
 	player->set_base_mana_maximum(512);
+	player->set_light_radius(14);
 	player->set_gold(125);
 	player->set_experience(99);
 	player->set_character_level(3);
@@ -140,6 +141,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->lifeMaximumBase, 640);
 	EXPECT_EQ(projected->manaMaximum, 640);
 	EXPECT_EQ(projected->manaMaximumBase, 512);
+	EXPECT_EQ(projected->lightRadius, 14);
 	EXPECT_EQ(projected->gold, 125U);
 	EXPECT_EQ(projected->diabloKillLevel, 2U);
 	EXPECT_EQ(projected->reflectCharges, 17U);
@@ -215,6 +217,16 @@ TEST(ServerBackedPlayerSnapshot, ValidatesNonEmptyStateHashShape)
 	EXPECT_TRUE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 	snapshot.set_state_sha256(std::string(64, 'A'));
 	EXPECT_TRUE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidLightRadius)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_light_radius(16);
+
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidCharacterNameShape)

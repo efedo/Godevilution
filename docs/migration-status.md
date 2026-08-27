@@ -175,13 +175,16 @@ Gargoyle.
 Geometry-backed server worlds now apply the first visibility activation gate:
 occluded monsters with no active tick remain inactive while connected players
 are present, using the authoritative walkability layer as a bounded native
-radius-10 line-of-sight approximation when native transparency is supplied.
+light-radius line-of-sight approximation when native transparency is supplied.
 The approximation now also rejects native-style diagonal corner occlusion.
 Native DUN piece metadata marked `BlockLight` now participates in the same
 vision blocker path, rather than relying only on movement collision.
+Player light radius is now derived from identified usable equipment using the
+native baseline and 2–15 clamp, projected through `PlayerSnapshot.light_radius`,
+and consumed by both server activation/targeting and Godot presentation.
 Geometry-free compatibility fixtures and no-player simulation ticks retain
-their legacy behavior; player light-radius data, exact ray-table parity, and
-broader activation timing remain follow-up work.
+their legacy behavior; exact ray-table parity and broader activation timing
+remain follow-up work.
 
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts
@@ -782,8 +785,9 @@ when hydrating cached positions, drawing monsters, and rendering action-target
 indicators; dead or `SneakHidden` monsters cannot leak through a presentation
 path even when they remain present in the complete snapshot.
 When projected native transparency is available, Godot also applies the
-server-aligned radius-10 vision boundary and diagonal corner occlusion to
-monster drawing; geometry-free snapshots retain the compatibility predicate.
+server-aligned equipment-derived light-radius vision boundary and diagonal
+corner occlusion to monster drawing; geometry-free snapshots retain the
+compatibility predicate.
 Authoritative level geometry now projects derived native vision-blocked cells,
 including DUN `BlockLight` pieces, through the shared protocol. Godot consumes
 that projection for presentation visibility while older snapshots fall back to

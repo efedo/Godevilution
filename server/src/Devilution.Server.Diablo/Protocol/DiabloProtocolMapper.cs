@@ -1106,6 +1106,11 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 "Authoritative player projection contains an invalid enum value.");
         }
+        if (state.LightRadius != 0
+            && (state.LightRadius is < 2 or > 15)) {
+            throw new InvalidDataException(
+                "Authoritative player projection contains an invalid light radius.");
+        }
         if (state.CombatMode == DiabloPlayerCombatMode.Stand
                 && state.CombatModeEndTick != 0
             || state.CombatMode is DiabloPlayerCombatMode.Block
@@ -1250,6 +1255,7 @@ internal static class DiabloProtocolMapper
         }
         player.StashGold = state.StashGold;
         player.StashOpen = state.StashOpen;
+        player.LightRadius = state.LightRadius;
         return player;
     }
 

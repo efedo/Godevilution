@@ -145,6 +145,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	if (player->reflect_charges() > std::numeric_limits<uint16_t>::max())
 		return tl::make_unexpected("Server-backed snapshot contains Reflect charges outside the native range.");
+	if (player->light_radius() != 0 && (player->light_radius() < 2 || player->light_radius() > 15))
+		return tl::make_unexpected("Server-backed snapshot contains a light radius outside the native range.");
 	if (player->stash_size() > StashPageCount * StashCellCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many stash items.");
 	if (player->stash_gold() > static_cast<uint32_t>(std::numeric_limits<int32_t>::max()))
@@ -230,6 +232,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		.mana = player->mana(),
 		.manaMaximum = player->mana_maximum(),
 		.manaMaximumBase = player->base_mana_maximum() == 0 ? player->mana_maximum() : player->base_mana_maximum(),
+		.lightRadius = player->light_radius(),
 		.gold = player->gold(),
 		.experience = player->experience(),
 		.characterLevel = player->character_level(),

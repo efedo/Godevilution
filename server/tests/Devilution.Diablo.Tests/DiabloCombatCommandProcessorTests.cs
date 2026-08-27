@@ -8149,6 +8149,46 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GeometryBackedWorldUsesEquipmentLightRadiusForActivation()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            20,
+            1,
+            nativeTransparency: Enumerable.Repeat((ushort)1, 20)));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            14,
+            0,
+            20,
+            levelId: 1,
+            attackDamage: 20,
+            aggroRange: 20,
+            toHit: 255);
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            levelId: 1,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusLight = 5,
+                })]);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(byte.MaxValue, monster.ActiveForTicks);
+    }
+
+    [Fact]
     public void GeometryBackedWorldHonorsNativeDiagonalVisionOcclusion()
     {
         var geometry = new AuthoritativeWorld();

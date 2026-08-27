@@ -344,6 +344,25 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void LightRadiusPreservesDefaultHashAndChangesWhenNonDefault()
+    {
+        var baseline = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var explicitDefault = baseline.Clone();
+        explicitDefault.Players[0].LightRadius = 10;
+        var expanded = baseline.Clone();
+        expanded.Players[0].LightRadius = 15;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(explicitDefault));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(expanded));
+    }
+
+    [Fact]
     public void NonzeroPlayerClassIdentityChangesTheStateHash()
     {
         var legacyWarrior = new Snapshot {

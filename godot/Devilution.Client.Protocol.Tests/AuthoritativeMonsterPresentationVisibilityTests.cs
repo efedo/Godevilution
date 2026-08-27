@@ -81,4 +81,26 @@ public sealed class AuthoritativeMonsterPresentationVisibilityTests
             0,
             0));
     }
+
+    [Fact]
+    public void GeometryBackedVisibilityUsesProjectedPlayerLightRadius()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 2, Width = 12, Height = 1 };
+        geometry.NativeTransparency.Add(Enumerable.Repeat<uint>(1, 12));
+
+        Assert.False(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 10, LevelId = 2, Alive = true, PositionX = 11 },
+            2,
+            geometry,
+            0,
+            0,
+            10));
+        Assert.True(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 10, LevelId = 2, Alive = true, PositionX = 11 },
+            2,
+            geometry,
+            0,
+            0,
+            11));
+    }
 }

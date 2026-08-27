@@ -367,6 +367,8 @@ struct ProjectedPlayerSnapshot {
 	int32_t mana = 0;
 	int32_t manaMaximum = 0;
 	int32_t manaMaximumBase = 0;
+	/** Native-clamped equipment-derived player vision radius. */
+	int32_t lightRadius = 0;
 	uint32_t gold = 0;
 	uint32_t experience = 0;
 	uint32_t characterLevel = 1;
