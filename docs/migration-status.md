@@ -199,6 +199,9 @@ identities are rejected before compatibility presentation. Projected entity
 coordinates must remain in the native tile range even without geometry; when
 authoritative level geometry is supplied, monster, item, object, and projectile
 positions are also checked against its fine-grid bounds before publication.
+The same boundary now preserves the protocol's spell-less WeaponArrow and
+MonsterArrow exception and enforces the shared physical-through-acid damage
+type range.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot

@@ -151,10 +151,11 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	if (std::any_of(projectiles.begin(), projectiles.end(), [&isInBounds](const auto &projectile) {
 			return projectile.entityId == 0
 			    || projectile.sourceEntityId == 0
-			    || projectile.spellId == 0
+			    || (projectile.spellId == 0 && projectile.behavior != 58 && projectile.behavior != 59)
 			    || projectile.remainingTicks == 0
 			    || projectile.damage < 0
 			    || projectile.areaRadius < 0
+			    || projectile.damageType < 0 || projectile.damageType > 4
 			    || projectile.behavior < 0 || projectile.behavior > 59
 			    || projectile.phase < 0 || projectile.phase > 1
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > 35

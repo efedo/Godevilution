@@ -1949,6 +1949,20 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProject
 	misplacedNativeMissile.behavior = 2; // Firebolt
 	misplacedNativeMissile.nativeMissileId = "Lightning";
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { misplacedNativeMissile }, 1).has_value());
+
+	ProjectedProjectileSnapshot invalidDamageType = first;
+	invalidDamageType.entityId = 16;
+	invalidDamageType.damageType = 5;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidDamageType }, 1).has_value());
+
+	ProjectedProjectileSnapshot arrow = first;
+	arrow.entityId = 17;
+	arrow.spellId = 0;
+	arrow.behavior = 58; // WeaponArrow
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { arrow }, 1).has_value());
+	arrow.entityId = 18;
+	arrow.behavior = 59; // MonsterArrow
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { arrow }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimulation)
