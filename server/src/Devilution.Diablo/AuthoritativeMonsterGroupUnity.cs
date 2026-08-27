@@ -52,7 +52,6 @@ public static class AuthoritativeMonsterGroupUnity
         if (member.LeaderEntityId == 0
             || member.LeaderEntityId == member.EntityId
             || !monsters.TryGetValue(member.LeaderEntityId, out var leader)
-            || leader.IsUnique
             || leader.HitPoints <= 0
             || leader.LevelId != member.LevelId) {
             return false;
@@ -106,7 +105,6 @@ public static class AuthoritativeMonsterGroupUnity
             || monster.LeaderEntityId == 0
             || monster.LeaderEntityId == monster.EntityId
             || !monsters.TryGetValue(monster.LeaderEntityId, out var leader)
-            || leader.IsUnique
             || leader.HitPoints <= 0
             || leader.LevelId != monster.LevelId) {
             monster.BreakLeaderRelation();

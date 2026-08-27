@@ -1129,7 +1129,6 @@ public sealed partial class DiabloSimulation
                      monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None)) {
             if (!restoredMonsterById.TryGetValue(monster.LeaderEntityId, out var leader)
                 || leader.EntityId == monster.EntityId
-                || leader.IsUnique
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid monster pack leader.");

@@ -745,6 +745,86 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportProjectsAuthoredUniqueMonsterPackState()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Unique-Pack-Overlay-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.godot-unique-pack",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.430.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    { "table": "unique_monsters.tsv", "keys": ["identity"], "mode": "upsert" },
+                    { "table": "unique_monster_placements.tsv", "keys": ["placement_id"], "mode": "upsert" },
+                    { "table": "unique_monster_packs.tsv", "keys": ["pack_id", "placement_id"], "mode": "upsert" }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "unique_monsters.tsv"),
+                "entity_id\tmonster_id\tmonster_symbol\tidentity\tnative_ai\tspawn_health_percent\tspawn_armor_delta\tspawn_fire_resistance\tspawn_lightning_resistance\tspawn_magic_resistance\tspawn_acid_resistance\n"
+                    + "0\t1\tbase_monster\tGenerated Zombie\tZombie\tnone\t0\tnone\tnone\tnone\tnone\n",
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "unique_monster_placements.tsv"),
+                "placement_id\tunique_identity\tmonster_id\tmonster_symbol\tlevel_id\tlevel_symbol\tentity_id\tposition_x\tposition_y\tseed\tdirection\tignore_dungeon_level_range\trequired_quest_id\trequired_quest_symbol\n"
+                    + "1\tGenerated Zombie\t1\tbase_monster\t1\tcathedral\t100\t10\t10\t99\t0\tfalse\t0\t\n",
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "unique_monster_packs.tsv"),
+                "pack_id\tplacement_id\tminion_monster_id\tpack_size\tpack_kind\n"
+                    + "1\t1\t1\t2\tleashed\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                gameMode: "single-player",
+                randomSeed: 0);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-unique-pack", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+
+            var leader = Assert.Single(
+                model.Snapshot!.Monsters,
+                monster => monster.EntityId == 100 && monster.IsUnique);
+            var members = model.Snapshot.Monsters
+                .Where(monster => monster.LeaderEntityId == leader.EntityId)
+                .ToArray();
+            Assert.Equal(2, members.Length);
+            Assert.All(
+                members,
+                member => Assert.Equal(1, member.LeaderRelation));
+            Assert.Equal(2, leader.PackSize);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerMovesInventoryByStableReferenceAndRejectsStaleMove()
     {
         using var server = await StartedServer.StartAsync(

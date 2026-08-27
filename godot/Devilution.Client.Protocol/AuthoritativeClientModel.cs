@@ -1172,7 +1172,6 @@ public sealed class AuthoritativeClientModel
         foreach (var monster in monsters.Where(monster => monster.LeaderRelation != 0)) {
             if (!monstersById.TryGetValue(monster.LeaderEntityId, out var leader)
                 || leader.EntityId == monster.EntityId
-                || leader.IsUnique
                 || !leader.Alive
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(

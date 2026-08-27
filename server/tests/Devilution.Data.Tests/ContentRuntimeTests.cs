@@ -246,6 +246,29 @@ public sealed class ContentRuntimeTests
     }
 
     [Fact]
+    public void CompositionAllowsAValidatedOverlayToIntroduceAnOptionalTable()
+    {
+        var optional = TsvTable.Parse(
+            "optional.tsv",
+            "id\tvalue\n1\tfirst\n2\tsecond\n");
+        var manifest = new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [TsvTable.Parse("items.tsv", "id\tvalue\n1\tbase\n")]),
+            new ContentPack(
+                "extension",
+                "1",
+                [optional],
+                ["base"],
+                [new ContentTableOverlay("optional.tsv", ["id"])]),
+        ]);
+
+        var content = ComposedContent.Compose(manifest);
+
+        Assert.Equal(
+            ["first", "second"],
+            content.GetRequiredTable("optional.tsv").Rows.Select(row => row.Required("value")));
+    }
+
+    [Fact]
     public void CompositionExposesAssetsAndRejectsConflictingDuplicates()
     {
         var first = new ContentAsset("levels/l1data/l1.til", new byte[] { 1, 2 });

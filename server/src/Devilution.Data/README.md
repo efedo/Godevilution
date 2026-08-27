@@ -27,8 +27,10 @@ first-party schemas live in `Devilution.Diablo`. The generic runtime must not
 acquire Diablo rules merely to simplify a caller.
 
 `ComposedContent` applies packs in manifest order. An existing table can only
-be changed by an explicit `upsert` declaration; replacements retain their base
-row position and new keys append in overlay order. `ContentRuntime.TryReload`
+be changed by an explicit `upsert` declaration; an optional table may also be
+introduced by an overlay when its declared keys are unique and non-empty.
+Replacements retain their base row position and new keys append in overlay
+order. `ContentRuntime.TryReload`
 publishes a candidate only after the complete pack set composes successfully,
 so callers retain the previous immutable content after a rejected reload.
 Compatibility metadata is optional for legacy packs. New manifests should use

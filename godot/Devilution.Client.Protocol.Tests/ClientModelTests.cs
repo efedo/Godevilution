@@ -2306,7 +2306,7 @@ public sealed class ClientModelTests
             snapshot => snapshot.Monsters[1].LeaderEntityId = 0,
             snapshot => snapshot.Monsters[1].LeaderEntityId = 11,
             snapshot => snapshot.Monsters[1].LeaderRelation = 3,
-            snapshot => snapshot.Monsters[0].IsUnique = true,
+            snapshot => snapshot.Monsters[1].IsUnique = true,
             snapshot => snapshot.Monsters[0].Alive = false,
             snapshot => snapshot.Monsters[1].PackSize = 256,
             snapshot => snapshot.Monsters[1].ActiveForTicks = -1,

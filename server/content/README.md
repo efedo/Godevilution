@@ -2936,11 +2936,13 @@ and no implicit table replacements. For example:
 ```
 
 The server composes the base pack followed by overlay arguments in command-line
-order. A dependency must name an earlier pack. Reusing a table path requires an
-overlay declaration, key columns must exist, and the overlay must use exactly
-the target table's ordered columns. Composite keys identify rows. Existing rows
-are replaced in place; new rows append in overlay order. Duplicate keys,
-implicit conflicts, missing targets, schema mismatches, and invalid dependencies
+order. A dependency must name an earlier pack. Reusing an existing table path
+requires an overlay declaration, key columns must exist, and the overlay must
+use exactly the target table's ordered columns. An overlay may introduce an
+optional table that no earlier pack provides; its declared keys are still
+validated for uniqueness and non-empty values. Composite keys identify rows.
+Existing rows are replaced in place; new rows append in overlay order.
+Duplicate keys, implicit conflicts, schema mismatches, and invalid dependencies
 reject the complete candidate before it becomes active.
 
 Manifest format 1 accepts an optional versioned schema identity and inclusive

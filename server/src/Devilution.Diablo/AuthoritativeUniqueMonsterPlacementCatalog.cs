@@ -164,6 +164,10 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
         var usedEntityIds = targets
             .Select(target => target.EntityId)
             .ToHashSet();
+        foreach (var target in targets) {
+            if (target.Drop is not null)
+                usedEntityIds.Add(target.Drop.EntityId);
+        }
         var generatedEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
         var materialized = new List<AuthoritativeCombatTarget>();
         foreach (var placement in Definitions) {
@@ -185,6 +189,10 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
             if (!usedEntityIds.Add(target.EntityId))
                 throw new InvalidDataException(
                     $"Unique placement {placement.PlacementId} reuses an entity ID during materialization.");
+            if (target.Drop is not null
+                && !usedEntityIds.Add(target.Drop.EntityId))
+                throw new InvalidDataException(
+                    $"Unique placement {placement.PlacementId} reuses drop entity {target.Drop.EntityId} during materialization.");
             if (!occupied.Add((target.LevelId, target.PositionX, target.PositionY)))
                 throw new InvalidDataException(
                     $"Unique placement {placement.PlacementId} overlaps an occupied cell during materialization.");
@@ -193,7 +201,8 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
             var pack = packs?.FindForPlacement(placement.PlacementId);
             if (pack is null)
                 continue;
-            while (usedEntityIds.Contains(generatedEntityId))
+            while (usedEntityIds.Contains(generatedEntityId)
+                || usedEntityIds.Contains(GetGeneratedDropEntityId(generatedEntityId)))
                 generatedEntityId = checked(generatedEntityId + 1);
             var members = planner.CreateNativeMonsterPack(
                 target,
@@ -208,12 +217,25 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
                 if (!usedEntityIds.Add(member.EntityId))
                     throw new InvalidDataException(
                         $"Unique monster pack {pack.PackId} reuses member entity {member.EntityId}.");
+                var memberDrop = member.Drop;
+                if (memberDrop is not null
+                    && !usedEntityIds.Add(memberDrop.EntityId))
+                    throw new InvalidDataException(
+                        $"Unique monster pack {pack.PackId} reuses drop entity {memberDrop.EntityId}.");
                 occupied.Add((member.LevelId, member.PositionX, member.PositionY));
                 materialized.Add(member);
                 generatedEntityId = checked(member.EntityId + 1);
             }
         }
         return materialized;
+    }
+
+    private static uint GetGeneratedDropEntityId(uint monsterEntityId)
+    {
+        if (monsterEntityId < AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId)
+            return AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId;
+        return checked(AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId
+            + (monsterEntityId - AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId));
     }
 
     public static AuthoritativeUniqueMonsterPlacementCatalog LoadTsv(

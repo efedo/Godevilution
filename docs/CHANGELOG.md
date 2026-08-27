@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Allow validated overlays to introduce optional tables that are absent from
+  earlier packs, enabling external pack-only contracts such as
+  `unique_monster_packs.tsv` without changing the base table set.
 - Project monster snapshots now carry additive group-unity state (leader
   identity/relation, pack size, and active ticks) through the shared protocol.
   Server mapping, canonical hashing, Godot validation, and the native
@@ -13,6 +16,9 @@ All notable changes to this fork are documented below.
   unique encounters. Validated independent and leashed packs now materialize
   deterministic minion identities and reserved-cell-aware positions through
   the authoritative spawn planner.
+- Preserve authored unique-monster pack relationships across simulation ticks
+  and reserve generated monster loot IDs so pack materialization cannot collide
+  with the leader's drop or another authoritative entity.
 - Preserve native `FollowTheLeader` activation timing for authoritative leashed
   packs, including both leader-to-member and member-to-leader propagation and
   snapshot round-trip coverage.

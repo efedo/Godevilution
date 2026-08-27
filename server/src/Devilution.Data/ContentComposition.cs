@@ -77,10 +77,8 @@ public sealed class ComposedContent
                             "conflicts with an earlier binary asset");
                     }
                     if (overlays.ContainsKey(table.SourcePath)) {
-                        throw CompositionError(
-                            pack.Id,
-                            table.SourcePath,
-                            "declares an overlay but no earlier pack provides the target table");
+                        var newTableOverlay = overlays[table.SourcePath];
+                        ValidateNewOverlayTable(pack.Id, table, newTableOverlay);
                     }
                     effectiveTables.Add(table.SourcePath, table);
                     tableOrder.Add(table.SourcePath);
@@ -173,6 +171,23 @@ public sealed class ComposedContent
             }
         }
         return new TsvTable(existing.SourcePath, existing.Columns.ToArray(), rows.ToArray());
+    }
+
+    private static void ValidateNewOverlayTable(
+        string packId,
+        TsvTable table,
+        ContentTableOverlay overlay)
+    {
+        if (overlay.Mode != ContentTableOverlayMode.Upsert) {
+            throw CompositionError(
+                packId,
+                overlay.TablePath,
+                $"uses unsupported overlay mode {overlay.Mode}");
+        }
+        // A new optional table has no earlier schema to compare against, but
+        // its declared key contract still needs the same strict uniqueness and
+        // non-empty-key guarantees as an ordinary upsert.
+        _ = BuildKeyIndex(packId, table, overlay.KeyColumns, table.Rows);
     }
 
     private static Dictionary<string, int> BuildKeyIndex(

@@ -5,10 +5,16 @@ Status date: 2026-08-26
 Generated unique placements now accept an optional validated
 `unique_monster_packs.tsv` contract. The server materializes deterministic
 independent or leashed minions through the authoritative spawn planner,
-assigns generated entity IDs without colliding with existing targets, avoids
-reserved cells, and preserves the native strict four-tile envelope for leashed
-members. Native random placement parity and the remaining visibility-driven
+assigns generated monster and loot entity IDs without colliding with existing
+targets or drops, avoids reserved cells, and preserves the native strict
+four-tile envelope for leashed members. Unique leaders retain their pack
+relationships across authoritative ticks. Native random placement parity and
+the remaining visibility-driven
 activation/interpolation work remain follow-ups.
+
+The generic Data composer now permits a validated overlay to introduce an
+optional table absent from earlier packs. This keeps pack-only contracts
+external to the base table set while retaining strict key and schema checks.
 
 Monster group-unity state now crosses the shared snapshot boundary through
 additive leader identity/relation, pack-size, and active-tick fields. The

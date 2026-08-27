@@ -983,7 +983,6 @@ internal static class DiabloProtocolMapper
                      monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None)) {
             if (!monstersById.TryGetValue(monster.LeaderEntityId, out var leader)
                 || leader.EntityId == monster.EntityId
-                || leader.IsUnique
                 || leader.HitPoints <= 0
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(

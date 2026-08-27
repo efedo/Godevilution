@@ -279,6 +279,36 @@ public sealed class AuthoritativeMonsterGroupUnityTests
     }
 
     [Fact]
+    public void GroupUnityRetainsMembersForAnAuthoredUniqueLeader()
+    {
+        var leader = new AuthoritativeCombatTarget(
+            1,
+            5,
+            5,
+            10,
+            unique: true,
+            packSize: 1);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            5,
+            6,
+            10,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                CombatTargets = [leader, member],
+            });
+
+        simulation.AdvanceTick(1, []);
+
+        Assert.Equal(leader.EntityId, member.LeaderEntityId);
+        Assert.Equal(AuthoritativeMonsterLeaderRelation.Leashed, member.LeaderRelation);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsPackRelationshipState()
     {
         var leader = new AuthoritativeCombatTarget(
