@@ -215,6 +215,24 @@ TEST(ServerBackedPlayerSnapshot, ValidatesNonEmptyStateHashShape)
 	EXPECT_TRUE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidCharacterNameShape)
+{
+	protocol::Snapshot snapshot;
+	snapshot.add_players()->set_entity_id(7);
+
+	for (const std::string &name : {
+		     std::string(32, 'A'),
+		     std::string("bad\nname"),
+		     std::string("bad\0name", 8),
+	     }) {
+		snapshot.mutable_players(0)->set_character_name(name);
+		EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value()) << name;
+	}
+
+	snapshot.mutable_players(0)->clear_character_name();
+	EXPECT_TRUE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, ResolvesTargetingKindAcrossAuthoritativeSources)
 {
 	ProjectedPlayerSnapshot snapshot;

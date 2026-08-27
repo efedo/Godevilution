@@ -81,6 +81,16 @@ bool IsValidSnapshotHash(std::string_view value)
 	});
 }
 
+bool IsValidCharacterName(std::string_view value)
+{
+	if (value.size() > 31)
+		return false;
+	return std::all_of(value.begin(), value.end(), [](char character) {
+		const auto value = static_cast<unsigned char>(character);
+		return value >= 0x21 && value <= 0x7E;
+	});
+}
+
 } // namespace
 
 tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const protocol::Snapshot &snapshot, uint32_t entityId)
@@ -99,6 +109,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	if (player == nullptr)
 		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
+	if (!IsValidCharacterName(player->character_name()))
+		return tl::make_unexpected("Server-backed snapshot contains an invalid character name.");
 	if (player->visited_level_ids_size() > 256) {
 		return tl::make_unexpected("Server-backed snapshot contains too many visited levels.");
 	}
