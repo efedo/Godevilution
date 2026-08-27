@@ -342,8 +342,36 @@ void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &s
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
-std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVisual, int damageType)
+std::optional<MissileID> NativePresentationMissileId(
+	int behavior,
+	int nativeVisual,
+	const std::string &nativeMissileId,
+	int damageType)
 {
+	if (!nativeMissileId.empty()) {
+		if (behavior != 50) // MonsterMagic
+			return std::nullopt;
+		if (nativeMissileId == "Lightning")
+			return MissileID::Lightning;
+		if (nativeMissileId == "OrangeFlare")
+			return MissileID::OrangeFlare;
+		if (nativeMissileId == "BlueFlare")
+			return MissileID::BlueFlare;
+		if (nativeMissileId == "RedFlare")
+			return MissileID::RedFlare;
+		if (nativeMissileId == "YellowFlare")
+			return MissileID::YellowFlare;
+		if (nativeMissileId == "BlueFlare2")
+			return MissileID::BlueFlare2;
+		if (nativeMissileId == "MagmaBall")
+			return MissileID::MagmaBall;
+		if (nativeMissileId == "HorkSpawn")
+			return MissileID::HorkSpawn;
+		// An explicit unknown identity must fail closed rather than infer a
+		// different visual from the enum or gameplay behavior.
+		return std::nullopt;
+	}
+
 	if (nativeVisual != 0) {
 		switch (static_cast<protocol::NativeProjectileVisual>(nativeVisual)) {
 		case protocol::NATIVE_PROJECTILE_VISUAL_ARROW:
@@ -1001,6 +1029,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		const auto missileId = NativePresentationMissileId(
 			snapshot.behavior,
 			snapshot.nativeVisual,
+			snapshot.nativeMissileId,
 			snapshot.damageType);
 		if (!missileId)
 			continue;

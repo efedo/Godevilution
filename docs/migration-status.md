@@ -26,6 +26,9 @@ Content-owned native missile identities now also cross the shared protocol as
 an additive field for monster-magic projectiles. Godot prefers the validated
 identity when selecting presentation, while empty values preserve the enum and
 behavior fallbacks required by older snapshots.
+The native compatibility projection now retains and prefers that identity as
+well; malformed or misplaced values fail closed before presentation, while
+empty values retain the legacy native enum/behavior fallback.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility

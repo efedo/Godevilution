@@ -1302,13 +1302,18 @@ public sealed class AuthoritativeClientModel
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
         if (projectile.Behavior != 50
-            || !char.IsLetter(projectile.NativeMissileId[0])
+            || !IsAsciiLetter(projectile.NativeMissileId[0])
                 && projectile.NativeMissileId[0] != '_') {
             return false;
         }
         return projectile.NativeMissileId.Skip(1).All(character =>
-            char.IsLetterOrDigit(character) || character is '_' or '-');
+            IsAsciiLetter(character)
+                || character is >= '0' and <= '9'
+                || character is '_' or '-');
     }
+
+    private static bool IsAsciiLetter(char character)
+        => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
 
     private static bool HasValidItemIdentity(
         uint itemSeed,

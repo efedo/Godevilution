@@ -902,6 +902,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
 	first->set_resistant_damage_divisor(13);
 	first->set_last_collision_target_entity_id(9);
 	first->set_effective_spell_level(14);
+	first->set_native_missile_id("BlueFlare2");
 
 	auto projected = ProjectProjectileSnapshots(snapshot);
 	ASSERT_TRUE(projected.has_value());
@@ -923,6 +924,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
 	EXPECT_EQ((*projected)[0].resistantDamageDivisor, 13);
 	EXPECT_EQ((*projected)[0].lastCollisionTargetEntityId, 9u);
 	EXPECT_EQ((*projected)[0].effectiveSpellLevel, 14);
+	EXPECT_EQ((*projected)[0].nativeMissileId, "BlueFlare2");
 	EXPECT_EQ((*projected)[1].entityId, 12u);
 }
 
@@ -1526,6 +1528,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	protocol::Snapshot invalidPresentation = makeProjectile();
 	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(36));
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidPresentation).has_value());
+
+	protocol::Snapshot invalidNativeIdentity = makeProjectile();
+	invalidNativeIdentity.mutable_projectiles(0)->set_behavior(50); // MonsterMagic
+	invalidNativeIdentity.mutable_projectiles(0)->set_native_missile_id("-invalid");
+	EXPECT_FALSE(ValidateProjectileSnapshots(invalidNativeIdentity).has_value());
+
+	protocol::Snapshot misplacedNativeIdentity = makeProjectile();
+	misplacedNativeIdentity.mutable_projectiles(0)->set_behavior(49);
+	misplacedNativeIdentity.mutable_projectiles(0)->set_native_missile_id("Lightning");
+	EXPECT_FALSE(ValidateProjectileSnapshots(misplacedNativeIdentity).has_value());
 
 	protocol::Snapshot zeroSpellArrow = makeProjectile();
 	zeroSpellArrow.mutable_projectiles(0)->set_spell_id(0);
@@ -2284,6 +2296,35 @@ TEST(ServerBackedPlayerSnapshot, PresentsContentOwnedMonsterMagicVisualFamilies)
 	}
 	Missiles.clear();
 }
+
+TEST(ServerBackedPlayerSnapshot, PrefersContentOwnedNativeMonsterMagicIdentity)
+{
+	LoadMissileData();
+	Missiles.clear();
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 600;
+	projectile.sourceEntityId = 1;
+	projectile.spellId = 4;
+	projectile.levelId = 1;
+	projectile.positionX = 4;
+	projectile.positionY = 5;
+	projectile.remainingTicks = 4;
+	projectile.behavior = 50; // MonsterMagic
+	projectile.nativeVisual = 30; // OrangeFlare compatibility fallback.
+	projectile.nativeMissileId = "Lightning";
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front()._mitype, MissileID::Lightning);
+	presentation.Clear();
+	Missiles.clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeMonsterProjectileFamilies)
 {
 	struct Family {

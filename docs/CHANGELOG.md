@@ -19,6 +19,8 @@ All notable changes to this fork are documented below.
   `NotAnimated` source vocabulary.
 - Carry validated content-owned native missile identities through the shared
   projectile protocol, with Godot presentation precedence and legacy fallback.
+- Carry the same native missile identity through the native compatibility
+  projection, with fail-closed validation and enum/behavior fallback.
 - Add exhaustive source coverage for all 36 native spell-data identities in
   the 52-entry normalized native spell namespace.
 - Add exhaustive parity coverage for the normalized item-generation rules and

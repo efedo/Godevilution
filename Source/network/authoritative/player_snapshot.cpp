@@ -46,6 +46,23 @@ bool IsValidSpellTargetingKind(uint32_t value)
 	return value <= static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY);
 }
 
+bool IsValidNativeMissileIdentity(const std::string &value)
+{
+	if (value.empty())
+		return true;
+	const auto isLetter = [](char character) {
+		return character >= 'A' && character <= 'Z'
+		    || character >= 'a' && character <= 'z';
+	};
+	const auto isPart = [&](char character) {
+		return isLetter(character)
+		    || character >= '0' && character <= '9'
+		    || character == '_' || character == '-';
+	};
+	return (isLetter(value.front()) || value.front() == '_')
+	    && std::all_of(value.begin() + 1, value.end(), isPart);
+}
+
 bool IsValidObjectPresentationKind(protocol::ObjectPresentationKind value)
 {
 	switch (value) {
@@ -698,6 +715,7 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 		    .remainingTicks = source.remaining_ticks(),
 		    .behavior = source.behavior(),
 		    .nativeVisual = source.native_visual(),
+		    .nativeMissileId = source.native_missile_id(),
 		    .phase = source.phase(),
 		    .startX = source.start_x(),
 		    .startY = source.start_y(),
@@ -1328,7 +1346,10 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || static_cast<int32_t>(projectile.presentation_kind()) < 0
 		    || static_cast<int32_t>(projectile.presentation_kind()) > 19
 		    || static_cast<int32_t>(projectile.native_visual()) < 0
-		    || static_cast<int32_t>(projectile.native_visual()) > 35)
+		    || static_cast<int32_t>(projectile.native_visual()) > 35
+		    || !projectile.native_missile_id().empty()
+		        && (projectile.behavior() != 50 // MonsterMagic
+		            || !IsValidNativeMissileIdentity(projectile.native_missile_id())))
 			return tl::make_unexpected("Server-backed snapshot contains invalid projectile state.");
 	}
 	return {};
