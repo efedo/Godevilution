@@ -38,6 +38,8 @@ authoritative level changes.
 Authoritative local equipment and class changes now also refresh the native
 sprite family and animation data through a presentation-only path; inventory
 and gameplay statistics remain snapshot-owned.
+The same snapshot path now rebuilds the native stash scroll-source mask, so
+closing or changing an authoritative stash cannot leave stale spell sources.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,

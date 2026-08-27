@@ -21,6 +21,8 @@ All notable changes to this fork are documented below.
   changes.
 - Refresh the local native sprite family and animation data when authoritative
   equipment or class state changes, without recalculating gameplay locally.
+- Rebuild native stash scroll-source state on every authoritative player
+  snapshot so closed or changed stashes cannot leave stale spell sources.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

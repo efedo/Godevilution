@@ -3228,6 +3228,39 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_EQ(pcurs, CURSOR_HAND);
 }
 
+TEST(ServerBackedPlayerSnapshot, ClearsStaleStashScrollSourcesOnSnapshotRefresh)
+{
+	LoadSpellData();
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterLevel = 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	snapshot.stashOpen = true;
+	Item scroll;
+	scroll._itype = ItemType::Misc;
+	scroll._iMiscId = IMISC_SCROLL;
+	scroll._iSpell = SpellID::Healing;
+	snapshot.stash.push_back({
+		.page = 0,
+		.cell = 0,
+		.itemSeed = 1,
+		.spellId = static_cast<uint32_t>(SpellID::Healing),
+		.spellTargetingKind = ProjectedSpellTargetingKind::Tile,
+		.width = 1,
+		.height = 1,
+		.item = scroll,
+	});
+	Player player;
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
+
+	snapshot.stashOpen = false;
+	snapshot.stash.clear();
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player._pScrlSpells, 0U);
+}
+
 TEST(ServerBackedPlayerSnapshot, AppliesTimedMoveDestinationToNativeFuturePosition)
 {
 	ProjectedPlayerSnapshot snapshot;
