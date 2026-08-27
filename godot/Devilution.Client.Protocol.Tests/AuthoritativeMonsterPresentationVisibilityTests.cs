@@ -30,4 +30,40 @@ public sealed class AuthoritativeMonsterPresentationVisibilityTests
             new MonsterSnapshot { EntityId = 5, LevelId = 0, Alive = true },
             2));
     }
+
+    [Fact]
+    public void GeometryBackedVisibilityUsesNativeVisionRadius()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 2, Width = 25, Height = 5 };
+        geometry.NativeTransparency.Add(Enumerable.Repeat<uint>(1, 125));
+
+        Assert.False(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 6, LevelId = 2, Alive = true, PositionX = 12, PositionY = 2 },
+            2,
+            geometry,
+            0,
+            2));
+        Assert.True(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 7, LevelId = 2, Alive = true, PositionX = 8, PositionY = 2 },
+            2,
+            geometry,
+            0,
+            2));
+    }
+
+    [Fact]
+    public void GeometryBackedVisibilityHonorsDiagonalCornerOcclusion()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 2, Width = 5, Height = 5 };
+        geometry.NativeTransparency.Add(Enumerable.Repeat<uint>(1, 25));
+        geometry.BlockedCells.Add(1);
+        geometry.BlockedCells.Add(5);
+
+        Assert.False(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 8, LevelId = 2, Alive = true, PositionX = 2, PositionY = 2 },
+            2,
+            geometry,
+            0,
+            0));
+    }
 }

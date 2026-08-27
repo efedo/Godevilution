@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Apply the authoritative geometry-backed monster vision boundary to Godot
+  presentation, including radius, line-of-sight, and diagonal corner checks.
 - Honor native DUN `BlockLight` piece metadata in geometry-backed monster
   visibility, including diagonal corner occlusion.
 - Preserve native diagonal corner occlusion when geometry-backed monster

@@ -781,6 +781,9 @@ Godot now applies one authoritative monster presentation visibility predicate
 when hydrating cached positions, drawing monsters, and rendering action-target
 indicators; dead or `SneakHidden` monsters cannot leak through a presentation
 path even when they remain present in the complete snapshot.
+When projected native transparency is available, Godot also applies the
+server-aligned radius-10 vision boundary and diagonal corner occlusion to
+monster drawing; geometry-free snapshots retain the compatibility predicate.
 Godot object presentation now follows the native removal boundary as well;
 activated or destroyed objects are removed from cached positions and are not
 drawn while their authoritative state remains available for validation and

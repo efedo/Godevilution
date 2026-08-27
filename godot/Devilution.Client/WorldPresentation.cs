@@ -46,6 +46,9 @@ public partial class WorldPresentation : Node2D
         var localPlayer = snapshot.Players.FirstOrDefault();
         levels.ApplyAuthoritative(snapshot.LevelGeometry);
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
+        var localGeometry = localPlayer is null
+            ? null
+            : snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
 
         foreach (var player in snapshot.Players) {
             activeEntityIds.Add(player.EntityId);
@@ -66,7 +69,13 @@ public partial class WorldPresentation : Node2D
             displayedPlayerSnapshots[player.EntityId] = player.Clone();
         }
         foreach (var monster in snapshot.Monsters.Where(monster =>
-                     AuthoritativeMonsterPresentationVisibility.IsVisible(monster, localPlayer?.LevelId ?? 0))) {
+                     localPlayer is not null
+                     && AuthoritativeMonsterPresentationVisibility.IsVisible(
+                         monster,
+                         localPlayer.LevelId,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY))) {
             activeEntityIds.Add(monster.EntityId);
             var reset = displayedMonsterSnapshots.TryGetValue(monster.EntityId, out var previous)
                 && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster);
