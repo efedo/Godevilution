@@ -316,6 +316,7 @@ public sealed class AuthoritativeMonsterGroupUnityTests
             5,
             5,
             10,
+            unique: true,
             packSize: 2,
             activeForTicks: 7);
         var member = new AuthoritativeCombatTarget(

@@ -20,8 +20,8 @@ Monster group-unity state now crosses the shared snapshot boundary through
 additive leader identity/relation, pack-size, and active-tick fields. The
 server projects and hashes these fields, while Godot and the native
 compatibility client validate and retain the state for presentation. Default
-values preserve legacy snapshot hashes; native visual interpolation and
-server-owned AI consumption remain follow-up work.
+values preserve legacy snapshot hashes; native and presentation-side visual
+interpolation remain follow-up work.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot
@@ -275,9 +275,9 @@ monster rows now carry validated leader identity, leashed/separated relation,
 and pack-size state; the server applies the native line-of-sight separation and
 strictly-under-four-tile reunion rule during autonomous ticks and preserves the
 relationship through snapshots. Native active-tick FollowTheLeader propagation
-now runs for leashed members and survives snapshots. Generated pack placement,
-visibility-driven activation, and native last-position interpolation remain
-follow-up work; post-tick authoritative
+now runs for leashed members and survives snapshots. Visibility-driven
+activation and native last-position interpolation remain follow-up work;
+post-tick authoritative
 movement-admission passes now prevent either a leader or a leashed member from
 moving beyond the strict four-tile pack envelope.
 Multiplayer Bat now consumes
