@@ -215,7 +215,9 @@ public sealed class AuthoritativeClientModel
                     previousPlayer.LevelId,
                     nextPlayer.LevelId))
                 predictedMoves.Clear();
-            Snapshot = message.Snapshot;
+            // Keep an owned copy so callers cannot mutate validated state
+            // through a reused transport buffer after admission.
+            Snapshot = message.Snapshot.Clone();
             LastError = null;
             RebuildPredictedPosition();
         }
@@ -223,7 +225,7 @@ public sealed class AuthoritativeClientModel
         if (message.Events is { } events
             && events.Tick >= CurrentTick) {
             ValidateEventBatch(events);
-            recentEvents.AddRange(events.Events);
+            recentEvents.AddRange(events.Events.Select(gameEvent => gameEvent.Clone()));
             recentEventsEndSequence = checked(
                 recentEventsEndSequence + (ulong)events.Events.Count);
             var excess = recentEvents.Count - MaxRecentEvents;

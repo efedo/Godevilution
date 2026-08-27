@@ -1122,6 +1122,29 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void OwnsValidatedSnapshotsAndEventsAfterApply()
+    {
+        var snapshot = new Snapshot {
+            Tick = 12,
+            Players = { new PlayerSnapshot { EntityId = 7, Life = 30, LifeMaximum = 40 } },
+        };
+        var gameEvent = new GameEvent {
+            Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 10 },
+        };
+        var events = new EventBatch { Tick = 12, Events = { gameEvent } };
+        var model = new AuthoritativeClientModel();
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+        model.Apply(new AuthoritativeClientMessage(Events: events));
+
+        snapshot.Players[0].Life = 0;
+        gameEvent.Experience.Amount = 999;
+
+        Assert.Equal(30, model.Snapshot!.Players[0].Life);
+        Assert.Equal(10U, Assert.Single(model.RecentEvents).Experience.Amount);
+    }
+
+    [Fact]
     public void RejectsMalformedAuthoritativeEventBatches()
     {
         var model = new AuthoritativeClientModel();

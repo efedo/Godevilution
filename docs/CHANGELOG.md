@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make the Godot protocol model own cloned validated snapshots and event
+  history entries, preventing post-apply mutation through transport objects.
 - Reconcile native `_pLvlChanging` state from authoritative `PM_NEWLVL`
   snapshots for local and remote player presentation, preventing stale level
   transition gates from leaking across snapshots.

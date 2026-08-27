@@ -76,6 +76,9 @@ The C# server adapter rejects the same malformed directional metadata before
 it serializes a protocol snapshot.
 The Godot protocol client applies the same directional metadata invariant,
 keeping both presentation boundaries fail-closed and behaviorally aligned.
+The Godot protocol model now owns cloned validated snapshots and event history
+entries, preventing mutable transport objects from changing state after the
+authoritative boundary has accepted them.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 
