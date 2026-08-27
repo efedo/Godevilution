@@ -1,3 +1,4 @@
+using Devilution.Domain;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Client.Protocol;
@@ -49,44 +50,14 @@ public static class AuthoritativeMonsterPresentationVisibility
             || !Contains(geometry, monster.PositionX, monster.PositionY))
             return false;
 
-        return HasNativeVisionLineOfSight(geometry, viewerX, viewerY, monster.PositionX, monster.PositionY);
-    }
-
-    private static bool HasNativeVisionLineOfSight(
-        LevelGeometrySnapshot geometry,
-        int startX,
-        int startY,
-        int endX,
-        int endY)
-    {
-        var x = startX;
-        var y = startY;
-        var deltaX = Math.Abs(endX - startX);
-        var deltaY = Math.Abs(endY - startY);
-        var stepX = startX < endX ? 1 : -1;
-        var stepY = startY < endY ? 1 : -1;
-        var error = deltaX - deltaY;
-
-        while (x != endX || y != endY) {
-            var doubledError = 2 * error;
-            var movesX = doubledError > -deltaY;
-            var movesY = doubledError < deltaX;
-            if (movesX && movesY
-                && IsBlocked(geometry, x + stepX, y)
-                && IsBlocked(geometry, x, y + stepY))
-                return false;
-            if (movesX) {
-                error -= deltaY;
-                x += stepX;
-            }
-            if (movesY) {
-                error += deltaX;
-                y += stepY;
-            }
-            if ((x != endX || y != endY) && IsBlocked(geometry, x, y))
-                return false;
-        }
-        return true;
+        return NativeVision.IsVisible(
+            viewerX,
+            viewerY,
+            monster.PositionX,
+            monster.PositionY,
+            nativeVisionRadius,
+            (x, y) => !IsBlocked(geometry, x, y),
+            (x, y) => Contains(geometry, x, y));
     }
 
     private static bool Contains(LevelGeometrySnapshot geometry, int x, int y)

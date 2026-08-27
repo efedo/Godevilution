@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Share the native `DoVision` ray table between the authoritative server and
+  Godot protocol client, including radius trimming and diagonal corner rules.
 - Align native authoritative projection tests with the fail-closed boundary for
   invalid projectile visuals and out-of-bounds moving destinations.
 - Apply the authoritative geometry-backed monster vision boundary to Godot

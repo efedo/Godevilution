@@ -103,4 +103,29 @@ public sealed class AuthoritativeMonsterPresentationVisibilityTests
             0,
             11));
     }
+
+    [Fact]
+    public void GeometryBackedVisibilityUsesTheNativeRayTable()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 2, Width = 16, Height = 16 };
+        geometry.NativeTransparency.Add(Enumerable.Repeat<uint>(1, 256));
+        geometry.BlockedCells.Add(1);
+
+        Assert.True(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 11, LevelId = 2, Alive = true, PositionX = 8, PositionY = 4 },
+            2,
+            geometry,
+            0,
+            0,
+            10));
+
+        geometry.BlockedCells.Add(16);
+        Assert.False(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 11, LevelId = 2, Alive = true, PositionX = 8, PositionY = 4 },
+            2,
+            geometry,
+            0,
+            0,
+            10));
+    }
 }

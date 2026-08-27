@@ -174,17 +174,16 @@ Gargoyle.
 
 Geometry-backed server worlds now apply the first visibility activation gate:
 occluded monsters with no active tick remain inactive while connected players
-are present, using the authoritative walkability layer as a bounded native
-light-radius line-of-sight approximation when native transparency is supplied.
-The approximation now also rejects native-style diagonal corner occlusion.
+are present, using the authoritative walkability layer and shared native
+ray-table light-radius line-of-sight when native transparency is supplied.
+The ray pass also rejects native-style diagonal corner occlusion.
 Native DUN piece metadata marked `BlockLight` now participates in the same
 vision blocker path, rather than relying only on movement collision.
 Player light radius is now derived from identified usable equipment using the
 native baseline and 2–15 clamp, projected through `PlayerSnapshot.light_radius`,
 and consumed by both server activation/targeting and Godot presentation.
 Geometry-free compatibility fixtures and no-player simulation ticks retain
-their legacy behavior; exact ray-table parity and broader activation timing
-remain follow-up work.
+their legacy behavior; broader activation timing remains follow-up work.
 
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts

@@ -850,4 +850,15 @@ public sealed class AuthoritativeWorldTests
         Assert.False(level.HasNativeVisionLineOfSight(0, 0, 4, 0));
         Assert.True(level.HasNativeVisionLineOfSight(0, 0, 1, 0));
     }
+
+    [Fact]
+    public void NativeVisionLineOfSightUsesTheNativeRayTable()
+    {
+        var level = new AuthoritativeLevel(1, 16, 16, [1]);
+
+        Assert.True(level.HasNativeVisionLineOfSight(0, 0, 8, 4));
+
+        var cornerBlocked = new AuthoritativeLevel(1, 16, 16, [1, 16]);
+        Assert.False(cornerBlocked.HasNativeVisionLineOfSight(0, 0, 8, 4));
+    }
 }

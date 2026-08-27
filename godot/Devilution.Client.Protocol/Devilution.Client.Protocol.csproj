@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../server/src/Devilution.Domain/Devilution.Domain.csproj" />
     <ProjectReference Include="../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
   </ItemGroup>
 </Project>
