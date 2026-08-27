@@ -42,6 +42,7 @@ public static class AuthoritativeSnapshotValidator
             if (player.LevelId >= NativeLevelCount
                 || player.VisitedLevelIds.Count > 256
                 || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
+                || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count
                 || player.VisitedLevelIds.Count > 0
                     && !player.VisitedLevelIds.Contains(player.LevelId)
                 || !Enum.IsDefined(player.FacingDirection)

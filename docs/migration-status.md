@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+The generic host now rejects duplicate visited-level IDs before snapshot
+serialization, aligning the authoritative boundary with the existing Godot
+and native compatibility validators and preventing ambiguous quest-gate state.
+
 Character progression now consumes a validated external `experience.tsv`
 catalog in activated content, preserving all 50 native cumulative thresholds;
 programmatic compatibility callers retain their legacy fallback until they

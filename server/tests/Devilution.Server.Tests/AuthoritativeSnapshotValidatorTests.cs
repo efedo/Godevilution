@@ -170,6 +170,21 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsDuplicateVisitedLevels()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 1,
+                        LevelId = 4,
+                        VisitedLevelIds = { 0, 4, 4 },
+                    },
+                },
+            }));
+    }
+
+    [Fact]
     public void RejectsUndefinedPlayerEnums()
     {
         foreach (var player in new[] {

@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject duplicate visited-level IDs at the generic host boundary, matching
+  the existing Godot and native compatibility validation.
 - Bound active world-mutation metadata to 4,096 entries consistently across
   the generic host, Godot, and native compatibility boundaries.
 - Reject non-native player level IDs before native compatibility application
