@@ -16,6 +16,10 @@ The retained legacy `itemdat.tsv` fallback is also guarded field-for-field
 against the inherited native table, preserving all 168 rows while normalized
 item definitions continue to take precedence in active packs.
 
+The normalized base class animation catalog is likewise guarded against each
+native class animation table, covering all 27 exposed timing fields for all
+six classes.
+
 The external Hellfire monster catalog now matches native `monstdat.tsv` core
 metadata for all 138 variant rows, including the 26 Hellfire-only standing
 animation frame/timing pairs, previously divergent armor values, and the four

@@ -55,6 +55,65 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseClassAnimationsMatchNativeTables()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var external = basePack.Tables.Single(table => table.SourcePath == "class_animations.tsv");
+        var externalRows = external.Rows.ToDictionary(
+            row => row.Required("class_symbol"),
+            StringComparer.Ordinal);
+        var fields = new[] {
+            (External: "unarmed_frames", Native: "unarmedFrames"),
+            (External: "unarmed_action_frame", Native: "unarmedActionFrame"),
+            (External: "unarmed_shield_frames", Native: "unarmedShieldFrames"),
+            (External: "unarmed_shield_action_frame", Native: "unarmedShieldActionFrame"),
+            (External: "sword_frames", Native: "swordFrames"),
+            (External: "sword_action_frame", Native: "swordActionFrame"),
+            (External: "sword_shield_frames", Native: "swordShieldFrames"),
+            (External: "sword_shield_action_frame", Native: "swordShieldActionFrame"),
+            (External: "bow_frames", Native: "bowFrames"),
+            (External: "bow_action_frame", Native: "bowActionFrame"),
+            (External: "axe_frames", Native: "axeFrames"),
+            (External: "axe_action_frame", Native: "axeActionFrame"),
+            (External: "mace_frames", Native: "maceFrames"),
+            (External: "mace_action_frame", Native: "maceActionFrame"),
+            (External: "mace_shield_frames", Native: "maceShieldFrames"),
+            (External: "mace_shield_action_frame", Native: "maceShieldActionFrame"),
+            (External: "staff_frames", Native: "staffFrames"),
+            (External: "staff_action_frame", Native: "staffActionFrame"),
+            (External: "idle_frames", Native: "idleFrames"),
+            (External: "walking_frames", Native: "walkingFrames"),
+            (External: "blocking_frames", Native: "blockingFrames"),
+            (External: "death_frames", Native: "deathFrames"),
+            (External: "casting_frames", Native: "castingFrames"),
+            (External: "recovery_frames", Native: "recoveryFrames"),
+            (External: "town_idle_frames", Native: "townIdleFrames"),
+            (External: "town_walking_frames", Native: "townWalkingFrames"),
+            (External: "casting_action_frame", Native: "castingActionFrame"),
+        };
+        Assert.Equal(6, externalRows.Count);
+        foreach (var (classSymbol, externalRow) in externalRows) {
+            var native = TsvTable.Parse(
+                $"assets/txtdata/classes/{classSymbol}/animations.tsv",
+                File.ReadAllText(Path.Combine(
+                    repositoryRoot,
+                    "assets",
+                    "txtdata",
+                    "classes",
+                    classSymbol,
+                    "animations.tsv")));
+            var nativeValues = native.Rows.ToDictionary(
+                row => row.Required("Variable"),
+                row => row.Required("Value"),
+                StringComparer.Ordinal);
+            foreach (var (externalColumn, nativeVariable) in fields)
+                Assert.Equal(nativeValues[nativeVariable], externalRow.Required(externalColumn));
+        }
+    }
+
+    [Fact]
     public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
     {
         var repositoryRoot = FindRepositoryRoot();
