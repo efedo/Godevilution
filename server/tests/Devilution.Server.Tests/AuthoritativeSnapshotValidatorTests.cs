@@ -97,6 +97,10 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 Difficulty = (GameDifficulty)99,
             }));
 
+        var tooManyMutations = new Snapshot();
+        tooManyMutations.ActiveWorldMutationIds.AddRange(
+            Enumerable.Range(1, 4097).Select(value => (uint)value));
+
         foreach (var snapshot in new[] {
             new Snapshot { Portals = { new PortalSnapshot() } },
             new Snapshot {
@@ -117,6 +121,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
             },
             new Snapshot { ActiveWorldMutationIds = { 0 } },
             new Snapshot { ActiveWorldMutationIds = { 7, 7 } },
+            tooManyMutations,
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));

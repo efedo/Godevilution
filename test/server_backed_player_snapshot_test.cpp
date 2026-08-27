@@ -1811,6 +1811,11 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidSessionMetadata)
 	duplicateMutation.add_active_world_mutation_ids(7);
 	duplicateMutation.add_active_world_mutation_ids(7);
 	EXPECT_FALSE(ProjectSessionMetadata(duplicateMutation).has_value());
+
+	protocol::Snapshot tooManyMutations;
+	for (uint32_t mutationId = 1; mutationId <= 4097; mutationId++)
+		tooManyMutations.add_active_world_mutation_ids(mutationId);
+	EXPECT_FALSE(ProjectSessionMetadata(tooManyMutations).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)

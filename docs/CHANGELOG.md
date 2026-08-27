@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Bound active world-mutation metadata to 4,096 entries consistently across
+  the generic host, Godot, and native compatibility boundaries.
 - Reject non-native player level IDs before native compatibility application
   narrows them into the legacy 8-bit level field.
 - Reject authoritative player snapshots with undefined direction, combat-mode,

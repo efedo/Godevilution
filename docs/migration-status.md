@@ -109,6 +109,8 @@ The generic host also rejects undefined player direction, combat-mode,
 ability-kind, and ability-targeting enum values before wire serialization.
 The native player application boundary now repeats the regular-level range
 check before narrowing an authoritative level ID into the legacy 8-bit field.
+Active world-mutation metadata now has the same 4,096-entry bound at the host,
+Godot, and native session-metadata boundaries.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 

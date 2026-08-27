@@ -20,6 +20,7 @@ public sealed class AuthoritativeClientModel
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
     private const int MaximumEventBatchCount = 4096;
+    private const int MaximumWorldMutationCount = 4096;
     private const uint MaximumStableSpellId = byte.MaxValue;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
@@ -1135,6 +1136,10 @@ public sealed class AuthoritativeClientModel
         }
 
         var mutationIds = new HashSet<uint>();
+        if (snapshot.ActiveWorldMutationIds.Count > MaximumWorldMutationCount) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many active world mutations.");
+        }
         foreach (var mutationId in snapshot.ActiveWorldMutationIds) {
             if (mutationId == 0 || !mutationIds.Add(mutationId)) {
                 throw new InvalidDataException(

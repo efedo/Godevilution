@@ -9,6 +9,7 @@ public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
     private const uint NativeLevelCount = 25;
+    private const int MaximumWorldMutationCount = 4096;
 
     public static void Validate(Snapshot snapshot)
     {
@@ -60,6 +61,9 @@ public static class AuthoritativeSnapshotValidator
                 "The authoritative snapshot contains an invalid game difficulty.");
 
         var mutationIds = new HashSet<uint>();
+        if (snapshot.ActiveWorldMutationIds.Count > MaximumWorldMutationCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many active world mutations.");
         foreach (var mutationId in snapshot.ActiveWorldMutationIds) {
             if (mutationId == 0 || !mutationIds.Add(mutationId))
                 throw new InvalidDataException(

@@ -28,6 +28,7 @@ constexpr uint32_t StashPageCount = 100;
 constexpr uint32_t StashCellCount = 100;
 constexpr uint32_t StashGridWidth = 10;
 constexpr uint32_t StashGridHeight = 10;
+constexpr int MaxWorldMutationCount = 4096;
 
 bool HasValidItemIdentity(uint32_t itemSeed, const protocol::ItemStateSnapshot &state)
 {
@@ -824,6 +825,8 @@ tl::expected<ProjectedSessionMetadata, std::string> ProjectSessionMetadata(const
 		.victoryTriggered = snapshot.victory_triggered(),
 		.difficulty = difficulty,
 	};
+	if (snapshot.active_world_mutation_ids_size() > MaxWorldMutationCount)
+		return tl::make_unexpected("Server-backed snapshot contains too many active world mutations.");
 	projected.activeWorldMutationIds.reserve(snapshot.active_world_mutation_ids_size());
 	for (const uint32_t mutationId : snapshot.active_world_mutation_ids()) {
 		if (mutationId == 0)

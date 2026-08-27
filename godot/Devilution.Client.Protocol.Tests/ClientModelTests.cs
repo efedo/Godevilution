@@ -775,6 +775,8 @@ public sealed class ClientModelTests
             snapshot => snapshot.Difficulty = (GameDifficulty)99,
             snapshot => snapshot.ActiveWorldMutationIds[0] = 0,
             snapshot => snapshot.ActiveWorldMutationIds.Add(20),
+            snapshot => snapshot.ActiveWorldMutationIds.AddRange(
+                Enumerable.Range(21, 4096).Select(value => (uint)value)),
         }) {
             var invalid = valid.Clone();
             mutate(invalid);
