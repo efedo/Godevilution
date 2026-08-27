@@ -144,6 +144,25 @@ public sealed class AuthoritativeClientTransportTests
     }
 
     [Fact]
+    public async Task RejectsAHandshakeWithAnInvalidGameMode()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunInvalidGameModeServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash"));
+
+        await Assert.ThrowsAsync<InvalidDataException>(
+            () => client.ConnectAsync(TestContext.Current.CancellationToken));
+        Assert.False(client.IsConnected);
+        await serverTask;
+    }
+
+    [Fact]
     public async Task RejectsMalformedAcknowledgementWithoutDroppingPendingCommand()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -238,6 +257,7 @@ public sealed class AuthoritativeClientTransportTests
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = "content-hash",
                 TickRateHz = 20,
+                GameMode = GameMode.Multiplayer,
             },
         });
         await WriteEnvelopeAsync(stream, new Envelope {
@@ -266,12 +286,30 @@ public sealed class AuthoritativeClientTransportTests
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = "content-hash",
                 TickRateHz = 20,
+                GameMode = GameMode.Multiplayer,
             },
         });
         await WriteEnvelopeAsync(stream, new Envelope {
             Error = new ProtocolError {
                 Code = ProtocolErrorCode.InvalidMessage,
                 Detail = "snapshot unavailable",
+            },
+        });
+        listener.Stop();
+    }
+
+    private static async Task RunInvalidGameModeServerAsync(TcpListener listener)
+    {
+        using var tcpClient = await listener.AcceptTcpClientAsync();
+        await using var stream = tcpClient.GetStream();
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            ServerHello = new ServerHello {
+                ServerBuildId = "test-server",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = "content-hash",
+                TickRateHz = 20,
+                GameMode = GameMode.Unspecified,
             },
         });
         listener.Stop();
@@ -288,6 +326,7 @@ public sealed class AuthoritativeClientTransportTests
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = "content-hash",
                 TickRateHz = 20,
+                GameMode = GameMode.Multiplayer,
             },
         });
         await WriteEnvelopeAsync(stream, new Envelope {

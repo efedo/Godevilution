@@ -109,7 +109,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
                 || hello.ServerHello.ContentManifestHash != options.ContentManifestHash
                 || (!string.IsNullOrWhiteSpace(options.RulesetIdentityHash)
-                    && hello.ServerHello.RulesetIdentityHash != options.RulesetIdentityHash))
+                    && hello.ServerHello.RulesetIdentityHash != options.RulesetIdentityHash)
+                || hello.ServerHello.GameMode is not (GameMode.SinglePlayer or GameMode.Multiplayer))
                 throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");
 
             SessionToken = hello.ServerHello.SessionToken;

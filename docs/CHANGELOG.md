@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject server handshakes that declare an unspecified or unknown game mode
+  before the Godot client enters a connected state.
 - Validate command acknowledgements before the Godot transport or model mutates
   pending-command and presentation state; malformed acknowledgements now fail
   closed without dropping retryable commands.
