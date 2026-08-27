@@ -6,9 +6,12 @@
 
 #include "devilution.pb.h"
 #include "engine/cursor.h"
+#include "game/items/item_pool.hpp"
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/objects/object_pool.hpp"
+#include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
 #include "network/authoritative/item_snapshot.hpp"
@@ -887,6 +890,80 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_TRUE((*projected)[1].destroyed);
 	EXPECT_FALSE((*projected)[1].missilePassable);
 	EXPECT_TRUE((*projected)[1].trapArmed);
+}
+
+TEST(ServerBackedPlayerSnapshot, RemovesUnclaimedCompatibilityWorldEntitySlots)
+{
+	InitializeItemPool();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+
+	const Point staleItemPosition { 10, 10 };
+	const Point claimedItemPosition { 11, 11 };
+	const unsigned staleItemSlot = 0;
+	const unsigned claimedItemSlot = 1;
+	ActiveItemCount = 2;
+	Items[staleItemSlot] = {};
+	Items[staleItemSlot]._iSeed = 101;
+	Items[staleItemSlot].position = staleItemPosition;
+	Items[claimedItemSlot] = {};
+	Items[claimedItemSlot]._iSeed = 42;
+	Items[claimedItemSlot].position = claimedItemPosition;
+	tileAt(staleItemPosition).setItem(static_cast<int>(staleItemSlot + 1));
+	tileAt(claimedItemPosition).setItem(static_cast<int>(claimedItemSlot + 1));
+
+	const Point staleObjectPosition { 12, 12 };
+	const Point claimedObjectPosition { 13, 13 };
+	const int staleObjectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_GE(staleObjectSlot, 0);
+	Objects[staleObjectSlot] = {};
+	Objects[staleObjectSlot]._otype = OBJ_BARREL;
+	Objects[staleObjectSlot].position = staleObjectPosition;
+	tileAt(staleObjectPosition).setObject(staleObjectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+	const int claimedObjectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_GE(claimedObjectSlot, 0);
+	Objects[claimedObjectSlot] = {};
+	Objects[claimedObjectSlot]._otype = OBJ_BARREL;
+	Objects[claimedObjectSlot].position = claimedObjectPosition;
+	tileAt(claimedObjectPosition).setObject(claimedObjectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+
+	ProjectedWorldItemSnapshot claimedItem;
+	claimedItem.entityId = 10;
+	claimedItem.levelId = 1;
+	claimedItem.positionX = claimedItemPosition.x;
+	claimedItem.positionY = claimedItemPosition.y;
+	claimedItem.itemSeed = 42;
+	claimedItem.item._iSeed = 42;
+	claimedItem.item._itype = ItemType::Gold;
+	ProjectedObjectSnapshot claimedObject;
+	claimedObject.entityId = 20;
+	claimedObject.objectId = static_cast<uint32_t>(OBJ_BARREL);
+	claimedObject.nativeObjectId = static_cast<uint32_t>(OBJ_BARREL);
+	claimedObject.levelId = 1;
+	claimedObject.positionX = claimedObjectPosition.x;
+	claimedObject.positionY = claimedObjectPosition.y;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({}, { claimedItem }, { claimedObject }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+
+	ASSERT_EQ(ActiveItemCount, 1);
+	EXPECT_EQ(tileAt(staleItemPosition).item(), 0);
+	EXPECT_EQ(tileAt(claimedItemPosition).item(), static_cast<int>(claimedItemSlot + 1));
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectIndexAt(0), claimedObjectSlot);
+	EXPECT_EQ(tileAt(staleObjectPosition).object(), 0);
+	EXPECT_EQ(tileAt(claimedObjectPosition).object(), claimedObjectSlot + 1);
+
+	presentation.Clear();
+	EXPECT_EQ(ActiveItemCount, 0);
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 0);
+	EXPECT_EQ(tileAt(claimedItemPosition).item(), 0);
+	EXPECT_EQ(tileAt(claimedObjectPosition).object(), 0);
+	InitializeItemPool();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)

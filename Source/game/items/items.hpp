@@ -304,7 +304,7 @@ struct CornerStoneStruct {
 };
 
 /** Contains the items on ground in the current game. Storage is owned by gItemPool (item_pool.cpp). */
-extern Item *Items;
+extern DVL_API_FOR_TEST Item *Items;
 extern bool ShowUniqueItemInfoBox;
 extern CornerStoneStruct CornerStone;
 extern DVL_API_FOR_TEST bool UniqueItemFlags[128];

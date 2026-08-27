@@ -778,6 +778,17 @@ void RemoveUnclaimedMonsterSlots(const std::unordered_set<unsigned> &claimedSlot
 	}
 }
 
+void RemoveUnclaimedItemSlots(const std::unordered_set<unsigned> &claimedSlots)
+{
+	for (int activeIndex = ItemPoolAdapter::ActiveItemCountValue() - 1; activeIndex >= 0; --activeIndex) {
+		const unsigned itemSlot = ItemPoolAdapter::ActiveItemIds()[static_cast<size_t>(activeIndex)];
+		if (claimedSlots.contains(itemSlot))
+			continue;
+
+		RemoveMappedItem(itemSlot);
+	}
+}
+
 void RemoveMappedObject(int objectSlot)
 {
 	if (const int activeIndex = FindActiveObjectListIndex(objectSlot); activeIndex >= 0) {
@@ -786,6 +797,17 @@ void RemoveMappedObject(int objectSlot)
 		if (ObjectUnderCursor == &Objects[objectSlot])
 			ObjectUnderCursor = nullptr;
 		ObjectPoolAdapter::ReleaseObjectSlot(objectSlot, activeIndex);
+	}
+}
+
+void RemoveUnclaimedObjectSlots(const std::unordered_set<int> &claimedSlots)
+{
+	for (int activeIndex = ObjectPoolAdapter::ActiveObjectCountValue() - 1; activeIndex >= 0; --activeIndex) {
+		const int objectSlot = ObjectPoolAdapter::ActiveObjectIndexAt(activeIndex);
+		if (claimedSlots.contains(objectSlot))
+			continue;
+
+		RemoveMappedObject(objectSlot);
 	}
 }
 
@@ -1034,6 +1056,10 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		itemSlots_[snapshot.entityId] = slot;
 		ApplyItemSnapshot(Items[slot], snapshot);
 	}
+	// Native level loading may leave compatibility-pool items behind when the
+	// authoritative snapshot omits them. Remove those slots so stale floor
+	// items cannot remain visible or interactable on the connected client.
+	RemoveUnclaimedItemSlots(claimedItemSlots);
 
 	for (const auto &snapshot : projection.Objects()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))
@@ -1076,6 +1102,10 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		objectSlots_[snapshot.entityId] = slot;
 		ApplyObjectSnapshot(Objects[slot], slot, snapshot);
 	}
+	// Native level loading may also leave compatibility-pool objects behind.
+	// Only objects claimed by the current authoritative snapshot may remain in
+	// the connected presentation pool.
+	RemoveUnclaimedObjectSlots(claimedObjectSlots);
 
 	for (const auto &snapshot : projection.Projectiles()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))

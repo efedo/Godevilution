@@ -53,6 +53,11 @@ from server-owned equipment without invoking legacy gameplay recalculation.
 The same snapshot path now rebuilds the native stash scroll-source mask, so
 closing or changing an authoritative stash cannot leave stale spell sources.
 Inventory and belt scroll sources remain intact during that reconciliation.
+The native world presentation bridge now removes unclaimed compatibility-pool
+world-item and object slots after each authoritative snapshot, clearing their
+tile references so omitted legacy level entities cannot remain as connected
+client ghosts. Focused coverage verifies that claimed item/object slots remain
+while stale compatibility slots are removed.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,
@@ -1523,6 +1528,10 @@ rebuilding the projects before a future run.
 The Diablo module suite was rerun after the Na-Krul parity-characterization
 correction and passed 1,452 of 1,452 tests; the other counts above remain from
 the original Release baseline.
+
+On 2026-08-27, the focused native `ServerBackedPlayerSnapshot.*` suite passed
+107 of 107 tests, including the compatibility-pool world-item/object cleanup
+regression.
 
 On 2026-08-26, the current Debug Diablo module suite ran 1,828 of 1,839
 tests successfully. Three failures were stale characterization expectations:

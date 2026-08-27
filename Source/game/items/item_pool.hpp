@@ -39,7 +39,7 @@ extern ItemPool gItemPool;
 
 // Active/available item index bookkeeping (uint8_t, separate from pool internals)
 extern uint8_t ActiveItems[MAXITEMS];
-extern uint8_t ActiveItemCount;
+extern DVL_API_FOR_TEST uint8_t ActiveItemCount;
 
 // Initialization hook (call when starting a new level)
 void InitializeItemPool();
