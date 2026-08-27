@@ -212,6 +212,17 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             + (int)(seed % (uint)hitPointRange);
         var attackDamage = definition.MinimumDamage
             + (int)((seed / 0x100U) % (uint)damageRange);
+        var uniqueDefinition = applyUniqueSelector
+            ? uniqueMonsters?.Definitions.FirstOrDefault(uniqueDefinition =>
+                uniqueDefinition.EntityId == 0
+                && (uniqueDefinition.MonsterId == 0
+                    || uniqueDefinition.MonsterId == definition.MonsterId)
+                && (uniqueDefinition.NativeAi.Length == 0
+                    || string.Equals(
+                        uniqueDefinition.NativeAi,
+                        definition.NativeAi,
+                        StringComparison.Ordinal)))
+            : null;
         var target = CreateCombatTarget(
             new AuthoritativeMonsterSpawn(
                 definition,
@@ -225,20 +236,12 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             entityId,
             multiplayer,
             direction,
+            preserveSinglePlayerHealth: uniqueDefinition is not null,
             monsterItemSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA11CEU),
             monsterAiSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA17EEDU));
-        if (applyUniqueSelector
-            && uniqueMonsters?.Definitions.Any(uniqueDefinition =>
-                uniqueDefinition.EntityId == 0
-                && (uniqueDefinition.MonsterId == 0
-                    || uniqueDefinition.MonsterId == definition.MonsterId)
-                && (uniqueDefinition.NativeAi.Length == 0
-                    || string.Equals(
-                        uniqueDefinition.NativeAi,
-                        definition.NativeAi,
-                        StringComparison.Ordinal))) == true) {
+        if (uniqueDefinition is not null) {
             target.IsUnique = true;
-            uniqueMonsters.ApplyToGenerated([target]);
+            uniqueMonsters!.ApplyToGenerated([target]);
         }
         return target;
     }
@@ -456,7 +459,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint monsterItemSeed = 0,
         uint monsterAiSeed = 0,
         int initialStandAnimationFrame = 0,
-        int initialStandAnimationTick = 0)
+        int initialStandAnimationTick = 0,
+        bool preserveSinglePlayerHealth = false)
     {
         var dropDefinition = monsterCatalog?.TryGetDropDefinition(
             spawn.Definition.MonsterId,
@@ -498,10 +502,14 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             dropPrice = checked((uint)Math.Max(0, dropState.Value));
         }
 
-        var hitPoints = ResolveInitialMonsterHealth(spawn.HitPoints, multiplayer);
+        var hitPoints = ResolveInitialMonsterHealth(
+            spawn.HitPoints,
+            multiplayer,
+            preserveSinglePlayerHealth);
         var maximumHitPoints = ResolveInitialMonsterHealth(
             spawn.Definition.MaximumHitPoints,
-            multiplayer);
+            multiplayer,
+            preserveSinglePlayerHealth);
         return new AuthoritativeCombatTarget(
             checked(firstEntityId + (uint)index),
             spawn.PositionX,
@@ -557,8 +565,13 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     }
 
     /** Native InitMonster halves ordinary single-player monster health. */
-    private static int ResolveInitialMonsterHealth(int health, bool multiplayer)
-        => multiplayer ? health : Math.Max(health / 2, 1);
+    private static int ResolveInitialMonsterHealth(
+        int health,
+        bool multiplayer,
+        bool preserveSinglePlayerHealth)
+        => multiplayer || preserveSinglePlayerHealth
+            ? health
+            : Math.Max(health / 2, 1);
 
     private static uint CreateDropSeed(uint seed, uint monsterId, int index)
     {

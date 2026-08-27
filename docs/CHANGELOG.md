@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve authored unique-monster health percentages when materializing
+  single-player summons, avoiding a second native health-halving pass.
 - Harden the protocol-free native world projection boundary by rejecting
   zero/duplicate monster identities, invalid native directions, and
   non-adjacent authoritative movement targets before publishing state; reject
