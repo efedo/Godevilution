@@ -30,6 +30,19 @@ namespace devilution::authoritative {
 /** Maps authoritative equipment to the native weapon/armor sprite bitmask. */
 [[nodiscard]] uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snapshot);
 
+/** Applies an authoritative player action to native animation state only. */
+void ApplyProjectedPlayerAnimation(
+	Player &player,
+	const ProjectedPlayerSnapshot &snapshot,
+	player_graphic graphic,
+	bool reset,
+	bool hasPreviousTick,
+	uint64_t previousTick,
+	uint64_t presentationTicksSincePreviousSnapshot = 0);
+
+/** Advances projected player animation state without running gameplay logic. */
+void AdvanceProjectedPlayerAnimation(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop);
+
 /** Returns whether a projected remote player belongs to the currently rendered level. */
 [[nodiscard]] bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player);
 

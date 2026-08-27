@@ -2363,6 +2363,39 @@ TEST(ServerBackedPlayerSnapshot, PlacesRemoteAnimationAtAuthoritativeActionTick)
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, AppliesProjectedPlayerAnimationAtAuthoritativeActionTick)
+{
+	LoadPlayerDataFiles();
+	LoadSpellData();
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.characterClassId = static_cast<uint32_t>(HeroClass::Warrior);
+	snapshot.life = 640;
+	snapshot.lifeMaximum = 640;
+	snapshot.combatMode = PM_SPELL;
+	snapshot.serverTick = 3;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 3,
+		.startedAtTick = 1,
+		.hasCast = true,
+		.spellId = static_cast<uint32_t>(SpellID::Firebolt),
+	};
+
+	Player player;
+	player._pClass = HeroClass::Warrior;
+	player.setAnimations();
+	ApplyProjectedPlayerAnimation(
+	    player,
+	    snapshot,
+	    GetRemotePlayerGraphic(snapshot),
+	    true,
+	    false,
+	    0);
+
+	EXPECT_EQ(player.animInfo.currentFrame, 2);
+	AdvanceProjectedPlayerAnimation(player, GetRemotePlayerGraphic(snapshot), 1, false);
+	EXPECT_EQ(player.animInfo.currentFrame, 3);
+}
+
 TEST(ServerBackedPlayerSnapshot, AdvancesRemotePlayerPresentationAnimationWithoutSimulation)
 {
 	LoadPlayerDataFiles();

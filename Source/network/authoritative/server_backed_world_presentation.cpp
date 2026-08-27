@@ -173,7 +173,7 @@ void SetRemotePlayerAnimationFrame(Player &player, player_graphic graphic, uint6
 	player.animInfo.tickCounterOfCurrentFrame = static_cast<int8_t>(elapsedTicks % static_cast<uint64_t>(ticksPerFrame));
 }
 
-void AdvanceRemotePlayerAnimation(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop)
+void AdvanceProjectedPlayerAnimationInternal(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop)
 {
 	int8_t numberOfFrames;
 	int8_t ticksPerFrame;
@@ -186,7 +186,7 @@ void AdvanceRemotePlayerAnimation(Player &player, player_graphic graphic, uint64
 	SetRemotePlayerAnimationFrame(player, graphic, currentTicks + elapsedTicks, loop);
 }
 
-void ApplyRemotePlayerAnimation(
+void ApplyProjectedPlayerAnimationInternal(
 	Player &player,
 	const ProjectedPlayerSnapshot &snapshot,
 	player_graphic graphic,
@@ -210,7 +210,7 @@ void ApplyRemotePlayerAnimation(
 		const uint64_t unappliedServerTicks = serverTicks > presentationTicksSincePreviousSnapshot
 		    ? serverTicks - presentationTicksSincePreviousSnapshot
 		    : 0;
-		AdvanceRemotePlayerAnimation(player, graphic, unappliedServerTicks, loop);
+		AdvanceProjectedPlayerAnimationInternal(player, graphic, unappliedServerTicks, loop);
 	}
 }
 
@@ -866,6 +866,30 @@ uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snaps
 	return GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
 }
 
+void ApplyProjectedPlayerAnimation(
+	Player &player,
+	const ProjectedPlayerSnapshot &snapshot,
+	player_graphic graphic,
+	bool reset,
+	bool hasPreviousTick,
+	uint64_t previousTick,
+	uint64_t presentationTicksSincePreviousSnapshot)
+{
+	ApplyProjectedPlayerAnimationInternal(
+	    player,
+	    snapshot,
+	    graphic,
+	    reset,
+	    hasPreviousTick,
+	    previousTick,
+	    presentationTicksSincePreviousSnapshot);
+}
+
+void AdvanceProjectedPlayerAnimation(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop)
+{
+	AdvanceProjectedPlayerAnimationInternal(player, graphic, elapsedTicks, loop);
+}
+
 bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player)
 {
 	return projectedLevelId == 0 || player.isOnActiveLevel();
@@ -1101,7 +1125,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		    || it->second.actionKind != actionKind
 		    || it->second.actionStartedAtTick != actionStartedAtTick;
 		ApplyRemotePlayerSnapshot(it->second.player, snapshot);
-		ApplyRemotePlayerAnimation(
+		ApplyProjectedPlayerAnimationInternal(
 		    it->second.player,
 		    snapshot,
 		    graphic,
@@ -1244,7 +1268,7 @@ std::size_t ServerBackedWorldPresentation::AdvanceAnimations() noexcept
 		(void)entityId;
 		const bool loop = remote.graphic == player_graphic::Stand
 		    || remote.graphic == player_graphic::Walk;
-		AdvanceRemotePlayerAnimation(remote.player, remote.graphic, 1, loop);
+		AdvanceProjectedPlayerAnimationInternal(remote.player, remote.graphic, 1, loop);
 		++remote.presentationTicksSinceServerTick;
 		++advanced;
 	}

@@ -40,8 +40,8 @@ public:
 	[[nodiscard]] ServerBackedSession *Session() noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedSession *Session() const noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedWorldProjection &WorldProjection() const noexcept { return worldProjection_; }
-	/** Advances projected monster animation without running legacy simulation. */
-	void AdvancePresentationAnimations() noexcept { (void)worldPresentation_.AdvanceAnimations(); }
+	/** Advances projected entity animation without running legacy simulation. */
+	void AdvancePresentationAnimations() noexcept;
 	/** Draws authoritative remote players through the presentation-only bridge. */
 	void DrawRemotePlayers(const Surface &out, Point tilePosition, Point targetBufferPosition, int lightTableIndex) const
 	{
@@ -181,6 +181,12 @@ private:
 	std::optional<ServerBackedItemReference> pendingInventoryItemDrag_;
 	std::optional<uint32_t> pendingInventoryItemDragSeed_;
 	std::optional<ServerBackedItemReference> pendingOilUse_;
+	std::optional<player_graphic> playerPresentationGraphic_;
+	std::optional<uint32_t> playerPresentationActionKind_;
+	std::optional<uint64_t> playerPresentationActionStartedAtTick_;
+	std::optional<uint32_t> playerPresentationLevelId_;
+	std::optional<uint64_t> playerPresentationServerTick_;
+	uint64_t playerPresentationTicksSinceServerTick_ = 0;
 	ServerBackedWorldProjection worldProjection_;
 	ServerBackedWorldPresentation worldPresentation_;
 };

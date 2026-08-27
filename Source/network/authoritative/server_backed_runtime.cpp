@@ -150,9 +150,26 @@ void ServerBackedRuntime::Stop() noexcept
 	pendingInventoryItemDrag_.reset();
 	pendingInventoryItemDragSeed_.reset();
 	pendingOilUse_.reset();
+	playerPresentationGraphic_.reset();
+	playerPresentationActionKind_.reset();
+	playerPresentationActionStartedAtTick_.reset();
+	playerPresentationLevelId_.reset();
+	playerPresentationServerTick_.reset();
+	playerPresentationTicksSinceServerTick_ = 0;
 	worldProjection_.Clear();
 	worldPresentation_.Clear();
 	player_ = nullptr;
+}
+
+void ServerBackedRuntime::AdvancePresentationAnimations() noexcept
+{
+	(void)worldPresentation_.AdvanceAnimations();
+	if (player_ == nullptr || !playerPresentationGraphic_.has_value())
+		return;
+	const bool loop = *playerPresentationGraphic_ == player_graphic::Stand
+	    || *playerPresentationGraphic_ == player_graphic::Walk;
+	AdvanceProjectedPlayerAnimation(*player_, *playerPresentationGraphic_, 1, loop);
+	++playerPresentationTicksSinceServerTick_;
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::OpenSmithStore(uint64_t requestedTick, uint64_t nowMs)
@@ -1042,6 +1059,23 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
+	const player_graphic graphic = GetRemotePlayerGraphic(*snapshot);
+	const std::optional<uint32_t> actionKind = snapshot->currentAction.has_value()
+	    ? std::optional<uint32_t>(snapshot->currentAction->kind)
+	    : std::nullopt;
+	const std::optional<uint64_t> actionStartedAtTick = snapshot->currentAction.has_value()
+	    ? std::optional<uint64_t>(snapshot->currentAction->startedAtTick)
+	    : std::nullopt;
+	const bool animationChanged = !playerPresentationGraphic_.has_value()
+	    || *playerPresentationGraphic_ != graphic
+	    || playerPresentationActionKind_ != actionKind
+	    || playerPresentationActionStartedAtTick_ != actionStartedAtTick
+	    || !playerPresentationLevelId_.has_value()
+	    || *playerPresentationLevelId_ != snapshot->levelId
+	    || player_->direction != static_cast<Direction>(snapshot->facingDirection);
+	const bool hasPreviousTick = playerPresentationServerTick_.has_value();
+	const uint64_t previousTick = playerPresentationServerTick_.value_or(0);
+	const uint64_t presentationTicksSincePreviousSnapshot = playerPresentationTicksSinceServerTick_;
 	std::optional<Item> pendingItem;
 	if (pendingInventoryItemDrag_.has_value() && pendingInventoryItemDragSeed_.has_value()) {
 		if (!player_->HoldItem.isEmpty()
@@ -1070,6 +1104,21 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	}
 	if (auto result = ApplyServerBackedPlayerSnapshot(*player_, *snapshot); !result.has_value())
 		return result;
+	ApplyProjectedPlayerAnimation(
+	    *player_,
+	    *snapshot,
+	    graphic,
+	    animationChanged,
+	    hasPreviousTick,
+	    previousTick,
+	    presentationTicksSincePreviousSnapshot);
+	playerPresentationGraphic_ = graphic;
+	playerPresentationActionKind_ = actionKind;
+	playerPresentationActionStartedAtTick_ = actionStartedAtTick;
+	playerPresentationLevelId_ = snapshot->levelId;
+	playerPresentationServerTick_ = snapshot->serverTick;
+	if (animationChanged || snapshot->currentAction.has_value() || snapshot->serverTick > previousTick)
+		playerPresentationTicksSinceServerTick_ = 0;
 	if (auto result = ApplyServerBackedStashProjection(*snapshot); !result.has_value())
 		return result;
 	if (!pendingInventoryItemDrag_.has_value() || !pendingItem.has_value())

@@ -31,7 +31,10 @@ well; malformed or misplaced values fail closed before presentation, while
 empty values retain the legacy native enum/behavior fallback. The connected
 native presentation loop also advances projected remote-player animations
 without invoking legacy gameplay simulation, while snapshot catch-up avoids
-double-advancing time already consumed by the render loop.
+double-advancing time already consumed by the render loop. The same loop now
+drives the local player's server-declared action animation without re-entering
+legacy `ProcessPlayers` mutation, and resets that presentation state across
+authoritative level changes.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,
