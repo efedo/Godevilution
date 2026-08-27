@@ -5492,7 +5492,7 @@ public sealed class ShippedContentTests
             .Where(row => row.Required("name") is "piercing" or "puncturing" or "bashing")
             .ToDictionary(row => row.Required("name"), StringComparer.Ordinal);
 
-        Assert.Equal((2, 6), (
+        Assert.Equal((1, 1), (
             suffixes["piercing"].RequiredInt32("power.value1"),
             suffixes["piercing"].RequiredInt32("power.value2")));
         Assert.Equal((2, 2), (

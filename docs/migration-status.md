@@ -5097,9 +5097,10 @@ atural_resistance_per_level_percent` and
   duplicate-name legacy variants remain intentionally unmerged.
 - The overlay also ships the distinct Hellfire `Doppelganger's` weapon/staff
   prefix; duplicate-name legacy variants remain intentionally unmerged.
-- The Hellfire overlay now replaces the native `piercing`, `puncturing`, and
-  `bashing` target-accuracy suffix ranges with their Hellfire values while
-  retaining the shared validated suffix schema.
+- The Hellfire overlay now replaces the native `piercing` (`1–1`),
+  `puncturing` (`2–2`), and `bashing` (`3–3`) target-accuracy suffix ranges
+  with their Hellfire values while retaining the shared validated suffix
+  schema.
 - Hellfire's staff-capable legacy affix eligibility rows now replace their base
   counterparts through deterministic composite-key overlays, avoiding duplicate
   candidates during authoritative generation.

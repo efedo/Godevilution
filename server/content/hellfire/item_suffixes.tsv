@@ -16,7 +16,7 @@ sturdiness	DUR	26	75	1	Armor,Shield,Weapon,Staff	Any	1	true	100	100	2
 craftsmanship	DUR	51	100	6	Armor,Shield,Weapon,Staff	Any	1	true	200	200	2
 structure	DUR	101	200	12	Armor,Shield,Weapon,Staff	Any	1	true	300	300	2
 the ages	INDESTRUCTIBLE			25	Armor,Shield,Weapon,Staff	Any	1	true	600	600	5
-piercing	TARGAC	2	6	1	Weapon,Bow	Any	1	true	1000	1000	3
+piercing	TARGAC	1	1	1	Weapon,Bow	Any	1	true	1000	1000	3
 puncturing	TARGAC	2	2	9	Weapon,Bow	Any	1	true	2000	2000	6
 bashing	TARGAC	3	3	17	Weapon	Any	1	true	4000	4000	12
 devastation	DEVASTATION	1	1	1	Weapon,Staff,Bow	Any	1	true	1200	1200	3

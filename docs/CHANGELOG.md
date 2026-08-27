@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Correct the Hellfire `piercing` suffix range to its native `1–1` target-
+  accuracy value in the external overlay.
 - Externalize Hellfire's native `The Grizzly` unique item with its validated
   five-power definition through the unique-item overlay.
 - Externalize Hellfire's native affix eligibility rows, including staff-capable
