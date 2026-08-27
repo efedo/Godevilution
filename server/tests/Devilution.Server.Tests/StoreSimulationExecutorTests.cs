@@ -3966,6 +3966,7 @@ public sealed class StoreSimulationExecutorTests
             store.Save("player-a", "second");
 
             Assert.Equal("second", store.Load("player-a"));
+            Assert.Empty(Directory.GetFiles(root, "*.tmp"));
             Assert.True(store.Delete("player-a"));
             Assert.Null(store.Load("player-a"));
             Assert.Throws<ArgumentException>(() => store.Save("../escape", "invalid"));

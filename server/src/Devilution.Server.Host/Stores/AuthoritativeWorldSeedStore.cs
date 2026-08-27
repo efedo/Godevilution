@@ -36,12 +36,25 @@ public sealed class AuthoritativeWorldSeedStore
 
             var seed = requestedSeed
                 ?? BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(sizeof(uint)));
-            var temporaryPath = path + ".tmp";
-            File.WriteAllText(
-                temporaryPath,
-                seed.ToString(CultureInfo.InvariantCulture),
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            File.Move(temporaryPath, path, overwrite: true);
+            var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try {
+                var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
+                    .GetBytes(seed.ToString(CultureInfo.InvariantCulture));
+                using (var stream = new FileStream(
+                    temporaryPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    bufferSize: 4096,
+                    options: FileOptions.WriteThrough)) {
+                    stream.Write(bytes);
+                    stream.Flush(flushToDisk: true);
+                }
+                File.Move(temporaryPath, path, overwrite: true);
+            } finally {
+                if (File.Exists(temporaryPath))
+                    File.Delete(temporaryPath);
+            }
             return seed;
         }
     }

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make authoritative save and world-seed writes durable before atomic
+  replacement, isolate concurrent temporary files, and clean up failed writes;
+  add focused coverage for temporary-artifact cleanup.
 - Give validated monster controller tuning precedence over legacy AI labels,
   restoring the authored Gargoyle, Skeleton King, and Rhino behavior paths.
 - Preserve authored unique-monster health percentages when materializing

@@ -18,6 +18,7 @@ public sealed class AuthoritativeWorldSeedStoreTests
             Assert.Equal(
                 "305419896",
                 File.ReadAllText(Path.Combine(root, AuthoritativeWorldSeedStore.FileName)).Trim());
+            Assert.Empty(Directory.GetFiles(root, "*.tmp"));
         } finally {
             DeleteRoot(root);
         }

@@ -1,6 +1,13 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-26
+Status date: 2026-08-27
+
+Authoritative save and world-seed writes now use unique temporary files with
+`WriteThrough` and an explicit disk flush before atomic replacement. Failed
+writes clean up their temporary file without changing the previous committed
+save, and focused store tests verify that normal writes leave no temporary
+artifacts. This strengthens the server-owned recovery boundary without
+changing the version-1 save envelope.
 
 Generated unique placements now accept an optional validated
 `unique_monster_packs.tsv` contract. The server materializes deterministic

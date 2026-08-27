@@ -19,10 +19,26 @@ public sealed class AuthoritativeSaveStore
     {
         var path = GetPath(sessionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(serializedSave);
-        var temporaryPath = path + ".tmp";
+        var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         lock (synchronization) {
-            File.WriteAllText(temporaryPath, serializedSave, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            File.Move(temporaryPath, path, overwrite: true);
+            try {
+                var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
+                    .GetBytes(serializedSave);
+                using (var stream = new FileStream(
+                    temporaryPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    bufferSize: 4096,
+                    options: FileOptions.WriteThrough)) {
+                    stream.Write(bytes);
+                    stream.Flush(flushToDisk: true);
+                }
+                File.Move(temporaryPath, path, overwrite: true);
+            } finally {
+                if (File.Exists(temporaryPath))
+                    File.Delete(temporaryPath);
+            }
         }
     }
 
