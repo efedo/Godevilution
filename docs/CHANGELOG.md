@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Hellfire's native `piercing`, `puncturing`, and `bashing`
+  target-accuracy suffix ranges through the validated item-suffix overlay.
 - Externalize Hellfire's `devastation`, `decay`, and `peril` weapon/staff/bow
   suffixes through the validated item-suffix overlay.
 - Externalize Hellfire's distinct `Doppelganger's` weapon/staff prefix through

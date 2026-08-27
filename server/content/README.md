@@ -11,7 +11,8 @@ for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
 `combat.tsv` variant selector plus the first content-owned towner turn-in row,
 the native `Crystalline`, `Jester's`, and `Doppelganger's` weapon prefixes and
-`devastation`, `decay`, and `peril` weapon/staff/bow suffixes,
+the Hellfire target-accuracy ranges for `piercing`, `puncturing`, and `bashing`,
+plus `devastation`, `decay`, and `peril` weapon/staff/bow suffixes,
 so operators can activate the native Hellfire ruleset with
 `--content-overlay server/content/hellfire` while remaining Hellfire tables are
 migrated incrementally.

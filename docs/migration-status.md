@@ -5097,6 +5097,9 @@ atural_resistance_per_level_percent` and
   duplicate-name legacy variants remain intentionally unmerged.
 - The overlay also ships the distinct Hellfire `Doppelganger's` weapon/staff
   prefix; duplicate-name legacy variants remain intentionally unmerged.
+- The Hellfire overlay now replaces the native `piercing`, `puncturing`, and
+  `bashing` target-accuracy suffix ranges with their Hellfire values while
+  retaining the shared validated suffix schema.
 - The Hellfire overlay now also ships the native `devastation`, `decay`, and
   `peril` weapon/staff/bow suffixes with their authoritative effect mappings.
 - Native item life/mana bonuses and Hellfire mana-to-life and life-to-mana

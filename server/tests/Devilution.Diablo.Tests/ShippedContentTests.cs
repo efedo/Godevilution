@@ -5475,6 +5475,34 @@ public sealed class ShippedContentTests
         Assert.All(suffixes, row => Assert.Equal("Weapon,Staff,Bow", row.Required("itemTypes")));
     }
 
+    [Fact]
+    public void HellfireOverlayExternalizesTargetAccuracySuffixRanges()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        var suffixes = composed.GetRequiredTable("item_suffixes.tsv").Rows
+            .Where(row => row.Required("name") is "piercing" or "puncturing" or "bashing")
+            .ToDictionary(row => row.Required("name"), StringComparer.Ordinal);
+
+        Assert.Equal((2, 6), (
+            suffixes["piercing"].RequiredInt32("power.value1"),
+            suffixes["piercing"].RequiredInt32("power.value2")));
+        Assert.Equal((2, 2), (
+            suffixes["puncturing"].RequiredInt32("power.value1"),
+            suffixes["puncturing"].RequiredInt32("power.value2")));
+        Assert.Equal((3, 3), (
+            suffixes["bashing"].RequiredInt32("power.value1"),
+            suffixes["bashing"].RequiredInt32("power.value2")));
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");
