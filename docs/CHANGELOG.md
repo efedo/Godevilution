@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add exhaustive base-content affix parity coverage against the inherited native
+  prefix and suffix tables, guarding every field and row in the external pack.
 - Restore The Undead Crown's native `SETAC 8–8` unique power in the Hellfire
   overlay and guard the complete native unique-power projection against drift.
 - Restore the 19 remaining native Hellfire unique cursor projections through

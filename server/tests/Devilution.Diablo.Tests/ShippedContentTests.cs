@@ -5425,6 +5425,28 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseContentAffixesMatchNativeDevilutionTables()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var baseRoot = Path.Combine(repositoryRoot, "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(baseRoot);
+
+        foreach (var sourcePath in new[] { "item_prefixes.tsv", "item_suffixes.tsv" }) {
+            var native = TsvTable.Parse(
+                sourcePath,
+                File.ReadAllText(Path.Combine(repositoryRoot, "assets", "txtdata", "items", sourcePath)));
+            var external = basePack.Tables.Single(table => table.SourcePath == sourcePath);
+
+            Assert.Equal(native.Columns, external.Columns);
+            Assert.Equal(native.Rows.Count, external.Rows.Count);
+            for (var rowIndex = 0; rowIndex < native.Rows.Count; rowIndex++) {
+                foreach (var column in native.Columns)
+                    Assert.Equal(native.Rows[rowIndex][column], external.Rows[rowIndex][column]);
+            }
+        }
+    }
+
+    [Fact]
     public void HellfireOverlayExternalizesTheCrystallineWeaponPrefix()
     {
         var repositoryRoot = FindRepositoryRoot();

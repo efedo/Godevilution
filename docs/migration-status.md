@@ -2,6 +2,11 @@
 
 Status date: 2026-08-27
 
+The external base prefix and suffix catalogs are now guarded exhaustively
+against the inherited native tables, including row ordering and every field;
+future content edits therefore fail focused shipped-content verification when
+they drift from the native source.
+
 The external Hellfire monster catalog now matches native `monstdat.tsv` armor
 values for all previously divergent rows and preserves the four Fallen-family
 special attacks as non-damaging ranges. Focused shipped-content coverage guards
