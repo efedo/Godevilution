@@ -19,6 +19,8 @@ All notable changes to this fork are documented below.
 - Validate non-empty authoritative snapshot hashes at the generic TCP host
   boundary before adapter snapshots are serialized, preserving omitted-hash
   compatibility.
+- Reject zero or duplicate projected entity IDs at the generic TCP host
+  boundary, matching the Godot and native compatibility clients.
 - Make authoritative save and world-seed writes durable before atomic
   replacement, isolate concurrent temporary files, and clean up failed writes;
   add focused coverage for temporary-artifact cleanup.

@@ -16,6 +16,21 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsDistinctEntityIdsAcrossProjectedCollections()
+    {
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1 } },
+            Monsters = { new MonsterSnapshot { EntityId = 2 } },
+            WorldItems = { new WorldItemSnapshot { EntityId = 3 } },
+            Objects = { new ObjectSnapshot { EntityId = 4 } },
+            Projectiles = { new ProjectileSnapshot { EntityId = 5 } },
+            Corpses = { new CorpseSnapshot { EntityId = 6 } },
+        };
+
+        AuthoritativeSnapshotValidator.Validate(snapshot);
+    }
+
+    [Fact]
     public void RejectsMalformedNonEmptyStateHashes()
     {
         foreach (var hash in new[] {
@@ -26,5 +41,22 @@ public sealed class AuthoritativeSnapshotValidatorTests
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(new Snapshot { StateSha256 = hash }));
+    }
+
+    [Fact]
+    public void RejectsZeroOrDuplicateEntityIds()
+    {
+        var zero = new Snapshot {
+            Players = { new PlayerSnapshot() },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(zero));
+
+        var duplicate = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = { new MonsterSnapshot { EntityId = 7 } },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(duplicate));
     }
 }

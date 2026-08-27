@@ -313,8 +313,9 @@ Every newly authoritative field requires native and C# parity coverage before
 clients depend on it. A non-empty value is a 64-character ASCII hexadecimal
 SHA-256 digest; the generic TCP host, Godot presentation boundary, and native
 compatibility boundary reject malformed values while still accepting an omitted
-value from legacy snapshots. Digest computation and content verification remain
-server-owned.
+value from legacy snapshots. Entity IDs are non-zero and unique across players,
+monsters, world items, objects, projectiles, and corpses. Digest computation and
+content verification remain server-owned.
 
 `Snapshot.random_state` field 10 carries the module-owned Diablo gameplay RNG.
 `Snapshot.portals` field 11 carries the complete authoritative portal route
