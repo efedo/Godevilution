@@ -244,6 +244,35 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseNativeSpellNamespaceMatchesNativeSpellData()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var native = TsvTable.Parse(
+            "assets/txtdata/spells/spelldat.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "assets",
+                "txtdata",
+                "spells",
+                "spelldat.tsv")));
+        var externalRows = basePack.Tables
+            .Single(table => table.SourcePath == "native_spells.tsv")
+            .Rows
+            .ToDictionary(row => row.Required("native_spell_symbol"), StringComparer.Ordinal);
+
+        Assert.Equal(36, native.Rows.Count);
+        Assert.Equal(52, externalRows.Count);
+        foreach (var (index, nativeRow) in native.Rows.Select((row, index) => (index, row))) {
+            var symbol = nativeRow.Required("id");
+            var external = Assert.Contains(symbol, externalRows);
+            Assert.Equal(index + 1, external.RequiredInt32("native_spell_id"));
+            Assert.Equal(symbol, external.Required("native_spell_symbol"));
+        }
+    }
+
+    [Fact]
     public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
     {
         var repositoryRoot = FindRepositoryRoot();

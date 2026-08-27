@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add exhaustive source coverage for all 36 native spell-data identities in
+  the 52-entry normalized native spell namespace.
 - Add exhaustive parity coverage for the normalized item-generation rules and
   their native `item_generation.tsv` source row.
 - Add exhaustive parity coverage for all five normalized level-generation rules

@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
+identities and their ordinal native IDs, while retaining the 16 compatibility
+and rune-alias entries outside the native spell-data table.
+
 The normalized item-generation catalog now checks all eleven fields against its
 native `item_generation.tsv` source row.
 
