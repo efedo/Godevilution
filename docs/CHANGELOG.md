@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Give validated monster controller tuning precedence over legacy AI labels,
+  restoring the authored Gargoyle, Skeleton King, and Rhino behavior paths.
 - Preserve authored unique-monster health percentages when materializing
   single-player summons, avoiding a second native health-halving pass.
 - Harden the protocol-free native world projection boundary by rejecting

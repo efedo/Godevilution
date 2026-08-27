@@ -6781,14 +6781,12 @@ public sealed class DiabloCombatCommandProcessor
     /** FallenAi delegates its normal state to the native SkeletonAi controller. */
     private bool UsesNativeSkeletonAi(AuthoritativeCombatTarget target)
     {
-        // Unique encounters may retain a generic catalog monster type while
-        // supplying an explicit native AI identity. Preserve that identity
-        // before consulting the type's complete tuning tuple; otherwise a
-        // base Zombie row can silently replace Warlord/Snotspill/Fallen's
-        // native Skeleton/Fallen controller.
-        if (target.NativeAi is "SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord")
-            return true;
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            // Validated controller tuples take precedence over a legacy label
+            // when a compatibility target carries both. Unique encounters
+            // may still retain a generic catalog type while supplying an
+            // explicit native AI identity, so the label fallback remains
+            // below the complete-tuning checks.
             var hasSkeletonTuning = definition.SkeletonMeleeDelayChanceBase > 0
                 && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0
                 || definition.SkeletonMeleeAttackChanceBase > 0

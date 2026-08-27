@@ -1298,11 +1298,11 @@ On 2026-08-26, the current Debug Diablo module suite ran 1,828 of 1,839
 tests successfully. Three failures were stale characterization expectations:
 the lethal gold-stack seed now follows the monster attack's preceding native
 RNG draw, a full inventory intentionally uses the held cursor for pickup, and
-authored Na-Krul health must not receive single-player halving twice. Those
-three cases now pass in focused verification; eight combat-tuning expectations
-remain. This local run supersedes the older count for current-state tracking,
-but is not a release gate until the remaining failures are resolved or
-explicitly characterized.
+authored Na-Krul health must not receive single-player halving twice. The
+remaining eight failures were controller-dispatch precedence cases where
+validated Gargoyle, Skeleton King, or Rhino tuning was bypassed by a legacy AI
+label. On 2026-08-27, after correcting that precedence, the full Debug Diablo
+module suite passed 1,856 of 1,856 tests.
 
 The live Godot protocol suite also verifies that a Hell difficulty selected by
 the server changes the authoritative Hellfire monster snapshot (including its
