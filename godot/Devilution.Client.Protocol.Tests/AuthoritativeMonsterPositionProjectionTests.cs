@@ -37,4 +37,63 @@ public sealed class AuthoritativeMonsterPositionProjectionTests
             new ClientPresentationPosition(4, 5),
             AuthoritativeMonsterPositionProjection.ResolvePresentation(monster));
     }
+
+    [Fact]
+    public void KeepsAOneTileMoveOnTheInterpolationPath()
+    {
+        var previous = new MonsterSnapshot {
+            EntityId = 7,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var next = new MonsterSnapshot {
+            EntityId = 7,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+            FuturePositionX = 5,
+            FuturePositionY = 5,
+            Moving = true,
+        };
+
+        Assert.False(
+            AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, next));
+    }
+
+    [Fact]
+    public void SnapsLargeSameLevelRelocations()
+    {
+        var previous = new MonsterSnapshot {
+            EntityId = 7,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var next = new MonsterSnapshot {
+            EntityId = 7,
+            LevelId = 1,
+            PositionX = 10,
+            PositionY = 5,
+        };
+
+        Assert.True(
+            AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, next));
+    }
+
+    [Fact]
+    public void SnapsAcrossMonsterLevelChanges()
+    {
+        var previous = new MonsterSnapshot {
+            EntityId = 7,
+            LevelId = 1,
+            PositionX = 4,
+            PositionY = 5,
+        };
+        var next = previous.Clone();
+        next.LevelId = 2;
+
+        Assert.True(
+            AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, next));
+    }
 }

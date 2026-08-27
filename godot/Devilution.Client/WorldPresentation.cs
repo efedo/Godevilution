@@ -17,6 +17,7 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, Vector2> displayedPositions = [];
     private readonly Dictionary<uint, uint> displayedPositionLevels = [];
     private readonly Dictionary<uint, PlayerSnapshot> displayedPlayerSnapshots = [];
+    private readonly Dictionary<uint, MonsterSnapshot> displayedMonsterSnapshots = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
     private Snapshot? snapshot;
@@ -32,6 +33,7 @@ public partial class WorldPresentation : Node2D
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
             displayedPlayerSnapshots.Clear();
+            displayedMonsterSnapshots.Clear();
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
             currentLevel = LevelLayout.Empty;
             QueueRedraw();
@@ -64,8 +66,16 @@ public partial class WorldPresentation : Node2D
         foreach (var monster in snapshot.Monsters.Where(monster =>
                      AuthoritativeMonsterPresentationVisibility.IsVisible(monster, localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(monster.EntityId);
+            var reset = displayedMonsterSnapshots.TryGetValue(monster.EntityId, out var previous)
+                && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster);
             var projected = AuthoritativeMonsterPositionProjection.ResolvePresentation(monster);
-            UpdatePosition(monster.EntityId, ToScreen(projected.X, projected.Y), delta, monster.LevelId);
+            UpdatePosition(
+                monster.EntityId,
+                ToScreen(projected.X, projected.Y),
+                delta,
+                monster.LevelId,
+                reset);
+            displayedMonsterSnapshots[monster.EntityId] = monster.Clone();
         }
         foreach (var item in snapshot.WorldItems.Where(item =>
                      AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(
@@ -104,6 +114,8 @@ public partial class WorldPresentation : Node2D
         }
         foreach (var entityId in displayedPlayerSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
             displayedPlayerSnapshots.Remove(entityId);
+        foreach (var entityId in displayedMonsterSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            displayedMonsterSnapshots.Remove(entityId);
         QueueRedraw();
     }
 

@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   legacy snapshots.
 - Align native snapshot validation with the authored unique-pack contract by
   accepting leashed members whose leader is a unique encounter.
+- Add bounded Godot monster interpolation reset detection for level changes and
+  large authoritative relocations while preserving one-tile movement smoothing.
 - Allow validated overlays to introduce optional tables that are absent from
   earlier packs, enabling external pack-only contracts such as
   `unique_monster_packs.tsv` without changing the base table set.
