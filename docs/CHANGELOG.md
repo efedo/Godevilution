@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align native authoritative projection tests with the fail-closed boundary for
+  invalid projectile visuals and out-of-bounds moving destinations.
 - Apply the authoritative geometry-backed monster vision boundary to Godot
   presentation, including radius, line-of-sight, and diagonal corner checks.
 - Honor native DUN `BlockLight` piece metadata in geometry-backed monster

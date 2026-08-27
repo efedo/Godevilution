@@ -2426,11 +2426,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
 	projectile.nativeVisual = 999;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
-	ServerBackedWorldPresentation presentation;
-	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
-	EXPECT_TRUE(Missiles.empty());
-	presentation.Clear();
+	const auto result = projection.Apply({ }, { }, { }, { projectile }, 1);
+	ASSERT_FALSE(result.has_value());
+	EXPECT_EQ(result.error(), "Authoritative projectile projection contains invalid identity, lifecycle, or presentation data.");
 }
 
 TEST(ServerBackedPlayerSnapshot, PresentsContentOwnedMonsterMagicVisualFamilies)
@@ -2796,13 +2794,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMovingDestinationOutsideNativeDungeon)
 	monster.futurePositionX = -1;
 	monster.futurePositionY = 1;
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
-	ServerBackedWorldPresentation presentation;
-
-	const auto result = presentation.Apply(projection, 1);
-
+	const auto result = projection.Apply({ monster }, { }, { }, 1);
 	ASSERT_FALSE(result.has_value());
-	EXPECT_EQ(result.error(), "Authoritative moving monster destination cannot be represented by the native world tile type.");
+	EXPECT_EQ(result.error(), "Authoritative monster projection is outside projected level geometry.");
 }
 
 TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMonsterWalkAnimation)
