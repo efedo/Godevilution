@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Validate command acknowledgements before the Godot transport or model mutates
+  pending-command and presentation state; malformed acknowledgements now fail
+  closed without dropping retryable commands.
 - Reject legacy whole-unit damage values that would overflow native Q6
   conversion across the C# host, Godot, and native event validators.
 - Reject authoritative Diablo victory ranks above the native byte range across

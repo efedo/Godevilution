@@ -93,6 +93,9 @@ Legacy whole-unit damage values are now bounded before native Q6 conversion;
 the C# host, Godot model, and native compatibility validator reject values
 that would overflow the signed fixed-point range when no exact Q6 amount is
 provided.
+Godot command acknowledgements are now validated before transport removal of
+pending commands or model presentation updates; malformed result status and
+reason combinations fail closed without losing retryable commands.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 

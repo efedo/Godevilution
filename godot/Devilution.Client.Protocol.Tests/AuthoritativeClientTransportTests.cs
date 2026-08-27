@@ -143,6 +143,33 @@ public sealed class AuthoritativeClientTransportTests
         await serverTask;
     }
 
+    [Fact]
+    public async Task RejectsMalformedAcknowledgementWithoutDroppingPendingCommand()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = RunMalformedAcknowledgementServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            port,
+            "godot-test",
+            "0.1.0",
+            "content-hash"));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        _ = client.DrainMessages();
+        client.Queue(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 13);
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(25, TestContext.Current.CancellationToken);
+
+        var message = Assert.Single(client.DrainMessages());
+        Assert.NotNull(message.Error);
+        Assert.Equal(ProtocolErrorCode.InvalidMessage, message.Error!.Code);
+        Assert.Equal(1, client.PendingCommandCount);
+        await serverTask;
+    }
+
     private static async Task RunServerAsync(TcpListener listener)
     {
         using var tcpClient = await listener.AcceptTcpClientAsync();
@@ -245,6 +272,34 @@ public sealed class AuthoritativeClientTransportTests
             Error = new ProtocolError {
                 Code = ProtocolErrorCode.InvalidMessage,
                 Detail = "snapshot unavailable",
+            },
+        });
+        listener.Stop();
+    }
+
+    private static async Task RunMalformedAcknowledgementServerAsync(TcpListener listener)
+    {
+        using var tcpClient = await listener.AcceptTcpClientAsync();
+        await using var stream = tcpClient.GetStream();
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            ServerHello = new ServerHello {
+                ServerBuildId = "test-server",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = "content-hash",
+                TickRateHz = 20,
+            },
+        });
+        await WriteEnvelopeAsync(stream, new Envelope {
+            Snapshot = new Snapshot {
+                Tick = 12,
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+            },
+        });
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            CommandAck = new CommandAck {
+                Results = { new CommandResult { ClientSequence = 1 } },
             },
         });
         listener.Stop();

@@ -241,6 +241,7 @@ public sealed class AuthoritativeClientModel
             LastError = message.Error.Detail;
 
         if (message.Acknowledgement is not null) {
+            AuthoritativeCommandAckValidator.Validate(message.Acknowledgement);
             if (message.Acknowledgement.Results.Count > 0) {
                 var latestResult = message.Acknowledgement.Results
                     .OrderBy(result => result.ClientSequence)

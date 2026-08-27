@@ -1188,6 +1188,35 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedCommandAcknowledgementsBeforeStateMutation()
+    {
+        var model = new AuthoritativeClientModel();
+
+        foreach (var result in new[] {
+            new CommandResult { ClientSequence = 1 },
+            new CommandResult { ClientSequence = 1, Status = (CommandStatus)99 },
+            new CommandResult {
+                ClientSequence = 1,
+                Status = CommandStatus.Accepted,
+                RejectReason = CommandRejectReason.Malformed,
+            },
+        }) {
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(
+                    Acknowledgement: new CommandAck { Results = { result } })));
+        }
+
+        var oversized = new CommandAck();
+        for (var index = 0; index <= AuthoritativeCommandAckValidator.MaximumResultCount; index++)
+            oversized.Results.Add(new CommandResult {
+                ClientSequence = (ulong)index + 1,
+                Status = CommandStatus.Accepted,
+            });
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Acknowledgement: oversized)));
+    }
+
+    [Fact]
     public void BoundsRecentEventHistoryAndAdvancesItsSequenceWindow()
     {
         var model = new AuthoritativeClientModel();

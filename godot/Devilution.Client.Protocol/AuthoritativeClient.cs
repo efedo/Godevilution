@@ -261,8 +261,18 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private void Enqueue(Envelope envelope)
     {
-        if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck)
+        if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck) {
+            try {
+                AuthoritativeCommandAckValidator.Validate(envelope.CommandAck);
+            } catch (InvalidDataException exception) {
+                incoming.Enqueue(new AuthoritativeClientMessage(Error: new ProtocolError {
+                    Code = ProtocolErrorCode.InvalidMessage,
+                    Detail = exception.Message,
+                }));
+                return;
+            }
             Acknowledge(envelope.CommandAck);
+        }
         incoming.Enqueue(envelope.PayloadCase switch {
             Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot),
             Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch),
