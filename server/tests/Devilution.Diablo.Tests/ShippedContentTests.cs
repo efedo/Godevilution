@@ -175,6 +175,40 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseLevelGenerationRulesMatchNativeTable()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var native = TsvTable.Parse(
+            "assets/txtdata/levels/level_generation.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "assets",
+                "txtdata",
+                "levels",
+                "level_generation.tsv")));
+        var external = basePack.Tables.Single(table => table.SourcePath == "level_generation.tsv");
+        var externalRows = external.Rows.ToDictionary(
+            row => (row.RequiredInt32("minimum_level"), row.RequiredInt32("maximum_level")));
+        var fields = new[] {
+            (External: "monster_density_divisor", Native: "monsterDensityDivisor"),
+            (External: "multiplayer_monster_multiplier_percent", Native: "mpMonsterMultiplierPercent"),
+            (External: "trap_percent", Native: "trapPercent"),
+        };
+
+        Assert.Equal(native.Rows.Count, externalRows.Count);
+        foreach (var nativeRow in native.Rows) {
+            var key = (
+                nativeRow.RequiredInt32("minLevel"),
+                nativeRow.RequiredInt32("maxLevel"));
+            var externalRow = externalRows[key];
+            foreach (var (externalColumn, nativeColumn) in fields)
+                Assert.Equal(nativeRow.Required(nativeColumn), externalRow.Required(externalColumn));
+        }
+    }
+
+    [Fact]
     public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
     {
         var repositoryRoot = FindRepositoryRoot();

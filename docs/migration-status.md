@@ -2,6 +2,9 @@
 
 Status date: 2026-08-27
 
+The normalized level-generation catalog now checks all five external rules
+against the native `level_generation.tsv` ranges and tuning values.
+
 The normalized base class catalog now checks all six native `attributes.tsv`
 tables for direct stat, block, and accuracy values plus Q6-converted life and
 mana tuning; migration-specific class flags remain intentionally separate.
