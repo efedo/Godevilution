@@ -12,6 +12,10 @@ field-for-field guard against the native variant tables: all 86 prefixes and
 98 suffixes must remain present under their validated composite keys after
 overlay replacement.
 
+The retained legacy `itemdat.tsv` fallback is also guarded field-for-field
+against the inherited native table, preserving all 168 rows while normalized
+item definitions continue to take precedence in active packs.
+
 The external Hellfire monster catalog now matches native `monstdat.tsv` core
 metadata for all 138 variant rows, including the 26 Hellfire-only standing
 animation frame/timing pairs, previously divergent armor values, and the four

@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Guard the retained 168-row legacy `itemdat.tsv` compatibility fallback
+  field-for-field against the inherited native item table.
 - Restore native standing-animation frame and timing metadata for all 26
   Hellfire-only monster types and guard the complete 138-row variant catalog
   against `monstdat.tsv` core metadata.

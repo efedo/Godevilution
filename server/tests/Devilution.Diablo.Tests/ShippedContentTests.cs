@@ -5497,6 +5497,29 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseLegacyItemDataMatchesNativeCompatibilityTable()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var baseRoot = Path.Combine(repositoryRoot, "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(baseRoot);
+        var native = TsvTable.Parse(
+            "assets/txtdata/items/itemdat.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "assets",
+                "txtdata",
+                "items",
+                "itemdat.tsv")));
+        var external = basePack.Tables.Single(table => table.SourcePath == "itemdat.tsv");
+
+        Assert.Equal(native.Columns, external.Columns);
+        Assert.Equal(native.Rows.Count, external.Rows.Count);
+        for (var rowIndex = 0; rowIndex < native.Rows.Count; rowIndex++)
+            foreach (var column in native.Columns)
+                Assert.Equal(native.Rows[rowIndex][column], external.Rows[rowIndex][column]);
+    }
+
+    [Fact]
     public void HellfireAffixesMatchNativeVariantTables()
     {
         var repositoryRoot = FindRepositoryRoot();
