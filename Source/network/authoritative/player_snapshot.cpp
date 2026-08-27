@@ -462,6 +462,15 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		        || source.future_position_y() != source.position_y())) {
 			return tl::make_unexpected("Server-backed snapshot contains inconsistent stationary monster occupancy.");
 		}
+		if (source.leader_relation() < 0 || source.leader_relation() > 2
+		    || (source.leader_relation() == 0
+		        ? source.leader_entity_id() != 0
+		        : source.leader_entity_id() == 0)
+		    || source.leader_relation() != 0 && source.is_unique()
+		    || source.pack_size() < 0 || source.pack_size() > 255
+		    || source.active_for_ticks() < 0 || source.active_for_ticks() > 255) {
+			return tl::make_unexpected("Server-backed snapshot contains invalid monster group-unity state.");
+		}
 		projected.push_back({
 		    .entityId = source.entity_id(),
 		    .monsterId = source.monster_id(),
@@ -489,7 +498,25 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		    .petrified = source.petrified(),
 		    .sneakHidden = source.sneak_hidden(),
 		    .stoneCurseImmune = source.stone_curse_immune(),
+		    .leaderEntityId = source.leader_entity_id(),
+		    .leaderRelation = source.leader_relation(),
+		    .packSize = source.pack_size(),
+		    .activeForTicks = source.active_for_ticks(),
 		});
+	}
+	for (const auto &monster : projected) {
+		if (monster.leaderRelation == 0)
+			continue;
+		const auto leader = std::find_if(projected.begin(), projected.end(), [&](const auto &candidate) {
+			return candidate.entityId == monster.leaderEntityId;
+		});
+		if (leader == projected.end()
+		    || leader->entityId == monster.entityId
+		    || leader->isUnique
+		    || !leader->alive
+		    || leader->levelId != monster.levelId) {
+			return tl::make_unexpected("Server-backed snapshot contains an invalid monster pack leader.");
+		}
 	}
 	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) { return left.entityId < right.entityId; });
 	return projected;
@@ -1194,6 +1221,8 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 
 tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapshot &snapshot)
 {
+	std::unordered_map<uint32_t, const protocol::MonsterSnapshot *> monstersById;
+	monstersById.reserve(snapshot.monsters_size());
 	for (const auto &monster : snapshot.monsters()) {
 		const int64_t hitPointsQ6 = monster.hit_points_q6() == 0 && monster.hit_points() != 0
 		    ? static_cast<int64_t>(monster.hit_points()) * 64
@@ -1226,8 +1255,29 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || (!monster.is_player_minion() && monster.owner_player_id() != 0)
 		    || monster.dialogue_message_id() < 0
 		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
-		    || (monster.dialogue_message_id() != 0 && !monster.is_unique()))
+		    || (monster.dialogue_message_id() != 0 && !monster.is_unique())
+		    || monster.leader_relation() < 0 || monster.leader_relation() > 2
+		    || (monster.leader_relation() == 0
+		        ? monster.leader_entity_id() != 0
+		        : monster.leader_entity_id() == 0)
+		    || monster.leader_relation() != 0 && monster.is_unique()
+		    || monster.pack_size() < 0 || monster.pack_size() > 255
+		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > 255)
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster combat state.");
+		if (monster.entity_id() == 0 || !monstersById.emplace(monster.entity_id(), &monster).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate monster entity IDs.");
+	}
+	for (const auto &monster : snapshot.monsters()) {
+		if (monster.leader_relation() == 0)
+			continue;
+		const auto leader = monstersById.find(monster.leader_entity_id());
+		if (leader == monstersById.end()
+		    || leader->second->entity_id() == monster.entity_id()
+		    || leader->second->is_unique()
+		    || !leader->second->alive()
+		    || leader->second->level_id() != monster.level_id()) {
+			return tl::make_unexpected("Server-backed snapshot contains an invalid monster pack leader.");
+		}
 	}
 	return {};
 }

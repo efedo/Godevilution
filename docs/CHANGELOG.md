@@ -6,8 +6,9 @@ All notable changes to this fork are documented below.
 
 - Project monster snapshots now carry additive group-unity state (leader
   identity/relation, pack size, and active ticks) through the shared protocol.
-  Server mapping, canonical hashing, and Godot validation preserve the state
-  while default values remain compatible with legacy snapshots.
+  Server mapping, canonical hashing, Godot validation, and the native
+  compatibility projection preserve the state while default values remain
+  compatible with legacy snapshots.
 - Add the optional `unique_monster_packs.tsv` content contract for generated
   unique encounters. Validated independent and leashed packs now materialize
   deterministic minion identities and reserved-cell-aware positions through

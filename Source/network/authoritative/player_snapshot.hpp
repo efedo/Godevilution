@@ -163,6 +163,14 @@ struct ProjectedMonsterSnapshot {
 	/** Server-owned stealth state; hidden monsters are not presentation targets. */
 	bool sneakHidden = false;
 	bool stoneCurseImmune = false;
+	/** Authoritative native pack leader entity, when this monster is a minion. */
+	uint32_t leaderEntityId = 0;
+	/** Native pack relation: 0 none, 1 leashed, 2 separated. */
+	int32_t leaderRelation = 0;
+	/** Number of living members retained by a native pack leader. */
+	int32_t packSize = 0;
+	/** Native activation countdown used by FollowTheLeader. */
+	int32_t activeForTicks = 0;
 };
 
 struct ProjectedWorldItemSnapshot {

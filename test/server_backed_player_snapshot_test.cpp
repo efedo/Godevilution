@@ -496,6 +496,11 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 {
 	protocol::Snapshot snapshot;
+	const auto leader = snapshot.add_monsters();
+	leader->set_entity_id(1);
+	leader->set_hit_points(10);
+	leader->set_max_hit_points(10);
+	leader->set_alive(true);
 	auto *second = snapshot.add_monsters();
 	second->set_entity_id(9);
 	second->set_monster_id(12);
@@ -523,6 +528,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_petrified(true);
 	second->set_sneak_hidden(true);
 	second->set_stone_curse_immune(true);
+	second->set_pack_size(2);
+	second->set_active_for_ticks(5);
 	const auto first = snapshot.add_monsters();
 	first->set_entity_id(3);
 	first->set_hit_points(0);
@@ -531,29 +538,60 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 
 	auto projected = ProjectMonsterSnapshots(snapshot);
 	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 3U);
+	EXPECT_EQ((*projected)[0].entityId, 1U);
+	EXPECT_TRUE((*projected)[0].alive);
+	EXPECT_EQ((*projected)[1].entityId, 3U);
+	EXPECT_FALSE((*projected)[1].alive);
+	EXPECT_EQ((*projected)[2].entityId, 9U);
+	EXPECT_EQ((*projected)[2].monsterId, 12U);
+	EXPECT_TRUE((*projected)[2].isUnique);
+	EXPECT_EQ((*projected)[2].uniqueIdentity, "Defiler");
+	EXPECT_EQ((*projected)[2].dialogueMessageId, 274);
+	EXPECT_EQ((*projected)[2].hitPoints, 7);
+	EXPECT_EQ((*projected)[2].hitPointsQ6, 432);
+	EXPECT_EQ((*projected)[2].maxHitPointsQ6, 1280);
+	EXPECT_EQ((*projected)[2].attackDamage, 11);
+	EXPECT_EQ((*projected)[2].aggroRange, 6);
+	EXPECT_EQ((*projected)[2].fireResistance, 25);
+	EXPECT_EQ((*projected)[2].lightningResistance, -10);
+	EXPECT_EQ((*projected)[2].magicResistance, 40);
+	EXPECT_EQ((*projected)[2].direction, static_cast<int32_t>(Direction::NorthEast));
+	EXPECT_TRUE((*projected)[2].moving);
+	EXPECT_EQ((*projected)[2].futurePositionX, 5);
+	EXPECT_EQ((*projected)[2].futurePositionY, 5);
+	EXPECT_TRUE((*projected)[2].petrified);
+	EXPECT_TRUE((*projected)[2].sneakHidden);
+	EXPECT_TRUE((*projected)[2].stoneCurseImmune);
+	EXPECT_EQ((*projected)[2].leaderEntityId, 0U);
+	EXPECT_EQ((*projected)[2].leaderRelation, 0);
+	EXPECT_EQ((*projected)[2].packSize, 2);
+	EXPECT_EQ((*projected)[2].activeForTicks, 5);
+}
+
+TEST(ServerBackedPlayerSnapshot, ProjectsAuthoritativeMonsterPackRelation)
+{
+	protocol::Snapshot snapshot;
+	auto *leader = snapshot.add_monsters();
+	leader->set_entity_id(1);
+	leader->set_level_id(2);
+	leader->set_hit_points(10);
+	leader->set_max_hit_points(10);
+	leader->set_alive(true);
+	auto *member = snapshot.add_monsters();
+	member->set_entity_id(2);
+	member->set_level_id(2);
+	member->set_hit_points(5);
+	member->set_max_hit_points(5);
+	member->set_alive(true);
+	member->set_leader_entity_id(1);
+	member->set_leader_relation(1);
+
+	auto projected = ProjectMonsterSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
 	ASSERT_EQ(projected->size(), 2U);
-	EXPECT_EQ((*projected)[0].entityId, 3U);
-	EXPECT_FALSE((*projected)[0].alive);
-	EXPECT_EQ((*projected)[1].entityId, 9U);
-	EXPECT_EQ((*projected)[1].monsterId, 12U);
-	EXPECT_TRUE((*projected)[1].isUnique);
-	EXPECT_EQ((*projected)[1].uniqueIdentity, "Defiler");
-	EXPECT_EQ((*projected)[1].dialogueMessageId, 274);
-	EXPECT_EQ((*projected)[1].hitPoints, 7);
-	EXPECT_EQ((*projected)[1].hitPointsQ6, 432);
-	EXPECT_EQ((*projected)[1].maxHitPointsQ6, 1280);
-	EXPECT_EQ((*projected)[1].attackDamage, 11);
-	EXPECT_EQ((*projected)[1].aggroRange, 6);
-	EXPECT_EQ((*projected)[1].fireResistance, 25);
-	EXPECT_EQ((*projected)[1].lightningResistance, -10);
-	EXPECT_EQ((*projected)[1].magicResistance, 40);
-	EXPECT_EQ((*projected)[1].direction, static_cast<int32_t>(Direction::NorthEast));
-	EXPECT_TRUE((*projected)[1].moving);
-	EXPECT_EQ((*projected)[1].futurePositionX, 5);
-	EXPECT_EQ((*projected)[1].futurePositionY, 5);
-	EXPECT_TRUE((*projected)[1].petrified);
-	EXPECT_TRUE((*projected)[1].sneakHidden);
-	EXPECT_TRUE((*projected)[1].stoneCurseImmune);
+	EXPECT_EQ((*projected)[1].leaderEntityId, 1U);
+	EXPECT_EQ((*projected)[1].leaderRelation, 1);
 }
 
 TEST(ServerBackedPlayerSnapshot, NormalizesOmittedStationaryMonsterDestination)
@@ -1345,6 +1383,23 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	protocol::Snapshot invalidDialogue = makeMonster();
 	invalidDialogue.mutable_monsters(0)->set_dialogue_message_id(1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDialogue).has_value());
+
+	protocol::Snapshot invalidGroupRelation = makeMonster();
+	invalidGroupRelation.mutable_monsters(0)->set_leader_relation(3);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupRelation).has_value());
+
+	protocol::Snapshot invalidGroupLeader = makeMonster();
+	invalidGroupLeader.mutable_monsters(0)->set_leader_relation(1);
+	invalidGroupLeader.mutable_monsters(0)->set_leader_entity_id(99);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupLeader).has_value());
+
+	protocol::Snapshot invalidGroupSize = makeMonster();
+	invalidGroupSize.mutable_monsters(0)->set_pack_size(256);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupSize).has_value());
+
+	protocol::Snapshot invalidGroupActiveTicks = makeMonster();
+	invalidGroupActiveTicks.mutable_monsters(0)->set_active_for_ticks(-1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupActiveTicks).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)

@@ -640,6 +640,14 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	monster.armorClass = static_cast<uint8_t>(std::clamp(snapshot.armorClass, 0, 255));
 	monster.minDamage = static_cast<uint8_t>(std::clamp(snapshot.attackDamage, 0, 255));
 	monster.maxDamage = monster.minDamage;
+	monster.activeForTicks = static_cast<uint8_t>(std::clamp(snapshot.activeForTicks, 0, 255));
+	monster.packSize = static_cast<uint8_t>(std::clamp(snapshot.packSize, 0, 255));
+	// Resolve the entity-based leader reference after all projected slots have
+	// been assigned. A hidden leader is intentionally treated as an ordinary
+	// presentation monster so native compatibility code never follows a null
+	// pointer from an incomplete visual projection.
+	monster.leader = Monster::NoLeader;
+	monster.leaderRelation = LeaderRelation::None;
 }
 
 void ApplyItemSnapshot(Item &item, const ProjectedWorldItemSnapshot &snapshot)
@@ -873,6 +881,19 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		claimedMonsterSlots.insert(slot);
 		monsterSlots_[snapshot.entityId] = slot;
 		ApplyMonsterSnapshot(Monsters[slot], snapshot);
+	}
+	for (const auto &snapshot : projection.Monsters()) {
+		if (!IsCurrentLevel(snapshot.levelId, levelId)
+		    || !IsAuthoritativeMonsterPresentable(snapshot)
+		    || snapshot.leaderEntityId == 0)
+			continue;
+		const auto member = monsterSlots_.find(snapshot.entityId);
+		const auto leader = monsterSlots_.find(snapshot.leaderEntityId);
+		if (member == monsterSlots_.end() || leader == monsterSlots_.end()
+		    || leader->second > std::numeric_limits<uint8_t>::max())
+			continue;
+		Monsters[member->second].leader = static_cast<uint8_t>(leader->second);
+		Monsters[member->second].leaderRelation = static_cast<LeaderRelation>(snapshot.leaderRelation);
 	}
 	// Native level loading still creates compatibility-pool monsters so their
 	// presentation data is available. They are not authoritative, however, and

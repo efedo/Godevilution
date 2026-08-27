@@ -431,8 +431,9 @@ Older peers may omit both fields; when present, the pair is included in the cond
 Optional `MonsterSnapshot` fields 91-94 carry the server-owned GroupUnity
 projection: `leader_entity_id`, `leader_relation` (0 none, 1 leashed, 2
 separated), `pack_size`, and `active_for_ticks`. The server validates leader
-references and relationship ranges; clients preserve the fields for
-presentation but never run GroupUnity transitions. Their non-default values
+ references and relationship ranges; Godot and native compatibility clients
+ preserve the fields for presentation but never run GroupUnity transitions.
+ Their non-default values
 are included in the conditional `godevilution-monster-group-unity-v1`
 canonical-hash section, while all-default legacy snapshots retain prior hashes.
 
