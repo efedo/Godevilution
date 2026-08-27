@@ -1849,6 +1849,38 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonster
 	ProjectedWorldItemSnapshot item;
 	item.entityId = first.entityId;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first }, { item }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot invalidGroupRelation = first;
+	invalidGroupRelation.entityId = 14;
+	invalidGroupRelation.leaderRelation = 3;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidGroupRelation }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot invalidGroupLeader = first;
+	invalidGroupLeader.entityId = 15;
+	invalidGroupLeader.leaderRelation = 1;
+	invalidGroupLeader.leaderEntityId = 99;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidGroupLeader }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot leader = first;
+	leader.entityId = 16;
+	leader.levelId = 1;
+	leader.alive = true;
+	ProjectedMonsterSnapshot member = first;
+	member.entityId = 17;
+	member.levelId = 1;
+	member.leaderEntityId = leader.entityId;
+	member.leaderRelation = 1;
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ member, leader }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot invalidUniqueMember = member;
+	invalidUniqueMember.entityId = 18;
+	invalidUniqueMember.isUnique = true;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidUniqueMember, leader }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot invalidPackSize = first;
+	invalidPackSize.entityId = 19;
+	invalidPackSize.packSize = 256;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidPackSize }, { }, { }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjectiles)

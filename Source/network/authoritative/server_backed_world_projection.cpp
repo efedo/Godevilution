@@ -129,6 +129,26 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			if (distance != 1)
 				return tl::make_unexpected("Authoritative moving monster projection must target an adjacent tile.");
 		}
+		if (monster.leaderRelation < 0 || monster.leaderRelation > 2
+		    || (monster.leaderRelation == 0
+		        ? monster.leaderEntityId != 0
+		        : monster.leaderEntityId == 0)
+		    || (monster.leaderRelation != 0 && monster.isUnique)
+		    || monster.packSize < 0 || monster.packSize > 255
+		    || monster.activeForTicks < 0 || monster.activeForTicks > 255)
+			return tl::make_unexpected("Authoritative monster projection contains invalid group-unity state.");
+	}
+	for (const auto &monster : monsters) {
+		if (monster.leaderRelation == 0)
+			continue;
+		const auto leader = std::find_if(monsters.begin(), monsters.end(), [&monster](const auto &candidate) {
+			return candidate.entityId == monster.leaderEntityId;
+		});
+		if (leader == monsters.end()
+		    || leader->entityId == monster.entityId
+		    || !leader->alive
+		    || leader->levelId != monster.levelId)
+			return tl::make_unexpected("Authoritative monster projection contains an invalid pack leader.");
 	}
 	const auto hasDuplicateProjectedEntity = [&projectedEntityIds](const auto &entities) {
 		for (const auto &entity : entities) {

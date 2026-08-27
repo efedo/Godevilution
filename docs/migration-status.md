@@ -188,7 +188,8 @@ legacy callers that do not provide a tick remain accepted.
 
 The protocol-free native world projection path now repeats the structural
 monster invariants needed by compatibility presentation: non-zero unique
-identities, native direction range, and one-tile movement destinations. It also
+identities, native direction range, one-tile movement destinations, and the
+validated group-unity leader contract. It also
 rejects duplicate nonzero identities across projected entity collections while
 retaining zero-ID placeholder compatibility for items and objects. This keeps
 legacy callers safe even when they bypass the richer protocol-session

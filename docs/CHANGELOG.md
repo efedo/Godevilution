@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
   native protocol-free world projection before compatibility presentation.
 - Align native protocol-free projectile validation with the shared arrow
   spell-less exception and damage-type range.
+- Enforce native monster group-unity leader invariants in the protocol-free
+  world projection before compatibility presentation.
 - Externalize native 1–50 character experience thresholds, wire active
   simulations to server-owned progression data, and add source parity coverage.
 - Externalize all 68 native `misdat.tsv` missile identities, retain five
