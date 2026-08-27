@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Clarify that geometry-backed visibility activation is shipped, while broader
+  activation timing, interpolation, rally behavior, and soak coverage remain
+  follow-up work.
 - Reject duplicate visited-level IDs at the generic host boundary, matching
   the existing Godot and native compatibility validation.
 - Bound active world-mutation metadata to 4,096 entries consistently across
