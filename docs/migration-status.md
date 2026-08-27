@@ -40,6 +40,8 @@ The C# server adapter rejects the same malformed directional metadata before
 it serializes a protocol snapshot.
 The Godot protocol client applies the same directional metadata invariant,
 keeping both presentation boundaries fail-closed and behaviorally aligned.
+Godot projectile presentation now snaps on authoritative level, phase, or
+presentation-identity changes instead of interpolating across discontinuities.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility

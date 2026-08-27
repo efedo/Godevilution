@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   before protocol serialization.
 - Apply the same directional projectile metadata validation at the Godot
   protocol boundary.
+- Reset Godot projectile interpolation across authoritative level, phase, and
+  presentation-identity changes.
 - Externalize native 1–50 character experience thresholds, wire active
   simulations to server-owned progression data, and add source parity coverage.
 - Externalize all 68 native `misdat.tsv` missile identities, retain five

@@ -18,6 +18,7 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, uint> displayedPositionLevels = [];
     private readonly Dictionary<uint, PlayerSnapshot> displayedPlayerSnapshots = [];
     private readonly Dictionary<uint, MonsterSnapshot> displayedMonsterSnapshots = [];
+    private readonly Dictionary<uint, ProjectileSnapshot> displayedProjectileSnapshots = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
     private Snapshot? snapshot;
@@ -34,6 +35,7 @@ public partial class WorldPresentation : Node2D
             displayedPositionLevels.Clear();
             displayedPlayerSnapshots.Clear();
             displayedMonsterSnapshots.Clear();
+            displayedProjectileSnapshots.Clear();
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
             currentLevel = LevelLayout.Empty;
             QueueRedraw();
@@ -106,7 +108,15 @@ public partial class WorldPresentation : Node2D
                          projectile.LevelId,
                          localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(projectile.EntityId);
-            UpdatePosition(projectile.EntityId, ToScreen(projectile.PositionX, projectile.PositionY), delta, projectile.LevelId);
+            var reset = displayedProjectileSnapshots.TryGetValue(projectile.EntityId, out var previous)
+                && AuthoritativeProjectilePositionProjection.RequiresPresentationReset(previous, projectile);
+            UpdatePosition(
+                projectile.EntityId,
+                ToScreen(projectile.PositionX, projectile.PositionY),
+                delta,
+                projectile.LevelId,
+                reset);
+            displayedProjectileSnapshots[projectile.EntityId] = projectile.Clone();
         }
         foreach (var entityId in displayedPositions.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray()) {
             displayedPositions.Remove(entityId);
@@ -116,6 +126,8 @@ public partial class WorldPresentation : Node2D
             displayedPlayerSnapshots.Remove(entityId);
         foreach (var entityId in displayedMonsterSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
             displayedMonsterSnapshots.Remove(entityId);
+        foreach (var entityId in displayedProjectileSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            displayedProjectileSnapshots.Remove(entityId);
         QueueRedraw();
     }
 
