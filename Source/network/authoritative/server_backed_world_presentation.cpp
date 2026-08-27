@@ -296,6 +296,21 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	for (std::size_t index = 0; index < snapshot.inventory.size() && index < InventoryGridCells; ++index)
 		player.InvList[index] = snapshot.inventory[index].item;
 	player._pNumInv = static_cast<int>(std::min<std::size_t>(snapshot.inventory.size(), InventoryGridCells));
+	player._pISpells = 0;
+	player._pScrlSpells = 0;
+	for (const Item &item : player.InvBody) {
+		if (!item.isEmpty() && item._iStatFlag && IsValidSpell(item._iSpell) && item._iCharges != 0)
+			player._pISpells |= GetSpellBitmask(item._iSpell);
+	}
+	for (const Item &item : player.SpdList) {
+		if (item.isScroll() && item._iStatFlag && IsValidSpell(item._iSpell))
+			player._pScrlSpells |= GetSpellBitmask(item._iSpell);
+	}
+	for (int index = 0; index < player._pNumInv; ++index) {
+		const Item &item = player.InvList[index];
+		if (item.isScroll() && item._iStatFlag && IsValidSpell(item._iSpell))
+			player._pScrlSpells |= GetSpellBitmask(item._iSpell);
+	}
 	std::fill(std::begin(player.InvGrid), std::end(player.InvGrid), 0);
 	if (snapshot.inventoryGrid.size() == InventoryGridCells) {
 		for (std::size_t index = 0; index < InventoryGridCells; ++index) {

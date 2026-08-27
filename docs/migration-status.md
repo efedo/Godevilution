@@ -46,6 +46,8 @@ an independent numeric literal, and its regression coverage verifies block state
 clears on the next authoritative standing snapshot.
 Remote-player snapshots also recompute the native derived life and mana
 percentages, keeping HUD and party resource presentation aligned with the server.
+Remote-player item hydration also rebuilds staff-charge and scroll spell masks,
+so native inspection cannot retain spell entries after authoritative item changes.
 The same snapshot path now rebuilds the native stash scroll-source mask, so
 closing or changing an authoritative stash cannot leave stale spell sources.
 Inventory and belt scroll sources remain intact during that reconciliation.

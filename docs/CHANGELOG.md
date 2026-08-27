@@ -31,6 +31,8 @@ All notable changes to this fork are documented below.
   the flag clears when the authoritative action returns to standing.
 - Recompute native remote-player life and mana percentages from each authoritative
   snapshot so HUD and party presentation do not retain stale resource bars.
+- Rebuild remote-player staff and scroll spell masks from authoritative item state,
+  clearing stale spell entries when equipment or inventory changes.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

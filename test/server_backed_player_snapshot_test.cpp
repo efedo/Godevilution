@@ -2121,6 +2121,7 @@ TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMissileAnimationWithoutSim
 TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 {
 	LoadPlayerDataFiles();
+	LoadSpellData();
 	ProjectedPlayerSnapshot local;
 	local.entityId = 1;
 	local.levelId = 1;
@@ -2147,6 +2148,20 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.strength = { 12, 14 };
 	remote.inventoryGrid.assign(InventoryGridCells, -1);
 	remote.combatMode = PM_BLOCK;
+	Item staff;
+	staff._itype = ItemType::Staff;
+	staff._iClass = ICLASS_WEAPON;
+	staff._iSpell = SpellID::Firebolt;
+	staff._iCharges = 5;
+	staff._iStatFlag = true;
+	remote.equipment.push_back({ .slot = INVLOC_HAND_LEFT, .item = staff });
+	Item scroll;
+	scroll._itype = ItemType::Misc;
+	scroll._iMiscId = IMISC_SCROLL;
+	scroll._iSpell = SpellID::Healing;
+	scroll._iStatFlag = true;
+	remote.inventory.push_back({ .item = scroll });
+	remote.inventoryGrid[0] = 0;
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
@@ -2173,6 +2188,8 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 		EXPECT_EQ(player.attributes.strength.current, 14);
 		EXPECT_STREQ(player._pName, "Remote");
 		EXPECT_TRUE(player._pBlockFlag);
+		EXPECT_NE(player._pISpells & GetSpellBitmask(SpellID::Firebolt), 0U);
+		EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
 	});
 	EXPECT_EQ(visitedEntityId, remote.entityId);
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
@@ -2180,12 +2197,17 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.combatMode = PM_STAND;
 	remote.life = 160;
 	remote.mana = 100;
+	remote.equipment.clear();
+	remote.inventory.clear();
+	remote.inventoryGrid.assign(InventoryGridCells, -1);
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
 	EXPECT_FALSE(remotePlayer->_pBlockFlag);
 	EXPECT_EQ(remotePlayer->life.percentage, 12);
 	EXPECT_EQ(remotePlayer->mana.percentage, 16);
+	EXPECT_EQ(remotePlayer->_pISpells, 0U);
+	EXPECT_EQ(remotePlayer->_pScrlSpells, 0U);
 	const uint8_t previousLevel = currentLevelNumber();
 	currentLevelNumber() = 2;
 	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(remote.levelId, *remotePlayer));
