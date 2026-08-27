@@ -102,6 +102,9 @@ status/reason mismatches.
 The Godot handshake now also rejects unspecified or unknown server game modes,
 so the client cannot enter a connected session without a valid single-player
 or multiplayer execution mode.
+Current player level IDs are now validated against the native 25-level range
+at the Diablo mapper, generic host, Godot model, and native projection
+boundaries, including snapshots that omit visited-level entries.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 

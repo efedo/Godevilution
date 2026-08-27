@@ -8,6 +8,7 @@ namespace Devilution.Server.Protocol;
 public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
+    private const uint NativeLevelCount = 25;
 
     public static void Validate(Snapshot snapshot)
     {
@@ -37,9 +38,14 @@ public static class AuthoritativeSnapshotValidator
     private static void ValidatePlayerNativeRanges(Snapshot snapshot)
     {
         foreach (var player in snapshot.Players) {
-            if (player.DiabloKillLevel > byte.MaxValue)
+            if (player.LevelId >= NativeLevelCount
+                || player.VisitedLevelIds.Count > 256
+                || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
+                || player.VisitedLevelIds.Count > 0
+                    && !player.VisitedLevelIds.Contains(player.LevelId)
+                || player.DiabloKillLevel > byte.MaxValue)
                 throw new InvalidDataException(
-                    "The authoritative snapshot contains an out-of-range Diablo kill level.");
+                    "The authoritative snapshot contains player state outside the native range.");
         }
     }
 

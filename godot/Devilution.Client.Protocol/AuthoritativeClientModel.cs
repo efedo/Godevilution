@@ -1109,7 +1109,8 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateVisitedLevels(PlayerSnapshot player)
     {
-        if (player.VisitedLevelIds.Count > 256
+        if (player.LevelId >= NativeLevelCount
+            || player.VisitedLevelIds.Count > 256
             || player.VisitedLevelIds.Any(levelId => levelId >= NativeLevelCount)
             || (player.VisitedLevelIds.Count > 0
                 && !player.VisitedLevelIds.Contains(player.LevelId))

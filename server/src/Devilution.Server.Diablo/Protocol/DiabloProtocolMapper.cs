@@ -1404,6 +1404,7 @@ internal static class DiabloProtocolMapper
     private static void ValidateProjectedVisitedLevels(StorePlayerSnapshot state)
     {
         if (state.VisitedLevelIds is null
+            || state.LevelId >= 25
             || state.VisitedLevelIds.Count > 256
             || state.VisitedLevelIds.Count > 0
                 && !state.VisitedLevelIds.Contains(state.LevelId)

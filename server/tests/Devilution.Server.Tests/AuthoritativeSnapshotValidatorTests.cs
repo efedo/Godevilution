@@ -151,6 +151,20 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsPlayerLevelsOutsideNativeRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 1,
+                        LevelId = 25,
+                    },
+                },
+            }));
+    }
+
+    [Fact]
     public void AcceptsMovementTimingOnlyForAnActiveMovingMonster()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

@@ -746,6 +746,21 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsCurrentPlayerLevelOutsideNativeRange()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 7,
+                        LevelId = 25,
+                    },
+                },
+            })));
+    }
+
+    [Fact]
     public void RejectsInvalidAuthoritativeSessionMetadata()
     {
         var model = new AuthoritativeClientModel();

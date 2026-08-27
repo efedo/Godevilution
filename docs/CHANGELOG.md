@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject player snapshots whose current level ID is outside the native 25-level
+  range, including when no visited-level list is supplied.
 - Reject server handshakes that declare an unspecified or unknown game mode
   before the Godot client enters a connected state.
 - Validate command acknowledgements before the Godot transport or model mutates

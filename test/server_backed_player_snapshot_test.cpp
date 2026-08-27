@@ -232,6 +232,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidLightRadius)
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsPlayerLevelOutsideNativeRange)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_level_id(NUMLEVELS);
+
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidCharacterNameShape)
 {
 	protocol::Snapshot snapshot;

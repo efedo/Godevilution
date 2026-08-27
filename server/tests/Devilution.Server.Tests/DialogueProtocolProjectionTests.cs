@@ -22,6 +22,17 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsPlayerLevelOutsideNativeRange()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8));
+        source = source with { Player = source.Player with { LevelId = 25 } };
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void ProjectsNativeMonsterRuntimeSeeds()
     {
         var source = CreateOriginSnapshot(

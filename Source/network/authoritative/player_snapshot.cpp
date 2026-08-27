@@ -126,6 +126,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	if (player == nullptr)
 		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
+	if (player->level_id() >= NUMLEVELS)
+		return tl::make_unexpected("Server-backed snapshot contains a player level outside the native range.");
 	if (!IsValidCharacterName(player->character_name()))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid character name.");
 	if (player->visited_level_ids_size() > 256) {
