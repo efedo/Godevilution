@@ -172,6 +172,16 @@
         "multVal"
       ],
       "mode": "upsert"
+    },
+    {
+      "table": "item_suffixes.tsv",
+      "keys": [
+        "name",
+        "power",
+        "minLevel",
+        "itemTypes"
+      ],
+      "mode": "upsert"
     }
   ]
 }

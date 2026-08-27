@@ -5451,6 +5451,30 @@ public sealed class ShippedContentTests
         Assert.Equal("Weapon,Staff", doppelganger.Required("itemTypes"));
     }
 
+    [Fact]
+    public void HellfireOverlayExternalizesSpecialItemSuffixes()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        var suffixes = composed.GetRequiredTable("item_suffixes.tsv").Rows
+            .Where(row => row.Required("name") is "devastation" or "decay" or "peril")
+            .ToArray();
+
+        Assert.Equal(3, suffixes.Length);
+        Assert.Equal(
+            new[] { "DEVASTATION", "DECAY", "PERIL" },
+            suffixes.Select(row => row.Required("power")).ToArray());
+        Assert.All(suffixes, row => Assert.Equal("Weapon,Staff,Bow", row.Required("itemTypes")));
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

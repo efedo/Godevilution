@@ -1,0 +1,4 @@
+name	power	power.value1	power.value2	minLevel	itemTypes	alignment	chance	useful	minVal	maxVal	multVal
+devastation	DEVASTATION	1	1	1	Weapon,Staff,Bow	Any	1	true	1200	1200	3
+decay	DECAY	150	250	1	Weapon,Staff,Bow	Any	1	true	200	200	2
+peril	PERIL	1	1	5	Weapon,Staff,Bow	Any	1	true	500	500	1

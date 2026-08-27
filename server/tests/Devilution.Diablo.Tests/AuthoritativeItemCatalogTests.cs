@@ -1531,6 +1531,38 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AppliesSpecialHellfireSuffixPowersToDamageArmorFlags()
+    {
+        var effects = new[] {
+            (Power: "DEVASTATION", Flag: AuthoritativeEquipmentIncomingDamageRules.DevastationFlag),
+            (Power: "DECAY", Flag: AuthoritativeEquipmentIncomingDamageRules.DecayFlag),
+            (Power: "PERIL", Flag: AuthoritativeEquipmentIncomingDamageRules.PerilFlag),
+        };
+        foreach (var effect in effects) {
+            var affixes = new AuthoritativeItemAffixCatalog(
+                [],
+                [new AuthoritativeItemAffix(
+                    effect.Power,
+                    effect.Power,
+                    1,
+                    1,
+                    1,
+                    new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase),
+                    1,
+                    true)],
+                new AuthoritativeItemGenerationRules(10, 1, 1, 15, 4, 0, 100, 100, 59, 74));
+
+            var result = affixes.Apply(
+                AuthoritativeItemState.Empty,
+                42,
+                10,
+                new HashSet<string>(["Weapon"], StringComparer.OrdinalIgnoreCase));
+
+            Assert.Equal(effect.Flag, result.HellfireDamageArmorFlags);
+        }
+    }
+
+    [Fact]
     public void LegacyUniquePowersUseNativeFixedPointAndSignConventions()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([
