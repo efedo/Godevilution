@@ -246,9 +246,10 @@ four-tile envelope for leashed members. Generated minions now also restore the
 native doubled maximum health and inherit the leader's intelligence used by
 authoritative AI decisions. Placement now follows the native bounded retry and
 transparency-region rules when native transparency data is available. Unique
-leaders retain their pack relationships across authoritative ticks. Remaining
-visibility-driven activation and broader cross-snapshot prediction/soak
-coverage remain follow-ups.
+leaders retain their pack relationships across authoritative ticks.
+Visibility-driven activation is shipped for geometry-backed worlds; broader
+activation timing and cross-snapshot prediction/soak coverage remain
+follow-ups.
 
 The authoritative monster AI selector now preserves explicit native
 SkeletonAi-compatible `SkeletonMelee`, `Snotspill`, and `Warlord` identities
@@ -570,9 +571,9 @@ monster rows now carry validated leader identity, leashed/separated relation,
 and pack-size state; the server applies the native line-of-sight separation and
 strictly-under-four-tile reunion rule during autonomous ticks and preserves the
 relationship through snapshots. Native active-tick FollowTheLeader propagation
-now runs for leashed members and survives snapshots. Visibility-driven
-activation and broader cross-snapshot position prediction remain follow-up work;
-post-tick authoritative
+now runs for leashed members and survives snapshots. Geometry-backed
+visibility-driven activation is shipped; broader activation timing and
+cross-snapshot position prediction remain follow-up work. Post-tick authoritative
 movement-admission passes now prevent either a leader or a leashed member from
 moving beyond the strict four-tile pack envelope.
 Multiplayer Bat now consumes
