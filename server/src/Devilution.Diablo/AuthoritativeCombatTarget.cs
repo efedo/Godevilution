@@ -364,6 +364,12 @@ public sealed class AuthoritativeCombatTarget
     public int FuturePositionX { get; private set; }
     public int FuturePositionY { get; private set; }
 
+    /** Server tick at which the current one-tick walk was admitted. */
+    public ulong MovementStartedTick { get; private set; }
+
+    /** First server tick at which the current walk is complete. */
+    public ulong MovementEffectTick { get; private set; }
+
     /** Native monster direction used by movement, attacks, and Hork Spawn. */
     public int Direction { get; private set; }
 
@@ -1409,6 +1415,37 @@ public sealed class AuthoritativeCombatTarget
         IsMoving = true;
     }
 
+    /** Stamps legacy or newly admitted movement when it enters a snapshot. */
+    internal void EnsureMovementTiming(ulong snapshotTick)
+    {
+        if (!IsMoving || MovementStartedTick != 0 || MovementEffectTick != 0)
+            return;
+        MovementStartedTick = snapshotTick == ulong.MaxValue
+            ? ulong.MaxValue - 1
+            : snapshotTick;
+        MovementEffectTick = snapshotTick == ulong.MaxValue
+            ? ulong.MaxValue
+            : snapshotTick + 1;
+    }
+
+    internal void RestoreMovementTiming(ulong startedTick, ulong effectTick)
+    {
+        if (!IsMoving) {
+            if (startedTick != 0 || effectTick != 0)
+                throw new ArgumentException(
+                    "Stationary monsters cannot carry movement timing.");
+            MovementStartedTick = 0;
+            MovementEffectTick = 0;
+            return;
+        }
+        if (startedTick != 0 && effectTick <= startedTick) {
+            throw new ArgumentException(
+                "Moving monsters must carry a valid movement timing window.");
+        }
+        MovementStartedTick = startedTick;
+        MovementEffectTick = effectTick;
+    }
+
     internal void SetLeaderRelation(AuthoritativeMonsterLeaderRelation relation)
     {
         if (relation == AuthoritativeMonsterLeaderRelation.None)
@@ -1471,6 +1508,8 @@ public sealed class AuthoritativeCombatTarget
         PositionX = FuturePositionX;
         PositionY = FuturePositionY;
         IsMoving = false;
+        MovementStartedTick = 0;
+        MovementEffectTick = 0;
     }
 
     internal void CancelMovement()
@@ -1478,6 +1517,8 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionX = PositionX;
         FuturePositionY = PositionY;
         IsMoving = false;
+        MovementStartedTick = 0;
+        MovementEffectTick = 0;
     }
 
     internal void ApplyKnockback(int positionX, int positionY)
@@ -1487,6 +1528,8 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionX = positionX;
         FuturePositionY = positionY;
         IsMoving = false;
+        MovementStartedTick = 0;
+        MovementEffectTick = 0;
     }
 
     private static int DirectionFromStep(int directionX, int directionY)

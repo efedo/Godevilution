@@ -39,6 +39,46 @@ public sealed class AuthoritativeMonsterPositionProjectionTests
     }
 
     [Fact]
+    public void InterpolatesAnAuthoritativeWalkWindow()
+    {
+        var monster = new MonsterSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            FuturePositionX = 5,
+            FuturePositionY = 5,
+            Moving = true,
+            MovementStartedTick = 12,
+            MovementEffectTick = 14,
+        };
+
+        Assert.Equal(
+            new ClientPresentationPosition(4, 5),
+            AuthoritativeMonsterPositionProjection.ResolvePresentation(monster, 12));
+        Assert.Equal(
+            new ClientPresentationPosition(4.5, 5),
+            AuthoritativeMonsterPositionProjection.ResolvePresentation(monster, 13));
+        Assert.Equal(
+            new ClientPresentationPosition(5, 5),
+            AuthoritativeMonsterPositionProjection.ResolvePresentation(monster, 14));
+    }
+
+    [Fact]
+    public void FallsBackToTheFutureTileWhenTimingIsOmitted()
+    {
+        var monster = new MonsterSnapshot {
+            PositionX = 4,
+            PositionY = 5,
+            FuturePositionX = 5,
+            FuturePositionY = 5,
+            Moving = true,
+        };
+
+        Assert.Equal(
+            new ClientPresentationPosition(5, 5),
+            AuthoritativeMonsterPositionProjection.ResolvePresentation(monster, 12));
+    }
+
+    [Fact]
     public void KeepsAOneTileMoveOnTheInterpolationPath()
     {
         var previous = new MonsterSnapshot {

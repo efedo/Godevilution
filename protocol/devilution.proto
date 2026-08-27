@@ -817,6 +817,11 @@ message MonsterSnapshot {
 	optional int32 pack_size = 93;
 	// Remaining native activation ticks used by FollowTheLeader.
 	optional int32 active_for_ticks = 94;
+	// Server tick at which the current one-tick walk was admitted. Zero with
+	// effect tick zero preserves compatibility with older snapshots.
+	optional uint64 movement_started_tick = 95;
+	// First server tick at which the current walk is complete.
+	optional uint64 movement_effect_tick = 96;
 }
 
 message WorldItemSnapshot {

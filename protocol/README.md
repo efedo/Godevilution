@@ -496,6 +496,11 @@ Windows toolchain command.
   current tile, while a petrified walker is hittable at either tile. Nondefault
   movement or petrification uses the tagged
   `godevilution-monster-occupancy-v1` hash extension.
+- `MonsterSnapshot` fields 95-96 optionally carry the server tick at which a
+  one-tick walk was admitted and the first tick at which it completes. Zero
+  values preserve older snapshots. The timing is derived presentation metadata
+  and is excluded from canonical gameplay hashing, so clients interpolate
+  without changing deterministic state.
 - `MonsterSnapshot.stone_curse_immune` field 22 persists the external monster
   capability used by later server-owned casts. True uses the tagged
   `godevilution-monster-stone-curse-immunity-v1` hash extension; false remains

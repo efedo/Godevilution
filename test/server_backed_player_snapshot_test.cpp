@@ -603,6 +603,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_moving(true);
 	second->set_future_position_x(5);
 	second->set_future_position_y(5);
+	second->set_movement_started_tick(12);
+	second->set_movement_effect_tick(13);
 	second->set_petrified(true);
 	second->set_sneak_hidden(true);
 	second->set_stone_curse_immune(true);
@@ -638,6 +640,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_TRUE((*projected)[2].moving);
 	EXPECT_EQ((*projected)[2].futurePositionX, 5);
 	EXPECT_EQ((*projected)[2].futurePositionY, 5);
+	EXPECT_EQ((*projected)[2].movementStartedTick, 12U);
+	EXPECT_EQ((*projected)[2].movementEffectTick, 13U);
 	EXPECT_TRUE((*projected)[2].petrified);
 	EXPECT_TRUE((*projected)[2].sneakHidden);
 	EXPECT_TRUE((*projected)[2].stoneCurseImmune);
@@ -1480,6 +1484,15 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	protocol::Snapshot invalidGroupActiveTicks = makeMonster();
 	invalidGroupActiveTicks.mutable_monsters(0)->set_active_for_ticks(-1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupActiveTicks).has_value());
+
+	protocol::Snapshot invalidMovementTiming = makeMonster();
+	invalidMovementTiming.mutable_monsters(0)->set_movement_started_tick(12);
+	invalidMovementTiming.mutable_monsters(0)->set_movement_effect_tick(11);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidMovementTiming).has_value());
+
+	protocol::Snapshot stationaryMovementTiming = makeMonster();
+	stationaryMovementTiming.mutable_monsters(0)->set_movement_effect_tick(13);
+	EXPECT_FALSE(ValidateMonsterSnapshots(stationaryMovementTiming).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, AcceptsAuthoredUniqueMonsterPackLeader)
@@ -1857,6 +1870,17 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonster
 	nonAdjacent.moving = true;
 	nonAdjacent.futurePositionX = 2;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ nonAdjacent }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot invalidTiming = first;
+	invalidTiming.entityId = 20;
+	invalidTiming.movementStartedTick = 12;
+	invalidTiming.movementEffectTick = 11;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidTiming }, { }, { }, 1).has_value());
+
+	ProjectedMonsterSnapshot stationaryTiming = first;
+	stationaryTiming.entityId = 21;
+	stationaryTiming.movementEffectTick = 13;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ stationaryTiming }, { }, { }, 1).has_value());
 
 	ProjectedWorldItemSnapshot item;
 	item.entityId = first.entityId;

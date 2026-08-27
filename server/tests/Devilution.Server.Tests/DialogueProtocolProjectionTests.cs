@@ -116,6 +116,77 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsAndRestoresMonsterMovementTiming()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0) {
+                    Moving = true,
+                    FuturePositionX = 2,
+                    FuturePositionY = 1,
+                    MovementStartedTick = 12,
+                    MovementEffectTick = 13,
+                }],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var monster = Assert.Single(projected.Monsters);
+        Assert.Equal(12UL, monster.MovementStartedTick);
+        Assert.Equal(13UL, monster.MovementEffectTick);
+
+        var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
+        var restoredMonster = Assert.Single(restored.Monsters);
+        Assert.Equal(12UL, restoredMonster.MovementStartedTick);
+        Assert.Equal(13UL, restoredMonster.MovementEffectTick);
+    }
+
+    [Fact]
+    public void RejectsMalformedMonsterMovementTiming()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0) {
+                    Moving = true,
+                    FuturePositionX = 2,
+                    FuturePositionY = 1,
+                    MovementStartedTick = 12,
+                    MovementEffectTick = 11,
+                }],
+            };
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void RejectsInvalidMonsterGroupUnityRelation()
     {
         var source = CreateOriginSnapshot(

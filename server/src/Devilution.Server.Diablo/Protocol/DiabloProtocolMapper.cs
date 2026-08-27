@@ -118,6 +118,8 @@ internal static class DiabloProtocolMapper
                 Moving = monster.Moving,
                 FuturePositionX = monster.FuturePositionX,
                 FuturePositionY = monster.FuturePositionY,
+                MovementStartedTick = monster.MovementStartedTick,
+                MovementEffectTick = monster.MovementEffectTick,
                 Direction = monster.Direction,
                 DialogueMessageId = monster.DialogueMessageId,
                 Petrified = monster.Petrified,
@@ -1012,6 +1014,15 @@ internal static class DiabloProtocolMapper
                 throw new InvalidDataException(
                     "Authoritative monster movement state is outside the shared protocol range.");
             }
+            if (!monster.Moving
+                && (monster.MovementStartedTick != 0
+                    || monster.MovementEffectTick != 0)
+                || (monster.MovementStartedTick != 0
+                    || monster.MovementEffectTick != 0)
+                    && monster.MovementEffectTick <= monster.MovementStartedTick) {
+                throw new InvalidDataException(
+                    "Authoritative monster movement timing is outside the shared protocol range.");
+            }
         }
 
         var monstersById = new Dictionary<uint, DiabloMonsterState>();
@@ -1572,6 +1583,8 @@ internal static class DiabloProtocolMapper
                 FuturePositionY = monster.Moving
                     ? monster.FuturePositionY
                     : monster.PositionY,
+                MovementStartedTick = monster.MovementStartedTick,
+                MovementEffectTick = monster.MovementEffectTick,
                 Direction = monster.Direction,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,

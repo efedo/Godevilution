@@ -163,8 +163,8 @@ native doubled maximum health and inherit the leader's intelligence used by
 authoritative AI decisions. Placement now follows the native bounded retry and
 transparency-region rules when native transparency data is available. Unique
 leaders retain their pack relationships across authoritative ticks. Remaining
-visibility-driven activation and cross-snapshot position prediction work remain
-follow-ups.
+visibility-driven activation and broader cross-snapshot position prediction
+work remain follow-ups.
 
 The authoritative monster AI selector now preserves explicit native
 SkeletonAi-compatible `SkeletonMelee`, `Snotspill`, and `Warlord` identities
@@ -207,6 +207,11 @@ discontinuous server state. The native world projection now carries the
 authoritative snapshot tick into presentation and ignores older complete world
 projections, preventing delayed server state from regressing native entities;
 legacy callers that do not provide a tick remain accepted.
+
+Authoritative monster snapshots now optionally carry a server-owned movement
+start/effect tick window. Godot interpolates a one-tick walk from the current
+tile toward the reserved future tile, while native occupancy and targeting stay
+discrete; zero-valued fields preserve older snapshots and saves.
 
 The protocol-free native world projection path now repeats the structural
 monster invariants needed by compatibility presentation: non-zero unique
@@ -479,7 +484,7 @@ and pack-size state; the server applies the native line-of-sight separation and
 strictly-under-four-tile reunion rule during autonomous ticks and preserves the
 relationship through snapshots. Native active-tick FollowTheLeader propagation
 now runs for leashed members and survives snapshots. Visibility-driven
-activation and cross-snapshot position prediction remain follow-up work;
+activation and broader cross-snapshot position prediction remain follow-up work;
 post-tick authoritative
 movement-admission passes now prevent either a leader or a leashed member from
 moving beyond the strict four-tile pack envelope.

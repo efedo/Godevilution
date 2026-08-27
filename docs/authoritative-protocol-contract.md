@@ -364,6 +364,15 @@ persists this state in version-1 saves, and adds the tagged
 petrification is nondefault. Missing additive fields normalize to stationary
 occupancy at the current tile.
 
+`MonsterSnapshot.movement_started_tick` and `movement_effect_tick` fields 95
+and 96 optionally carry the server-owned one-tick movement window. The server
+stamps legacy unstamped movement when it captures a snapshot, and restores the
+window through version-1 saves. The timing is derived presentation metadata
+and is deliberately excluded from canonical gameplay hashing. Godot uses the
+window only to interpolate presentation; native occupancy and all targeting
+decisions remain discrete and server-owned. Both zero values preserve
+compatibility with older snapshots.
+
 `MonsterSnapshot.stone_curse_immune` field 22 carries an immutable external-
 content capability needed by future authoritative casts and version-1 save
 restore. True adds the tagged

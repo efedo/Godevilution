@@ -2321,6 +2321,8 @@ public sealed class DiabloSimulationTests
         Assert.True(restoredMonster.IsMoving);
         Assert.Equal(1, restoredMonster.FuturePositionX);
         Assert.Equal(1, restoredMonster.FuturePositionY);
+        Assert.Equal(14UL, restoredMonster.MovementStartedTick);
+        Assert.Equal(15UL, restoredMonster.MovementEffectTick);
         Assert.True(restoredMonster.IsPetrified);
         Assert.Equal(99U, Assert.Single(replacement.WorldState.WorldItems).Value.ItemSeed);
         var restoredObject = Assert.Single(replacement.WorldState.Objects).Value;

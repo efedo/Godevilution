@@ -129,6 +129,11 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			if (distance != 1)
 				return tl::make_unexpected("Authoritative moving monster projection must target an adjacent tile.");
 		}
+		if ((!monster.moving
+		     && (monster.movementStartedTick != 0 || monster.movementEffectTick != 0))
+		    || (monster.movementStartedTick != 0 || monster.movementEffectTick != 0)
+		        && monster.movementEffectTick <= monster.movementStartedTick)
+			return tl::make_unexpected("Authoritative monster projection contains invalid movement timing.");
 		if (monster.leaderRelation < 0 || monster.leaderRelation > 2
 		    || (monster.leaderRelation == 0
 		        ? monster.leaderEntityId != 0

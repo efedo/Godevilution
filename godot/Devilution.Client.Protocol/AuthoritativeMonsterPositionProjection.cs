@@ -14,6 +14,36 @@ public static class AuthoritativeMonsterPositionProjection
             : new ClientPresentationPosition(monster.PositionX, monster.PositionY);
     }
 
+    /**
+     * Resolves a monster at an authoritative snapshot tick. Older snapshots
+     * omit timing and retain the discrete future-tile presentation.
+     */
+    public static ClientPresentationPosition ResolvePresentation(
+        MonsterSnapshot monster,
+        ulong snapshotTick)
+    {
+        ArgumentNullException.ThrowIfNull(monster);
+        if (!monster.Moving
+            || monster.MovementStartedTick == 0
+                && monster.MovementEffectTick == 0
+            || monster.MovementEffectTick <= monster.MovementStartedTick) {
+            return ResolvePresentation(monster);
+        }
+
+        var elapsed = snapshotTick <= monster.MovementStartedTick
+            ? 0UL
+            : Math.Min(
+                snapshotTick - monster.MovementStartedTick,
+                monster.MovementEffectTick - monster.MovementStartedTick);
+        var duration = monster.MovementEffectTick - monster.MovementStartedTick;
+        var progress = (double)elapsed / duration;
+        return new ClientPresentationPosition(
+            monster.PositionX
+                + (monster.FuturePositionX - monster.PositionX) * progress,
+            monster.PositionY
+                + (monster.FuturePositionY - monster.PositionY) * progress);
+    }
+
     /** Returns true when a cached monster position must snap to the next state. */
     public static bool RequiresPresentationReset(
         MonsterSnapshot previous,

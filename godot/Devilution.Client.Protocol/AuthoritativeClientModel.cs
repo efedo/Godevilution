@@ -1254,6 +1254,15 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster occupancy state.");
         }
+        if ((!monster.Moving
+                && (monster.MovementStartedTick != 0
+                    || monster.MovementEffectTick != 0))
+            || (monster.MovementStartedTick != 0
+                || monster.MovementEffectTick != 0)
+                && monster.MovementEffectTick <= monster.MovementStartedTick) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid monster movement timing.");
+        }
     }
 
     private static void ValidatePlayerSpells(PlayerSnapshot player)

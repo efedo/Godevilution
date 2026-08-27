@@ -509,6 +509,12 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		        || source.future_position_y() != source.position_y())) {
 			return tl::make_unexpected("Server-backed snapshot contains inconsistent stationary monster occupancy.");
 		}
+		if ((!source.moving()
+		     && (source.movement_started_tick() != 0 || source.movement_effect_tick() != 0))
+		    || (source.movement_started_tick() != 0 || source.movement_effect_tick() != 0)
+		        && source.movement_effect_tick() <= source.movement_started_tick()) {
+			return tl::make_unexpected("Server-backed snapshot contains invalid monster movement timing.");
+		}
 		if (source.leader_relation() < 0 || source.leader_relation() > 2
 		    || (source.leader_relation() == 0
 		        ? source.leader_entity_id() != 0
@@ -542,6 +548,8 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		    .moving = source.moving(),
 		    .futurePositionX = futurePositionX,
 		    .futurePositionY = futurePositionY,
+		    .movementStartedTick = source.movement_started_tick(),
+		    .movementEffectTick = source.movement_effect_tick(),
 		    .petrified = source.petrified(),
 		    .sneakHidden = source.sneak_hidden(),
 		    .stoneCurseImmune = source.stone_curse_immune(),
@@ -1309,7 +1317,11 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		        : monster.leader_entity_id() == 0)
 		    || monster.leader_relation() != 0 && monster.is_unique()
 		    || monster.pack_size() < 0 || monster.pack_size() > 255
-		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > 255)
+		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > 255
+		    || (!monster.moving()
+		        && (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0))
+		    || (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0)
+		        && monster.movement_effect_tick() <= monster.movement_started_tick())
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster combat state.");
 		if (monster.entity_id() == 0 || !monstersById.emplace(monster.entity_id(), &monster).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate monster entity IDs.");

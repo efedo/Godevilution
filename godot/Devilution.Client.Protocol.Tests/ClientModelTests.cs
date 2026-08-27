@@ -2453,6 +2453,12 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidMoving)));
 
+        var invalidTiming = moving.Clone();
+        invalidTiming.Monsters[0].MovementStartedTick = 12;
+        invalidTiming.Monsters[0].MovementEffectTick = 11;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidTiming)));
+
         var stationary = moving.Clone();
         stationary.Monsters[0].Moving = false;
         Assert.Throws<InvalidDataException>(() =>

@@ -28,6 +28,12 @@ public sealed record DiabloMonsterState(
 
     public int FuturePositionY { get; init; } = PositionY;
 
+    /** Server tick at which the current one-tick walk was admitted. */
+    public ulong MovementStartedTick { get; init; }
+
+    /** First server tick at which the current walk is complete. */
+    public ulong MovementEffectTick { get; init; }
+
     /** Native monster direction used by movement, attacks, and Hork Spawn. */
     public int Direction { get; init; }
 
@@ -578,6 +584,8 @@ public sealed partial class DiabloSimulation
                     .Select(item => item with { State = ResolveItemState(item.State) })
                     .ToArray())
             : null;
+        foreach (var target in WorldState.CombatTargets.Values)
+            target.EnsureMovementTiming(tick);
         return new DiabloSimulationSnapshot(
             tick,
             CapturePlayerState(player),
@@ -598,6 +606,8 @@ public sealed partial class DiabloSimulation
                     target.LightningResistance,
                     target.MagicResistance,
                     target.AcidResistance) {
+                    MovementStartedTick = target.IsMoving ? target.MovementStartedTick : 0,
+                    MovementEffectTick = target.IsMoving ? target.MovementEffectTick : 0,
                     MonsterLevel = target.MonsterLevel,
                     Moving = target.IsMoving,
                     FuturePositionX = target.FuturePositionX,
@@ -1115,6 +1125,12 @@ public sealed partial class DiabloSimulation
                 || (!monster.Moving
                     && (monster.FuturePositionX != monster.PositionX
                         || monster.FuturePositionY != monster.PositionY))
+                || (!monster.Moving
+                    && (monster.MovementStartedTick != 0
+                        || monster.MovementEffectTick != 0))
+                || (monster.MovementStartedTick != 0
+                    || monster.MovementEffectTick != 0)
+                    && monster.MovementEffectTick <= monster.MovementStartedTick
                 || monster.FireResistance is < -100 or > 100
                 || monster.LightningResistance is < -100 or > 100
                 || monster.MagicResistance is < -100 or > 100
@@ -2242,6 +2258,9 @@ public sealed partial class DiabloSimulation
                     monster.FuturePositionX,
                     monster.FuturePositionY,
                     monster.Petrified);
+                target.RestoreMovementTiming(
+                    monster.MovementStartedTick,
+                    monster.MovementEffectTick);
             } else {
                 var restoredTarget = new AuthoritativeCombatTarget(
                     monster.EntityId,
@@ -2308,6 +2327,9 @@ public sealed partial class DiabloSimulation
                     avoidanceMovementTurn: monster.AvoidanceMovementTurn,
                     avoidanceMovementIdleTicks: monster.AvoidanceMovementIdleTicks,
                     avoidanceMovementMode: monster.AvoidanceMovementMode);
+                restoredTarget.RestoreMovementTiming(
+                    monster.MovementStartedTick,
+                    monster.MovementEffectTick);
                 restoredTarget.RestoreSkeletonMeleeDelay(monster.SkeletonMeleeDelayTicks);
                 restoredTarget.RestoreSkeletonRangedMovementState(
                     monster.SkeletonRangedMovementIdleTicks,

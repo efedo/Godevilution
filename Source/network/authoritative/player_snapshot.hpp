@@ -159,6 +159,9 @@ struct ProjectedMonsterSnapshot {
 	bool moving = false;
 	int32_t futurePositionX = 0;
 	int32_t futurePositionY = 0;
+	/** Server-owned one-tick movement timing retained for presentation clients. */
+	uint64_t movementStartedTick = 0;
+	uint64_t movementEffectTick = 0;
 	bool petrified = false;
 	/** Server-owned stealth state; hidden monsters are not presentation targets. */
 	bool sneakHidden = false;

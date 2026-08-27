@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Carry authoritative monster movement start/effect ticks through snapshots,
+  saves, the shared protocol, Godot interpolation, and native compatibility
+  projection while retaining zero-valued legacy snapshot compatibility.
 - Share the native `DoVision` ray table between the authoritative server and
   Godot protocol client, including radius trimming and diagonal corner rules.
 - Align native authoritative projection tests with the fail-closed boundary for

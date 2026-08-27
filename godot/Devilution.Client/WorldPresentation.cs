@@ -83,7 +83,9 @@ public partial class WorldPresentation : Node2D
             activeEntityIds.Add(monster.EntityId);
             var reset = displayedMonsterSnapshots.TryGetValue(monster.EntityId, out var previous)
                 && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster);
-            var projected = AuthoritativeMonsterPositionProjection.ResolvePresentation(monster);
+            var projected = AuthoritativeMonsterPositionProjection.ResolvePresentation(
+                monster,
+                snapshot.Tick);
             UpdatePosition(
                 monster.EntityId,
                 ToScreen(projected.X, projected.Y),
