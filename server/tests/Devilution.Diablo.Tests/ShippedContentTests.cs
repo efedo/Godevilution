@@ -5447,6 +5447,53 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void HellfireAffixesMatchNativeVariantTables()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        foreach (var (sourcePath, keyColumns) in new[] {
+            ("item_prefixes.tsv", new[] { "name", "power", "power.value1", "power.value2", "minLevel" }),
+            ("item_suffixes.tsv", new[] { "name", "power", "minLevel" }),
+        }) {
+            var native = TsvTable.Parse(
+                $"native/{sourcePath}",
+                File.ReadAllText(Path.Combine(
+                    repositoryRoot,
+                    "mods",
+                    "Hellfire",
+                    "txtdata",
+                    "items",
+                    sourcePath)));
+            var external = composed.GetRequiredTable(sourcePath);
+            Assert.Equal(native.Columns, external.Columns);
+
+            static string Key(TsvRow row, IReadOnlyList<string> columns)
+                => string.Join('\u001F', columns.Select(row.Required));
+
+            var nativeRows = native.Rows.ToDictionary(
+                row => Key(row, keyColumns),
+                StringComparer.Ordinal);
+            var externalRows = external.Rows.ToDictionary(
+                row => Key(row, keyColumns),
+                StringComparer.Ordinal);
+            Assert.Equal(
+                nativeRows.Keys.Order(StringComparer.Ordinal),
+                externalRows.Keys.Order(StringComparer.Ordinal));
+            foreach (var key in nativeRows.Keys)
+                foreach (var column in native.Columns)
+                    Assert.Equal(nativeRows[key][column], externalRows[key][column]);
+        }
+    }
+
+    [Fact]
     public void HellfireOverlayExternalizesTheCrystallineWeaponPrefix()
     {
         var repositoryRoot = FindRepositoryRoot();

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add exhaustive Hellfire affix parity coverage against the native variant
+  prefix and suffix tables, guarding all 86 prefixes and 98 suffixes after
+  base-pack composition and overlay replacement.
 - Add exhaustive base-content affix parity coverage against the inherited native
   prefix and suffix tables, guarding every field and row in the external pack.
 - Restore The Undead Crown's native `SETAC 8–8` unique power in the Hellfire

@@ -7,6 +7,11 @@ against the inherited native tables, including row ordering and every field;
 future content edits therefore fail focused shipped-content verification when
 they drift from the native source.
 
+The composed Hellfire prefix and suffix catalogs now receive the same
+field-for-field guard against the native variant tables: all 86 prefixes and
+98 suffixes must remain present under their validated composite keys after
+overlay replacement.
+
 The external Hellfire monster catalog now matches native `monstdat.tsv` armor
 values for all previously divergent rows and preserves the four Fallen-family
 special attacks as non-damaging ranges. Focused shipped-content coverage guards
