@@ -1206,6 +1206,18 @@ public sealed class ClientModelTests
                     Acknowledgement: new CommandAck { Results = { result } })));
         }
 
+        model.Apply(new AuthoritativeClientMessage(Acknowledgement: new CommandAck {
+            Results = {
+                new CommandResult {
+                    ClientSequence = 2,
+                    Status = CommandStatus.Duplicate,
+                    RejectReason = CommandRejectReason.InvalidTarget,
+                },
+            },
+        }));
+        Assert.Equal(CommandStatus.Duplicate, model.LastCommandResult!.Status);
+        Assert.Equal(CommandRejectReason.InvalidTarget, model.LastCommandResult.RejectReason);
+
         var oversized = new CommandAck();
         for (var index = 0; index <= AuthoritativeCommandAckValidator.MaximumResultCount; index++)
             oversized.Results.Add(new CommandResult {

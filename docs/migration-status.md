@@ -96,6 +96,9 @@ provided.
 Godot command acknowledgements are now validated before transport removal of
 pending commands or model presentation updates; malformed result status and
 reason combinations fail closed without losing retryable commands.
+Duplicate acknowledgements retain the server's original rejection reason, so
+the validator preserves that valid retry outcome while rejecting other
+status/reason mismatches.
 The Godot handshake now also rejects unspecified or unknown server game modes,
 so the client cannot enter a connected session without a valid single-player
 or multiplayer execution mode.

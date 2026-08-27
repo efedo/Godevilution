@@ -18,7 +18,7 @@ public static class AuthoritativeCommandAckValidator
                 || result.Status == CommandStatus.Unspecified
                 || !Enum.IsDefined(result.Status)
                 || !Enum.IsDefined(result.RejectReason)
-                || result.Status != CommandStatus.Rejected
+                || result.Status is not (CommandStatus.Rejected or CommandStatus.Duplicate)
                     && result.RejectReason != CommandRejectReason.Unspecified) {
                 throw new InvalidDataException(
                     "The authoritative command acknowledgement contains an invalid result.");
