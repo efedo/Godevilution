@@ -6796,6 +6796,9 @@ public sealed class DiabloCombatCommandProcessor
                 && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0;
             if (hasSkeletonTuning)
                 return true;
+            if (target.NativeAi is "SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord"
+                && target.NativeAi != definition.NativeAi)
+                return true;
             if (target.NativeAi == definition.NativeAi
                 && (GetSneakTuning(target).HasValue
                     || GetBatAttackTuning(target).HasValue
@@ -6817,7 +6820,7 @@ public sealed class DiabloCombatCommandProcessor
                 return false;
             return definition.NativeAi is "SkeletonMelee" or "Fallen" or "Snotspill";
         }
-        return target.NativeAi is "Fallen" or "Snotspill" or "Warlord";
+        return target.NativeAi is "SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord";
     }
 
     private (int ChanceBase, int IntelligenceScale)? GetGoatMeleeMovementTuning(

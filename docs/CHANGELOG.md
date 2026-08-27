@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve explicit native SkeletonAi compatibility identities (`SkeletonMelee`,
+  `Fallen`, `Snotspill`, and `Warlord`) when a generic monster catalog row is
+  present, so authoritative delay and movement behavior is not bypassed.
 - Align generated unique-pack placement with native `PlaceGroup` retry and
   transparency-region rules while retaining deterministic server occupancy and
   entity allocation.
