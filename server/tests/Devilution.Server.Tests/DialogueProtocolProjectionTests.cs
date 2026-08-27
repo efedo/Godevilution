@@ -1991,6 +1991,18 @@ public sealed class DialogueProtocolProjectionTests
         Assert.Equal(string.Empty, Assert.Single(batch!.Events).Dialogue.Text);
     }
 
+    [Fact]
+    public void RejectsVictoryRankOutsideNativeRange()
+    {
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolEventBatch([
+            new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Victory,
+                1,
+                34,
+                byte.MaxValue + 1),
+        ], 1, 7));
+    }
+
     [Theory]
     [InlineData(AuthoritativeProjectileBehavior.ChargedBolt, NativeProjectileVisual.ChargedBolt)]
     [InlineData(AuthoritativeProjectileBehavior.MonsterChargedBolt, NativeProjectileVisual.ChargedBolt)]

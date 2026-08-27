@@ -2042,11 +2042,14 @@ internal static class DiabloProtocolMapper
                 });
                 break;
             case DiabloGameplayEventKind.Victory:
+                if (gameplayEvent.Amount < 0 || gameplayEvent.Amount > byte.MaxValue)
+                    throw new InvalidDataException(
+                        "Authoritative victory event rank exceeds the shared native range.");
                 batch.Events.Add(new GameEvent {
                     Victory = new VictoryEvent {
                         PlayerEntityId = entityId,
                         BossEntityId = gameplayEvent.TargetEntityId,
-                        DiabloKillLevel = (uint)Math.Max(gameplayEvent.Amount, 0),
+                        DiabloKillLevel = (uint)gameplayEvent.Amount,
                     },
                 });
                 break;

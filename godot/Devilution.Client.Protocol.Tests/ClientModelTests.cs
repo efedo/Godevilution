@@ -1159,6 +1159,7 @@ public sealed class ClientModelTests
             new GameEvent { Healing = new HealingEvent { AmountQ6 = -1 } },
             new GameEvent { Dialogue = new DialogueEvent { MessageId = -1 } },
             new GameEvent { Dialogue = new DialogueEvent { Text = "bad\0text" } },
+            new GameEvent { Victory = new VictoryEvent { DiabloKillLevel = byte.MaxValue + 1U } },
             new GameEvent(),
         }) {
             Assert.Throws<InvalidDataException>(() =>

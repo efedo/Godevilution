@@ -466,13 +466,14 @@ TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedbac
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
 {
-	const std::array<void (*)(protocol::EventBatch *), 7> configure = {
+	const std::array<void (*)(protocol::EventBatch *), 8> configure = {
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount_q6(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount_q6(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_message_id(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_text(std::string("bad\0text", 8)); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_victory()->set_diablo_kill_level(std::numeric_limits<uint8_t>::max() + 1U); },
 		[](protocol::EventBatch *batch) { batch->add_events(); },
 	};
 	for (const auto &configureEvent : configure) {

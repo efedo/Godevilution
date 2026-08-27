@@ -1435,8 +1435,11 @@ tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::E
 				return tl::make_unexpected("Server-backed event batch contains invalid dialogue.");
 			continue;
 		}
-		if (event.has_victory())
+		if (event.has_victory()) {
+			if (event.victory().diablo_kill_level() > std::numeric_limits<uint8_t>::max())
+				return tl::make_unexpected("Server-backed event batch contains a Diablo kill level outside the native range.");
 			continue;
+		}
 		return tl::make_unexpected("Server-backed event batch contains an unknown event kind.");
 	}
 	return {};

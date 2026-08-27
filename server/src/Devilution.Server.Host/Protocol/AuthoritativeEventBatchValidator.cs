@@ -33,6 +33,9 @@ public static class AuthoritativeEventBatchValidator
                     throw new InvalidDataException("The authoritative event batch contains invalid dialogue.");
                 break;
             case GameEvent.EventOneofCase.Victory:
+                if (gameEvent.Victory.DiabloKillLevel > byte.MaxValue)
+                    throw new InvalidDataException(
+                        "The authoritative event batch contains an out-of-range Diablo kill level.");
                 break;
             default:
                 throw new InvalidDataException("The authoritative event batch contains an unknown event kind.");

@@ -85,6 +85,10 @@ boundary.
 The Godot handshake now also requires an authoritative snapshot immediately
 after `ServerHello`; an error or unexpected payload fails closed before the
 client reports itself connected.
+Victory-event Diablo ranks now use the same native byte-range guard as player
+snapshot ranks across the C# mapper, generic host, Godot model, and native
+compatibility validator, preventing an oversized event from being silently
+narrowed during presentation.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 
