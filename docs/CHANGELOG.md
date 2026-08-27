@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
   scroll availability.
 - Reconcile the native local block-animation admission flag from authoritative
   combat modes so stale legacy state cannot survive a server-owned transition.
+- Use the native `PM_BLOCK` enum for remote-player block presentation and verify
+  the flag clears when the authoritative action returns to standing.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

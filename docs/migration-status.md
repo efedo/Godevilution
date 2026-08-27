@@ -41,6 +41,9 @@ and gameplay statistics remain snapshot-owned.
 Authoritative local combat-mode snapshots now also reconcile the native block
 animation admission flag, preventing stale legacy block state from surviving
 an action transition.
+Remote-player presentation uses the same native `PM_BLOCK` identity rather than
+an independent numeric literal, and its regression coverage verifies block state
+clears on the next authoritative standing snapshot.
 The same snapshot path now rebuilds the native stash scroll-source mask, so
 closing or changing an authoritative stash cannot leave stale spell sources.
 Inventory and belt scroll sources remain intact during that reconciliation.

@@ -2140,6 +2140,7 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.characterName = "Remote";
 	remote.strength = { 12, 14 };
 	remote.inventoryGrid.assign(InventoryGridCells, -1);
+	remote.combatMode = PM_BLOCK;
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
@@ -2163,10 +2164,16 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 		EXPECT_EQ(player.attributes.strength.base, 12);
 		EXPECT_EQ(player.attributes.strength.current, 14);
 		EXPECT_STREQ(player._pName, "Remote");
+		EXPECT_TRUE(player._pBlockFlag);
 	});
 	EXPECT_EQ(visitedEntityId, remote.entityId);
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
+	remote.combatMode = PM_STAND;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_FALSE(remotePlayer->_pBlockFlag);
 	const uint8_t previousLevel = currentLevelNumber();
 	currentLevelNumber() = 2;
 	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(remote.levelId, *remotePlayer));

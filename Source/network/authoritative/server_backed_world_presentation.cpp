@@ -328,7 +328,7 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.position.temp = player.position.tile;
 	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
 	player.direction = GetRemotePlayerDirection(snapshot);
-	player._pBlockFlag = snapshot.combatMode == 6;
+	player._pBlockFlag = snapshot.combatMode == static_cast<uint32_t>(PM_BLOCK);
 	player._pmode = snapshot.life <= 0 || snapshot.combatMode == PM_DEATH
 	    ? PM_DEATH
 	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode) : PM_STAND;
