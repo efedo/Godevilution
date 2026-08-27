@@ -174,10 +174,11 @@ Gargoyle.
 
 Geometry-backed server worlds now apply the first visibility activation gate:
 occluded monsters with no active tick remain inactive while connected players
-are present, using native transparency regions when supplied. Geometry-free
-compatibility fixtures and no-player simulation ticks retain their legacy
-behavior; broader native viewport and activation timing parity remain follow-up
-work.
+are present, using the authoritative walkability layer as a bounded native
+radius-10 line-of-sight approximation when native transparency is supplied.
+Geometry-free compatibility fixtures and no-player simulation ticks retain
+their legacy behavior; player light-radius data, exact ray parity, and broader
+activation timing remain follow-up work.
 
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts

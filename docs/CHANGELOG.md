@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend geometry-backed monster visibility activation with the native default
+  radius-10 line-of-sight boundary, while preserving geometry-free compatibility
+  behavior and documenting the remaining exact-ray/light-radius follow-up.
 - Add the first server-side visibility activation gate for geometry-backed
   worlds: occluded monsters remain inactive when connected players are present,
   while geometry-free compatibility fixtures retain their legacy behavior.

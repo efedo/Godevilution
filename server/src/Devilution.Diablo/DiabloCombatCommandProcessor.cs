@@ -4969,6 +4969,10 @@ public sealed class DiabloCombatCommandProcessor
                     target.RestoreActiveForTicks(target.ActiveForTicks - 1);
                 if (target.ActiveForTicks == 0)
                     continue;
+            } else if (world.World is not null && players.Count > 0) {
+                // Native ProcessMonsters wakes visible monsters for the full
+                // active window before dispatching their AI.
+                target.RestoreActiveForTicks(byte.MaxValue);
             }
             if (IsQuestDialogueTarget(target))
                 continue;
@@ -5414,11 +5418,28 @@ public sealed class DiabloCombatCommandProcessor
             && player.LevelId == target.LevelId
             && (level is null
                 || level.NativeTransparency.Count == 0
-                || level.IsSameTransparencyRegion(
-                    target.PositionX,
-                    target.PositionY,
-                    player.PositionX,
-                    player.PositionY)));
+                || IsWithinNativeVision(level, target, player)));
+    }
+
+    /** Native ProcessMonsters normally receives a visibility flag from the
+     * player's radius-10 vision pass. Until player light radius is external,
+     * retain that native default for geometry-backed levels and use the
+     * authoritative walkability layer as the vision blocker. */
+    private static bool IsWithinNativeVision(
+        AuthoritativeLevel level,
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState player)
+    {
+        const int nativeVisionRadius = 10;
+        var deltaX = target.PositionX - player.PositionX;
+        var deltaY = target.PositionY - player.PositionY;
+        if (deltaX * deltaX + deltaY * deltaY > nativeVisionRadius * nativeVisionRadius)
+            return false;
+        return level.HasLineOfSight(
+            player.PositionX,
+            player.PositionY,
+            target.PositionX,
+            target.PositionY);
     }
 
     /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */

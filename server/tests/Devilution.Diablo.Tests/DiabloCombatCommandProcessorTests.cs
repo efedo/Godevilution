@@ -8081,6 +8081,74 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GeometryBackedWorldDoesNotActivateMonstersOutsideNativeVisionRadius()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            25,
+            5,
+            nativeTransparency: Enumerable.Repeat((ushort)1, 125)));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            12,
+            2,
+            20,
+            levelId: 1,
+            attackDamage: 20,
+            aggroRange: 20,
+            toHit: 255);
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 2,
+            levelId: 1,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(50, player.Life);
+        Assert.Equal(0, monster.ActiveForTicks);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
+    public void GeometryBackedWorldWakesMonstersWithinNativeVisionRadius()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            25,
+            5,
+            nativeTransparency: Enumerable.Repeat((ushort)1, 125)));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            8,
+            2,
+            20,
+            levelId: 1,
+            attackDamage: 20,
+            aggroRange: 20,
+            toHit: 255);
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 2,
+            levelId: 1,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(byte.MaxValue, monster.ActiveForTicks);
+    }
+
+    [Fact]
     public void GargoyleAiUsesContentSelectedAvoidanceMovementWhenHealingMetadataIsPresent()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
