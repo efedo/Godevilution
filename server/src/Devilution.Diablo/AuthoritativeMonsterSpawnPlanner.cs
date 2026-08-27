@@ -185,7 +185,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         int direction = 0,
         bool ignoreDungeonLevelRange = false,
         uint? stableMonsterId = null,
-        bool applyUniqueSelector = true)
+        bool applyUniqueSelector = true,
+        int? intelligenceOverride = null)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -237,6 +238,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             multiplayer,
             direction,
             preserveSinglePlayerHealth: uniqueDefinition is not null,
+            intelligenceOverride: intelligenceOverride,
             monsterItemSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA11CEU),
             monsterAiSeed: CreateRuntimeSeed(seed, definition.MonsterId ^ 0xA17EEDU));
         if (uniqueDefinition is not null) {
@@ -333,10 +335,14 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 multiplayer,
                 random.Next(8),
                 ignoreDungeonLevelRange: true,
-                applyUniqueSelector: false);
+                applyUniqueSelector: false,
+                intelligenceOverride: leader.Intelligence);
             if (member is null)
                 throw new InvalidDataException(
                     $"Unique monster leader {leader.EntityId} could not materialize pack member {index + 1}.");
+            member.RestoreHitPointsQ6(
+                checked(member.MaxHitPointsQ6 * 2),
+                checked(member.MaxHitPointsQ6 * 2));
             if (kind == AuthoritativeUniqueMonsterPackKind.Leashed)
                 member.RestoreGroupUnity(
                     leader.EntityId,
@@ -460,7 +466,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint monsterAiSeed = 0,
         int initialStandAnimationFrame = 0,
         int initialStandAnimationTick = 0,
-        bool preserveSinglePlayerHealth = false)
+        bool preserveSinglePlayerHealth = false,
+        int? intelligenceOverride = null)
     {
         var dropDefinition = monsterCatalog?.TryGetDropDefinition(
             spawn.Definition.MonsterId,
@@ -546,7 +553,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             toHit: spawn.Definition.ToHit,
             toHitSpecial: spawn.Definition.ToHitSpecial,
             nativeAi: spawn.Definition.NativeAi,
-            intelligence: spawn.Definition.Intelligence,
+            intelligence: intelligenceOverride ?? spawn.Definition.Intelligence,
             gargoyleSpecialActive: spawn.Definition.NativeAi == "Gargoyle",
             knockback: spawn.Definition.Knockback,
             direction: direction,

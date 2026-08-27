@@ -53,8 +53,8 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(1, 12, 12));
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
-            CreateType(2, 1, 3) with { NativeAi = "SkeletonMelee" },
-            CreateType(3, 1, 3) with { NativeAi = "SkeletonMelee" },
+            CreateType(2, 1, 3) with { NativeAi = "SkeletonMelee", Intelligence = 17 },
+            CreateType(3, 1, 3) with { NativeAi = "SkeletonMelee", Intelligence = 3 },
         ]);
         var uniqueMonsters = new AuthoritativeUniqueMonsterCatalog([
             new AuthoritativeUniqueMonsterDefinition(0, 2, "Generated Defiler", "SkeletonMelee"),
@@ -103,6 +103,9 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
             Assert.False(member.IsUnique);
             Assert.Equal(leader.EntityId, member.LeaderEntityId);
             Assert.Equal(AuthoritativeMonsterLeaderRelation.Leashed, member.LeaderRelation);
+            Assert.Equal(leader.Intelligence, member.Intelligence);
+            Assert.Equal(member.MaxHitPoints, member.HitPoints);
+            Assert.Equal(10, member.MaxHitPoints);
             Assert.True(Math.Max(
                 Math.Abs(member.PositionX - leader.PositionX),
                 Math.Abs(member.PositionY - leader.PositionY)) < AuthoritativeMonsterGroupUnity.ReunionDistance);

@@ -158,10 +158,12 @@ Generated unique placements now accept an optional validated
 independent or leashed minions through the authoritative spawn planner,
 assigns generated monster and loot entity IDs without colliding with existing
 targets or drops, avoids reserved cells, and preserves the native strict
-four-tile envelope for leashed members. Unique leaders retain their pack
-relationships across authoritative ticks. Native random placement parity and
-the remaining visibility-driven activation and cross-snapshot position
-prediction work remain follow-ups.
+four-tile envelope for leashed members. Generated minions now also restore the
+native doubled maximum health and inherit the leader's intelligence used by
+authoritative AI decisions. Unique leaders retain their pack relationships
+across authoritative ticks. Native random placement parity and the remaining
+visibility-driven activation and cross-snapshot position prediction work remain
+follow-ups.
 
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts

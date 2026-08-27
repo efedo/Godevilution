@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align generated native unique-pack minions with `PlaceGroup` initialization:
+  minion health is restored to the native doubled maximum and minions inherit
+  the leader's intelligence for authoritative AI decisions.
 - Reject malformed directional projectile metadata at the native authoritative
   snapshot boundary before it reaches presentation code.
 - Reject the same malformed directional metadata in the C# server adapter
