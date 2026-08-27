@@ -48,6 +48,8 @@ Remote-player snapshots also recompute the native derived life and mana
 percentages, keeping HUD and party resource presentation aligned with the server.
 Remote-player item hydration also rebuilds staff-charge and scroll spell masks,
 so native inspection cannot retain spell entries after authoritative item changes.
+The local authoritative snapshot path likewise rebuilds staff-spell availability
+from server-owned equipment without invoking legacy gameplay recalculation.
 The same snapshot path now rebuilds the native stash scroll-source mask, so
 closing or changing an authoritative stash cannot leave stale spell sources.
 Inventory and belt scroll sources remain intact during that reconciliation.

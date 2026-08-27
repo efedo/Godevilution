@@ -366,6 +366,11 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	for (std::size_t index = 0; index < snapshot.inventory.size(); ++index)
 		player.InvList[index] = snapshot.inventory[index].item;
 	player._pNumInv = static_cast<int>(snapshot.inventory.size());
+	player._pISpells = 0;
+	for (const Item &item : player.InvBody) {
+		if (!item.isEmpty() && item._iStatFlag && IsValidSpell(item._iSpell) && item._iCharges != 0)
+			player._pISpells |= GetSpellBitmask(item._iSpell);
+	}
 	player.CalcScrolls();
 	if (snapshot.stashOpen) {
 		for (const auto &stashItem : snapshot.stash) {

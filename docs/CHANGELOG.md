@@ -33,6 +33,8 @@ All notable changes to this fork are documented below.
   snapshot so HUD and party presentation do not retain stale resource bars.
 - Rebuild remote-player staff and scroll spell masks from authoritative item state,
   clearing stale spell entries when equipment or inventory changes.
+- Rebuild the local authoritative player's staff-spell mask from server-owned
+  equipment while preserving legacy spell selection behavior offline.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

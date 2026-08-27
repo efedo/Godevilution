@@ -3136,6 +3136,7 @@ TEST(ServerBackedPlayerSnapshot, StateRejectsStaleSnapshotWithoutRegression)
 
 TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 {
+	LoadSpellData();
 	Player player;
 	player.life.maximum = 1000;
 	player.life.maximumBase = 1000;
@@ -3189,6 +3190,13 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	Item equippedItem;
 	equippedItem._itype = ItemType::Shield;
 	snapshot.equipment.push_back({ .slot = INVLOC_HAND_LEFT, .itemSeed = 43, .item = equippedItem });
+	Item staffItem;
+	staffItem._itype = ItemType::Staff;
+	staffItem._iClass = ICLASS_WEAPON;
+	staffItem._iSpell = SpellID::Firebolt;
+	staffItem._iCharges = 5;
+	staffItem._iStatFlag = true;
+	snapshot.equipment.push_back({ .slot = INVLOC_HAND_RIGHT, .itemSeed = 46, .item = staffItem });
 	Item beltItem;
 	beltItem._itype = ItemType::Misc;
 	snapshot.belt.push_back({ .slot = 2, .itemSeed = 44, .item = beltItem });
@@ -3238,6 +3246,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_TRUE(player._pBlockFlag);
 	EXPECT_EQ(player._pAblSpells, GetSpellBitmask(SpellID::Search));
 	EXPECT_EQ(player._pMemSpells, GetSpellBitmask(SpellID::Firebolt));
+	EXPECT_NE(player._pISpells & GetSpellBitmask(SpellID::Firebolt), 0U);
 	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
 	EXPECT_EQ(player._pSplLvl[static_cast<size_t>(SpellID::Firebolt)], 2);
 	EXPECT_EQ(player._pRSpell, SpellID::Firebolt);
@@ -3262,11 +3271,13 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 
 	snapshot.heldItem.reset();
 	snapshot.statusEffects.clear();
+	snapshot.equipment.clear();
 	snapshot.combatMode = static_cast<uint32_t>(PM_STAND);
 	snapshot.combatModeEndTick = 0;
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_TRUE(player.HoldItem.isEmpty());
 	EXPECT_FALSE(player._pBlockFlag);
+	EXPECT_EQ(player._pISpells, 0U);
 	EXPECT_FALSE(player._pInfraFlag);
 	EXPECT_FALSE(HasAnyOf(player._pSpellFlags, SpellFlag::Etherealize));
 	EXPECT_FALSE(CurrentAutomapManager.GetAutoMapShowItems());
