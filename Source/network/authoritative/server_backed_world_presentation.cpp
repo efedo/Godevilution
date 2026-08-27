@@ -192,7 +192,8 @@ void ApplyRemotePlayerAnimation(
 	player_graphic graphic,
 	bool reset,
 	bool hasPreviousTick,
-	uint64_t previousTick)
+	uint64_t previousTick,
+	uint64_t presentationTicksSincePreviousSnapshot)
 {
 	if (reset)
 		player.setAnimation(graphic, player.direction);
@@ -205,7 +206,11 @@ void ApplyRemotePlayerAnimation(
 	} else if (reset) {
 		SetRemotePlayerAnimationFrame(player, graphic, 0, loop);
 	} else if (hasPreviousTick && snapshot.serverTick >= previousTick) {
-		AdvanceRemotePlayerAnimation(player, graphic, snapshot.serverTick - previousTick, loop);
+		const uint64_t serverTicks = snapshot.serverTick - previousTick;
+		const uint64_t unappliedServerTicks = serverTicks > presentationTicksSincePreviousSnapshot
+		    ? serverTicks - presentationTicksSincePreviousSnapshot
+		    : 0;
+		AdvanceRemotePlayerAnimation(player, graphic, unappliedServerTicks, loop);
 	}
 }
 
@@ -1072,6 +1077,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		auto [it, inserted] = remotePlayers_.try_emplace(snapshot.entityId);
 		const bool hasPreviousTick = it->second.hasServerTick;
 		const uint64_t previousTick = it->second.serverTick;
+		const uint64_t presentationTicksSincePreviousSnapshot = it->second.presentationTicksSinceServerTick;
 		if (hasPreviousTick && snapshot.serverTick < previousTick)
 			continue;
 		const bool classChanged = !inserted && it->second.player._pClass != static_cast<HeroClass>(snapshot.characterClassId);
@@ -1095,7 +1101,14 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		    || it->second.actionKind != actionKind
 		    || it->second.actionStartedAtTick != actionStartedAtTick;
 		ApplyRemotePlayerSnapshot(it->second.player, snapshot);
-		ApplyRemotePlayerAnimation(it->second.player, snapshot, graphic, animationChanged, hasPreviousTick, previousTick);
+		ApplyRemotePlayerAnimation(
+		    it->second.player,
+		    snapshot,
+		    graphic,
+		    animationChanged,
+		    hasPreviousTick,
+		    previousTick,
+		    presentationTicksSincePreviousSnapshot);
 		it->second.levelId = snapshot.levelId;
 		it->second.tilePosition = it->second.player.position.tile;
 		it->second.graphic = graphic;
@@ -1103,6 +1116,8 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		it->second.actionStartedAtTick = actionStartedAtTick;
 		it->second.serverTick = snapshot.serverTick;
 		it->second.hasServerTick = true;
+		if (animationChanged || snapshot.currentAction.has_value() || snapshot.serverTick > previousTick)
+			it->second.presentationTicksSinceServerTick = 0;
 	}
 	for (auto it = remotePlayers_.begin(); it != remotePlayers_.end();) {
 		if (!retainedRemotePlayers.contains(it->first)) {
@@ -1228,8 +1243,9 @@ std::size_t ServerBackedWorldPresentation::AdvanceAnimations() noexcept
 	for (auto &[entityId, remote] : remotePlayers_) {
 		(void)entityId;
 		const bool loop = remote.graphic == player_graphic::Stand
-			|| remote.graphic == player_graphic::Walk;
+		    || remote.graphic == player_graphic::Walk;
 		AdvanceRemotePlayerAnimation(remote.player, remote.graphic, 1, loop);
+		++remote.presentationTicksSinceServerTick;
 		++advanced;
 	}
 	return advanced;

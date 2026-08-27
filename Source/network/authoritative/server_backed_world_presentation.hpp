@@ -87,6 +87,7 @@ private:
 		std::optional<uint64_t> actionStartedAtTick;
 		uint64_t serverTick = 0;
 		bool hasServerTick = false;
+		uint64_t presentationTicksSinceServerTick = 0;
 	};
 	std::map<uint32_t, RemotePlayerPresentation> remotePlayers_;
 };

@@ -13,6 +13,8 @@ All notable changes to this fork are documented below.
   the presentation clock with the authoritative action-tick projection.
 - Advance native remote-player presentation animations from the connected game
   loop without re-entering legacy gameplay simulation.
+- Avoid double-advancing idle remote-player animations when a snapshot follows
+  presentation ticks that were already rendered locally.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

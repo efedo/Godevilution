@@ -2404,6 +2404,41 @@ TEST(ServerBackedPlayerSnapshot, AdvancesRemotePlayerPresentationAnimationWithou
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, DoesNotDoubleAdvanceRemotePlayerAnimationBetweenSnapshots)
+{
+	LoadPlayerDataFiles();
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.life = 640;
+	remote.lifeMaximum = 640;
+	remote.serverTick = 3;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	ASSERT_EQ(presentation.AdvanceAnimations(), 1U);
+
+	int tickCounterAfterAdvance = -1;
+	presentation.ForEachRemotePlayer([&](uint32_t, const Player &player) {
+		tickCounterAfterAdvance = player.animInfo.tickCounterOfCurrentFrame;
+	});
+	ASSERT_EQ(tickCounterAfterAdvance, 1);
+
+	remote.serverTick = 4;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	int tickCounterAfterSnapshot = -1;
+	presentation.ForEachRemotePlayer([&](uint32_t, const Player &player) {
+		tickCounterAfterSnapshot = player.animInfo.tickCounterOfCurrentFrame;
+	});
+	EXPECT_EQ(tickCounterAfterSnapshot, tickCounterAfterAdvance);
+
+	presentation.Clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerCombatModesToNativeGraphics)
 {
 	ProjectedPlayerSnapshot snapshot;

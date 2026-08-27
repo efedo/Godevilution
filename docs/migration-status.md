@@ -30,7 +30,8 @@ The native compatibility projection now retains and prefers that identity as
 well; malformed or misplaced values fail closed before presentation, while
 empty values retain the legacy native enum/behavior fallback. The connected
 native presentation loop also advances projected remote-player animations
-without invoking legacy gameplay simulation.
+without invoking legacy gameplay simulation, while snapshot catch-up avoids
+double-advancing time already consumed by the render loop.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,
