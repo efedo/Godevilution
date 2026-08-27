@@ -1156,7 +1156,10 @@ public sealed class AuthoritativeClientModel
 
             switch (gameEvent.EventCase) {
             case GameEvent.EventOneofCase.Damage:
-                if (gameEvent.Damage.Amount < 0 || gameEvent.Damage.AmountQ6 < 0) {
+                if (gameEvent.Damage.Amount < 0
+                    || gameEvent.Damage.AmountQ6 < 0
+                    || gameEvent.Damage.AmountQ6 == 0
+                        && gameEvent.Damage.Amount > int.MaxValue / 64) {
                     throw new InvalidDataException(
                         "The authoritative event batch contains invalid damage.");
                 }

@@ -466,9 +466,10 @@ TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedbac
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
 {
-	const std::array<void (*)(protocol::EventBatch *), 8> configure = {
+	const std::array<void (*)(protocol::EventBatch *), 9> configure = {
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount_q6(-1); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount(std::numeric_limits<int32_t>::max() / 64 + 1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount_q6(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_message_id(-1); },

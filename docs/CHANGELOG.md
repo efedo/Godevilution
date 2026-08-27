@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject legacy whole-unit damage values that would overflow native Q6
+  conversion across the C# host, Godot, and native event validators.
 - Reject authoritative Diablo victory ranks above the native byte range across
   C#, Godot, generic-host, and native compatibility boundaries.
 - Validate requested character names at the generic handshake boundary using

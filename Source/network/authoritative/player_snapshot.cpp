@@ -1418,7 +1418,10 @@ tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::E
 		return tl::make_unexpected("Server-backed event batch is too large.");
 	for (const auto &event : eventBatch.events()) {
 		if (event.has_damage()) {
-			if (event.damage().amount() < 0 || event.damage().amount_q6() < 0)
+			if (event.damage().amount() < 0
+			    || event.damage().amount_q6() < 0
+			    || (event.damage().amount_q6() == 0
+			        && event.damage().amount() > std::numeric_limits<int32_t>::max() / 64))
 				return tl::make_unexpected("Server-backed event batch contains invalid damage.");
 			continue;
 		}

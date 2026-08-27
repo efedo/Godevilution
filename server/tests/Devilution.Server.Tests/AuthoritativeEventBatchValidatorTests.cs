@@ -26,6 +26,7 @@ public sealed class AuthoritativeEventBatchValidatorTests
         foreach (var invalidEvent in new[] {
             new GameEvent { Damage = new DamageEvent { Amount = -1 } },
             new GameEvent { Damage = new DamageEvent { AmountQ6 = -1 } },
+            new GameEvent { Damage = new DamageEvent { Amount = int.MaxValue / 64 + 1 } },
             new GameEvent { Healing = new HealingEvent { Amount = -1 } },
             new GameEvent { Healing = new HealingEvent { AmountQ6 = -1 } },
             new GameEvent { Dialogue = new DialogueEvent { MessageId = -1 } },
