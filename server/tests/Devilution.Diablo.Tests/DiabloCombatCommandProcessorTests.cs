@@ -6420,6 +6420,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GeometryBackedWorldDoesNotActivateOccludedMonsters()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            7,
+            5,
+            blockedCells: [16],
+            nativeTransparency: Enumerable.Range(0, 35)
+                .Select(cell => (ushort)(cell % 7 >= 3 ? 2 : 1))));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            4,
+            2,
+            20,
+            levelId: 1,
+            attackDamage: 20,
+            aggroRange: 10,
+            toHit: 255);
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 2,
+            levelId: 1,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(50, player.Life);
+        Assert.Equal(0, monster.ActiveForTicks);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void MonsterAttackAppliesUsableGetHitEquipmentAdjustment()
     {
         var monster = new AuthoritativeCombatTarget(

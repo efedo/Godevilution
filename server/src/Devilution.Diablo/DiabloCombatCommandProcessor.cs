@@ -4962,6 +4962,14 @@ public sealed class DiabloCombatCommandProcessor
             ApplyNativeMonsterRegeneration(target, rules.MonsterRegenerationLevelDivisor);
             if (target.IsPetrified)
                 continue;
+            if (world.World is not null
+                && players.Count > 0
+                && !IsMonsterVisibleToAnyPlayer(target, players)) {
+                if (target.ActiveForTicks > 0 && !target.IsDiablo)
+                    target.RestoreActiveForTicks(target.ActiveForTicks - 1);
+                if (target.ActiveForTicks == 0)
+                    continue;
+            }
             if (IsQuestDialogueTarget(target))
                 continue;
             if (IsLazarusMinionCombatSuppressed(target))
@@ -5391,6 +5399,26 @@ public sealed class DiabloCombatCommandProcessor
                     world.CombatTargets))
                 member.CancelMovement();
         }
+    }
+
+    /** Returns whether a live player can see the monster in authoritative geometry. */
+    private bool IsMonsterVisibleToAnyPlayer(
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var level = world.LevelGeometry
+            .FirstOrDefault(candidate => candidate.LevelId == target.LevelId);
+        return players.Any(player => player.Life > 0
+            && player.CombatMode is not (DiabloPlayerCombatMode.NewLevel
+                or DiabloPlayerCombatMode.Quit)
+            && player.LevelId == target.LevelId
+            && (level is null
+                || level.NativeTransparency.Count == 0
+                || level.IsSameTransparencyRegion(
+                    target.PositionX,
+                    target.PositionY,
+                    player.PositionX,
+                    player.PositionY)));
     }
 
     /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */

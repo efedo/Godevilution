@@ -172,6 +172,13 @@ when a generic catalog row is supplied, while complete catalog controllers
 retain precedence for intentionally content-selected identities such as
 Gargoyle.
 
+Geometry-backed server worlds now apply the first visibility activation gate:
+occluded monsters with no active tick remain inactive while connected players
+are present, using native transparency regions when supplied. Geometry-free
+compatibility fixtures and no-player simulation ticks retain their legacy
+behavior; broader native viewport and activation timing parity remain follow-up
+work.
+
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts
 external to the base table set while retaining strict key and schema checks.

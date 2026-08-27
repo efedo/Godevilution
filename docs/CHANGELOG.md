@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the first server-side visibility activation gate for geometry-backed
+  worlds: occluded monsters remain inactive when connected players are present,
+  while geometry-free compatibility fixtures retain their legacy behavior.
 - Preserve explicit native SkeletonAi compatibility identities (`SkeletonMelee`,
   `Snotspill`, and `Warlord`) when a generic monster catalog row is present,
   while retaining catalog-selected precedence for complete controllers such as
