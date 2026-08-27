@@ -1527,6 +1527,11 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	lightningWallPresentation.mutable_projectiles(0)->set_native_visual(protocol::NATIVE_PROJECTILE_VISUAL_LIGHTNING_WALL);
 	EXPECT_TRUE(ValidateProjectileSnapshots(lightningWallPresentation).has_value());
 
+	protocol::Snapshot invalidDirection = makeProjectile();
+	invalidDirection.mutable_projectiles(0)->set_behavior(2); // Firebolt
+	invalidDirection.mutable_projectiles(0)->set_original_direction(8);
+	EXPECT_FALSE(ValidateProjectileSnapshots(invalidDirection).has_value());
+
 	protocol::Snapshot invalidPresentation = makeProjectile();
 	invalidPresentation.mutable_projectiles(0)->set_native_visual(static_cast<protocol::NativeProjectileVisual>(36));
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidPresentation).has_value());

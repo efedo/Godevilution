@@ -1327,6 +1327,46 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 
 tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snapshot &snapshot)
 {
+	const auto usesDirectionalPresentation = [](const protocol::ProjectileSnapshot &projectile) {
+		if (projectile.native_visual() != protocol::NATIVE_PROJECTILE_VISUAL_UNSPECIFIED
+		    || !projectile.native_missile_id().empty()) {
+			return true;
+		}
+		switch (projectile.behavior()) {
+		case 1:  // ChargedBolt
+		case 2:  // Firebolt
+		case 3:  // Lightning
+		case 4:  // LightningSegment
+		case 6:  // FlashBottom
+		case 7:  // FlashTop
+		case 11: // ResurrectionBeam
+		case 15: // Phasing
+		case 16: // Fireball
+		case 19: // HolyBolt
+		case 20: // BloodStar
+		case 21: // BoneSpirit
+		case 23: // FireWallSegment
+		case 24: // FlameWaveController
+		case 25: // FlameWaveSegment
+		case 27: // InfernoSegment
+		case 29: // ChainLightningBolt
+		case 31: // NovaBall
+		case 33: // ApocalypseBoom
+		case 35: // Elemental
+		case 36: // GuardianController
+		case 49: // Etherealize
+		case 51: // Acid
+		case 52: // AcidSplat
+		case 53: // AcidPuddle
+		case 56: // MonsterChargedBolt
+		case 57: // HorkSpawn
+		case 58: // WeaponArrow
+		case 59: // MonsterArrow
+			return true;
+		default:
+			return false;
+		}
+	};
 	for (const auto &projectile : snapshot.projectiles()) {
 		if (projectile.source_entity_id() == 0
 		    || (projectile.spell_id() == 0 && projectile.behavior() != 58 && projectile.behavior() != 59)
@@ -1347,6 +1387,8 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || static_cast<int32_t>(projectile.presentation_kind()) > 19
 		    || static_cast<int32_t>(projectile.native_visual()) < 0
 		    || static_cast<int32_t>(projectile.native_visual()) > 35
+		    || usesDirectionalPresentation(projectile)
+		        && (projectile.original_direction() < 0 || projectile.original_direction() > 7)
 		    || !projectile.native_missile_id().empty()
 		        && (projectile.behavior() != 50 // MonsterMagic
 		            || !IsValidNativeMissileIdentity(projectile.native_missile_id())))

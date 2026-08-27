@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject malformed directional projectile metadata at the native authoritative
+  snapshot boundary before it reaches presentation code.
 - Externalize native 1–50 character experience thresholds, wire active
   simulations to server-owned progression data, and add source parity coverage.
 - Externalize all 68 native `misdat.tsv` missile identities, retain five

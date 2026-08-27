@@ -33,6 +33,9 @@ The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,
 combat, collision, lifetime, or regeneration logic.
+Native snapshot ingress also rejects out-of-range direction metadata for
+directional projectile presentations before it reaches the compatibility
+renderer.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility
