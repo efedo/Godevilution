@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add exhaustive parity coverage for the normalized item-generation rules and
+  their native `item_generation.tsv` source row.
 - Add exhaustive parity coverage for all five normalized level-generation rules
   and their native `level_generation.tsv` source rows.
 - Add exhaustive parity coverage for the six normalized class attribute tables,

@@ -2,6 +2,9 @@
 
 Status date: 2026-08-27
 
+The normalized item-generation catalog now checks all eleven fields against its
+native `item_generation.tsv` source row.
+
 The normalized level-generation catalog now checks all five external rules
 against the native `level_generation.tsv` ranges and tuning values.
 

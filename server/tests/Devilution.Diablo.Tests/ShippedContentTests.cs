@@ -209,6 +209,41 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseItemGenerationRulesMatchNativeTable()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var native = TsvTable.Parse(
+            "assets/txtdata/items/item_generation.tsv",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "assets",
+                "txtdata",
+                "items",
+                "item_generation.tsv")));
+        var external = basePack.Tables.Single(table => table.SourcePath == "item_generation.tsv");
+        var fields = new[] {
+            (External: "magicChanceBase", Native: "magicChanceBase"),
+            (External: "magicChancePerLevel", Native: "magicChancePerLevel"),
+            (External: "alwaysMagicMisc", Native: "alwaysMagicMisc"),
+            (External: "uniqueChanceNormal", Native: "uniqueChanceNormal"),
+            (External: "uniqueChanceUnique", Native: "uniqueChanceUnique"),
+            (External: "bonusLevelsUnique", Native: "bonusLevelsUnique"),
+            (External: "prefixPercent", Native: "prefixPercent"),
+            (External: "suffixPercent", Native: "suffixPercent"),
+            (External: "onlygoodChance", Native: "onlygoodChance"),
+            (External: "noDropPercent", Native: "noDropPercent"),
+            (External: "goldPercent", Native: "goldPercent"),
+        };
+
+        var nativeRow = Assert.Single(native.Rows);
+        var externalRow = Assert.Single(external.Rows);
+        foreach (var (externalColumn, nativeColumn) in fields)
+            Assert.Equal(nativeRow.Required(nativeColumn), externalRow.Required(externalColumn));
+    }
+
+    [Fact]
     public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
     {
         var repositoryRoot = FindRepositoryRoot();
