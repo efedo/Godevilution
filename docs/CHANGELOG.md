@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
 - Extend TCP restart recovery coverage across four fresh host/adapter cycles,
   preserving the resume token, player identity, character name, and canonical
   snapshot hash while confirming each retired adapter is disposed.
+- Coordinate save-store instances by canonical path and add concurrent
+  coverage proving atomic replacement leaves one complete session payload and
+  no temporary artifacts.
 - Give validated monster controller tuning precedence over legacy AI labels,
   restoring the authored Gargoyle, Skeleton King, and Rhino behavior paths.
 - Preserve authored unique-monster health percentages when materializing

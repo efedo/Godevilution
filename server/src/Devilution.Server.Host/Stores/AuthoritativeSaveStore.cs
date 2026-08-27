@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace Devilution.Server.Stores;
@@ -5,8 +6,9 @@ namespace Devilution.Server.Stores;
 /** Stores versioned authoritative save envelopes on the server filesystem. */
 public sealed class AuthoritativeSaveStore
 {
+    private static readonly ConcurrentDictionary<string, object> PathLocks = new(
+        StringComparer.OrdinalIgnoreCase);
     private readonly string rootDirectory;
-    private readonly object synchronization = new();
 
     public AuthoritativeSaveStore(string rootDirectory)
     {
@@ -20,7 +22,8 @@ public sealed class AuthoritativeSaveStore
         var path = GetPath(sessionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(serializedSave);
         var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        lock (synchronization) {
+        var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
+        lock (pathLock) {
             try {
                 var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
                     .GetBytes(serializedSave);
@@ -45,14 +48,16 @@ public sealed class AuthoritativeSaveStore
     public string? Load(string sessionId)
     {
         var path = GetPath(sessionId);
-        lock (synchronization)
+        var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
+        lock (pathLock)
             return File.Exists(path) ? File.ReadAllText(path) : null;
     }
 
     public bool Delete(string sessionId)
     {
         var path = GetPath(sessionId);
-        lock (synchronization) {
+        var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
+        lock (pathLock) {
             if (!File.Exists(path))
                 return false;
             File.Delete(path);
