@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Carry the authoritative snapshot tick through the native world projection
+  and ignore older complete world projections at the presentation boundary,
+  preventing delayed server state from regressing native entity visuals while
+  preserving unversioned compatibility callers.
 - Map authoritative monster movement directions to the native renderer's
   movement modes and walk animation, clear stale movement modes when snapshots
   become stationary, and share the direction classification with native walks.

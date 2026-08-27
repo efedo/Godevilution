@@ -16,7 +16,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	std::vector<ProjectedObjectSnapshot> objects,
 	uint32_t levelId)
 {
-	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), {}, {}, levelId);
+	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), {}, {}, levelId, std::nullopt);
 }
 
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
@@ -26,7 +26,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	std::vector<ProjectedProjectileSnapshot> projectiles,
 	uint32_t levelId)
 {
-	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), std::move(projectiles), {}, levelId);
+	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), std::move(projectiles), {}, levelId, std::nullopt);
 }
 
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
@@ -35,7 +35,8 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	std::vector<ProjectedObjectSnapshot> objects,
 	std::vector<ProjectedProjectileSnapshot> projectiles,
 	std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
-	uint32_t levelId)
+	uint32_t levelId,
+	std::optional<uint64_t> serverTick)
 {
 	if (std::any_of(projectiles.begin(), projectiles.end(), [](const auto &projectile) {
 			return projectile.entityId == 0
@@ -81,6 +82,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	projectiles_ = std::move(projectiles);
 	levelGeometry_ = std::move(levelGeometry);
 	levelId_ = levelId;
+	serverTick_ = serverTick;
 	return { };
 }
 
@@ -92,6 +94,7 @@ void ServerBackedWorldProjection::Clear() noexcept
 	projectiles_.clear();
 	levelGeometry_.clear();
 	levelId_ = 0;
+	serverTick_.reset();
 }
 
 const ProjectedLevelGeometrySnapshot *ServerBackedWorldProjection::LevelGeometryAt(uint32_t levelId) const noexcept

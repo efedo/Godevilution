@@ -29,7 +29,10 @@ remains follow-up work. The native compatibility validator now accepts
 authored unique leaders in the same pack relationship contract.
 Godot also snaps monster presentation on level changes or large authoritative
 relocations, preventing stale interpolation from carrying entities across
-discontinuous server state.
+discontinuous server state. The native world projection now carries the
+authoritative snapshot tick into presentation and ignores older complete world
+projections, preventing delayed server state from regressing native entities;
+legacy callers that do not provide a tick remain accepted.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot

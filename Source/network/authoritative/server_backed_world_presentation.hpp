@@ -72,6 +72,7 @@ private:
 	std::unordered_map<uint32_t, unsigned> itemSlots_;
 	std::unordered_map<uint32_t, int> objectSlots_;
 	std::unordered_set<uint32_t> projectileEntities_;
+	std::optional<uint64_t> lastWorldServerTick_;
 
 	struct RemotePlayerPresentation {
 		Player player;

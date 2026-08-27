@@ -849,6 +849,10 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const std::vector<ProjectedPlayerSnapshot> &players,
     uint32_t localEntityId)
 {
+	if (const auto serverTick = projection.ServerTick(); serverTick.has_value()
+	    && lastWorldServerTick_.has_value()
+	    && *serverTick < *lastWorldServerTick_)
+		return {};
 	if (auto result = ApplyAuthoritativeNativeGeometry(projection.CurrentLevelGeometry(), levelId); !result.has_value())
 		return result;
 
@@ -1119,6 +1123,8 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		RemoveAuthoritativePresentationMissile(*it);
 		it = projectileEntities_.erase(it);
 	}
+	if (projection.ServerTick().has_value())
+		lastWorldServerTick_ = projection.ServerTick();
 
 	return { };
 }
@@ -1170,6 +1176,7 @@ void ServerBackedWorldPresentation::Clear() noexcept
 	itemSlots_.clear();
 	objectSlots_.clear();
 	projectileEntities_.clear();
+	lastWorldServerTick_.reset();
 	remotePlayers_.clear();
 }
 

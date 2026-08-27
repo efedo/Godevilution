@@ -40,11 +40,14 @@ public:
 		std::vector<ProjectedObjectSnapshot> objects,
 		std::vector<ProjectedProjectileSnapshot> projectiles,
 		std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
-		uint32_t levelId);
+		uint32_t levelId,
+		std::optional<uint64_t> serverTick = std::nullopt);
 
 	void Clear() noexcept;
 
 	[[nodiscard]] uint32_t LevelId() const noexcept { return levelId_; }
+	/** Returns the source snapshot tick when this projection came from a versioned snapshot. */
+	[[nodiscard]] const std::optional<uint64_t> &ServerTick() const noexcept { return serverTick_; }
 	[[nodiscard]] const std::vector<ProjectedMonsterSnapshot> &Monsters() const noexcept { return monsters_; }
 	[[nodiscard]] const std::vector<ProjectedWorldItemSnapshot> &WorldItems() const noexcept { return worldItems_; }
 	[[nodiscard]] const std::vector<ProjectedObjectSnapshot> &Objects() const noexcept { return objects_; }
@@ -74,6 +77,7 @@ private:
 	std::vector<ProjectedProjectileSnapshot> projectiles_;
 	std::vector<ProjectedLevelGeometrySnapshot> levelGeometry_;
 	uint32_t levelId_ = 0;
+	std::optional<uint64_t> serverTick_;
 };
 
 } // namespace devilution::authoritative

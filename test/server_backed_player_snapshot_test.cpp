@@ -1718,6 +1718,43 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjec
 	EXPECT_EQ(projection.Projectiles()[1].nativeVisual, 2);
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldPresentationIgnoresOlderAuthoritativeProjection)
+{
+	LoadMissileData();
+	Missiles.clear();
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 101;
+	projectile.sourceEntityId = 1;
+	projectile.spellId = 4;
+	projectile.levelId = 1;
+	projectile.positionX = 4;
+	projectile.positionY = 4;
+	projectile.remainingTicks = 5;
+	projectile.behavior = 2; // Firebolt
+
+	ServerBackedWorldProjection newer;
+	ASSERT_TRUE(newer.Apply({ }, { }, { }, { projectile }, { }, 1, 10).has_value());
+	EXPECT_EQ(newer.ServerTick(), std::optional<uint64_t> { 10 });
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(newer, 1).has_value());
+	ASSERT_EQ(Missiles.size(), 1U);
+
+	projectile.positionX = 5;
+	ServerBackedWorldProjection older;
+	ASSERT_TRUE(older.Apply({ }, { }, { }, { projectile }, { }, 1, 9).has_value());
+	ASSERT_TRUE(presentation.Apply(older, 1).has_value());
+	EXPECT_EQ(Missiles.front().position.tile, (WorldTilePosition { 4, 4 }));
+
+	ServerBackedWorldProjection equal;
+	ASSERT_TRUE(equal.Apply({ }, { }, { }, { projectile }, { }, 1, 10).has_value());
+	ASSERT_TRUE(presentation.Apply(equal, 1).has_value());
+	EXPECT_EQ(Missiles.front().position.tile, (WorldTilePosition { 5, 4 }));
+
+	presentation.Clear();
+	Missiles.clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProjectiles)
 {
 	ProjectedProjectileSnapshot invalid;
