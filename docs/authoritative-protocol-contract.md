@@ -310,10 +310,11 @@ canonical projections; an omitted legacy field means the current level only.
 order. Stable-identity lists, including the complete participant set, are
 sorted before hashing. Presentation-only and localized values are excluded.
 Every newly authoritative field requires native and C# parity coverage before
-clients depend on it. A non-empty value is a 64-character hexadecimal SHA-256
-digest; the Godot presentation boundary rejects malformed values while still
-accepting an omitted value from legacy snapshots. Digest computation and
-content verification remain server-owned.
+clients depend on it. A non-empty value is a 64-character ASCII hexadecimal
+SHA-256 digest; the generic TCP host, Godot presentation boundary, and native
+compatibility boundary reject malformed values while still accepting an omitted
+value from legacy snapshots. Digest computation and content verification remain
+server-owned.
 
 `Snapshot.random_state` field 10 carries the module-owned Diablo gameplay RNG.
 `Snapshot.portals` field 11 carries the complete authoritative portal route

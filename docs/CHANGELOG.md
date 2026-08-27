@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
   state-hash strings while retaining omitted-hash compatibility.
 - Validate non-empty authoritative snapshot hashes at the Godot protocol
   boundary while preserving legacy snapshots that omit the additive hash.
+- Validate non-empty authoritative snapshot hashes at the generic TCP host
+  boundary before adapter snapshots are serialized, preserving omitted-hash
+  compatibility.
 - Make authoritative save and world-seed writes durable before atomic
   replacement, isolate concurrent temporary files, and clean up failed writes;
   add focused coverage for temporary-artifact cleanup.

@@ -141,6 +141,35 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task MalformedSnapshotsFromAdapterAreRejectedBeforeWireSerialization()
+    {
+        var executor = new RecordingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: new MalformedSnapshotProvider());
+        server.Start();
+
+        using var client = new TcpClient();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var stream = client.GetStream();
+        await SendHelloAsync(stream, cancellationToken);
+
+        Assert.Equal(
+            Envelope.PayloadOneofCase.ServerHello,
+            (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+        var error = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+        Assert.NotNull(error);
+        Assert.Equal(Envelope.PayloadOneofCase.Error, error!.PayloadCase);
+        Assert.Equal(ProtocolErrorCode.InvalidMessage, error.Error.Code);
+        Assert.Contains("invalid SHA-256 state hash", error.Error.Detail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task StoreSnapshotsAreSentAfterHandshakeAndCommands()
     {
         var catalog = new StoreCatalog();
@@ -1876,6 +1905,17 @@ public sealed class AuthoritativeTcpServerTests
             return new EventBatch {
                 Tick = tick,
                 Events = { new GameEvent() },
+            };
+        }
+    }
+
+    private sealed class MalformedSnapshotProvider : IAuthoritativeSnapshotProvider
+    {
+        public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
+        {
+            return new Snapshot {
+                Tick = tick,
+                StateSha256 = "not-a-hash",
             };
         }
     }

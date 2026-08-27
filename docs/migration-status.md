@@ -5,7 +5,9 @@ Status date: 2026-08-27
 The Godot protocol model now validates the shape of non-empty authoritative
 snapshot hashes (64 hexadecimal characters) while retaining compatibility with
 legacy snapshots that omit the additive hash field. Digest computation and
-verification remain server-owned.
+verification remain server-owned. The generic TCP host now validates the same
+shape before serializing adapter snapshots, so malformed non-empty hashes fail
+closed before reaching either presentation client.
 
 Godot event-batch ingress now rejects unknown event kinds, impossible signed
 damage/healing values, invalid dialogue message/text payloads, and batches

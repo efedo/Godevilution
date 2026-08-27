@@ -421,6 +421,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             return;
 
         var snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
+        AuthoritativeSnapshotValidator.Validate(snapshot);
         await EnvelopeCodec.WriteAsync(stream, new Envelope { Snapshot = snapshot }, cancellationToken);
     }
 
