@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Validate and bound Godot authoritative event batches while retaining
+  compatibility with zero-ID untargeted events.
 - Validate non-empty authoritative snapshot hashes at the Godot protocol
   boundary while preserving legacy snapshots that omit the additive hash.
 - Make authoritative save and world-seed writes durable before atomic

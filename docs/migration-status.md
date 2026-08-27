@@ -7,6 +7,11 @@ snapshot hashes (64 hexadecimal characters) while retaining compatibility with
 legacy snapshots that omit the additive hash field. Digest computation and
 verification remain server-owned.
 
+Godot event-batch ingress now rejects unknown event kinds, impossible signed
+damage/healing values, invalid dialogue message/text payloads, and batches
+larger than 4096 entries while retaining zero-ID compatibility for untargeted
+events.
+
 Authoritative save and world-seed writes now use unique temporary files with
 `WriteThrough` and an explicit disk flush before atomic replacement. Failed
 writes clean up their temporary file without changing the previous committed

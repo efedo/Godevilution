@@ -1122,6 +1122,47 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedAuthoritativeEventBatches()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+
+        foreach (var invalidEvent in new[] {
+            new GameEvent { Damage = new DamageEvent { Amount = -1 } },
+            new GameEvent { Damage = new DamageEvent { AmountQ6 = -1 } },
+            new GameEvent { Healing = new HealingEvent { Amount = -1 } },
+            new GameEvent { Healing = new HealingEvent { AmountQ6 = -1 } },
+            new GameEvent { Dialogue = new DialogueEvent { MessageId = -1 } },
+            new GameEvent { Dialogue = new DialogueEvent { Text = "bad\0text" } },
+            new GameEvent(),
+        }) {
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(
+                    Events: new EventBatch { Events = { invalidEvent } })));
+        }
+
+        var oversized = new EventBatch();
+        for (var index = 0; index <= 4096; index++)
+            oversized.Events.Add(new GameEvent {
+                Experience = new ExperienceEvent { Amount = (uint)index },
+            });
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Events: oversized)));
+
+        model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+            Events = {
+                new GameEvent { Damage = new DamageEvent() },
+                new GameEvent { Experience = new ExperienceEvent() },
+                new GameEvent { Healing = new HealingEvent() },
+                new GameEvent { Dialogue = new DialogueEvent() },
+                new GameEvent { Victory = new VictoryEvent() },
+            },
+        }));
+    }
+
+    [Fact]
     public void BoundsRecentEventHistoryAndAdvancesItsSequenceWindow()
     {
         var model = new AuthoritativeClientModel();

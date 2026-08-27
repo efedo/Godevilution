@@ -18,6 +18,7 @@ public sealed class AuthoritativeClientModel
 
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
+    private const int MaximumEventBatchCount = 4096;
     private const uint MaximumStableSpellId = byte.MaxValue;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
@@ -219,6 +220,7 @@ public sealed class AuthoritativeClientModel
 
         if (message.Events is { } events
             && events.Tick >= CurrentTick) {
+            ValidateEventBatch(events);
             recentEvents.AddRange(events.Events);
             recentEventsEndSequence = checked(
                 recentEventsEndSequence + (ulong)events.Events.Count);
@@ -1123,6 +1125,50 @@ public sealed class AuthoritativeClientModel
             if (mutationId == 0 || !mutationIds.Add(mutationId)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid or duplicate world-mutation identities.");
+            }
+        }
+    }
+
+    private static void ValidateEventBatch(EventBatch events)
+    {
+        if (events.Events.Count > MaximumEventBatchCount) {
+            throw new InvalidDataException(
+                "The authoritative event batch is too large.");
+        }
+
+        foreach (var gameEvent in events.Events) {
+            if (gameEvent is null) {
+                throw new InvalidDataException(
+                    "The authoritative event batch contains a null event.");
+            }
+
+            switch (gameEvent.EventCase) {
+            case GameEvent.EventOneofCase.Damage:
+                if (gameEvent.Damage.Amount < 0 || gameEvent.Damage.AmountQ6 < 0) {
+                    throw new InvalidDataException(
+                        "The authoritative event batch contains invalid damage.");
+                }
+                break;
+            case GameEvent.EventOneofCase.Experience:
+                break;
+            case GameEvent.EventOneofCase.Healing:
+                if (gameEvent.Healing.Amount < 0 || gameEvent.Healing.AmountQ6 < 0) {
+                    throw new InvalidDataException(
+                        "The authoritative event batch contains invalid healing.");
+                }
+                break;
+            case GameEvent.EventOneofCase.Dialogue:
+                if (gameEvent.Dialogue.MessageId < 0
+                    || gameEvent.Dialogue.Text.Contains('\0')) {
+                    throw new InvalidDataException(
+                        "The authoritative event batch contains invalid dialogue.");
+                }
+                break;
+            case GameEvent.EventOneofCase.Victory:
+                break;
+            default:
+                throw new InvalidDataException(
+                    "The authoritative event batch contains an unknown event kind.");
             }
         }
     }
