@@ -154,6 +154,24 @@
       "table": "class_loadout_items.tsv",
       "keys": ["class_id", "item_order"],
       "mode": "upsert"
+    },
+    {
+      "table": "item_prefixes.tsv",
+      "keys": [
+        "name",
+        "power",
+        "power.value1",
+        "power.value2",
+        "minLevel",
+        "itemTypes",
+        "alignment",
+        "chance",
+        "useful",
+        "minVal",
+        "maxVal",
+        "multVal"
+      ],
+      "mode": "upsert"
     }
   ]
 }

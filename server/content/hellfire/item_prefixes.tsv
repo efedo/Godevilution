@@ -1,0 +1,2 @@
+name	power	power.value1	power.value2	minLevel	itemTypes	alignment	chance	useful	minVal	maxVal	multVal
+Crystalline	CRYSTALLINE	30	70	5	Weapon	Any	1	true	1000	3000	3

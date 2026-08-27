@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Hellfire's native `Crystalline` weapon prefix through the
+  validated Hellfire content overlay.
 - Add native Hellfire `CRYSTALLINE` damage and durability semantics to
   authoritative affix and unique-item generation.
 - Extend normalized and legacy unique-item power handling with native
