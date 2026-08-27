@@ -167,9 +167,10 @@ visibility-driven activation and cross-snapshot position prediction work remain
 follow-ups.
 
 The authoritative monster AI selector now preserves explicit native
-SkeletonAi-compatible identities even when a generic catalog row is supplied,
-so compatibility targets continue through the native delay and movement
-branches instead of falling through to generic navigation.
+SkeletonAi-compatible `SkeletonMelee`, `Snotspill`, and `Warlord` identities
+when a generic catalog row is supplied, while complete catalog controllers
+retain precedence for intentionally content-selected identities such as
+Gargoyle.
 
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts

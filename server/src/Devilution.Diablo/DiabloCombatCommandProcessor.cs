@@ -6796,7 +6796,7 @@ public sealed class DiabloCombatCommandProcessor
                 && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0;
             if (hasSkeletonTuning)
                 return true;
-            if (target.NativeAi is "SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord"
+            if (target.NativeAi is "SkeletonMelee" or "Snotspill" or "Warlord"
                 && target.NativeAi != definition.NativeAi)
                 return true;
             if (target.NativeAi == definition.NativeAi
