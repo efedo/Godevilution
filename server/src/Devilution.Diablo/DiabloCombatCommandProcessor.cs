@@ -31,6 +31,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
     private readonly AuthoritativeWorldRules? worldRules;
+    private readonly AuthoritativeExperienceCatalog? experience;
     private IReadOnlyList<AuthoritativePlayerState> activePlayers = [];
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextMonsterEntityId = 0x10000000;
@@ -145,7 +146,8 @@ public sealed class DiabloCombatCommandProcessor
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeWorldRules? worldRules = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
-        uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId)
+        uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId,
+        AuthoritativeExperienceCatalog? experience = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -171,6 +173,7 @@ public sealed class DiabloCombatCommandProcessor
             ? throw new ArgumentOutOfRangeException(nameof(monsterFlashSpellId))
             : monsterFlashSpellId;
         this.worldRules = worldRules?.Validate();
+        this.experience = experience;
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
@@ -16344,7 +16347,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         var experienceReward = GetEffectiveMonsterExperienceReward(target);
-        DiabloPlayerProgression.GrantExperience(player, experienceReward);
+        DiabloPlayerProgression.GrantExperience(player, experienceReward, experience);
         events.Add(new DiabloGameplayEvent(
             DiabloGameplayEventKind.Experience,
             player.EntityId,

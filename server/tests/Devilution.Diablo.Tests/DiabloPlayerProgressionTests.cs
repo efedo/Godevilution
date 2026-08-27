@@ -40,6 +40,27 @@ public sealed class DiabloPlayerProgressionTests
         Assert.Equal(100, player.Mana);
     }
 
+    [Fact]
+    public void UsesExternalExperienceThresholdsForLevelAdvancement()
+    {
+        var experience = new AuthoritativeExperienceCatalog([
+            new(1, 2000),
+            new(2, 4620),
+            new(3, 8040),
+        ]);
+        var player = CreatePlayer(life: 300, mana: 100);
+
+        DiabloPlayerProgression.GrantExperience(player, 1000, experience);
+
+        Assert.Equal(1U, player.CharacterLevel);
+        Assert.Equal(1999U, player.Experience);
+
+        DiabloPlayerProgression.GrantExperience(player, 1, experience);
+
+        Assert.Equal(2U, player.CharacterLevel);
+        Assert.Equal(5U, player.StatPoints);
+    }
+
     private static AuthoritativePlayerState CreatePlayer(
         int life,
         int mana,

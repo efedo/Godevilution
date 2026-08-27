@@ -26,6 +26,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly DiabloDifficulty difficulty;
     private readonly DiabloGameVariant gameVariant;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
+    private readonly AuthoritativeExperienceCatalog? experience;
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextAuthoredProjectileEntityId = 0xC0000000;
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
@@ -50,7 +51,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         DiabloGameVariant gameVariant = DiabloGameVariant.Diablo,
-        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null,
+        AuthoritativeExperienceCatalog? experience = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -72,6 +74,7 @@ public sealed class DiabloWorldCommandProcessor
         this.difficulty = difficulty;
         this.gameVariant = gameVariant;
         this.monsterTypes = monsterTypes;
+        this.experience = experience;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -1319,7 +1322,8 @@ public sealed class DiabloWorldCommandProcessor
         case AuthoritativeObjectEffectKind.Experience:
             DiabloPlayerProgression.GrantExperience(
                 player,
-                checked((uint)@object.EffectAmount));
+                checked((uint)@object.EffectAmount),
+                experience);
             return DiabloWorldIntentResult.AcceptedWith(new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Experience,
                 player.EntityId,

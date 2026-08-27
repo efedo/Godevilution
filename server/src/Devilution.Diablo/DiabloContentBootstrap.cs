@@ -47,7 +47,8 @@ public sealed record DiabloContentActivation
         AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null,
         AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOrigins = null,
         AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters = null,
-        AuthoritativeUniqueMonsterPackCatalog? uniqueMonsterPacks = null)
+        AuthoritativeUniqueMonsterPackCatalog? uniqueMonsterPacks = null,
+        AuthoritativeExperienceCatalog? experience = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -81,6 +82,7 @@ public sealed record DiabloContentActivation
         QuestSequenceVariants = questSequenceVariants;
         UniqueMonsterPlacements = uniqueMonsterPlacements;
         UniqueMonsterPacks = uniqueMonsterPacks;
+        Experience = experience;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -160,6 +162,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
+
+    /** Validated cumulative character-level experience thresholds. */
+    public AuthoritativeExperienceCatalog? Experience { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -229,6 +234,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 generationTable.SourcePath,
                 generationTable.ToCanonicalTsv())
             : AuthoritativeItemGenerationRules.Default;
+        var experience = content.TryGetTable(
+            "experience.tsv",
+            out var experienceTable)
+            ? AuthoritativeExperienceCatalog.LoadTsv(
+                experienceTable.SourcePath,
+                experienceTable.ToCanonicalTsv())
+            : null;
         var playerClassTable = content.GetRequiredTable("classes.tsv");
         var playerClasses = AuthoritativePlayerClassCatalog.LoadTsv(
             playerClassTable.SourcePath,
@@ -1184,6 +1196,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             Content = content,
             NativeObjectTemplates = objectTemplates,
             Spells = spells,
+            Experience = experience,
             SpellBooks = spellBooks,
             CombatRules = combatRules,
             Items = itemCatalog,
@@ -1236,7 +1249,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             uniqueMonsterPlacements,
             proceduralSetPieceOrigins,
             nativeDunMonsters,
-            uniqueMonsterPacks);
+            uniqueMonsterPacks,
+            experience);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -244,6 +244,25 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseExperienceThresholdsMatchNativeTable()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var native = TsvTable.Parse(
+            "assets/txtdata/Experience.tsv",
+            File.ReadAllText(Path.Combine(repositoryRoot, "assets", "txtdata", "Experience.tsv")));
+        var external = basePack.Tables.Single(table => table.SourcePath == "experience.tsv");
+
+        Assert.Equal(50, native.Rows.Count);
+        Assert.Equal(native.Rows.Count, external.Rows.Count);
+        foreach (var (nativeRow, externalRow) in native.Rows.Zip(external.Rows)) {
+            Assert.Equal(nativeRow.Required("Level"), externalRow.Required("level"));
+            Assert.Equal(nativeRow.Required("Experience"), externalRow.Required("experience"));
+        }
+    }
+
+    [Fact]
     public void BaseNativeSpellNamespaceMatchesNativeSpellData()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -464,6 +483,22 @@ public sealed class ShippedContentTests
         var activation = new DiabloModule().ContentBootstrap.Activate(content);
 
         Assert.NotNull(activation);
+    }
+
+    [Fact]
+    public void BaseContentActivationUsesExternalExperienceCatalog()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("experience", "1", [pack])));
+
+        var experience = Assert.IsType<AuthoritativeExperienceCatalog>(activation.Experience);
+        Assert.Same(experience, activation.Simulation.Experience);
+        Assert.Equal(50U, experience.MaximumLevel);
+        Assert.Equal(2000U, experience.GetRequiredExperience(1));
+        Assert.Equal(4620U, experience.GetRequiredExperience(2));
+        Assert.Equal(1583495809U, experience.GetRequiredExperience(50));
     }
 
     [Fact]

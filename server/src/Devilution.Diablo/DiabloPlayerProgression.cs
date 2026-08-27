@@ -3,12 +3,16 @@ namespace Devilution.Diablo;
 /** Shared deterministic character progression used by Diablo gameplay transitions. */
 internal static class DiabloPlayerProgression
 {
-    public static void GrantExperience(AuthoritativePlayerState player, uint amount)
+    public static void GrantExperience(
+        AuthoritativePlayerState player,
+        uint amount,
+        AuthoritativeExperienceCatalog? experience = null)
     {
         ArgumentNullException.ThrowIfNull(player);
         player.Experience = checked(player.Experience + amount);
-        while (player.CharacterLevel < 50
-            && player.Experience >= player.CharacterLevel * 1000U) {
+        while (player.CharacterLevel < (experience?.MaximumLevel ?? AuthoritativeExperienceCatalog.MaximumSupportedLevel)
+            && player.Experience >= (experience?.GetRequiredExperience(player.CharacterLevel)
+                ?? checked(player.CharacterLevel * 1000U))) {
             player.AdvanceLevel();
             var available = CalculateAvailableAttributePoints(player);
             player.StatPoints = available < 5

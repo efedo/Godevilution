@@ -107,6 +107,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeSpellCatalog? Spells { get; init; }
 
+    /** Validated cumulative character-level experience thresholds. */
+    public AuthoritativeExperienceCatalog? Experience { get; init; }
+
     /** Validated stable spell identity used by native Counselor Flash layers. */
     public uint MonsterFlashSpellId { get; init; } = LegacyMonsterFlashSpellId;
 
@@ -250,7 +253,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.MonsterSpawnPlanner,
             options.Difficulty,
             combatRules.GameVariant,
-            options.MonsterTypes);
+            options.MonsterTypes,
+            options.Experience);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,
@@ -286,7 +290,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.Difficulty,
                 options.WorldRules,
                 options.SpellBooks,
-                options.MonsterFlashSpellId),
+                options.MonsterFlashSpellId,
+                options.Experience),
             spells,
             random,
             combatRules,
@@ -318,7 +323,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.World ?? new AuthoritativeWorld(),
                 options.RandomSeed),
             proceduralSetPieceOriginCatalog: options.ProceduralSetPieceOrigins,
-            proceduralSetPieceOriginSeed: options.RandomSeed);
+            proceduralSetPieceOriginSeed: options.RandomSeed,
+            experience: options.Experience);
     }
 }
 
@@ -387,7 +393,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeQuestTypeCatalog? questTypes = null,
         IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? proceduralSetPieceOrigins = null,
         AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog = null,
-        uint proceduralSetPieceOriginSeed = 0)
+        uint proceduralSetPieceOriginSeed = 0,
+        AuthoritativeExperienceCatalog? experience = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -395,6 +402,7 @@ public sealed partial class DiabloSimulation
         this.worldCommands = worldCommands ?? throw new ArgumentNullException(nameof(worldCommands));
         this.combatCommands = combatCommands ?? throw new ArgumentNullException(nameof(combatCommands));
         Spells = spells ?? throw new ArgumentNullException(nameof(spells));
+        Experience = experience;
         this.random = random ?? throw new ArgumentNullException(nameof(random));
         CombatRules = combatRules ?? throw new ArgumentNullException(nameof(combatRules));
         PlayerClasses = playerClasses;
@@ -446,6 +454,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated spell catalog used for protocol source classification. */
     public AuthoritativeSpellCatalog Spells { get; }
+
+    /** Validated cumulative character-level experience thresholds. */
+    public AuthoritativeExperienceCatalog? Experience { get; }
 
     /** Validated native dynamic spell-book metadata used for presentation names. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; }
