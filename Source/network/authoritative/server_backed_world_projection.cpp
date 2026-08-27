@@ -6,6 +6,50 @@
 
 namespace devilution::authoritative {
 
+namespace {
+
+bool UsesDirectionalPresentation(const ProjectedProjectileSnapshot &projectile)
+{
+	if (projectile.nativeVisual != 0 || !projectile.nativeMissileId.empty())
+		return true;
+	switch (projectile.behavior) {
+	case 1:  // ChargedBolt
+	case 2:  // Firebolt
+	case 3:  // Lightning
+	case 4:  // LightningSegment
+	case 6:  // FlashBottom
+	case 7:  // FlashTop
+	case 11: // ResurrectionBeam
+	case 15: // Phasing
+	case 16: // Fireball
+	case 19: // HolyBolt
+	case 20: // BloodStar
+	case 21: // BoneSpirit
+	case 23: // FireWallSegment
+	case 24: // FlameWaveController
+	case 25: // FlameWaveSegment
+	case 27: // InfernoSegment
+	case 29: // ChainLightningBolt
+	case 31: // NovaBall
+	case 33: // ApocalypseBoom
+	case 35: // Elemental
+	case 36: // GuardianController
+	case 49: // Etherealize
+	case 51: // Acid
+	case 52: // AcidSplat
+	case 53: // AcidPuddle
+	case 56: // MonsterChargedBolt
+	case 57: // HorkSpawn
+	case 58: // WeaponArrow
+	case 59: // MonsterArrow
+		return true;
+	default:
+		return false;
+	}
+}
+
+} // namespace
+
 bool IsAuthoritativeLevelVisible(uint32_t projectedLevelId, uint32_t activeLevelId) noexcept
 {
 	return projectedLevelId == 0 || projectedLevelId == activeLevelId;
@@ -74,9 +118,14 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.spellId == 0
 			    || projectile.remainingTicks == 0
 			    || projectile.damage < 0
-			    || projectile.areaRadius < 0;
+			    || projectile.areaRadius < 0
+			    || projectile.behavior < 0 || projectile.behavior > 59
+			    || projectile.phase < 0 || projectile.phase > 1
+			    || projectile.nativeVisual < 0 || projectile.nativeVisual > 35
+			    || UsesDirectionalPresentation(projectile)
+			        && (projectile.originalDirection < 0 || projectile.originalDirection > 7);
 		})) {
-		return tl::make_unexpected("Authoritative projectile projection contains invalid identity, lifetime, or effect data.");
+		return tl::make_unexpected("Authoritative projectile projection contains invalid identity, lifecycle, or presentation data.");
 	}
 	std::sort(projectiles.begin(), projectiles.end(), [](const auto &left, const auto &right) {
 		return left.entityId < right.entityId;

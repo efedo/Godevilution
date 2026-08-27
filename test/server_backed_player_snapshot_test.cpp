@@ -1876,6 +1876,17 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProject
 	first.remainingTicks = 1;
 	ProjectedProjectileSnapshot duplicate = first;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { first, duplicate }, 1).has_value());
+
+	ProjectedProjectileSnapshot invalidBehavior = first;
+	invalidBehavior.entityId = 12;
+	invalidBehavior.behavior = 60;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidBehavior }, 1).has_value());
+
+	ProjectedProjectileSnapshot invalidDirection = first;
+	invalidDirection.entityId = 13;
+	invalidDirection.behavior = 2; // Firebolt
+	invalidDirection.originalDirection = 8;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidDirection }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimulation)

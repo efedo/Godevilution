@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
   protocol boundary.
 - Reset Godot projectile interpolation across authoritative level, phase, and
   presentation-identity changes.
+- Extend the native protocol-free world projection guard to reject malformed
+  projectile lifecycle, visual-ID, and directional metadata.
 - Externalize native 1–50 character experience thresholds, wire active
   simulations to server-owned progression data, and add source parity coverage.
 - Externalize all 68 native `misdat.tsv` missile identities, retain five

@@ -192,7 +192,9 @@ identities, native direction range, and one-tile movement destinations. It also
 rejects duplicate nonzero identities across projected entity collections while
 retaining zero-ID placeholder compatibility for items and objects. This keeps
 legacy callers safe even when they bypass the richer protocol-session
-validator; full protocol validation remains the authoritative ingress check.
+validator; projectile lifecycle, visual-ID, and directional metadata ranges now
+receive the same fail-closed treatment. Full protocol validation remains the
+authoritative ingress check.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot
