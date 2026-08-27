@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 
 - Reject malformed directional projectile metadata at the native authoritative
   snapshot boundary before it reaches presentation code.
+- Reject the same malformed directional metadata in the C# server adapter
+  before protocol serialization.
 - Apply the same directional projectile metadata validation at the Godot
   protocol boundary.
 - Externalize native 1–50 character experience thresholds, wire active

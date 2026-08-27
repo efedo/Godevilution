@@ -1036,6 +1036,10 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { DamageType = (AuthoritativeDamageType)99 });
         AssertRejected(value => value with { Behavior = (AuthoritativeProjectileBehavior)99 });
         AssertRejected(value => value with { Phase = (AuthoritativeProjectilePhase)99 });
+        AssertRejected(value => value with {
+            Behavior = AuthoritativeProjectileBehavior.Firebolt,
+            OriginalDirection = 8,
+        });
         AssertRejected(value => value with { PositionX = -1 });
         AssertRejected(
             value => value with { PositionY = 10 },

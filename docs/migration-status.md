@@ -36,6 +36,8 @@ combat, collision, lifetime, or regeneration logic.
 Native snapshot ingress also rejects out-of-range direction metadata for
 directional projectile presentations before it reaches the compatibility
 renderer.
+The C# server adapter rejects the same malformed directional metadata before
+it serializes a protocol snapshot.
 The Godot protocol client applies the same directional metadata invariant,
 keeping both presentation boundaries fail-closed and behaviorally aligned.
 

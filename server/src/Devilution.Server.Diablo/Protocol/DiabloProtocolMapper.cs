@@ -865,11 +865,50 @@ internal static class DiabloProtocolMapper
                 || projectile.Behavior is < AuthoritativeProjectileBehavior.Targeted
                     or > AuthoritativeProjectileBehavior.MonsterArrow
                 || projectile.Phase is < AuthoritativeProjectilePhase.Travel
-                    or > AuthoritativeProjectilePhase.Impact) {
+                    or > AuthoritativeProjectilePhase.Impact
+                || UsesDirectionalPresentation(projectile)
+                    && projectile.OriginalDirection is < 0 or > 7) {
                 throw new InvalidDataException(
                     "Authoritative projectile state is outside the shared protocol range.");
             }
         }
+    }
+
+    private static bool UsesDirectionalPresentation(DiabloProjectileState projectile)
+    {
+        if (!string.IsNullOrEmpty(projectile.NativeMissileId))
+            return true;
+
+        return projectile.Behavior is
+            AuthoritativeProjectileBehavior.ChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.LightningSegment
+                or AuthoritativeProjectileBehavior.FlashBottom
+                or AuthoritativeProjectileBehavior.FlashTop
+                or AuthoritativeProjectileBehavior.ResurrectionBeam
+                or AuthoritativeProjectileBehavior.Phasing
+                or AuthoritativeProjectileBehavior.Fireball
+                or AuthoritativeProjectileBehavior.HolyBolt
+                or AuthoritativeProjectileBehavior.BloodStar
+                or AuthoritativeProjectileBehavior.BoneSpirit
+                or AuthoritativeProjectileBehavior.FireWallSegment
+                or AuthoritativeProjectileBehavior.FlameWaveController
+                or AuthoritativeProjectileBehavior.FlameWaveSegment
+                or AuthoritativeProjectileBehavior.InfernoSegment
+                or AuthoritativeProjectileBehavior.ChainLightningBolt
+                or AuthoritativeProjectileBehavior.NovaBall
+                or AuthoritativeProjectileBehavior.ApocalypseBoom
+                or AuthoritativeProjectileBehavior.Elemental
+                or AuthoritativeProjectileBehavior.GuardianController
+                or AuthoritativeProjectileBehavior.Etherealize
+                or AuthoritativeProjectileBehavior.Acid
+                or AuthoritativeProjectileBehavior.AcidSplat
+                or AuthoritativeProjectileBehavior.AcidPuddle
+                or AuthoritativeProjectileBehavior.MonsterChargedBolt
+                or AuthoritativeProjectileBehavior.HorkSpawn
+                or AuthoritativeProjectileBehavior.WeaponArrow
+                or AuthoritativeProjectileBehavior.MonsterArrow;
     }
 
     private static void ValidateProjectedPlayerPositions(
