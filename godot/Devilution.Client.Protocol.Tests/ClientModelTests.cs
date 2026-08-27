@@ -8,6 +8,38 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientModelTests
 {
     [Fact]
+    public void ValidatesAuthoritativeStateHashFormatWhileRetainingLegacySnapshots()
+    {
+        var model = new AuthoritativeClientModel();
+        var canonicalHash = new string('A', 64);
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            StateSha256 = canonicalHash,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+
+        Assert.Equal(canonicalHash, model.Snapshot!.StateSha256);
+
+        foreach (var invalidHash in new[] {
+            new string('a', 63),
+            new string('a', 65),
+            new string('g', 64),
+        }) {
+            var invalid = new Snapshot {
+                StateSha256 = invalidHash,
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+            };
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+
+        var legacy = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: legacy));
+        Assert.Empty(model.Snapshot!.StateSha256);
+    }
+
+    [Fact]
     public void ExposesOnlyActiveLevelWarpTriggersToPresentation()
     {
         var model = new AuthoritativeClientModel();

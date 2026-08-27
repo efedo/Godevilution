@@ -2,6 +2,11 @@
 
 Status date: 2026-08-27
 
+The Godot protocol model now validates the shape of non-empty authoritative
+snapshot hashes (64 hexadecimal characters) while retaining compatibility with
+legacy snapshots that omit the additive hash field. Digest computation and
+verification remain server-owned.
+
 Authoritative save and world-seed writes now use unique temporary files with
 `WriteThrough` and an explicit disk flush before atomic replacement. Failed
 writes clean up their temporary file without changing the previous committed

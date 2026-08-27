@@ -1111,6 +1111,13 @@ public sealed class AuthoritativeClientModel
                 "The authoritative snapshot contains an invalid game difficulty.");
         }
 
+        if (snapshot.StateSha256.Length != 0
+            && (snapshot.StateSha256.Length != 64
+                || snapshot.StateSha256.Any(character => !Uri.IsHexDigit(character)))) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid SHA-256 state hash.");
+        }
+
         var mutationIds = new HashSet<uint>();
         foreach (var mutationId in snapshot.ActiveWorldMutationIds) {
             if (mutationId == 0 || !mutationIds.Add(mutationId)) {
