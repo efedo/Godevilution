@@ -199,8 +199,9 @@ presentation now maps server-declared movement directions to the native
 movement modes and walk animation consumed by the renderer, while stationary
 snapshots clear stale movement modes; the connected loop advances that walk
 animation without running legacy simulation. The bounded fractional
-presentation clock now advances timed monster walks between snapshots; broader
-cross-snapshot prediction and soak coverage remain follow-up work. The native
+presentation clock now advances timed monster and remote-player walks between
+snapshots; broader cross-snapshot prediction and soak coverage remain follow-up
+work. The native
 compatibility validator now accepts
 authored unique leaders in the same pack relationship contract.
 Godot also snaps monster presentation on level changes or large authoritative
