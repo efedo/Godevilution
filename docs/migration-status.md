@@ -28,7 +28,9 @@ identity when selecting presentation, while empty values preserve the enum and
 behavior fallbacks required by older snapshots.
 The native compatibility projection now retains and prefers that identity as
 well; malformed or misplaced values fail closed before presentation, while
-empty values retain the legacy native enum/behavior fallback.
+empty values retain the legacy native enum/behavior fallback. The connected
+native presentation loop also advances projected remote-player animations
+without invoking legacy gameplay simulation.
 The connected native loop now advances projected walk and missile sprite
 animations each game tick, so authoritative current/future tiles and active
 projectile visuals continue to animate without running legacy AI, movement,

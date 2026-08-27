@@ -2363,6 +2363,47 @@ TEST(ServerBackedPlayerSnapshot, PlacesRemoteAnimationAtAuthoritativeActionTick)
 	presentation.Clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, AdvancesRemotePlayerPresentationAnimationWithoutSimulation)
+{
+	LoadPlayerDataFiles();
+	LoadSpellData();
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	local.characterClassId = 0;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.life = 640;
+	remote.lifeMaximum = 640;
+	remote.combatMode = PM_SPELL;
+	remote.serverTick = 3;
+	remote.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 3,
+		.startedAtTick = 1,
+		.hasCast = true,
+		.spellId = static_cast<uint32_t>(SpellID::Firebolt),
+	};
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	int initialFrame = -1;
+	presentation.ForEachRemotePlayer([&](uint32_t, const Player &player) {
+		initialFrame = player.animInfo.currentFrame;
+	});
+
+	EXPECT_EQ(presentation.AdvanceAnimations(), 1U);
+	int advancedFrame = -1;
+	presentation.ForEachRemotePlayer([&](uint32_t, const Player &player) {
+		advancedFrame = player.animInfo.currentFrame;
+	});
+	EXPECT_EQ(initialFrame, 2);
+	EXPECT_EQ(advancedFrame, 3);
+
+	presentation.Clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerCombatModesToNativeGraphics)
 {
 	ProjectedPlayerSnapshot snapshot;

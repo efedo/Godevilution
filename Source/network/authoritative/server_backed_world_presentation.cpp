@@ -1212,8 +1212,8 @@ void ServerBackedWorldPresentation::Clear() noexcept
 std::size_t ServerBackedWorldPresentation::AdvanceAnimations() noexcept
 {
 	// Connected sessions skip ProcessMonsters entirely because it owns gameplay
-	// mutation. Advance only the walk animation used to interpolate the
-	// server-declared current/future tile pair.
+	// mutation. Advance only presentation animation state for projected
+	// monsters and remote players.
 	std::size_t advanced = 0;
 	for (const auto &[entityId, monsterSlot] : monsterSlots_) {
 		(void)entityId;
@@ -1224,6 +1224,13 @@ std::size_t ServerBackedWorldPresentation::AdvanceAnimations() noexcept
 			monster.animInfo.processAnimation();
 			++advanced;
 		}
+	}
+	for (auto &[entityId, remote] : remotePlayers_) {
+		(void)entityId;
+		const bool loop = remote.graphic == player_graphic::Stand
+			|| remote.graphic == player_graphic::Walk;
+		AdvanceRemotePlayerAnimation(remote.player, remote.graphic, 1, loop);
+		++advanced;
 	}
 	return advanced;
 }
