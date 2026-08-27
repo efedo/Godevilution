@@ -68,10 +68,25 @@ bool IsValidNativeTileCoordinate(int32_t x, int32_t y)
 	    && y <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max());
 }
 
+bool IsValidSnapshotHash(std::string_view value)
+{
+	if (value.empty())
+		return true;
+	if (value.size() != 64)
+		return false;
+	return std::all_of(value.begin(), value.end(), [](char character) {
+		return (character >= '0' && character <= '9')
+		    || (character >= 'a' && character <= 'f')
+		    || (character >= 'A' && character <= 'F');
+	});
+}
+
 } // namespace
 
 tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const protocol::Snapshot &snapshot, uint32_t entityId)
 {
+	if (!IsValidSnapshotHash(snapshot.state_sha256()))
+		return tl::make_unexpected("Server-backed snapshot contains an invalid state hash.");
 	const protocol::PlayerSnapshot *player = nullptr;
 	std::unordered_set<uint32_t> entityIds;
 	for (const auto &candidate : snapshot.players()) {

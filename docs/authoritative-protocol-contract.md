@@ -252,6 +252,11 @@ amounts, negative dialogue message IDs, or dialogue text containing NUL
 characters; zero entity IDs remain tolerated for compatibility with events that
 do not target the local presentation.
 
+Godot and the native compatibility client accept an omitted snapshot hash for
+legacy peers, but reject any non-empty hash that is not exactly 64 hexadecimal
+characters. The server remains responsible for computing and verifying the
+canonical digest.
+
 `QuestSnapshot` fields 9-13 preserve native quest variables and completion
 identities. Optional proto3 field 14, `turn_in_towner_id`, carries the validated
 content-owned towner ordinal for authored quest interactions. Fields 15-16 add a

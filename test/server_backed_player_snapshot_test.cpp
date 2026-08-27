@@ -194,6 +194,27 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->stash[0].height, 1U);
 }
 
+TEST(ServerBackedPlayerSnapshot, ValidatesNonEmptyStateHashShape)
+{
+	protocol::Snapshot snapshot;
+	snapshot.add_players()->set_entity_id(7);
+
+	for (const std::string &hash : {
+		     std::string("not-a-hash"),
+		     std::string(63, '0'),
+		     std::string(65, '0'),
+		     std::string(64, 'g'),
+	     }) {
+		snapshot.set_state_sha256(hash);
+		EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value()) << hash;
+	}
+
+	snapshot.clear_state_sha256();
+	EXPECT_TRUE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+	snapshot.set_state_sha256(std::string(64, 'A'));
+	EXPECT_TRUE(ProjectPlayerSnapshot(snapshot, 7).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, ResolvesTargetingKindAcrossAuthoritativeSources)
 {
 	ProjectedPlayerSnapshot snapshot;

@@ -479,6 +479,10 @@ The native compatibility client now enforces the same generated-origin
 validation before applying a snapshot, including duplicate set-level identity
 checks and the geometry-free legacy path.
 
+Native snapshot projection now also applies Godot's non-empty state-hash shape
+check: omitted hashes remain compatible with legacy peers, while supplied
+values must be exactly 64 hexadecimal characters before projection.
+
 The native presentation bridge independently revalidates DUN object-layer IDs
 before applying directly constructed geometry projections, so malformed
 compatibility data fails closed even when it bypasses protocol validation.

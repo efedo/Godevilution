@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
   event application.
 - Add a loopback TCP regression test proving malformed adapter events are
   rejected as protocol errors before wire serialization.
+- Align native snapshot ingress with Godot by rejecting malformed non-empty
+  state-hash strings while retaining omitted-hash compatibility.
 - Validate non-empty authoritative snapshot hashes at the Godot protocol
   boundary while preserving legacy snapshots that omit the additive hash.
 - Make authoritative save and world-seed writes durable before atomic
