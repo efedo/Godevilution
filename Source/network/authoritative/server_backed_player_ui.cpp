@@ -301,6 +301,9 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.friendlyMode = snapshot.friendlyMode;
 	player.direction = static_cast<Direction>(snapshot.facingDirection);
 	player._pmode = static_cast<PLR_MODE>(snapshot.combatMode);
+	// Block animation admission is presentation state in the authoritative
+	// client. Do not retain a legacy value across server-owned action changes.
+	player._pBlockFlag = snapshot.combatMode == static_cast<uint32_t>(PM_BLOCK);
 	player._pClass = static_cast<HeroClass>(snapshot.characterClassId);
 	std::fill(std::begin(player._pLvlVisited), std::end(player._pLvlVisited), false);
 	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds)

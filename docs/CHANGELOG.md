@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   snapshot so closed or changed stashes cannot leave stale spell sources.
 - Preserve inventory and belt scroll sources while reconciling stash-derived
   scroll availability.
+- Reconcile the native local block-animation admission flag from authoritative
+  combat modes so stale legacy state cannot survive a server-owned transition.
 - Reset the Godot presentation clock across authoritative local-level changes
   so timed movement from a prior level cannot bleed into the new view.
 - Validate authoritative monster movement timing at the generic host boundary,

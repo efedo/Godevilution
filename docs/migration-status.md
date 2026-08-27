@@ -38,6 +38,9 @@ authoritative level changes.
 Authoritative local equipment and class changes now also refresh the native
 sprite family and animation data through a presentation-only path; inventory
 and gameplay statistics remain snapshot-owned.
+Authoritative local combat-mode snapshots now also reconcile the native block
+animation admission flag, preventing stale legacy block state from surviving
+an action transition.
 The same snapshot path now rebuilds the native stash scroll-source mask, so
 closing or changing an authoritative stash cannot leave stale spell sources.
 Inventory and belt scroll sources remain intact during that reconciliation.

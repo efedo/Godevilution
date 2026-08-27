@@ -3194,6 +3194,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
 	EXPECT_FALSE(player.friendlyMode);
 	EXPECT_EQ(player._pmode, PM_BLOCK);
+	EXPECT_TRUE(player._pBlockFlag);
 	EXPECT_EQ(player._pAblSpells, GetSpellBitmask(SpellID::Search));
 	EXPECT_EQ(player._pMemSpells, GetSpellBitmask(SpellID::Firebolt));
 	EXPECT_NE(player._pScrlSpells & GetSpellBitmask(SpellID::Healing), 0U);
@@ -3220,8 +3221,11 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 
 	snapshot.heldItem.reset();
 	snapshot.statusEffects.clear();
+	snapshot.combatMode = static_cast<uint32_t>(PM_STAND);
+	snapshot.combatModeEndTick = 0;
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_TRUE(player.HoldItem.isEmpty());
+	EXPECT_FALSE(player._pBlockFlag);
 	EXPECT_FALSE(player._pInfraFlag);
 	EXPECT_FALSE(HasAnyOf(player._pSpellFlags, SpellFlag::Etherealize));
 	EXPECT_FALSE(CurrentAutomapManager.GetAutoMapShowItems());
