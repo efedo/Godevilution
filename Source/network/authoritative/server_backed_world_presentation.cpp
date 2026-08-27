@@ -233,6 +233,8 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.mana.current = snapshot.mana;
 	player.mana.maximum = snapshot.manaMaximum;
 	player.mana.maximumBase = snapshot.manaMaximumBase;
+	player.UpdateHitPointPercentage();
+	player.UpdateManaPercentage();
 	player.attributes.strength = { snapshot.strength.base, snapshot.strength.current };
 	player.attributes.magic = { snapshot.magic.base, snapshot.magic.current };
 	player.attributes.dexterity = { snapshot.dexterity.base, snapshot.dexterity.current };

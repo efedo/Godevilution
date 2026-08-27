@@ -2132,6 +2132,12 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.positionY = 5;
 	remote.gold = 1234;
 	remote.experience = 5678;
+	remote.life = 640;
+	remote.lifeMaximum = 1000;
+	remote.lifeMaximumBase = 800;
+	remote.mana = 320;
+	remote.manaMaximum = 500;
+	remote.manaMaximumBase = 400;
 	remote.characterLevel = 7;
 	remote.diabloKillLevel = 2;
 	remote.reflectCharges = 17;
@@ -2156,6 +2162,8 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 		EXPECT_EQ(player.position.tile.y, remote.positionY);
 		EXPECT_EQ(player._pGold, 1234);
 		EXPECT_EQ(player._pExperience, 5678U);
+		EXPECT_EQ(player.life.percentage, 51);
+		EXPECT_EQ(player.mana.percentage, 51);
 		EXPECT_EQ(player.getCharacterLevel(), 7);
 		EXPECT_EQ(player.pDiabloKillLevel, 2);
 		EXPECT_EQ(player.wReflections, 17);
@@ -2170,10 +2178,14 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
 	remote.combatMode = PM_STAND;
+	remote.life = 160;
+	remote.mana = 100;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	remotePlayer = presentation.FindRemotePlayer(remote.entityId);
 	ASSERT_NE(remotePlayer, nullptr);
 	EXPECT_FALSE(remotePlayer->_pBlockFlag);
+	EXPECT_EQ(remotePlayer->life.percentage, 12);
+	EXPECT_EQ(remotePlayer->mana.percentage, 16);
 	const uint8_t previousLevel = currentLevelNumber();
 	currentLevelNumber() = 2;
 	EXPECT_TRUE(IsRemotePlayerOnActiveLevel(remote.levelId, *remotePlayer));

@@ -44,6 +44,8 @@ an action transition.
 Remote-player presentation uses the same native `PM_BLOCK` identity rather than
 an independent numeric literal, and its regression coverage verifies block state
 clears on the next authoritative standing snapshot.
+Remote-player snapshots also recompute the native derived life and mana
+percentages, keeping HUD and party resource presentation aligned with the server.
 The same snapshot path now rebuilds the native stash scroll-source mask, so
 closing or changing an authoritative stash cannot leave stale spell sources.
 Inventory and belt scroll sources remain intact during that reconciliation.
