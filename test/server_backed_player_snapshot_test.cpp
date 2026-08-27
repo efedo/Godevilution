@@ -7,6 +7,7 @@
 #include "devilution.pb.h"
 #include "engine/cursor.h"
 #include "game/missiles/missiles.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
@@ -15,6 +16,7 @@
 #include "network/authoritative/server_backed_world_presentation.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
 #include "tables/playerdat.hpp"
+#include "tables/monstdat.h"
 #include "tables/objdat.h"
 #include "ui/automap.h"
 
@@ -2630,6 +2632,34 @@ TEST(ServerBackedPlayerSnapshot, RejectsMovingDestinationOutsideNativeDungeon)
 
 	ASSERT_FALSE(result.has_value());
 	EXPECT_EQ(result.error(), "Authoritative moving monster destination cannot be represented by the native world tile type.");
+}
+
+TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMonsterWalkAnimation)
+{
+	InitLevelMonsters();
+	LoadMonsterData();
+	ASSERT_TRUE(AddMonsterType(MT_NZOMBIE, PLACE_SCATTER).has_value());
+
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 41;
+	monster.monsterId = MT_NZOMBIE;
+	monster.levelId = 1;
+	monster.positionX = 4;
+	monster.positionY = 5;
+	monster.futurePositionX = 5;
+	monster.futurePositionY = 5;
+	monster.alive = true;
+	monster.moving = true;
+	monster.direction = static_cast<int32_t>(Direction::East);
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+
+	EXPECT_EQ(presentation.AdvanceAnimations(), 1U);
+
+	presentation.Clear();
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)

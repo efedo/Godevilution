@@ -1869,6 +1869,7 @@ void GameLogic()
 		// The connected server owns all gameplay mutation. The legacy pools remain
 		// presentation data until their authoritative projection is consumed by
 		// the renderer; running them locally would create a second simulation.
+		authoritative::GetServerBackedRuntime().AdvancePresentationAnimations();
 		CurrentLightManager.ProcessLightList();
 		CurrentLightManager.ProcessVisionList();
 	} else if (levelType() != DTYPE_TOWN) {

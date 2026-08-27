@@ -6,6 +6,7 @@
  * Applies authoritative world entities to the legacy presentation pools.
  */
 
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -43,6 +44,9 @@ public:
 		uint32_t levelId,
 		const std::vector<ProjectedPlayerSnapshot> &players = {},
 		uint32_t localEntityId = 0);
+
+	/** Advances only presentation animation state for projected authoritative monsters. */
+	[[nodiscard]] std::size_t AdvanceAnimations() noexcept;
 
 	/** Draws projected remote players without adding them to native simulation pools. */
 	void DrawRemotePlayers(

@@ -1209,4 +1209,23 @@ void ServerBackedWorldPresentation::Clear() noexcept
 	remotePlayers_.clear();
 }
 
+std::size_t ServerBackedWorldPresentation::AdvanceAnimations() noexcept
+{
+	// Connected sessions skip ProcessMonsters entirely because it owns gameplay
+	// mutation. Advance only the walk animation used to interpolate the
+	// server-declared current/future tile pair.
+	std::size_t advanced = 0;
+	for (const auto &[entityId, monsterSlot] : monsterSlots_) {
+		(void)entityId;
+		if (FindActiveMonsterListIndex(monsterSlot) < 0)
+			continue;
+		Monster &monster = Monsters[monsterSlot];
+		if (monster.isWalking() && !monster.animInfo.isPetrified) {
+			monster.animInfo.processAnimation();
+			++advanced;
+		}
+	}
+	return advanced;
+}
+
 } // namespace devilution::authoritative

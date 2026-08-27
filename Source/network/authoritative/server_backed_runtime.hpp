@@ -40,6 +40,8 @@ public:
 	[[nodiscard]] ServerBackedSession *Session() noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedSession *Session() const noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedWorldProjection &WorldProjection() const noexcept { return worldProjection_; }
+	/** Advances projected monster animation without running legacy simulation. */
+	void AdvancePresentationAnimations() noexcept { (void)worldPresentation_.AdvanceAnimations(); }
 	/** Draws authoritative remote players through the presentation-only bridge. */
 	void DrawRemotePlayers(const Surface &out, Point tilePosition, Point targetBufferPosition, int lightTableIndex) const
 	{

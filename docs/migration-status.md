@@ -29,6 +29,9 @@ behavior fallbacks required by older snapshots.
 The native compatibility projection now retains and prefers that identity as
 well; malformed or misplaced values fail closed before presentation, while
 empty values retain the legacy native enum/behavior fallback.
+The connected native loop now advances only the projected walk animation each
+game tick, so current/future authoritative tiles interpolate visually without
+running legacy monster AI, movement, combat, or regeneration.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility
@@ -147,8 +150,8 @@ assigns generated monster and loot entity IDs without colliding with existing
 targets or drops, avoids reserved cells, and preserves the native strict
 four-tile envelope for leashed members. Unique leaders retain their pack
 relationships across authoritative ticks. Native random placement parity and
-the remaining visibility-driven
-activation/interpolation work remain follow-ups.
+the remaining visibility-driven activation and cross-snapshot position
+prediction work remain follow-ups.
 
 The generic Data composer now permits a validated overlay to introduce an
 optional table absent from earlier packs. This keeps pack-only contracts
@@ -162,8 +165,9 @@ values preserve legacy snapshot hashes. Godot monster presentation now moves
 toward the server's authoritative future tile. Native authoritative monster
 presentation now maps server-declared movement directions to the native
 movement modes and walk animation consumed by the renderer, while stationary
-snapshots clear stale movement modes; native last-position interpolation
-remains follow-up work. The native compatibility validator now accepts
+snapshots clear stale movement modes; the connected loop advances that walk
+animation without running legacy simulation. Cross-snapshot position
+prediction remains follow-up work. The native compatibility validator now accepts
 authored unique leaders in the same pack relationship contract.
 Godot also snaps monster presentation on level changes or large authoritative
 relocations, preventing stale interpolation from carrying entities across
@@ -433,7 +437,7 @@ and pack-size state; the server applies the native line-of-sight separation and
 strictly-under-four-tile reunion rule during autonomous ticks and preserves the
 relationship through snapshots. Native active-tick FollowTheLeader propagation
 now runs for leashed members and survives snapshots. Visibility-driven
-activation and native last-position interpolation remain follow-up work;
+activation and cross-snapshot position prediction remain follow-up work;
 post-tick authoritative
 movement-admission passes now prevent either a leader or a leashed member from
 moving beyond the strict four-tile pack envelope.
