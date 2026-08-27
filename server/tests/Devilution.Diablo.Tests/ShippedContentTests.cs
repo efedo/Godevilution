@@ -55,6 +55,34 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+        var catalog = AuthoritativeNativeSpellCatalog.LoadTsv(
+            "native_spells.tsv",
+            composed.GetRequiredTable("native_spells.tsv").ToCanonicalTsv());
+
+        // The native table has 52 identities. Some are intentionally namespace
+        // compatibility entries rather than rows in the cast-behavior table.
+        Assert.Equal(52, catalog.Definitions.Count);
+        Assert.Equal(16U, catalog.GetRequiredId("DoomSerpents"));
+        Assert.Equal(17U, catalog.GetRequiredId("BloodRitual"));
+        Assert.Equal(19U, catalog.GetRequiredId("Invisibility"));
+        Assert.Equal(26U, catalog.GetRequiredId("ItemRepair"));
+        Assert.Equal(28U, catalog.GetRequiredId("TrapDisarm"));
+        Assert.Equal(47U, catalog.GetRequiredId("RuneOfFire"));
+        Assert.Equal(51U, catalog.GetRequiredId("RuneOfStone"));
+    }
+
+    [Fact]
     public void BaseContentPackShipsTheInitialSnotspillBannerFragment()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

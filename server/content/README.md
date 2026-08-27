@@ -63,6 +63,10 @@ positions.
 `native_spells.tsv` defines the complete native spell-name namespace, including
 unused legacy ordinals, so `itemdat.tsv` compatibility names are data-driven
 and validated before they can resolve into the active stable spell catalog.
+The unused `DoomSerpents`, `BloodRitual`, and `Invisibility` identities, the
+service-capability identities (`ItemRepair`, `StaffRecharge`, and `TrapDisarm`),
+and the five rune identities remain namespace entries; rune items resolve to
+their existing authoritative spell behaviors through item metadata.
 `native_item_misc.tsv` does the same for the native miscellaneous-item symbols
 used by the legacy item-table fallback.
 `native_item_topology.tsv` covers the legacy item type, item class, and

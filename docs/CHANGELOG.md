@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Guard the complete 52-entry native spell namespace, including unused legacy
+  identities, service capabilities, and rune aliases that intentionally do not
+  create additional cast-behavior rows.
 - Characterize the complete Hellfire unique catalog's native blank numeric
   power fields: normalized flag-style rows use explicit `0,0` values while
   retaining all populated native ranges.
