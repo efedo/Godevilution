@@ -36,6 +36,8 @@ combat, collision, lifetime, or regeneration logic.
 Native snapshot ingress also rejects out-of-range direction metadata for
 directional projectile presentations before it reaches the compatibility
 renderer.
+The Godot protocol client applies the same directional metadata invariant,
+keeping both presentation boundaries fail-closed and behaviorally aligned.
 
 The normalized native spell namespace now checks all 36 `spelldat.tsv` spell
 identities and their ordinal native IDs, while retaining the 16 compatibility

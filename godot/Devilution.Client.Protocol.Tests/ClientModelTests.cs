@@ -1785,6 +1785,22 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidCodes)));
 
+        var invalidDirection = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 10,
+                    SourceEntityId = 11,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                    Behavior = 2,
+                    OriginalDirection = 8,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidDirection)));
+
         var invalidNativeMissile = new Snapshot {
             Players = { new PlayerSnapshot { EntityId = 7 } },
             Projectiles = {

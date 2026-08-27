@@ -1291,10 +1291,24 @@ public sealed class AuthoritativeClientModel
             || projectile.Phase is < 0 or > MaximumProjectilePhase
             || !Enum.IsDefined(projectile.PresentationKind)
             || !Enum.IsDefined(projectile.NativeVisual)
+            || UsesDirectionalPresentation(projectile)
+                && projectile.OriginalDirection is < 0 or > 7
             || !IsValidNativeMissileIdentity(projectile)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid projectile state.");
         }
+    }
+
+    private static bool UsesDirectionalPresentation(ProjectileSnapshot projectile)
+    {
+        if (projectile.NativeVisual != NativeProjectileVisual.Unspecified
+            || !string.IsNullOrEmpty(projectile.NativeMissileId))
+            return true;
+
+        return projectile.Behavior is
+            1 or 2 or 3 or 4 or 6 or 7 or 11 or 15 or 16 or 19 or 20 or 21
+            or 23 or 24 or 25 or 27 or 29 or 31 or 33 or 35 or 36 or 49
+            or 51 or 52 or 53 or 56 or 57 or 58 or 59;
     }
 
     private static bool IsValidNativeMissileIdentity(ProjectileSnapshot projectile)
