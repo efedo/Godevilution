@@ -2,6 +2,11 @@
 
 Status date: 2026-08-27
 
+The external Hellfire monster catalog now matches native `monstdat.tsv` armor
+values for all previously divergent rows and preserves the four Fallen-family
+special attacks as non-damaging ranges. Focused shipped-content coverage guards
+these native combat metadata values.
+
 The Godot protocol model now validates the shape of non-empty authoritative
 snapshot hashes (64 hexadecimal characters) while retaining compatibility with
 legacy snapshots that omit the additive hash field. Digest computation and

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Correct the external Hellfire monster catalog's native armor-class values
+  and Fallen-family special-damage ranges against `monstdat.tsv`, covering
+  the 25 affected armor rows and four non-damaging special attacks.
 - Correct the Hellfire `piercing` suffix range to its native `1–1` target-
   accuracy value in the external overlay.
 - Externalize Hellfire's native `The Grizzly` unique item with its validated

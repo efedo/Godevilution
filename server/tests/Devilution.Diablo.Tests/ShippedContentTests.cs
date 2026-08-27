@@ -5565,6 +5565,65 @@ public sealed class ShippedContentTests
             rows.Select(row => row.Required("power")).ToArray());
     }
 
+    [Fact]
+    public void HellfireOverlayPreservesNativeArmorAndSpecialDamage()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
+
+        var expectedArmor = new Dictionary<uint, int>
+        {
+            [0] = 5,
+            [2] = 15,
+            [3] = 20,
+            [4] = 0,
+            [5] = 5,
+            [26] = 15,
+            [28] = 60,
+            [29] = 25,
+            [30] = 30,
+            [31] = 30,
+            [33] = 70,
+            [34] = 40,
+            [35] = 40,
+            [60] = 45,
+            [61] = 45,
+            [62] = 50,
+            [63] = 60,
+            [64] = 40,
+            [65] = 45,
+            [66] = 50,
+            [67] = 55,
+            [68] = 50,
+            [69] = 60,
+            [70] = 45,
+            [71] = 65,
+        };
+
+        foreach (var (nativeMonsterId, armorClass) in expectedArmor) {
+            Assert.Equal(
+                armorClass,
+                catalog.Definitions.Single(definition => definition.MonsterId >= 2
+                    && definition.NativeMonsterId == nativeMonsterId).ArmorClass);
+        }
+
+        foreach (var nativeMonsterId in new uint[] { 4, 5, 6, 7 }) {
+            var definition = catalog.Definitions.Single(
+                candidate => candidate.MonsterId >= 2 && candidate.NativeMonsterId == nativeMonsterId);
+            Assert.Equal((0, 0), (definition.MinimumSpecialDamage, definition.MaximumSpecialDamage));
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

@@ -14,7 +14,8 @@ the native `Crystalline`, `Jester's`, and `Doppelganger's` weapon prefixes and
 Hellfire's staff-capable legacy affix eligibility rows,
 the Hellfire target-accuracy ranges for `piercing`, `puncturing`, and `bashing`,
 plus `devastation`, `decay`, and `peril` weapon/staff/bow suffixes,
-and the native `The Grizzly` unique item,
+the native `The Grizzly` unique item, and native monster armor and special-
+damage metadata,
 so operators can activate the native Hellfire ruleset with
 `--content-overlay server/content/hellfire` while remaining Hellfire tables are
 migrated incrementally.
