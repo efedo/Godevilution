@@ -79,6 +79,9 @@ keeping both presentation boundaries fail-closed and behaviorally aligned.
 The Godot protocol model now owns cloned validated snapshots and event history
 entries, preventing mutable transport objects from changing state after the
 authoritative boundary has accepted them.
+The Godot transport likewise owns cloned queued commands, so caller mutation
+cannot change a command retained for send or retry after it crosses the client
+boundary.
 Godot projectile presentation now snaps on authoritative level, phase, or
 presentation-identity changes instead of interpolating across discontinuities.
 

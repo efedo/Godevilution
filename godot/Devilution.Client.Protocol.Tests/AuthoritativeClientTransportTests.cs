@@ -78,6 +78,33 @@ public sealed class AuthoritativeClientTransportTests
     }
 
     [Fact]
+    public async Task OwnsQueuedCommandAfterCallerMutation()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var serverTask = RunOwnedCommandServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            port,
+            "godot-test",
+            "0.1.0",
+            "content-hash"));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        _ = client.DrainMessages();
+        var command = new Command {
+            MoveRequested = new MoveRequested { DirectionX = 1, DirectionY = -1 },
+        };
+        client.Queue(command, 13);
+        command.MoveRequested.DirectionX = 9;
+        command.MoveRequested.DirectionY = 9;
+
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        await serverTask;
+    }
+
+    [Fact]
     public async Task RejectsAHandshakeWithAnIncompatibleRulesetIdentity()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -150,6 +177,34 @@ public sealed class AuthoritativeClientTransportTests
                 TickRateHz = 20,
             },
         });
+        listener.Stop();
+    }
+
+    private static async Task RunOwnedCommandServerAsync(TcpListener listener)
+    {
+        using var tcpClient = await listener.AcceptTcpClientAsync();
+        await using var stream = tcpClient.GetStream();
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            ServerHello = new ServerHello {
+                ServerBuildId = "test-server",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = "content-hash",
+                TickRateHz = 20,
+            },
+        });
+        await WriteEnvelopeAsync(stream, new Envelope {
+            Snapshot = new Snapshot {
+                Tick = 12,
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+            },
+        });
+        var batch = await ReadEnvelopeAsync(stream);
+        var command = Assert.Single(batch.CommandBatch.Commands);
+        Assert.Equal(1UL, command.ClientSequence);
+        Assert.Equal(13UL, command.RequestedTick);
+        Assert.Equal(1, command.MoveRequested.DirectionX);
+        Assert.Equal(-1, command.MoveRequested.DirectionY);
         listener.Stop();
     }
 

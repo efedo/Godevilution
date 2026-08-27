@@ -158,8 +158,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         var sequence = checked(++nextClientSequence);
         command.ClientSequence = sequence;
         command.RequestedTick = requestedTick;
+        var ownedCommand = command.Clone();
         lock (pendingLock)
-            pending.Add(sequence, new PendingCommand(command));
+            pending.Add(sequence, new PendingCommand(ownedCommand));
         return sequence;
     }
 
