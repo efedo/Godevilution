@@ -5435,7 +5435,7 @@ public sealed class DiabloCombatCommandProcessor
         var deltaY = target.PositionY - player.PositionY;
         if (deltaX * deltaX + deltaY * deltaY > nativeVisionRadius * nativeVisionRadius)
             return false;
-        return level.HasLineOfSight(
+        return level.HasNativeVisionLineOfSight(
             player.PositionX,
             player.PositionY,
             target.PositionX,

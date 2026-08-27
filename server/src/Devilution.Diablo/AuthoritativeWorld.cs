@@ -392,6 +392,44 @@ public sealed class AuthoritativeLevel
         }
     }
 
+    /** Native DoVision-style line check, including diagonal corner blocking. */
+    public bool HasNativeVisionLineOfSight(int startX, int startY, int endX, int endY)
+    {
+        if (!ContainsPosition(startX, startY) || !ContainsPosition(endX, endY))
+            return false;
+
+        var x = startX;
+        var y = startY;
+        var deltaX = Math.Abs(endX - startX);
+        var deltaY = Math.Abs(endY - startY);
+        var stepX = startX < endX ? 1 : -1;
+        var stepY = startY < endY ? 1 : -1;
+        var error = deltaX - deltaY;
+
+        while (x != endX || y != endY) {
+            var doubledError = 2 * error;
+            var movesX = doubledError > -deltaY;
+            var movesY = doubledError < deltaX;
+            if (movesX && movesY
+                && !IsWalkable(x + stepX, y)
+                && !IsWalkable(x, y + stepY))
+                return false;
+            if (movesX) {
+                error -= deltaY;
+                x += stepX;
+            }
+            if (movesY) {
+                error += deltaX;
+                y += stepY;
+            }
+            if (x != endX || y != endY) {
+                if (!IsWalkable(x, y))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     /** Native monster placement room check; absent transparency retains legacy behavior. */
     public bool IsSameTransparencyRegion(int startX, int startY, int endX, int endY)
     {
