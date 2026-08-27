@@ -195,7 +195,9 @@ legacy callers safe even when they bypass the richer protocol-session
 validator; projectile lifecycle, visual-ID, and directional metadata ranges now
 receive the same fail-closed treatment. Full protocol validation remains the
 authoritative ingress check, and malformed or misplaced native missile
-identities are rejected before compatibility presentation.
+identities are rejected before compatibility presentation. When authoritative
+level geometry is supplied, projected monster, item, object, and projectile
+positions are also checked against its fine-grid bounds before publication.
 
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot

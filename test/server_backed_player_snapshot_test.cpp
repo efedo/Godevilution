@@ -1775,6 +1775,48 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { }, { first, duplicate }, 1).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedGeometry)
+{
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 2;
+	geometry.height = 2;
+
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 11;
+	monster.levelId = 1;
+	monster.positionX = 2;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+
+	ProjectedMonsterSnapshot movingMonster = monster;
+	movingMonster.entityId = 12;
+	movingMonster.positionX = 1;
+	movingMonster.futurePositionX = 2;
+	movingMonster.moving = true;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ movingMonster }, { }, { }, { }, { geometry }, 1).has_value());
+
+	ProjectedWorldItemSnapshot item;
+	item.entityId = 13;
+	item.levelId = 1;
+	item.positionY = -1;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { item }, { }, { }, { geometry }, 1).has_value());
+
+	ProjectedObjectSnapshot object;
+	object.entityId = 14;
+	object.levelId = 1;
+	object.positionX = 2;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { object }, { }, { geometry }, 1).has_value());
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 15;
+	projectile.sourceEntityId = 1;
+	projectile.spellId = 4;
+	projectile.levelId = 1;
+	projectile.positionY = 2;
+	projectile.remainingTicks = 1;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonsters)
 {
 	ProjectedMonsterSnapshot invalid;

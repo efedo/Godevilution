@@ -86,6 +86,22 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	// This boundary is also used by compatibility callers that do not pass
 	// through the protocol-session validators. Keep the structural invariants
 	// that native interaction and presentation rely on enforced here as well.
+	std::sort(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
+		return left.levelId < right.levelId;
+	});
+	if (std::adjacent_find(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
+			return left.levelId == right.levelId;
+		}) != levelGeometry.end()) {
+		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
+	}
+	const auto isInBounds = [&levelGeometry](uint32_t projectedLevelId, int32_t x, int32_t y) {
+		const auto geometry = std::find_if(levelGeometry.begin(), levelGeometry.end(), [projectedLevelId](const auto &candidate) {
+			return candidate.levelId == projectedLevelId;
+		});
+		if (geometry == levelGeometry.end() || geometry->width == 0 || geometry->height == 0)
+			return true;
+		return x >= 0 && y >= 0 && x < geometry->width && y < geometry->height;
+	};
 	std::unordered_set<uint32_t> projectedEntityIds;
 	projectedEntityIds.reserve(monsters.size() + worldItems.size() + objects.size() + projectiles.size());
 	for (const auto &monster : monsters) {
@@ -93,6 +109,9 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			return tl::make_unexpected("Authoritative monster projection contains invalid or duplicate entity IDs.");
 		if (monster.direction < 0 || monster.direction > 7)
 			return tl::make_unexpected("Authoritative monster projection contains an invalid direction.");
+		if (!isInBounds(monster.levelId, monster.positionX, monster.positionY)
+		    || (monster.moving && !isInBounds(monster.levelId, monster.futurePositionX, monster.futurePositionY)))
+			return tl::make_unexpected("Authoritative monster projection is outside projected level geometry.");
 		if (monster.moving) {
 			const int64_t deltaX = static_cast<int64_t>(monster.futurePositionX) - monster.positionX;
 			const int64_t deltaY = static_cast<int64_t>(monster.futurePositionY) - monster.positionY;
@@ -112,7 +131,14 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	};
 	if (hasDuplicateProjectedEntity(worldItems) || hasDuplicateProjectedEntity(objects) || hasDuplicateProjectedEntity(projectiles))
 		return tl::make_unexpected("Authoritative projection contains duplicate entity IDs across projected collections.");
-	if (std::any_of(projectiles.begin(), projectiles.end(), [](const auto &projectile) {
+	if (std::any_of(worldItems.begin(), worldItems.end(), [&isInBounds](const auto &item) {
+			return !isInBounds(item.levelId, item.positionX, item.positionY);
+		})
+	    || std::any_of(objects.begin(), objects.end(), [&isInBounds](const auto &object) {
+			return !isInBounds(object.levelId, object.positionX, object.positionY);
+		}))
+		return tl::make_unexpected("Authoritative projection entity is outside projected level geometry.");
+	if (std::any_of(projectiles.begin(), projectiles.end(), [&isInBounds](const auto &projectile) {
 			return projectile.entityId == 0
 			    || projectile.sourceEntityId == 0
 			    || projectile.spellId == 0
@@ -122,6 +148,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.behavior < 0 || projectile.behavior > 59
 			    || projectile.phase < 0 || projectile.phase > 1
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > 35
+			    || !isInBounds(projectile.levelId, projectile.positionX, projectile.positionY)
 			    || UsesDirectionalPresentation(projectile)
 			        && (projectile.originalDirection < 0 || projectile.originalDirection > 7)
 			    || !projectile.nativeMissileId.empty()
@@ -137,14 +164,6 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			return left.entityId == right.entityId;
 		}) != projectiles.end()) {
 		return tl::make_unexpected("Authoritative projectile projection contains duplicate entity IDs.");
-	}
-	std::sort(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
-		return left.levelId < right.levelId;
-	});
-	if (std::adjacent_find(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
-			return left.levelId == right.levelId;
-		}) != levelGeometry.end()) {
-		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
 	}
 	// Keep native presentation and interaction lookup order canonical. Godot
 	// selectors use the same entity-ID order when multiple projected entities
