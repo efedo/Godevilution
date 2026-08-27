@@ -114,6 +114,67 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseClassAttributesMatchNativeTables()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var externalRows = basePack.Tables
+            .Single(table => table.SourcePath == "classes.tsv")
+            .Rows
+            .ToDictionary(row => row.Required("symbol"), StringComparer.Ordinal);
+        var classes = new[] { "warrior", "rogue", "sorcerer", "monk", "bard", "barbarian" };
+        var directFields = new[] {
+            (External: "base_strength", Native: "baseStr"),
+            (External: "base_magic", Native: "baseMag"),
+            (External: "base_dexterity", Native: "baseDex"),
+            (External: "base_vitality", Native: "baseVit"),
+            (External: "maximum_strength", Native: "maxStr"),
+            (External: "maximum_magic", Native: "maxMag"),
+            (External: "maximum_dexterity", Native: "maxDex"),
+            (External: "maximum_vitality", Native: "maxVit"),
+            (External: "base_block_chance", Native: "blockBonus"),
+            (External: "base_magic_to_hit", Native: "baseMagicToHit"),
+            (External: "base_melee_to_hit", Native: "baseMeleeToHit"),
+            (External: "base_ranged_to_hit", Native: "baseRangedToHit"),
+        };
+        var q6Fields = new[] {
+            (External: "life_adjustment_q6", Native: "adjLife"),
+            (External: "mana_adjustment_q6", Native: "adjMana"),
+            (External: "life_per_level_q6", Native: "lvlLife"),
+            (External: "mana_per_level_q6", Native: "lvlMana"),
+            (External: "life_per_vitality_q6", Native: "chrLife"),
+            (External: "mana_per_magic_q6", Native: "chrMana"),
+            (External: "item_life_per_vitality_q6", Native: "itmLife"),
+            (External: "item_mana_per_magic_q6", Native: "itmMana"),
+        };
+
+        Assert.Equal(classes.Length, externalRows.Count);
+        foreach (var classSymbol in classes) {
+            var nativeValues = TsvTable.Parse(
+                    $"assets/txtdata/classes/{classSymbol}/attributes.tsv",
+                    File.ReadAllText(Path.Combine(
+                        repositoryRoot,
+                        "assets",
+                        "txtdata",
+                        "classes",
+                        classSymbol,
+                        "attributes.tsv")))
+                .Rows
+                .ToDictionary(
+                    row => row.Required("Attribute"),
+                    row => row["Value"],
+                    StringComparer.Ordinal);
+            var external = externalRows[classSymbol];
+
+            foreach (var (externalColumn, nativeVariable) in directFields)
+                Assert.Equal(nativeValues[nativeVariable], external.Required(externalColumn));
+            foreach (var (externalColumn, nativeVariable) in q6Fields)
+                Assert.Equal(ToQ6(nativeValues[nativeVariable]), external.Required(externalColumn));
+        }
+    }
+
+    [Fact]
     public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -5972,5 +6033,11 @@ public sealed class ShippedContentTests
         var bytes = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
         bytes[20] = (byte)AuthoritativeDunTileFlags.Solid;
         return bytes;
+    }
+
+    private static string ToQ6(string nativeValue)
+    {
+        var value = decimal.Parse(nativeValue, System.Globalization.CultureInfo.InvariantCulture);
+        return checked((int)(value * 64m)).ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 }

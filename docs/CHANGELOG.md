@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add exhaustive parity coverage for the six normalized class attribute tables,
+  including direct native values and Q6-converted life/mana tuning.
 - Add a native-source parity guard for all six class starting-loadout metadata
   rows, covering ability identity, starting spell, spell level, and gold.
 - Add exhaustive parity coverage for all 27 exposed animation fields across

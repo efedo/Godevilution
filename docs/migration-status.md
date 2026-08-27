@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+The normalized base class catalog now checks all six native `attributes.tsv`
+tables for direct stat, block, and accuracy values plus Q6-converted life and
+mana tuning; migration-specific class flags remain intentionally separate.
+
 The six external class-loadout metadata rows are now checked directly against
 their native `starting_loadout.tsv` sources for ability identity, starting
 spell, spell level, and gold; intentional item aliases remain covered by the
