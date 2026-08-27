@@ -32,7 +32,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 {
 	if (snapshot.entityId == 0)
 		return tl::make_unexpected("Server-backed player snapshot has an invalid entity ID.");
-	if (snapshot.levelId > UINT8_MAX)
+	if (snapshot.levelId >= NUMLEVELS)
 		return tl::make_unexpected("Server-backed player level is outside the native range.");
 	if (snapshot.positionX < 0 || snapshot.positionX > UINT8_MAX || snapshot.positionY < 0 || snapshot.positionY > UINT8_MAX)
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");

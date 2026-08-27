@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject non-native player level IDs before native compatibility application
+  narrows them into the legacy 8-bit level field.
 - Reject authoritative player snapshots with undefined direction, combat-mode,
   ability-kind, or ability-targeting enum values at the generic host boundary.
 - Reject player snapshots whose current level ID is outside the native 25-level

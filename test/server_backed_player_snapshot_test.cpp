@@ -3693,15 +3693,17 @@ TEST(ServerBackedPlayerSnapshot, RejectsDiabloKillLevelOutsideNativeRangeWithout
 
 TEST(ServerBackedPlayerSnapshot, RejectsLevelOutsideNativeRangeWithoutMutation)
 {
-	Player player;
-	player.setLevel(2);
-	ProjectedPlayerSnapshot snapshot;
-	snapshot.entityId = 7;
-	snapshot.levelId = 256;
-	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	for (const uint32_t levelId : { static_cast<uint32_t>(NUMLEVELS), static_cast<uint32_t>(UINT8_MAX) + 1 }) {
+		Player player;
+		player.setLevel(2);
+		ProjectedPlayerSnapshot snapshot;
+		snapshot.entityId = 7;
+		snapshot.levelId = levelId;
+		snapshot.inventoryGrid.assign(InventoryGridCells, -1);
 
-	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
-	EXPECT_TRUE(player.isOnLevel(2));
+		EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+		EXPECT_TRUE(player.isOnLevel(2));
+	}
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidVisitedLevelWithoutMutation)
