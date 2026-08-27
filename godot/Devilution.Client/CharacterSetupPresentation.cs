@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Client.Protocol;
 using Godot;
 
@@ -70,7 +71,7 @@ public partial class CharacterSetupPresentation : CanvasLayer
         endpoint.AddChild(portField);
         layout.AddChild(endpoint);
 
-        nameField.MaxLength = 32;
+        nameField.MaxLength = AuthoritativePlayerNameRules.MaximumLength;
         nameField.Text = "Hero";
         layout.AddChild(nameField);
 
@@ -111,8 +112,9 @@ public partial class CharacterSetupPresentation : CanvasLayer
         }
 
         var name = nameField.Text.Trim();
-        if (name.Length is < 1 or > 32) {
-            validation.Text = "Enter a character name between 1 and 32 characters.";
+        if (string.IsNullOrEmpty(name)
+            || !AuthoritativePlayerNameRules.IsValidShape(name)) {
+            validation.Text = "Enter 1-31 printable ASCII characters.";
             return;
         }
 

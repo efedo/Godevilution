@@ -1,4 +1,5 @@
 using Devilution.Protocol.V1;
+using Devilution.Protocol;
 using System.Collections.Generic;
 
 namespace Devilution.Server.Protocol;
@@ -24,8 +25,7 @@ public static class AuthoritativeSnapshotValidator
     private static void ValidatePlayerNames(Snapshot snapshot)
     {
         foreach (var player in snapshot.Players) {
-            if (player.CharacterName.Length > 31
-                || player.CharacterName.Any(character => character is < (char)0x21 or > (char)0x7e)) {
+            if (!AuthoritativePlayerNameRules.IsValidShape(player.CharacterName)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid character name.");
             }

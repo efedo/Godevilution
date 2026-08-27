@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Client.Protocol;
@@ -111,8 +112,7 @@ public sealed class AuthoritativeClientModel
             var entityIds = new HashSet<uint>();
             foreach (var player in message.Snapshot.Players) {
                 ValidateEntityId(entityIds, player.EntityId);
-                if (player.CharacterName.Length > 31
-                    || player.CharacterName.Any(character => character is < (char)0x21 or > (char)0x7e)) {
+                if (!AuthoritativePlayerNameRules.IsValidShape(player.CharacterName)) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid player character name.");
                 }

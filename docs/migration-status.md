@@ -12,8 +12,12 @@ duplicate entity IDs across the projected entity collections, matching the
 Godot and native compatibility boundaries. It also validates difficulty,
 portal-route state, and active world-mutation identities before emission. Native
 snapshot projection now applies the same printable, 31-character player-name
-shape accepted by Godot and the Diablo mapper; the generic host now rejects the
-same malformed names before wire serialization.
+shape accepted by Godot and the Diablo mapper; the shared protocol assembly now
+owns that wire-level shape rule for host and Godot boundaries, while the Diablo
+module retains independent native validation to preserve its dependency
+boundary. The generic host rejects malformed names before wire serialization,
+and the Godot setup form applies the same 31-character printable-ASCII limit
+before sending a new-session request.
 
 Godot event-batch ingress now rejects unknown event kinds, impossible signed
 damage/healing values, invalid dialogue message/text payloads, and batches

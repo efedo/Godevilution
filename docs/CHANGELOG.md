@@ -27,6 +27,9 @@ All notable changes to this fork are documented below.
   shapes while retaining omitted-name compatibility.
 - Align generic TCP host snapshot emission with the shared player-name shape,
   rejecting malformed names before wire serialization.
+- Centralize the optional authoritative player-name wire shape in the shared
+  protocol assembly for host and Godot boundaries while preserving the Diablo
+  module's independent native validation.
 - Make authoritative save and world-seed writes durable before atomic
   replacement, isolate concurrent temporary files, and clean up failed writes;
   add focused coverage for temporary-artifact cleanup.
