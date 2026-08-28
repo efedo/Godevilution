@@ -131,6 +131,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native inventory seed for a single initial Gold stack whose value is `Gold`. */
     public uint GoldStackSeed { get; init; }
 
+    /** Optional stable identity for the initial Gold stack. */
+    public uint GoldStackStableItemId { get; init; }
+
     /** Native 0-based inventory-grid cell occupied by `GoldStackSeed`. */
     public uint GoldStackCell { get; init; }
 
@@ -307,6 +310,12 @@ public sealed record ReplayFixtureCommand(
     public uint ObjectEntityId { get; init; }
 
     public uint QuestId { get; init; }
+
+    /** Stable identity used by explicit carried-item references. */
+    public uint StableItemId { get; init; }
+
+    /** Item location used by explicit carried-item references. */
+    public string ItemLocation { get; init; } = "Inventory";
 }
 
 public sealed record ReplayContentManifest(string Id, string Version, string Sha256);

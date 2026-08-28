@@ -281,6 +281,7 @@ public static class ReplayFixtureLoader
             GoldStackSeed = value.TryGetProperty("gold_stack_seed", out var goldStackSeed)
                 ? goldStackSeed.GetUInt32()
                 : 0,
+            GoldStackStableItemId = GetOptionalUInt(value, "gold_stack_stable_item_id"),
             GoldStackCell = value.TryGetProperty("gold_stack_cell", out var goldStackCell)
                 ? goldStackCell.GetUInt32()
                 : 0,
@@ -657,7 +658,7 @@ public static class ReplayFixtureLoader
                         ? inventory.GetUInt32()
                         : 0U;
 
-            if (kind is not ("OpenStore" or "BuyItem" or "SellItem" or "RefillMana" or "Move" or "Attack" or "Cast" or "UsePortal" or "RestartTown" or "PickupWorldItem" or "DropHeldItem" or "OperateObject" or "AdvanceQuest" or "TalkToQuest"))
+            if (kind is not ("OpenStore" or "BuyItem" or "SellItem" or "RefillMana" or "Move" or "Attack" or "Cast" or "UsePortal" or "RestartTown" or "PickupWorldItem" or "DropHeldItem" or "DropItem" or "OperateObject" or "AdvanceQuest" or "TalkToQuest"))
                 throw new InvalidDataException($"Unsupported replay command kind '{kind}'.");
 
             commands.Add(new ReplayFixtureCommand(
@@ -678,6 +679,10 @@ public static class ReplayFixtureLoader
                 WorldItemEntityId = GetOptionalUInt(payload, "item_entity_id"),
                 ObjectEntityId = GetOptionalUInt(payload, "object_entity_id"),
                 QuestId = GetOptionalUInt(payload, "quest_id"),
+                StableItemId = GetOptionalUInt(payload, "stable_item_id"),
+                ItemLocation = payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("location", out var location)
+                    ? location.GetString() ?? "Inventory"
+                    : "Inventory",
             });
         }
 

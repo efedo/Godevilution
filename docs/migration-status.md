@@ -16,6 +16,12 @@ reference rejection over the transport boundary. The native authoritative
 client now submits the same stable-reference intent for carried cursor drops;
 legacy mode and stash selections retain fail-closed compatibility behavior.
 
+The shared replay contract now includes a stable-reference inventory-drop
+fixture. Native and managed runners both validate the stable identity, remove
+the inventory source, and create the authoritative adjacent world item,
+extending parity coverage for the protocol path behind the native and Godot
+clients.
+
 Initial staged-dialogue projection now chooses a shared-safe message for
 item-gated encounters. When a conversation has item-present and item-absent
 branches, snapshots advertise the item-absent branch; the server still selects

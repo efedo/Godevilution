@@ -68,6 +68,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-portal-transition.json" Link="Fixtures/gameplay-portal-transition.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-world-item-pickup.json" Link="Fixtures/gameplay-world-item-pickup.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gold-pickup-overflow.json" Link="Fixtures/gameplay-gold-pickup-overflow.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-stable-item-drop.json" Link="Fixtures/gameplay-stable-item-drop.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-object-quest.json" Link="Fixtures/gameplay-object-quest.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-quest-selection.json" Link="Fixtures/gameplay-quest-selection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-autonomous-regen-soak.json" Link="Fixtures/gameplay-autonomous-regen-soak.json" CopyToOutputDirectory="PreserveNewest" />

@@ -32,6 +32,10 @@ struct ReplayFixtureCommand {
 	int32_t targetY = 0;
 	uint32_t portalId = 0;
 	uint32_t worldItemEntityId = 0;
+	/** Stable item identity used by explicit carried-item references. */
+	uint32_t stableItemId = 0;
+	/** Item location name used by explicit carried-item references. */
+	std::string itemLocation = "Inventory";
 	uint32_t objectEntityId = 0;
 	uint32_t questId = 0;
 };
@@ -132,6 +136,7 @@ struct ReplayFixtureInitialState {
 	uint32_t facingDirection = 0;
 	bool suppressMultiplayerDeathDrops = false;
 	uint32_t goldStackSeed = 0;
+	uint32_t goldStackStableItemId = 0;
 	uint32_t goldStackCell = 0;
 	uint32_t inventoryFillerCount = 0;
 	uint32_t worldItemEntityId = 0;
@@ -248,6 +253,7 @@ struct ReplayFixture {
 /** Snapshot item fields used by the cross-language authoritative hash. */
 struct ReplayFixtureItemState {
 	uint32_t createInfo = 0;
+	uint32_t stableItemId = 0;
 	int32_t itemType = -1;
 	int32_t positionX = 0;
 	int32_t positionY = 0;

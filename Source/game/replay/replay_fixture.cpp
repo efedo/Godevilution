@@ -5436,6 +5436,8 @@ private:
 				return ParseBool(fixture_.initialState.suppressMultiplayerDeathDrops);
 			if (key == "gold_stack_seed")
 				return ParseUnsigned(fixture_.initialState.goldStackSeed);
+			if (key == "gold_stack_stable_item_id")
+				return ParseUnsigned(fixture_.initialState.goldStackStableItemId);
 			if (key == "gold_stack_cell")
 				return ParseUnsigned(fixture_.initialState.goldStackCell);
 			if (key == "inventory_filler_count")
@@ -5964,6 +5966,10 @@ private:
 				return ParseUnsigned(command.portalId);
 			if (key == "item_entity_id")
 				return ParseUnsigned(command.worldItemEntityId);
+			if (key == "stable_item_id")
+				return ParseUnsigned(command.stableItemId);
+			if (key == "location")
+				return ParseString(command.itemLocation);
 			if (key == "object_entity_id")
 				return ParseUnsigned(command.objectEntityId);
 			if (key == "quest_id")
@@ -6392,6 +6398,7 @@ bool ExecuteReplayFixture(
 	if (state.inventory.empty() && fixture.initialState.goldStackSeed != 0) {
 		ReplayFixtureItemState goldState;
 		goldState.itemType = 11;
+		goldState.stableItemId = fixture.initialState.goldStackStableItemId;
 		goldState.value = static_cast<int32_t>(fixture.initialState.gold);
 		goldState.identifiedValue = static_cast<int32_t>(fixture.initialState.gold);
 		goldState.itemIndex = 0;
@@ -6961,6 +6968,60 @@ bool ExecuteReplayFixture(
 					state.worldItemState = state.heldItem.state;
 					state.heldItemDefined = false;
 					state.heldItem = { };
+					accepted = true;
+				}
+			} else if (command.kind == "DropItem") {
+				const int originX = state.currentAction.defined && state.currentAction.kind == 1
+				    ? state.positionX + state.currentAction.directionX
+				    : state.positionX;
+				const int originY = state.currentAction.defined && state.currentAction.kind == 1
+				    ? state.positionY + state.currentAction.directionY
+				    : state.positionY;
+				const int distance = std::max(std::abs(originX - command.targetX), std::abs(originY - command.targetY));
+				const bool targetOccupied = (state.combatTargetEntityId != 0
+				        && state.combatTargetHitPoints > 0
+				        && state.combatTargetLevelId == state.levelId
+				        && state.combatTargetPositionX == command.targetX
+				        && state.combatTargetPositionY == command.targetY)
+				    || (state.secondaryPlayerEntityId != 0
+				        && state.secondaryPlayerLife > 0
+				        && state.secondaryPlayerLevelId == state.levelId
+				        && state.secondaryPlayerPositionX == command.targetX
+				        && state.secondaryPlayerPositionY == command.targetY)
+				    || (state.objectEntityId != 0
+				        && !state.objectActivated
+				        && !state.objectDestroyed
+				        && state.objectLevelId == state.levelId
+				        && state.objectPositionX == command.targetX
+				        && state.objectPositionY == command.targetY)
+				    || (state.worldItemEntityId != 0
+				        && state.worldItemLevelId == state.levelId
+				        && state.worldItemPositionX == command.targetX
+				        && state.worldItemPositionY == command.targetY);
+				if (command.itemLocation == "Inventory"
+				    && command.storeSlot < state.inventory.size()
+				    && !state.heldItemDefined
+				    && (command.stableItemId == 0
+				        || state.inventory[command.storeSlot].state.stableItemId == command.stableItemId)
+				    && distance <= 1
+				    && command.targetX >= 0 && command.targetX < 40
+				    && command.targetY >= 0 && command.targetY < 40
+				    && !targetOccupied) {
+					const ReplayFixtureInventoryItem source = state.inventory[command.storeSlot];
+					uint32_t entityId = 0x40000000U;
+					while (entityId == state.entityId
+					    || entityId == state.secondaryPlayerEntityId
+					    || entityId == state.combatTargetEntityId
+					    || entityId == state.objectEntityId)
+						++entityId;
+					state.worldItemEntityId = entityId;
+					state.worldItemLevelId = state.levelId;
+					state.worldItemPositionX = command.targetX;
+					state.worldItemPositionY = command.targetY;
+					state.worldItemSeed = source.itemSeed;
+					state.worldItemPrice = source.price;
+					state.worldItemState = source.state;
+					RemoveReplayInventoryItem(state, command.storeSlot);
 					accepted = true;
 				}
 			} else if (command.kind == "OperateObject") {

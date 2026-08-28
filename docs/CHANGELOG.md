@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the cross-language `gameplay-stable-item-drop.json` replay fixture.
+  Native and managed runners now parse and execute explicit
+  `DropItemRequested` inventory references with stable identity validation,
+  source removal, and authoritative world-item materialization. The legacy
+  `DropHeldItem` replay path remains covered separately.
+
 - Add the additive `DropItemRequested` protocol intent for stable-reference
   inventory, belt, and equipment-to-world drops. The server keeps the native
   cursor-only `DropHeldItemRequested` compatibility path while validating the

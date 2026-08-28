@@ -109,6 +109,15 @@ non-Gold items into the remaining native inventory cells. This forces the same
 capacity boundary without encoding presentation-only filler details in each
 fixture.
 
+The optional `gold_stack_stable_item_id` gives that initial pile a stable
+content identity. A `DropItem` command uses `location`, `inventory_index`, and
+`stable_item_id` to submit the explicit `DropItemRequested` protocol intent;
+the native and managed runners validate the identity, remove the inventory
+source, and materialize the adjacent world item. `DropHeldItem` remains the
+legacy cursor-only compatibility command. The
+`gameplay-stable-item-drop.json` fixture covers this boundary without a
+presentation-specific cursor state.
+
 ## Rules
 
 - Required identity metadata must match the runner; mismatches invalidate the
@@ -133,7 +142,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-28,
-the native replay gate contains 81 checked-in JSON fixtures and 107 registered
+the native replay gate contains 82 checked-in JSON fixtures and 108 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -235,6 +244,12 @@ inventory cells, and a 75-Gold world pile. Tick 1 tops the existing pile to
 does not advance RNG. Tick 2 drops that held remainder onto the adjacent tile
 as stable world entity `0x40000000`. Both checkpoints hash the inventory grid,
 wallet, held item, world item, and RNG state in C++ and C#.
+
+`gameplay-stable-item-drop.json` starts with a stable-identified Gold pile in
+inventory cell 0. Both runners submit `DropItemRequested` with the stable
+identity, remove the source pile, and materialize it at `(1,0)` as world entity
+`0x40000000`. This keeps explicit stable-reference drops in the shared replay
+baseline while preserving the separate legacy held-item fixture.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied
@@ -428,6 +443,8 @@ Notable shared fixtures include:
   inventory placement, and refill;
 - `gameplay-gold-pickup-overflow.json` for partial canonical Gold pickup,
   cursor-held remainder identity, RNG stability, and explicit adjacent drop;
+- `gameplay-stable-item-drop.json` for explicit stable-reference inventory
+  drops through `DropItemRequested` and authoritative world-item creation;
 - `stores/base-content-purchase.json` for the checked-in base content pack;
 - `gameplay-player-action-lifecycle.json` for native-timed movement, melee,
   attack-to-cast chaining, cast effects, and action cleanup;

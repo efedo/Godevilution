@@ -2309,6 +2309,37 @@ TEST(ReplayFixture, ExecutesWorldItemPickupTransition)
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesStableInventoryItemDropTransition)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-stable-item-drop.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.levelId = fixture.initialState.levelId;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.gold = fixture.initialState.gold;
+	state.inventoryGrid.assign(40, -1);
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(state.inventory.empty());
+	EXPECT_FALSE(state.heldItemDefined);
+	EXPECT_EQ(state.worldItemEntityId, 0x40000000U);
+	EXPECT_EQ(state.worldItemSeed, fixture.initialState.goldStackSeed);
+	EXPECT_EQ(state.worldItemState.stableItemId, fixture.initialState.goldStackStableItemId);
+	EXPECT_EQ(state.worldItemPositionX, 1);
+	EXPECT_EQ(state.worldItemPositionY, 0);
+}
+
 TEST(ReplayFixture, ExecutesGoldPickupOverflowAndHeldItemDrop)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-gold-pickup-overflow.json");

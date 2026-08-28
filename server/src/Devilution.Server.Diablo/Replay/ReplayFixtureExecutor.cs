@@ -227,8 +227,32 @@ public static class ReplayFixtureExecutor
                         TargetEntityId = fixtureCommand.TargetEntityId,
                     },
                 },
+                "DropItem" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    DropItemRequested = new DropItemRequested {
+                        Item = new PlayerItemReference {
+                            Location = ParseItemLocation(fixtureCommand.ItemLocation),
+                            Slot = fixtureCommand.StoreSlot,
+                            StableItemId = fixtureCommand.StableItemId,
+                        },
+                        TargetX = fixtureCommand.TargetX,
+                        TargetY = fixtureCommand.TargetY,
+                    },
+                },
                 _ => throw new InvalidDataException($"Unsupported replay command '{fixtureCommand.Kind}'."),
             };
+    }
+
+    private static PlayerItemLocation ParseItemLocation(string value)
+    {
+        return value switch {
+            "Inventory" => PlayerItemLocation.Inventory,
+            "Belt" => PlayerItemLocation.Belt,
+            "Equipment" => PlayerItemLocation.Equipment,
+            "Stash" => PlayerItemLocation.Stash,
+            _ => throw new InvalidDataException($"Unsupported replay item location '{value}'."),
+        };
     }
 
     private static bool IsSha256(string value)
