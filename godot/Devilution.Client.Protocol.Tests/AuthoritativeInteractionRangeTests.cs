@@ -26,6 +26,20 @@ public sealed class AuthoritativeInteractionRangeTests
     }
 
     [Fact]
+    public void RejectsExtremeCoordinatesWithoutOverflowing()
+    {
+        var player = new PlayerSnapshot {
+            PositionX = int.MinValue,
+            PositionY = int.MaxValue,
+        };
+
+        Assert.False(AuthoritativeInteractionRange.IsAdjacent(
+            new PlayerSnapshot(), int.MinValue, 0));
+        Assert.False(AuthoritativeInteractionRange.IsAdjacent(player, int.MaxValue, int.MinValue));
+        Assert.False(AuthoritativeInteractionRange.IsAdjacent(player, int.MaxValue, int.MaxValue));
+    }
+
+    [Fact]
     public void RequiresExactPortalEndpointAndHonorsBidirectionalReturn()
     {
         var player = new PlayerSnapshot { LevelId = 2, PositionX = 8, PositionY = 9 };

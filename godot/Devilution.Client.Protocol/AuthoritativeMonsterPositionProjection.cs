@@ -48,9 +48,9 @@ public static class AuthoritativeMonsterPositionProjection
         var progress = elapsed / duration;
         return new ClientPresentationPosition(
             monster.PositionX
-                + (monster.FuturePositionX - monster.PositionX) * progress,
+                + ((double)monster.FuturePositionX - monster.PositionX) * progress,
             monster.PositionY
-                + (monster.FuturePositionY - monster.PositionY) * progress);
+                + ((double)monster.FuturePositionY - monster.PositionY) * progress);
     }
 
     /** Returns true when a cached monster position must snap to the next state. */

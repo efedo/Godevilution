@@ -472,6 +472,37 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsExtremeQuestTownerCoordinatesWithoutOverflowing()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = int.MinValue,
+                    PositionY = int.MaxValue,
+                },
+            },
+            Quests = {
+                new QuestSnapshot { QuestId = 3002, Initial = true },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 300201,
+                    QuestId = 3002,
+                    TownerId = 6,
+                    LevelId = 0,
+                    PositionX = int.MaxValue,
+                    PositionY = int.MinValue,
+                    Kind = 0,
+                },
+            },
+        };
+
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+    }
+
+    [Fact]
     public void RejectsMalformedQuestTownerInteractionSnapshots()
     {
         var model = new AuthoritativeClientModel();

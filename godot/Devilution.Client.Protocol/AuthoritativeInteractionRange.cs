@@ -10,8 +10,8 @@ public static class AuthoritativeInteractionRange
     {
         ArgumentNullException.ThrowIfNull(player);
         return Math.Max(
-            Math.Abs(player.PositionX - targetX),
-            Math.Abs(player.PositionY - targetY)) <= 1;
+            Math.Abs((long)player.PositionX - targetX),
+            Math.Abs((long)player.PositionY - targetY)) <= 1;
     }
 
     /** Portal use requires the player's exact visible source or bidirectional endpoint. */

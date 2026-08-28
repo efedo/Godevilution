@@ -20,6 +20,13 @@ mapping aligned with the inherited native catalog.
 Shipped-content verification now cross-checks every external spell behavior row
 against that native identity namespace.
 
+Godot interaction-range and quest/towner selection helpers now widen raw
+coordinate deltas before taking absolute values, so extreme malformed snapshots
+cannot overflow or throw while presentation commands are being selected.
+Monster visibility distance checks and timed walk interpolation likewise widen
+coordinate arithmetic before squaring or interpolating, preserving stable
+fail-closed presentation behavior at the protocol boundary.
+
 Shared bounded crawl searches now skip candidate coordinates that overflow the
 integer domain, so raw client target cells fail closed across teleport, stone
 curse, wall, portal, and berserk placement paths instead of faulting a session.

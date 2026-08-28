@@ -18,6 +18,9 @@ All notable changes to this fork are documented below.
   to the native `Etherealize` ID (25), including catalog fixtures.
 - Cross-check every shipped external spell behavior row against the native spell
   identity namespace during content verification.
+- Widen Godot interaction, quest/towner selection, visibility, and monster
+  interpolation coordinate arithmetic so extreme malformed snapshots cannot
+  overflow or throw at the presentation protocol boundary.
 - Make shared bounded crawl searches skip overflowing candidate coordinates,
   keeping raw client target cells fail-closed across authoritative placement
   and target-search paths.

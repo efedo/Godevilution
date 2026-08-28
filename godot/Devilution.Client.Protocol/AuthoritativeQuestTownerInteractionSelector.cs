@@ -55,8 +55,8 @@ public static class AuthoritativeQuestTownerInteractionSelector
             || interaction.TownerId is < 0 or > byte.MaxValue
             || interaction.LevelId != player.LevelId
             || Math.Max(
-                Math.Abs(interaction.PositionX - player.PositionX),
-                Math.Abs(interaction.PositionY - player.PositionY)) > 1
+                Math.Abs((long)interaction.PositionX - player.PositionX),
+                Math.Abs((long)interaction.PositionY - player.PositionY)) > 1
             || !quests.TryGetValue(interaction.QuestId, out var quest)
             || quest.Unavailable) {
             return false;

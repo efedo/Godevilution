@@ -100,6 +100,25 @@ public sealed class AuthoritativeMonsterPositionProjectionTests
     }
 
     [Fact]
+    public void WidenedCoordinateDeltaKeepsExtremeInterpolationNumericallyStable()
+    {
+        var monster = new MonsterSnapshot {
+            PositionX = int.MinValue,
+            PositionY = int.MaxValue,
+            FuturePositionX = int.MaxValue,
+            FuturePositionY = int.MinValue,
+            Moving = true,
+            MovementStartedTick = 12,
+            MovementEffectTick = 14,
+        };
+
+        var position = AuthoritativeMonsterPositionProjection.ResolvePresentation(monster, 13);
+
+        Assert.Equal(-0.5, position.X);
+        Assert.Equal(-0.5, position.Y);
+    }
+
+    [Fact]
     public void KeepsAOneTileMoveOnTheInterpolationPath()
     {
         var previous = new MonsterSnapshot {

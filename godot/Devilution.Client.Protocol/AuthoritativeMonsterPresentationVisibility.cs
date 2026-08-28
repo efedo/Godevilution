@@ -41,10 +41,12 @@ public static class AuthoritativeMonsterPresentationVisibility
         var nativeVisionRadius = viewerLightRadius is >= 2 and <= 15
             ? viewerLightRadius
             : 10;
-        var deltaX = monster.PositionX - viewerX;
-        var deltaY = monster.PositionY - viewerY;
-        if ((long)deltaX * deltaX + (long)deltaY * deltaY
-            > nativeVisionRadius * nativeVisionRadius)
+        var deltaX = (long)monster.PositionX - viewerX;
+        var deltaY = (long)monster.PositionY - viewerY;
+        if (Math.Abs(deltaX) > nativeVisionRadius
+            || Math.Abs(deltaY) > nativeVisionRadius
+            || deltaX * deltaX + deltaY * deltaY
+                > (long)nativeVisionRadius * nativeVisionRadius)
             return false;
         if (!Contains(geometry, viewerX, viewerY)
             || !Contains(geometry, monster.PositionX, monster.PositionY))
