@@ -183,6 +183,34 @@ public sealed class AuthoritativeCommandServerTests
                 }]));
     }
 
+    [Fact]
+    public async Task SynchronizedSessionCallbackExcludesConcurrentCommandExecution()
+    {
+        var executor = new RecordingExecutor();
+        var server = new AuthoritativeCommandServer(executor);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var persistence = Task.Run(() => server.WithSynchronizedSession("player-a", () => {
+            entered.SetResult();
+            release.Task.GetAwaiter().GetResult();
+            return true;
+        }));
+        await entered.Task;
+
+        var command = Task.Run(() => server.Process("player-a", Attack(1, 10), currentTick: 10));
+        var completedBeforeRelease = await Task.WhenAny(
+            command,
+            Task.Delay(100, TestContext.Current.CancellationToken));
+        Assert.NotSame(command, completedBeforeRelease);
+
+        release.SetResult();
+        Assert.True(await persistence);
+        var result = await command;
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Equal(1, executor.CallCount);
+    }
+
     private static Command Attack(ulong clientSequence, ulong requestedTick)
     {
         return new Command {

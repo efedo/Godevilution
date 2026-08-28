@@ -79,6 +79,30 @@ public sealed class AuthoritativeCommandServer
         }
     }
 
+    /**
+     * Runs a session persistence callback while command execution and
+     * autonomous advancement are excluded. The callback may export the
+     * adapter state and completed-command ledger as one consistent view.
+     */
+    public TResult WithSynchronizedSession<TResult>(string sessionId, Func<TResult> callback)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+            throw new ArgumentException("A session ID is required.", nameof(sessionId));
+        ArgumentNullException.ThrowIfNull(callback);
+        lock (synchronization)
+            return callback();
+    }
+
+    /** Runs a void persistence callback under the same authoritative lock. */
+    public void WithSynchronizedSession(string sessionId, Action callback)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+            throw new ArgumentException("A session ID is required.", nameof(sessionId));
+        ArgumentNullException.ThrowIfNull(callback);
+        lock (synchronization)
+            callback();
+    }
+
     /** Returns a defensive copy of the completed command ledger for a session. */
     public IReadOnlyDictionary<ulong, CommandResult> ExportCompletedCommands(string sessionId)
     {

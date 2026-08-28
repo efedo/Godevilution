@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Serialize authoritative state and command-ledger exports under the command
+  server's synchronization boundary. Concurrent commands and autonomous ticks
+  can no longer produce a save whose snapshot and durable receipt ledger were
+  captured from different authoritative states.
+
 - Expand fresh-host persistence coverage into a four-cycle, multi-command soak:
   every previously accepted client sequence is replayed after each restart,
   receipt identities remain stable, and the next sequence is accepted exactly

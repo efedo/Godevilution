@@ -403,14 +403,16 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     private void SaveSession(SessionState session)
     {
-        if (!session.ParticipantInitialized)
-            return;
-        if (saveStore is not null && saveProvider is not null)
-            saveStore.Save(session.Id, saveProvider.ExportSessionState(session.Id));
-        if (commandReceiptStore is not null)
-            commandReceiptStore.Save(
-                session.Id,
-                commandServer.ExportCompletedCommands(session.Id));
+        commandServer.WithSynchronizedSession(session.Id, () => {
+            if (!session.ParticipantInitialized)
+                return;
+            if (saveStore is not null && saveProvider is not null)
+                saveStore.Save(session.Id, saveProvider.ExportSessionState(session.Id));
+            if (commandReceiptStore is not null)
+                commandReceiptStore.Save(
+                    session.Id,
+                    commandServer.ExportCompletedCommands(session.Id));
+        });
     }
 
     private void EnsureCommandReceiptsLoaded(SessionState session)
