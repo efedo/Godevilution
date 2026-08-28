@@ -30,18 +30,72 @@ public sealed class NativeMissileActivationBoundaryTests
         Assert.Contains("native_missiles.tsv requires native_missile_sprites.tsv", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void RejectsPartialNativeMissileNamespaceDuringProductionActivation()
+    {
+        var basePack = LoadBasePack();
+        var nativeMissiles = basePack.Tables.Single(
+            table => table.SourcePath == "native_missiles.tsv");
+        var partialContent = string.Join(
+            '\n',
+            nativeMissiles.ToCanonicalTsv()
+                .Split('\n')
+                .Where(line => !line.StartsWith("Firebolt\t", StringComparison.Ordinal)));
+        var pack = ReplaceBaseTable(
+            basePack,
+            nativeMissiles.SourcePath,
+            TsvTable.Parse(nativeMissiles.SourcePath, partialContent));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("partial-native-missiles", "1", [pack]))));
+
+        Assert.Contains("complete native misdat.tsv contract", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Firebolt", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DirectCompatibilityCatalogsMayRemainPartialUntilExplicitValidation()
+    {
+        var catalog = new AuthoritativeNativeMissileCatalog([
+            new("Firebolt", "", "", "", "", "", "", "", null),
+        ]);
+
+        Assert.Single(catalog.Definitions);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            catalog.ValidateCompleteNativeNamespace);
+
+        Assert.Contains("Acid", exception.Message, StringComparison.Ordinal);
+    }
+
     private static ContentPack LoadBasePackWithout(string sourcePath)
+        => ReplaceBaseTable(
+            LoadBasePack(),
+            sourcePath,
+            replacement: null);
+
+    private static ContentPack LoadBasePack()
     {
         var root = FindRepositoryRoot();
-        var basePack = ContentPackLoader.LoadManifestDirectory(
+        return ContentPackLoader.LoadManifestDirectory(
             Path.Combine(root, "server", "content", "base"));
+    }
+
+    private static ContentPack ReplaceBaseTable(
+        ContentPack basePack,
+        string sourcePath,
+        TsvTable? replacement)
+    {
         return new ContentPack(
             basePack.Id,
             basePack.Version,
             basePack.Tables.Where(table => !string.Equals(
                 table.SourcePath,
                 sourcePath,
-                StringComparison.OrdinalIgnoreCase)).ToArray(),
+                StringComparison.OrdinalIgnoreCase))
+                .Concat(replacement is null ? [] : [replacement])
+                .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
             basePack.Schema,

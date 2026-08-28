@@ -25,9 +25,10 @@ patterns for every native projectile behavior that consumes one (Charged Bolt,
 Fireball, Elemental, Flash, Guardian, and Resurrection). Compatibility callers
 retain the embedded native defaults when constructing catalogs directly.
 
-Production activation now requires the external native missile namespace and
-sprite catalog as a pair whenever native missile or monster-missile mappings
-are present; missing tables no longer silently skip reference validation.
+Production activation now requires the complete external native missile
+namespace (all 68 native `misdat.tsv` identities) and its sprite catalog as a
+pair whenever native missile or monster-missile mappings are present; partial
+namespaces and missing tables no longer silently skip reference validation.
 
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative

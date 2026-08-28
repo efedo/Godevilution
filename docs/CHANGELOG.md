@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
   embedded native defaults.
 - Require active native missile mappings to provide both the external missile
   namespace and sprite catalog so missing reference validation fails closed.
+- Require the active native missile namespace to retain all 68 native `misdat`
+  identities during production activation; direct compatibility catalogs remain
+  permissive until explicitly validated.
 - Route authoritative item, spawn, quest, spell-book, and unique-item random
   consumers through the engine LCG primitive, retaining Diablo random wrappers
   and overloads only as source-compatible shims and adding sequence-parity

@@ -21,6 +21,79 @@ public sealed record AuthoritativeNativeMissileDefinition(
 /** Validated native misdat.tsv identities used by server and presentation bridges. */
 public sealed class AuthoritativeNativeMissileCatalog
 {
+    private static readonly IReadOnlySet<string> CompleteNativeMissileIds = new HashSet<string>(
+        [
+            "Acid",
+            "AcidPuddle",
+            "AcidSplat",
+            "Apocalypse",
+            "ApocalypseBoom",
+            "Arrow",
+            "BloodHit",
+            "BloodRitual",
+            "BloodStar",
+            "BloodStarExplosion",
+            "BoneHit",
+            "BoneSpirit",
+            "ChainBall",
+            "ChainLightning",
+            "ChargedBolt",
+            "DiabloApocalypse",
+            "DiabloApocalypseBoom",
+            "DoomSerpents",
+            "Elemental",
+            "Etherealize",
+            "FireArrow",
+            "Fireball",
+            "Firebolt",
+            "FireMan",
+            "FireOnly",
+            "FireWall",
+            "FireWallControl",
+            "FlameWave",
+            "FlameWaveControl",
+            "FlashBottom",
+            "FlashTop",
+            "Golem",
+            "Guardian",
+            "Healing",
+            "HealOther",
+            "HolyBolt",
+            "Identify",
+            "Inferno",
+            "InfernoControl",
+            "Infravision",
+            "Invisibility",
+            "ItemRepair",
+            "Krull",
+            "Lightning",
+            "LightningArrow",
+            "LightningControl",
+            "MagmaBall",
+            "MagmaBallExplosion",
+            "ManaShield",
+            "MetalHit",
+            "Nova",
+            "NovaBall",
+            "Phasing",
+            "Rage",
+            "RedPortal",
+            "Resurrect",
+            "ResurrectBeam",
+            "Rhino",
+            "Spurt",
+            "StaffRecharge",
+            "StoneCurse",
+            "Telekinesis",
+            "Teleport",
+            "ThinLightning",
+            "ThinLightningControl",
+            "TownPortal",
+            "TrapDisarm",
+            "WeaponExplosion",
+        ],
+        StringComparer.Ordinal);
+
     private static readonly IReadOnlySet<string> KnownFlags = new HashSet<string>(
         ["Acid", "Arrow", "Fire", "Invisible", "Lightning", "Magic", "Physical", "Unblockable"],
         StringComparer.Ordinal);
@@ -94,6 +167,33 @@ public sealed class AuthoritativeNativeMissileCatalog
     }
 
     public IReadOnlyList<AuthoritativeNativeMissileDefinition> Definitions => definitions;
+
+    /**
+     * Requires the complete native `misdat.tsv` identity namespace. Direct
+     * compatibility callers may still construct intentionally partial catalogs.
+     */
+    public void ValidateCompleteNativeNamespace()
+    {
+        var actual = definitions
+            .Where(definition => !definition.CompatibilityAlias)
+            .Select(definition => definition.MissileId)
+            .ToHashSet(StringComparer.Ordinal);
+        var missing = CompleteNativeMissileIds
+            .Except(actual, StringComparer.Ordinal)
+            .OrderBy(missileId => missileId, StringComparer.Ordinal)
+            .ToArray();
+        var unexpected = actual
+            .Except(CompleteNativeMissileIds, StringComparer.Ordinal)
+            .OrderBy(missileId => missileId, StringComparer.Ordinal)
+            .ToArray();
+        if (missing.Length == 0 && unexpected.Length == 0)
+            return;
+
+        throw new InvalidDataException(
+            "The active native missile namespace must match the complete native misdat.tsv contract. "
+            + $"Missing: {string.Join(", ", missing)}. "
+            + $"Unexpected: {string.Join(", ", unexpected)}.");
+    }
 
     public bool TryGet(
         string missileId,
