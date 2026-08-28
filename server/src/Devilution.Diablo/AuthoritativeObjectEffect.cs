@@ -58,3 +58,13 @@ public enum AuthoritativeObjectRewardKind
     NormalItem,
     UniqueItem,
 }
+
+/** Selects the authoritative coordinate origin used by an object reward. */
+public enum AuthoritativeObjectRewardOriginKind
+{
+    /** RewardOffsetX/RewardOffsetY are relative to the activating object. */
+    Object,
+
+    /** RewardOffsetX/RewardOffsetY are relative to a published set-piece origin. */
+    SetLevelOrigin,
+}

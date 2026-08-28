@@ -843,6 +843,8 @@ public sealed class AuthoritativeClientModel
                 && @object.RewardItemLevel == 0
                 && @object.RewardOffsetX == 0
                 && @object.RewardOffsetY == 0
+                && @object.RewardOriginKind == 0
+                && @object.RewardSetLevelId == 0
             : @object.RewardId != 0;
         var producesProjectile = effectKind is 8 or 9
             || followUpKind == 2;
@@ -875,6 +877,9 @@ public sealed class AuthoritativeClientModel
             || @object.RewardItemLevel is < 0 or > byte.MaxValue
             || @object.RewardOffsetX is < -16 or > 16
             || @object.RewardOffsetY is < -16 or > 16
+            || @object.RewardOriginKind is < 0 or > 1
+            || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
+            || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > 8
             || !rewardValid
             || @object.ProjectileTargetOffsetX is < -32 or > 32
             || @object.ProjectileTargetOffsetY is < -32 or > 32

@@ -629,13 +629,17 @@ public static class SnapshotStateHasher
                     || @object.RewardId != 0
                     || @object.RewardItemLevel != 0
                     || @object.RewardOffsetX != 0
-                    || @object.RewardOffsetY != 0) {
+                    || @object.RewardOffsetY != 0
+                    || @object.RewardOriginKind != 0
+                    || @object.RewardSetLevelId != 0) {
                     hasher.AppendString("godevilution-object-reward-v1");
                     hasher.AppendInt32((int)@object.RewardKind);
                     hasher.AppendUInt32(@object.RewardId);
                     hasher.AppendInt32(@object.RewardItemLevel);
                     hasher.AppendInt32(@object.RewardOffsetX);
                     hasher.AppendInt32(@object.RewardOffsetY);
+                    hasher.AppendInt32(@object.RewardOriginKind);
+                    hasher.AppendInt32(@object.RewardSetLevelId);
                 }
                 if (@object.ProjectileTargetOffsetX != 0
                     || @object.ProjectileTargetOffsetY != 0) {

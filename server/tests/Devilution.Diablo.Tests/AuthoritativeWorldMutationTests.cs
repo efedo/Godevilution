@@ -788,6 +788,18 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectTableLoadsSetLevelRewardOriginMetadata()
+    {
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\treward_kind\treward_id\treward_origin\treward_set_level_id\n"
+                + "20\t4\t1\t1\t0\tNormalItem\t100\tset_level_origin\t6\n"));
+
+        Assert.Equal(AuthoritativeObjectRewardOriginKind.SetLevelOrigin, @object.RewardOriginKind);
+        Assert.Equal(6, @object.RewardSetLevelId);
+    }
+
+    [Fact]
     public void ObjectTableLoadsSpellLevelGrant()
     {
         var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
@@ -1545,6 +1557,42 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.Equal(1, reward.PositionX);
         Assert.Equal(1, reward.PositionY);
         Assert.True(@object.Activated);
+    }
+
+    [Fact]
+    public void ObjectActivationResolvesSetLevelRewardOrigin()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t6\t6\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            rewardKind: AuthoritativeObjectRewardKind.NormalItem,
+            rewardId: 100,
+            rewardOriginKind: AuthoritativeObjectRewardOriginKind.SetLevelOrigin,
+            rewardSetLevelId: 6,
+            rewardOffsetX: 1,
+            rewardOffsetY: -1);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(100, 3, 10, 10, 0, 0, 0, 1, 1, 1, 1, true),
+        ]);
+        var world = new DiabloWorldState(geometry, objects: [@object]);
+        var commands = new DiabloWorldCommandProcessor(world, items: items);
+        commands.SetSetLevelOriginResolver(_ => new AuthoritativeSetLevelObjectOrigin(1, 3, 4));
+
+        var result = commands.Execute(
+            CreatePlayer(),
+            new DiabloOperateObjectIntent(20),
+            1,
+            [CreatePlayer()]);
+
+        Assert.True(result.Succeeded);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal((1U, 4, 3), (reward.LevelId, reward.PositionX, reward.PositionY));
     }
 
     [Fact]

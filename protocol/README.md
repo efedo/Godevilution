@@ -479,6 +479,10 @@ Windows toolchain command.
   28-31 carry ordered quest-sequence follow-up kind, amount, and relative
   offsets. These fields are additive projection metadata; the server validates
   and applies the complete operation atomically.
+- `ObjectSnapshot` fields 37-38 optionally select a published set-level origin
+  for an item reward and carry its native set-level identity. Zero preserves
+  legacy object-relative reward behavior; clients must treat both fields as
+  server-owned projection metadata.
 - `ObjectSnapshot.projectile_source_kind` field 32 carries the authored
   projectile origin. Zero preserves target-origin compatibility; the additive
   activating-player value is currently valid for Phasing rows. Nonzero source

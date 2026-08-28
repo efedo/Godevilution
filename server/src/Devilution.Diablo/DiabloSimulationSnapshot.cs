@@ -307,6 +307,10 @@ public sealed record DiabloObjectState(
 
     public int RewardOffsetY { get; init; }
 
+    public AuthoritativeObjectRewardOriginKind RewardOriginKind { get; init; }
+
+    public int RewardSetLevelId { get; init; } = -1;
+
     public int ProjectileTargetOffsetX { get; init; }
 
     public int ProjectileTargetOffsetY { get; init; }
@@ -741,6 +745,8 @@ public sealed partial class DiabloSimulation
                     RewardItemLevel = @object.RewardItemLevel,
                     RewardOffsetX = @object.RewardOffsetX,
                     RewardOffsetY = @object.RewardOffsetY,
+                    RewardOriginKind = @object.RewardOriginKind,
+                    RewardSetLevelId = @object.RewardSetLevelId,
                     ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
                     ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
                     QuestSequenceFollowUpKind = @object.QuestSequenceFollowUpKind,
@@ -1198,7 +1204,9 @@ public sealed partial class DiabloSimulation
                     @object.RewardId,
                     @object.RewardItemLevel,
                     @object.RewardOffsetX,
-                    @object.RewardOffsetY)
+                    @object.RewardOffsetY,
+                    @object.RewardOriginKind,
+                    @object.RewardSetLevelId)
                 || !AuthoritativeWorldObject.IsValidProjectileTargetOffset(
                     @object.EffectKind,
                     @object.ProjectileTargetOffsetX,
@@ -2482,6 +2490,8 @@ public sealed partial class DiabloSimulation
                 target.RewardItemLevel = @object.RewardItemLevel;
                 target.RewardOffsetX = @object.RewardOffsetX;
                 target.RewardOffsetY = @object.RewardOffsetY;
+                target.RewardOriginKind = @object.RewardOriginKind;
+                target.RewardSetLevelId = @object.RewardSetLevelId;
                 target.ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX;
                 target.ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY;
                 target.QuestSequenceFollowUpKind = @object.QuestSequenceFollowUpKind;
@@ -2535,7 +2545,9 @@ public sealed partial class DiabloSimulation
                     @object.NativeObjectId,
                     @object.HideWhenActivated,
                     @object.AnimationFrame,
-                    @object.ActivatedAnimationFrame));
+                    @object.ActivatedAnimationFrame,
+                    @object.RewardOriginKind,
+                    @object.RewardSetLevelId));
             }
         }
     }

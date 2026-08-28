@@ -262,7 +262,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             combatRules.GameVariant,
             options.MonsterTypes,
             options.Experience);
-        return new DiabloSimulation(
+        var simulation = new DiabloSimulation(
             options.StoreCatalog,
             worldState,
             new DiabloStoreCommandProcessor(
@@ -334,6 +334,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             experience: options.Experience,
             nativeMissiles: options.NativeMissiles,
             nativeMissileSprites: options.NativeMissileSprites);
+        worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
+        return simulation;
     }
 }
 
@@ -498,6 +500,9 @@ public sealed partial class DiabloSimulation
     /** Runtime-generated origins used by relative set-level object placements. */
     public IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin> SetLevelObjectOrigins
         => setLevelObjectOrigins;
+
+    internal AuthoritativeSetLevelObjectOrigin? ResolveSetLevelObjectOrigin(int setLevelId)
+        => setLevelObjectOrigins.TryGetValue(setLevelId, out var origin) ? origin : null;
 
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }

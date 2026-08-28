@@ -46,7 +46,10 @@ public sealed class AuthoritativeWorldObject
         uint nativeObjectId = 0,
         bool hideWhenActivated = true,
         int animationFrame = 0,
-        int activatedAnimationFrame = 0)
+        int activatedAnimationFrame = 0,
+        AuthoritativeObjectRewardOriginKind rewardOriginKind
+            = AuthoritativeObjectRewardOriginKind.Object,
+        int rewardSetLevelId = -1)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -99,7 +102,9 @@ public sealed class AuthoritativeWorldObject
                 rewardId,
                 rewardItemLevel,
                 rewardOffsetX,
-                rewardOffsetY)) {
+                rewardOffsetY,
+                rewardOriginKind,
+                rewardSetLevelId)) {
             throw new InvalidDataException("Object reward values are invalid.");
         }
         RewardKind = rewardKind;
@@ -107,6 +112,8 @@ public sealed class AuthoritativeWorldObject
         RewardItemLevel = rewardItemLevel;
         RewardOffsetX = rewardOffsetX;
         RewardOffsetY = rewardOffsetY;
+        RewardOriginKind = rewardOriginKind;
+        RewardSetLevelId = rewardSetLevelId;
         if (!IsValidProjectileTargetOffset(
                 effectKind,
                 projectileTargetOffsetX,
@@ -181,6 +188,12 @@ public sealed class AuthoritativeWorldObject
     public int RewardItemLevel { get; set; }
     public int RewardOffsetX { get; set; }
     public int RewardOffsetY { get; set; }
+
+    /** Coordinate origin used when an authored item reward is generated. */
+    public AuthoritativeObjectRewardOriginKind RewardOriginKind { get; set; }
+
+    /** Native set-level identity used by SetLevelOrigin rewards; -1 means none. */
+    public int RewardSetLevelId { get; set; }
     /** Authored target displacement for server-owned spell projectiles. */
     public int ProjectileTargetOffsetX { get; set; }
 
@@ -281,7 +294,9 @@ public sealed class AuthoritativeWorldObject
             NativeObjectId,
             HideWhenActivated,
             AnimationFrame,
-            ActivatedAnimationFrame);
+            ActivatedAnimationFrame,
+            RewardOriginKind,
+            RewardSetLevelId);
     }
 
     public static bool IsValidQuestTransition(
@@ -328,10 +343,33 @@ public sealed class AuthoritativeWorldObject
         int rewardOffsetX,
         int rewardOffsetY)
     {
+        return IsValidReward(
+            kind,
+            rewardId,
+            rewardItemLevel,
+            rewardOffsetX,
+            rewardOffsetY,
+            AuthoritativeObjectRewardOriginKind.Object,
+            -1);
+    }
+
+    public static bool IsValidReward(
+        AuthoritativeObjectRewardKind kind,
+        uint rewardId,
+        int rewardItemLevel,
+        int rewardOffsetX,
+        int rewardOffsetY,
+        AuthoritativeObjectRewardOriginKind originKind,
+        int setLevelId)
+    {
         if (!Enum.IsDefined(kind)
+            || !Enum.IsDefined(originKind)
             || rewardItemLevel is < 0 or > byte.MaxValue
             || rewardOffsetX is < -16 or > 16
-            || rewardOffsetY is < -16 or > 16) {
+            || rewardOffsetY is < -16 or > 16
+            || originKind == AuthoritativeObjectRewardOriginKind.Object && setLevelId != -1
+            || originKind == AuthoritativeObjectRewardOriginKind.SetLevelOrigin
+                && setLevelId is < 0 or > 8) {
             return false;
         }
         return kind == AuthoritativeObjectRewardKind.None
@@ -339,6 +377,8 @@ public sealed class AuthoritativeWorldObject
                 && rewardItemLevel == 0
                 && rewardOffsetX == 0
                 && rewardOffsetY == 0
+                && originKind == AuthoritativeObjectRewardOriginKind.Object
+                && setLevelId == -1
             : rewardId != 0;
     }
 
@@ -535,7 +575,9 @@ public static class AuthoritativeWorldObjectCatalog
                     row.OptionalUInt32("native_object_id"),
                     row.OptionalBoolean("hide_when_activated", true),
                     row.OptionalInt32("animation_frame"),
-                    row.OptionalInt32("activated_animation_frame")),
+                    row.OptionalInt32("activated_animation_frame"),
+                    ParseRewardOriginKind(row),
+                    ParseRewardSetLevelId(row, stableIds)),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();
@@ -787,6 +829,39 @@ public static class AuthoritativeWorldObjectCatalog
         }
         throw new InvalidDataException(
             $"Object row {row.LineNumber} contains an unknown reward kind '{value}'.");
+    }
+
+    private static AuthoritativeObjectRewardOriginKind ParseRewardOriginKind(TsvRow row)
+    {
+        if (!row.TryGet("reward_origin", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "object", StringComparison.OrdinalIgnoreCase))
+            return AuthoritativeObjectRewardOriginKind.Object;
+        if (string.Equals(value, "set_level_origin", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "set_level_origin_offset", StringComparison.OrdinalIgnoreCase))
+            return AuthoritativeObjectRewardOriginKind.SetLevelOrigin;
+        throw new InvalidDataException(
+            $"Object row {row.LineNumber} contains an unknown reward origin '{value}'.");
+    }
+
+    private static int ParseRewardSetLevelId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var symbol = row.TryGet("reward_set_level_symbol", out var value)
+            ? value.Trim()
+            : string.Empty;
+        if (string.Equals(symbol, "none", StringComparison.OrdinalIgnoreCase))
+            return row.OptionalInt32("reward_set_level_id", -1);
+        if (symbol.Length == 0
+            && (!row.TryGet("reward_set_level_id", out var id)
+                || string.IsNullOrWhiteSpace(id)))
+            return -1;
+        return AuthoritativeSetLevelIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "reward_set_level_id",
+            "reward_set_level_symbol");
     }
 
     private static int OptionalQuestTransitionValue(TsvRow row, string column)

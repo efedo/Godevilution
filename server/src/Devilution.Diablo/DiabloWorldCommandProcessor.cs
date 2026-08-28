@@ -27,6 +27,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly DiabloGameVariant gameVariant;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeExperienceCatalog? experience;
+    private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator authoredProjectileEntityIds = new(0xC0000000);
     private readonly DeterministicEntityIdAllocator generatedMonsterEntityIds = new(
@@ -81,6 +82,13 @@ public sealed class DiabloWorldCommandProcessor
                 "Native player action timing requires a player animation catalog.",
                 nameof(playerAnimations));
         }
+    }
+
+    internal void SetSetLevelOriginResolver(
+        Func<int, AuthoritativeSetLevelObjectOrigin?> resolver)
+    {
+        ArgumentNullException.ThrowIfNull(resolver);
+        setLevelOriginResolver = resolver;
     }
 
     public DiabloWorldIntentResult Execute(
@@ -1658,7 +1666,9 @@ public sealed class DiabloWorldCommandProcessor
                 @object.RewardId,
                 @object.RewardItemLevel,
                 @object.RewardOffsetX,
-                @object.RewardOffsetY)) {
+                @object.RewardOffsetY,
+                @object.RewardOriginKind,
+                @object.RewardSetLevelId)) {
             return false;
         }
         if (@object.RewardKind == AuthoritativeObjectRewardKind.NormalItem
@@ -1670,17 +1680,19 @@ public sealed class DiabloWorldCommandProcessor
                 || @object.RewardItemLevel < unique.MinimumLevel)) {
             return false;
         }
-        var rewardX = checked(@object.PositionX + @object.RewardOffsetX);
-        var rewardY = checked(@object.PositionY + @object.RewardOffsetY);
-        return world.IsWalkable(@object.LevelId, rewardX, rewardY)
+        if (!TryResolveObjectRewardPosition(@object, out var rewardLevelId, out var rewardX, out var rewardY)
+            || rewardLevelId != @object.LevelId) {
+            return false;
+        }
+        return world.IsWalkable(rewardLevelId, rewardX, rewardY)
             && !world.IsOccupied(
-                @object.LevelId,
+                rewardLevelId,
                 rewardX,
                 rewardY,
                 participants,
                 excludedEntityId: @object.EntityId)
             && !world.WorldItems.Values.Any(item =>
-                item.LevelId == @object.LevelId
+                item.LevelId == rewardLevelId
                 && item.PositionX == rewardX
                 && item.PositionY == rewardY);
     }
@@ -1695,17 +1707,42 @@ public sealed class DiabloWorldCommandProcessor
         var rewardState = @object.RewardKind == AuthoritativeObjectRewardKind.UniqueItem
             ? items!.GenerateUnique(@object.RewardId, itemSeed, @object.RewardItemLevel)
             : items!.Generate(@object.RewardId, itemSeed, @object.RewardItemLevel);
-        var rewardX = checked(@object.PositionX + @object.RewardOffsetX);
-        var rewardY = checked(@object.PositionY + @object.RewardOffsetY);
+        if (!TryResolveObjectRewardPosition(@object, out var rewardLevelId, out var rewardX, out var rewardY))
+            throw new InvalidDataException("Object reward origin is unavailable.");
         var entityId = AllocateWorldItemEntityId(participants);
         world.WorldItems[entityId] = new AuthoritativeWorldItem(
             entityId,
-            @object.LevelId,
+            rewardLevelId,
             rewardX,
             rewardY,
             itemSeed,
             checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
             rewardState);
+    }
+
+    private bool TryResolveObjectRewardPosition(
+        AuthoritativeWorldObject @object,
+        out uint levelId,
+        out int rewardX,
+        out int rewardY)
+    {
+        if (@object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.Object) {
+            levelId = @object.LevelId;
+            rewardX = checked(@object.PositionX + @object.RewardOffsetX);
+            rewardY = checked(@object.PositionY + @object.RewardOffsetY);
+            return true;
+        }
+        if (setLevelOriginResolver is null
+            || setLevelOriginResolver(@object.RewardSetLevelId) is not { } origin) {
+            levelId = 0;
+            rewardX = 0;
+            rewardY = 0;
+            return false;
+        }
+        levelId = origin.LevelId;
+        rewardX = checked(origin.PositionX + @object.RewardOffsetX);
+        rewardY = checked(origin.PositionY + @object.RewardOffsetY);
+        return true;
     }
 
     /** Consumes a content-selected inventory item at a quest interaction boundary. */

@@ -18,7 +18,7 @@ Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.
 
-Live Godot overlay fixtures now declare the active `1.432.0` content schema,
+Live Godot overlay fixtures now declare the active `1.433.0` content schema,
 matching the shipped base pack. Manifest composition continues to reject a
 mixed current/previous schema set before module activation; the Diablo module
 still accepts a previous additive schema when a complete manifest uses it.
@@ -1531,12 +1531,15 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.432.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.431.0` schema
+The Diablo content schema is now `1.433.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.432.0` schema
 for existing manifest-based packs. Schema 1.431 adds the optional validated
 `object_presentations.tsv` sidecar, keyed by authored object entity, so
 activation visibility and animation frames can evolve without changing the
-legacy `objects.tsv` header. Schema 1.428 adds the optional
+legacy `objects.tsv` header. Schema 1.433 adds set-piece-origin metadata for
+authored object item rewards;
+the server resolves these offsets from published origins and preserves them
+through saves and protocol snapshots. Schema 1.428 adds the optional
 `piece_property_overrides` column to `world_mutations.tsv`, allowing a
 mutation to externalize validated native `.sol`-style collision flags for
 d-pieces introduced by a set-piece transition. Schema 1.427 adds the optional

@@ -243,6 +243,8 @@ internal static class DiabloProtocolMapper
                 RewardItemLevel = @object.RewardItemLevel,
                 RewardOffsetX = @object.RewardOffsetX,
                 RewardOffsetY = @object.RewardOffsetY,
+                RewardOriginKind = (int)@object.RewardOriginKind,
+                RewardSetLevelId = @object.RewardSetLevelId < 0 ? 0 : @object.RewardSetLevelId,
                 ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
                 ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
                 QuestSequenceFollowUpKind = (int)@object.QuestSequenceFollowUpKind,
@@ -534,6 +536,8 @@ internal static class DiabloProtocolMapper
                     && @object.RewardItemLevel == 0
                     && @object.RewardOffsetX == 0
                     && @object.RewardOffsetY == 0
+                    && @object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.Object
+                    && @object.RewardSetLevelId == -1
                 : @object.RewardId != 0;
             var producesProjectile = effectKind is
                     AuthoritativeObjectEffectKind.SpawnSpellProjectile
@@ -575,6 +579,12 @@ internal static class DiabloProtocolMapper
                 || @object.RewardItemLevel is < 0 or > byte.MaxValue
                 || @object.RewardOffsetX is < -16 or > 16
                 || @object.RewardOffsetY is < -16 or > 16
+                || @object.RewardOriginKind is < AuthoritativeObjectRewardOriginKind.Object
+                    or > AuthoritativeObjectRewardOriginKind.SetLevelOrigin
+                || @object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.Object
+                    && @object.RewardSetLevelId != -1
+                || @object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.SetLevelOrigin
+                    && @object.RewardSetLevelId is < 0 or > 8
                 || !rewardValid
                 || @object.ProjectileTargetOffsetX is < -32 or > 32
                 || @object.ProjectileTargetOffsetY is < -32 or > 32
@@ -1764,6 +1774,10 @@ internal static class DiabloProtocolMapper
                 RewardItemLevel = @object.RewardItemLevel,
                 RewardOffsetX = @object.RewardOffsetX,
                 RewardOffsetY = @object.RewardOffsetY,
+                RewardOriginKind = (AuthoritativeObjectRewardOriginKind)@object.RewardOriginKind,
+                RewardSetLevelId = @object.RewardOriginKind == 0 && @object.RewardSetLevelId == 0
+                    ? -1
+                    : @object.RewardSetLevelId,
                 ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
                 ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
                 QuestSequenceFollowUpKind = (AuthoritativeQuestSequenceFollowUpKind)@object.QuestSequenceFollowUpKind,

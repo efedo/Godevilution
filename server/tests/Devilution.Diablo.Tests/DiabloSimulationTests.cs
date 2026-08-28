@@ -11,13 +11,13 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.432.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.433.0"),
             DiabloContentSchema.Current);
     }
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.431.0", true)]
+    [InlineData("devilution.diablo", "1.432.0", true)]
     [InlineData("devilution.diablo", "1.429.0", false)]
     [InlineData("devilution.diablo", "1.415.0", false)]
     [InlineData("other.game", "1.424.0", false)]
@@ -175,6 +175,51 @@ public sealed class DiabloSimulationTests
             origin.Value.LevelId,
             origin.Value.PositionX,
             origin.Value.PositionY));
+    }
+
+    [Fact]
+    public void SnapshotRoundTripPreservesSetLevelRewardOriginMetadata()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 32, 32));
+        world.AddLevel(new AuthoritativeLevel(1, 32, 32));
+        var sourceObject = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            8,
+            8,
+            rewardKind: AuthoritativeObjectRewardKind.NormalItem,
+            rewardId: 100,
+            rewardOriginKind: AuthoritativeObjectRewardOriginKind.SetLevelOrigin,
+            rewardSetLevelId: 6,
+            rewardOffsetX: 1);
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Objects = [sourceObject],
+                SetLevelObjectOrigins = new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+                    [6] = new(1, 12, 13),
+                },
+            });
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+
+        var restoredWorld = new AuthoritativeWorld();
+        restoredWorld.AddLevel(new AuthoritativeLevel(0, 32, 32));
+        restoredWorld.AddLevel(new AuthoritativeLevel(1, 32, 32));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = restoredWorld,
+                Objects = [],
+                SetLevelObjectOrigins = new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+                    [6] = new(1, 12, 13),
+                },
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.Objects.Values);
+        Assert.Equal(AuthoritativeObjectRewardOriginKind.SetLevelOrigin, restored.RewardOriginKind);
+        Assert.Equal(6, restored.RewardSetLevelId);
     }
 
     [Theory]
@@ -635,7 +680,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.432.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.433.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

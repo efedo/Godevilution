@@ -7,9 +7,12 @@ All notable changes to this fork are documented below.
 - Add validated set-level-origin anchors to native DUN fragments and their
   behavior-object placements. Rows now defer until a generated set-piece origin
   is published, then compose atomically with existing entity, unique-encounter,
-  and coordinate anchor modes; the Diablo content schema is now `1.432.0`
-  (schema `1.432.0`)
-  while retaining `1.431.0` as the previous additive contract.
+  and coordinate anchor modes; the Diablo content schema is now `1.433.0`
+  (schema `1.433.0`)
+  while retaining `1.432.0` as the previous additive contract.
+- Add validated set-piece-origin metadata to object item rewards. Rewards can
+  now resolve their drop coordinate from a published set-level origin while
+  retaining legacy object-relative behavior across snapshots and protocol.
 - Package the existing native Skeleton King and Chamber of Bone transparency
   `.dun` binaries in the authoritative base content pack, with shipped-content
   dimension checks. The Lazarus transparency mapping remains metadata-only
