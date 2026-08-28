@@ -327,8 +327,8 @@ boundary in both runners.
 
 `gameplay-multiplayer-secondary-portal.json` routes a portal transition from
 the secondary participant while the primary remains on its original level. The
-fixture proves session-specific world-command routing and level/position
-projection in both runners.
+fixture proves session-specific world-command routing, level/position
+projection, and per-participant visited-level history in both runners.
 
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified

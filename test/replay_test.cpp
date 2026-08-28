@@ -2689,6 +2689,9 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryPortalAgainstCSharpProjection)
 	EXPECT_EQ(state.levelId, 1U);
 	EXPECT_EQ(std::pair(state.positionX, state.positionY), std::pair(0, 0));
 	EXPECT_EQ(state.secondaryPlayerLevelId, 2U);
+	ASSERT_EQ(state.secondaryPlayerVisitedLevelIds.size(), 2U);
+	EXPECT_EQ(state.secondaryPlayerVisitedLevelIds[0], 1U);
+	EXPECT_EQ(state.secondaryPlayerVisitedLevelIds[1], 2U);
 	EXPECT_EQ(std::pair(state.secondaryPlayerPositionX, state.secondaryPlayerPositionY), std::pair(3, 4));
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);

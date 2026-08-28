@@ -1826,6 +1826,7 @@ public sealed class ReplayFixtureTests
         Assert.Equal([1U, 8U], players.Select(player => player.EntityId));
         Assert.Equal((1U, 0, 0), (players[0].LevelId, players[0].PositionX, players[0].PositionY));
         Assert.Equal((2U, 3, 4), (players[1].LevelId, players[1].PositionX, players[1].PositionY));
+        Assert.Equal([1U, 2U], players[1].VisitedLevelIds.OrderBy(levelId => levelId));
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));

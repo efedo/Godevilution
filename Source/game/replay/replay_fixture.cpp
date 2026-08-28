@@ -175,6 +175,18 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 	hasher.AppendInt32(state.secondaryPlayerLifeMaximum);
 	hasher.AppendUint32(state.secondaryPlayerCharacterLevel);
 	hasher.AppendUint32(state.secondaryPlayerLevelId);
+	std::vector<uint32_t> historicalVisitedLevelIds;
+	for (const uint32_t levelId : state.secondaryPlayerVisitedLevelIds) {
+		if (levelId != state.secondaryPlayerLevelId)
+			historicalVisitedLevelIds.push_back(levelId);
+	}
+	std::sort(historicalVisitedLevelIds.begin(), historicalVisitedLevelIds.end());
+	if (!historicalVisitedLevelIds.empty()) {
+		hasher.AppendString("godevilution-player-visited-levels-v1");
+		hasher.AppendUint64(historicalVisitedLevelIds.size());
+		for (const uint32_t levelId : historicalVisitedLevelIds)
+			hasher.AppendUint32(levelId);
+	}
 	if (state.secondaryPlayerCharacterClassId != 0) {
 		hasher.AppendString("godevilution-player-class-v1");
 		hasher.AppendUint32(state.secondaryPlayerCharacterClassId);
@@ -6428,6 +6440,8 @@ bool ExecuteReplayFixture(
 		state.secondaryPlayerPositionX = secondary.positionX;
 		state.secondaryPlayerPositionY = secondary.positionY;
 		state.secondaryPlayerLevelId = secondary.levelId;
+		if (secondary.levelId != 0)
+			state.secondaryPlayerVisitedLevelIds.push_back(secondary.levelId);
 		state.secondaryPlayerCharacterLevel = secondary.characterLevel;
 		state.secondaryPlayerCharacterClassId = secondary.characterClass;
 		state.secondaryPlayerMagic = secondary.magic;
@@ -6579,6 +6593,13 @@ bool ExecuteReplayFixture(
 				} else if (command.kind == "UsePortal") {
 					if (command.portalId == state.portalId) {
 						state.secondaryPlayerLevelId = state.portalDestinationLevelId;
+						if (state.secondaryPlayerLevelId != 0
+						    && std::find(
+							       state.secondaryPlayerVisitedLevelIds.begin(),
+							       state.secondaryPlayerVisitedLevelIds.end(),
+							       state.secondaryPlayerLevelId)
+							        == state.secondaryPlayerVisitedLevelIds.end())
+							state.secondaryPlayerVisitedLevelIds.push_back(state.secondaryPlayerLevelId);
 						state.secondaryPlayerPositionX = state.portalDestinationX;
 						state.secondaryPlayerPositionY = state.portalDestinationY;
 						accepted = true;

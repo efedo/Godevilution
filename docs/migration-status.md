@@ -16,7 +16,7 @@ while malformed paired metadata fails closed at the transport boundaries.
 The multiplayer death-suppression replay checkpoint now matches the canonical
 snapshot hash produced after the accumulated additive snapshot fields; the
 complete replay fixture class validates all 77 cases, including a secondary
-participant portal transition.
+participant portal transition and visited-level projection.
 
 The generic host now exposes the active combined ruleset identity and retired
 generation count through the live server status surface. Operators can verify

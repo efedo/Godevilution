@@ -481,6 +481,7 @@ struct ReplayFixtureExecutionState {
 	int32_t secondaryPlayerPositionX = 0;
 	int32_t secondaryPlayerPositionY = 0;
 	uint32_t secondaryPlayerLevelId = 0;
+	std::vector<uint32_t> secondaryPlayerVisitedLevelIds;
 	uint32_t secondaryPlayerCharacterLevel = 1;
 	uint32_t secondaryPlayerCharacterClassId = 0;
 	int32_t secondaryPlayerMagic = 0;
