@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Shared bounded crawl searches now skip candidate coordinates that overflow the
+integer domain, so raw client target cells fail closed across teleport, stone
+curse, wall, portal, and berserk placement paths instead of faulting a session.
+
 Held-item drop intents now reject out-of-level target coordinates before
 computing adjacency distance, keeping the direct client target path fail-closed
 for malformed coordinates in both projected and fallback worlds.

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make shared bounded crawl searches skip overflowing candidate coordinates,
+  keeping raw client target cells fail-closed across authoritative placement
+  and target-search paths.
 - Reject out-of-level held-item drop targets before adjacency arithmetic, so
   malformed client coordinates cannot overflow the authoritative range check.
 - Make authoritative projected and fallback line-of-sight checks fail closed

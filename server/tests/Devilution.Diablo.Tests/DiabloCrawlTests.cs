@@ -39,4 +39,17 @@ public sealed class DiabloCrawlTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             DiabloCrawl.FindClosestValidPosition(0, 0, 0, 51, static (_, _) => true));
     }
+
+    [Fact]
+    public void SearchSkipsCandidatesThatOverflowTheCoordinateDomain()
+    {
+        var result = DiabloCrawl.FindClosestValidPosition(
+            int.MaxValue,
+            int.MaxValue,
+            1,
+            1,
+            static (_, _) => false);
+
+        Assert.Null(result);
+    }
 }

@@ -20,8 +20,17 @@ public static class DiabloCrawl
         }
 
         foreach (var displacement in Enumerate(minimumRadius, maximumRadius)) {
-            var candidateX = checked(startingX + displacement.X);
-            var candidateY = checked(startingY + displacement.Y);
+            int candidateX;
+            int candidateY;
+            try {
+                candidateX = checked(startingX + displacement.X);
+                candidateY = checked(startingY + displacement.Y);
+            } catch (OverflowException) {
+                // Client-supplied target cells may be outside the integer
+                // neighborhood. Skip overflowing candidates and fail closed
+                // instead of disconnecting the authoritative session.
+                continue;
+            }
             if (isValid(candidateX, candidateY))
                 return (candidateX, candidateY);
         }
