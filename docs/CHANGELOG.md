@@ -48,10 +48,10 @@ All notable changes to this fork are documented below.
 - Run spawned live authoritative servers from the same build configuration as
   the Godot protocol test assembly, preventing stale Debug binaries from
   making Release boundary tests intermittently miss gameplay projections.
-- Refresh all live Godot overlay fixtures to the active `1.431.0` content
-  schema and add coverage for rejecting mixed current/previous schema packs
-  during manifest composition; clarify the exact-schema composition rule in
-  the content-pack guide.
+- Refresh all live Godot overlay fixtures to the active `1.434.0` content
+  schema; previous additive-schema compatibility remains covered by the
+  module and Data tests. The content-pack guide continues to document the
+  exact-schema composition rule.
 - Refresh the native Lua-boundary characterization for the centralized
   `ShouldInitializeLegacyLua` lifecycle policy, covering both guarded startup
   and shutdown while retaining the authoritative debug-console exclusion.
@@ -69,10 +69,10 @@ All notable changes to this fork are documented below.
 - Route secondary-participant portal transitions through the shared replay
   fixture gate, preserving the primary session while updating the secondary
   level and position in both native and managed runners.
-- Add a repository-level content-contract check that derives the active and
-  previous additive schema from the Diablo module, validates first-party
-  manifests, and catches stale contract text in the content and migration docs
-  for schema `1.431.0`.
+- Extend the repository-level content-contract check to derive the active and
+  previous additive schema from the Diablo module, validate first-party
+  manifests and inline Godot overlay fixtures, and catch stale contract text
+  in the content and migration docs for schema `1.434.0`.
 - Require active spell content to provide the native projectile ordering
   patterns used by authoritative Charged Bolt, Fireball, Elemental, Flash,
   Guardian, and Resurrection handlers; direct compatibility catalogs retain

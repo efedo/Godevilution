@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_SOURCE = ROOT / "server/src/Devilution.Diablo/DiabloContentSchema.cs"
 CONTENT_ROOT = ROOT / "server/content"
+GODOT_LIVE_TESTS = ROOT / "godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"
 
 
 def fail(message: str) -> None:
@@ -62,6 +63,26 @@ def validate_manifests(schema_id: str, current_version: str) -> int:
     return len(manifests)
 
 
+def validate_godot_fixture_schemas(schema_id: str, current_version: str) -> int:
+    """Keep inline live-server overlays on the active schema contract."""
+    text = GODOT_LIVE_TESTS.read_text(encoding="utf-8")
+    schemas = re.findall(
+        r'"schema"\s*:\s*\{\s*"id"\s*:\s*"([^"]+)"\s*,\s*'
+        r'"version"\s*:\s*"([^"]+)"\s*\}',
+        text,
+    )
+    if not schemas:
+        fail(f"no inline Godot schemas found in {GODOT_LIVE_TESTS.relative_to(ROOT)}")
+    for fixture_schema_id, fixture_version in schemas:
+        if (fixture_schema_id, fixture_version) != (schema_id, current_version):
+            fail(
+                f"{GODOT_LIVE_TESTS.relative_to(ROOT)} declares inline schema "
+                f"{fixture_schema_id}@{fixture_version}, expected "
+                f"{schema_id}@{current_version}"
+            )
+    return len(schemas)
+
+
 def require_text(path: Path, *fragments: str) -> None:
     text = path.read_text(encoding="utf-8")
     for fragment in fragments:
@@ -72,6 +93,7 @@ def require_text(path: Path, *fragments: str) -> None:
 def main() -> int:
     schema_id, current_version, previous_version = read_schema()
     manifest_count = validate_manifests(schema_id, current_version)
+    godot_fixture_count = validate_godot_fixture_schemas(schema_id, current_version)
     require_text(
         CONTENT_ROOT / "README.md",
         f"`{schema_id}@{current_version}` schema",
@@ -84,8 +106,9 @@ def main() -> int:
     )
     require_text(ROOT / "docs/CHANGELOG.md", f"schema `{current_version}`")
     print(
-        f"content-contract: validated {manifest_count} manifests and documentation "
-        f"for {schema_id}@{current_version} (previous additive {previous_version})"
+        f"content-contract: validated {manifest_count} manifests, "
+        f"{godot_fixture_count} Godot fixtures, and documentation for "
+        f"{schema_id}@{current_version} (previous additive {previous_version})"
     )
     return 0
 
