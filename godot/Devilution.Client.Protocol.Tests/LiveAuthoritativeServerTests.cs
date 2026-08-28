@@ -2205,6 +2205,38 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerProjectsHellfireLittleGirlPreActivationHandIn()
+    {
+        var hellfireRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "hellfire");
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            hellfireRoot);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-hellfire-little-girl", requestedClassId: 2));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        model.Apply(await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null));
+
+        var completion = Assert.Single(
+            model.Snapshot!.QuestTownerInteractions,
+            interaction => interaction.InteractionId == 301903);
+        Assert.Equal(3019U, completion.QuestId);
+        Assert.Equal(11, completion.TownerId);
+        Assert.Equal(2102U, completion.ItemId);
+        Assert.Equal(285, completion.MessageId);
+        Assert.True(completion.ConsumeItem);
+        Assert.True(completion.AllowInitial);
+        Assert.True(completion.UseQuestTurnInReward);
+    }
+
+    [Fact]
     public async Task LiveServerConsumesTheHellfireSorcererFireboltStaff()
     {
         var hellfireRoot = Path.Combine(

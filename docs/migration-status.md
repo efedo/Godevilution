@@ -7,7 +7,9 @@ active dialogue, and pre-activation Theodore hand-in branches. The itemless
 stages require Theodore to be absent, while the completion stage is explicitly
 allowed during initial quest state and reuses the quest-declared amulet reward;
 the authoritative visited-level gate and native messages 283/284/285 are
-preserved.
+preserved. A live Godot protocol fixture now verifies that the standalone
+Hellfire server projects the pre-activation completion metadata and reward
+contract unchanged.
 
 The base content pack now includes template-only authoritative behavior rows
 for the Halls of the Blind book, Gateway of Blood book, and Warlord steel tome.

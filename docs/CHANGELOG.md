@@ -9,6 +9,10 @@ All notable changes to this fork are documented below.
   reuses the declared amulet reward, and is projected consistently to Godot and
   the native compatibility client.
 
+- Add live standalone-server coverage for the Hellfire Little Girl's
+  pre-activation hand-in metadata, including the Theodore item gate and
+  quest-reward reuse flags.
+
 - Externalize the Hellfire Little Girl's opening and active dialogue through
   authored quest/towner stages. New required-item presence metadata keeps those
   itemless branches from intercepting the server-owned Theodore hand-in while
