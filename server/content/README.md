@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.430.0` schema in
+It declares its identity and `devilution.diablo@1.431.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
 previous additive `1.429.0` schema so existing manifest-based packs remain
 loadable. The standalone host falls back to legacy command-line identity only
@@ -2962,7 +2962,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.430.0"
+    "version": "1.431.0"
   },
   "dependencyConstraints": [
     {
@@ -2996,7 +2996,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.430.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.431.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -3016,6 +3016,9 @@ native DUN monster-layer index maps to a native monster identity and stable
 unmapped conversion entries remain inert until their spawn behavior is
 externalized.
 
+Schema 1.431 adds the optional validated `object_presentations.tsv` sidecar,
+keyed by authored object entity ID, for additive activation visibility and
+animation-frame metadata without changing the legacy `objects.tsv` header.
 Schema 1.430 adds optional `stand_animation_frames` and
 `stand_animation_ticks_per_frame` columns to `monster_types.tsv`. Shipped
 native rows carry the standing animation metadata used by `InitMonster` to
