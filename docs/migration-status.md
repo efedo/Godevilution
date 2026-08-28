@@ -2095,6 +2095,9 @@ scaled hit points), not only the client's difficulty label.
 - The native debug console now stays script-free in authoritative mode, using
   only the registered native command list and retaining the legacy console
   behavior for explicit compatibility launches.
+- Authoritative store presentation now skips the legacy `StoreOpened` Lua event
+  callback; explicit compatibility launches continue to deliver it for legacy
+  mods.
 - Snapshot and live world-item hydration now also restores omitted authored
   presentation names and native cursor graphics without replacing explicit
   unique-item overrides.

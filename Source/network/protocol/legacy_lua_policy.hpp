@@ -12,4 +12,10 @@ constexpr bool ShouldInitializeLegacyLua(bool authoritativeMode) noexcept
 	return !authoritativeMode;
 }
 
+/** Legacy Lua event callbacks belong only to the native compatibility client. */
+constexpr bool ShouldProcessLegacyLuaEvents(bool authoritativeMode) noexcept
+{
+	return !authoritativeMode;
+}
+
 } // namespace devilution

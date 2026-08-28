@@ -27,6 +27,9 @@ compatibility.
 That lifecycle decision is centralized in a native policy and covered by a
 focused compatibility test so future startup changes cannot accidentally
 reintroduce embedded Lua into the authoritative client.
+Legacy `StoreOpened` callbacks use the same policy: authoritative store
+presentation does not enter the Lua event bus, while native compatibility mode
+continues to deliver the callback for existing mods.
 The authoritative Data runtime now provides validated ordered content overlays
 and transactional activation, so new server data extensions no longer require
 Lua reload hooks. Native `ModManager` now owns archive selection, sound

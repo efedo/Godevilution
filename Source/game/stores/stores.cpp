@@ -29,6 +29,7 @@
 #include "ui/minitext.h"
 #include "ui/player_messages.h"
 #include "network/protocol/multi.h"
+#include "network/protocol/legacy_lua_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_store_policy.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -2536,9 +2537,17 @@ void StoreManager::StartStore(TalkID s)
 	CurrentStoreManager.ClearSText(0, NumStoreLines);
 	ReleaseStoreBtn();
 
-	// Fire StoreOpened Lua event for main store entries
-	if (std::optional<std::string_view> name = TownerNameForTalkID(s); name.has_value())
-		CurrentGameEventBus.StoreOpened(*name);
+	// StoreOpened is a legacy Lua callback; authoritative store state arrives
+	// from the server and must not enter the embedded scripting lifecycle.
+	bool processLegacyLuaEvents = true;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	processLegacyLuaEvents = ShouldProcessLegacyLuaEvents(
+		    authoritative::GetServerBackedRuntime().IsAuthoritativeMode());
+#endif
+	if (processLegacyLuaEvents) {
+		if (std::optional<std::string_view> name = TownerNameForTalkID(s); name.has_value())
+			CurrentGameEventBus.StoreOpened(*name);
+	}
 
 	switch (s) {
 	case TalkID::Smith:

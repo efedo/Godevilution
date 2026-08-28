@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Keep authoritative store presentation out of the legacy Lua event bus. The
+  native `StoreOpened` callback remains available in compatibility mode behind
+  the centralized Lua lifecycle policy.
+
 - Add the cross-language `gameplay-stable-item-drop.json` replay fixture.
   Native and managed runners now parse and execute explicit
   `DropItemRequested` inventory references with stable identity validation,

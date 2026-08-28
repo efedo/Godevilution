@@ -81,6 +81,12 @@ TEST(ServerBackedCompatibility, AuthoritativeModeDoesNotOwnLegacyLuaLifecycle)
 	EXPECT_FALSE(ShouldInitializeLegacyLua(true));
 }
 
+TEST(ServerBackedCompatibility, AuthoritativeModeDoesNotProcessLegacyLuaEvents)
+{
+	EXPECT_TRUE(ShouldProcessLegacyLuaEvents(false));
+	EXPECT_FALSE(ShouldProcessLegacyLuaEvents(true));
+}
+
 TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTargets)
 {
 	ServerBackedWorldProjection projection;
