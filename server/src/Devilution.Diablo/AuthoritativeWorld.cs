@@ -105,9 +105,11 @@ public sealed class AuthoritativeWorld
         return warpTargets.Values
             .Where(target => target.SourceLevelId == sourceLevelId
                 && (isAvailable is null || isAvailable(target)))
-            .OrderBy(target => checked(
-                (long)(target.TriggerX - positionX) * (target.TriggerX - positionX)
-                + (long)(target.TriggerY - positionY) * (target.TriggerY - positionY)))
+            .OrderBy(target => {
+                var deltaX = (long)target.TriggerX - positionX;
+                var deltaY = (long)target.TriggerY - positionY;
+                return checked(deltaX * deltaX + deltaY * deltaY);
+            })
             .ThenBy(target => target.WarpId)
             .FirstOrDefault();
     }

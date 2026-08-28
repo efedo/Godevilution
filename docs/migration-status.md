@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Warp trigger lookup now widens coordinate deltas before squaring, preventing
+32-bit wraparound from changing the selected authoritative route for malformed
+caller coordinates.
+
 Authoritative world registration now rejects duplicate source warp trigger
 coordinates instead of silently selecting one route by numeric ID; authored
 level transitions therefore remain unambiguous at content activation time.

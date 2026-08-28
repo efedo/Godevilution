@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make authoritative warp-distance lookup overflow-safe for extreme caller
+  coordinates.
 - Reject duplicate authored warp source triggers so content cannot define
   ambiguous level transitions that differ only by warp ID.
 - Reject partial declared set-level native map bundles instead of silently

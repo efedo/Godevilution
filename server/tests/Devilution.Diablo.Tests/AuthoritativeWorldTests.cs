@@ -375,6 +375,21 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void WarpDistanceDoesNotWrapForExtremeCallerCoordinates()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 8, 8));
+        world.AddLevel(new AuthoritativeLevel(2, 8, 8));
+        world.AddLevel(new AuthoritativeLevel(3, 8, 8));
+        world.AddWarpTarget(new AuthoritativeWarpTarget(7, 1, 0, 0, 2, 1, 1));
+        world.AddWarpTarget(new AuthoritativeWarpTarget(8, 1, 1, 0, 3, 1, 1));
+
+        var nearest = world.FindNearestWarpTarget(1, int.MinValue, 0);
+
+        Assert.Equal(7U, nearest!.WarpId);
+    }
+
+    [Fact]
     public void ValidatesStaticPortalEndpointsAgainstWorldGeometry()
     {
         var world = AuthoritativeWorld.LoadTsv(
