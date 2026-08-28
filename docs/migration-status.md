@@ -8,7 +8,9 @@ branches, snapshots advertise the item-absent branch; the server still selects
 the interacting player's exact branch at `TalkToQuestRequested`. This keeps
 multiplayer target presentation deterministic without leaking item-dependent
 reward state. The Lachdanan boundary is covered by catalog and simulation
-tests; native map geometry remains separately deferred.
+tests, plus a live two-participant Godot/server fixture that composes the
+shipped Hellfire pack and validates the same branch through both protocol
+snapshots. Native map geometry remains separately deferred.
 
 Snotspill's initial unique-monster conversation now enters through the authored
 staged-dialogue catalog instead of the legacy quest-dialogue fallback. The

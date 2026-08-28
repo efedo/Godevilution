@@ -535,6 +535,7 @@ public sealed class LiveAuthoritativeServerTests
                   ],
                   "overlays": [
                     { "table": "quest_states.tsv", "keys": ["quest_id"], "mode": "upsert" },
+                    { "table": "monster_types.tsv", "keys": ["monster_id"], "mode": "upsert" },
                     { "table": "unique_monsters.tsv", "keys": ["identity"], "mode": "upsert" },
                     { "table": "unique_monster_placements.tsv", "keys": ["placement_id"], "mode": "upsert" }
                   ]
@@ -564,6 +565,7 @@ public sealed class LiveAuthoritativeServerTests
             questState[QuestStateColumn("logged")] = "0";
             questState[QuestStateColumn("variable1")] = "0";
             questState[QuestStateColumn("variable2")] = "0";
+            questState[QuestStateColumn("completion_unique_identity")] = "Lachdanan";
             questState[QuestStateColumn("dialogue_completion_variable1")] = "-1";
             questState[QuestStateColumn("completion_unique_identity")] = "FixtureUnique";
             await File.WriteAllLinesAsync(
@@ -669,6 +671,195 @@ public sealed class LiveAuthoritativeServerTests
             Assert.Equal(
                 1,
                 Assert.Single(model.Snapshot.Quests, quest => quest.QuestId == 3008).Variable1);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task GodotTransportUsesTheItemAbsentBranchForSharedLachdananDialogue()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Lachdanan-Dialogue-Overlay-"
+                + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.godot-lachdanan-dialogue",
+                  "version": "1",
+                  "dependencies": ["devilution.hellfire"],
+                  "schema": { "id": "devilution.diablo", "version": "1.442.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.hellfire",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    { "table": "quest_states.tsv", "keys": ["quest_id"], "mode": "upsert" },
+                    { "table": "monster_types.tsv", "keys": ["monster_id"], "mode": "upsert" },
+                    { "table": "unique_monsters.tsv", "keys": ["identity"], "mode": "upsert" },
+                    { "table": "unique_monster_placements.tsv", "keys": ["placement_id"], "mode": "upsert" }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+
+            var repositoryRoot = FindRepositoryRoot();
+            var questStatesPath = Path.Combine(
+                repositoryRoot,
+                "server",
+                "content",
+                "hellfire",
+                "quest_states.tsv");
+            var questStateLines = await File.ReadAllLinesAsync(
+                questStatesPath,
+                TestContext.Current.CancellationToken);
+            var questStateHeader = questStateLines[0].Split('\t');
+            int QuestStateColumn(string name)
+                => Array.IndexOf(questStateHeader, name);
+            var questState = questStateLines
+                .Single(line => line.StartsWith("3005\t", StringComparison.Ordinal))
+                .Split('\t');
+            questState[QuestStateColumn("level_id")] = "14";
+            questState[QuestStateColumn("level_symbol")] = "";
+            questState[QuestStateColumn("initial")] = "0";
+            questState[QuestStateColumn("logged")] = "0";
+            questState[QuestStateColumn("variable1")] = "0";
+            questState[QuestStateColumn("variable2")] = "0";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "quest_states.tsv"),
+                [questStateLines[0], string.Join('\t', questState)],
+                TestContext.Current.CancellationToken);
+
+            var monsterTypesPath = Path.Combine(
+                repositoryRoot,
+                "server",
+                "content",
+                "base",
+                "monster_types.tsv");
+            var monsterTypeLines = await File.ReadAllLinesAsync(
+                monsterTypesPath,
+                TestContext.Current.CancellationToken);
+            var monsterTypeHeader = monsterTypeLines[0].Split('\t');
+            int MonsterTypeColumn(string name)
+                => Array.IndexOf(monsterTypeHeader, name);
+            var monsterType = monsterTypeLines
+                .Single(line => line.StartsWith("1\t", StringComparison.Ordinal))
+                .Split('\t');
+            monsterType[MonsterTypeColumn("monster_id")] = "5000";
+            monsterType[MonsterTypeColumn("monster_symbol")] = "";
+            monsterType[MonsterTypeColumn("name")] = "Lachdanan Fixture";
+            monsterType[MonsterTypeColumn("minimum_dungeon_level")] = "1";
+            monsterType[MonsterTypeColumn("maximum_dungeon_level")] = "16";
+            monsterType[MonsterTypeColumn("native_ai")] = "Lachdanan";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "monster_types.tsv"),
+                [monsterTypeLines[0], string.Join('\t', monsterType)],
+                TestContext.Current.CancellationToken);
+
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "unique_monsters.tsv"),
+                "entity_id\tmonster_id\tmonster_symbol\tidentity\tnative_ai\tspawn_health_percent\tspawn_armor_delta\tspawn_fire_resistance\tspawn_lightning_resistance\tspawn_magic_resistance\tspawn_acid_resistance\n"
+                    + "0\t5000\t\tLachdanan\tLachdanan\tnone\t0\tnone\tnone\tnone\tnone\n",
+                TestContext.Current.CancellationToken);
+
+            var placementsPath = Path.Combine(
+                repositoryRoot,
+                "server",
+                "content",
+                "base",
+                "unique_monster_placements.tsv");
+            var placementLines = await File.ReadAllLinesAsync(
+                placementsPath,
+                TestContext.Current.CancellationToken);
+            var placementHeader = placementLines[0].Split('\t');
+            int PlacementColumn(string name)
+                => Array.IndexOf(placementHeader, name);
+            var placement = placementLines[1].Split('\t');
+            placement[PlacementColumn("unique_identity")] = "Lachdanan";
+            placement[PlacementColumn("monster_id")] = "5000";
+            placement[PlacementColumn("monster_symbol")] = "";
+            placement[PlacementColumn("level_id")] = "14";
+            placement[PlacementColumn("level_symbol")] = "";
+            placement[PlacementColumn("entity_id")] = "100";
+            placement[PlacementColumn("position_x")] = "0";
+            placement[PlacementColumn("position_y")] = "1";
+            placement[PlacementColumn("ignore_dungeon_level_range")] = "true";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "unique_monster_placements.tsv"),
+                [placementLines[0], string.Join('\t', placement)],
+                TestContext.Current.CancellationToken);
+
+            var hellfireRoot = Path.Combine(repositoryRoot, "server", "content", "hellfire");
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                hellfireRoot,
+                overlayRoot,
+                startingLevelOverride: 14,
+                gameMode: "multiplayer");
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-lachdanan-dialogue", requestedClassId: 2));
+            await using var secondClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-lachdanan-dialogue-second", requestedClassId: 0));
+            var model = new AuthoritativeClientModel();
+            var secondModel = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            await secondClient.ConnectAsync(TestContext.Current.CancellationToken);
+            secondModel.Apply(await WaitForMessageAsync(
+                secondClient,
+                message => message.Snapshot is not null));
+            var target = Assert.Single(
+                model.Snapshot!.Monsters,
+                monster => monster.EntityId == 100 && monster.IsUnique);
+            var secondTarget = Assert.Single(
+                secondModel.Snapshot!.Monsters,
+                monster => monster.EntityId == 100 && monster.IsUnique);
+            Assert.Equal(81, target.DialogueMessageId);
+            Assert.Equal(81, secondTarget.DialogueMessageId);
+            Assert.Equal(
+                new AuthoritativeMonsterDialogueTarget(3005, 100),
+                AuthoritativeMonsterDialogueSelector.Select(model.Snapshot, model.PlayerEntityId, 0, 1));
+            Assert.Equal(
+                new AuthoritativeMonsterDialogueTarget(3005, 100),
+                AuthoritativeMonsterDialogueSelector.Select(secondModel.Snapshot, secondModel.PlayerEntityId, 0, 1));
+
+            var sequence = client.Queue(new Command {
+                TalkToQuestRequested = new TalkToQuestRequested {
+                    QuestId = 3005,
+                    TargetEntityId = target.EntityId,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+
+            var dialogue = await WaitForMessageAsync(
+                client,
+                message => message.Events?.Events.Any(gameEvent =>
+                    gameEvent.Dialogue is {
+                        QuestId: 3005,
+                        MessageId: 81,
+                    }) == true);
+            model.Apply(dialogue);
+            Assert.Equal(
+                81,
+                Assert.Single(model.Snapshot.Monsters, monster => monster.EntityId == 100).DialogueMessageId);
+            Assert.Equal(
+                0,
+                Assert.Single(model.Snapshot.Quests, quest => quest.QuestId == 3005).Variable1);
         } finally {
             if (Directory.Exists(overlayRoot))
                 Directory.Delete(overlayRoot, recursive: true);
@@ -5115,6 +5306,7 @@ public sealed class LiveAuthoritativeServerTests
         public static async Task<StartedServer> StartAsync(
             CancellationToken cancellationToken,
             string? contentOverlayRoot = null,
+            string? additionalContentOverlayRoot = null,
             uint? startingGoldOverride = null,
             int? startingLifeOverride = null,
             int? startingManaOverride = null,
@@ -5199,6 +5391,10 @@ public sealed class LiveAuthoritativeServerTests
             if (!string.IsNullOrWhiteSpace(contentOverlayRoot)) {
                 startInfo.ArgumentList.Add("--content-overlay");
                 startInfo.ArgumentList.Add(Path.GetFullPath(contentOverlayRoot));
+            }
+            if (!string.IsNullOrWhiteSpace(additionalContentOverlayRoot)) {
+                startInfo.ArgumentList.Add("--content-overlay");
+                startInfo.ArgumentList.Add(Path.GetFullPath(additionalContentOverlayRoot));
             }
             var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start the authoritative server.");
             var standardError = process.StandardError.ReadToEndAsync(cancellationToken);

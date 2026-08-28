@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a live two-participant Godot/server Lachdanan fixture for shared-safe
+  staged dialogue. The fixture composes the shipped Hellfire pack, validates
+  an explicit Lachdanan target binding, and confirms both multiplayer
+  snapshots and talk commands remain on the item-absent branch until a player
+  supplies the Golden Elixir.
+
 - Make initial staged-dialogue projection safe for shared multiplayer targets.
   Item-gated conversations now advertise the item-absent branch until the
   interacting player submits a validated item-present hand-in, preventing a
