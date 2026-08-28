@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Apply external quest route activation when an authoritative player enters a
   materialized active set-level runtime map, preserving native set-level entry
   markers without treating pre-map variants as visited gameplay levels.
+- Enforce the same active set-level quest-entry rule during simulation ticks and
+  snapshot restoration, closing lifecycle paths that bypass world commands.
 - Share regular and materialized set-level runtime-ID rules across the protocol,
   generic host, Diablo mapper, Godot model, and native compatibility boundary;
   native presentation now decodes runtime IDs to `_setlevels`, while visited

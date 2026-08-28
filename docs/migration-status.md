@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Set-level quest entry state is now enforced across world commands, simulation
+ticks, store/combat entry, and snapshot restoration, so a player already on a
+materialized active set-level cannot bypass native QUEST_INIT activation.
+
 The generic host now rejects duplicate visited-level IDs before snapshot
 serialization, aligning the authoritative boundary with the existing Godot
 and native compatibility validators and preventing ambiguous quest-gate state.

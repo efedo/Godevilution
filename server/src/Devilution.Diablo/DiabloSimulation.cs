@@ -927,6 +927,7 @@ public sealed partial class DiabloSimulation
     private void ConfigurePlayer(AuthoritativePlayerState player)
     {
         ArgumentNullException.ThrowIfNull(player);
+        worldCommands.EnsureLevelEntryState(player.LevelId);
         player.ConfigureMaximumAttribute(CombatRules.MaximumAttribute);
     }
 }

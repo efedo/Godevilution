@@ -92,7 +92,7 @@ public sealed class DiabloWorldCommandProcessor
         ArgumentNullException.ThrowIfNull(intent);
         ArgumentNullException.ThrowIfNull(players);
 
-        ActivateInitialQuestsForLevel(player.LevelId);
+        EnsureLevelEntryState(player.LevelId);
 
         if (intent is DiabloRestartTownIntent)
             return RestartTown(player, appliedTick);
@@ -444,7 +444,7 @@ public sealed class DiabloWorldCommandProcessor
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destination.Value.X;
         player.PositionY = destination.Value.Y;
-        ActivateInitialQuestsForLevel(player.LevelId);
+        EnsureLevelEntryState(player.LevelId);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
@@ -510,7 +510,7 @@ public sealed class DiabloWorldCommandProcessor
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = combatRules.RestartPositionX;
         player.PositionY = combatRules.RestartPositionY;
-        ActivateInitialQuestsForLevel(player.LevelId);
+        EnsureLevelEntryState(player.LevelId);
         player.Life = Math.Min(
             player.LifeMaximum,
             checked(combatRules.RestartLife * combatRules.RestartLifeScale));
@@ -710,7 +710,7 @@ public sealed class DiabloWorldCommandProcessor
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destinationPositionX;
         player.PositionY = destinationPositionY;
-        ActivateInitialQuestsForLevel(player.LevelId);
+        EnsureLevelEntryState(player.LevelId);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
@@ -740,8 +740,8 @@ public sealed class DiabloWorldCommandProcessor
                 or AuthoritativeStatusEffectBehavior.Etherealize);
     }
 
-    /** Activates external QUEST_INIT rows when the authoritative player enters their route level. */
-    private void ActivateInitialQuestsForLevel(uint levelId)
+    /** Ensures external QUEST_INIT rows are active whenever authoritative state observes a route level. */
+    internal void EnsureLevelEntryState(uint levelId)
     {
         if (questTypes is null)
             return;

@@ -1968,6 +1968,97 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void AdvanceTickActivatesQuestWhenPlayerIsAlreadyOnActiveSetLevel()
+    {
+        var activeSetLevel = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(activeSetLevel, 32, 32));
+        var quest = new AuthoritativeQuestState(
+            3013,
+            3,
+            1,
+            active: false,
+            routeActivationVariable1: 1);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Quests = [quest],
+                QuestTypes = new AuthoritativeQuestTypeCatalog([
+                    new AuthoritativeQuestTypeDefinition(
+                        3013,
+                        3,
+                        "The Curse of King Leoric",
+                        3,
+                        -1,
+                        "DTYPE_CATHEDRAL",
+                        1,
+                        false),
+                ]),
+            });
+        var player = CreatePlayer();
+        player.LevelId = activeSetLevel;
+
+        simulation.AdvanceTick(1, [player]);
+
+        Assert.True(quest.Active);
+        Assert.Equal(1, quest.Variable1);
+    }
+
+    [Fact]
+    public void RestoreSnapshotActivatesQuestWhenPlayerIsAlreadyOnActiveSetLevel()
+    {
+        var activeSetLevel = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3013,
+                3,
+                "The Curse of King Leoric",
+                3,
+                -1,
+                "DTYPE_CATHEDRAL",
+                1,
+                false),
+        ]);
+        var sourceWorld = new AuthoritativeWorld();
+        sourceWorld.AddLevel(new AuthoritativeLevel(activeSetLevel, 32, 32));
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = sourceWorld,
+                Quests = [new AuthoritativeQuestState(
+                    3013,
+                    3,
+                    1,
+                    active: false,
+                    routeActivationVariable1: 1)],
+                QuestTypes = questTypes,
+            });
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.LevelId = activeSetLevel;
+        var snapshot = source.CaptureSnapshot(sourcePlayer, 1);
+
+        var destinationWorld = new AuthoritativeWorld();
+        destinationWorld.AddLevel(new AuthoritativeLevel(activeSetLevel, 32, 32));
+        var destination = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = destinationWorld,
+                Quests = [new AuthoritativeQuestState(
+                    3013,
+                    3,
+                    1,
+                    active: false,
+                    routeActivationVariable1: 1)],
+                QuestTypes = questTypes,
+            });
+        var destinationPlayer = CreatePlayer();
+
+        destination.RestoreSnapshot(destinationPlayer, snapshot);
+
+        var quest = Assert.Single(destination.WorldState.Quests.Values);
+        Assert.True(quest.Active);
+        Assert.Equal(1, quest.Variable1);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsInitialAndLoggedQuestState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(
