@@ -566,9 +566,9 @@ therefore remains external validated content rather than executable startup or
 client state. It also adds native-derived level identities 3, 4, 9, and 17
 through 24 at the native 40-by-40 dungeon bounds, so level references can cross
 the same composed-world validation boundary. These rows intentionally provide
-only the current normalized geometry metadata; blocked-cell generation and the
-remaining Hellfire quest behavior/state, monster, and item catalogs remain
-separate migrations.
+only the current normalized geometry metadata; blocked-cell generation,
+remaining Hellfire quest/world behavior, and unported encounter placements
+remain separate migrations.
 The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
 same composition and activation boundary; the complete Hellfire encounter
@@ -584,8 +584,8 @@ from an encounter row. Schema 0.68 adds native acid resistance as the
 `acid_resistance` percentage, preserving the native acid immunity of the four
 Hellfire acid creatures without silently mapping it to another channel.
 The Diablo module now exposes a stable-ID query for validated monster types
-available at a requested dungeon level; procedural map layout and spawn
-placement remain separate migrations. Its server-owned spawn planner can now
+available at a requested dungeon level; native map-layout synthesis and broader
+encounter placement remain separate migrations. Its server-owned spawn planner can now
 turn those candidates and validated level-density metadata into bounded,
 walkable, seed-stable placements. Diablo content activation exposes that
 planner to the server adapter without bypassing the validated content boundary.

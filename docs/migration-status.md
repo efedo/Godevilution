@@ -6514,13 +6514,16 @@ resistance, lifetime, collision, and deterministic projectile state.
 
 ## Near-term priorities
 
-1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,
-   Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
-   Infravision, Search, Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town Portal, Resurrection, Jester, Berserk, Warp, Lightning Wall, and Golem,
-   including remaining class modifiers, scaling, and targeting rules.
-2. Expand external content coverage, including remaining Hellfire monster,
-   quest behavior/state, native-parity procedural level generation, and item metadata and
-   authoritative gameplay definitions.
+1. Expand authoritative combat and spell fidelity for the migrated Firebolt,
+   Holy Bolt, Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain
+   Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball,
+   Lightning, Flash, Healing, Heal Other, Stone Curse, Infravision, Search,
+   Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town
+   Portal, Resurrection, Jester, Berserk, Warp, Lightning Wall, and Golem
+   behaviors, including remaining class modifiers, scaling, and targeting rules.
+2. Expand external content coverage, including remaining Hellfire encounter and
+   world behavior, native-parity procedural level generation, and item metadata
+   and authoritative gameplay definitions.
 3. Grow the Godot client from a protocol demonstration into a complete playable
    presentation client using production assets.
 4. Add the missing replay, reconnect, multiplayer, and long-running soak cases.

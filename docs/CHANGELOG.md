@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Clarify Hellfire migration status: the monster-type catalog is complete,
+  while encounter placement, world behavior, map synthesis, and unported data
+  remain follow-up work.
 - Make shared bounded crawl searches skip overflowing candidate coordinates,
   keeping raw client target cells fail-closed across authoritative placement
   and target-search paths.
