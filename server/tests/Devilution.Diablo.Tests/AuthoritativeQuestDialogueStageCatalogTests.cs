@@ -89,4 +89,74 @@ public sealed class AuthoritativeQuestDialogueStageCatalogTests
         Assert.Equal(AuthoritativeQuestDialogueRewardKind.NormalItem, reward.RewardKind);
         Assert.Equal(2203U, reward.RewardItemId);
     }
+
+    [Fact]
+    public void ItemPresenceBranchesResolveTheMatchingStage()
+    {
+        var catalog = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3005,
+                0,
+                0,
+                81,
+                0,
+                0,
+                RequiredItemId: 2137,
+                RequireItemPresent: false),
+            new(
+                3005,
+                0,
+                0,
+                83,
+                0,
+                0,
+                RequiredItemId: 2137,
+                ConsumeItem: true,
+                CompleteQuest: true,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.UniqueItem,
+                RewardItemLevel: 1,
+                RewardOffsetY: 1,
+                RewardUniqueId: 1008),
+        ]);
+
+        Assert.True(catalog.TryGet(
+            3005,
+            0,
+            0,
+            stage => !stage.RequireItemPresent,
+            out var absent));
+        Assert.Equal(81, absent.MessageId);
+        Assert.True(catalog.TryGet(
+            3005,
+            0,
+            0,
+            stage => stage.RequireItemPresent,
+            out var present));
+        Assert.Equal(83, present.MessageId);
+    }
+
+    [Fact]
+    public void UniqueItemRewardRequiresAnAuthoredKnownUnique()
+    {
+        var catalog = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3005,
+                0,
+                0,
+                83,
+                0,
+                0,
+                RequiredItemId: 2137,
+                ConsumeItem: true,
+                CompleteQuest: true,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.UniqueItem,
+                RewardUniqueId: 1008),
+        ]);
+        var uniqueItems = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1008, "Veil of Steel", 2203, 1, 0, []),
+        ]);
+
+        catalog.ValidateUniqueItems(uniqueItems);
+        Assert.Equal(1008U, Assert.Single(catalog.Definitions).RewardUniqueId);
+    }
 }

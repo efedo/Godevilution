@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.438.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.439.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -647,7 +647,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.437.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.438.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -2984,7 +2984,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.438.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.439.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -3593,7 +3593,7 @@ public sealed class ShippedContentTests
             activation.Simulation.WorldState.Quests[3016].TurnInCompletionRequiredVariable1,
             activation.Simulation.WorldState.Quests[3016].TurnInCompletionVariable1,
             activation.Simulation.WorldState.Quests[3016].TurnInCompletionMessageId));
-        Assert.Equal((81, 2137U, 1008U, 1, 0, 1, 83, true), (
+        Assert.Equal((81, 0U, 0U, 0, 0, 0, 0, false), (
             activation.Simulation.WorldState.Quests[3005].MessageId,
             activation.Simulation.WorldState.Quests[3005].DialogueItemId,
             activation.Simulation.WorldState.Quests[3005].DialogueRewardUniqueId,
@@ -3602,6 +3602,24 @@ public sealed class ShippedContentTests
             activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetY,
             activation.Simulation.WorldState.Quests[3005].DialogueCompletionMessageId,
             activation.Simulation.WorldState.Quests[3005].DialogueCompletionDefeatsTarget));
+        var lachdananStages = activation.QuestDialogueStages!.Definitions
+            .Where(stage => stage.QuestId == 3005)
+            .ToArray();
+        Assert.Equal(2, lachdananStages.Length);
+        Assert.Equal(
+            [(81, false, AuthoritativeQuestDialogueRewardKind.None, 0U),
+             (83, true, AuthoritativeQuestDialogueRewardKind.UniqueItem, 1008U)],
+            lachdananStages.OrderBy(stage => stage.MessageId).Select(stage => (
+                stage.MessageId,
+                stage.RequireItemPresent,
+                stage.RewardKind,
+                stage.RewardUniqueId)));
+        Assert.Equal("TEXT_VEIL9", activation.DialogueMessages!.Definitions
+            .Single(message => message.MessageId == 81)
+            .Symbol);
+        Assert.Equal("TEXT_VEIL11", activation.DialogueMessages.Definitions
+            .Single(message => message.MessageId == 83)
+            .Symbol);
         Assert.Equal((0U, 0, 0, 0, false), (
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemId,
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemLevel,

@@ -1,0 +1,3 @@
+quest_id	quest_symbol	required_variable1	required_variable2	message_id	next_variable1	next_variable2	required_item_id	required_item_symbol	consume_item	complete_quest	reward_kind	reward_item_level	reward_offset_x	reward_offset_y	next_message_id	follow_up_kind	follow_up_amount	reward_item_id	reward_item_symbol	defeat_target	reward_unique_id	reward_unique_symbol	require_item_present
+3005	lachdanan	0	0	81	0	0	2137	golden_elixir	false	false	None	0	0	0	81	None	0	0		false	0		false
+3005	lachdanan	0	0	83	0	0	2137	golden_elixir	true	true	UniqueItem	1	0	1	83	None	0	0		true	1008	veil_of_steel	true

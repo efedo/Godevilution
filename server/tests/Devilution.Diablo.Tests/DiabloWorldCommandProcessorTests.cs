@@ -3223,6 +3223,119 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StagedLachdananDialogueSelectsItemBranchAndSpawnsAuthoredUniqueReward()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1008, "Veil of Steel", 117, 1, 63800, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(117, 1, 63800, 63800, 0, 0, 18, 60, 60, 1, 1, true),
+            new AuthoritativeItemDefinition(2137, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var quest = new AuthoritativeQuestState(
+            3005,
+            14,
+            1,
+            active: false,
+            messageId: 81,
+            completionUniqueIdentity: "Lachdanan");
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 14,
+            unique: true,
+            uniqueIdentity: "Lachdanan");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3005,
+                0,
+                0,
+                81,
+                0,
+                0,
+                RequiredItemId: 2137,
+                NextMessageId: 81,
+                RequireItemPresent: false),
+            new(
+                3005,
+                0,
+                0,
+                83,
+                0,
+                0,
+                RequiredItemId: 2137,
+                ConsumeItem: true,
+                CompleteQuest: true,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.UniqueItem,
+                RewardItemLevel: 1,
+                RewardOffsetY: 1,
+                NextMessageId: 83,
+                DefeatTarget: true,
+                RewardUniqueId: 1008),
+        ]);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questDialogueStages: stages);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 14,
+            entityId: 7,
+            inventoryGrid: Enumerable.Repeat(-1, 40).ToArray());
+        var blocker = CreatePlayer(positionX: 20, positionY: 21, levelId: 14, entityId: 8);
+
+        var initial = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3005, 20),
+            1,
+            [player, blocker]);
+
+        Assert.True(initial.Succeeded, initial.Failure?.ToString());
+        Assert.Equal(81, Assert.Single(initial.Events).MessageId);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Empty(world.WorldItems);
+
+        var elixir = items.Generate(2137, 42);
+        player.Inventory.Add(new OwnedStoreItem(0, 0, elixir.CreateInfo, 0, 0, elixir));
+        player.InventoryGrid[0] = 0;
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTalkToQuestIntent(3005, 20),
+                2,
+                [player, blocker]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(quest.Completed);
+        Assert.Single(player.Inventory);
+        Assert.Empty(world.WorldItems);
+
+        blocker.PositionX = 0;
+        blocker.PositionY = 0;
+        var completed = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3005, 20),
+            3,
+            [player, blocker]);
+
+        Assert.True(completed.Succeeded, completed.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(83, Assert.Single(completed.Events).MessageId);
+        Assert.Equal(83, target.DialogueMessageId);
+        Assert.Equal(0, target.HitPoints);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1008, reward.State.UniqueId);
+        Assert.Equal((20, 21), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void AuthoredDialogueNormalRewardUsesValidatedSpellBookGeneration()
     {
         var items = new AuthoritativeItemCatalog([

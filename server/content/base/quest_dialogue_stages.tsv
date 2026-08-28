@@ -1,10 +1,10 @@
-quest_id	quest_symbol	required_variable1	required_variable2	message_id	next_variable1	next_variable2	required_item_id	required_item_symbol	consume_item	complete_quest	reward_kind	reward_item_level	reward_offset_x	reward_offset_y	next_message_id	follow_up_kind	follow_up_amount	reward_item_id	reward_item_symbol	defeat_target
-3003	gharbads_weak	0	-1	144	1	0	0		false	false	None	0	0	0	0	None	0	0		false
-3003	gharbads_weak	1	-1	145	3	0	0		false	false	RandomUniqueMonsterDrop	0	1	1	0	None	0	0		false
-3003	gharbads_weak	3	-1	146	4	0	0		false	false	None	0	0	0	0	None	0	0		false
-3003	gharbads_weak	4	-1	147	5	0	0		false	false	None	0	0	0	0	None	0	0		false
-3008	ogdens_sign	1	-1	21	2	0	0		false	false	None	0	0	0	22	WorldMutation	9301	0		false
-3008	ogdens_sign	2	-1	23	3	0	2136	tavern_sign	true	true	None	0	0	0	0	WorldMutation	9300	0		false
-3012	warlord_of_blood	0	-1	110	2	0	0		false	false	None	0	0	0	0	None	0	0		false
-3012	warlord_of_blood	2	-1	110	3	0	0		false	false	None	0	0	0	0	None	0	0		false
-3004	zhar_the_mad	0	-1	148	2	0	0		false	false	NormalItem	8	1	1	0	None	0	2203	book_template_level_14	false
+quest_id	quest_symbol	required_variable1	required_variable2	message_id	next_variable1	next_variable2	required_item_id	required_item_symbol	consume_item	complete_quest	reward_kind	reward_item_level	reward_offset_x	reward_offset_y	next_message_id	follow_up_kind	follow_up_amount	reward_item_id	reward_item_symbol	defeat_target	reward_unique_id	reward_unique_symbol	require_item_present
+3003	gharbads_weak	0	-1	144	1	0	0		false	false	None	0	0	0	0	None	0	0		false	0		true
+3003	gharbads_weak	1	-1	145	3	0	0		false	false	RandomUniqueMonsterDrop	0	1	1	0	None	0	0		false	0		true
+3003	gharbads_weak	3	-1	146	4	0	0		false	false	None	0	0	0	0	None	0	0		false	0		true
+3003	gharbads_weak	4	-1	147	5	0	0		false	false	None	0	0	0	0	None	0	0		false	0		true
+3008	ogdens_sign	1	-1	21	2	0	0		false	false	None	0	0	0	22	WorldMutation	9301	0		false	0		true
+3008	ogdens_sign	2	-1	23	3	0	2136	tavern_sign	true	true	None	0	0	0	0	WorldMutation	9300	0		false	0		true
+3012	warlord_of_blood	0	-1	110	2	0	0		false	false	None	0	0	0	0	None	0	0		false	0		true
+3012	warlord_of_blood	2	-1	110	3	0	0		false	false	None	0	0	0	0	None	0	0		false	0		true
+3004	zhar_the_mad	0	-1	148	2	0	0		false	false	NormalItem	8	1	1	0	None	0	2203	book_template_level_14	false	0		true

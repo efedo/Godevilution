@@ -1980,10 +1980,24 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         if (questDialogueStages?.ContainsQuest(questId) == true) {
+            bool MatchesStageItemRequirement(AuthoritativeQuestDialogueStage candidate)
+            {
+                if (candidate.RequiredItemId == 0)
+                    return candidate.RequireItemPresent;
+                if (items is null
+                    || !items.TryGet(candidate.RequiredItemId, out var candidateItem)) {
+                    return false;
+                }
+                var hasItem = player.Inventory.Any(item =>
+                    items.IsStateForDefinition(item.State, candidateItem));
+                return hasItem == candidate.RequireItemPresent;
+            }
+
             if (!questDialogueStages.TryGet(
                     questId,
                     quest.Variable1,
                     quest.Variable2,
+                    MatchesStageItemRequirement,
                     out var stage)) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
@@ -2020,8 +2034,10 @@ public sealed class DiabloWorldCommandProcessor
                         break;
                     }
                 }
-                if (stageInventoryIndex < 0)
+                if (stage.RequireItemPresent && stageInventoryIndex < 0
+                    || !stage.RequireItemPresent && stageInventoryIndex >= 0) {
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                }
             }
 
             if (stageInventoryIndex >= 0 && stage.ConsumeItem) {
@@ -2235,6 +2251,10 @@ public sealed class DiabloWorldCommandProcessor
                     gameMode,
                     stage.RewardItemId)
                 : items.Generate(stage.RewardItemId, itemSeed, stage.RewardItemLevel),
+            AuthoritativeQuestDialogueRewardKind.UniqueItem => items.GenerateUnique(
+                stage.RewardUniqueId,
+                itemSeed,
+                stage.RewardItemLevel),
             _ => throw new InvalidDataException(
                 $"Dialogue stage reward kind '{stage.RewardKind}' is unsupported."),
         };

@@ -1059,11 +1059,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     questTownerInteractions.ValidateWorld(world);
             }
             if (questDialogueStages is not null) {
-                if (questDialogueStages.Definitions.Any(stage => stage.RequiredItemId != 0)) {
+                if (questDialogueStages.Definitions.Any(stage =>
+                        stage.RequiredItemId != 0
+                        || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None)) {
                     if (itemCatalog is null)
                         throw new InvalidDataException(
-                            "Item-gated quest dialogue stages require an active item catalog.");
+                            "Item-gated or item-reward quest dialogue stages require an active item catalog.");
                     questDialogueStages.ValidateItems(itemCatalog);
+                }
+                if (questDialogueStages.Definitions.Any(stage => stage.RewardUniqueId != 0)) {
+                    if (uniqueItems is null)
+                        throw new InvalidDataException(
+                            "Unique-item quest dialogue stages require an active unique-item catalog.");
+                    questDialogueStages.ValidateUniqueItems(uniqueItems);
                 }
                 if (questDialogueStages.Definitions.Any(stage =>
                         stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.WorldMutation)) {

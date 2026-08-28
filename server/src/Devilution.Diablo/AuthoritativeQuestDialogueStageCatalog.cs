@@ -10,6 +10,8 @@ public enum AuthoritativeQuestDialogueRewardKind
     RandomUniqueMonsterDrop,
     /** Generates the authored normal item at the dialogue target's offset. */
     NormalItem,
+    /** Generates the authored unique item at the dialogue target's offset. */
+    UniqueItem,
 }
 
 /** Server-owned follow-up applied after an accepted staged conversation. */
@@ -39,7 +41,9 @@ public sealed record AuthoritativeQuestDialogueStage(
     uint FollowUpAmount = 0,
     int NextMessageId = 0,
     uint RewardItemId = 0,
-    bool DefeatTarget = false);
+    bool DefeatTarget = false,
+    uint RewardUniqueId = 0,
+    bool RequireItemPresent = true);
 
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
@@ -65,7 +69,10 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 || stage.CompleteQuest
                     && (stage.RequiredItemId == 0 || !stage.ConsumeItem)
                 || stage.RequiredItemId == 0 && stage.ConsumeItem
-                || stage.NextVariable1 <= stage.RequiredVariable1
+                || stage.NextVariable1 < stage.RequiredVariable1
+                || stage.NextVariable1 == stage.RequiredVariable1
+                    && !(stage.CompleteQuest
+                        || stage.RequiredItemId != 0 && !stage.RequireItemPresent)
                 || !Enum.IsDefined(stage.RewardKind)
                 || stage.RewardItemLevel < 0
                 || stage.RewardOffsetX is < -16 or > 16
@@ -77,20 +84,37 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                     && stage.FollowUpAmount == 0
                 || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None
                     && stage.RewardKind is not (AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop
-                        or AuthoritativeQuestDialogueRewardKind.NormalItem)
+                        or AuthoritativeQuestDialogueRewardKind.NormalItem
+                        or AuthoritativeQuestDialogueRewardKind.UniqueItem)
                 || stage.RewardKind == AuthoritativeQuestDialogueRewardKind.NormalItem
                     && stage.RewardItemId == 0
                 || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.NormalItem
                     && stage.RewardItemId != 0
+                || stage.RewardKind == AuthoritativeQuestDialogueRewardKind.UniqueItem
+                    && stage.RewardUniqueId == 0
+                || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.UniqueItem
+                    && stage.RewardUniqueId != 0
+                || stage.RewardItemId != 0 && stage.RewardUniqueId != 0
+                || stage.RequiredItemId == 0 && !stage.RequireItemPresent
+                || stage.RequiredItemId == 0 && stage.ConsumeItem
+                || stage.RequiredItemId != 0 && !stage.RequireItemPresent && stage.ConsumeItem
                 || stage.DefeatTarget && !stage.CompleteQuest)) {
             throw new InvalidDataException(
-                "Quest dialogue stages contain invalid values or a non-increasing variable-1 transition.");
+                "Quest dialogue stages contain invalid values, ambiguous gates, or an invalid variable-1 transition.");
         }
         if (values.GroupBy(stage => (
                 stage.QuestId,
                 stage.RequiredVariable1,
                 stage.RequiredVariable2))
-                .Any(group => group.Count() != 1)) {
+                .Any(group => group.Count() > 1
+                    && (group.Count() != 2
+                        || group.Any(stage => stage.RequiredItemId == 0)
+                        || group.Select(stage => (
+                                stage.RequiredItemId,
+                                stage.RequireItemPresent))
+                            .Distinct()
+                            .Count() != 2
+                        || group.Select(stage => stage.RequiredItemId).Distinct().Count() != 1))) {
             throw new InvalidDataException(
                 "Quest dialogue stages contain duplicate quest/variable gates.");
         }
@@ -99,6 +123,8 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
             .OrderBy(stage => stage.QuestId)
             .ThenBy(stage => stage.RequiredVariable1)
             .ThenBy(stage => stage.RequiredVariable2)
+            .ThenBy(stage => stage.RequiredItemId)
+            .ThenByDescending(stage => stage.RequireItemPresent)
             .ThenBy(stage => stage.MessageId)
             .ToArray();
         questIds = this.definitions
@@ -118,11 +144,22 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
         int variable1,
         int variable2,
         out AuthoritativeQuestDialogueStage stage)
+        => TryGet(questId, variable1, variable2, static _ => true, out stage);
+
+    /** Resolves a variable gate while applying an item-presence branch predicate. */
+    public bool TryGet(
+        uint questId,
+        int variable1,
+        int variable2,
+        Func<AuthoritativeQuestDialogueStage, bool> predicate,
+        out AuthoritativeQuestDialogueStage stage)
     {
+        ArgumentNullException.ThrowIfNull(predicate);
         var exact = definitions.FirstOrDefault(candidate =>
             candidate.QuestId == questId
             && candidate.RequiredVariable1 == variable1
-            && candidate.RequiredVariable2 == variable2);
+            && candidate.RequiredVariable2 == variable2
+            && predicate(candidate));
         if (exact is not null) {
             stage = exact;
             return true;
@@ -131,7 +168,8 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
         var wildcard = definitions.FirstOrDefault(candidate =>
             candidate.QuestId == questId
             && candidate.RequiredVariable1 == variable1
-            && candidate.RequiredVariable2 == -1);
+            && candidate.RequiredVariable2 == -1
+            && predicate(candidate));
         if (wildcard is null) {
             stage = null!;
             return false;
@@ -171,7 +209,7 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
         }
     }
 
-    /** Validates item identities used by item-gated dialogue stages. */
+    /** Validates item identities used by item-gated dialogue stages and rewards. */
     public void ValidateItems(AuthoritativeItemCatalog items)
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -184,6 +222,17 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
             if (!items.TryGet(stage.RewardItemId, out _))
                 throw new InvalidDataException(
                     $"Quest dialogue stage for quest {stage.QuestId} references unknown reward item {stage.RewardItemId}.");
+        }
+    }
+
+    /** Validates unique-item identities used by authored staged rewards. */
+    public void ValidateUniqueItems(AuthoritativeUniqueItemCatalog uniqueItems)
+    {
+        ArgumentNullException.ThrowIfNull(uniqueItems);
+        foreach (var stage in definitions.Where(stage => stage.RewardUniqueId != 0)) {
+            if (!uniqueItems.TryGet(stage.RewardUniqueId, out _))
+                throw new InvalidDataException(
+                    $"Quest dialogue stage for quest {stage.QuestId} references unknown unique reward {stage.RewardUniqueId}.");
         }
     }
 
@@ -232,7 +281,13 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                     stableIds,
                     "reward_item_id",
                     "reward_item_symbol"),
-                row.OptionalBoolean("defeat_target"))));
+                row.OptionalBoolean("defeat_target"),
+                AuthoritativeUniqueItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "reward_unique_id",
+                    "reward_unique_symbol"),
+                row.OptionalBoolean("require_item_present", true))));
     }
 
     private static AuthoritativeQuestDialogueRewardKind ParseRewardKind(TsvRow row)

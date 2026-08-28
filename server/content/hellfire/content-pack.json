@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.438.0"
+    "version": "1.439.0"
   },
   "dependencyConstraints": [
     {
@@ -98,6 +98,22 @@
     {
       "table": "quest_towner_interactions.tsv",
       "keys": ["interaction_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "quest_dialogue_stages.tsv",
+      "keys": [
+        "quest_id",
+        "required_variable1",
+        "required_variable2",
+        "required_item_id",
+        "require_item_present"
+      ],
+      "mode": "upsert"
+    },
+    {
+      "table": "dialogue_messages.tsv",
+      "keys": ["message_id"],
       "mode": "upsert"
     },
     {
