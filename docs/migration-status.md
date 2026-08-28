@@ -30,6 +30,13 @@ Content-owned native missile identities now also cross the shared protocol as
 an additive field for monster-magic projectiles. Godot prefers the validated
 identity when selecting presentation, while empty values preserve the enum and
 behavior fallbacks required by older snapshots.
+
+Entering a materialized active set-level now applies the same external
+route-activation metadata as its native `LoadSetMap` counterpart. This keeps
+set-level quest activation and route variable markers server-owned while
+leaving pre-map variants presentation-only and preserving multiplayer quest
+availability gates.
+
 The native compatibility projection now retains and prefers that identity as
 well; malformed or misplaced values fail closed before presentation, while
 empty values retain the legacy native enum/behavior fallback. The connected

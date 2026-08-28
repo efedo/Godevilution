@@ -758,11 +758,17 @@ public sealed class DiabloWorldCommandProcessor
             var routeLevel = gameMode == DiabloGameMode.Multiplayer
                 ? definition.MultiplayerLevel
                 : definition.SinglePlayerLevel;
-            if (routeLevel >= 0 && (uint)routeLevel == levelId) {
-                quest.Active = true;
-                if (quest.RouteActivationVariable1 >= 0)
-                    quest.Variable1 = Math.Max(quest.Variable1, quest.RouteActivationVariable1);
-            }
+            var entersOrdinaryRoute = routeLevel >= 0 && (uint)routeLevel == levelId;
+            var entersActiveSetLevel = definition.SetLevel > 0
+                && AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                    definition.SetLevel,
+                    activeMap: true) == levelId;
+            if (!entersOrdinaryRoute && !entersActiveSetLevel)
+                continue;
+
+            quest.Active = true;
+            if (quest.RouteActivationVariable1 >= 0)
+                quest.Variable1 = Math.Max(quest.Variable1, quest.RouteActivationVariable1);
         }
     }
 
