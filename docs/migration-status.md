@@ -792,6 +792,12 @@ now use the same engine allocator for their runtime IDs. Authored IDs remain
 unchanged, while generated pack starts continue to reserve occupied monster
 and drop identities before native-compatible pack creation.
 
+All authoritative Diablo distance consumers now call the engine-owned widened
+Chebyshev metric directly, including combat targeting, movement and AI,
+projectile resolution, world interactions, and snapshot validation. The old
+combat-target distance facade has been removed; compatibility behavior remains
+in the engine primitive itself.
+
 Connected native spell targeting now also fails closed when a visible player or
 combat-entity cursor target has no authoritative entity projection, preventing
 presentation-only cursor state from becoming an unintended tile cast for both

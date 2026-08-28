@@ -319,12 +319,12 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                     || !level.IsSameTransparencyRegion(anchorX, anchorY, candidate.X, candidate.Y))
                     continue;
                 if (kind == AuthoritativeUniqueMonsterPackKind.Leashed
-                    && (AuthoritativeCombatTarget.ChebyshevDistance(
+                    && (DeterministicGridMetrics.ChebyshevDistance(
                             candidate.X,
                             candidate.Y,
                             anchorX,
                             anchorY) >= AuthoritativeMonsterGroupUnity.ReunionDistance
-                        || AuthoritativeCombatTarget.ChebyshevDistance(
+                        || DeterministicGridMetrics.ChebyshevDistance(
                             candidate.X,
                             candidate.Y,
                             leader.PositionX,

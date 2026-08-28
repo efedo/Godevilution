@@ -1,5 +1,6 @@
 using Devilution.Domain.Protocol;
 using Devilution.Domain.Inventory;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -1133,7 +1134,7 @@ public sealed partial class DiabloSimulation
                             monster.LevelId,
                             monster.FuturePositionX,
                             monster.FuturePositionY)
-                        || AuthoritativeCombatTarget.ChebyshevDistance(
+                        || DeterministicGridMetrics.ChebyshevDistance(
                             monster.FuturePositionX,
                             monster.FuturePositionY,
                             monster.PositionX,

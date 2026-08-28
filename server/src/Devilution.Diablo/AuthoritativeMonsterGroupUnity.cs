@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Native relationship state used by a monster pack's GroupUnity pass. */
@@ -35,7 +37,7 @@ public static class AuthoritativeMonsterGroupUnity
         var futureY = leader.IsMoving ? leader.FuturePositionY : leader.PositionY;
         return leashedMembers.All(member =>
             member.LevelId == leader.LevelId
-            && AuthoritativeCombatTarget.ChebyshevDistance(
+            && DeterministicGridMetrics.ChebyshevDistance(
                 member.PositionX,
                 member.PositionY,
                 futureX,
@@ -63,7 +65,7 @@ public static class AuthoritativeMonsterGroupUnity
         var leaderY = leader.IsMoving ? leader.FuturePositionY : leader.PositionY;
         var memberX = member.IsMoving ? member.FuturePositionX : member.PositionX;
         var memberY = member.IsMoving ? member.FuturePositionY : member.PositionY;
-        return AuthoritativeCombatTarget.ChebyshevDistance(
+        return DeterministicGridMetrics.ChebyshevDistance(
             memberX,
             memberY,
             leaderX,
@@ -125,7 +127,7 @@ public static class AuthoritativeMonsterGroupUnity
             leaderY);
         if (lineIsClear) {
             if (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.Separated
-                && AuthoritativeCombatTarget.ChebyshevDistance(
+                && DeterministicGridMetrics.ChebyshevDistance(
                     monster.PositionX,
                     monster.PositionY,
                     leaderX,

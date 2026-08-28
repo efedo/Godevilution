@@ -47,6 +47,9 @@ All notable changes to this fork are documented below.
 - Migrate native DUN monster hydration and generated unique-monster pack
   materialization to the shared engine allocator, preserving authored IDs,
   generated drop reservations, and deterministic collision handling.
+- Complete the authoritative distance migration: Diablo targeting, movement,
+  AI, projectile, snapshot, and world validation now call the engine metrics
+  primitive directly while removing the redundant combat-target facade.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

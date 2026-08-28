@@ -243,7 +243,7 @@ public sealed class AuthoritativeCombatTarget
         var resolvedFuturePositionX = futurePositionX ?? positionX;
         var resolvedFuturePositionY = futurePositionY ?? positionY;
         if (moving) {
-            if (ChebyshevDistance(
+            if (DeterministicGridMetrics.ChebyshevDistance(
                     positionX,
                     positionY,
                     resolvedFuturePositionX,
@@ -1404,7 +1404,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void BeginMovement(int futurePositionX, int futurePositionY)
     {
-        if (ChebyshevDistance(
+        if (DeterministicGridMetrics.ChebyshevDistance(
                 PositionX,
                 PositionY,
                 futurePositionX,
@@ -1419,18 +1419,6 @@ public sealed class AuthoritativeCombatTarget
             futurePositionY - PositionY);
         IsMoving = true;
     }
-
-    /** Computes a coordinate distance without overflowing on malformed state. */
-    internal static long ChebyshevDistance(
-        int firstX,
-        int firstY,
-        int secondX,
-        int secondY)
-        => DeterministicGridMetrics.ChebyshevDistance(
-            firstX,
-            firstY,
-            secondX,
-            secondY);
 
     /** Stamps legacy or newly admitted movement when it enters a snapshot. */
     internal void EnsureMovementTiming(ulong snapshotTick)

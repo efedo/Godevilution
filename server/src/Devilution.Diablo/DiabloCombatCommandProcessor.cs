@@ -763,7 +763,7 @@ public sealed class DiabloCombatCommandProcessor
             targetY);
         var displacement = DiabloPlayerDirections.GetDisplacement(direction);
         var steps = ranged
-            ? AuthoritativeCombatTarget.ChebyshevDistance(
+            ? DeterministicGridMetrics.ChebyshevDistance(
                 targetX,
                 targetY,
                 player.PositionX,
@@ -807,7 +807,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState target,
         ulong appliedTick)
     {
-        var targetDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+        var targetDistance = DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             player.PositionX,
@@ -1017,7 +1017,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (arrowCount is < 1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(arrowCount));
-        var targetDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+        var targetDistance = DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             player.PositionX,
@@ -1687,7 +1687,7 @@ public sealed class DiabloCombatCommandProcessor
             || (target.LevelId != 0 && target.LevelId != player.LevelId)) {
             return false;
         }
-        var distance = AuthoritativeCombatTarget.ChebyshevDistance(
+        var distance = DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             player.PositionX,
@@ -1760,7 +1760,7 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
-        var distance = AuthoritativeCombatTarget.ChebyshevDistance(
+        var distance = DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             player.PositionX,
@@ -1929,7 +1929,7 @@ public sealed class DiabloCombatCommandProcessor
                 || intent.TargetEntityId == player.EntityId
                 || resurrectionTarget is null
                 || resurrectionTarget.LevelId != player.LevelId
-                || AuthoritativeCombatTarget.ChebyshevDistance(
+                || DeterministicGridMetrics.ChebyshevDistance(
                     resurrectionTarget.PositionX,
                     resurrectionTarget.PositionY,
                     player.PositionX,
@@ -1948,7 +1948,7 @@ public sealed class DiabloCombatCommandProcessor
                 || healOtherTarget is null
                 || healOtherTarget.Life <= 0
                 || healOtherTarget.LevelId != player.LevelId
-                || AuthoritativeCombatTarget.ChebyshevDistance(
+                || DeterministicGridMetrics.ChebyshevDistance(
                     healOtherTarget.PositionX,
                     healOtherTarget.PositionY,
                     player.PositionX,
@@ -2016,7 +2016,7 @@ public sealed class DiabloCombatCommandProcessor
                         || target.SneakHidden
                         || IsQuestDialogueTarget(target)
                         || (target.LevelId != 0 && target.LevelId != player.LevelId)))
-                || AuthoritativeCombatTarget.ChebyshevDistance(
+                || DeterministicGridMetrics.ChebyshevDistance(
                     centerX,
                     centerY,
                     player.PositionX,
@@ -2050,7 +2050,7 @@ public sealed class DiabloCombatCommandProcessor
                     .Where(candidate => candidate.HitPoints > 0
                         && !candidate.SneakHidden
                         && (candidate.LevelId == 0 || candidate.LevelId == player.LevelId)
-                        && AuthoritativeCombatTarget.ChebyshevDistance(
+                        && DeterministicGridMetrics.ChebyshevDistance(
                             candidate.PositionX,
                             candidate.PositionY,
                             centerX,
@@ -2080,7 +2080,7 @@ public sealed class DiabloCombatCommandProcessor
         long projectileTravelTicks = 0;
         if (spell.ProjectileSpeed > 0
             && spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Targeted) {
-            var distance = AuthoritativeCombatTarget.ChebyshevDistance(
+            var distance = DeterministicGridMetrics.ChebyshevDistance(
                 centerX,
                 centerY,
                 player.PositionX,
@@ -2134,7 +2134,7 @@ public sealed class DiabloCombatCommandProcessor
                 || player.LevelId == rules.TownLevelId
                 || intent.TargetEntityId != 0
                 || !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
-                || AuthoritativeCombatTarget.ChebyshevDistance(
+                || DeterministicGridMetrics.ChebyshevDistance(
                     intent.TargetX,
                     intent.TargetY,
                     player.PositionX,
@@ -2167,7 +2167,7 @@ public sealed class DiabloCombatCommandProcessor
         if (isGolem) {
             if (intent.TargetEntityId != 0
                 || !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
-                || AuthoritativeCombatTarget.ChebyshevDistance(
+                || DeterministicGridMetrics.ChebyshevDistance(
                     intent.TargetX,
                     intent.TargetY,
                     player.PositionX,
@@ -5027,12 +5027,12 @@ public sealed class DiabloCombatCommandProcessor
                         or DiabloPlayerCombatMode.Quit)
                     && player.LevelId == target.LevelId
                     && (fallenRallyActive
-                        || AuthoritativeCombatTarget.ChebyshevDistance(
+                        || DeterministicGridMetrics.ChebyshevDistance(
                             player.PositionX,
                             player.PositionY,
                             target.PositionX,
                             target.PositionY) <= target.AggroRange))
-                .OrderBy(player => AuthoritativeCombatTarget.ChebyshevDistance(
+                .OrderBy(player => DeterministicGridMetrics.ChebyshevDistance(
                     player.PositionX,
                     player.PositionY,
                     target.PositionX,
@@ -5045,7 +5045,7 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             }
 
-            var victimDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+            var victimDistance = DeterministicGridMetrics.ChebyshevDistance(
                 victim.PositionX,
                 victim.PositionY,
                 target.PositionX,
@@ -5386,7 +5386,7 @@ public sealed class DiabloCombatCommandProcessor
                         candidate.Y,
                         players,
                         target.EntityId)
-                    || AuthoritativeCombatTarget.ChebyshevDistance(
+                    || DeterministicGridMetrics.ChebyshevDistance(
                         victim.PositionX,
                         victim.PositionY,
                         candidate.X,
@@ -6453,7 +6453,7 @@ public sealed class DiabloCombatCommandProcessor
             world.Corpses.TryGetValue(target.ScavengerCorpseEntityId, out corpse);
         if (corpse is null
             || (corpse.LevelId != 0 && corpse.LevelId != target.LevelId)
-            || AuthoritativeCombatTarget.ChebyshevDistance(
+            || DeterministicGridMetrics.ChebyshevDistance(
                 corpse.PositionX,
                 corpse.PositionY,
                 target.PositionX,
@@ -7820,12 +7820,12 @@ public sealed class DiabloCombatCommandProcessor
                 candidate.Y,
                 players,
                 monster.EntityId))
-            .Where(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .Where(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 player.PositionX,
                 player.PositionY,
                 candidate.X,
                 candidate.Y) >= currentDistance)
-            .OrderByDescending(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .OrderByDescending(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 player.PositionX,
                 player.PositionY,
                 candidate.X,
@@ -8627,12 +8627,12 @@ public sealed class DiabloCombatCommandProcessor
                 candidate.Y,
                 players,
                 monster.EntityId))
-            .Where(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .Where(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 player.PositionX,
                 player.PositionY,
                 candidate.X,
                 candidate.Y) >= currentDistance)
-            .OrderByDescending(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .OrderByDescending(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 player.PositionX,
                 player.PositionY,
                 candidate.X,
@@ -10602,7 +10602,7 @@ public sealed class DiabloCombatCommandProcessor
                     monster.PositionY,
                     candidate.X,
                     candidate.Y))
-            .OrderBy(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .OrderBy(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 candidate.X,
                 candidate.Y,
                 monster.PositionX,
@@ -10765,7 +10765,7 @@ public sealed class DiabloCombatCommandProcessor
                 && !candidate.IsPlayerMinion
                 && candidate.HitPoints > 0
                 && (candidate.LevelId == 0 || candidate.LevelId == minion.LevelId))
-            .OrderBy(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .OrderBy(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 candidate.PositionX,
                 candidate.PositionY,
                 minion.PositionX,
@@ -10785,7 +10785,7 @@ public sealed class DiabloCombatCommandProcessor
             minion.PositionY,
             enemy.PositionX,
             enemy.PositionY));
-        var distance = ClampNativeDistance(AuthoritativeCombatTarget.ChebyshevDistance(
+        var distance = ClampNativeDistance(DeterministicGridMetrics.ChebyshevDistance(
             enemy.PositionX,
             enemy.PositionY,
             minion.PositionX,
@@ -11124,7 +11124,7 @@ public sealed class DiabloCombatCommandProcessor
                                  .Where(target => target.HitPoints > 0
                                      && (target.LevelId == 0
                                          || target.LevelId == projectile.LevelId)
-                                      && AuthoritativeCombatTarget.ChebyshevDistance(
+                                      && DeterministicGridMetrics.ChebyshevDistance(
                                           target.PositionX,
                                           target.PositionY,
                                           projectile.TargetX,
@@ -12229,7 +12229,7 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerEtherealized(target))
             return false;
 
-        var distance = ClampNativeDistance(AuthoritativeCombatTarget.ChebyshevDistance(
+        var distance = ClampNativeDistance(DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             monster.PositionX,
@@ -13132,12 +13132,12 @@ public sealed class DiabloCombatCommandProcessor
         var target = world.CombatTargets.Values
             .Where(candidate => candidate.HitPointsQ6 > 0
                 && (candidate.LevelId == 0 || candidate.LevelId == projectile.LevelId)
-                && AuthoritativeCombatTarget.ChebyshevDistance(
+                && DeterministicGridMetrics.ChebyshevDistance(
                     candidate.PositionX,
                     candidate.PositionY,
                     projectile.PositionX,
                     projectile.PositionY) <= 19)
-            .OrderBy(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+            .OrderBy(candidate => DeterministicGridMetrics.ChebyshevDistance(
                 candidate.PositionX,
                 candidate.PositionY,
                 projectile.PositionX,
@@ -14013,7 +14013,7 @@ public sealed class DiabloCombatCommandProcessor
                 targetX,
                 targetY))
             return false;
-        if (AuthoritativeCombatTarget.ChebyshevDistance(
+        if (DeterministicGridMetrics.ChebyshevDistance(
                 targetX,
                 targetY,
                 controller.PositionX,
@@ -14047,12 +14047,12 @@ public sealed class DiabloCombatCommandProcessor
             .Where(target => target.HitPointsQ6 > 0
                 && !target.IsPlayerMinion
                 && (target.LevelId == 0 || target.LevelId == projectile.LevelId)
-                && AuthoritativeCombatTarget.ChebyshevDistance(
+                && DeterministicGridMetrics.ChebyshevDistance(
                     target.PositionX,
                     target.PositionY,
                     projectile.PositionX,
                     projectile.PositionY) <= 19)
-            .OrderBy(target => AuthoritativeCombatTarget.ChebyshevDistance(
+            .OrderBy(target => DeterministicGridMetrics.ChebyshevDistance(
                 target.PositionX,
                 target.PositionY,
                 projectile.PositionX,
@@ -14486,7 +14486,7 @@ public sealed class DiabloCombatCommandProcessor
         projectile.PositionY = finalTile.Y;
 
         var possibleVisitedTiles = projectile.VelocityX == 0 || projectile.VelocityY == 0
-            ? AuthoritativeCombatTarget.ChebyshevDistance(
+            ? DeterministicGridMetrics.ChebyshevDistance(
                 previousX,
                 previousY,
                 finalTile.X,
@@ -14785,7 +14785,7 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
-        var distance = ClampNativeDistance(AuthoritativeCombatTarget.ChebyshevDistance(
+        var distance = ClampNativeDistance(DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             monster.PositionX,
@@ -14874,7 +14874,7 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerProtectedByFlash(target))
             return false;
 
-        var distance = checked((int)AuthoritativeCombatTarget.ChebyshevDistance(
+        var distance = checked((int)DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             monster.PositionX,
@@ -16365,7 +16365,7 @@ public sealed class DiabloCombatCommandProcessor
                              && tuning.HasValue
                              && candidate.HitPointsQ6 > 0
                              && (candidate.LevelId == 0 || candidate.LevelId == deceased.LevelId)
-                              && AuthoritativeCombatTarget.ChebyshevDistance(
+                              && DeterministicGridMetrics.ChebyshevDistance(
                                   candidate.PositionX,
                                   candidate.PositionY,
                                   deceased.PositionX,
@@ -16395,7 +16395,7 @@ public sealed class DiabloCombatCommandProcessor
                          UsesNativeAi(candidate, "Fallen")
                          && candidate.HitPointsQ6 > 0
                          && (candidate.LevelId == 0 || candidate.LevelId == leader.LevelId)
-                          && AuthoritativeCombatTarget.ChebyshevDistance(
+                          && DeterministicGridMetrics.ChebyshevDistance(
                               candidate.PositionX,
                               candidate.PositionY,
                               leader.PositionX,

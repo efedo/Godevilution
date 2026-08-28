@@ -632,7 +632,7 @@ public sealed class DiabloWorldCommandProcessor
             intent.TargetY,
             participants,
             player.EntityId);
-        var targetDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+        var targetDistance = DeterministicGridMetrics.ChebyshevDistance(
             intent.TargetX,
             intent.TargetY,
             player.PositionX,
@@ -800,7 +800,7 @@ public sealed class DiabloWorldCommandProcessor
         if (!world.WorldItems.TryGetValue(itemEntityId, out var item)
             || item.LevelId != player.LevelId
             || (requireAdjacent
-                && AuthoritativeCombatTarget.ChebyshevDistance(
+                && DeterministicGridMetrics.ChebyshevDistance(
                     item.PositionX,
                     item.PositionY,
                     player.PositionX,
@@ -1150,7 +1150,7 @@ public sealed class DiabloWorldCommandProcessor
         var originY = player.FuturePositionY;
         if (!world.ContainsPosition(player.LevelId, targetX, targetY))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        if (AuthoritativeCombatTarget.ChebyshevDistance(
+        if (DeterministicGridMetrics.ChebyshevDistance(
                 targetX,
                 targetY,
                 originX,
@@ -1244,7 +1244,7 @@ public sealed class DiabloWorldCommandProcessor
             || @object.Activated
             || @object.LevelId != player.LevelId
             || (requireAdjacent
-                && AuthoritativeCombatTarget.ChebyshevDistance(
+                && DeterministicGridMetrics.ChebyshevDistance(
                     @object.PositionX,
                     @object.PositionY,
                     player.PositionX,
@@ -1849,7 +1849,7 @@ public sealed class DiabloWorldCommandProcessor
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
             || !@object.TrapArmed
             || @object.LevelId != player.LevelId
-            || AuthoritativeCombatTarget.ChebyshevDistance(
+            || DeterministicGridMetrics.ChebyshevDistance(
                 @object.PositionX,
                 @object.PositionY,
                 player.PositionX,
@@ -1934,7 +1934,7 @@ public sealed class DiabloWorldCommandProcessor
                 target.UniqueIdentity,
                 quest.CompletionUniqueIdentity,
                 StringComparison.Ordinal)
-            || AuthoritativeCombatTarget.ChebyshevDistance(
+            || DeterministicGridMetrics.ChebyshevDistance(
                 target.PositionX,
                 target.PositionY,
                 player.PositionX,
@@ -2284,7 +2284,7 @@ public sealed class DiabloWorldCommandProcessor
                 continue;
             hasActiveInteraction = true;
             if (interaction.LevelId != player.LevelId
-                || AuthoritativeCombatTarget.ChebyshevDistance(
+                || DeterministicGridMetrics.ChebyshevDistance(
                     interaction.PositionX,
                     interaction.PositionY,
                     player.PositionX,
@@ -2447,7 +2447,7 @@ public sealed class DiabloWorldCommandProcessor
             || (quest.TurnInBlockedVisitedLevel != 0
                 && player.HasVisitedLevel(quest.TurnInBlockedVisitedLevel))
             || quest.TurnInLevelId != player.LevelId
-            || AuthoritativeCombatTarget.ChebyshevDistance(
+            || DeterministicGridMetrics.ChebyshevDistance(
                 quest.TurnInPositionX,
                 quest.TurnInPositionY,
                 player.PositionX,
