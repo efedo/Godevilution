@@ -322,6 +322,11 @@ public sealed class DiabloWorldState
         int endX,
         int endY)
     {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
         if (World is not null) {
             var level = projectedLevels.TryGetValue(levelId, out var projected)
                 ? projected

@@ -857,6 +857,15 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void FallbackWorldLineOfSightRejectsEndpointsOutsideTheLevelBeforeArithmetic()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 8, fallbackHeight: 8);
+
+        Assert.False(world.HasLineOfSight(1, int.MinValue, 0, 0, 0));
+        Assert.False(world.HasLineOfSight(1, 0, 0, int.MaxValue, 0));
+    }
+
+    [Fact]
     public void NativeTransparencyRegionsMatchNativePlacementSemantics()
     {
         var level = new AuthoritativeLevel(

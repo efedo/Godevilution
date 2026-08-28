@@ -2,9 +2,10 @@
 
 Status date: 2026-08-27
 
-Authoritative generic line-of-sight checks now reject endpoints outside the
-validated level before calculating coordinate deltas, preventing malformed
-remote targets from overflowing arithmetic or causing an unbounded grid walk.
+Authoritative generic and fallback line-of-sight checks now reject endpoints
+outside the validated level before calculating coordinate deltas, preventing
+malformed remote targets from overflowing arithmetic or causing an unbounded
+grid walk in either projected or compatibility geometry.
 
 Warp trigger lookup now widens coordinate deltas before squaring, preventing
 32-bit wraparound from changing the selected authoritative route for malformed

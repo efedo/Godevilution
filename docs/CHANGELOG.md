@@ -4,9 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Make authoritative line-of-sight checks fail closed for out-of-level
-  endpoints before coordinate arithmetic, preventing malformed targets from
-  overflowing deltas or forcing an unbounded grid traversal.
+- Make authoritative projected and fallback line-of-sight checks fail closed
+  for out-of-level endpoints before coordinate arithmetic, preventing malformed
+  targets from overflowing deltas or forcing an unbounded grid traversal.
 - Make authoritative warp-distance lookup overflow-safe for extreme caller
   coordinates.
 - Reject duplicate authored warp source triggers so content cannot define
