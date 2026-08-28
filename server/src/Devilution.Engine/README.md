@@ -23,6 +23,8 @@ The engine currently owns:
   and per-session transient-event queues;
 - bounded deterministic grid navigation with caller-supplied walkability and
   occupancy predicates, so game modules do not own reusable path-search logic;
+- the native-compatible deterministic legacy LCG, exposed as a reusable
+  primitive while Diablo retains its source-compatible `DiabloRandom` facade;
 - serialized participant operations, exactly-once deterministic tick advancement,
   module-supplied lifecycle hooks, and directed event routing.
 

@@ -1,59 +1,31 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
-/** Native-compatible Borland 32-bit LCG used by authoritative Diablo gameplay. */
-public sealed class DiabloRandom
+/** Backward-compatible Diablo facade over the engine's native-compatible LCG. */
+public sealed class DiabloRandom : DeterministicLegacyRandom
 {
-    private uint state;
-
     public DiabloRandom(uint seed)
+        : base(seed)
     {
-        state = seed;
     }
 
-    public uint State => state;
+    public new uint State => base.State;
 
-    public void Restore(uint restoredState)
-    {
-        state = restoredState;
-    }
+    public new void Restore(uint restoredState) => base.Restore(restoredState);
 
-    public uint NextUInt32()
-    {
-        state = unchecked(0x015A4E35U * state + 1U);
-        return state;
-    }
+    public new uint NextUInt32() => base.NextUInt32();
 
-    public int AdvanceRndSeed()
-    {
-        var seed = unchecked((int)NextUInt32());
-        return seed == int.MinValue ? int.MinValue : Math.Abs(seed);
-    }
+    public new int AdvanceRndSeed() => base.AdvanceRndSeed();
 
-    public int GenerateRnd(int limit)
-    {
-        if (limit <= 0)
-            return 0;
-        var seed = AdvanceRndSeed();
-        return (limit <= 0x7FFF ? seed >> 16 : seed) % limit;
-    }
+    public new int GenerateRnd(int limit) => base.GenerateRnd(limit);
 
-    public int RandomIntLessThan(int limit) => Math.Max(GenerateRnd(limit), 0);
+    public new int RandomIntLessThan(int limit) => base.RandomIntLessThan(limit);
 
-    public int RandomIntBetween(int minimum, int maximum, bool halfOpen = false)
-    {
-        if (maximum < minimum || (halfOpen && maximum == minimum))
-            throw new ArgumentOutOfRangeException(nameof(maximum));
-        var width = checked(maximum - minimum + (halfOpen ? 0 : 1));
-        return checked(minimum + GenerateRnd(width));
-    }
+    public new int RandomIntBetween(int minimum, int maximum, bool halfOpen = false)
+        => base.RandomIntBetween(minimum, maximum, halfOpen);
 
-    public bool FlipCoin(uint frequency) => GenerateRnd(unchecked((int)frequency)) == 0;
+    public new bool FlipCoin(uint frequency) => base.FlipCoin(frequency);
 
-    public void Discard(int count)
-    {
-        if (count < 0)
-            throw new ArgumentOutOfRangeException(nameof(count));
-        for (var index = 0; index < count; index++)
-            NextUInt32();
-    }
+    public new void Discard(int count) => base.Discard(count);
 }

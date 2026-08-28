@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the native-compatible deterministic LCG into the engine-neutral
+  assembly; the Diablo module retains its source-compatible `DiabloRandom`
+  facade while other authoritative modules can reuse the same parity primitive.
 - Extend widened authoritative coordinate arithmetic through monster aggro,
   retreat, scavenger/fallen radius, minion, projectile, and native-vision
   targeting paths; malformed extreme coordinates no longer wrap during AI
