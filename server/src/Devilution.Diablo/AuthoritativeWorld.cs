@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 using Devilution.Data;
@@ -395,30 +397,12 @@ public sealed class AuthoritativeLevel
         if (!ContainsPosition(startX, startY) || !ContainsPosition(endX, endY))
             return false;
 
-        var x = startX;
-        var y = startY;
-        var deltaX = Math.Abs(endX - startX);
-        var deltaY = Math.Abs(endY - startY);
-        var stepX = startX < endX ? 1 : -1;
-        var stepY = startY < endY ? 1 : -1;
-        var error = deltaX - deltaY;
-
-        while (true) {
-            if ((x != startX || y != startY) && (x != endX || y != endY) && !IsWalkable(x, y))
-                return false;
-            if (x == endX && y == endY)
-                return true;
-
-            var doubledError = 2 * error;
-            if (doubledError > -deltaY) {
-                error -= deltaY;
-                x += stepX;
-            }
-            if (doubledError < deltaX) {
-                error += deltaX;
-                y += stepY;
-            }
-        }
+        return DeterministicGridLineTraversal.HasLineOfSight(
+            startX,
+            startY,
+            endX,
+            endY,
+            (x, y) => !IsWalkable(x, y));
     }
 
     /** Native DoVision-style line check, including diagonal corner blocking. */

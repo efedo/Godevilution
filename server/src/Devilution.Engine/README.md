@@ -31,6 +31,8 @@ The engine currently owns:
 - overflow-safe Chebyshev grid-distance metrics shared by bounded navigation
   and authoritative gameplay, while Diablo retains its compatibility entry
   point;
+- deterministic overflow-safe Bresenham line traversal shared by movement and
+  missile line-of-sight checks, with a bounded step limit for malformed inputs;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;

@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Module-owned authoritative world state and deterministic navigation rules. */
@@ -334,29 +336,12 @@ public sealed class DiabloWorldState
             return level?.HasLineOfSight(startX, startY, endX, endY) ?? false;
         }
 
-        var x = startX;
-        var y = startY;
-        var deltaX = Math.Abs(endX - startX);
-        var deltaY = Math.Abs(endY - startY);
-        var stepX = startX < endX ? 1 : -1;
-        var stepY = startY < endY ? 1 : -1;
-        var error = deltaX - deltaY;
-        while (true) {
-            if ((x != startX || y != startY) && (x != endX || y != endY)
-                && !IsWalkable(levelId, x, y))
-                return false;
-            if (x == endX && y == endY)
-                return true;
-            var doubledError = 2 * error;
-            if (doubledError > -deltaY) {
-                error -= deltaY;
-                x += stepX;
-            }
-            if (doubledError < deltaX) {
-                error += deltaX;
-                y += stepY;
-            }
-        }
+        return DeterministicGridLineTraversal.HasLineOfSight(
+            startX,
+            startY,
+            endX,
+            endY,
+            (x, y) => !IsWalkable(levelId, x, y));
     }
 
     private void RebuildProjectedGeometry()
@@ -664,30 +649,12 @@ public sealed class DiabloWorldState
             return false;
         }
 
-        var x = startX;
-        var y = startY;
-        var deltaX = Math.Abs(endX - startX);
-        var deltaY = Math.Abs(endY - startY);
-        var stepX = startX < endX ? 1 : -1;
-        var stepY = startY < endY ? 1 : -1;
-        var error = deltaX - deltaY;
-        while (true) {
-            if ((x != startX || y != startY) && (x != endX || y != endY)
-                && IsMissileGeometryBlocked(levelId, x, y)) {
-                return false;
-            }
-            if (x == endX && y == endY)
-                return true;
-            var doubledError = 2 * error;
-            if (doubledError > -deltaY) {
-                error -= deltaY;
-                x += stepX;
-            }
-            if (doubledError < deltaX) {
-                error += deltaX;
-                y += stepY;
-            }
-        }
+        return DeterministicGridLineTraversal.HasLineOfSight(
+            startX,
+            startY,
+            endX,
+            endY,
+            (x, y) => IsMissileGeometryBlocked(levelId, x, y));
     }
 
     public bool IsOccupied(

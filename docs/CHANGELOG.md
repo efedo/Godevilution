@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract deterministic overflow-safe Bresenham line traversal into the
+  engine-neutral assembly; authoritative movement and missile line-of-sight
+  checks now share one endpoint and interior-cell contract, while malformed
+  extreme-coordinate requests fail closed before an unbounded walk.
 - Extract overflow-safe Chebyshev grid-distance metrics into the
   engine-neutral assembly; bounded navigation and Diablo's authoritative
   targeting callers now share the same native-compatible extreme-coordinate
