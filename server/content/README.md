@@ -110,7 +110,8 @@ active `native_missile_sprites.tsv` catalog during activation.
 When `native_missiles.tsv` or `monster_missiles.tsv` mappings are active, the
 complete 68-identity native missile namespace and its sprite catalog are
 required; activation does not silently skip either reference check when a
-table is missing or partial.
+table is missing or partial. The sprite catalog must retain all 46 base
+`missile_sprites.tsv` identities; Hellfire may add its 13 overlay identities.
 
 `classes.tsv` defines the native-compatible class IDs `0` through `5`, their
 base-game or Hellfire availability, exactly one active default, class flags,

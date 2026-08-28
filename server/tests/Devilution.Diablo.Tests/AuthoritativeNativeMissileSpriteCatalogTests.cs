@@ -60,4 +60,19 @@ public sealed class AuthoritativeNativeMissileSpriteCatalogTests
                 header + $"Fireball\t96\t16\tfireba\t1\tUnknown\t{values}\t{values}\n"));
         Assert.Contains("unknown flag", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void DirectCompatibilityCatalogsMayRemainPartialUntilExplicitValidation()
+    {
+        var values = Enumerable.Repeat(1, 16).ToArray();
+        var catalog = new AuthoritativeNativeMissileSpriteCatalog([
+            new("Fireball", 96, 16, "fireba", 16, "", values, values),
+        ]);
+
+        Assert.Single(catalog.Definitions);
+        var exception = Assert.Throws<InvalidDataException>(
+            catalog.ValidateRequiredNativeNamespace);
+
+        Assert.Contains("Acid", exception.Message, StringComparison.Ordinal);
+    }
 }

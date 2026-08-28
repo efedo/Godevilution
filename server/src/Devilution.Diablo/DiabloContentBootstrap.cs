@@ -309,6 +309,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "native_missiles.tsv requires native_missile_sprites.tsv during production activation.");
         nativeMissiles?.ValidateCompleteNativeNamespace();
+        nativeMissileSprites?.ValidateRequiredNativeNamespace();
         if (nativeMissiles is not null && nativeMissileSprites is not null)
             nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
         var nativeMisc = content.TryGetTable(

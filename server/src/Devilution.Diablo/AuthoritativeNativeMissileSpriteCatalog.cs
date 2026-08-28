@@ -17,6 +17,56 @@ public sealed record AuthoritativeNativeMissileSpriteDefinition(
 public sealed class AuthoritativeNativeMissileSpriteCatalog
 {
     public const int NativeDirectionCount = 16;
+    private static readonly IReadOnlySet<string> RequiredNativeSpriteIds = new HashSet<string>(
+        [
+            "Acid",
+            "AcidPuddle",
+            "AcidSplat",
+            "ApocalypseBoom",
+            "Arrow",
+            "BigExplosion",
+            "BloodHit",
+            "BloodStar",
+            "BloodStarBlue",
+            "BloodStarBlueExplosion",
+            "BloodStarExplosion",
+            "BloodStarRed",
+            "BloodStarRedExplosion",
+            "BloodStarYellow",
+            "BloodStarYellowExplosion",
+            "BoneHit",
+            "BoneSpirit",
+            "ChargedBolt",
+            "DiabloApocalypseBoom",
+            "DoomSerpents",
+            "Elemental",
+            "Etherealize",
+            "FireArrow",
+            "FireArrowExplosion",
+            "Fireball",
+            "FireWall",
+            "FlashBottom",
+            "FlashTop",
+            "Golem",
+            "Guardian",
+            "HolyBolt",
+            "HolyBoltExplosion",
+            "Inferno",
+            "Krull",
+            "Lightning",
+            "LightningArrow",
+            "MagmaBall",
+            "MagmaBallExplosion",
+            "ManaShield",
+            "MetalHit",
+            "RedPortal",
+            "Resurrect",
+            "Spurt",
+            "StoneCurseShatter",
+            "ThinLightning",
+            "TownPortal",
+        ],
+        StringComparer.Ordinal);
     private static readonly IReadOnlySet<string> KnownFlags = new HashSet<string>(
         ["MonsterOwned", "NotAnimated"],
         StringComparer.Ordinal);
@@ -57,6 +107,27 @@ public sealed class AuthoritativeNativeMissileSpriteCatalog
     }
 
     public IReadOnlyList<AuthoritativeNativeMissileSpriteDefinition> Definitions => definitions;
+
+    /**
+     * Requires every base native `missile_sprites.tsv` identity. Variant packs
+     * may add presentation identities through ordered overlays.
+     */
+    public void ValidateRequiredNativeNamespace()
+    {
+        var actual = definitions
+            .Select(definition => definition.MissileId)
+            .ToHashSet(StringComparer.Ordinal);
+        var missing = RequiredNativeSpriteIds
+            .Except(actual, StringComparer.Ordinal)
+            .OrderBy(missileId => missileId, StringComparer.Ordinal)
+            .ToArray();
+        if (missing.Length == 0)
+            return;
+
+        throw new InvalidDataException(
+            "The active native missile sprite namespace is missing required base "
+            + $"missile_sprites.tsv identities: {string.Join(", ", missing)}.");
+    }
 
     public bool TryGet(
         string missileId,

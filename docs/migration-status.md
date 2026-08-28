@@ -28,7 +28,9 @@ retain the embedded native defaults when constructing catalogs directly.
 Production activation now requires the complete external native missile
 namespace (all 68 native `misdat.tsv` identities) and its sprite catalog as a
 pair whenever native missile or monster-missile mappings are present; partial
-namespaces and missing tables no longer silently skip reference validation.
+namespaces, partial base sprite catalogs, and missing tables no longer silently
+skip reference validation. Hellfire overlays may add their 13 variant sprite
+identities on top of the required 46 base definitions.
 
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative

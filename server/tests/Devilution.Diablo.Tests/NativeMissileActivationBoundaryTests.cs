@@ -55,6 +55,30 @@ public sealed class NativeMissileActivationBoundaryTests
     }
 
     [Fact]
+    public void RejectsPartialNativeMissileSpriteNamespaceDuringProductionActivation()
+    {
+        var basePack = LoadBasePack();
+        var nativeSprites = basePack.Tables.Single(
+            table => table.SourcePath == "native_missile_sprites.tsv");
+        var partialContent = string.Join(
+            '\n',
+            nativeSprites.ToCanonicalTsv()
+                .Split('\n')
+                .Where(line => !line.StartsWith("Fireball\t", StringComparison.Ordinal)));
+        var pack = ReplaceBaseTable(
+            basePack,
+            nativeSprites.SourcePath,
+            TsvTable.Parse(nativeSprites.SourcePath, partialContent));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("partial-native-sprites", "1", [pack]))));
+
+        Assert.Contains("required base missile_sprites.tsv identities", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Fireball", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DirectCompatibilityCatalogsMayRemainPartialUntilExplicitValidation()
     {
         var catalog = new AuthoritativeNativeMissileCatalog([
