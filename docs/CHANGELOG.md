@@ -59,9 +59,9 @@ All notable changes to this fork are documented below.
   portal, resurrection, drop, and multi-target searches share overflow-safe
   nearest-cell behavior.
 - Extract native-compatible eight-way direction math into the engine-neutral
-  assembly; Diablo retains its source-compatible direction facade while
-  authoritative callers share overflow-safe coordinate-to-facing selection,
-  rotation, and adjacent-cell displacement.
+  assembly; Diablo retains its public direction enum while authoritative
+  callers use the engine primitive directly for overflow-safe coordinate-to-
+  facing selection, rotation, and adjacent-cell displacement.
 - Preserve authoritative object presentation lifecycle metadata across content,
   snapshots, saves, hashes, protocol projections, native compatibility, and
   Godot visibility. Objects remain one-shot server interactions while authored

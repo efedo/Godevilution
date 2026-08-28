@@ -756,12 +756,13 @@ public sealed class DiabloCombatCommandProcessor
         bool ranged,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        var direction = DiabloPlayerDirections.Toward(
+        var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
             targetX,
             targetY);
-        var displacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var displacement = DeterministicGridDirections.GetDisplacement(
+            (DeterministicGridDirection)direction);
         var steps = ranged
             ? DeterministicGridMetrics.ChebyshevDistance(
                 targetX,
@@ -812,12 +813,13 @@ public sealed class DiabloCombatCommandProcessor
             target.PositionY,
             player.PositionX,
             player.PositionY);
-        var direction = DiabloPlayerDirections.Toward(
+        var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
             target.PositionX,
             target.PositionY);
-        var directionDisplacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var directionDisplacement = DeterministicGridDirections.GetDisplacement(
+            (DeterministicGridDirection)direction);
         var perpendicular = (-directionDisplacement.Y, directionDisplacement.X);
         var targetProxy = CreatePlayerCombatTargetProxy(target);
         var arrowCount = HasUsableEquipmentFlag(
@@ -1022,12 +1024,13 @@ public sealed class DiabloCombatCommandProcessor
             target.PositionY,
             player.PositionX,
             player.PositionY);
-        var direction = DiabloPlayerDirections.Toward(
+        var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
             target.PositionX,
             target.PositionY);
-        var directionDisplacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var directionDisplacement = DeterministicGridDirections.GetDisplacement(
+            (DeterministicGridDirection)direction);
         var perpendicular = (-directionDisplacement.Y, directionDisplacement.X);
         for (var arrowIndex = 0; arrowIndex < arrowCount; arrowIndex++) {
             var damageQ6 = ResolvePlayerAttackDamageQ6(
@@ -1340,12 +1343,13 @@ public sealed class DiabloCombatCommandProcessor
         if (!monster.HasKnockback || player.Life <= 0)
             return;
 
-        var direction = DiabloPlayerDirections.Toward(
+        var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY);
-        var displacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var displacement = DeterministicGridDirections.GetDisplacement(
+            (DeterministicGridDirection)direction);
         var destinationX = checked(player.PositionX + displacement.X);
         var destinationY = checked(player.PositionY + displacement.Y);
         if (!world.IsWalkable(monster.LevelId, destinationX, destinationY)
@@ -10618,12 +10622,13 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        var direction = DiabloPlayerDirections.Toward(
+        var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY);
-        var displacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var displacement = DeterministicGridDirections.GetDisplacement(
+            (DeterministicGridDirection)direction);
         var destinationX = checked(player.PositionX + displacement.X);
         var destinationY = checked(player.PositionY + displacement.Y);
         if (!world.IsWalkable(monster.LevelId, destinationX, destinationY)
@@ -13148,7 +13153,8 @@ public sealed class DiabloCombatCommandProcessor
         var targetX = target?.PositionX ?? projectile.PositionX;
         var targetY = target?.PositionY ?? projectile.PositionY;
         if (target is null && owner is not null) {
-            var displacement = DiabloPlayerDirections.GetDisplacement(owner.FacingDirection);
+            var displacement = DeterministicGridDirections.GetDisplacement(
+                (DeterministicGridDirection)owner.FacingDirection);
             targetX += displacement.X;
             targetY += displacement.Y;
         }
@@ -14061,10 +14067,12 @@ public sealed class DiabloCombatCommandProcessor
             .FirstOrDefault();
         var targetX = nextMonster?.PositionX
             ?? checked(projectile.PositionX
-                + DiabloPlayerDirections.GetDisplacement(owner.FacingDirection).X);
+                + DeterministicGridDirections.GetDisplacement(
+                    (DeterministicGridDirection)owner.FacingDirection).X);
         var targetY = nextMonster?.PositionY
             ?? checked(projectile.PositionY
-                + DiabloPlayerDirections.GetDisplacement(owner.FacingDirection).Y);
+                + DeterministicGridDirections.GetDisplacement(
+                    (DeterministicGridDirection)owner.FacingDirection).Y);
         var direction = GetDirection(
             projectile.PositionX,
             projectile.PositionY,
@@ -15654,8 +15662,8 @@ public sealed class DiabloCombatCommandProcessor
             var item = equipment.FirstOrDefault(candidate => candidate.Slot == slot);
             if (item is null)
                 continue;
-            var preferredDirection = DiabloPlayerDirections.RotateLeft(
-                player.FacingDirection,
+            var preferredDirection = (DiabloPlayerDirection)DeterministicGridDirections.RotateLeft(
+                (DeterministicGridDirection)player.FacingDirection,
                 checked((int)slot + 1));
             var position = FindDeathDropPosition(player, players, preferredDirection);
             if (!position.HasValue)
@@ -15788,8 +15796,8 @@ public sealed class DiabloCombatCommandProcessor
         DiabloPlayerDirection? preferredDirection = null)
     {
         if (preferredDirection.HasValue) {
-            var displacement = DiabloPlayerDirections.GetDisplacement(
-                preferredDirection.Value);
+            var displacement = DeterministicGridDirections.GetDisplacement(
+                (DeterministicGridDirection)preferredDirection.Value);
             var preferredX = checked(player.PositionX + displacement.X);
             var preferredY = checked(player.PositionY + displacement.Y);
             if (IsDeathDropPositionAvailable(player, players, preferredX, preferredY))
@@ -15852,7 +15860,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (targetX == player.PositionX && targetY == player.PositionY)
             return;
-        player.FacingDirection = DiabloPlayerDirections.Toward(
+        player.FacingDirection = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
             targetX,

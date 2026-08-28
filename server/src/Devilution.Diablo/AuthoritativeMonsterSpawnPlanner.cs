@@ -294,8 +294,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             members.Clear();
             var occupied = reserved.ToHashSet();
             var anchorDirection = random.Next(8);
-            var anchorDisplacement = DiabloPlayerDirections.GetDisplacement(
-                (DiabloPlayerDirection)anchorDirection);
+            var anchorDisplacement = DeterministicGridDirections.GetDisplacement(
+                (DeterministicGridDirection)anchorDirection);
             var anchorX = checked(leader.PositionX + anchorDisplacement.X);
             var anchorY = checked(leader.PositionY + anchorDisplacement.Y);
             var cursorX = anchorX;
@@ -304,10 +304,10 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             for (var placementAttempt = 0;
                 members.Count < packSize && placementAttempt < 100;
                 placementAttempt++) {
-                var xDisplacement = DiabloPlayerDirections.GetDisplacement(
-                    (DiabloPlayerDirection)random.Next(8));
-                var yDisplacement = DiabloPlayerDirections.GetDisplacement(
-                    (DiabloPlayerDirection)random.Next(8));
+                var xDisplacement = DeterministicGridDirections.GetDisplacement(
+                    (DeterministicGridDirection)random.Next(8));
+                var yDisplacement = DeterministicGridDirections.GetDisplacement(
+                    (DeterministicGridDirection)random.Next(8));
                 var candidate = (
                     X: checked(cursorX + xDisplacement.X),
                     Y: checked(cursorY + yDisplacement.Y));

@@ -569,7 +569,7 @@ public sealed class DiabloWorldCommandProcessor
         if (useNativePlayerActionTiming) {
             if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-            player.FacingDirection = DiabloPlayerDirections.FromAdjacentStep(
+            player.FacingDirection = (DiabloPlayerDirection)DeterministicGridDirections.FromAdjacentStep(
                 intent.DirectionX,
                 intent.DirectionY);
             var animation = playerAnimations!.GetRequired(player.CharacterClassId);
@@ -589,7 +589,7 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Accepted;
         }
 
-        player.FacingDirection = DiabloPlayerDirections.FromAdjacentStep(
+        player.FacingDirection = (DiabloPlayerDirection)DeterministicGridDirections.FromAdjacentStep(
             intent.DirectionX,
             intent.DirectionY);
         player.PositionX = targetX;

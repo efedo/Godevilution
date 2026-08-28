@@ -33,32 +33,6 @@ public enum DiabloPlayerDirection
     SouthEast = 7,
 }
 
-/** Exact native direction conversion and rotation used by authoritative player rules. */
-internal static class DiabloPlayerDirections
-{
-    public static DiabloPlayerDirection FromAdjacentStep(int directionX, int directionY)
-        => (DiabloPlayerDirection)DeterministicGridDirections.FromAdjacentStep(directionX, directionY);
-
-    public static DiabloPlayerDirection Toward(
-        int startX,
-        int startY,
-        int destinationX,
-        int destinationY)
-        => (DiabloPlayerDirection)DeterministicGridDirections.Toward(
-            startX,
-            startY,
-            destinationX,
-            destinationY);
-
-    public static DiabloPlayerDirection RotateLeft(DiabloPlayerDirection direction, int steps = 1)
-        => (DiabloPlayerDirection)DeterministicGridDirections.RotateLeft(
-            (DeterministicGridDirection)direction,
-            steps);
-
-    public static (int X, int Y) GetDisplacement(DiabloPlayerDirection direction)
-        => DeterministicGridDirections.GetDisplacement((DeterministicGridDirection)direction);
-}
-
 /** Protocol-independent authoritative inventory item owned by a player. */
 public sealed record OwnedStoreItem(
     uint StoreId,

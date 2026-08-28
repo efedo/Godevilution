@@ -1492,10 +1492,10 @@ overlay headers remain compatible.
 
 Native-compatible eight-way direction sectors and coordinate-to-facing selection
 are now implemented by the engine-neutral deterministic grid primitive; the
-Diablo module keeps its existing direction enum and facade for source
-compatibility, and combat now consumes the same engine-owned displacement
-sequence and sector selection while extreme coordinate differences are
-evaluated without integer wraparound.
+Diablo module keeps its existing public direction enum for source compatibility,
+and authoritative combat, world movement, and monster placement now consume the
+engine-owned displacement sequence and sector selection while extreme coordinate
+differences are evaluated without integer wraparound.
 
 The bounded native crawl order is likewise engine-neutral: Diablo's existing
 `DiabloCrawl` facade delegates nearest-cell searches and displacement enumeration
