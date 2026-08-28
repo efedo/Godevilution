@@ -94,6 +94,10 @@ The server owns:
 - objects, quests, portals, level occupancy, and persistent world state;
 - saves, validation, migrations, active content, and gameplay modules.
 
+The live host also reports the active combined ruleset identity and the count of
+retired generations awaiting disposal. These diagnostics are operational only;
+they do not expose game-specific state or alter the protocol contract.
+
 The host persists the server/world seed beside authoritative saves. A restart
 reuses that seed before content activation, so generated level geometry remains
 identical when saved participants are restored; an explicitly supplied

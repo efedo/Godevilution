@@ -10,6 +10,9 @@ handshake identity publication, and explicit verified module packages. The
 leased adapter wrapper uses a read/write operation barrier: replacement waits
 for in-flight operations, migrates initialized sessions before publication,
 and disposes drained game targets through an injected host policy.
+It exposes the active combined ruleset identity and the number of retired
+generations still awaiting disposal so operators can verify replacement health
+without inspecting game-specific state.
 The wrapper is itself disposable; server shutdown drains any remaining retired
 generation, disposes the active target, and releases its operation barrier.
 

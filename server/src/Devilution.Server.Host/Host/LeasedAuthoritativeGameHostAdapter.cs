@@ -27,6 +27,12 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
         this.disposeAdapter = disposeAdapter ?? DisposeAdapter;
     }
 
+    /** Identity hash of the generation that will serve the next operation. */
+    public string ActiveRulesetIdentityHash => rulesets.Active.Identity.CombinedSha256;
+
+    /** Replaced generations still awaiting explicit disposal by the host. */
+    public int RetiredRulesetCount => rulesets.RetiredActivationCount;
+
     /**
      * Replaces the active ruleset after migrating every named session through
      * the existing save contract. The write barrier prevents host operations

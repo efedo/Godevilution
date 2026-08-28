@@ -132,6 +132,14 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     public int Port => ((IPEndPoint?)listener.LocalEndpoint)?.Port ?? 0;
 
+    /** Combined identity hash advertised by the current handshake. */
+    public string ActiveRulesetIdentityHash => handshake.Identity.RulesetIdentityHash;
+
+    /** Replaced generations awaiting host disposal, if live reload is enabled. */
+    public int RetiredRulesetCount => gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter
+        ? leasedAdapter.RetiredRulesetCount
+        : 0;
+
     /** Returns initialized sessions in deterministic identity order. */
     public IReadOnlyList<string> ActiveSessionIds => sessionsByToken.Values
         .Where(session => session.ParticipantInitialized)

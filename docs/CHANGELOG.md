@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expose active ruleset identity and retired-generation counts through the
+  generic host and operator `status` command, making live replacement and safe
+  retirement observable without coupling the host to Diablo.
 - Add optional validated `object_presentations.tsv` sidecars so content packs
   can author activated-object visibility and native animation frames without
   changing the legacy `objects.tsv` header or breaking older overlays.

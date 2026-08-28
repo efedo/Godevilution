@@ -203,6 +203,8 @@ public sealed class RulesetLeaseHostAdapterTests
 
         Assert.True(result.Succeeded);
         Assert.True(initial.Disposed);
+        Assert.Equal(result.Active.Identity.CombinedSha256, adapter.ActiveRulesetIdentityHash);
+        Assert.Equal(0, adapter.RetiredRulesetCount);
         Assert.Equal(result.Active.Identity.CombinedSha256, handshake.Identity.ContentManifestHash);
         Assert.Equal(result.Active.Identity.CombinedSha256, handshake.Identity.RulesetIdentityHash);
     }

@@ -398,6 +398,8 @@ public sealed class AuthoritativeTcpServerTests
             participantInitializer: initializer);
         server.Start();
         var cancellationToken = TestContext.Current.CancellationToken;
+        Assert.Equal(handshake.Identity.RulesetIdentityHash, server.ActiveRulesetIdentityHash);
+        Assert.Equal(0, server.RetiredRulesetCount);
         string resumeToken;
 
         using (var firstClient = new TcpClient()) {
@@ -866,6 +868,8 @@ public sealed class AuthoritativeTcpServerTests
             Assert.Equal(
                 reload.Active.Identity.CombinedSha256,
                 handshake.Identity.RulesetIdentityHash);
+            Assert.Equal(handshake.Identity.RulesetIdentityHash, server.ActiveRulesetIdentityHash);
+            Assert.Equal(0, server.RetiredRulesetCount);
 
             await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
                 CommandBatch = new CommandBatch {

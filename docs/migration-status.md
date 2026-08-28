@@ -6,6 +6,11 @@ The multiplayer death-suppression replay checkpoint now matches the canonical
 snapshot hash produced after the accumulated additive snapshot fields; the
 complete replay fixture class validates all 76 cases.
 
+The generic host now exposes the active combined ruleset identity and retired
+generation count through the live server status surface. Operators can verify
+that a replacement was published and that old generations were drained without
+reaching into game-specific adapter state.
+
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative
 targeting paths; the Diablo compatibility entry point preserves the same

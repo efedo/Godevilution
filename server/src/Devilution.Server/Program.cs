@@ -188,6 +188,8 @@ internal static class Program
             case ServerOperatorCommandKind.Status:
                 Console.WriteLine($"Active sessions: {server.ActiveSessionIds.Count}");
                 Console.WriteLine($"Listening: {server.Port}");
+                Console.WriteLine($"Ruleset identity: {server.ActiveRulesetIdentityHash}");
+                Console.WriteLine($"Retired rulesets awaiting disposal: {server.RetiredRulesetCount}");
                 break;
             case ServerOperatorCommandKind.Reload:
                 await ReloadRulesetAsync(
