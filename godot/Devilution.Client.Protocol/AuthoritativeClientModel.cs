@@ -314,11 +314,60 @@ public sealed class AuthoritativeClientModel
                 skippedAuthoritativeMove = true;
                 continue;
             }
-            (x, y) = (x + move.DirectionX, y + move.DirectionY);
+            var nextX = (long)x + move.DirectionX;
+            var nextY = (long)y + move.DirectionY;
+            if (nextX < int.MinValue
+                || nextX > int.MaxValue
+                || nextY < int.MinValue
+                || nextY > int.MaxValue
+                || !IsProjectedMoveAvailable(Snapshot, player, (int)nextX, (int)nextY))
+                break;
+            (x, y) = ((int)nextX, (int)nextY);
         }
 
         IsCorrectingPosition = x != player.PositionX || y != player.PositionY;
         PredictedPlayerPosition = IsCorrectingPosition ? new ClientPosition(x, y) : null;
+    }
+
+    /**
+     * Applies only collision facts already present in the authoritative
+     * snapshot. Prediction never invents local geometry or entity state; when
+     * either is absent, the queued move remains eligible for presentation.
+     */
+    private static bool IsProjectedMoveAvailable(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        int targetX,
+        int targetY)
+    {
+        var level = snapshot.LevelGeometry
+            .FirstOrDefault(candidate => candidate.LevelId == player.LevelId);
+        if (level is { Width: > 0, Height: > 0 }) {
+            if (targetX < 0
+                || targetY < 0
+                || targetX >= level.Width
+                || targetY >= level.Height)
+                return false;
+            var targetCell = (long)targetY * level.Width + targetX;
+            if (targetCell > int.MaxValue || level.BlockedCells.Contains((int)targetCell))
+                return false;
+        }
+
+        if (snapshot.Players.Any(other =>
+                other.EntityId != player.EntityId
+                && other.Life > 0
+                && other.LevelId == player.LevelId
+                && AuthoritativePlayerPositionProjection.Resolve(other)
+                    == new ClientPosition(targetX, targetY)))
+            return false;
+
+        return !snapshot.Monsters.Any(monster =>
+            monster.Alive
+            && monster.LevelId == player.LevelId
+            && ((monster.PositionX == targetX && monster.PositionY == targetY)
+                || (monster.Moving
+                    && monster.FuturePositionX == targetX
+                    && monster.FuturePositionY == targetY)));
     }
 
     private static void ValidatePlayerAction(Snapshot snapshot, PlayerSnapshot player)

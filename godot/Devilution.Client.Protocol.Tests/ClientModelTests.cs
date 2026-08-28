@@ -2815,6 +2815,98 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void StopsPredictionAtKnownBlockedCell()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 2,
+                    Width = 4,
+                    Height = 4,
+                    BlockedCells = { 1 * 4 + 2 },
+                },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 2,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+        model.TrackPredictedMove(2, 1, 0);
+
+        Assert.Equal(new ClientPosition(1, 1), model.PredictedPlayerPosition);
+        Assert.True(model.IsCorrectingPosition);
+    }
+
+    [Fact]
+    public void StopsPredictionAtKnownMonsterOccupancy()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 2,
+                    HitPoints = 10,
+                    MaxHitPoints = 10,
+                    Alive = true,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+        model.TrackPredictedMove(2, 0, 1);
+
+        Assert.Equal(new ClientPosition(1, 1), model.PredictedPlayerPosition);
+        Assert.True(model.IsCorrectingPosition);
+    }
+
+    [Fact]
+    public void StopsPredictionAtKnownRemotePlayerOccupancy()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+                new PlayerSnapshot {
+                    EntityId = 8,
+                    LevelId = 1,
+                    Life = 10,
+                    LifeMaximum = 10,
+                    PositionX = 1,
+                    PositionY = 1,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
+    }
+
+    [Fact]
     public void ClearsPendingMovementPredictionWhenTheAuthoritativePlayerChangesLevel()
     {
         var model = new AuthoritativeClientModel();

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make Godot local movement prediction collision-aware using only authoritative
+  geometry, monster occupancy, and remote-player occupancy already present in
+  the latest snapshot; unknown collision data remains non-blocking for
+  compatibility.
 - Add a repository-level content-contract check that derives the active and
   previous additive schema from the Diablo module, validates first-party
   manifests, and catches stale contract text in the content and migration docs

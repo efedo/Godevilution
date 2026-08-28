@@ -2,6 +2,12 @@
 
 Status date: 2026-08-28
 
+Godot local movement prediction now stops at authoritative blocked cells and
+known live monster or remote-player occupancy while retaining bounded queued
+input for cells whose collision state is not yet projected. This keeps the
+presentation responsive without allowing the client to speculate through
+server-known blockers.
+
 The native compatibility client now retains the server's content and ruleset
 identity from complete authoritative snapshots and reuses refreshed values on
 reconnect, so live ruleset replacement is visible to both presentation clients
