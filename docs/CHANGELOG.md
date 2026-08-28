@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Run spawned live authoritative servers from the same build configuration as
+  the Godot protocol test assembly, preventing stale Debug binaries from
+  making Release boundary tests intermittently miss gameplay projections.
 - Refresh all live Godot overlay fixtures to the active `1.431.0` content
   schema and add coverage for rejecting mixed current/previous schema packs
   during manifest composition; clarify the exact-schema composition rule in

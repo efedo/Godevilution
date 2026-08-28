@@ -4762,6 +4762,15 @@ public sealed class LiveAuthoritativeServerTests
         throw new DirectoryNotFoundException("Could not locate the Godevilution repository root.");
     }
 
+    private static string ResolveBuildConfiguration()
+    {
+        var outputDirectory = new DirectoryInfo(AppContext.BaseDirectory.TrimEnd(
+            Path.DirectorySeparatorChar,
+            Path.AltDirectorySeparatorChar));
+        var configuration = outputDirectory.Parent?.Name;
+        return string.IsNullOrWhiteSpace(configuration) ? "Debug" : configuration;
+    }
+
     private sealed class StartedServer : IDisposable
     {
         private readonly Process process;
@@ -4820,6 +4829,8 @@ public sealed class LiveAuthoritativeServerTests
             startInfo.ArgumentList.Add("run");
             startInfo.ArgumentList.Add("--project");
             startInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "server/src/Devilution.Server/Devilution.Server.csproj"));
+            startInfo.ArgumentList.Add("--configuration");
+            startInfo.ArgumentList.Add(ResolveBuildConfiguration());
             startInfo.ArgumentList.Add("--no-build");
             var artifactsPath = Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH");
             if (!string.IsNullOrWhiteSpace(artifactsPath)) {

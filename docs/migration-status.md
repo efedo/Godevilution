@@ -2,6 +2,10 @@
 
 Status date: 2026-08-28
 
+Godot live protocol tests now launch the authoritative server from the same
+Debug or Release output selected for the test assembly, avoiding stale
+configuration binaries during boundary verification.
+
 Live Godot overlay fixtures now declare the active `1.431.0` content schema,
 matching the shipped base pack. Manifest composition continues to reject a
 mixed current/previous schema set before module activation; the Diablo module
