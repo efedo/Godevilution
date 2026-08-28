@@ -30,6 +30,10 @@ reintroduce embedded Lua into the authoritative client.
 Legacy `StoreOpened` callbacks use the same policy: authoritative store
 presentation does not enter the Lua event bus, while native compatibility mode
 continues to deliver the callback for existing mods.
+The remaining native lifecycle callbacks (`GameDataReloaded`, `GameStart`, and
+`GameDrawComplete`) use that same policy. Authoritative mode therefore does not
+emit Lua-facing reload, startup, or per-frame callbacks; native compatibility
+mode continues to emit them for existing mods.
 The authoritative Data runtime now provides validated ordered content overlays
 and transactional activation, so new server data extensions no longer require
 Lua reload hooks. Native `ModManager` now owns archive selection, sound

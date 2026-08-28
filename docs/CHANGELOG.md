@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind
   the centralized Lua lifecycle policy.
+- Keep authoritative data reload, game-start, and frame-complete lifecycle
+  emissions out of the legacy Lua event bus while preserving those callbacks in
+  compatibility mode.
 
 - Add the cross-language `gameplay-stable-item-drop.json` replay fixture.
   Native and managed runners now parse and execute explicit

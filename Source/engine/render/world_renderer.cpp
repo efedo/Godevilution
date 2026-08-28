@@ -90,6 +90,7 @@
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
+#include "network/protocol/legacy_lua_policy.hpp"
 #endif
 
 namespace devilution {
@@ -2015,7 +2016,10 @@ void DrawAndBlit()
 
 	DrawFPS(out);
 
-	CurrentGameEventBus.GameDrawComplete();
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (ShouldProcessLegacyLuaEvents(authoritative::GetServerBackedRuntime().IsAuthoritativeMode()))
+#endif
+		CurrentGameEventBus.GameDrawComplete();
 
 	DrawMain(hgt, drawInfoBox, drawHealth, drawMana, drawBelt, drawControlButtons);
 

@@ -2098,6 +2098,9 @@ scaled hit points), not only the client's difficulty label.
 - Authoritative store presentation now skips the legacy `StoreOpened` Lua event
   callback; explicit compatibility launches continue to deliver it for legacy
   mods.
+- Authoritative data reload, game-start, and frame-complete event-bus emissions
+  now skip legacy Lua callbacks; explicit compatibility launches continue to
+  deliver those lifecycle events for legacy mods.
 - Snapshot and live world-item hydration now also restores omitted authored
   presentation names and native cursor graphics without replacing explicit
   unique-item overrides.

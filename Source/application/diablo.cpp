@@ -1110,7 +1110,8 @@ void RunGameLoop(interface_mode uMsg)
 	gbGameLoopStartup = true;
 	nthread_ignore_mutex(false);
 
-	CurrentGameEventBus.GameStart();
+	if (ShouldProcessLegacyLuaEvents(authoritative::GetServerBackedRuntime().IsAuthoritativeMode()))
+		CurrentGameEventBus.GameStart();
 #ifdef GPERF_HEAP_FIRST_GAME_ITERATION
 	unsigned run_game_iteration = 0;
 #endif
