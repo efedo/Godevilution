@@ -49,7 +49,8 @@ public sealed class AuthoritativeWorldObject
         int activatedAnimationFrame = 0,
         AuthoritativeObjectRewardOriginKind rewardOriginKind
             = AuthoritativeObjectRewardOriginKind.Object,
-        int rewardSetLevelId = -1)
+        int rewardSetLevelId = -1,
+        int dialogueMessageId = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -59,6 +60,8 @@ public sealed class AuthoritativeWorldObject
             throw new ArgumentOutOfRangeException(nameof(animationFrame));
         if (activatedAnimationFrame is < 0 or > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(activatedAnimationFrame));
+        if (dialogueMessageId is < 0 or > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(dialogueMessageId));
         EntityId = entityId;
         ObjectId = objectId;
         LevelId = levelId;
@@ -161,6 +164,7 @@ public sealed class AuthoritativeWorldObject
         HideWhenActivated = hideWhenActivated;
         AnimationFrame = animationFrame;
         ActivatedAnimationFrame = activatedAnimationFrame;
+        DialogueMessageId = dialogueMessageId;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -237,6 +241,9 @@ public sealed class AuthoritativeWorldObject
     /** Native-compatible animation frame selected when the object activates. */
     public int ActivatedAnimationFrame { get; set; }
 
+    /** Optional authored dialogue emitted when this object is activated. */
+    public int DialogueMessageId { get; set; }
+
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
     public bool MissilePassable { get; set; }
@@ -296,7 +303,8 @@ public sealed class AuthoritativeWorldObject
             AnimationFrame,
             ActivatedAnimationFrame,
             RewardOriginKind,
-            RewardSetLevelId);
+            RewardSetLevelId,
+            DialogueMessageId);
     }
 
     /** Returns whether another object has the same authoritative authored state. */
@@ -338,6 +346,7 @@ public sealed class AuthoritativeWorldObject
             && HideWhenActivated == other.HideWhenActivated
             && AnimationFrame == other.AnimationFrame
             && ActivatedAnimationFrame == other.ActivatedAnimationFrame
+            && DialogueMessageId == other.DialogueMessageId
             && MissilePassable == other.MissilePassable
             && Breakable == other.Breakable
             && Destroyed == other.Destroyed
@@ -623,7 +632,8 @@ public static class AuthoritativeWorldObjectCatalog
                     row.OptionalInt32("animation_frame"),
                     row.OptionalInt32("activated_animation_frame"),
                     ParseRewardOriginKind(row),
-                    ParseRewardSetLevelId(row, stableIds)),
+                    ParseRewardSetLevelId(row, stableIds),
+                    row.OptionalInt32("dialogue_message_id")),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();

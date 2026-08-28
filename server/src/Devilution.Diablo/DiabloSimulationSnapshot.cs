@@ -342,6 +342,9 @@ public sealed record DiabloObjectState(
 
     /** Native-compatible animation frame selected when the object activates. */
     public int ActivatedAnimationFrame { get; init; }
+
+    /** Optional authored dialogue emitted when this object is activated. */
+    public int DialogueMessageId { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -761,6 +764,7 @@ public sealed partial class DiabloSimulation
                     HideWhenActivated = @object.HideWhenActivated,
                     AnimationFrame = @object.AnimationFrame,
                     ActivatedAnimationFrame = @object.ActivatedAnimationFrame,
+                    DialogueMessageId = @object.DialogueMessageId,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -2544,7 +2548,8 @@ public sealed partial class DiabloSimulation
                     @object.AnimationFrame,
                     @object.ActivatedAnimationFrame,
                     @object.RewardOriginKind,
-                    @object.RewardSetLevelId));
+                    @object.RewardSetLevelId,
+                    @object.DialogueMessageId));
             }
         }
     }

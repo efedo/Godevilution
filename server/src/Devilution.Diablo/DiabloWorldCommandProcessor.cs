@@ -1309,6 +1309,11 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         ApplyQuestTransition(@object);
+        if (@object.DialogueMessageId != 0
+            && @object.QuestId != 0
+            && world.Quests.TryGetValue(@object.QuestId, out var dialogueQuest)) {
+            dialogueQuest.MessageId = @object.DialogueMessageId;
+        }
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
             world.ApplyWorldMutation((uint)@object.EffectAmount);
             ApplyAuthoredObjectFollowUp(@object, player, participants);
@@ -1323,7 +1328,7 @@ public sealed class DiabloWorldCommandProcessor
             SpawnObjectSpellProjectile(@object, player);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
             || @object.EffectAmount <= 0)
-            return DiabloWorldIntentResult.Accepted;
+            return CreateObjectDialogueResult(@object, player);
 
         switch (@object.EffectKind) {
         case AuthoritativeObjectEffectKind.Heal:
@@ -1369,8 +1374,25 @@ public sealed class DiabloWorldCommandProcessor
                 player.EntityId,
                 @object.EffectAmount));
         default:
-            return DiabloWorldIntentResult.Accepted;
+            return CreateObjectDialogueResult(@object, player);
         }
+    }
+
+    private static DiabloWorldIntentResult CreateObjectDialogueResult(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
+    {
+        return @object.DialogueMessageId == 0
+            ? DiabloWorldIntentResult.Accepted
+            : DiabloWorldIntentResult.AcceptedWith(
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Dialogue,
+                    player.EntityId,
+                    @object.EntityId,
+                    0) {
+                    MessageId = @object.DialogueMessageId,
+                    QuestId = @object.QuestId,
+                });
     }
 
     private void ApplyGrantedSpellLevel(

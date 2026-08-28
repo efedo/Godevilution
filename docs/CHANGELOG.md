@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the Halls of the Blind, Gateway of Blood, and Warlord steel-tome
+  activation dialogue through authored object metadata. The server now records
+  each native quest message and emits it as a server-owned dialogue event;
+  native-DUN placement and map mutations remain deferred until their licensed
+  geometry is available. schema `1.440.0` is current with `1.439.0` retained
+  for additive compatibility.
+
 - Externalize Hellfire Lachdanan's opening and Golden Elixir hand-in through
   paired item-presence dialogue stages. The server now owns the Veil of Steel
   unique reward, placement validation, quest completion, and target defeat;

@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.439.0` schema in
+It declares its identity and `devilution.diablo@1.440.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.438.0` schema so existing manifest-based packs remain
+previous additive `1.439.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1722,6 +1722,12 @@ single variable gate to model native opening and item hand-in conversations.
 The Hellfire Lachdanan conversation now uses these server-owned stages and
 retains its Golden Elixir gate, Veil of Steel reward, and native defeat boundary.
 
+Schema 1.440 adds the optional `dialogue_message_id` column to `objects.tsv`.
+When a quest object activates, the server records the authored message on the
+linked quest and emits a dialogue event; this externalizes the native Halls of
+the Blind, Gateway of Blood, and Warlord steel-tome activation speech while
+their native-DUN placement and map mutations remain deferred.
+
 `objects.tsv` also accepts the backward-compatible `GrantSpellLevel` effect;
 its numeric `effect_amount` is a validated active spell ID, with optional
 `effect_spell_symbol` cross-checking through the stable spell namespace.
@@ -3048,7 +3054,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.439.0"
+      "version": "1.440.0"
   },
   "dependencyConstraints": [
     {
@@ -3082,7 +3088,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.439.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.440.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

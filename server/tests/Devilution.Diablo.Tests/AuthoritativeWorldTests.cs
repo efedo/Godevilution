@@ -706,6 +706,24 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LoadsAuthoredObjectDialogueMessageIdentity()
+    {
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tdialogue_message_id\n"
+                + "20\t4\t1\t2\t3\t255\n"));
+
+        Assert.Equal(255, @object.DialogueMessageId);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new AuthoritativeWorldObject(
+            21,
+            4,
+            1,
+            2,
+            3,
+            dialogueMessageId: short.MaxValue + 1));
+    }
+
+    [Fact]
     public void LoadsExternalQuestSequenceObjectSteps()
     {
         var objects = AuthoritativeWorldObjectCatalog.LoadTsv(

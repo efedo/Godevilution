@@ -55,13 +55,14 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Theory]
-    [InlineData(71U, 3009U, 8U)]
-    [InlineData(72U, 3010U, 5U)]
-    [InlineData(88U, 3012U, 13U)]
+    [InlineData(71U, 3009U, 8U, 255)]
+    [InlineData(72U, 3010U, 5U, 254)]
+    [InlineData(88U, 3012U, 13U, 256)]
     public void NativeQuestBookTransitionTemplateActivatesItsLinkedQuest(
         uint nativeObjectId,
         uint questId,
-        uint levelId)
+        uint levelId,
+        int dialogueMessageId)
     {
         var geometry = AuthoritativeWorld.LoadTsv(
             "levels.tsv",
@@ -82,7 +83,8 @@ public sealed class DiabloWorldCommandProcessorTests
             questTransitionKind: AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
             questTransitionAmount: 1,
             questTransitionRequiredVariable1: 0,
-            nativeObjectId: nativeObjectId);
+            nativeObjectId: nativeObjectId,
+            dialogueMessageId: dialogueMessageId);
         var world = new DiabloWorldState(geometry, objects: [@object], quests: [quest]);
         var player = CreatePlayer(levelId: levelId, positionX: 5, positionY: 4, entityId: 1);
 
@@ -98,6 +100,11 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(quest.Logged);
         Assert.Equal(1, quest.Variable1);
         Assert.False(quest.Completed);
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(dialogueMessageId, dialogue.MessageId);
+        Assert.Equal(questId, dialogue.QuestId);
+        Assert.Equal(dialogueMessageId, quest.MessageId);
     }
 
     [Fact]

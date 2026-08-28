@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.439.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.440.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -66,6 +66,7 @@ public sealed class ShippedContentTests
                 templates[71].QuestTransitionKind,
                 templates[71].QuestTransitionAmount,
                 templates[71].QuestTransitionRequiredVariable1));
+        Assert.Equal(255, templates[71].DialogueMessageId);
         Assert.Equal(
             (72U, 3010U, AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1, 1, 0),
             (templates[72].NativeObjectId,
@@ -73,6 +74,7 @@ public sealed class ShippedContentTests
                 templates[72].QuestTransitionKind,
                 templates[72].QuestTransitionAmount,
                 templates[72].QuestTransitionRequiredVariable1));
+        Assert.Equal(254, templates[72].DialogueMessageId);
         Assert.Equal(
             (88U, 3012U, AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1, 1, 0),
             (templates[88].NativeObjectId,
@@ -80,6 +82,20 @@ public sealed class ShippedContentTests
                 templates[88].QuestTransitionKind,
                 templates[88].QuestTransitionAmount,
                 templates[88].QuestTransitionRequiredVariable1));
+        Assert.Equal(256, templates[88].DialogueMessageId);
+
+        var dialogueMessages = AuthoritativeDialogueMessageCatalog.LoadTsv(
+            "dialogue_messages.tsv",
+            pack.Tables.Single(table => table.SourcePath == "dialogue_messages.tsv").ToCanonicalTsv());
+        Assert.Equal(
+            "...and so, locked beyond the Gateway of Blood and past the Hall of Fire, Valor awaits for the Hero of Light to awaken...",
+            dialogueMessages.TryGet(254, out var bloody) ? bloody.Text : null);
+        Assert.Equal(
+            "I can see what you see not.\nVision milky then eyes rot.\nWhen you turn they will be gone,\nWhispering their hidden song.\nThen you see what cannot be,\nShadows move where light should be.\nOut of darkness, out of mind,\nCast down into the Halls of the Blind.",
+            dialogueMessages.TryGet(255, out var blinding) ? blinding.Text : null);
+        Assert.Equal(
+            "The armories of Hell are home to the Warlord of Blood. In his wake lay the mutilated bodies of thousands. Angels and men alike have been cut down to fulfill his endless sacrifices to the Dark ones who scream for one thing - blood.",
+            dialogueMessages.TryGet(256, out var bloodwar) ? bloodwar.Text : null);
     }
 
     [Fact]
@@ -647,7 +663,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.438.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.439.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1026,7 +1042,7 @@ public sealed class ShippedContentTests
             table.SourcePath,
             table.ToCanonicalTsv());
 
-        Assert.Equal([21, 22, 23, 110, 144, 145, 146, 147, 148],
+        Assert.Equal([21, 22, 23, 110, 144, 145, 146, 147, 148, 254, 255, 256],
             catalog.Definitions.Select(message => message.MessageId));
         Assert.Equal(
             "Something for you I am making. Again, not kill Gharbad. Live and give good. \n \nYou take this as proof I keep word...",
@@ -1034,7 +1050,7 @@ public sealed class ShippedContentTests
         Assert.Equal(
             "You kill uglies, get banner. You bring to me, or else...",
             catalog.TryGet(22, out var snotspill) ? snotspill.Text : null);
-        catalog.ValidateMessageIds([144, 145, 146, 147, 148, 21, 22, 23, 110]);
+        catalog.ValidateMessageIds([144, 145, 146, 147, 148, 21, 22, 23, 110, 254, 255, 256]);
     }
 
     [Fact]
@@ -1373,9 +1389,9 @@ public sealed class ShippedContentTests
                 + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\t\tCathedral\t4\t5\n");
         var objectTable = TsvTable.Parse(
             "objects.tsv",
-            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\tprojectile_source\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\tquest_transition_required_variable2\tactivate_on_occupancy\trequired_activated_linked_objects\tnative_object_id\treward_kind\treward_id\treward_item_level\treward_offset_x\treward_offset_y\n"
-                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\n"
-                + "9002\t41\t\t\t\t\t\t0\t0\t\tWorldMutation\t9100\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\n");
+            "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\tprojectile_source\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\tquest_transition_required_variable2\tactivate_on_occupancy\trequired_activated_linked_objects\tnative_object_id\treward_kind\treward_id\treward_item_level\treward_offset_x\treward_offset_y\tdialogue_message_id\n"
+                + "9001\t40\t\t\t\t\t\t0\t0\t\tGrantSpellLevel\t7\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\t0\n"
+                + "9002\t41\t\t\t\t\t\t0\t0\t\tWorldMutation\t9100\t\t0\t0\t0\t0\t1\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\t0\n");
         var placementTable = TsvTable.Parse(
             "set_level_objects.tsv",
             "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\ttemplate_entity_id\n"
@@ -2174,7 +2190,7 @@ public sealed class ShippedContentTests
         var questLinkedObjects = TsvTable.Parse(
             objects.SourcePath,
             objects.ToCanonicalTsv()
-                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\t0\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\n");
+                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\t0\tNone\t0\t\t0\t0\t0\t\t0\t0\tObject\tNone\t0\t\t\tfalse\t0\t0\tNone\t0\t0\t0\t0\t0\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -2984,7 +3000,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.439.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.440.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

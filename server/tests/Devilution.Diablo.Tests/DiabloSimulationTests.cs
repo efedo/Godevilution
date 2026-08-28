@@ -11,13 +11,13 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.434.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.440.0"),
             DiabloContentSchema.Current);
     }
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.433.0", true)]
+    [InlineData("devilution.diablo", "1.439.0", true)]
     [InlineData("devilution.diablo", "1.429.0", false)]
     [InlineData("devilution.diablo", "1.415.0", false)]
     [InlineData("other.game", "1.424.0", false)]
@@ -193,7 +193,8 @@ public sealed class DiabloSimulationTests
             rewardId: 100,
             rewardOriginKind: AuthoritativeObjectRewardOriginKind.SetLevelOrigin,
             rewardSetLevelId: 6,
-            rewardOffsetX: 1);
+            rewardOffsetX: 1,
+            dialogueMessageId: 255);
         var source = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
                 World = world,
@@ -220,6 +221,7 @@ public sealed class DiabloSimulationTests
         var restored = Assert.Single(replacement.WorldState.Objects.Values);
         Assert.Equal(AuthoritativeObjectRewardOriginKind.SetLevelOrigin, restored.RewardOriginKind);
         Assert.Equal(6, restored.RewardSetLevelId);
+        Assert.Equal(255, restored.DialogueMessageId);
     }
 
     [Fact]
@@ -816,7 +818,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.434.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.440.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
