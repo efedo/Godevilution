@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route authoritative item, spawn, quest, spell-book, and unique-item random
+  consumers through the engine LCG primitive, retaining Diablo random wrappers
+  and overloads only as source-compatible shims and adding sequence-parity
+  coverage.
 - Extend live snapshot identity propagation to both clients, including
   reconnecting with refreshed identity, fail-closed rejection of incomplete
   paired metadata, and focused handshake coverage.

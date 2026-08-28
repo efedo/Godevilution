@@ -29,6 +29,10 @@ public class DeterministicLegacyRandom
         return seed == int.MinValue ? int.MinValue : Math.Abs(seed);
     }
 
+    /** Compatibility-shaped alias for the seed consumed by native spawns. */
+    public uint AdvanceSeed()
+        => unchecked((uint)AdvanceRndSeed());
+
     public int GenerateRnd(int limit)
     {
         if (limit <= 0)
@@ -38,6 +42,9 @@ public class DeterministicLegacyRandom
     }
 
     public int RandomIntLessThan(int limit) => Math.Max(GenerateRnd(limit), 0);
+
+    /** Compatibility-shaped bounded roll used by authoritative content code. */
+    public int Next(int exclusiveMaximum) => RandomIntLessThan(exclusiveMaximum);
 
     public int RandomIntBetween(int minimum, int maximum, bool halfOpen = false)
     {

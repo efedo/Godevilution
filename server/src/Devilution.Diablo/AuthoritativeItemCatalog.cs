@@ -1,5 +1,6 @@
 using System.Text;
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -91,10 +92,10 @@ public sealed record AuthoritativeItemDefinition(
 
     public AuthoritativeItemState Generate(uint itemSeed)
     {
-        return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
+        return Generate(itemSeed, new DeterministicLegacyRandom(itemSeed));
     }
 
-    public AuthoritativeItemState Generate(uint itemSeed, AuthoritativeLegacyRandom random)
+    public AuthoritativeItemState Generate(uint itemSeed, DeterministicLegacyRandom random)
     {
         if (itemSeed == 0)
             throw new ArgumentOutOfRangeException(nameof(itemSeed));
@@ -137,6 +138,10 @@ public sealed record AuthoritativeItemDefinition(
             NativeCursorGraphic = NativeCursorGraphic,
         };
     }
+
+    /** Preserves the pre-engine overload for existing Diablo callers. */
+    public AuthoritativeItemState Generate(uint itemSeed, AuthoritativeLegacyRandom random)
+        => Generate(itemSeed, (DeterministicLegacyRandom)random);
 }
 
 /** Validated external item definitions keyed by stable numeric content ID. */
@@ -831,7 +836,7 @@ public sealed class AuthoritativeItemCatalog
         if (!TryGet(itemId, out var definition))
             throw new InvalidDataException($"Item {itemId} is not present in the authoritative catalog.");
         var useLegacyRandom = affixes?.UsesLegacyRandom == true;
-        var random = useLegacyRandom ? new AuthoritativeLegacyRandom(itemSeed) : null;
+        var random = useLegacyRandom ? new DeterministicLegacyRandom(itemSeed) : null;
         var state = useLegacyRandom ? definition.Generate(itemSeed, random!) : definition.Generate(itemSeed);
         return affixes is null || itemLevel <= 0
             ? state
@@ -874,7 +879,7 @@ public sealed class AuthoritativeItemCatalog
         if (affixes is null || !affixes.UsesLegacyRandom || monsterLevel <= 0)
             return definition.Generate(itemSeed);
 
-        var random = new AuthoritativeLegacyRandom(itemSeed);
+        var random = new DeterministicLegacyRandom(itemSeed);
         var state = definition.Generate(itemSeed, random);
         var rules = affixes.GenerationRules;
         var isAlwaysMagic = rules.AlwaysMagicMisc.Overlaps(definition.GenerationTags);
@@ -941,7 +946,7 @@ public sealed class AuthoritativeItemCatalog
             throw new InvalidDataException(
                 "The item catalog contains no eligible unique-monster random-drop rows.");
 
-        var random = new AuthoritativeLegacyRandom(itemSeed);
+        var random = new DeterministicLegacyRandom(itemSeed);
         var selected = candidates[random.Next(candidates.Length)];
         return GenerateDrop(
             selected.ItemId,

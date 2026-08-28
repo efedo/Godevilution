@@ -38,4 +38,21 @@ public sealed class DeterministicLegacyRandomTests
         Assert.Throws<ArgumentOutOfRangeException>(() => random.RandomIntBetween(5, 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => random.RandomIntBetween(2, 2, halfOpen: true));
     }
+
+    [Fact]
+    public void ExposesCompatibilityShapedRollsWithoutChangingTheLcgSequence()
+    {
+        var random = new DeterministicLegacyRandom(0xCAFEBABE);
+        var expected = new DeterministicLegacyRandom(0xCAFEBABE);
+
+        Assert.Equal(
+            unchecked((uint)expected.AdvanceRndSeed()),
+            random.AdvanceSeed());
+        Assert.Equal(
+            expected.RandomIntLessThan(37),
+            random.Next(37));
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(0, random.Next(0));
+        Assert.Equal(0, random.Next(-1));
+    }
 }

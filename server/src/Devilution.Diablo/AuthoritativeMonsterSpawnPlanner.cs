@@ -110,7 +110,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         if (spawnCount == 0)
             return [];
 
-        var random = new AuthoritativeLegacyRandom(seed ^ levelId);
+        var random = new DeterministicLegacyRandom(seed ^ levelId);
         DeterministicRandomOrdering.Shuffle(positions, random.Next);
         var orderedCandidates = candidates.ToArray();
         DeterministicRandomOrdering.Shuffle(orderedCandidates, random.Next);
@@ -287,7 +287,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             .ToHashSet();
         reserved.Add((leader.LevelId, leader.PositionX, leader.PositionY));
 
-        var random = new AuthoritativeLegacyRandom(seed ^ leader.EntityId ^ minionMonsterId);
+        var random = new DeterministicLegacyRandom(seed ^ leader.EntityId ^ minionMonsterId);
         var members = new List<AuthoritativeCombatTarget>(packSize);
         var level = world.Levels.Single(level => level.LevelId == leader.LevelId);
         for (var groupAttempt = 0; groupAttempt < 10 && members.Count < packSize; groupAttempt++) {
@@ -613,20 +613,11 @@ public sealed class AuthoritativeMonsterSpawnPlanner
 
     /** Native InitMonster consumes stand animation timing before rolling health. */
     private static (int Tick, int Frame) ConsumeNativeInitialAnimationRandom(
-        AuthoritativeLegacyRandom random,
+        DeterministicLegacyRandom random,
         AuthoritativeMonsterTypeDefinition definition)
     {
         var tick = random.Next(definition.StandAnimationTicksPerFrame - 1);
         var frame = random.Next(definition.StandAnimationFrames - 1);
-        return (tick, frame);
-    }
-
-    private static (int Tick, int Frame) ConsumeNativeInitialAnimationRandom(
-        DeterministicLegacyRandom random,
-        AuthoritativeMonsterTypeDefinition definition)
-    {
-        var tick = random.RandomIntLessThan(definition.StandAnimationTicksPerFrame - 1);
-        var frame = random.RandomIntLessThan(definition.StandAnimationFrames - 1);
         return (tick, frame);
     }
 

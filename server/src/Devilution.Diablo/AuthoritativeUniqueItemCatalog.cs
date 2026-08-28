@@ -1,5 +1,6 @@
 using System.Text;
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -15,13 +16,17 @@ public sealed record AuthoritativeUniqueItemPower(string Power, int Value1, int 
         return low + (int)(unchecked(seed * 1664525U + 1013904223U) % (uint)(high - low + 1));
     }
 
-    public int RollLegacy(AuthoritativeLegacyRandom random)
+    public int RollLegacy(DeterministicLegacyRandom random)
     {
         ArgumentNullException.ThrowIfNull(random);
         var low = Math.Min(Value1, Value2);
         var high = Math.Max(Value1, Value2);
         return low == high ? low : low + random.Next(high - low + 1);
     }
+
+    /** Preserves the pre-engine overload for existing Diablo callers. */
+    public int RollLegacy(AuthoritativeLegacyRandom random)
+        => RollLegacy((DeterministicLegacyRandom)random);
 }
 
 /** External unique item definition composed from a base item and normalized powers. */
@@ -123,7 +128,7 @@ public sealed class AuthoritativeUniqueItemCatalog
         uint baseItemId,
         int itemLevel,
         int chancePercent,
-        AuthoritativeLegacyRandom random,
+        DeterministicLegacyRandom random,
         out AuthoritativeUniqueItemDefinition? definition)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -140,6 +145,16 @@ public sealed class AuthoritativeUniqueItemCatalog
         definition = candidates[^1];
         return true;
     }
+
+    /** Preserves the pre-engine overload for existing Diablo callers. */
+    public bool TrySelectForBase(
+        uint baseItemId,
+        int itemLevel,
+        int chancePercent,
+        AuthoritativeLegacyRandom random,
+        out AuthoritativeUniqueItemDefinition? definition)
+        => TrySelectForBase(baseItemId, itemLevel, chancePercent,
+            (DeterministicLegacyRandom)random, out definition);
 
     public AuthoritativeItemState Generate(AuthoritativeItemCatalog items, uint uniqueId, uint itemSeed, int itemLevel)
     {
@@ -182,7 +197,7 @@ public sealed class AuthoritativeUniqueItemCatalog
             Magical = 2,
         };
         if (UsesLegacyRandom) {
-            var random = new AuthoritativeLegacyRandom(itemSeed);
+            var random = new DeterministicLegacyRandom(itemSeed);
             foreach (var power in definition.Powers)
                 state = ApplyPower(state, power, power.RollLegacy(random));
         } else {
@@ -195,7 +210,7 @@ public sealed class AuthoritativeUniqueItemCatalog
     public AuthoritativeItemState ApplyDefinition(
         AuthoritativeItemState state,
         AuthoritativeUniqueItemDefinition definition,
-        AuthoritativeLegacyRandom random)
+        DeterministicLegacyRandom random)
     {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(random);
@@ -213,6 +228,13 @@ public sealed class AuthoritativeUniqueItemCatalog
             state = ApplyPower(state, power, power.RollLegacy(random));
         return state;
     }
+
+    /** Preserves the pre-engine overload for existing Diablo callers. */
+    public AuthoritativeItemState ApplyDefinition(
+        AuthoritativeItemState state,
+        AuthoritativeUniqueItemDefinition definition,
+        AuthoritativeLegacyRandom random)
+        => ApplyDefinition(state, definition, (DeterministicLegacyRandom)random);
 
     public static AuthoritativeUniqueItemCatalog LoadTsv(
         string sourcePath,

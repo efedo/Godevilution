@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -39,7 +40,7 @@ public sealed record AuthoritativeItemAffix(
             && (ItemTags.Count == 0 || ItemTags.Overlaps(itemTags));
     }
 
-    public int RollLegacy(AuthoritativeLegacyRandom random)
+    public int RollLegacy(DeterministicLegacyRandom random)
     {
         ArgumentNullException.ThrowIfNull(random);
         var low = Math.Min(Value1, Value2);
@@ -53,6 +54,10 @@ public sealed record AuthoritativeItemAffix(
             return MinimumValue;
         return MinimumValue + (MaximumValue - MinimumValue) * (100 * (raw - Value1) / (Value2 - Value1)) / 100;
     }
+
+    /** Preserves the pre-engine overload for existing Diablo callers. */
+    public int RollLegacy(AuthoritativeLegacyRandom random)
+        => RollLegacy((DeterministicLegacyRandom)random);
 
     public int RollLegacy(uint seed)
     {
@@ -130,7 +135,7 @@ public sealed class AuthoritativeItemAffixCatalog
         IReadOnlySet<string> itemTags)
     {
         if (UsesLegacyRandom)
-            return Apply(state, new AuthoritativeLegacyRandom(itemSeed), itemLevel, itemTags);
+            return Apply(state, new DeterministicLegacyRandom(itemSeed), itemLevel, itemTags);
 
         var result = state;
         var allocatePrefix = Percent(itemSeed ^ 0x9E3779B9U, generationRules.PrefixPercent);
@@ -157,7 +162,7 @@ public sealed class AuthoritativeItemAffixCatalog
 
     public AuthoritativeItemState Apply(
         AuthoritativeItemState state,
-        AuthoritativeLegacyRandom random,
+        DeterministicLegacyRandom random,
         int itemLevel,
         IReadOnlySet<string> itemTags)
     {
@@ -166,9 +171,17 @@ public sealed class AuthoritativeItemAffixCatalog
         return ApplyLegacy(state, random, itemLevel, itemTags);
     }
 
-    private AuthoritativeItemState ApplyLegacy(
+    /** Preserves the pre-engine overload for existing Diablo callers. */
+    public AuthoritativeItemState Apply(
         AuthoritativeItemState state,
         AuthoritativeLegacyRandom random,
+        int itemLevel,
+        IReadOnlySet<string> itemTags)
+        => Apply(state, (DeterministicLegacyRandom)random, itemLevel, itemTags);
+
+    private AuthoritativeItemState ApplyLegacy(
+        AuthoritativeItemState state,
+        DeterministicLegacyRandom random,
         int itemLevel,
         IReadOnlySet<string> itemTags)
     {
@@ -199,7 +212,7 @@ public sealed class AuthoritativeItemAffixCatalog
     private AuthoritativeItemState ApplyLegacyPower(
         AuthoritativeItemState state,
         AuthoritativeItemAffix affix,
-        AuthoritativeLegacyRandom random,
+        DeterministicLegacyRandom random,
         bool isPrefix)
     {
         if (affix.Power == "TOHIT_DAMP") {
@@ -222,7 +235,7 @@ public sealed class AuthoritativeItemAffixCatalog
         return ApplyPower(state, affix, affix.RollLegacy(random), isPrefix);
     }
 
-    private static int CalculateToHitBonus(int level, AuthoritativeLegacyRandom random)
+    private static int CalculateToHitBonus(int level, DeterministicLegacyRandom random)
     {
         var (minimum, maximum, sign) = level switch {
             -50 => (6, 10, -1),
@@ -357,7 +370,7 @@ public sealed class AuthoritativeItemAffixCatalog
 
     private static AuthoritativeItemAffix? SelectLegacy(
         IReadOnlyList<AuthoritativeItemAffix> values,
-        AuthoritativeLegacyRandom random,
+        DeterministicLegacyRandom random,
         int itemLevel,
         IReadOnlySet<string> itemTags,
         string blockedAlignment,

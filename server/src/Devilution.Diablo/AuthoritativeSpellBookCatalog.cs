@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -162,7 +163,7 @@ public sealed class AuthoritativeSpellBookCatalog
             throw new InvalidDataException(
                 $"No spell-book template is eligible at item level {itemLevel}.");
 
-        var template = eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Count)];
+        var template = eligible[new DeterministicLegacyRandom(itemSeed).Next(eligible.Count)];
         return GenerateFromTemplate(items, spellId, itemSeed, book, template);
     }
 
@@ -257,9 +258,9 @@ public sealed class AuthoritativeSpellBookCatalog
         uint itemSeed)
     {
         if (nativeDefinitions.Count == 0)
-            return eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Count)];
+            return eligible[new DeterministicLegacyRandom(itemSeed).Next(eligible.Count)];
 
-        var remaining = new AuthoritativeLegacyRandom(itemSeed).Next(checked((int)nativeSpellTableSize)) + 1;
+        var remaining = new DeterministicLegacyRandom(itemSeed).Next(checked((int)nativeSpellTableSize)) + 1;
         var nativeSpellId = FirstNativeSpellId;
         while (true) {
             if (nativeDefinitions.TryGetValue(nativeSpellId, out var definition)
