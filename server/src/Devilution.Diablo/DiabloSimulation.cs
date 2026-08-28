@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -237,7 +238,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.Difficulty,
                 options.MonsterTypes);
         }
-        var random = new DiabloRandom(options.RandomSeed);
+        var random = new DeterministicLegacyRandom(options.RandomSeed);
         var playerDamage = new AuthoritativePlayerDamageResolver(spells);
         var worldCommands = new DiabloWorldCommandProcessor(
             worldState,
@@ -346,7 +347,7 @@ public sealed partial class DiabloSimulation
     private readonly DiabloStoreCommandProcessor storeCommands;
     private readonly DiabloWorldCommandProcessor worldCommands;
     private readonly DiabloCombatCommandProcessor combatCommands;
-    private readonly DiabloRandom random;
+    private readonly DeterministicLegacyRandom random;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
     private readonly DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns;
     private readonly uint proceduralMonsterSeed;
@@ -373,7 +374,7 @@ public sealed partial class DiabloSimulation
         DiabloWorldCommandProcessor worldCommands,
         DiabloCombatCommandProcessor combatCommands,
         AuthoritativeSpellCatalog spells,
-        DiabloRandom random,
+        DeterministicLegacyRandom random,
         AuthoritativeCombatRules combatRules,
         AuthoritativePlayerClassCatalog? playerClasses,
         AuthoritativePlayerAnimationCatalog? playerAnimations,

@@ -1,4 +1,5 @@
 using Devilution.Domain.Inventory;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -16,7 +17,7 @@ public sealed class DiabloStoreCommandProcessor
     private readonly StoreCatalog catalog;
     private readonly IDiabloStoreRules rules;
     private readonly AuthoritativeCombatRules combatRules;
-    private readonly DiabloRandom random;
+    private readonly DeterministicLegacyRandom random;
     private readonly uint identifyAbilitySpellId;
     private readonly uint repairAbilitySpellId;
     private readonly uint rechargeAbilitySpellId;
@@ -30,7 +31,7 @@ public sealed class DiabloStoreCommandProcessor
         StoreCatalog catalog,
         IDiabloStoreRules? rules = null,
         AuthoritativeCombatRules? combatRules = null,
-        DiabloRandom? random = null,
+        DeterministicLegacyRandom? random = null,
         uint identifyAbilitySpellId = 0,
         uint repairAbilitySpellId = 0,
         uint rechargeAbilitySpellId = 0,
@@ -43,7 +44,7 @@ public sealed class DiabloStoreCommandProcessor
         this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         this.rules = rules ?? new DiabloStoreRules();
         this.combatRules = combatRules ?? new AuthoritativeCombatRules(10, 1, 100);
-        this.random = random ?? new DiabloRandom(0);
+        this.random = random ?? new DeterministicLegacyRandom(0);
         this.identifyAbilitySpellId = identifyAbilitySpellId;
         this.repairAbilitySpellId = repairAbilitySpellId;
         this.rechargeAbilitySpellId = rechargeAbilitySpellId;

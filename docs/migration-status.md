@@ -24,6 +24,9 @@ The native-compatible deterministic LCG now lives in the engine-neutral
 assembly as a reusable primitive. `Devilution.Diablo.DiabloRandom` remains a
 source-compatible facade, preserving existing gameplay and replay callers
 while keeping deterministic infrastructure outside the game module.
+Authoritative combat, world, store, simulation, spawn, and quest code now types
+and constructs the engine primitive directly; the Diablo facade is retained
+only for compatibility consumers and existing test fixtures.
 
 Stable non-zero entity-ID allocation now follows the same boundary: its
 implementation lives in `Devilution.Engine`, while the server host keeps its

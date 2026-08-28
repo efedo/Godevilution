@@ -1,13 +1,15 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Compatibility implementation of the native Diablo LCG used by item generation. */
 public sealed class AuthoritativeLegacyRandom
 {
-    private readonly DiabloRandom random;
+    private readonly DeterministicLegacyRandom random;
 
     public AuthoritativeLegacyRandom(uint seed)
     {
-        random = new DiabloRandom(seed);
+        random = new DeterministicLegacyRandom(seed);
     }
 
     public uint State => random.State;

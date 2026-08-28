@@ -27,7 +27,8 @@ The engine currently owns:
 - native-compatible bounded grid crawl ordering and overflow-safe nearest-cell
   search, exposed independently from Diablo's compatibility facade;
 - the native-compatible deterministic legacy LCG, exposed as a reusable
-  primitive while Diablo retains its source-compatible `DiabloRandom` facade;
+  primitive and used directly by Diablo authoritative callers while the module
+  retains its source-compatible `DiabloRandom` facade;
 - native-compatible signed 26.6 fixed-point arithmetic, exposed as a reusable
   primitive and used directly by Diablo authoritative callers while the module
   retains its source-compatible `DiabloFixedPointQ6` facade;

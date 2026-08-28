@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -136,7 +137,7 @@ public sealed class AuthoritativeQuestSequenceVariantCatalog
             return;
         ValidateReferences(objects, quests);
         var objectsById = objects.ToDictionary(@object => @object.EntityId);
-        var random = new DiabloRandom(randomSeed);
+        var random = new DeterministicLegacyRandom(randomSeed);
         var updates = new List<(AuthoritativeWorldObject Object, int Step)>();
         foreach (var questGroup in definitions.GroupBy(step => step.QuestId).OrderBy(group => group.Key)) {
             var variants = questGroup

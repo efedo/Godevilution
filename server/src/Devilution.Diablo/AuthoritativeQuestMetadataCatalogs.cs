@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -105,7 +106,7 @@ public sealed class AuthoritativeQuestPoolCatalog
     /** Selects the native single-player quest exclusions for one level-15 seed. */
     public IReadOnlyList<uint> SelectUnavailableQuestIds(uint seed)
     {
-        var random = new DiabloRandom(seed);
+        var random = new DeterministicLegacyRandom(seed);
         var unavailable = new List<uint>();
         foreach (var pool in definitions.GroupBy(entry => entry.PoolId).OrderBy(group => group.Key)) {
             // Vanilla compatibility: QuestGroup1[-2] skips pool 1 after one

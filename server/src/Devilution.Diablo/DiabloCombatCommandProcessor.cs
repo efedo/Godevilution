@@ -16,7 +16,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativeSpellCatalog spells;
     private readonly AuthoritativeSpellDefinition? reflectSpell;
     private readonly AuthoritativeCombatRules rules;
-    private readonly DiabloRandom random;
+    private readonly DeterministicLegacyRandom random;
     private readonly AuthoritativePlayerClassCatalog? playerClasses;
     private readonly AuthoritativePlayerAnimationCatalog? playerAnimations;
     private readonly bool useNativePlayerActionTiming;
@@ -124,7 +124,7 @@ public sealed class DiabloCombatCommandProcessor
         DiabloWorldState world,
         AuthoritativeSpellCatalog spells,
         AuthoritativeCombatRules rules,
-        DiabloRandom? random = null,
+        DeterministicLegacyRandom? random = null,
         AuthoritativePlayerClassCatalog? playerClasses = null,
         AuthoritativePlayerAnimationCatalog? playerAnimations = null,
         bool useNativePlayerActionTiming = false,
@@ -146,7 +146,7 @@ public sealed class DiabloCombatCommandProcessor
         this.reflectSpell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Reflect);
         this.rules = rules ?? throw new ArgumentNullException(nameof(rules));
-        this.random = random ?? new DiabloRandom(0);
+        this.random = random ?? new DeterministicLegacyRandom(0);
         this.playerClasses = playerClasses;
         this.playerAnimations = playerAnimations;
         this.useNativePlayerActionTiming = useNativePlayerActionTiming;
@@ -4720,7 +4720,7 @@ public sealed class DiabloCombatCommandProcessor
         var golemType = monsterTypes?.TryGetNative(109, out var validatedGolemType) == true
             ? validatedGolemType
             : null;
-        var spawnRandom = new DiabloRandom(random.State);
+        var spawnRandom = new DeterministicLegacyRandom(random.State);
         // InitializeSpawnedMonster seeds the native Golem after its standing
         // animation and native health draws, even though InitGolem replaces
         // the health and damage values with spell-owned formulas. Preserve

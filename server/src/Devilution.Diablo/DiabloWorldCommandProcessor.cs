@@ -10,7 +10,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativePlayerAnimationCatalog? playerAnimations;
     private readonly bool useNativePlayerActionTiming;
     private readonly AuthoritativeCombatRules combatRules;
-    private readonly DiabloRandom random;
+    private readonly DeterministicLegacyRandom random;
     private readonly AuthoritativePlayerDamageResolver? playerDamage;
     private readonly uint trapDisarmAbilitySpellId;
     private readonly AuthoritativeQuestTypeCatalog? questTypes;
@@ -37,7 +37,7 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerAnimationCatalog? playerAnimations = null,
         bool useNativePlayerActionTiming = false,
         AuthoritativeCombatRules? combatRules = null,
-        DiabloRandom? random = null,
+        DeterministicLegacyRandom? random = null,
         AuthoritativePlayerDamageResolver? playerDamage = null,
         uint trapDisarmAbilitySpellId = 0,
         AuthoritativeQuestTypeCatalog? questTypes = null,
@@ -59,7 +59,7 @@ public sealed class DiabloWorldCommandProcessor
         this.playerAnimations = playerAnimations;
         this.useNativePlayerActionTiming = useNativePlayerActionTiming;
         this.combatRules = combatRules ?? new AuthoritativeCombatRules(10, 1, 100);
-        this.random = random ?? new DiabloRandom(0);
+        this.random = random ?? new DeterministicLegacyRandom(0);
         this.playerDamage = playerDamage;
         this.trapDisarmAbilitySpellId = trapDisarmAbilitySpellId;
         this.questTypes = questTypes;

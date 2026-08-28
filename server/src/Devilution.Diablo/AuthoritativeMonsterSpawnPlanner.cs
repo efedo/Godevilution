@@ -388,7 +388,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         int direction = 0)
         => CreateSkeletonSummon(
             levelId,
-            new DiabloRandom(seed),
+            new DeterministicLegacyRandom(seed),
             positionX,
             positionY,
             entityId,
@@ -403,7 +403,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
      */
     public AuthoritativeCombatTarget? CreateSkeletonSummon(
         uint levelId,
-        DiabloRandom random,
+        DeterministicLegacyRandom random,
         int positionX,
         int positionY,
         uint entityId,
@@ -622,7 +622,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     }
 
     private static (int Tick, int Frame) ConsumeNativeInitialAnimationRandom(
-        DiabloRandom random,
+        DeterministicLegacyRandom random,
         AuthoritativeMonsterTypeDefinition definition)
     {
         var tick = random.RandomIntLessThan(definition.StandAnimationTicksPerFrame - 1);
