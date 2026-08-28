@@ -96,6 +96,7 @@ struct ServerBackedCastSource {
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeUsePortalCommand(uint32_t portalId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakePickupWorldItemCommand(uint32_t itemEntityId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeDropHeldItemCommand(int32_t targetX, int32_t targetY, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeDropItemCommand(ServerBackedItemReference item, int32_t targetX, int32_t targetY, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeOperateObjectCommand(uint32_t objectEntityId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeDisarmTrapCommand(uint32_t objectEntityId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAdvanceQuestCommand(uint32_t questId, uint64_t requestedTick);

@@ -400,6 +400,25 @@ TEST(ServerBackedVendorCommand, BuildsCellTargetedCastIntent)
 	EXPECT_EQ(cast->cast_requested().target_y(), 5);
 }
 
+TEST(ServerBackedVendorCommand, BuildsStableWorldDropIntent)
+{
+	const ServerBackedItemReference inventory {
+		.location = ServerBackedItemLocation::Inventory,
+		.slot = 3,
+		.stableItemId = 702,
+	};
+	const auto command = MakeDropItemCommand(inventory, 8, 9, 31);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_drop_item_requested());
+	const auto &request = command->drop_item_requested();
+	EXPECT_EQ(command->requested_tick(), 31U);
+	EXPECT_EQ(request.target_x(), 8);
+	EXPECT_EQ(request.target_y(), 9);
+	EXPECT_EQ(request.item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_EQ(request.item().slot(), 3U);
+	EXPECT_EQ(request.item().stable_item_id(), 702U);
+}
+
 TEST(ServerBackedVendorCommand, BuildsSourceAwareCastIntents)
 {
 	const auto memorized = MakeCastCommand(

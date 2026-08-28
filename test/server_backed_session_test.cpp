@@ -512,5 +512,88 @@ TEST(ServerBackedSession, SubmitsAuthoredQuestDialogueIntent)
 	EXPECT_TRUE(observed);
 }
 
+TEST(ServerBackedSession, SubmitsStableWorldDropIntent)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool observed = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_session_token("session");
+		WriteEnvelope(socket, serverHello);
+
+		protocol::Envelope initial;
+		initial.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *item = initial.mutable_snapshot()->mutable_players(0)->add_inventory();
+		item->set_item_seed(42);
+		item->mutable_state()->set_stable_item_id(700);
+		item->mutable_state()->set_item_type(1);
+		WriteEnvelope(socket, initial);
+
+		auto commandPayload = EnvelopeCodec::Read(socket);
+		if (!commandPayload.has_value() || !commandPayload->has_value())
+			return;
+		protocol::Envelope command;
+		if (!command.ParseFromArray(commandPayload->value().data(), static_cast<int>(commandPayload->value().size()))
+		    || command.command_batch().commands_size() != 1)
+			return;
+		const auto &request = command.command_batch().commands(0);
+		if (!request.has_drop_item_requested()
+		    || request.drop_item_requested().target_x() != 1
+		    || request.drop_item_requested().target_y() != 2
+		    || request.drop_item_requested().item().location() != protocol::PLAYER_ITEM_LOCATION_INVENTORY
+		    || request.drop_item_requested().item().slot() != 0
+		    || request.drop_item_requested().item().stable_item_id() != 700)
+			return;
+
+		protocol::Envelope acknowledgement;
+		auto *result = acknowledgement.mutable_command_ack()->add_results();
+		result->set_client_sequence(request.client_sequence());
+		result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
+		WriteEnvelope(socket, acknowledgement);
+		protocol::Envelope snapshot;
+		snapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		WriteEnvelope(socket, snapshot);
+		observed = true;
+	});
+
+	ServerBackedSession::Configuration configuration {
+		.client = {
+			.host = "127.0.0.1",
+			.port = acceptor.local_endpoint().port(),
+			.clientBuildId = "client",
+			.protocolSchemaVersion = "1",
+			.contentManifestHash = "content",
+		},
+	};
+	auto session = ServerBackedSession::Connect(configuration);
+	ASSERT_TRUE(session.has_value()) << session.error();
+	const auto drop = (*session)->DropItem(
+		ServerBackedItemReference {
+			.location = ServerBackedItemLocation::Inventory,
+			.slot = 0,
+			.stableItemId = 700,
+		},
+		1,
+		2,
+		10,
+		0);
+	ASSERT_TRUE(drop.has_value()) << drop.error();
+	EXPECT_EQ((*session)->LastCommandResolution(), ServerBackedSession::CommandResolution::Accepted);
+	(*session)->Close();
+	server.join();
+	EXPECT_TRUE(observed);
+}
+
 } // namespace
 } // namespace devilution::authoritative

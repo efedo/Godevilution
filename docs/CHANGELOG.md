@@ -20,6 +20,11 @@ All notable changes to this fork are documented below.
   snapshots and talk commands remain on the item-absent branch until a player
   supplies the Golden Elixir.
 
+- Route native authoritative inventory, belt, and equipment cursor drops
+  through the stable-reference `DropItemRequested` intent. Legacy cursor-only
+  drops remain unchanged for compatibility mode, and stash selections fail
+  closed instead of being misrepresented as held items.
+
 - Make initial staged-dialogue projection safe for shared multiplayer targets.
   Item-gated conversations now advertise the item-absent branch until the
   interacting player submits a validated item-present hand-in, preventing a

@@ -472,6 +472,20 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeDropHeldItemC
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeDropItemCommand(ServerBackedItemReference item, int32_t targetX, int32_t targetY, uint64_t requestedTick)
+{
+	auto reference = MakeItemReference(item);
+	if (!reference.has_value())
+		return tl::make_unexpected(reference.error());
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_drop_item_requested();
+	request->mutable_item()->CopyFrom(*reference);
+	request->set_target_x(targetX);
+	request->set_target_y(targetY);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeOperateObjectCommand(uint32_t objectEntityId, uint64_t requestedTick)
 {
 	if (objectEntityId == 0)

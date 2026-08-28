@@ -118,6 +118,7 @@ public:
 	tl::expected<bool, std::string> UsePortalAt(int32_t positionX, int32_t positionY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PickupWorldItem(uint32_t itemEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> DropItem(ServerBackedItemReference item, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> DisarmTrap(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
@@ -160,6 +161,8 @@ public:
 	[[nodiscard]] std::optional<ServerBackedItemReference> FindStashPlacement(uint32_t width, uint32_t height, uint32_t preferredPage) const noexcept;
 	/** Retains a native inventory drag selection while authoritative snapshots refresh. */
 	[[nodiscard]] bool BeginInventoryItemDrag(uint32_t itemSeed) noexcept;
+	/** Returns the stable source retained by the native inventory cursor. */
+	[[nodiscard]] std::optional<ServerBackedItemReference> PendingInventoryItemDrag() const noexcept { return pendingInventoryItemDrag_; }
 	/** Cancels the presentation-only inventory drag selection. */
 	void CancelInventoryItemDrag() noexcept;
 	/** Arms a native oil cursor action with its authoritative source reference. */

@@ -265,6 +265,11 @@ tl::expected<void, std::string> ServerBackedSession::DropHeldItem(int32_t target
 	return SubmitGameplayCommand(MakeDropHeldItemCommand(targetX, targetY, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::DropItem(ServerBackedItemReference item, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeDropItemCommand(item, targetX, targetY, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeOperateObjectCommand(objectEntityId, requestedTick), nowMs);

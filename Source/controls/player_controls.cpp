@@ -2582,7 +2582,19 @@ bool TryDropItem()
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+		auto &runtime = authoritative::GetServerBackedRuntime();
+		if (const auto source = runtime.PendingInventoryItemDrag(); source.has_value()) {
+			if (source->location == authoritative::ServerBackedItemLocation::Stash) {
+				LogError("Server-backed stash item cannot be dropped directly into the world.");
+				return false;
+			}
+			if (auto result = runtime.DropItem(*source, itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+				LogError("Server-backed stable item drop failed: {}", result.error());
+				return false;
+			}
+			return true;
+		}
+		if (auto result = runtime.DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 			LogError("Server-backed held-item drop failed: {}", result.error());
 			return false;
 		}
