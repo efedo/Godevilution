@@ -58,4 +58,17 @@ public sealed class DeterministicEntityIdAllocatorTests
         Assert.Throws<ArgumentNullException>(
             () => allocator.Allocate(null!));
     }
+
+    [Fact]
+    public void FindsOneAvailableIdentityWithoutChangingASeparateAllocator()
+    {
+        var allocator = new DeterministicEntityIdAllocator(40);
+
+        Assert.Equal(
+            42U,
+            DeterministicEntityIdAllocator.FindFirstAvailable(
+                40,
+                candidate => candidate is 40 or 41));
+        Assert.Equal(40U, allocator.Allocate());
+    }
 }

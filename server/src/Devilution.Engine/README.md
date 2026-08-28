@@ -54,8 +54,9 @@ The engine currently owns:
 - native-compatible Fisher–Yates ordering with caller-owned bounded random
   sources for deterministic spawn and content selection;
 - deterministic non-zero entity-ID allocation, including caller-owned
-  collision skipping, exposed as a reusable primitive while the server host
-  retains its source-compatible allocator facade;
+  collision skipping and stateless first-available lookup, exposed as a
+  reusable primitive while the server host retains its source-compatible
+  allocator facade;
 - serialized participant operations, exactly-once deterministic tick advancement,
   module-supplied lifecycle hooks, and directed event routing.
 

@@ -1,5 +1,6 @@
 using Devilution.Data;
 using Devilution.Domain.Protocol;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -201,9 +202,10 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
             var pack = packs?.FindForPlacement(placement.PlacementId);
             if (pack is null)
                 continue;
-            while (usedEntityIds.Contains(generatedEntityId)
-                || usedEntityIds.Contains(GetGeneratedDropEntityId(generatedEntityId)))
-                generatedEntityId = checked(generatedEntityId + 1);
+            generatedEntityId = DeterministicEntityIdAllocator.FindFirstAvailable(
+                generatedEntityId,
+                candidate => usedEntityIds.Contains(candidate)
+                    || usedEntityIds.Contains(GetGeneratedDropEntityId(candidate)));
             var members = planner.CreateNativeMonsterPack(
                 target,
                 pack.MinionMonsterId,

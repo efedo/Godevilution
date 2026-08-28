@@ -787,6 +787,11 @@ exhaustion handling. Diablo combat and world processors retain their native
 world-item, monster, projectile, and authored-projectile ranges while routing
 all allocations through that shared deterministic primitive.
 
+Native DUN monster hydration and generated unique-monster pack materialization
+now use the same engine allocator for their runtime IDs. Authored IDs remain
+unchanged, while generated pack starts continue to reserve occupied monster
+and drop identities before native-compatible pack creation.
+
 Connected native spell targeting now also fails closed when a visible player or
 combat-entity cursor target has no authoritative entity projection, preventing
 presentation-only cursor state from becoming an unintended tile cast for both

@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -112,7 +113,7 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
         var usedEntityIds = targets.Select(target => target.EntityId)
             .Concat(objects.Select(@object => @object.EntityId))
             .ToHashSet();
-        var nextEntityId = RuntimeMonsterEntityIdBase;
+        var entityIds = new DeterministicEntityIdAllocator(RuntimeMonsterEntityIdBase);
         var materialized = new List<AuthoritativeCombatTarget>();
         foreach (var level in world.Levels.OrderBy(level => level.LevelId)) {
             if (level.NativeMonsterLayer.Count == 0)
@@ -138,8 +139,7 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                     || occupiedCells.Contains(cellKey))
                     throw new InvalidDataException(
                         $"Native DUN monster cell {cellKey} is not available for authoritative placement.");
-                while (usedEntityIds.Contains(nextEntityId))
-                    nextEntityId = checked(nextEntityId + 1);
+                var entityId = entityIds.Allocate(usedEntityIds.Contains);
                 var cellSeed = CreateCellSeed(seed, level.LevelId, cell, nativeDunMonsterId);
                 var target = planner.CreateNativeMonsterSummon(
                     level.LevelId,
@@ -147,7 +147,7 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                     cellSeed,
                     positionX,
                     positionY,
-                    nextEntityId,
+                    entityId,
                     multiplayer,
                     stableMonsterId: mapping.MonsterId);
                 if (target is null)
@@ -155,9 +155,8 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                         $"Native DUN monster mapping {nativeDunMonsterId} cannot materialize "
                         + $"monster {mapping.MonsterId} on level {level.LevelId}.");
                 materialized.Add(target);
-                usedEntityIds.Add(nextEntityId);
+                usedEntityIds.Add(entityId);
                 existingByCell.Add(cellKey, target);
-                nextEntityId = checked(nextEntityId + 1);
             }
         }
         return materialized;

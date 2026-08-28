@@ -31,4 +31,10 @@ public class DeterministicEntityIdAllocator
                 return candidate;
         }
     }
+
+    /** Finds one available ID without retaining allocator state. */
+    public static uint FindFirstAvailable(uint firstId, Func<uint, bool> isOccupied)
+    {
+        return new DeterministicEntityIdAllocator(firstId).Allocate(isOccupied);
+    }
 }
