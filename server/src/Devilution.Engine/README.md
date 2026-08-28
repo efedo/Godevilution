@@ -38,6 +38,8 @@ The engine currently owns:
 - native-compatible eight-way direction sectors, coordinate-to-facing
   selection, rotation, and adjacent-cell displacement, including the stable
   direction-indexed sequence consumed by Diablo combat;
+- native alternating and turn-pair direction candidate ordering used by
+  movement AI, preserving the native RandomWalk sweep sequences;
 - native-compatible rotated-grid projectile velocity construction with the
   legacy fixed-point scaling contract;
 - deterministic procedural grid generation with connected corridor topology,

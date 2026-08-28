@@ -107,4 +107,35 @@ public sealed class DeterministicGridDirectionsTests
             },
             DeterministicGridDirections.AdjacentDisplacements);
     }
+
+    [Fact]
+    public void EnumerateAlternatingPreservesNativeSweepOrder()
+    {
+        Assert.Equal(
+            new[] { 3, 4, 2, 5, 1, 6, 0, 7 },
+            DeterministicGridDirections.EnumerateAlternating(3));
+    }
+
+    [Fact]
+    public void EnumerateTurnCandidatesPreservesRandomWalkOrder()
+    {
+        Assert.Equal(
+            new[] { 3, 4, 2, 5, 1 },
+            DeterministicGridDirections.EnumerateTurnCandidates(3, 1, 2));
+    }
+
+    [Fact]
+    public void DirectionCandidateHelpersRejectInvalidDirections()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => DeterministicGridDirections.Rotate(8, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => DeterministicGridDirections.EnumerateAlternating(-1));
+        Assert.Equal(
+            7,
+            DeterministicGridDirections.Rotate(0, int.MaxValue));
+        Assert.Equal(
+            0,
+            DeterministicGridDirections.Rotate(0, int.MinValue));
+    }
 }

@@ -88,11 +88,56 @@ public static class DeterministicGridDirections
         int steps = 1)
         => (DeterministicGridDirection)(((int)direction + 8 - (steps % 8)) % 8);
 
+    /** Rotates a native direction by a signed offset around the direction ring. */
+    public static int Rotate(int direction, int offset)
+    {
+        ValidateDirection(direction);
+        var rotated = (int)(((long)direction + offset) % Displacements.Count);
+        return rotated < 0 ? rotated + Displacements.Count : rotated;
+    }
+
+    /** Enumerates the native alternating clockwise/counter-clockwise sweep. */
+    public static IReadOnlyList<int> EnumerateAlternating(int direction)
+    {
+        ValidateDirection(direction);
+        var directions = new int[Displacements.Count];
+        for (var offset = 0; offset < directions.Length; offset++) {
+            directions[offset] = offset == 0
+                ? direction
+                : offset % 2 == 1
+                    ? Rotate(direction, (offset + 1) / 2)
+                    : Rotate(direction, -(offset / 2));
+        }
+        return Array.AsReadOnly(directions);
+    }
+
+    /** Enumerates the native five-direction RandomWalk turn candidate order. */
+    public static IReadOnlyList<int> EnumerateTurnCandidates(
+        int direction,
+        int firstTurn,
+        int secondTurn)
+    {
+        ValidateDirection(direction);
+        return Array.AsReadOnly(new[] {
+            direction,
+            Rotate(direction, firstTurn),
+            Rotate(direction, -firstTurn),
+            Rotate(direction, secondTurn),
+            Rotate(direction, -secondTurn),
+        });
+    }
+
     /** Returns the native adjacent-cell displacement for a direction. */
     public static (int X, int Y) GetDisplacement(DeterministicGridDirection direction)
     {
         if (!Enum.IsDefined(direction))
             throw new ArgumentOutOfRangeException(nameof(direction));
         return Displacements[(int)direction];
+    }
+
+    private static void ValidateDirection(int direction)
+    {
+        if (direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(direction));
     }
 }

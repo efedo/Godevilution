@@ -1488,6 +1488,11 @@ and aligned walkable-footprint selection. Diablo still owns set-level identity,
 content validation, and world-origin records, while the reusable candidate
 ordering and seed selection remain outside the game module.
 
+Native movement-AI direction sweeps now use engine-owned alternating and
+turn-pair candidate ordering. The Diablo module retains AI-specific admission,
+occupancy, and movement state while sharing the exact RandomWalk-compatible
+direction sequences across fear, stealth, counselor, and minion fallbacks.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.
