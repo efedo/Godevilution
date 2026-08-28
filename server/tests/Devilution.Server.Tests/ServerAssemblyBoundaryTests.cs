@@ -177,9 +177,21 @@ public sealed class ServerAssemblyBoundaryTests
             "authoritative::GetServerBackedRuntimeConfiguration().mode != "
             + "authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative";
 
-        Assert.Equal(
-            3,
-            Regex.Matches(source, Regex.Escape(modeGuard)).Count);
+        // The lifecycle policy is centralized in ShouldInitializeLegacyLua;
+        // only the debug-console registration keeps a direct mode comparison.
+        static void AssertMatchCount(string sourceText, string pattern, int expected)
+        {
+            var actual = Regex.Matches(sourceText, Regex.Escape(pattern)).Count;
+            Assert.True(
+                actual == expected,
+                $"Expected {expected} matches for '{pattern}', found {actual}.");
+        }
+
+        AssertMatchCount(source, modeGuard, 1);
+        AssertMatchCount(source, "ShouldInitializeLegacyLua(", 2);
+        AssertMatchCount(source, "if (ShouldInitializeLegacyLua(", 2);
+        Assert.Contains("LuaInitialize();", source, StringComparison.Ordinal);
+        Assert.Contains("LuaShutdown();", source, StringComparison.Ordinal);
         Assert.Contains(
             "// Authoritative mode delegates gameplay and content ownership to the server;",
             source,

@@ -29,6 +29,11 @@ The shared secondary-portal replay now captures a complete initial participant
 set and verifies reverse-order save restoration, preserving the secondary
 participant's visited-level history across a reconnect-style reconstruction.
 
+The native Lua compatibility boundary characterization now tracks the
+centralized lifecycle policy directly: both startup and shutdown remain guarded
+for authoritative mode, while the debug-console registration retains its
+explicit native-only mode comparison.
+
 The generic host now exposes the active combined ruleset identity and retired
 generation count through the live server status surface. Operators can verify
 that a replacement was published and that old generations were drained without

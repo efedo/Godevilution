@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh the native Lua-boundary characterization for the centralized
+  `ShouldInitializeLegacyLua` lifecycle policy, covering both guarded startup
+  and shutdown while retaining the authoritative debug-console exclusion.
 - Make multiplayer replay initial snapshots complete before command execution
   and add a secondary-portal persistence round-trip that restores both
   participants and visited-level history in reverse reconnect order.
