@@ -1619,6 +1619,17 @@ public sealed class DialogueProtocolProjectionTests
             AuthoritativeQuestTownerInteractionKind.Activate,
             MessageId: 10);
 
+        var completionInteraction = interaction with {
+            Kind = AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest,
+            AllowCompleted = true,
+            UseQuestCompletionReward = true,
+        };
+        var projectedCompletion = DiabloProtocolMapper.ToProtocolSnapshot(
+            source with { QuestTownerInteractions = [completionInteraction] },
+            levelGeometry: levels);
+        Assert.Equal(4, projectedCompletion.QuestTownerInteractions.Single().Kind);
+        Assert.True(projectedCompletion.QuestTownerInteractions.Single().UseQuestCompletionReward);
+
         void AssertRejected(
             Func<AuthoritativeQuestTownerInteractionDefinition,
                 AuthoritativeQuestTownerInteractionDefinition> mutate)

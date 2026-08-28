@@ -970,7 +970,7 @@ public sealed class AuthoritativeClientModel
                 || interaction.RequiredItemId > ushort.MaxValue
                 || interaction.PositionX < 0
                 || interaction.PositionY < 0
-                || interaction.Kind is < 0 or > 3
+                || interaction.Kind is < 0 or > 4
                 || !interaction.HasMessageId
                 || interaction.MessageId is <= 0 or > short.MaxValue
                 || (interaction.HasRequiredVariable1

@@ -3183,7 +3183,7 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(17, mushroomInteractions.Count);
+        Assert.Equal(20, mushroomInteractions.Count);
         Assert.Equal(
             [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
@@ -3195,8 +3195,11 @@ public sealed class ShippedContentTests
              (300208U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 88),
              (300209U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 39),
              (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39),
+             (301401U, 1, 0U, AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest, 0, 2, 41),
+             (301601U, 4, 0U, AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest, 7, 8, 25),
              (301701U, 7, 43U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 274),
              (301801U, 10, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 277),
+             (301802U, 10, 0U, AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest, -1, -1, 280),
              (301901U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 283),
              (301902U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, 1, -1, 284),
              (301903U, 11, 2102U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 285),
@@ -3221,6 +3224,20 @@ public sealed class ShippedContentTests
             interaction => interaction.InteractionId == 302402);
         Assert.True(jerseyCompletion.UseQuestTurnInReward);
         Assert.Equal(1, jerseyCompletion.RequiredVariable2);
+        var poisonedWaterCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301401);
+        Assert.True(poisonedWaterCompletion.AllowCompleted);
+        Assert.True(poisonedWaterCompletion.UseQuestCompletionReward);
+        var lazarusCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301601);
+        Assert.Equal((7, 0, 8, 1), (
+            lazarusCompletion.RequiredVariable1,
+            lazarusCompletion.RequiredVariable2,
+            lazarusCompletion.Variable1,
+            lazarusCompletion.Variable2));
+        var farmersOrchardCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301802);
+        Assert.True(farmersOrchardCompletion.UseQuestCompletionReward);
         var kingCompletionDialogue = mushroomInteractions.Single(interaction => interaction.InteractionId == 300205);
         Assert.True(kingCompletionDialogue.AllowCompleted);
         Assert.Equal(1, kingCompletionDialogue.RequiredVariable2);

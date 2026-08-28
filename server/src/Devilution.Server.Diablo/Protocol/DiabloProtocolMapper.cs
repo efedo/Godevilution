@@ -322,6 +322,7 @@ internal static class DiabloProtocolMapper
                 RequireItemPresent = interaction.RequireItemPresent,
                 AllowInitial = interaction.AllowInitial,
                 UseQuestTurnInReward = interaction.UseQuestTurnInReward,
+                UseQuestCompletionReward = interaction.UseQuestCompletionReward,
             };
             if (interaction.RequiredVariable1 >= 0)
                 projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;
@@ -731,7 +732,7 @@ internal static class DiabloProtocolMapper
                 || interaction.PositionX < 0
                 || interaction.PositionY < 0
                 || interaction.Kind is < AuthoritativeQuestTownerInteractionKind.Activate
-                    or > AuthoritativeQuestTownerInteractionKind.Dialogue
+                    or > AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest
                 || interaction.MessageId is <= 0 or > short.MaxValue
                 || interaction.RequiredVariable1 is < -1 or > byte.MaxValue
                 || interaction.RequiredVariable2 is < -1 or > byte.MaxValue

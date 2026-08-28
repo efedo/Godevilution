@@ -26,8 +26,15 @@ The content-owned quest/towner interaction catalog now covers the shipped
 Hellfire Grave Matters dialogue, Farmer's Orchard activation and Rune Bomb
 reward, and Jersey's Jersey alternate Grey Suit dialogue plus Brown Suit
 completion. Activation stages may reuse their quest-declared normal-item reward;
-legacy quest-state turn-in handling remains available for completion-only stages
-that have not yet been migrated.
+legacy quest-state turn-in handling remains available for older packs and direct
+compatibility callers.
+
+The additive `CompleteAfterQuest` interaction kind now externalizes the shipped
+Poisoned Water, Lazarus, and Farmer's Orchard post-completion conversations.
+Completion rows carry their native variable gates and markers, optionally spawn
+the quest's completion reward, and activate follow-on quests under the same
+server-owned one-shot boundary. Older peers retain the legacy completion-stage
+fallback when the additive field is absent.
 
 Hellfire Little Girl now uses authored quest/towner stages for its opening,
 active dialogue, and pre-activation Theodore hand-in branches. The itemless

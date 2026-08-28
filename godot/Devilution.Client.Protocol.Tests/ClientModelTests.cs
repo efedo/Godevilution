@@ -754,6 +754,48 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void SelectsCompletionAfterQuestInteractionWhenCompletionGateIsPresent()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = 62,
+                    PositionY = 16,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3018,
+                    Completed = true,
+                    Variable2 = 0,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 301802,
+                    QuestId = 3018,
+                    TownerId = 10,
+                    LevelId = 0,
+                    PositionX = 62,
+                    PositionY = 16,
+                    Kind = 4,
+                    RequiredVariable2 = 0,
+                    Variable2 = 1,
+                    MessageId = 280,
+                    AllowCompleted = true,
+                    UseQuestCompletionReward = true,
+                },
+            },
+        };
+
+        Assert.Equal(
+            301802U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+    }
+
+    [Fact]
     public void SelectsAuthoredQuestTownerActivationFromVisitedLevelOrGate()
     {
         var snapshot = new Snapshot {

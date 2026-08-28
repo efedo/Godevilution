@@ -1005,7 +1005,7 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		    || interaction.required_visited_level2() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_item_id() > std::numeric_limits<uint16_t>::max()
 		    || interaction.position_x() < 0 || interaction.position_y() < 0
-		    || interaction.kind() < 0 || interaction.kind() > 3
+		    || interaction.kind() < 0 || interaction.kind() > 4
 		    || !interaction.has_message_id()
 		    || interaction.message_id() <= 0 || interaction.message_id() > std::numeric_limits<int16_t>::max()
 		    || (interaction.has_required_variable1() && (interaction.required_variable1() < 0 || interaction.required_variable1() > 255))

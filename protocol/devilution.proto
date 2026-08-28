@@ -987,8 +987,10 @@ message QuestTownerInteractionSnapshot {
 	optional bool require_item_present = 20;
 	// Whether this completion stage may run while the quest is still initial.
 	bool allow_initial = 21;
-	// Whether completion reuses the quest's declared normal or unique turn-in reward.
+	// Whether activation/completion reuses the quest's declared normal or unique turn-in reward.
 	bool use_quest_turn_in_reward = 22;
+	// Whether a completion-after-quest stage reuses its declared completion reward.
+	bool use_quest_completion_reward = 23;
 }
 
 message ProjectileSnapshot {

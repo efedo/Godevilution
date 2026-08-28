@@ -3931,6 +3931,81 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedCompletionAfterQuestStageUsesCompletionRewardAndFollowOnQuest()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2103, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3018,
+            9,
+            1,
+            completed: true,
+            active: false,
+            variable2: 0,
+            completionActivateQuestId: 3019,
+            turnInTownerId: 10,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 16,
+            turnInOnCompletion: true,
+            turnInCompletionVariable2: 1,
+            turnInCompletionMessageId: 280,
+            turnInCompletionRewardItemId: 2103,
+            turnInCompletionRewardPositionX: 63,
+            turnInCompletionRewardPositionY: 16);
+        var followOn = new AuthoritativeQuestState(3019, 17, 1, active: false);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(
+                301802,
+                3018,
+                10,
+                0,
+                62,
+                16,
+                0,
+                AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest,
+                RequiredVariable2: 0,
+                Variable2: 1,
+                MessageId: 280,
+                ConsumeItem: false,
+                AllowCompleted: true,
+                UseQuestCompletionReward: true),
+        ]);
+        var world = new DiabloWorldState(quests: [quest, followOn]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 61, positionY: 16, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3018, 10),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.Equal(1, quest.Variable2);
+        Assert.True(followOn.Active);
+        Assert.Equal(280, Assert.Single(result.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal((2103U, 63, 16), (
+            reward.State.StableItemId,
+            reward.PositionX,
+            reward.PositionY));
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3018, 10),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Single(world.WorldItems);
+    }
+
+    [Fact]
     public void AuthoredLazarusCompletionStageWritesNativeMarkerAndLogsDiablo()
     {
         var items = new AuthoritativeItemCatalog([

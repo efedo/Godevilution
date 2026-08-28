@@ -9,6 +9,7 @@ public enum AuthoritativeQuestTownerInteractionKind
     Advance,
     Complete,
     Dialogue,
+    CompleteAfterQuest,
 }
 
 /** One validated interaction stage for a quest and native townsperson. */
@@ -34,7 +35,8 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
     uint RequiredItemId = 0,
     bool RequireItemPresent = true,
     bool AllowInitial = false,
-    bool UseQuestTurnInReward = false);
+    bool UseQuestTurnInReward = false,
+    bool UseQuestCompletionReward = false);
 
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
@@ -80,6 +82,10 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                     or AuthoritativeQuestTownerInteractionKind.Complete))
                 throw new InvalidDataException(
                     $"Quest/towner interaction {definition.InteractionId} may reuse a quest turn-in reward only for activation or completion stages.");
+            if (definition.UseQuestCompletionReward
+                && definition.Kind != AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest)
+                throw new InvalidDataException(
+                    $"Quest/towner interaction {definition.InteractionId} may reuse a quest completion reward only for completion-after-quest stages.");
             switch (definition.Kind) {
             case AuthoritativeQuestTownerInteractionKind.Activate:
                 if (definition.ConsumeItem && definition.ItemId == 0
@@ -119,6 +125,17 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                     || definition.MessageId == 0) {
                     throw new InvalidDataException(
                         $"Quest/towner dialogue {definition.InteractionId} requires a message.");
+                }
+                break;
+            case AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest:
+                if (definition.ConsumeItem
+                    || !definition.AllowCompleted
+                    || (definition.RequiredVariable1 < 0 && definition.RequiredVariable2 < 0)
+                    || (definition.Variable1 < 0 && definition.Variable2 < 0)
+                    || definition.ItemId != 0
+                    || definition.MessageId == 0) {
+                    throw new InvalidDataException(
+                        $"Quest/towner completion-after-quest {definition.InteractionId} is incomplete.");
                 }
                 break;
             default:
@@ -220,7 +237,8 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                     "required_item_symbol"),
                 row.OptionalBoolean("require_item_present", true),
                 row.OptionalBoolean("allow_initial", false),
-                row.OptionalBoolean("use_quest_turn_in_reward", false))));
+                row.OptionalBoolean("use_quest_turn_in_reward", false),
+                row.OptionalBoolean("use_quest_completion_reward", false))));
     }
 
     private static AuthoritativeQuestTownerInteractionKind ParseKind(

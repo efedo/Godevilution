@@ -1332,6 +1332,17 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestTownerInteractions)
 	interaction->set_position_x(10);
 	interaction->set_message_id(1);
 	EXPECT_FALSE(ValidateQuestTownerInteractions(outsideGeometry).has_value());
+
+	protocol::Snapshot completionAfterQuest;
+	completionAfterQuest.add_quests()->set_quest_id(1);
+	completionAfterQuest.mutable_quests(0)->set_required_progress(1);
+	interaction = completionAfterQuest.add_quest_towner_interactions();
+	interaction->set_interaction_id(1);
+	interaction->set_quest_id(1);
+	interaction->set_kind(4);
+	interaction->set_allow_completed(true);
+	interaction->set_message_id(1);
+	EXPECT_TRUE(ValidateQuestTownerInteractions(completionAfterQuest).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)

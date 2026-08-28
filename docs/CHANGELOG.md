@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the additive `CompleteAfterQuest` interaction kind and completion-reward
+  flag. Lazarus, Poisoned Water, and Farmer's Orchard completion conversations
+  now use validated content rows with server-owned variable gates, follow-on
+  activation, reward placement, and one-shot behavior across C#, Godot, and
+  native compatibility boundaries.
+
 - Expand the content-owned quest/towner pipeline across shipped Hellfire
   interactions: Grave Matters dialogue, Farmer's Orchard activation (including
   its Rune Bomb reward), and Jersey's Jersey's Grey Suit alternate and Brown

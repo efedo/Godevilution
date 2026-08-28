@@ -316,6 +316,13 @@ Hellfire Little Girl opening and active dialogue.
 Fields 21-22 mark completion stages that may run while a quest is still in its
 initial state and may reuse the quest's declared turn-in reward. This preserves
 native item hand-ins that are valid before the opening conversation.
+Interaction kind `4` is `CompleteAfterQuest`: it is available only when
+`allow_completed` is true and the quest is already complete. Its variable gates
+and markers preserve one-shot completion conversations without reopening the
+quest. Field 23, `use_quest_completion_reward`, tells the server to spawn the
+quest's authored completion reward at its declared position after the stage
+succeeds. The additive field is ignored by older peers, which retain the
+legacy completion-stage route.
 
 `PlayerSnapshot.visited_level_ids` is the canonical per-player visitation set.
 The server marks a level when the player enters it through a warp, portal, or
