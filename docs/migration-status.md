@@ -30,6 +30,11 @@ session even when the origin was not preloaded, and accepts the matching
 persisted behavior objects without duplicating their entity IDs; conflicting
 object state still fails closed.
 
+Save and ruleset-import boundaries now discard queued transient simulation events
+before resuming the restored tick. Events are not persisted, so reconnects and
+live replacement cannot deliver stale combat or dialogue notifications from the
+pre-restore timeline.
+
 Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.

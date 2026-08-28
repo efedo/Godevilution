@@ -121,6 +121,12 @@ public sealed class SimulationSessionCoordinator<TState, TEvent>
         return events.ToArray();
     }
 
+    /** Discards transient events that are not represented in persisted state. */
+    public void ClearEvents()
+    {
+        pendingEvents.Clear();
+    }
+
     private static void ValidateSessionId(string sessionId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);

@@ -3704,6 +3704,49 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ImportingAPlayerSaveDiscardsEventsQueuedBeforeTheRestore()
+    {
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingMana: 10,
+            startingManaMaximum: 10,
+            startingCombatTargets: [new AuthoritativeCombatTarget(9, 1, 0, 20, armorClass: 2)],
+            startingSpells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(7, 4, 0, 0, 0, 0) {
+                    DamageAmount = 12,
+                    Range = 1,
+                },
+            ]),
+            startingMemorizedSpells: [new MemorizedSpellState(7, 1)]);
+        var commandServer = new AuthoritativeCommandServer(executor);
+
+        Assert.Equal(CommandStatus.Accepted, commandServer.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            CastRequested = new CastRequested {
+                SpellId = 7,
+                TargetEntityId = 9,
+                Source = CastSourceKind.MemorizedSpell,
+            },
+        }, 1).Status);
+        var save = executor.ExportPlayerSave("player-a");
+        // Queue another event immediately before restoring the earlier save.
+        Assert.Equal(CommandStatus.Accepted, commandServer.Process("player-a", new Command {
+            ClientSequence = 2,
+            RequestedTick = 4,
+            CastRequested = new CastRequested {
+                SpellId = 7,
+                TargetEntityId = 9,
+                Source = CastSourceKind.MemorizedSpell,
+            },
+        }, 4).Status);
+        executor.ImportPlayerSave("player-a", save);
+
+        Assert.Null(executor.DrainEvents("player-a", 7, 1));
+    }
+
+    [Fact]
     public void AuthoritativeSaveRestoresRemainingActiveStoreStock()
     {
         var source = new StoreSimulationExecutor(

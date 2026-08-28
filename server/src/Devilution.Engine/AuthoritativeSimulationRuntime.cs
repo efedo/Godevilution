@@ -57,11 +57,17 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
         }
     }
 
-    /** Synchronizes the runtime clock with a module snapshot loaded from persistence. */
+    /**
+     * Synchronizes the runtime clock with a module snapshot loaded from
+     * persistence. Pending events are transient and are discarded because
+     * they are not part of the restored snapshot.
+     */
     public void RestoreAtTick(ulong tick)
     {
-        lock (synchronization)
+        lock (synchronization) {
             lastAdvancedTick = tick;
+            sessions.ClearEvents();
+        }
     }
 
     /** Registers module-created state before any implicit participant access. */

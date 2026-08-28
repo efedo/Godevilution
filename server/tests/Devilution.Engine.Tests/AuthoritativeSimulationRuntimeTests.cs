@@ -68,6 +68,28 @@ public sealed class AuthoritativeSimulationRuntimeTests
     }
 
     [Fact]
+    public void RestoreAtTickDiscardsTransientEventsFromThePreRestoreTimeline()
+    {
+        var lifecycle = new TestLifecycle();
+        var runtime = new AuthoritativeSimulationRuntime<TestState, string>(lifecycle);
+
+        runtime.Execute(
+            "player-a",
+            1,
+            (_, _) => new SimulationStepResult<int, string>(1, ["stale-a"]));
+        runtime.Execute(
+            "player-b",
+            1,
+            (_, _) => new SimulationStepResult<int, string>(1, ["stale-b"]));
+
+        runtime.RestoreAtTick(7);
+
+        Assert.Empty(runtime.DrainEvents("player-a"));
+        Assert.Empty(runtime.DrainEvents("player-b"));
+        Assert.Equal(7UL, runtime.LastAdvancedTick);
+    }
+
+    [Fact]
     public void CaptureAdvancesExistingStatesBeforeCreatingNewParticipant()
     {
         var lifecycle = new TestLifecycle();

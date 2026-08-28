@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Discard transient simulation events when importing a saved session or
+  synchronizing the runtime to a restored tick. Reconnect and live ruleset
+  replacement no longer deliver combat or dialogue events from before the
+  restored snapshot.
+
 - Restore set-level-anchored native DUN fragments after origins are hydrated,
   including their persisted behavior objects. Snapshot restore now treats an
   already-present matching fragment object as idempotent while still rejecting
