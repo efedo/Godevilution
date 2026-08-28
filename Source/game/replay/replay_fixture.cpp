@@ -4141,19 +4141,19 @@ bool CanPlaceReplayInventoryItem(const std::vector<int32_t> &grid, int cell, uin
 	return true;
 }
 
-int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const ReplayFixtureItemState &item)
+int FindReplayInventoryPlacement(const std::vector<int32_t> &grid, const ReplayFixtureItemState &item)
 {
 	const uint32_t width = std::max(item.inventoryWidth, 1U);
 	const uint32_t height = std::max(item.inventoryHeight, 1U);
 	if (height == 1) {
-		for (int cell = 30; cell <= 39 && static_cast<size_t>(cell) < state.inventoryGrid.size(); ++cell) {
-			if (CanPlaceReplayInventoryItem(state.inventoryGrid, cell, width, height))
+		for (int cell = 30; cell <= 39 && static_cast<size_t>(cell) < grid.size(); ++cell) {
+			if (CanPlaceReplayInventoryItem(grid, cell, width, height))
 				return cell;
 		}
 		for (int x = 9; x >= 0; --x) {
 			for (int y = 2; y >= 0; --y) {
 				const int cell = y * 10 + x;
-				if (CanPlaceReplayInventoryItem(state.inventoryGrid, cell, width, height))
+				if (CanPlaceReplayInventoryItem(grid, cell, width, height))
 					return cell;
 			}
 		}
@@ -4163,7 +4163,7 @@ int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const
 		for (int x = 10 - static_cast<int>(width); x >= 0; --x) {
 			for (int y = 0; y < 3; ++y) {
 				const int cell = y * 10 + x;
-				if (CanPlaceReplayInventoryItem(state.inventoryGrid, cell, width, height))
+				if (CanPlaceReplayInventoryItem(grid, cell, width, height))
 					return cell;
 			}
 		}
@@ -4171,25 +4171,34 @@ int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const
 	}
 	if (width == 1 && height == 3) {
 		for (int cell = 0; cell < 20; ++cell) {
-			if (CanPlaceReplayInventoryItem(state.inventoryGrid, cell, width, height))
+			if (CanPlaceReplayInventoryItem(grid, cell, width, height))
 				return cell;
 		}
 		return -1;
 	}
 	if (width == 2 && height == 3) {
 		for (int cell = 0; cell < 9; ++cell) {
-			if (CanPlaceReplayInventoryItem(state.inventoryGrid, cell, width, height))
+			if (CanPlaceReplayInventoryItem(grid, cell, width, height))
 				return cell;
 		}
 		for (int cell = 10; cell < 19; ++cell) {
-			if (CanPlaceReplayInventoryItem(state.inventoryGrid, cell, width, height))
+			if (CanPlaceReplayInventoryItem(grid, cell, width, height))
 				return cell;
 		}
 	}
 	return -1;
 }
 
-void FillReplayInventoryGrid(ReplayFixtureExecutionState &state, int cell, size_t itemIndex, const ReplayFixtureItemState &item)
+int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const ReplayFixtureItemState &item)
+{
+	return FindReplayInventoryPlacement(state.inventoryGrid, item);
+}
+
+void FillReplayInventoryGrid(
+	std::vector<int32_t> &grid,
+	int cell,
+	size_t itemIndex,
+	const ReplayFixtureItemState &item)
 {
 	const uint32_t width = std::max(item.inventoryWidth, 1U);
 	const uint32_t height = std::max(item.inventoryHeight, 1U);
@@ -4197,9 +4206,14 @@ void FillReplayInventoryGrid(ReplayFixtureExecutionState &state, int cell, size_
 	const int row = cell / 10;
 	for (uint32_t y = 0; y < height; ++y) {
 		for (uint32_t x = 0; x < width; ++x) {
-			state.inventoryGrid[(row + static_cast<int>(y)) * 10 + column + static_cast<int>(x)] = static_cast<int32_t>(itemIndex);
+			grid[(row + static_cast<int>(y)) * 10 + column + static_cast<int>(x)] = static_cast<int32_t>(itemIndex);
 		}
 	}
+}
+
+void FillReplayInventoryGrid(ReplayFixtureExecutionState &state, int cell, size_t itemIndex, const ReplayFixtureItemState &item)
+{
+	FillReplayInventoryGrid(state.inventoryGrid, cell, itemIndex, item);
 }
 
 std::vector<int> ReplayGoldPlacementCells(const ReplayFixtureExecutionState &state)
@@ -6688,8 +6702,8 @@ bool ExecuteReplayFixture(
 			bool accepted = false;
 			std::string rejectReason;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
-				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal" && command.kind != "DropItem") {
-					error = "Secondary replay participant supports Move, Attack, UsePortal, and DropItem commands only.";
+				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal" && command.kind != "DropItem" && command.kind != "PickupWorldItem") {
+					error = "Secondary replay participant supports Move, Attack, UsePortal, DropItem, and PickupWorldItem commands only.";
 					return false;
 				}
 				if (command.kind == "Move") {
@@ -6719,6 +6733,42 @@ bool ExecuteReplayFixture(
 							state.secondaryPlayerVisitedLevelIds.push_back(state.secondaryPlayerLevelId);
 						state.secondaryPlayerPositionX = state.portalDestinationX;
 						state.secondaryPlayerPositionY = state.portalDestinationY;
+						accepted = true;
+					}
+				} else if (command.kind == "PickupWorldItem") {
+					const int distance = std::max(
+					    std::abs(state.secondaryPlayerPositionX - state.worldItemPositionX),
+					    std::abs(state.secondaryPlayerPositionY - state.worldItemPositionY));
+					const int targetCell = CanPlaceReplayInventoryItem(
+					    state.secondaryInventoryGrid,
+					    0,
+					    state.worldItemState.inventoryWidth,
+					    state.worldItemState.inventoryHeight)
+					    ? 0
+					    : FindReplayInventoryPlacement(
+					          state.secondaryInventoryGrid,
+					          state.worldItemState);
+					if (command.worldItemEntityId == state.worldItemEntityId
+					    && state.worldItemSeed != 0
+					    && state.secondaryPlayerLevelId == state.worldItemLevelId
+					    && distance <= 1
+					    && state.secondaryInventory.size() < 40
+					    && targetCell >= 0) {
+						const size_t inventoryIndex = state.secondaryInventory.size();
+						state.secondaryInventory.push_back({
+						    0,
+						    0,
+						    state.worldItemSeed,
+						    state.worldItemPrice,
+						    command.order.targetTick,
+						    state.worldItemState,
+						});
+						FillReplayInventoryGrid(
+						    state.secondaryInventoryGrid,
+						    targetCell,
+						    inventoryIndex,
+						    state.worldItemState);
+						state.worldItemEntityId = 0;
 						accepted = true;
 					}
 				} else if (command.kind == "DropItem") {

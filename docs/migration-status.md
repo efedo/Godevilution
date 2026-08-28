@@ -27,6 +27,16 @@ from a secondary participant. The new fixture validates secondary inventory
 source removal, adjacent world-item projection, and a shared canonical
 checkpoint hash in both runners.
 
+The companion multiplayer replay lane now routes `PickupWorldItem` from the
+secondary participant. Native and managed runners agree on world-item removal,
+inventory placement, purchased-tick propagation, and the resulting canonical
+checkpoint hash.
+
+The companion multiplayer replay lane now routes `PickupWorldItem` from the
+secondary participant as well. Native and managed runners agree on world-item
+removal, inventory placement, purchase-tick propagation, and the resulting
+canonical checkpoint hash.
+
 Dedicated replay fixtures now cover stable-reference drops from inventory,
 belt, and equipment sources, matching the three carried-item locations exposed
 by the protocol boundary. Command-level expected statuses are now part of the

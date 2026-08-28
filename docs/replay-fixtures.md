@@ -108,6 +108,10 @@ stable-reference `DropItem` from a secondary participant. The corresponding
 fixture verifies participant routing, source removal, adjacent world-item
 materialization, stable identity validation, and a shared checkpoint hash in
 both runners.
+The companion `gameplay-multiplayer-secondary-item-pickup.json` fixture routes
+`PickupWorldItem` from the secondary participant, proving authoritative world
+item removal, inventory placement, purchased-tick propagation, and the shared
+checkpoint hash in both runners.
 An initial state with one canonical Gold pile may add
 `inventory_filler_count`. Both runners place that many deterministic one-cell
 non-Gold items into the remaining native inventory cells. This forces the same
@@ -156,7 +160,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-28,
-the native replay gate contains 87 checked-in JSON fixtures and 113 registered
+the native replay gate contains 89 checked-in JSON fixtures and 115 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -269,6 +273,12 @@ baseline while preserving the separate legacy held-item fixture.
 exercise the same intent from belt slot 0 and equipment slot 0. Their stable
 identities are validated before the slotted source is removed, keeping replay
 coverage aligned with the protocol's three carried-item source locations.
+
+`gameplay-multiplayer-secondary-item-pickup.json` starts an adjacent world item
+and routes `PickupWorldItem` through the secondary participant. Both runners
+remove the world entity, place the item in the secondary inventory at the
+native first-fit cell, preserve its purchased tick, and validate the shared
+checkpoint hash.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied
@@ -464,6 +474,9 @@ Notable shared fixtures include:
   cursor-held remainder identity, RNG stability, and explicit adjacent drop;
 - `gameplay-stable-item-drop.json` for explicit stable-reference inventory
   drops through `DropItemRequested` and authoritative world-item creation;
+- `gameplay-multiplayer-secondary-item-pickup.json` for secondary-participant
+  world-item pickup, inventory placement, purchase-tick propagation, and
+  checkpoint parity;
 - `gameplay-stable-item-drop-retry.json` for accepted-then-rejected stale
   stable-reference retry ordering and `InvalidTarget` rejection reason;
 - `gameplay-stable-belt-drop-invalid-target.json` for `NotAllowed` rejection

@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
   participant routing, stable identity validation, source removal, and
   adjacent world-item materialization in both replay runners.
 
+- Add multiplayer secondary-participant world-item pickup coverage. The shared
+  fixture verifies authoritative item removal, inventory placement, and
+  canonical checkpoint parity through the same protocol command.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.
