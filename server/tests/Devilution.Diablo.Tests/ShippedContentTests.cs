@@ -52,6 +52,34 @@ public sealed class ShippedContentTests
         Assert.Equal(1, signChest.QuestTransitionRequiredVariable1);
         Assert.Equal(AuthoritativeObjectRewardKind.NormalItem, signChest.RewardKind);
         Assert.Equal(2136U, signChest.RewardId);
+
+        var templates = objects
+            .Where(@object => @object.ObjectId is 71 or 72 or 88)
+            .ToDictionary(@object => @object.ObjectId);
+        Assert.Equal(
+            [71U, 72U, 88U],
+            templates.Keys.Order().ToArray());
+        Assert.Equal(
+            (71U, 3009U, AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1, 1, 0),
+            (templates[71].NativeObjectId,
+                templates[71].QuestId,
+                templates[71].QuestTransitionKind,
+                templates[71].QuestTransitionAmount,
+                templates[71].QuestTransitionRequiredVariable1));
+        Assert.Equal(
+            (72U, 3010U, AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1, 1, 0),
+            (templates[72].NativeObjectId,
+                templates[72].QuestId,
+                templates[72].QuestTransitionKind,
+                templates[72].QuestTransitionAmount,
+                templates[72].QuestTransitionRequiredVariable1));
+        Assert.Equal(
+            (88U, 3012U, AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1, 1, 0),
+            (templates[88].NativeObjectId,
+                templates[88].QuestId,
+                templates[88].QuestTransitionKind,
+                templates[88].QuestTransitionAmount,
+                templates[88].QuestTransitionRequiredVariable1));
     }
 
     [Fact]

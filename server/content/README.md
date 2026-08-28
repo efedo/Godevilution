@@ -23,6 +23,13 @@ so operators can activate the native Hellfire ruleset with
 `--content-overlay server/content/hellfire` while remaining Hellfire tables are
 migrated incrementally.
 
+The base pack also carries template-only behavior rows for the native Halls of
+the Blind book, Gateway of Blood book, and Warlord steel tome. These rows own
+their stable object and native presentation identities plus the initial
+quest-variable transition. Native-DUN placement, book-specific rewards, and
+map replacement remain deferred until generated geometry and licensed assets
+are available; no server path infers those values from a native object ID.
+
 The optional `unique_monster_placements.tsv` table owns generated unique
 encounter placement. Rows are validated against unique identities, monster
 types, level geometry, reserved warp/portal/object cells, entity IDs reserved

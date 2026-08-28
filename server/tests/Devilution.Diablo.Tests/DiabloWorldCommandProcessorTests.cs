@@ -54,6 +54,52 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(7, @object.AnimationFrame);
     }
 
+    [Theory]
+    [InlineData(71U, 3009U, 8U)]
+    [InlineData(72U, 3010U, 5U)]
+    [InlineData(88U, 3012U, 13U)]
+    public void NativeQuestBookTransitionTemplateActivatesItsLinkedQuest(
+        uint nativeObjectId,
+        uint questId,
+        uint levelId)
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            $"level_id\twidth\theight\tblocked_cells\n{levelId}\t20\t20\tnone\n");
+        var quest = new AuthoritativeQuestState(
+            questId,
+            levelId,
+            requiredProgress: 1,
+            active: false,
+            variable1: 0);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            nativeObjectId,
+            levelId,
+            5,
+            5,
+            questId: questId,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
+            questTransitionAmount: 1,
+            questTransitionRequiredVariable1: 0,
+            nativeObjectId: nativeObjectId);
+        var world = new DiabloWorldState(geometry, objects: [@object], quests: [quest]);
+        var player = CreatePlayer(levelId: levelId, positionX: 5, positionY: 4, entityId: 1);
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(@object.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(@object.Activated);
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(1, quest.Variable1);
+        Assert.False(quest.Completed);
+    }
+
     [Fact]
     public void MovementRejectsMalformedBlockedAndOccupiedDestinationsWithoutMutation()
     {

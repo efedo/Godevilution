@@ -2,6 +2,12 @@
 
 Status date: 2026-08-28
 
+The base content pack now includes template-only authoritative behavior rows
+for the Halls of the Blind book, Gateway of Blood book, and Warlord steel tome.
+Their native identities and initial quest-variable transitions are validated by
+the module-owned shipped-content test; native-DUN placement, rewards, and map
+replacement remain deferred pending generated geometry and licensed assets.
+
 Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.

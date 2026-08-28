@@ -367,6 +367,12 @@ explicit migration seams, not server-authority claims:
   this is presentation-only and does not make activation repeatable. Native
   behavior, placement, and map resynchronization remain compatibility seams
   until their server contracts are externalized.
+  The base pack now carries template-only behavior rows for the native Halls of
+  the Blind book, Gateway of Blood book, and Warlord steel tome. These rows
+  author their native object identities and initial quest-variable transition;
+  native-DUN placement, book-specific rewards, and map resynchronization remain
+  deferred until the corresponding generated geometry and licensed assets are
+  available.
   The two fixed Chamber of Bone completion books now clone authored templates:
   the server completes the quest, grants Guardian, and owns the exact
   player-origin target offset. The Vile Betrayer's two fixed book

@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add template-only authoritative behavior rows for the native Halls of the
+  Blind book, Gateway of Blood book, and Warlord steel tome. The rows carry
+  stable object identities and initial quest transitions so future native-DUN
+  placement can reuse one server contract; exact generated placement, rewards,
+  and map replacement remain deferred until their native geometry inputs land.
 - Run spawned live authoritative servers from the same build configuration as
   the Godot protocol test assembly, preventing stale Debug binaries from
   making Release boundary tests intermittently miss gameplay projections.
