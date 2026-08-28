@@ -79,6 +79,58 @@ public sealed class AuthoritativeCommandServer
         }
     }
 
+    /** Returns a defensive copy of the completed command ledger for a session. */
+    public IReadOnlyDictionary<ulong, CommandResult> ExportCompletedCommands(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+            throw new ArgumentException("A session ID is required.", nameof(sessionId));
+        lock (synchronization) {
+            return completedCommandsBySession.TryGetValue(sessionId, out var completedCommands)
+                ? completedCommands.ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value.Clone())
+                : new Dictionary<ulong, CommandResult>();
+        }
+    }
+
+    /** Hydrates an empty session ledger from durable command receipts. */
+    public void ImportCompletedCommands(
+        string sessionId,
+        IEnumerable<CommandResult> results)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+            throw new ArgumentException("A session ID is required.", nameof(sessionId));
+        ArgumentNullException.ThrowIfNull(results);
+        lock (synchronization) {
+            var pending = results.ToArray();
+            var clientSequences = new HashSet<ulong>();
+            var receiptSequences = new HashSet<ulong>();
+            foreach (var result in pending) {
+                ArgumentNullException.ThrowIfNull(result);
+                if (result.ClientSequence == 0
+                    || result.ServerReceiptSequence == 0
+                    || !Enum.IsDefined(result.Status)
+                    || !Enum.IsDefined(result.RejectReason)
+                    || !clientSequences.Add(result.ClientSequence)
+                    || !receiptSequences.Add(result.ServerReceiptSequence)) {
+                    throw new InvalidDataException("The command receipt ledger contains an invalid or duplicate result.");
+                }
+            }
+            if (receiptSequences.Contains(ulong.MaxValue))
+                throw new InvalidDataException("The command receipt ledger exhausts receipt sequence space.");
+
+            var completedCommands = GetCompletedCommands(sessionId);
+            if (completedCommands.Count != 0)
+                throw new InvalidOperationException(
+                    $"The command ledger for session '{sessionId}' is already initialized.");
+            foreach (var result in pending) {
+                completedCommands.Add(result.ClientSequence, result.Clone());
+                if (result.ServerReceiptSequence >= nextServerReceiptSequence)
+                    nextServerReceiptSequence = checked(result.ServerReceiptSequence + 1);
+            }
+        }
+    }
+
     private Dictionary<ulong, CommandResult> GetCompletedCommands(string sessionId)
     {
         if (!completedCommandsBySession.TryGetValue(sessionId, out var completedCommands)) {

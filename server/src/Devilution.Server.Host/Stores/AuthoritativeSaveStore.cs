@@ -17,6 +17,9 @@ public sealed class AuthoritativeSaveStore
         Directory.CreateDirectory(this.rootDirectory);
     }
 
+    /** Root directory shared by related server-owned persistence stores. */
+    public string RootDirectory => rootDirectory;
+
     public void Save(string sessionId, string serializedSave)
     {
         var path = GetPath(sessionId);

@@ -2,6 +2,12 @@
 
 Status date: 2026-08-28
 
+The generic host now persists each initialized session's completed command
+receipt ledger beside its authoritative save and restores it before handshake
+processing. A client retry therefore remains a duplicate across a fresh host
+process, preserving server-owned exactly-once command admission through the
+reconnect boundary.
+
 Hellfire Little Girl now uses authored quest/towner stages for its opening,
 active dialogue, and pre-activation Theodore hand-in branches. The itemless
 stages require Theodore to be absent, while the completion stage is explicitly

@@ -144,6 +144,45 @@ public sealed class AuthoritativeCommandServerTests
         Assert.Equal(0, executor.CallCount);
     }
 
+    [Fact]
+    public void ExportAndImportPreserveDuplicateResultsAndReceiptSequence()
+    {
+        var sourceExecutor = new RecordingExecutor();
+        var source = new AuthoritativeCommandServer(sourceExecutor);
+        var accepted = source.Process("player-a", Attack(7, 10), currentTick: 10);
+        var exported = source.ExportCompletedCommands("player-a");
+
+        var replacementExecutor = new RecordingExecutor();
+        var replacement = new AuthoritativeCommandServer(replacementExecutor);
+        replacement.ImportCompletedCommands("player-a", exported.Values);
+
+        var duplicate = replacement.Process("player-a", Attack(7, 10), currentTick: 11);
+        var next = replacement.Process("player-a", Attack(8, 11), currentTick: 11);
+
+        Assert.Equal(CommandStatus.Duplicate, duplicate.Status);
+        Assert.Equal(accepted.ServerReceiptSequence, duplicate.ServerReceiptSequence);
+        Assert.Equal(CommandStatus.Accepted, next.Status);
+        Assert.Equal(accepted.ServerReceiptSequence + 1, next.ServerReceiptSequence);
+        Assert.Equal(1, replacementExecutor.CallCount);
+    }
+
+    [Fact]
+    public void ImportRejectsASecondInitializationForTheSameSession()
+    {
+        var server = new AuthoritativeCommandServer(new RecordingExecutor());
+        server.Process("player-a", Attack(1, 10), currentTick: 10);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            server.ImportCompletedCommands(
+                "player-a",
+                [new CommandResult {
+                    ClientSequence = 2,
+                    ServerReceiptSequence = 2,
+                    AppliedTick = 10,
+                    Status = CommandStatus.Accepted,
+                }]));
+    }
+
     private static Command Attack(ulong clientSequence, ulong requestedTick)
     {
         return new Command {

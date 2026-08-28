@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Persist per-session command receipts beside authoritative saves and hydrate
+  them before reconnect processing. Retried client sequences now remain
+  idempotent across a fresh host process, while receipt allocation resumes
+  after the highest persisted server receipt.
+
 - Preserve native Little Girl ordering when Theodore is already in the player's
   inventory: the authored completion stage may run during initial quest state,
   reuses the declared amulet reward, and is projected consistently to Godot and

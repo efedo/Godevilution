@@ -176,7 +176,10 @@ an operator-facing reload command through its local console.
 
 The save root is reusable across process restarts: a reconnect carrying the
 same resume token restores the persisted session through the fresh adapter and
-save provider before any new character selection is considered.
+save provider before any new character selection is considered. The host also
+persists the session's completed command receipts beside that save, so a
+retrying client sequence remains a duplicate after a process restart rather
+than replaying gameplay.
 
 When attached to an interactive console, the standalone executable accepts the
 local operator commands `status`, `reload`, `help`, and `quit`. `reload` reads

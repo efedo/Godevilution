@@ -127,6 +127,9 @@ authoritative results.
 - The server advances at a fixed 20 Hz authoritative tick by default.
 - Commands are ordered by requested tick and server receipt sequence.
 - Client sequence numbers are reused for retries; the server deduplicates them.
+  Completed command receipts are persisted beside the session save, restored
+  before a resumed connection can submit commands, and included in the next
+  receipt-sequence allocation after a host restart.
 - Snapshots are canonical state. Events are transient presentation deltas.
 - Every network snapshot includes all assigned participants, with the receiver
   first on the wire and every player sorted by entity ID for canonical hashing.

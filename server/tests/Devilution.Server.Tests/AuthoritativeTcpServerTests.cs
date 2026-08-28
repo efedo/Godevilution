@@ -684,6 +684,24 @@ public sealed class AuthoritativeTcpServerTests
                     Assert.Equal(
                         SnapshotStateHasher.Compute(resumedSnapshot),
                         resumedSnapshot.StateSha256);
+
+                    await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
+                        CommandBatch = new CommandBatch {
+                            Commands = { new Command {
+                                ClientSequence = 1,
+                                RequestedTick = 10,
+                                AttackRequested = new AttackRequested {
+                                    TargetEntityId = initialEntityId,
+                                },
+                            } },
+                        },
+                    }, restartCancellationToken);
+                    var duplicate = (await EnvelopeCodec.ReadAsync(
+                        resumedStream,
+                        restartCancellationToken))!.CommandAck.Results.Single();
+                    Assert.Equal(CommandStatus.Duplicate, duplicate.Status);
+                    Assert.Equal(1UL, duplicate.ClientSequence);
+                    await EnvelopeCodec.ReadAsync(resumedStream, restartCancellationToken);
                 }
 
                 Assert.True(replacement.Disposed);
