@@ -18,6 +18,13 @@ snapshot hash produced after the accumulated additive snapshot fields; the
 complete replay fixture class validates all 77 cases, including a secondary
 participant portal transition and visited-level projection.
 
+The engine-neutral entity pool now initializes sparse free-lists before any
+game-specific reset hook, rejects duplicate releases, and correctly packs
+dense-policy storage after deletion. The native compatibility adapters retain
+their legacy bookkeeping contract, documented in the entity-pool guides, while
+focused GTest coverage protects the container behavior used by future
+presentation-pool extraction.
+
 The generic host now exposes the active combined ruleset identity and retired
 generation count through the live server status surface. Operators can verify
 that a replacement was published and that old generations were drained without

@@ -14,6 +14,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace devilution {
 
@@ -126,7 +127,17 @@ public:
 	using iterator = iterator_base<T>;
 	using const_iterator = iterator_base<const T>;
 
-	DenseEntityPool() = default;
+	/**
+	 * Constructs an empty pool with its sparse free-list initialized.
+	 *
+	 * Keeping construction equivalent to clear() makes the container safe to
+	 * use before a game-specific reset hook runs, while preserving the legacy
+	 * aliases that explicitly call clear() at level/session boundaries.
+	 */
+	DenseEntityPool()
+	{
+		clear();
+	}
 
 	/**
 	 * Allocate a new entity at the next available slot.
@@ -171,22 +182,26 @@ public:
 		}
 
 		if constexpr (StableIndices) {
-			// Sparse: return to free-list
-			availableIndices_[index] = nextAvailableIndex_;
-			nextAvailableIndex_ = index;
-			// Remove from active list
+			// Sparse: find the active slot before returning it to the free-list.
+			// This keeps repeated release calls from corrupting the free-list.
 			for (size_type i = 0; i < activeCount_; ++i) {
 				if (activeIndices_[i] == index) {
+					availableIndices_[index] = nextAvailableIndex_;
+					nextAvailableIndex_ = index;
 					activeIndices_[i] = activeIndices_[--activeCount_];
-					break;
+					return;
 				}
 			}
 		} else {
-			// Dense: swap-with-last
+			// Dense: move the final packed element into the released slot.
 			for (size_type i = 0; i < activeCount_; ++i) {
 				if (activeIndices_[i] == index) {
-					activeIndices_[i] = activeIndices_[--activeCount_];
-					break;
+					const size_type lastIndex = activeIndices_[activeCount_ - 1];
+					if (index != lastIndex)
+						elements_[index] = std::move(elements_[lastIndex]);
+					activeIndices_[i] = index;
+					--activeCount_;
+					return;
 				}
 			}
 		}

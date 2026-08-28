@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Initialize the generic entity-pool free-list at construction, make repeated
+  releases harmless, and correctly pack dense-pool elements after deletion;
+  restore the referenced entity-pool contract and modernization guides with
+  focused native regression tests.
 - Make Godot local movement prediction collision-aware using only authoritative
   geometry, monster occupancy, and remote-player occupancy already present in
   the latest snapshot; unknown collision data remains non-blocking for

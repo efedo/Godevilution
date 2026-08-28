@@ -81,6 +81,7 @@ set(standalone_tests
   content_manifest_test
   codec_test
   crawl_test
+  entity_pool_test
   mpq_file_test
   file_util_test
   format_int_test

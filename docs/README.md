@@ -20,6 +20,8 @@ implementation instructions.
 - [Replay fixtures](replay-fixtures.md)
 - [Lua replacement inventory](lua-capability-inventory.md)
 - [Repository organization](source-organization.md)
+- [Entity-pool contract](ENTITY_POOLS.md)
+- [Entity-pool modernization](ENTITY_POOL_MODERNIZATION.md)
 
 ## Development
 
