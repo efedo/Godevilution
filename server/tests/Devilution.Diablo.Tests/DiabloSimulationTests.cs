@@ -262,6 +262,102 @@ public sealed class DiabloSimulationTests
         Assert.False(replacement.WorldState.IsWalkable(1, 4, 5));
     }
 
+    [Fact]
+    public void FailedSnapshotRestoreRetainsSetLevelMutationProjection()
+    {
+        var mutationCatalog = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(0, 0, 1, 1)],
+                anchorSetLevelId: 6),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                WorldMutations = mutationCatalog,
+                SetLevelObjectOrigins = new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+                    [6] = new(1, 4, 5),
+                },
+            });
+        Assert.True(simulation.WorldState.ApplyWorldMutation(7));
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
+        var invalid = snapshot with {
+            SetLevelObjectOrigins = [snapshot.SetLevelObjectOrigins[0] with { LevelId = 0 }],
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), invalid));
+
+        Assert.Equal(new AuthoritativeSetLevelObjectOrigin(1, 4, 5), simulation.SetLevelObjectOrigins[6]);
+        Assert.False(simulation.WorldState.IsWalkable(1, 4, 5));
+    }
+
+    [Fact]
+    public void FailedSetLevelOriginPublicationLeavesOriginsAndObjectsUnchanged()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                SetLevelObjects = new AuthoritativeSetLevelObjectCatalog([
+                    new AuthoritativeSetLevelObjectPlacement(
+                        1101,
+                        6,
+                        4,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1,
+                        1) {
+                        PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+                        TemplateEntityId = 9999,
+                    },
+                ]),
+            });
+
+        Assert.Throws<InvalidDataException>(() => simulation.PublishSetLevelObjectOrigin(
+            6,
+            new AuthoritativeSetLevelObjectOrigin(17, 12, 12)));
+
+        Assert.Empty(simulation.SetLevelObjectOrigins);
+        Assert.Empty(simulation.WorldState.Objects);
+    }
+
+    [Fact]
+    public void FailedProceduralOriginBatchRollsBackEarlierPublications()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = new AuthoritativeWorld(),
+                SetLevelObjects = new AuthoritativeSetLevelObjectCatalog([
+                    new AuthoritativeSetLevelObjectPlacement(1101, 6, 4, 1, 1, 0, 0, 1, 1) {
+                        PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+                    },
+                    new AuthoritativeSetLevelObjectPlacement(1102, 7, 5, 1, 1, 0, 0, 1, 1) {
+                        PlacementMode = AuthoritativeSetLevelObjectPlacementMode.SetLevelOriginOffset,
+                        TemplateEntityId = 9999,
+                    },
+                ]),
+                ProceduralSetPieceOrigins = new AuthoritativeProceduralSetPieceOriginCatalog([
+                    new AuthoritativeProceduralSetPieceOriginDefinition(6, 17, 4, 4, 1234),
+                    new AuthoritativeProceduralSetPieceOriginDefinition(7, 17, 4, 4, 1235),
+                ]),
+            });
+        simulation.WorldState.AddLevel(new AuthoritativeLevel(17, 32, 32));
+
+        Assert.Throws<InvalidDataException>(
+            simulation.PublishAvailableProceduralSetPieceOrigins);
+
+        Assert.Empty(simulation.SetLevelObjectOrigins);
+        Assert.Empty(simulation.WorldState.Objects);
+    }
+
     [Theory]
     [InlineData(DiabloDifficulty.Normal, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 10)]
     [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 130)]

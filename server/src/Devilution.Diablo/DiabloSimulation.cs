@@ -370,6 +370,12 @@ public sealed partial class DiabloSimulation
     private readonly Dictionary<int, AuthoritativeSetLevelObjectOrigin> setLevelObjectOrigins = [];
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
+    private sealed record DynamicOriginPublicationState(
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin> Origins,
+        IReadOnlyDictionary<uint, AuthoritativeWorldObject> Objects,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> Levels,
+        IReadOnlySet<uint> AppliedNativeDunFragments);
+
     internal DiabloSimulation(
         StoreCatalog storeCatalog,
         DiabloWorldState worldState,
@@ -535,9 +541,15 @@ public sealed partial class DiabloSimulation
         AuthoritativeSetLevelObjectOrigin origin)
     {
         ArgumentNullException.ThrowIfNull(origin);
-        var generated = PublishSetLevelObjectOrigin(setLevelId, origin, materialize: true);
-        ApplyDeferredNativeDunFragments();
-        return generated;
+        var previous = CaptureDynamicOriginPublicationState();
+        try {
+            var generated = PublishSetLevelObjectOrigin(setLevelId, origin, materialize: true);
+            ApplyDeferredNativeDunFragments();
+            return generated;
+        } catch {
+            RestoreDynamicOriginPublicationState(previous);
+            throw;
+        }
     }
 
     /**
@@ -550,25 +562,61 @@ public sealed partial class DiabloSimulation
         if (proceduralSetPieceOriginCatalog is null || WorldState.World is null)
             return new Dictionary<int, AuthoritativeSetLevelObjectOrigin>();
 
-        var planned = proceduralSetPieceOriginCatalog.Plan(
-            WorldState.World,
-            proceduralSetPieceOriginSeed);
-        var published = new Dictionary<int, AuthoritativeSetLevelObjectOrigin>();
-        foreach (var (setLevelId, origin) in planned) {
-            if (setLevelObjectOrigins.TryGetValue(setLevelId, out var existing)) {
-                if (existing != origin)
-                    throw new InvalidDataException(
-                        $"Procedural set-level origin {setLevelId} conflicts with its published origin.");
-                continue;
-            }
+        var previous = CaptureDynamicOriginPublicationState();
+        try {
+            var planned = proceduralSetPieceOriginCatalog.Plan(
+                WorldState.World,
+                proceduralSetPieceOriginSeed);
+            var published = new Dictionary<int, AuthoritativeSetLevelObjectOrigin>();
+            foreach (var (setLevelId, origin) in planned) {
+                if (setLevelObjectOrigins.TryGetValue(setLevelId, out var existing)) {
+                    if (existing != origin)
+                        throw new InvalidDataException(
+                            $"Procedural set-level origin {setLevelId} conflicts with its published origin.");
+                    continue;
+                }
 
-            PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
-            published.Add(setLevelId, origin);
-            MaterializeRelativeSetLevelObjects(setLevelId);
+                PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
+                published.Add(setLevelId, origin);
+                MaterializeRelativeSetLevelObjects(setLevelId);
+            }
+            if (published.Count != 0)
+                ApplyDeferredNativeDunFragments();
+            return published;
+        } catch {
+            RestoreDynamicOriginPublicationState(previous);
+            throw;
         }
-        if (published.Count != 0)
-            ApplyDeferredNativeDunFragments();
-        return published;
+    }
+
+    private DynamicOriginPublicationState CaptureDynamicOriginPublicationState()
+    {
+        return new DynamicOriginPublicationState(
+            setLevelObjectOrigins.ToDictionary(pair => pair.Key, pair => pair.Value),
+            WorldState.Objects.ToDictionary(pair => pair.Key, pair => pair.Value),
+            WorldState.World?.Levels.ToDictionary(level => level.LevelId)
+                ?? new Dictionary<uint, AuthoritativeLevel>(),
+            appliedNativeDunFragments.ToHashSet());
+    }
+
+    private void RestoreDynamicOriginPublicationState(
+        DynamicOriginPublicationState previous)
+    {
+        setLevelObjectOrigins.Clear();
+        foreach (var (setLevelId, origin) in previous.Origins)
+            setLevelObjectOrigins.Add(setLevelId, origin);
+
+        WorldState.Objects.Clear();
+        foreach (var (@object, value) in previous.Objects)
+            WorldState.Objects.Add(@object, value);
+
+        appliedNativeDunFragments.Clear();
+        appliedNativeDunFragments.UnionWith(previous.AppliedNativeDunFragments);
+
+        if (WorldState.World is { } world)
+            foreach (var level in previous.Levels.Values)
+                world.ReplaceLevel(level);
+        WorldState.RefreshProjectedGeometry();
     }
 
     private IReadOnlyList<AuthoritativeWorldObject> PublishSetLevelObjectOrigin(

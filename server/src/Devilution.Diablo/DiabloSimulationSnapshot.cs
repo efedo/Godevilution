@@ -920,15 +920,16 @@ public sealed partial class DiabloSimulation
             RestoreSnapshotCore(destination, snapshot);
         }
         catch {
-            WorldState.RestoreWorldMutations(previousWorldMutationIds);
             setLevelObjectOrigins.Clear();
             foreach (var (setLevelId, origin) in previousSetLevelObjectOrigins)
                 setLevelObjectOrigins.Add(setLevelId, origin);
+            WorldState.RestoreWorldMutations(previousWorldMutationIds);
             appliedNativeDunFragments.Clear();
             appliedNativeDunFragments.UnionWith(previousAppliedNativeDunFragments);
             materializedProceduralLevels.Clear();
             materializedProceduralLevels.UnionWith(previousMaterializedProceduralLevels);
             nextGeneratedMonsterEntityId = previousNextGeneratedMonsterEntityId;
+            WorldState.RefreshProjectedGeometry();
             throw;
         }
     }

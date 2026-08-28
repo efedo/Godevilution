@@ -18,6 +18,10 @@ World mutations now accept the same validated set-level-origin anchor. Geometry
 and native layer changes defer until the referenced generated origin is
 published, then rebuild through the authoritative world projection.
 
+Dynamic origin publication and snapshot rollback now restore origins, generated
+objects, native fragments, and projected geometry together when deferred
+materialization or validation fails.
+
 Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make dynamic set-piece origin publication and snapshot rollback transactional;
+  failed deferred geometry or object materialization no longer leaves partial
+  origins, objects, fragments, or projected mutation state behind.
+
 - Add validated set-level-origin anchors to native DUN fragments and their
   behavior-object placements. Rows now defer until a generated set-piece origin
   is published, then compose atomically with existing entity, unique-encounter,
