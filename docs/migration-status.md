@@ -2,6 +2,14 @@
 
 Status date: 2026-08-28
 
+Initial staged-dialogue projection now chooses a shared-safe message for
+item-gated encounters. When a conversation has item-present and item-absent
+branches, snapshots advertise the item-absent branch; the server still selects
+the interacting player's exact branch at `TalkToQuestRequested`. This keeps
+multiplayer target presentation deterministic without leaking item-dependent
+reward state. The Lachdanan boundary is covered by catalog and simulation
+tests; native map geometry remains separately deferred.
+
 Snotspill's initial unique-monster conversation now enters through the authored
 staged-dialogue catalog instead of the legacy quest-dialogue fallback. The
 live Godot fixture verifies the server event, quest-variable advance, next

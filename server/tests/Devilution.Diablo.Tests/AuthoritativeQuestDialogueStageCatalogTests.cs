@@ -136,6 +136,37 @@ public sealed class AuthoritativeQuestDialogueStageCatalogTests
     }
 
     [Fact]
+    public void PresentationStagePrefersTheItemAbsentBranchForSharedTargets()
+    {
+        var catalog = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3005,
+                0,
+                0,
+                83,
+                0,
+                0,
+                RequiredItemId: 2137,
+                ConsumeItem: true,
+                CompleteQuest: true,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.UniqueItem,
+                RewardUniqueId: 1008),
+            new(
+                3005,
+                0,
+                0,
+                81,
+                0,
+                0,
+                RequiredItemId: 2137,
+                RequireItemPresent: false),
+        ]);
+
+        Assert.True(catalog.TryGetPresentationStage(3005, 0, 0, out var presentation));
+        Assert.Equal(81, presentation.MessageId);
+    }
+
+    [Fact]
     public void UniqueItemRewardRequiresAnAuthoredKnownUnique()
     {
         var catalog = new AuthoritativeQuestDialogueStageCatalog([

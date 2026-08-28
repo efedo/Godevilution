@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make initial staged-dialogue projection safe for shared multiplayer targets.
+  Item-gated conversations now advertise the item-absent branch until the
+  interacting player submits a validated item-present hand-in, preventing a
+  snapshot from exposing another participant's reward branch.
+
 - Project the current authored dialogue message onto staged unique-monster
   targets as soon as the server materializes or restores them. Godot can now
   resolve and submit the dialogue target directly from the initial

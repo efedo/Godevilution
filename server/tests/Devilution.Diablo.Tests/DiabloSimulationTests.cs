@@ -552,6 +552,57 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SimulationProjectsItemAbsentDialogueBranchOnSharedInitialTarget()
+    {
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 14,
+            unique: true,
+            uniqueIdentity: "Lachdanan");
+        var quest = new AuthoritativeQuestState(
+            3005,
+            14,
+            1,
+            active: true,
+            completionUniqueIdentity: "Lachdanan");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3005,
+                0,
+                0,
+                83,
+                0,
+                0,
+                RequiredItemId: 2137,
+                ConsumeItem: true,
+                CompleteQuest: true,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.UniqueItem,
+                RewardUniqueId: 1008),
+            new(
+                3005,
+                0,
+                0,
+                81,
+                0,
+                0,
+                RequiredItemId: 2137,
+                RequireItemPresent: false),
+        ]);
+
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+                Quests = [quest],
+                QuestDialogueStages = stages,
+            });
+
+        Assert.Equal(81, target.DialogueMessageId);
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsOnlyOneMonsterRuntimeSeed()
     {
         var source = DiabloSimulationFactory.Instance.Create(

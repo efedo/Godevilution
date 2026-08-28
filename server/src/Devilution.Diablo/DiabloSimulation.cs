@@ -740,11 +740,11 @@ public sealed partial class DiabloSimulation
                 continue;
             }
 
-            target.DialogueMessageId = QuestDialogueStages.TryGet(
-                    quest.QuestId,
-                    quest.Variable1,
-                    quest.Variable2,
-                    out var stage)
+            target.DialogueMessageId = QuestDialogueStages.TryGetPresentationStage(
+                quest.QuestId,
+                quest.Variable1,
+                quest.Variable2,
+                out var stage)
                 ? stage.MessageId
                 : 0;
         }

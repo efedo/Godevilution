@@ -142,6 +142,34 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
     public bool HasPendingStage(uint questId, int variable1, int variable2)
         => TryGet(questId, variable1, variable2, out _);
 
+    /**
+     * Resolves the message identity safe for shared target presentation.
+     *
+     * Item branches are selected by the interacting player, so a projected
+     * target must prefer the item-absent branch when no item-independent stage
+     * exists. This keeps multiplayer snapshots from advertising a reward
+     * branch that only one participant can satisfy.
+     */
+    public bool TryGetPresentationStage(
+        uint questId,
+        int variable1,
+        int variable2,
+        out AuthoritativeQuestDialogueStage stage)
+    {
+        var candidates = definitions
+            .Where(candidate => candidate.QuestId == questId
+                && candidate.RequiredVariable1 == variable1
+                && (candidate.RequiredVariable2 == variable2
+                    || candidate.RequiredVariable2 == -1))
+            .OrderBy(candidate => candidate.RequiredVariable2 == variable2 ? 0 : 1)
+            .ThenBy(candidate => candidate.RequiredItemId == 0
+                ? 0
+                : candidate.RequireItemPresent ? 2 : 1)
+            .ThenBy(candidate => candidate.MessageId);
+        stage = candidates.FirstOrDefault()!;
+        return stage is not null;
+    }
+
     /** Resolves an exact variable-2 gate before a wildcard gate. */
     public bool TryGet(
         uint questId,
