@@ -167,7 +167,8 @@ public sealed class AuthoritativeWorldMutation
         bool createTransparencyLayer = false,
         uint megaTileCopySourceLevelId = 0,
         IEnumerable<AuthoritativeWorldMutationRectangle>? megaTileCopyRectangles = null,
-        IEnumerable<AuthoritativeWorldMutationPieceProperty>? piecePropertyOverrides = null)
+        IEnumerable<AuthoritativeWorldMutationPieceProperty>? piecePropertyOverrides = null,
+        int anchorSetLevelId = -1)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -175,15 +176,19 @@ public sealed class AuthoritativeWorldMutation
         LevelId = levelId;
         AnchorEntityId = anchorEntityId;
         AnchorUniqueIdentity = anchorUniqueIdentity.Trim();
-        if (AnchorEntityId != 0 && AnchorUniqueIdentity.Length != 0)
+        if (anchorSetLevelId is < -1 or > 8)
+            throw new ArgumentOutOfRangeException(nameof(anchorSetLevelId));
+        if ((AnchorEntityId != 0 ? 1 : 0)
+            + (AnchorUniqueIdentity.Length != 0 ? 1 : 0)
+            + (anchorSetLevelId >= 0 ? 1 : 0) > 1)
             throw new InvalidDataException(
-                "A world mutation cannot use both an object and unique-identity anchor.");
+                "A world mutation cannot use more than one anchor kind.");
         if (!NativeTextLimits.IsIdentityWithinLimit(AnchorUniqueIdentity))
             throw new ArgumentOutOfRangeException(nameof(anchorUniqueIdentity));
-        if (AnchorEntityId == 0 && AnchorUniqueIdentity.Length == 0
+        if (AnchorEntityId == 0 && AnchorUniqueIdentity.Length == 0 && anchorSetLevelId < 0
             && (anchorMegaOffsetX != 0 || anchorMegaOffsetY != 0)) {
             throw new InvalidDataException(
-                "Mega-tile anchor offsets require an object or unique-identity anchor.");
+                "Mega-tile anchor offsets require an object, unique-identity, or set-level anchor.");
         }
         if (anchorMegaOffsetX is < -255 or > 255)
             throw new ArgumentOutOfRangeException(nameof(anchorMegaOffsetX));
@@ -191,6 +196,7 @@ public sealed class AuthoritativeWorldMutation
             throw new ArgumentOutOfRangeException(nameof(anchorMegaOffsetY));
         AnchorMegaOffsetX = anchorMegaOffsetX;
         AnchorMegaOffsetY = anchorMegaOffsetY;
+        AnchorSetLevelId = anchorSetLevelId;
         CreateTransparencyLayer = createTransparencyLayer;
         GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
@@ -231,6 +237,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Optional server-owned unique encounter identity whose position is the mutation origin. */
     public string AnchorUniqueIdentity { get; }
+
+    /** Optional published set-level origin used as the mutation coordinate origin. */
+    public int AnchorSetLevelId { get; }
 
     /** World-cell offsets used to resolve an anchored mega-tile origin. */
     public int AnchorMegaOffsetX { get; }
@@ -592,9 +601,10 @@ public sealed class AuthoritativeWorldMutationCatalog
                 }
             }
             var anchor = ResolveAnchor(mutation, objects, combatTargets, level);
-            if (mutation.AnchorUniqueIdentity.Length != 0 && anchor is null)
-                // Generated unique encounters may be materialized after content
-                // activation; the simulation validates the resolved position.
+            if ((mutation.AnchorUniqueIdentity.Length != 0 || mutation.AnchorSetLevelId >= 0)
+                && anchor is null)
+                // Dynamic anchors may be materialized after content activation;
+                // the simulation validates the resolved position.
                 continue;
             IReadOnlyList<int> blockedAdd;
             IReadOnlyList<int> blockedRemove;
@@ -726,7 +736,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 row.OptionalBoolean("create_transparency_layer"),
                 row.OptionalUInt32("mega_tile_copy_source_level_id"),
                 ParseRectangles(row, "mega_tile_copy_rects"),
-                ParsePiecePropertyOverrides(row))));
+                ParsePiecePropertyOverrides(row),
+                ParseAnchorSetLevelId(row, stableIds))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -760,6 +771,20 @@ public sealed class AuthoritativeWorldMutationCatalog
                 $"World mutation row {row.LineNumber} contains an invalid set-level target.",
                 exception);
         }
+    }
+
+    private static int ParseAnchorSetLevelId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        if (!HasValue(row, "anchor_set_level_id")
+            && !HasValue(row, "anchor_set_level_symbol"))
+            return -1;
+        return AuthoritativeSetLevelIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "anchor_set_level_id",
+            "anchor_set_level_symbol");
     }
 
     private static uint ResolveSetLevelId(
@@ -805,7 +830,9 @@ public sealed class AuthoritativeWorldMutationCatalog
         IEnumerable<AuthoritativeCombatTarget>? combatTargets,
         AuthoritativeLevel level)
     {
-        if (mutation.AnchorEntityId == 0 && mutation.AnchorUniqueIdentity.Length == 0)
+        if (mutation.AnchorEntityId == 0
+            && mutation.AnchorUniqueIdentity.Length == 0
+            && mutation.AnchorSetLevelId < 0)
             return null;
         if (mutation.AnchorEntityId != 0) {
             var anchor = objects?.SingleOrDefault(@object =>
@@ -818,6 +845,9 @@ public sealed class AuthoritativeWorldMutationCatalog
                     $"World mutation {mutation.MutationId} anchor entity {mutation.AnchorEntityId} is on level {anchor.LevelId}, expected {level.LevelId}.");
             return (anchor.PositionX, anchor.PositionY);
         }
+
+        if (mutation.AnchorSetLevelId >= 0)
+            return null;
 
         if (combatTargets is null)
             return null;

@@ -11,13 +11,13 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.433.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.434.0"),
             DiabloContentSchema.Current);
     }
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.432.0", true)]
+    [InlineData("devilution.diablo", "1.433.0", true)]
     [InlineData("devilution.diablo", "1.429.0", false)]
     [InlineData("devilution.diablo", "1.415.0", false)]
     [InlineData("other.game", "1.424.0", false)]
@@ -220,6 +220,46 @@ public sealed class DiabloSimulationTests
         var restored = Assert.Single(replacement.WorldState.Objects.Values);
         Assert.Equal(AuthoritativeObjectRewardOriginKind.SetLevelOrigin, restored.RewardOriginKind);
         Assert.Equal(6, restored.RewardSetLevelId);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripRestoresSetLevelAnchoredMutation()
+    {
+        var mutationCatalog = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(0, 0, 1, 1)],
+                anchorSetLevelId: 6),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var origin = new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+            [6] = new(1, 4, 5),
+        };
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                WorldMutations = mutationCatalog,
+                SetLevelObjectOrigins = origin,
+            });
+        Assert.True(source.WorldState.ApplyWorldMutation(7));
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+
+        var restoredWorld = new AuthoritativeWorld();
+        restoredWorld.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        restoredWorld.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = restoredWorld,
+                WorldMutations = mutationCatalog,
+                SetLevelObjectOrigins = origin,
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.Contains(7U, replacement.WorldState.ActiveWorldMutationIds);
+        Assert.False(replacement.WorldState.IsWalkable(1, 4, 5));
     }
 
     [Theory]
@@ -680,7 +720,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.433.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.434.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

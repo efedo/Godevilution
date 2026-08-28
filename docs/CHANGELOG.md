@@ -7,9 +7,11 @@ All notable changes to this fork are documented below.
 - Add validated set-level-origin anchors to native DUN fragments and their
   behavior-object placements. Rows now defer until a generated set-piece origin
   is published, then compose atomically with existing entity, unique-encounter,
-  and coordinate anchor modes; the Diablo content schema is now `1.433.0`
-  (schema `1.433.0`)
-  while retaining `1.432.0` as the previous additive contract.
+  and coordinate anchor modes; the Diablo content schema is now `1.434.0`
+  (schema `1.434.0`)
+  while retaining `1.433.0` as the previous additive contract.
+- Add deferred set-level-origin anchors to authored world mutations, allowing
+  geometry and native layer changes to follow published generated origins.
 - Add validated set-piece-origin metadata to object item rewards. Rewards can
   now resolve their drop coordinate from a published set-level origin while
   retaining legacy object-relative behavior across snapshots and protocol.

@@ -555,6 +555,43 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void SetLevelAnchoredMutationDefersUntilOriginIsPublished()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_set_level_id\tgeometry_rect_add\n"
+                + "7\t1\t6\t0,0,1,1\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal(6, mutation.AnchorSetLevelId);
+
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+        world.SetSetLevelOriginResolver(_ => null);
+        world.RestoreWorldMutations([7]);
+        Assert.True(world.IsWalkable(1, 0, 0));
+
+        world.SetSetLevelOriginResolver(_ => new AuthoritativeSetLevelObjectOrigin(1, 2, 2));
+        Assert.False(world.IsWalkable(1, 2, 2));
+    }
+
+    [Fact]
+    public void SetLevelAnchorResolvesStableSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("set_level", "SL_ARENA_CHURCH", 6),
+        ]);
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_set_level_symbol\tgeometry_rect_add\n"
+                + "7\t1\tSL_ARENA_CHURCH\t0,0,1,1\n",
+            stableIds);
+
+        Assert.Equal(6, Assert.Single(catalog.Definitions).AnchorSetLevelId);
+    }
+
+    [Fact]
     public void RejectsObjectAndUniqueIdentityAnchorsTogether()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeWorldMutation(
@@ -562,6 +599,16 @@ public sealed class AuthoritativeWorldMutationTests
             1,
             anchorEntityId: 20,
             anchorUniqueIdentity: "Snotspill"));
+    }
+
+    [Fact]
+    public void RejectsMultipleWorldMutationAnchorKinds()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeWorldMutation(
+            7,
+            1,
+            anchorEntityId: 20,
+            anchorSetLevelId: 6));
     }
 
     [Fact]

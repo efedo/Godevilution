@@ -1860,6 +1860,7 @@ public sealed partial class DiabloSimulation
                     origin.LevelId,
                     origin.PositionX,
                     origin.PositionY));
+        WorldState.RefreshProjectedGeometry();
         WorldState.Portals.Clear();
         foreach (var portal in savedPortals) {
             WorldState.Portals.Add(

@@ -15,6 +15,7 @@ public sealed class DiabloWorldState
     private readonly AuthoritativeNativeDunObjectCatalog? nativeDunObjects;
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly bool allowMissingNativeDunLayers;
+    private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
     private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
     private readonly HashSet<uint> activeWorldMutationIds = [];
     private ulong? lastPortalTick;
@@ -170,7 +171,10 @@ public sealed class DiabloWorldState
     public bool ApplyWorldMutation(uint mutationId)
     {
         if (WorldMutations is null
-            || !WorldMutations.TryGet(mutationId, out _)
+            || !WorldMutations.TryGet(mutationId, out var mutation)
+            || mutation.AnchorSetLevelId >= 0
+                && (setLevelOriginResolver is null
+                    || setLevelOriginResolver(mutation.AnchorSetLevelId) is null)
             || !activeWorldMutationIds.Add(mutationId)) {
             return WorldMutations?.TryGet(mutationId, out _) == true
                 && activeWorldMutationIds.Contains(mutationId);
@@ -193,6 +197,14 @@ public sealed class DiabloWorldState
         }
         activeWorldMutationIds.Clear();
         activeWorldMutationIds.UnionWith(restoredMutationIds);
+        RebuildProjectedGeometry();
+    }
+
+    internal void SetSetLevelOriginResolver(
+        Func<int, AuthoritativeSetLevelObjectOrigin?> resolver)
+    {
+        ArgumentNullException.ThrowIfNull(resolver);
+        setLevelOriginResolver = resolver;
         RebuildProjectedGeometry();
     }
 
@@ -368,7 +380,10 @@ public sealed class DiabloWorldState
                     || mutation.LevelId != baseLevel.LevelId) {
                     continue;
                 }
-                var (originX, originY) = ResolveMutationOrigin(mutation);
+                var mutationOrigin = ResolveMutationOrigin(mutation);
+                if (mutationOrigin is null)
+                    continue;
+                var (originX, originY) = mutationOrigin.Value;
                 foreach (var pieceProperty in mutation.PiecePropertyOverrides) {
                     if (nativePieceProperties.TryGetValue(
                             pieceProperty.PieceId,
@@ -565,14 +580,25 @@ public sealed class DiabloWorldState
         ReconcileNativeDunObjects(allowMissingNativeDunLayers);
     }
 
-    /** Resolves an authored mutation origin from a fixed object or unique encounter. */
-    private (int X, int Y) ResolveMutationOrigin(AuthoritativeWorldMutation mutation)
+    /** Resolves an authored mutation origin from a fixed object, encounter, or set-level origin. */
+    private (int X, int Y)? ResolveMutationOrigin(AuthoritativeWorldMutation mutation)
     {
         if (mutation.AnchorEntityId != 0) {
             if (!Objects.TryGetValue(mutation.AnchorEntityId, out var anchoredObject))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
             return (anchoredObject.PositionX, anchoredObject.PositionY);
+        }
+
+        if (mutation.AnchorSetLevelId >= 0) {
+            if (setLevelOriginResolver is null
+                || setLevelOriginResolver(mutation.AnchorSetLevelId) is not { } origin)
+                return null;
+            if (origin.LevelId != mutation.LevelId)
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} set-level anchor {mutation.AnchorSetLevelId} "
+                    + $"is on level {origin.LevelId}, expected {mutation.LevelId}.");
+            return (origin.PositionX, origin.PositionY);
         }
 
         if (mutation.AnchorUniqueIdentity.Length == 0)

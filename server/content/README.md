@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.433.0` schema in
+It declares its identity and `devilution.diablo@1.434.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.432.0` schema so existing manifest-based packs remain
+previous additive `1.433.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1938,6 +1938,12 @@ Schema 1.433 adds optional `reward_origin`, `reward_set_level_id`, and
 published origin of the referenced set-level identity. Missing origins reject
 the activation rather than guessing a client-side coordinate.
 
+Schema 1.434 adds optional `anchor_set_level_id` or `anchor_set_level_symbol` to
+`world_mutations.tsv`.
+Anchored geometry, transparency, object-layer, d-piece, and mega-tile changes
+resolve from the published set-level origin; if that origin is not available,
+the mutation remains deferred until it is published.
+
 Schema 1.422 adds the optional `native_object_id` compatibility presentation
 value to `objects.tsv`. The stable `object_id` remains the authoritative
 behavior identity; when supplied, `native_object_id` selects the native object
@@ -2936,7 +2942,7 @@ clients.
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence`, `QuestItemCompletion`, `WorldMutation`, `GrantSpellLevel`, `SpawnSpellProjectile`, and `GrantSpellLevelAndSpawnProjectile` interactions), linked-quest progress amounts, optional quest activation/completion or `_qvar1`/`_qvar2` transition kind, amount, and required-variable gates, optional normal/unique item rewards with stable ID, item level, and relative offsets (`reward_kind`, `reward_id`, `reward_item_level`, `reward_offset_x`, and `reward_offset_y`). Reward offsets may optionally resolve from a published set-level origin using `reward_origin=set_level_origin` with `reward_set_level_id` or `reward_set_level_symbol`; the default `object` origin preserves legacy behavior. Optional `projectile_target_offset_x`/`projectile_target_offset_y` target displacement, optional `projectile_source` (`Object` or `ActivatingPlayer`, defaulting to `Object`), optional quest-sequence/world-mutation follow-up mutation/projectile/native-monster metadata and relative offsets, optional second `quest_sequence_follow_up_world_mutation_id` applied after the primary follow-up, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. Optional `native_object_id` selects the legacy native object type used for compatibility presentation while stable `object_id` remains authoritative. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; spell effects store the validated spell ID in `effect_amount` with optional `effect_spell_symbol` cross-checking; native-monster follow-ups store a validated monster ID or `quest_sequence_follow_up_monster_symbol`; other follow-ups use their own amount and optional spell symbol. Projectile-producing effects currently accept only Phasing and Guardian controller spell behaviors; `ActivatingPlayer` is valid for both native projectile constructions. |
 | `objects.tsv` | `entity_id` | Optional `template_only` rows are validated and available for set-level/native-DUN behavior cloning but are excluded from ordinary world placement; rows omitted from the column or marked `0` retain the full world-object behavior contract. |
 | `object_presentations.tsv` | `entity_id` | Optional additive lifecycle metadata for authored objects and templates: `hide_when_activated` (default `1`), `animation_frame`, and `activated_animation_frame` (both default `0`). The sidecar preserves the legacy `objects.tsv` header while allowing a completed one-shot object to remain visible with an authored native frame. |
-| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter, allowing generated quest targets to provide the mutation origin. The two anchor columns are mutually exclusive. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer, with `create_transparency_layer` allowing an absent layer to be materialized; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer; optional `piece_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native d-piece layer; optional `anchor_mega_offset_x`/`anchor_mega_offset_y` and `mega_tile_assignments` author anchored native mega-tile values for exact set-piece transitions; optional `mega_tile_copy_source_level_id` and `mega_tile_copy_rects` copy native mega-tile and d-piece state from a companion map using local mega coordinates, with set-level rows deferred until their native bundles are loaded. |
+| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter; optional `anchor_set_level_id`/`anchor_set_level_symbol` follows a published generated set-piece origin. These anchor columns are mutually exclusive, and unresolved dynamic anchors remain deferred. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer, with `create_transparency_layer` allowing an absent layer to be materialized; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer; optional `piece_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native d-piece layer; optional `anchor_mega_offset_x`/`anchor_mega_offset_y` and `mega_tile_assignments` author anchored native mega-tile values for exact set-piece transitions; optional `mega_tile_copy_source_level_id` and `mega_tile_copy_rects` copy native mega-tile and d-piece state from a companion map using local mega coordinates, with set-level rows deferred until their native bundles are loaded. |
 | `set_level_objects.tsv` | `placement_id`, `set_level_id`, `object_id` | Validated native fixed-object placements and template footprints for set-level maps, with optional `template_entity_id` linking an authored `objects.tsv` behavior template. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; positions and template rectangles are bounded, duplicate placements are rejected, and template object IDs must match. |
 | `procedural_set_piece_origins.tsv` | `set_level_id`, `level_id` | Optional deterministic origins for generated set-piece footprints. Rows select aligned walkable rectangles from authoritative generated geometry using a content seed; unavailable target levels defer materialization. |
 | `native_dun_objects.tsv` | `native_object_id`, one level target | Optional explicit mapping from native DUN object-layer values to authoritative object identities for either a set-level variant (`set_level_id`/`set_level_symbol` plus `active_map`) or an ordinary runtime level (`level_id`/`level_symbol`). Optional `object_symbol` cross-checks the authored object identity. Duplicate mappings, ambiguous targets, unknown identities, missing native layers, and mismatched templates reject activation; unmapped values remain inert. |
@@ -2992,7 +2998,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.433.0"
+    "version": "1.434.0"
   },
   "dependencyConstraints": [
     {
@@ -3026,7 +3032,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.433.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.434.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

@@ -334,6 +334,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             experience: options.Experience,
             nativeMissiles: options.NativeMissiles,
             nativeMissileSprites: options.NativeMissileSprites);
+        worldState.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         return simulation;
     }
@@ -591,6 +592,7 @@ public sealed partial class DiabloSimulation
             return [];
         }
         setLevelObjectOrigins.Add(setLevelId, origin);
+        WorldState.RefreshProjectedGeometry();
         return materialize ? MaterializeRelativeSetLevelObjects(setLevelId) : [];
     }
 
