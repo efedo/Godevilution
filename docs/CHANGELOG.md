@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject duplicate authored warp source triggers so content cannot define
+  ambiguous level transitions that differ only by warp ID.
 - Reject partial declared set-level native map bundles instead of silently
   ignoring supplied `.dun` assets when `.til`/`.sol` data is absent.
 - Apply external quest route activation when an authoritative player enters a

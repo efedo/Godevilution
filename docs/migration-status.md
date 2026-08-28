@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Authoritative world registration now rejects duplicate source warp trigger
+coordinates instead of silently selecting one route by numeric ID; authored
+level transitions therefore remain unambiguous at content activation time.
+
 Set-level map validation now fails closed when any declared native binary is
 present without the complete `.dun`/`.til`/`.sol` bundle (or declared
 transparency layer), while rows with no supplied binaries remain metadata-only.

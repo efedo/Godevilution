@@ -85,6 +85,13 @@ public sealed class AuthoritativeWorld
             throw new InvalidDataException(
                 $"Warp {target.WarpId} contains a blocked endpoint.");
         }
+        if (warpTargets.Values.Any(existing =>
+                existing.SourceLevelId == target.SourceLevelId
+                && existing.TriggerX == target.TriggerX
+                && existing.TriggerY == target.TriggerY)) {
+            throw new InvalidDataException(
+                $"Warp {target.WarpId} duplicates an existing source trigger on level {target.SourceLevelId}.");
+        }
         if (!warpTargets.TryAdd(target.WarpId, target))
             throw new InvalidDataException($"Warp {target.WarpId} is registered more than once.");
     }

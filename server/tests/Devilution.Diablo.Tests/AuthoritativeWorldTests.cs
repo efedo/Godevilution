@@ -360,6 +360,21 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RejectsDuplicateWarpSourceTriggers()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 8, 8));
+        world.AddLevel(new AuthoritativeLevel(2, 8, 8));
+        world.AddLevel(new AuthoritativeLevel(3, 8, 8));
+        world.AddWarpTarget(new AuthoritativeWarpTarget(7, 1, 1, 1, 2, 2, 2));
+
+        var exception = Assert.Throws<InvalidDataException>(() => world.AddWarpTarget(
+            new AuthoritativeWarpTarget(8, 1, 1, 1, 3, 3, 3)));
+
+        Assert.Contains("duplicates an existing source trigger", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidatesStaticPortalEndpointsAgainstWorldGeometry()
     {
         var world = AuthoritativeWorld.LoadTsv(
