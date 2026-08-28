@@ -2340,6 +2340,34 @@ TEST(ReplayFixture, ExecutesStableInventoryItemDropTransition)
 	EXPECT_EQ(state.worldItemPositionY, 0);
 }
 
+TEST(ReplayFixture, RejectsStaleStableInventoryItemDropTransition)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-stable-item-drop-retry.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.levelId = fixture.initialState.levelId;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.gold = fixture.initialState.gold;
+	state.inventoryGrid.assign(40, -1);
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_FALSE(result.transitions[1].accepted);
+	EXPECT_TRUE(state.inventory.empty());
+	EXPECT_EQ(state.worldItemSeed, fixture.initialState.goldStackSeed);
+	EXPECT_EQ(state.worldItemState.stableItemId, fixture.initialState.goldStackStableItemId);
+}
+
 TEST(ReplayFixture, ExecutesStableBeltItemDropTransition)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-stable-belt-drop.json");

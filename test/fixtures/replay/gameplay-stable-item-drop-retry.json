@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/stable-item-drop-retry",
+  "protocol_schema_version": "0.1.0",
+  "tick_rate_hz": 20,
+  "rng_seed": 0,
+  "initial_state": {
+    "player": "A",
+    "gold": 100,
+    "gold_stack_seed": 124,
+    "gold_stack_stable_item_id": 7004,
+    "gold_stack_cell": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 0
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "expected_status": "Accepted",
+      "kind": "DropItem",
+      "payload": {
+        "location": "Inventory",
+        "inventory_index": 0,
+        "stable_item_id": 7004,
+        "target_x": 1,
+        "target_y": 0
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 1,
+      "server_receipt_sequence": 2,
+      "expected_status": "Rejected",
+      "kind": "DropItem",
+      "payload": {
+        "location": "Inventory",
+        "inventory_index": 0,
+        "stable_item_id": 7004,
+        "target_x": 0,
+        "target_y": 1
+      }
+    }
+  ],
+  "checkpoints": []
+}

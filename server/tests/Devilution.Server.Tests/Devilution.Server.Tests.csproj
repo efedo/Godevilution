@@ -71,6 +71,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-stable-item-drop.json" Link="Fixtures/gameplay-stable-item-drop.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-stable-belt-drop.json" Link="Fixtures/gameplay-stable-belt-drop.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-stable-equipment-drop.json" Link="Fixtures/gameplay-stable-equipment-drop.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-stable-item-drop-retry.json" Link="Fixtures/gameplay-stable-item-drop-retry.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-object-quest.json" Link="Fixtures/gameplay-object-quest.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-quest-selection.json" Link="Fixtures/gameplay-quest-selection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-autonomous-regen-soak.json" Link="Fixtures/gameplay-autonomous-regen-soak.json" CopyToOutputDirectory="PreserveNewest" />

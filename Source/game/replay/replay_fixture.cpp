@@ -5938,6 +5938,8 @@ private:
 			return ParseUnsigned(command.order.targetTick);
 		if (key == "server_receipt_sequence")
 			return ParseUnsigned(command.order.serverReceiptSequence);
+		if (key == "expected_status")
+			return ParseString(command.expectedStatus);
 		if (key == "player")
 			return ParseString(command.player);
 		if (key == "kind")
@@ -6331,6 +6333,12 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		return false;
 	}
 	for (const auto &command : fixture.commands) {
+		if (!command.expectedStatus.empty()
+		    && command.expectedStatus != "Accepted"
+		    && command.expectedStatus != "Rejected") {
+			error = "Replay fixture command expected_status must be Accepted or Rejected.";
+			return false;
+		}
 		if (!command.player.empty()
 		    && command.player != fixture.initialState.player
 		    && (!secondaryPlayer.defined || command.player != secondaryPlayer.player)) {
@@ -7135,6 +7143,12 @@ bool ExecuteReplayFixture(
 			}
 
 			const std::string hash = ComputeReplayFixtureStateHash(state);
+			if ((!command.expectedStatus.empty() && command.expectedStatus == "Accepted" && !accepted)
+			    || (!command.expectedStatus.empty() && command.expectedStatus == "Rejected" && accepted)) {
+				error = "Replay command status mismatch at tick " + std::to_string(command.order.targetTick)
+				    + ": expected " + command.expectedStatus + ", actual " + (accepted ? "Accepted" : "Rejected");
+				return false;
+			}
 			result.transitions.push_back({ command.order.targetTick, command.kind, accepted, hash });
 		}
 		if (!fixture.contentManifest.id.empty()) {

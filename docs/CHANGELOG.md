@@ -14,6 +14,11 @@ All notable changes to this fork are documented below.
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.
 
+- Add optional replay command `expected_status` validation for accepted and
+  rejected outcomes. The stale stable-item retry fixture now proves native and
+  managed runners agree that a consumed source identity cannot be submitted a
+  second time.
+
 - Add the additive `DropItemRequested` protocol intent for stable-reference
   inventory, belt, and equipment-to-world drops. The server keeps the native
   cursor-only `DropHeldItemRequested` compatibility path while validating the

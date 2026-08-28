@@ -1,5 +1,6 @@
 using Devilution.Diablo;
 using Devilution.Engine;
+using Devilution.Protocol.V1;
 using Devilution.Server.Stores;
 
 namespace Devilution.Server.Replay;
@@ -294,6 +295,9 @@ public sealed record ReplayFixtureCommand(
     uint StoreId,
     uint StoreSlot)
 {
+    /** Optional expected authoritative command result status. */
+    public CommandStatus? ExpectedStatus { get; init; }
+
     /** Optional participant session identity; omitted commands target the primary player. */
     public string Player { get; init; } = string.Empty;
 

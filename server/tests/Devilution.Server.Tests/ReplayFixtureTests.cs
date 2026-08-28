@@ -1144,50 +1144,26 @@ public sealed class ReplayFixtureTests
     [Fact]
     public void GameplayStableItemDropFixtureUsesStableInventoryIdentity()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-stable-item-drop.json");
-        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var goldState = AuthoritativeItemState.Empty with {
-            ItemType = 11,
-            ItemIndex = 0,
-            Value = checked((int)fixture.InitialState.Gold),
-            IdentifiedValue = checked((int)fixture.InitialState.Gold),
-            StatFlag = true,
-            StableItemId = fixture.InitialState.GoldStackStableItemId,
-        };
-        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
-        inventoryGrid[checked((int)fixture.InitialState.GoldStackCell)] = 0;
-        var world = new AuthoritativeWorld();
-        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
-        var executor = new StoreSimulationExecutor(
-            new StoreCatalog(),
-            fixture.InitialState.Gold,
-            fixture.InitialState.Experience,
-            fixture.InitialState.Life,
-            fixture.InitialState.Mana,
-            startingPositionX: fixture.InitialState.PositionX,
-            startingPositionY: fixture.InitialState.PositionY,
-            startingLevelId: fixture.InitialState.LevelId,
-            startingInventoryGrid: inventoryGrid,
-            startingInventory: [new OwnedStoreItem(
-                0,
-                0,
-                fixture.InitialState.GoldStackSeed,
-                fixture.InitialState.Gold,
-                0,
-                goldState)],
-            startingWorld: world,
-            startingRandomSeed: checked((uint)fixture.RngSeed));
-
-        var result = ReplayFixtureExecutor.Execute(
-            fixture,
-            executor,
-            new AuthoritativeCommandServer(executor));
+        var result = ExecuteStableInventoryDropFixture("gameplay-stable-item-drop.json");
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Empty(Assert.Single(result.FinalSnapshot.Players).Inventory);
         var dropped = Assert.Single(result.FinalSnapshot.WorldItems);
-        Assert.Equal(fixture.InitialState.GoldStackSeed, dropped.ItemSeed);
-        Assert.Equal(fixture.InitialState.GoldStackStableItemId, dropped.State.StableItemId);
+        Assert.Equal(123U, dropped.ItemSeed);
+        Assert.Equal(7001U, dropped.State.StableItemId);
+    }
+
+    [Fact]
+    public void GameplayStableItemDropRetryFixtureRejectsStaleStableIdentity()
+    {
+        var result = ExecuteStableInventoryDropFixture("gameplay-stable-item-drop-retry.json");
+        Assert.Equal(
+            [CommandStatus.Accepted, CommandStatus.Rejected],
+            result.Results.Select(command => command.Status));
+        Assert.Empty(Assert.Single(result.FinalSnapshot.Players).Inventory);
+        var dropped = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(124U, dropped.ItemSeed);
+        Assert.Equal(7004U, dropped.State.StableItemId);
     }
 
     [Fact]
@@ -1236,6 +1212,48 @@ public sealed class ReplayFixtureTests
                 .Select(item => item.ToBeltStoreItem())
                 .ToArray(),
             startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingWorld: world,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        return ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+    }
+
+    private static ReplayExecutionResult ExecuteStableInventoryDropFixture(string fileName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", fileName);
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var goldState = AuthoritativeItemState.Empty with {
+            ItemType = 11,
+            ItemIndex = 0,
+            Value = checked((int)fixture.InitialState.Gold),
+            IdentifiedValue = checked((int)fixture.InitialState.Gold),
+            StatFlag = true,
+            StableItemId = fixture.InitialState.GoldStackStableItemId,
+        };
+        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+        inventoryGrid[checked((int)fixture.InitialState.GoldStackCell)] = 0;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingInventoryGrid: inventoryGrid,
+            startingInventory: [new OwnedStoreItem(
+                0,
+                0,
+                fixture.InitialState.GoldStackSeed,
+                fixture.InitialState.Gold,
+                0,
+                goldState)],
             startingWorld: world,
             startingRandomSeed: checked((uint)fixture.RngSeed));
 

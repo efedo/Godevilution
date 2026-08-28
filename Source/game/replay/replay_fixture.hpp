@@ -19,6 +19,8 @@ namespace devilution {
 struct ReplayFixtureCommand {
 	uint64_t clientSequence = 0;
 	ReplayCommandOrder order;
+	/** Optional expected authoritative command result status. */
+	std::string expectedStatus;
 	/** Optional participant session identity; empty targets the primary player. */
 	std::string player;
 	std::string kind;

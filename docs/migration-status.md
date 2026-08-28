@@ -24,7 +24,10 @@ clients.
 
 Dedicated replay fixtures now cover stable-reference drops from inventory,
 belt, and equipment sources, matching the three carried-item locations exposed
-by the protocol boundary.
+by the protocol boundary. Command-level expected statuses are now part of the
+cross-language replay contract; the accepted-then-rejected stale inventory
+drop fixture proves both runners preserve authoritative source removal while
+rejecting a retry that references the consumed stable identity.
 
 Initial staged-dialogue projection now chooses a shared-safe message for
 item-gated encounters. When a conversation has item-present and item-absent

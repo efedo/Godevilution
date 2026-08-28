@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Devilution.Diablo;
+using Devilution.Protocol.V1;
 
 namespace Devilution.Server.Replay;
 
@@ -671,6 +672,7 @@ public static class ReplayFixtureLoader
                 kind,
                 storeId,
                 storeSlot) {
+                ExpectedStatus = ParseExpectedStatus(command),
                 Player = OptionalString(command, "player") ?? string.Empty,
                 DirectionX = GetOptionalInt(payload, "direction_x"),
                 DirectionY = GetOptionalInt(payload, "direction_y"),
@@ -690,6 +692,19 @@ public static class ReplayFixtureLoader
         }
 
         return commands;
+    }
+
+    private static CommandStatus? ParseExpectedStatus(JsonElement command)
+    {
+        var value = OptionalString(command, "expected_status");
+        if (value is null)
+            return null;
+        return value switch {
+            "Accepted" => CommandStatus.Accepted,
+            "Rejected" => CommandStatus.Rejected,
+            _ => throw new InvalidDataException(
+                "Replay fixture command expected_status must be Accepted or Rejected."),
+        };
     }
 
     private static IReadOnlyList<ReplayCheckpoint> ParseCheckpoints(JsonElement value)
