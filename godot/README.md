@@ -12,6 +12,11 @@ available only to the legacy compatibility client.
 Feedback anchors are exposed only for entities visible on the active level, so
 off-level snapshot entries cannot create floating labels in the current view.
 
+The accepted `ServerHello` is retained as a typed `AuthoritativeServerIdentity`
+across reconnects. The diagnostics panel shows the server build plus shortened
+content and ruleset hashes, making it clear which validated ruleset the
+presentation client is consuming without giving the client gameplay authority.
+
 The protocol model retains the latest 256 accepted event entries. A monotonic
 sequence window lets feedback advance past entries that roll off, so a
 long-running session cannot grow the client event history without bound or

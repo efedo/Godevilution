@@ -71,6 +71,14 @@ public sealed class RetryReconnectTests
             "content-hash"));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var identity = new AuthoritativeServerIdentity(
+            "test-server",
+            "0.1.0",
+            "content-hash",
+            "content-hash",
+            20,
+            GameMode.SinglePlayer);
+        Assert.Equal(identity, client.ServerIdentity);
         var sessionToken = client.SessionToken;
         _ = client.DrainMessages();
         for (var attempt = 0; attempt < 50 && client.IsConnected; attempt++)
@@ -84,6 +92,7 @@ public sealed class RetryReconnectTests
         await client.PollAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(sessionToken, client.SessionToken);
+        Assert.Equal(identity, client.ServerIdentity);
         var snapshot = Assert.Single(client.DrainMessages()).Snapshot;
         Assert.NotNull(snapshot);
         Assert.Equal(9UL, snapshot!.Tick);
@@ -159,6 +168,7 @@ public sealed class RetryReconnectTests
                     RulesetIdentityHash = "content-hash",
                     TickRateHz = 20,
                     SessionToken = "resume-token",
+                    GameMode = GameMode.SinglePlayer,
                 },
             });
             await WriteEnvelopeAsync(stream, new Envelope {
@@ -186,6 +196,7 @@ public sealed class RetryReconnectTests
                     RulesetIdentityHash = "content-hash",
                     TickRateHz = 20,
                     SessionToken = "same-instance-token",
+                    GameMode = GameMode.SinglePlayer,
                 },
             });
             await WriteEnvelopeAsync(stream, new Envelope {
@@ -236,6 +247,7 @@ public sealed class RetryReconnectTests
                 RulesetIdentityHash = "content-hash",
                 TickRateHz = 20,
                 SessionToken = sessionToken,
+                GameMode = GameMode.SinglePlayer,
             },
         });
         await WriteEnvelopeAsync(stream, new Envelope {

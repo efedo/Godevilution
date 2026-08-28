@@ -1024,11 +1024,22 @@ public partial class HudPresentation : CanvasLayer
     {
         var snapshot = model.Snapshot;
         var localPlayer = snapshot?.Players.FirstOrDefault();
+        var serverIdentity = client?.ServerIdentity;
         var playerIdentity = string.IsNullOrEmpty(localPlayer?.CharacterName)
             ? $"Player {model.PlayerEntityId}"
             : $"{localPlayer.CharacterName} ({model.PlayerEntityId})";
-        return $"Tick {model.CurrentTick}  pending {client?.PendingCommandCount ?? 0}  RTT {client?.RetryTimeout.TotalMilliseconds ?? 0:0} ms\n"
+        var identity = serverIdentity is null
+            ? "Server identity unavailable"
+            : $"Server {serverIdentity.BuildId}  ruleset {FormatHash(serverIdentity.RulesetIdentityHash)}  content {FormatHash(serverIdentity.ContentManifestHash)}";
+        return identity + $"\nTick {model.CurrentTick}  pending {client?.PendingCommandCount ?? 0}  RTT {client?.RetryTimeout.TotalMilliseconds ?? 0:0} ms\n"
             + $"{playerIdentity}  entities: {snapshot?.Monsters.Count ?? 0} monsters, {snapshot?.WorldItems.Count ?? 0} items, {snapshot?.Projectiles.Count ?? 0} projectiles\n"
             + $"Prediction {(model.IsCorrectingPosition ? "active" : "settled")}  events {model.RecentEvents.Count}";
+    }
+
+    private static string FormatHash(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "none";
+        return value.Length <= 12 ? value : value[..12];
     }
 }

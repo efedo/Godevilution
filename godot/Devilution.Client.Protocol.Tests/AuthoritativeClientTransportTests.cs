@@ -62,6 +62,15 @@ public sealed class AuthoritativeClientTransportTests
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         Assert.Equal(GameMode.Multiplayer, client.ServerGameMode);
+        Assert.Equal(
+            new AuthoritativeServerIdentity(
+                "test-server",
+                "0.1.0",
+                "content-hash",
+                "ruleset-hash",
+                20,
+                GameMode.Multiplayer),
+            client.ServerIdentity);
         var initial = Assert.Single(client.DrainMessages());
         var initialSnapshot = initial.Snapshot;
         Assert.NotNull(initialSnapshot);
@@ -205,6 +214,7 @@ public sealed class AuthoritativeClientTransportTests
                 ServerBuildId = "test-server",
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = "content-hash",
+                RulesetIdentityHash = "ruleset-hash",
                 TickRateHz = 20,
                 GameMode = GameMode.Multiplayer,
             },

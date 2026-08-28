@@ -38,6 +38,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public GameMode ServerGameMode { get; private set; } = GameMode.Unspecified;
 
+    /** The most recently accepted server identity; retained across reconnects. */
+    public AuthoritativeServerIdentity? ServerIdentity { get; private set; }
+
     public ulong SuggestedCommandTick(ulong observedTick)
     {
         var leadTicks = Math.Max(1, (int)Math.Ceiling(RetryTimeout.TotalSeconds * ServerTickRateHz) + 1);
@@ -116,6 +119,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             SessionToken = hello.ServerHello.SessionToken;
             ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
             ServerGameMode = hello.ServerHello.GameMode;
+            ServerIdentity = new AuthoritativeServerIdentity(
+                hello.ServerHello.ServerBuildId,
+                hello.ServerHello.ProtocolSchemaVersion,
+                hello.ServerHello.ContentManifestHash,
+                hello.ServerHello.RulesetIdentityHash,
+                ServerTickRateHz,
+                ServerGameMode);
 
             var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
                 ?? throw new EndOfStreamException("The server closed the connection before the initial snapshot.");
