@@ -38,6 +38,8 @@ The engine currently owns:
 - native-compatible eight-way direction sectors, coordinate-to-facing
   selection, rotation, and adjacent-cell displacement, including the stable
   direction-indexed sequence consumed by Diablo combat;
+- native-compatible rotated-grid projectile velocity construction with the
+  legacy fixed-point scaling contract;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;

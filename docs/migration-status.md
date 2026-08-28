@@ -1469,6 +1469,11 @@ The bounded native crawl order is likewise engine-neutral: Diablo's existing
 to the shared primitive, including its 50-cell radius limit and overflow-safe
 candidate handling.
 
+Native rotated-grid projectile velocity construction is now also owned by the
+engine-neutral assembly. Diablo retains its private source-compatible helper,
+but all projectile callers share the same fixed-point scaling and mirrored
+trajectory behavior.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.

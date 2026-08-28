@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
 - Share the engine-owned native direction displacement sequence and sector
   selection with Diablo combat, removing a duplicate compatibility table while
   preserving direction indices and extreme-coordinate behavior.
+- Extract native rotated-grid projectile velocity construction into the
+  engine-neutral assembly while preserving Diablo's fixed-point scaling.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

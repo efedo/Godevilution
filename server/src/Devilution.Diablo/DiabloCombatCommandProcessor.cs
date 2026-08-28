@@ -16347,20 +16347,12 @@ public sealed class DiabloCombatCommandProcessor
         int destinationX,
         int destinationY,
         int speed)
-    {
-        if (startX == destinationX && startY == destinationY)
-            return (0, 0);
-        var deltaX = startX - destinationX;
-        var deltaY = startY - destinationY;
-        var rotatedX = deltaY - deltaX;
-        var rotatedY = -(deltaY + deltaX);
-        var magnitude = MathF.Sqrt((float)checked(
-            rotatedX * rotatedX + rotatedY * rotatedY));
-        var normalX = (int)(unchecked(rotatedX << 16) / magnitude);
-        var normalY = (int)(unchecked(rotatedY << 16) / magnitude);
-        normalY /= 2;
-        return (unchecked(normalX * speed), unchecked(normalY * speed));
-    }
+        => DeterministicGridVelocity.CalculateNative(
+            startX,
+            startY,
+            destinationX,
+            destinationY,
+            speed);
 
     private void ResolveProjectileDamage(
         AuthoritativeProjectile projectile,
