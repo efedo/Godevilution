@@ -1753,7 +1753,10 @@ values remain attached to authoritative level geometry for later presentation
 projection. A transparency layer may be shipped ahead of deferred map and
 `.til`/`.sol` geometry; it is shape-validated and remains metadata-only until
 the complete bundle arrives. Packs without the optional layer remain
-compatible.
+compatible. The base pack now ships the native Skeleton King and Chamber of
+Bone transparency binaries; Archbishop Lazarus' row continues to reference
+the deferred `vile1.dun` map asset because native uses that same file for both
+the pre-map and transparency layer.
 
 Schema 1.367 adds the optional `template_entity_id` column to
 `set_level_objects.tsv`. A placement may reference an `objects.tsv` entity with

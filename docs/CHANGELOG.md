@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Package the existing native Skeleton King and Chamber of Bone transparency
+  `.dun` binaries in the authoritative base content pack, with shipped-content
+  dimension checks. The Lazarus transparency mapping remains metadata-only
+  until its shared `vile1.dun` map bundle is available.
 - Author the native transparency layers for Skeleton King's Lair, the Chamber
   of Bone, and Archbishop Lazarus' Lair in `set_level_maps.tsv`. Transparency
   binaries may now be validated and retained while their deferred native map

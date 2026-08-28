@@ -2794,7 +2794,10 @@ scaled hit points), not only the client's difficulty label.
   d-piece values on the authoritative level geometry; a transparency layer
   may also arrive before deferred map and `.til`/`.sol` geometry, in which
   case it is shape-validated and retained as metadata until the complete
-  bundle is available. Older packs remain compatible without it.
+  bundle is available. The base pack now includes the native Skeleton King
+  and Chamber of Bone transparency binaries; the Lazarus row remains deferred
+  because native reuses its `vile1.dun` pre-map as the transparency source.
+  Older packs remain compatible without it.
 
 - Schema 1.367 adds the optional `template_entity_id` link to
   `set_level_objects.tsv`. A validated set-level placement can now clone the

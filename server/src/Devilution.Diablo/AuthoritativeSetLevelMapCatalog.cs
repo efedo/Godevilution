@@ -202,6 +202,16 @@ public sealed class AuthoritativeSetLevelMapCatalog
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (present == 0)
                 continue;
+            var corePresent = new[] {
+                definition.PreMapAssetPath,
+                definition.ActiveMapAssetPath,
+            }.Count(path => content.TryGetAsset(path, out _));
+            var geometryPresent = new[] {
+                definition.TileAssetPath,
+                definition.SolAssetPath,
+            }.Count(path => content.TryGetAsset(path, out _));
+            if (corePresent == 0 && geometryPresent == 0)
+                continue;
             var (preMap, activeMap) = LoadCompleteGeometryBundle(content, definition);
             levels.Add(preMap);
             levels.Add(activeMap);

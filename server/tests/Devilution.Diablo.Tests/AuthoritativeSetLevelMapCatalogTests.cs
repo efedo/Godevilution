@@ -116,6 +116,8 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
                 "Cathedral",
                 83,
                 44) {
+                TileAssetPath = "levels/l1data/l1.til",
+                SolAssetPath = "levels/l1data/l1.sol",
                 TransparencyAssetPath = "levels/l1data/sklkngt.dun",
             },
         ]);

@@ -927,6 +927,15 @@ public sealed class ShippedContentTests
         var vileBetrayer = maps.Definitions.Single(map => map.SetLevelId == 5);
         Assert.Equal("Cathedral", vileBetrayer.DungeonType);
         Assert.Equal("levels/l1data/vile1.dun", vileBetrayer.TransparencyAssetPath);
+
+        var skeletonTransparency = AuthoritativeDunMapAsset.Load(
+            skeletonKing.TransparencyAssetPath,
+            pack.Assets.Single(asset => asset.SourcePath == skeletonKing.TransparencyAssetPath).Contents);
+        Assert.Equal((37, 25), (skeletonTransparency.MegaWidth, skeletonTransparency.MegaHeight));
+        var boneTransparency = AuthoritativeDunMapAsset.Load(
+            boneChamber.TransparencyAssetPath,
+            pack.Assets.Single(asset => asset.SourcePath == boneChamber.TransparencyAssetPath).Contents);
+        Assert.Equal((32, 18), (boneTransparency.MegaWidth, boneTransparency.MegaHeight));
     }
 
     [Fact]
