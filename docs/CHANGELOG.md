@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a validated `--starting-level` authoritative-server override for new
+  participants. Development and live-client fixtures can now select an
+  authored content level explicitly, avoiding accidental interaction with
+  the default dungeon encounter while preserving the content-defined default
+  when the option is omitted.
+
 - Discard transient simulation events when importing a saved session or
   synchronizing the runtime to a restored tick. Reconnect and live ruleset
   replacement no longer deliver combat or dialogue events from before the

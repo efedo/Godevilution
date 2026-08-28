@@ -23,6 +23,9 @@ public sealed record ServerHostOptions(
     /** Optional server-owned primary-attribute points for development starts. */
     public uint? StartingStatPoints { get; init; }
 
+    /** Optional content level override for newly initialized participants. */
+    public uint? StartingLevelId { get; init; }
+
     /** Null loads the save-root seed or creates it once for a new server. */
     public uint? RandomSeed { get; init; }
 
@@ -164,6 +167,14 @@ public sealed record ServerHostOptions(
                 }
                 current = current with { StartingStatPoints = startingStatPoints };
                 break;
+            case "--starting-level":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var startingLevelId)) {
+                    options = current;
+                    error = $"'{value}' is not a valid starting level ID.";
+                    return false;
+                }
+                current = current with { StartingLevelId = startingLevelId };
+                break;
             case "--random-seed":
                 if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var randomSeed)) {
                     options = current;
@@ -297,6 +308,7 @@ public sealed record ServerHostOptions(
           --starting-life <amount>     Override content-derived initial life (Q6)
           --starting-mana <amount>     Override content-derived initial mana (Q6)
           --starting-stat-points <n>   Seed server-owned attribute points for development starts
+          --starting-level <id>        Override the content-defined initial level for new participants
           --random-seed <uint32>       Initial server/world seed (persisted in save root)
           --game-mode <mode>           single-player or multiplayer (default: multiplayer)
           --difficulty <level>         normal, nightmare, or hell (default: normal)

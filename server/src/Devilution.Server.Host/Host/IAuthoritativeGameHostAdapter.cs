@@ -54,6 +54,9 @@ public sealed record AuthoritativePlayerStartConfiguration(
     /** Optional server-owned primary-attribute points for development starts. */
     public uint? StatPoints { get; init; }
 
+    /** Optional content level override for newly initialized participants. */
+    public uint? StartingLevelId { get; init; }
+
     /** Host-owned seed for the selected module's deterministic simulation. */
     public uint RandomSeed { get; init; }
 

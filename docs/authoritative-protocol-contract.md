@@ -1073,7 +1073,9 @@ class enum. Nonzero IDs are included in the canonical state hash and covered by
 matching native/C# golden tests. For newly created Diablo players, the server
 also derives maximum life and mana from the selected class's native-compatible
 Q6 level and attribute formulas; command-line values remain explicit
-development overrides rather than the normal creation path.
+development overrides rather than the normal creation path. The standalone
+server may likewise select an authored starting level with `--starting-level`;
+omitting it retains the active content pack's default.
 
 `PlayerSnapshot.character_name` field 28 carries server-owned character
 identity. A nonempty value is validated before state creation, persisted in

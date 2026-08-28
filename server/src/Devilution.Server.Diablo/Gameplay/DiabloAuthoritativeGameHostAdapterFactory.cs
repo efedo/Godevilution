@@ -51,6 +51,12 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
                     AuthoritativeGameDifficulty.Hell => DiabloDifficulty.Hell,
                     _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
                 });
+        var startingLevelId = playerStart.StartingLevelId
+            ?? activatedContent.DefaultStartingLevelId;
+        if (activatedContent.Simulation.WorldState.World is not { } world
+            || !world.ContainsLevel(startingLevelId))
+            throw new InvalidDataException(
+                $"Starting level {startingLevelId} is not defined by the active content world.");
         return new StoreSimulationExecutor(
             activatedContent,
             (sessionId, requestedClassId) => {
@@ -68,7 +74,7 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
                     playerStart.Gold,
                     playerStart.Life,
                     playerStart.Mana,
-                    activatedContent.DefaultStartingLevelId,
+                    startingLevelId,
                     playerStart.StatPoints);
             });
     }

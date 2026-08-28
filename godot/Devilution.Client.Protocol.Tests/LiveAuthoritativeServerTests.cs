@@ -65,7 +65,8 @@ public sealed class LiveAuthoritativeServerTests
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            startingStatPointsOverride: 1);
+            startingStatPointsOverride: 1,
+            startingLevelOverride: 0);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-live-stat-point", requestedClassId: 0));
         var model = new AuthoritativeClientModel();
@@ -4806,6 +4807,7 @@ public sealed class LiveAuthoritativeServerTests
             int? startingLifeOverride = null,
             int? startingManaOverride = null,
             uint? startingStatPointsOverride = null,
+            uint? startingLevelOverride = null,
             uint? randomSeed = null,
             string? gameMode = null,
             string? difficultyOverride = null,
@@ -4862,6 +4864,11 @@ public sealed class LiveAuthoritativeServerTests
             if (startingStatPointsOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-stat-points");
                 startInfo.ArgumentList.Add(startingStatPointsOverride.Value.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture));
+            }
+            if (startingLevelOverride.HasValue) {
+                startInfo.ArgumentList.Add("--starting-level");
+                startInfo.ArgumentList.Add(startingLevelOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (randomSeed.HasValue) {

@@ -1866,6 +1866,10 @@ transient labels from another projected level.
 
 ## Current state
 
+Authoritative server startup now accepts an optional `--starting-level` override
+for newly created participants. This is a development and fixture control only;
+when omitted, the active content pack's validated default level remains in use.
+
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, additive live authoritative level-geometry projections, live authored progression-warp transition through server-owned movement with same-session resume retention, live authored quest/towner dialogue submission through the Godot protocol model, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, live single-player and multiplayer handshakes/cast slices, a twelve-cycle server soak plus an eight-cycle live Godot-client reconnect soak while another participant remains connected, live Godot two-participant process-restart restoration, protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias, server-owned adjacent melee plus line-of-sight ranged player-versus-player admission with native timing, physical/elemental damage, target resistance, shield/class blocking, equipment knockback, lethal death/ear handling, targeted Firebolt/Charged Bolt/Bone Spirit admission for living remote players, live Firebolt, Charged Bolt, Bone Spirit, Heal Other, and Resurrection player-target coverage, live two-client coverage including effect-tick shield resolution, typed Diablo victory events for client presentation, exact additive native `NovaBall` projectile visual identity, exact additive Godot `NovaBall` presentation identity with behavior fallback for older snapshots, and Normal/Nightmare/Hell difficulty projection in authoritative snapshots | Add broader reconnect/multiplayer fixtures and production-client soak coverage |

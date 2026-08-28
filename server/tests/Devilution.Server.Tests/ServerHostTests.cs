@@ -21,6 +21,7 @@ public sealed class ServerHostTests
         Assert.Null(ServerHostOptions.Defaults.StartingLife);
         Assert.Null(ServerHostOptions.Defaults.StartingMana);
         Assert.Null(ServerHostOptions.Defaults.StartingStatPoints);
+        Assert.Null(ServerHostOptions.Defaults.StartingLevelId);
         Assert.Null(ServerHostOptions.Defaults.RandomSeed);
         Assert.Equal(AuthoritativeGameMode.Multiplayer, ServerHostOptions.Defaults.GameMode);
         Assert.Equal(AuthoritativeGameDifficulty.Normal, ServerHostOptions.Defaults.Difficulty);
@@ -50,6 +51,7 @@ public sealed class ServerHostTests
             "--starting-life", "4480",
             "--starting-mana", "640",
             "--starting-stat-points", "3",
+            "--starting-level", "0",
             "--game-mode", "single-player",
             "--difficulty", "hell",
             "--random-seed", "305419896",
@@ -72,6 +74,7 @@ public sealed class ServerHostTests
         Assert.Equal(4480, options.StartingLife);
         Assert.Equal(640, options.StartingMana);
         Assert.Equal(3U, options.StartingStatPoints);
+        Assert.Equal(0U, options.StartingLevelId);
         Assert.Equal(AuthoritativeGameMode.SinglePlayer, options.GameMode);
         Assert.Equal(AuthoritativeGameDifficulty.Hell, options.Difficulty);
         Assert.Equal(305419896U, options.RandomSeed);
@@ -87,6 +90,7 @@ public sealed class ServerHostTests
     [InlineData("--starting-life", "-1")]
     [InlineData("--starting-mana", "-1")]
     [InlineData("--starting-stat-points", "not-a-number")]
+    [InlineData("--starting-level", "not-a-level")]
     [InlineData("--random-seed", "4294967296")]
     [InlineData("--procedural-monsters", "-1")]
     [InlineData("--procedural-monster-level", "not-a-level")]
