@@ -638,6 +638,10 @@ public sealed class AuthoritativeTcpServerTests
                 Assert.Equal(resumeToken, hello.SessionToken);
             }
 
+            Assert.NotNull(new AuthoritativeSessionStore(saveRoot).Load(sessionId));
+            File.WriteAllText(Path.Combine(saveRoot, sessionId + ".json"), "stale-save");
+            File.WriteAllText(Path.Combine(saveRoot, sessionId + ".commands.json"), "malformed-receipts");
+
             const int freshAdapterRestarts = 4;
             for (var restart = 1; restart <= freshAdapterRestarts; restart++) {
                 var replacement = new ReloadableHostAdapter($"fresh-{restart}");

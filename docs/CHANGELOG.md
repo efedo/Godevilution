@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an atomic per-session checkpoint containing the exported authoritative
+  state and completed command receipts. Fresh hosts prefer this checkpoint and
+  retain the separate save/ledger files as compatibility fallbacks, closing
+  the process-crash window between state and idempotency publication.
+
 - Serialize authoritative state and command-ledger exports under the command
   server's synchronization boundary. Concurrent commands and autonomous ticks
   can no longer produce a save whose snapshot and durable receipt ledger were

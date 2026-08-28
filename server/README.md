@@ -177,7 +177,9 @@ an operator-facing reload command through its local console.
 The save root is reusable across process restarts: a reconnect carrying the
 same resume token restores the persisted session through the fresh adapter and
 save provider before any new character selection is considered. The host also
-persists the session's completed command receipts beside that save, so a
+publishes an atomic `<session>.session.json` checkpoint containing the exported
+state and completed command receipts. Existing `<session>.json` and
+`<session>.commands.json` files remain compatibility fallbacks, while a
 retrying client sequence remains a duplicate after a process restart rather
 than replaying gameplay.
 

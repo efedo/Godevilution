@@ -32,6 +32,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private readonly IAuthoritativeEventProvider? eventProvider;
     private readonly AuthoritativeSaveStore? saveStore;
     private readonly AuthoritativeCommandReceiptStore? commandReceiptStore;
+    private readonly AuthoritativeSessionStore? sessionStore;
     private readonly IAuthoritativeSaveProvider? saveProvider;
     private readonly IAuthoritativeParticipantInitializer? participantInitializer;
     private IAuthoritativeGameHostAdapter? gameAdapter;
@@ -52,7 +53,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         int port = 0,
         IPAddress? address = null,
         AuthoritativeSaveStore? saveStore = null,
-        AuthoritativeCommandReceiptStore? commandReceiptStore = null)
+        AuthoritativeCommandReceiptStore? commandReceiptStore = null,
+        AuthoritativeSessionStore? sessionStore = null)
         : this(
             commandServer,
             handshake,
@@ -64,7 +66,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             saveStore,
             gameAdapter,
             gameAdapter,
-            commandReceiptStore)
+            commandReceiptStore,
+            sessionStore)
     {
         ArgumentNullException.ThrowIfNull(gameAdapter);
         this.gameAdapter = gameAdapter;
@@ -81,8 +84,9 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         AuthoritativeSaveStore? saveStore = null,
         IAuthoritativeSaveProvider? saveProvider = null,
         IAuthoritativeParticipantInitializer? participantInitializer = null,
-        AuthoritativeCommandReceiptStore? commandReceiptStore = null)
-        : this(commandServer, handshake, new DelegateAuthoritativeClock(currentTickProvider), port, address, snapshotProvider, eventProvider, saveStore, saveProvider, participantInitializer, commandReceiptStore)
+        AuthoritativeCommandReceiptStore? commandReceiptStore = null,
+        AuthoritativeSessionStore? sessionStore = null)
+        : this(commandServer, handshake, new DelegateAuthoritativeClock(currentTickProvider), port, address, snapshotProvider, eventProvider, saveStore, saveProvider, participantInitializer, commandReceiptStore, sessionStore)
     {
     }
 
@@ -97,7 +101,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         AuthoritativeSaveStore? saveStore = null,
         IAuthoritativeSaveProvider? saveProvider = null,
         IAuthoritativeParticipantInitializer? participantInitializer = null,
-        AuthoritativeCommandReceiptStore? commandReceiptStore = null)
+        AuthoritativeCommandReceiptStore? commandReceiptStore = null,
+        AuthoritativeSessionStore? sessionStore = null)
         : this(
             commandServer,
             handshake,
@@ -109,7 +114,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             saveStore,
             saveProvider,
             participantInitializer,
-            commandReceiptStore)
+            commandReceiptStore,
+            sessionStore)
     {
     }
 
@@ -124,7 +130,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         AuthoritativeSaveStore? saveStore = null,
         IAuthoritativeSaveProvider? saveProvider = null,
         IAuthoritativeParticipantInitializer? participantInitializer = null,
-        AuthoritativeCommandReceiptStore? commandReceiptStore = null)
+        AuthoritativeCommandReceiptStore? commandReceiptStore = null,
+        AuthoritativeSessionStore? sessionStore = null)
     {
         this.commandServer = commandServer ?? throw new ArgumentNullException(nameof(commandServer));
         this.handshake = handshake ?? throw new ArgumentNullException(nameof(handshake));
@@ -136,6 +143,10 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             ?? (saveStore is null
                 ? null
                 : new AuthoritativeCommandReceiptStore(saveStore.RootDirectory));
+        this.sessionStore = sessionStore
+            ?? (saveStore is null
+                ? null
+                : new AuthoritativeSessionStore(saveStore.RootDirectory));
         this.saveProvider = saveProvider;
         this.participantInitializer = participantInitializer;
         listener = new TcpListener(address ?? IPAddress.Loopback, port);
@@ -387,9 +398,10 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private bool RestoreSessionIfAvailable(SessionState session)
     {
         lock (session) {
-            if (session.SaveLoaded || saveStore is null || saveProvider is null)
+            if (session.SaveLoaded || saveProvider is null)
                 return false;
-            var serializedSave = saveStore.Load(session.Id);
+            var serializedSave = LoadSessionDocument(session)?.SerializedState
+                ?? saveStore?.Load(session.Id);
             if (serializedSave is null) {
                 session.SaveLoaded = true;
                 return false;
@@ -406,27 +418,42 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         commandServer.WithSynchronizedSession(session.Id, () => {
             if (!session.ParticipantInitialized)
                 return;
-            if (saveStore is not null && saveProvider is not null)
-                saveStore.Save(session.Id, saveProvider.ExportSessionState(session.Id));
+            var serializedState = saveProvider is null
+                ? null
+                : saveProvider.ExportSessionState(session.Id);
+            var completedCommands = commandServer.ExportCompletedCommands(session.Id);
+            if (saveStore is not null && serializedState is not null)
+                saveStore.Save(session.Id, serializedState);
             if (commandReceiptStore is not null)
-                commandReceiptStore.Save(
-                    session.Id,
-                    commandServer.ExportCompletedCommands(session.Id));
+                commandReceiptStore.Save(session.Id, completedCommands);
+            if (sessionStore is not null && serializedState is not null)
+                sessionStore.Save(session.Id, serializedState, completedCommands);
         });
     }
 
     private void EnsureCommandReceiptsLoaded(SessionState session)
     {
-        if (commandReceiptStore is null)
+        if (commandReceiptStore is null && sessionStore is null)
             return;
         lock (session) {
             if (session.CommandReceiptsLoaded)
                 return;
-            commandServer.ImportCompletedCommands(
-                session.Id,
-                commandReceiptStore.Load(session.Id));
+            var document = LoadSessionDocument(session);
+            var receipts = document is not null
+                ? document.CommandReceipts
+                : commandReceiptStore?.Load(session.Id) ?? [];
+            commandServer.ImportCompletedCommands(session.Id, receipts);
             session.CommandReceiptsLoaded = true;
         }
+    }
+
+    private AuthoritativeSessionDocument? LoadSessionDocument(SessionState session)
+    {
+        if (session.SessionDocumentLoaded)
+            return session.SessionDocument;
+        session.SessionDocument = sessionStore?.Load(session.Id);
+        session.SessionDocumentLoaded = true;
+        return session.SessionDocument;
     }
 
     private static ValueTask SendErrorAsync(Stream stream, ProtocolErrorCode code, string detail, CancellationToken cancellationToken)
@@ -445,6 +472,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         public uint EntityId { get; } = entityId;
         public bool SaveLoaded { get; set; }
         public bool CommandReceiptsLoaded { get; set; }
+        public bool SessionDocumentLoaded { get; set; }
+        public AuthoritativeSessionDocument? SessionDocument { get; set; }
         public bool ParticipantInitialized
         {
             get => Volatile.Read(ref participantInitialized) != 0;

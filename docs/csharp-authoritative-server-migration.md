@@ -133,6 +133,9 @@ authoritative results.
 - Session save and receipt exports run under the same command-server
   synchronization boundary as command execution and autonomous ticks, so the
   persisted snapshot and idempotency ledger describe one authoritative state.
+- The host publishes an atomic per-session checkpoint containing both exports
+  and prefers it during cold restoration; the legacy separate save and receipt
+  files remain available as compatibility fallbacks.
 - Snapshots are canonical state. Events are transient presentation deltas.
 - Every network snapshot includes all assigned participants, with the receiver
   first on the wire and every player sorted by entity ID for canonical hashing.

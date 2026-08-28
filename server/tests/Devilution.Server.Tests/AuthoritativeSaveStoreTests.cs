@@ -91,4 +91,120 @@ public sealed class AuthoritativeSaveStoreTests
                 Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public void SessionStoreRoundTripsStateAndCommandReceiptsAtomically()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-store-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            var store = new AuthoritativeSessionStore(root);
+            store.Save("session-a", "authoritative-state", new Dictionary<ulong, CommandResult> {
+                [2] = new CommandResult {
+                    ClientSequence = 2,
+                    ServerReceiptSequence = 7,
+                    AppliedTick = 14,
+                    Status = CommandStatus.Rejected,
+                    RejectReason = CommandRejectReason.InvalidTarget,
+                },
+                [5] = new CommandResult {
+                    ClientSequence = 5,
+                    ServerReceiptSequence = 8,
+                    AppliedTick = 16,
+                    Status = CommandStatus.Accepted,
+                    RejectReason = CommandRejectReason.Unspecified,
+                },
+            });
+
+            var document = store.Load("session-a");
+            Assert.NotNull(document);
+            Assert.Equal(AuthoritativeSessionStore.CurrentFormatVersion, document.FormatVersion);
+            Assert.Equal("authoritative-state", document.SerializedState);
+            Assert.Collection(
+                document.CommandReceipts,
+                first => {
+                    Assert.Equal(2UL, first.ClientSequence);
+                    Assert.Equal(7UL, first.ServerReceiptSequence);
+                    Assert.Equal(CommandStatus.Rejected, first.Status);
+                },
+                second => {
+                    Assert.Equal(5UL, second.ClientSequence);
+                    Assert.Equal(8UL, second.ServerReceiptSequence);
+                    Assert.Equal(CommandStatus.Accepted, second.Status);
+                });
+            Assert.Throws<ArgumentException>(() => store.Load("../session-a"));
+            Assert.Empty(Directory.GetFiles(root, "*.tmp"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ConcurrentSessionStoreInstancesPublishCompleteCheckpoints()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-store-tests",
+            Guid.NewGuid().ToString("N"));
+        var states = Enumerable.Range(0, 12)
+            .Select(index => (State: $"state-{index:D2}", Sequence: (ulong)(index + 1)))
+            .ToArray();
+
+        try {
+            var stores = states.Select(_ => new AuthoritativeSessionStore(root)).ToArray();
+            using var barrier = new Barrier(states.Length);
+            await Task.WhenAll(states.Select((entry, index) => Task.Run(() => {
+                if (!barrier.SignalAndWait(
+                        TimeSpan.FromSeconds(5),
+                        TestContext.Current.CancellationToken))
+                    throw new TimeoutException("Concurrent session writers did not start together.");
+                stores[index].Save("shared-session", entry.State, new Dictionary<ulong, CommandResult> {
+                    [entry.Sequence] = new CommandResult {
+                        ClientSequence = entry.Sequence,
+                        ServerReceiptSequence = entry.Sequence,
+                        AppliedTick = entry.Sequence,
+                        Status = CommandStatus.Accepted,
+                        RejectReason = CommandRejectReason.Unspecified,
+                    },
+                });
+            })));
+
+            var persisted = new AuthoritativeSessionStore(root).Load("shared-session");
+            Assert.NotNull(persisted);
+            var expected = states.Single(entry => entry.State == persisted.SerializedState);
+            var receipt = Assert.Single(persisted.CommandReceipts);
+            Assert.Equal(expected.Sequence, receipt.ClientSequence);
+            Assert.Equal(expected.Sequence, receipt.ServerReceiptSequence);
+            Assert.Empty(Directory.GetFiles(root, "*.tmp"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreRejectsMalformedOrDuplicateReceiptsOnDisk()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-store-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            File.WriteAllText(
+                Path.Combine(root, "session-a.session.json"),
+                "{\"SerializedState\":\"state\",\"CommandReceipts\":["
+                + "{\"ClientSequence\":1,\"ServerReceiptSequence\":1,\"AppliedTick\":1,\"Status\":1,\"RejectReason\":0},"
+                + "{\"ClientSequence\":2,\"ServerReceiptSequence\":1,\"AppliedTick\":1,\"Status\":1,\"RejectReason\":0}]}" );
+
+            Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSessionStore(root).Load("session-a"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
 }
