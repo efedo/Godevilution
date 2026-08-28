@@ -117,8 +117,9 @@ source, and materialize the adjacent world item. `DropHeldItem` remains the
 legacy cursor-only compatibility command. The
 `gameplay-stable-item-drop.json` fixture covers this boundary without a
 presentation-specific cursor state. A command may also declare
-`expected_status` (`Accepted` or `Rejected`); both runners validate that
-authoritative admission outcome after receipt sequencing. The
+`expected_status` (`Accepted` or `Rejected`) and, for rejected commands,
+`expected_reject_reason`; both runners validate the authoritative admission
+outcome after receipt sequencing. The
 `gameplay-stable-item-drop-retry.json` fixture uses this field to prove that a
 second submission with the already-removed stable identity is rejected while
 the first drop remains authoritative.
@@ -147,7 +148,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-28,
-the native replay gate contains 85 checked-in JSON fixtures and 111 registered
+the native replay gate contains 86 checked-in JSON fixtures and 112 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -456,7 +457,9 @@ Notable shared fixtures include:
 - `gameplay-stable-item-drop.json` for explicit stable-reference inventory
   drops through `DropItemRequested` and authoritative world-item creation;
 - `gameplay-stable-item-drop-retry.json` for accepted-then-rejected stale
-  stable-reference retry ordering;
+  stable-reference retry ordering and `InvalidTarget` rejection reason;
+- `gameplay-stable-belt-drop-invalid-target.json` for `NotAllowed` rejection
+  when a valid stable source targets a non-adjacent destination;
 - `stores/base-content-purchase.json` for the checked-in base content pack;
 - `gameplay-player-action-lifecycle.json` for native-timed movement, melee,
   attack-to-cast chaining, cast effects, and action cleanup;

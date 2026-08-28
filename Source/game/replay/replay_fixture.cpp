@@ -5940,6 +5940,8 @@ private:
 			return ParseUnsigned(command.order.serverReceiptSequence);
 		if (key == "expected_status")
 			return ParseString(command.expectedStatus);
+		if (key == "expected_reject_reason")
+			return ParseString(command.expectedRejectReason);
 		if (key == "player")
 			return ParseString(command.player);
 		if (key == "kind")
@@ -6339,6 +6341,15 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			error = "Replay fixture command expected_status must be Accepted or Rejected.";
 			return false;
 		}
+		if (!command.expectedRejectReason.empty()
+		    && command.expectedRejectReason != "Malformed"
+		    && command.expectedRejectReason != "TooLate"
+		    && command.expectedRejectReason != "NotAllowed"
+		    && command.expectedRejectReason != "InvalidTarget"
+		    && command.expectedRejectReason != "InsufficientResources") {
+			error = "Replay fixture command expected_reject_reason is not recognized.";
+			return false;
+		}
 		if (!command.player.empty()
 		    && command.player != fixture.initialState.player
 		    && (!secondaryPlayer.defined || command.player != secondaryPlayer.player)) {
@@ -6591,6 +6602,7 @@ bool ExecuteReplayFixture(
 			if (command.order.targetTick != timelineTick)
 				continue;
 			bool accepted = false;
+			std::string rejectReason;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
 				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal") {
 					error = "Secondary replay participant supports Move, Attack, and UsePortal commands only.";
@@ -7073,6 +7085,12 @@ bool ExecuteReplayFixture(
 						}));
 					}
 					accepted = true;
+				} else if (!sourceFound
+				    || state.heldItemDefined
+				    || (command.stableItemId != 0 && source.state.stableItemId != command.stableItemId)) {
+					rejectReason = "InvalidTarget";
+				} else {
+					rejectReason = "NotAllowed";
 				}
 			} else if (command.kind == "OperateObject") {
 				const int distance = std::max(std::abs(state.positionX - state.objectPositionX), std::abs(state.positionY - state.objectPositionY));
@@ -7147,6 +7165,13 @@ bool ExecuteReplayFixture(
 			    || (!command.expectedStatus.empty() && command.expectedStatus == "Rejected" && accepted)) {
 				error = "Replay command status mismatch at tick " + std::to_string(command.order.targetTick)
 				    + ": expected " + command.expectedStatus + ", actual " + (accepted ? "Accepted" : "Rejected");
+				return false;
+			}
+			if (!command.expectedRejectReason.empty()
+			    && command.expectedRejectReason != rejectReason) {
+				error = "Replay command reject reason mismatch at tick " + std::to_string(command.order.targetTick)
+				    + ": expected " + command.expectedRejectReason + ", actual "
+				    + (rejectReason.empty() ? "Unspecified" : rejectReason);
 				return false;
 			}
 			result.transitions.push_back({ command.order.targetTick, command.kind, accepted, hash });

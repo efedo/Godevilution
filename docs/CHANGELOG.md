@@ -19,6 +19,12 @@ All notable changes to this fork are documented below.
   managed runners agree that a consumed source identity cannot be submitted a
   second time.
 
+- Extend replay command expectations with `expected_reject_reason`, beginning
+  with cross-language `InvalidTarget` parity for stale stable-item retries.
+
+- Add a cross-language `NotAllowed` stable-belt drop lane so replay parity
+  distinguishes source identity failures from non-adjacent destination checks.
+
 - Add the additive `DropItemRequested` protocol intent for stable-reference
   inventory, belt, and equipment-to-world drops. The server keeps the native
   cursor-only `DropHeldItemRequested` compatibility path while validating the

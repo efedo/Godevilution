@@ -298,6 +298,9 @@ public sealed record ReplayFixtureCommand(
     /** Optional expected authoritative command result status. */
     public CommandStatus? ExpectedStatus { get; init; }
 
+    /** Optional expected authoritative rejection reason. */
+    public CommandRejectReason? ExpectedRejectReason { get; init; }
+
     /** Optional participant session identity; omitted commands target the primary player. */
     public string Player { get; init; } = string.Empty;
 

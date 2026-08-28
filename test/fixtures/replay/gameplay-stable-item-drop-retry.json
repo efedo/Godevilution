@@ -37,6 +37,7 @@
       "target_tick": 1,
       "server_receipt_sequence": 2,
       "expected_status": "Rejected",
+      "expected_reject_reason": "InvalidTarget",
       "kind": "DropItem",
       "payload": {
         "location": "Inventory",

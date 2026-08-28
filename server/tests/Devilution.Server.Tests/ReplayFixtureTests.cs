@@ -1179,6 +1179,16 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayStableBeltDropFixtureRejectsNonAdjacentDestination()
+    {
+        var result = ExecuteStableSlottedDropFixture("gameplay-stable-belt-drop-invalid-target.json");
+        Assert.Equal(CommandStatus.Rejected, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Equal(7005U, Assert.Single(player.Belt).State.StableItemId);
+        Assert.Empty(result.FinalSnapshot.WorldItems);
+    }
+
+    [Fact]
     public void GameplayStableEquipmentDropFixtureUsesStableEquipmentIdentity()
     {
         var result = ExecuteStableSlottedDropFixture("gameplay-stable-equipment-drop.json");

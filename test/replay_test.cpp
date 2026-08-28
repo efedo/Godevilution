@@ -2391,6 +2391,31 @@ TEST(ReplayFixture, ExecutesStableBeltItemDropTransition)
 	EXPECT_EQ(state.worldItemState.stableItemId, 7002U);
 }
 
+TEST(ReplayFixture, RejectsStableBeltItemDropAtNonAdjacentDestination)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-stable-belt-drop-invalid-target.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.levelId = fixture.initialState.levelId;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_FALSE(result.transitions[0].accepted);
+	EXPECT_TRUE(state.worldItemEntityId == 0);
+	ASSERT_EQ(state.belt.size(), 1U);
+	EXPECT_EQ(state.belt[0].state.stableItemId, 7005U);
+}
+
 TEST(ReplayFixture, ExecutesStableEquipmentItemDropTransition)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-stable-equipment-drop.json");

@@ -21,6 +21,8 @@ struct ReplayFixtureCommand {
 	ReplayCommandOrder order;
 	/** Optional expected authoritative command result status. */
 	std::string expectedStatus;
+	/** Optional expected authoritative rejection reason. */
+	std::string expectedRejectReason;
 	/** Optional participant session identity; empty targets the primary player. */
 	std::string player;
 	std::string kind;

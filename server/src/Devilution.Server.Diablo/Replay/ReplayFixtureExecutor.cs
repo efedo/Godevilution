@@ -110,6 +110,12 @@ public static class ReplayFixtureExecutor
                         $"Replay command status mismatch for client sequence {fixtureCommand.ClientSequence}: "
                         + $"expected {expectedStatus}, actual {result.Status}.");
                 }
+                if (fixtureCommand.ExpectedRejectReason is { } expectedRejectReason
+                    && result.RejectReason != expectedRejectReason) {
+                    throw new InvalidDataException(
+                        $"Replay command reject reason mismatch for client sequence {fixtureCommand.ClientSequence}: "
+                        + $"expected {expectedRejectReason}, actual {result.RejectReason}.");
+                }
                 results.Add(result);
             }
 

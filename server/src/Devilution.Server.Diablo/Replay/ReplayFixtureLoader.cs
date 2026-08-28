@@ -673,6 +673,7 @@ public static class ReplayFixtureLoader
                 storeId,
                 storeSlot) {
                 ExpectedStatus = ParseExpectedStatus(command),
+                ExpectedRejectReason = ParseExpectedRejectReason(command),
                 Player = OptionalString(command, "player") ?? string.Empty,
                 DirectionX = GetOptionalInt(payload, "direction_x"),
                 DirectionY = GetOptionalInt(payload, "direction_y"),
@@ -704,6 +705,22 @@ public static class ReplayFixtureLoader
             "Rejected" => CommandStatus.Rejected,
             _ => throw new InvalidDataException(
                 "Replay fixture command expected_status must be Accepted or Rejected."),
+        };
+    }
+
+    private static CommandRejectReason? ParseExpectedRejectReason(JsonElement command)
+    {
+        var value = OptionalString(command, "expected_reject_reason");
+        if (value is null)
+            return null;
+        return value switch {
+            "Malformed" => CommandRejectReason.Malformed,
+            "TooLate" => CommandRejectReason.TooLate,
+            "NotAllowed" => CommandRejectReason.NotAllowed,
+            "InvalidTarget" => CommandRejectReason.InvalidTarget,
+            "InsufficientResources" => CommandRejectReason.InsufficientResources,
+            _ => throw new InvalidDataException(
+                "Replay fixture command expected_reject_reason is not recognized."),
         };
     }
 

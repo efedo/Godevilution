@@ -27,7 +27,10 @@ belt, and equipment sources, matching the three carried-item locations exposed
 by the protocol boundary. Command-level expected statuses are now part of the
 cross-language replay contract; the accepted-then-rejected stale inventory
 drop fixture proves both runners preserve authoritative source removal while
-rejecting a retry that references the consumed stable identity.
+rejecting a retry that references the consumed stable identity, including the
+protocol's `InvalidTarget` reason. A companion belt-source lane verifies that
+valid identity with an illegal destination is rejected as `NotAllowed` without
+removing the source.
 
 Initial staged-dialogue projection now chooses a shared-safe message for
 item-gated encounters. When a conversation has item-present and item-absent
