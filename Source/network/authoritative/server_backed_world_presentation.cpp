@@ -753,9 +753,10 @@ void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSn
 			tileAt(object.position).setObject(0);
 		object.position = position;
 	}
-	if (!snapshot.activated && !snapshot.destroyed)
+	if ((!snapshot.activated || snapshot.keepVisibleAfterActivation) && !snapshot.destroyed)
 		tileAt(position).setObject(objectSlot + 1);
-	object._oDelFlag = snapshot.activated || snapshot.destroyed;
+	object._oDelFlag = snapshot.destroyed || snapshot.activated && !snapshot.keepVisibleAfterActivation;
+	object._oAnimFrame = snapshot.activated ? snapshot.activatedAnimationFrame : snapshot.animationFrame;
 	object._oTrapFlag = snapshot.trapArmed;
 	object._oMissFlag = snapshot.missilePassable;
 	object._oBreak = snapshot.destroyed && snapshot.breakable ? -1 : snapshot.breakable ? 1 : 0;

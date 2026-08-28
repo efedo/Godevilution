@@ -355,6 +355,11 @@ explicit migration seams, not server-authority claims:
   native presentation still supplies the legacy speech/audio timing fallback.
 - `OperateBook` and `OperateBookLever` still own Chamber of Bone's ordinary
   quest-book activation and the Halls of the Blind and Blood-goal book branches.
+  Authored object lifecycle metadata now lets the authoritative projection
+  retain a completed native object and select its activated animation frame;
+  this is presentation-only and does not make activation repeatable. Native
+  behavior, placement, and map resynchronization remain compatibility seams
+  until their server contracts are externalized.
   The two fixed Chamber of Bone completion books now clone authored templates:
   the server completes the quest, grants Guardian, and owns the exact
   player-origin target offset. The Vile Betrayer's two fixed book

@@ -168,6 +168,29 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsObjectPresentationLifecycleMetadata()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Objects = [baseline.Objects[0] with {
+                Activated = true,
+                HideWhenActivated = false,
+                AnimationFrame = 7,
+                ActivatedAnimationFrame = 11,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+        var @object = Assert.Single(restored.Objects);
+
+        Assert.True(@object.Activated);
+        Assert.False(@object.HideWhenActivated);
+        Assert.Equal(7, @object.AnimationFrame);
+        Assert.Equal(11, @object.ActivatedAnimationFrame);
+    }
+
+    [Fact]
     public void VersionOneRoundTripsObjectRewardMetadata()
     {
         var baseline = CreateSnapshot();

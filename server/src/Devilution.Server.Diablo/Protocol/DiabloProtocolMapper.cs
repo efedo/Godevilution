@@ -250,6 +250,9 @@ internal static class DiabloProtocolMapper
                 QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                 ProjectileSourceKind = (int)@object.ProjectileSourceKind,
                 NativeObjectId = @object.NativeObjectId,
+                KeepVisibleAfterActivation = !@object.HideWhenActivated,
+                AnimationFrame = checked((uint)@object.AnimationFrame),
+                ActivatedAnimationFrame = checked((uint)@object.ActivatedAnimationFrame),
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -587,6 +590,10 @@ internal static class DiabloProtocolMapper
                 || !producesProjectile && @object.ProjectileSourceKind
                     != AuthoritativeObjectProjectileSourceKind.Object
                 || @object.NativeObjectId > AuthoritativeLevel.NativeMaximumObjectId
+                || !AuthoritativeWorldObject.IsValidPresentation(
+                    @object.HideWhenActivated,
+                    @object.AnimationFrame,
+                    @object.ActivatedAnimationFrame)
                 || @object.Breakable && @object.MissilePassable
                 || @object.Destroyed && !@object.Breakable) {
                 throw new InvalidDataException(
@@ -1764,6 +1771,9 @@ internal static class DiabloProtocolMapper
                 QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                 ProjectileSourceKind = (AuthoritativeObjectProjectileSourceKind)@object.ProjectileSourceKind,
                 NativeObjectId = @object.NativeObjectId,
+                HideWhenActivated = !@object.KeepVisibleAfterActivation,
+                AnimationFrame = checked((int)@object.AnimationFrame),
+                ActivatedAnimationFrame = checked((int)@object.ActivatedAnimationFrame),
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

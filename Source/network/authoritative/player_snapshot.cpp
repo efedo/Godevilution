@@ -621,6 +621,9 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 			return tl::make_unexpected("Server-backed snapshot contains an object with an invalid entity or object ID.");
 		if (source.native_object_id() > static_cast<uint32_t>(OBJ_LAST))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid native object presentation ID.");
+		if (source.animation_frame() > std::numeric_limits<uint8_t>::max()
+		    || source.activated_animation_frame() > std::numeric_limits<uint8_t>::max())
+			return tl::make_unexpected("Server-backed snapshot contains an invalid object animation frame.");
 		const bool transitionSetsVariable = source.quest_transition_kind() >= 3 && source.quest_transition_kind() <= 8;
 		const bool transitionValid = source.quest_transition_kind() == 0
 		    || (source.quest_id() != 0
@@ -692,6 +695,9 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .destroyed = source.destroyed(),
 		    .trapArmed = source.trap_armed(),
 		    .nativeObjectId = source.native_object_id(),
+		    .keepVisibleAfterActivation = source.keep_visible_after_activation(),
+		    .animationFrame = source.animation_frame(),
+		    .activatedAnimationFrame = source.activated_animation_frame(),
 		    .questTransitionKind = source.quest_transition_kind(),
 		    .rewardKind = source.reward_kind(),
 		    .questSequenceFollowUpKind = source.quest_sequence_follow_up_kind(),

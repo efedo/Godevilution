@@ -27,6 +27,34 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ActivatedObjectSelectsItsAuthoredPresentationFrame()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t8\t8\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            2,
+            2,
+            effectKind: AuthoritativeObjectEffectKind.Heal,
+            effectAmount: 1,
+            hideWhenActivated: false,
+            animationFrame: 3,
+            activatedAnimationFrame: 7);
+        var player = CreatePlayer(levelId: 1, positionX: 2, positionY: 1, entityId: 1);
+        var result = new DiabloWorldCommandProcessor(
+            new DiabloWorldState(geometry, objects: [@object]))
+            .Execute(player, new DiabloOperateObjectIntent(@object.EntityId), 1, [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(@object.Activated);
+        Assert.False(@object.HideWhenActivated);
+        Assert.Equal(7, @object.AnimationFrame);
+    }
+
+    [Fact]
     public void MovementRejectsMalformedBlockedAndOccupiedDestinationsWithoutMutation()
     {
         var world = new DiabloWorldState(

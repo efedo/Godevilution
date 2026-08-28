@@ -9,7 +9,7 @@ public static class AuthoritativeObjectPresentationVisibility
     public static bool IsVisible(ObjectSnapshot @object, uint currentLevelId)
     {
         ArgumentNullException.ThrowIfNull(@object);
-        return !@object.Activated
+        return (!@object.Activated || @object.KeepVisibleAfterActivation)
             && !@object.Destroyed
             && AuthoritativeLevelVisibility.IsVisible(@object.LevelId, currentLevelId);
     }

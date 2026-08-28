@@ -30,4 +30,18 @@ public sealed class AuthoritativeObjectPresentationVisibilityTests
             new ObjectSnapshot { EntityId = 5, ObjectId = 1, LevelId = 0 },
             2));
     }
+
+    [Fact]
+    public void KeepsActivatedObjectVisibleWhenPresentationRequestsIt()
+    {
+        Assert.True(AuthoritativeObjectPresentationVisibility.IsVisible(
+            new ObjectSnapshot {
+                EntityId = 6,
+                ObjectId = 1,
+                LevelId = 2,
+                Activated = true,
+                KeepVisibleAfterActivation = true,
+            },
+            2));
+    }
 }

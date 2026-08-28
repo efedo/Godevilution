@@ -43,12 +43,19 @@ public sealed class AuthoritativeWorldObject
         uint questSequenceFollowUpWorldMutationId = 0,
         bool activateOnOccupancy = false,
         int requiredActivatedLinkedObjects = 0,
-        uint nativeObjectId = 0)
+        uint nativeObjectId = 0,
+        bool hideWhenActivated = true,
+        int animationFrame = 0,
+        int activatedAnimationFrame = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
         if (nativeObjectId > AuthoritativeLevel.NativeMaximumObjectId)
             throw new ArgumentOutOfRangeException(nameof(nativeObjectId));
+        if (animationFrame is < 0 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(animationFrame));
+        if (activatedAnimationFrame is < 0 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(activatedAnimationFrame));
         EntityId = entityId;
         ObjectId = objectId;
         LevelId = levelId;
@@ -144,6 +151,9 @@ public sealed class AuthoritativeWorldObject
         ActivateOnOccupancy = activateOnOccupancy;
         RequiredActivatedLinkedObjects = requiredActivatedLinkedObjects;
         NativeObjectId = nativeObjectId;
+        HideWhenActivated = hideWhenActivated;
+        AnimationFrame = animationFrame;
+        ActivatedAnimationFrame = activatedAnimationFrame;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -205,6 +215,15 @@ public sealed class AuthoritativeWorldObject
         }
     }
 
+    /** Whether the compatibility presentation removes the object after activation. */
+    public bool HideWhenActivated { get; set; }
+
+    /** Native-compatible animation frame before activation. */
+    public int AnimationFrame { get; set; }
+
+    /** Native-compatible animation frame selected when the object activates. */
+    public int ActivatedAnimationFrame { get; set; }
+
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
     public bool MissilePassable { get; set; }
@@ -259,7 +278,10 @@ public sealed class AuthoritativeWorldObject
             QuestSequenceFollowUpWorldMutationId,
             ActivateOnOccupancy,
             RequiredActivatedLinkedObjects,
-            NativeObjectId);
+            NativeObjectId,
+            HideWhenActivated,
+            AnimationFrame,
+            ActivatedAnimationFrame);
     }
 
     public static bool IsValidQuestTransition(
@@ -378,6 +400,15 @@ public sealed class AuthoritativeWorldObject
         return producesProjectile
             ? true
             : sourceKind == AuthoritativeObjectProjectileSourceKind.Object;
+    }
+
+    public static bool IsValidPresentation(
+        bool hideWhenActivated,
+        int animationFrame,
+        int activatedAnimationFrame)
+    {
+        return animationFrame is >= 0 and <= byte.MaxValue
+            && activatedAnimationFrame is >= 0 and <= byte.MaxValue;
     }
 }
 
@@ -501,7 +532,10 @@ public static class AuthoritativeWorldObjectCatalog
                     row.OptionalUInt32("quest_sequence_follow_up_world_mutation_id"),
                     row.OptionalBoolean("activate_on_occupancy"),
                     row.OptionalInt32("required_activated_linked_objects"),
-                    row.OptionalUInt32("native_object_id")),
+                    row.OptionalUInt32("native_object_id"),
+                    row.OptionalBoolean("hide_when_activated", true),
+                    row.OptionalInt32("animation_frame"),
+                    row.OptionalInt32("activated_animation_frame")),
                 TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();

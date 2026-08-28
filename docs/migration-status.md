@@ -1440,6 +1440,14 @@ inventing a runtime object solely to carry coordinates. Schema 1.423 adds author
 columns; the Snotspill Banner sign chest uses them with its server-owned
 quest-variable gate.
 
+The authoritative object projection now carries additive presentation lifecycle
+metadata. Optional `hide_when_activated`, `animation_frame`, and
+`activated_animation_frame` values preserve legacy hide behavior by default,
+allow authored native objects to remain visible after their one-shot server
+operation, and select the post-activation frame across save/restore, hashing,
+the protocol, native compatibility presentation, and Godot visibility. Existing
+packs omit these columns and retain the previous behavior.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.

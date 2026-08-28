@@ -880,6 +880,12 @@ message ObjectSnapshot {
 	// Optional native object type used only by compatibility presentations
 	// (0 through native OBJ_LAST, currently 108).
 	uint32 native_object_id = 33;
+	// Presentation-only lifecycle metadata. Activated objects remain server-
+	// side one-shot interactions; this controls whether the native bridge keeps
+	// their visual object and which animation frame it displays.
+	bool keep_visible_after_activation = 34;
+	uint32 animation_frame = 35;
+	uint32 activated_animation_frame = 36;
 }
 
 enum ObjectPresentationKind {

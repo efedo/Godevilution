@@ -328,6 +328,15 @@ public sealed record DiabloObjectState(
 
     /** Optional native object type used only by compatibility presentations. */
     public uint NativeObjectId { get; init; }
+
+    /** Compatibility presentation may retain an activated object on the map. */
+    public bool HideWhenActivated { get; init; } = true;
+
+    /** Native-compatible animation frame before activation. */
+    public int AnimationFrame { get; init; }
+
+    /** Native-compatible animation frame selected when the object activates. */
+    public int ActivatedAnimationFrame { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -740,6 +749,9 @@ public sealed partial class DiabloSimulation
                     ActivateOnOccupancy = @object.ActivateOnOccupancy,
                     RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects,
                     NativeObjectId = @object.NativeObjectId,
+                    HideWhenActivated = @object.HideWhenActivated,
+                    AnimationFrame = @object.AnimationFrame,
+                    ActivatedAnimationFrame = @object.ActivatedAnimationFrame,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -1198,6 +1210,10 @@ public sealed partial class DiabloSimulation
                     @object.EffectKind,
                     @object.QuestSequenceFollowUpKind,
                     @object.ProjectileSourceKind)
+                || !AuthoritativeWorldObject.IsValidPresentation(
+                    @object.HideWhenActivated,
+                    @object.AnimationFrame,
+                    @object.ActivatedAnimationFrame)
                 || !AuthoritativeWorldObject.IsValidOccupancyTrigger(
                     @object.ActivateOnOccupancy,
                     @object.RequiredActivatedLinkedObjects,
@@ -2467,6 +2483,9 @@ public sealed partial class DiabloSimulation
                 target.ActivateOnOccupancy = @object.ActivateOnOccupancy;
                 target.RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects;
                 target.NativeObjectId = @object.NativeObjectId;
+                target.HideWhenActivated = @object.HideWhenActivated;
+                target.AnimationFrame = @object.AnimationFrame;
+                target.ActivatedAnimationFrame = @object.ActivatedAnimationFrame;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2503,7 +2522,10 @@ public sealed partial class DiabloSimulation
                     @object.QuestSequenceFollowUpWorldMutationId,
                     @object.ActivateOnOccupancy,
                     @object.RequiredActivatedLinkedObjects,
-                    @object.NativeObjectId));
+                    @object.NativeObjectId,
+                    @object.HideWhenActivated,
+                    @object.AnimationFrame,
+                    @object.ActivatedAnimationFrame));
             }
         }
     }

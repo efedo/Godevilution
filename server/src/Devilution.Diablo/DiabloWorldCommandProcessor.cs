@@ -1286,6 +1286,7 @@ public sealed class DiabloWorldCommandProcessor
             return ApplyQuestItemCompletion(player, @object);
 
         @object.Activated = true;
+        @object.AnimationFrame = @object.ActivatedAnimationFrame;
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
             && @object.QuestTransitionKind == AuthoritativeObjectQuestTransitionKind.None
             && !quest.Unavailable
@@ -1745,6 +1746,7 @@ public sealed class DiabloWorldCommandProcessor
         InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, inventoryIndex);
         player.Inventory.RemoveAt(inventoryIndex);
         @object.Activated = true;
+        @object.AnimationFrame = @object.ActivatedAnimationFrame;
         quest.Progress = quest.RequiredProgress;
         quest.Completed = true;
         quest.Active = false;

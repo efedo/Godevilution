@@ -1676,6 +1676,27 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectPresentationLifecycleChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = { new ObjectSnapshot { EntityId = 20, ObjectId = 4, Activated = true } },
+        };
+        var retained = baseline.Clone();
+        retained.Objects[0].KeepVisibleAfterActivation = true;
+        retained.Objects[0].AnimationFrame = 3;
+        retained.Objects[0].ActivatedAnimationFrame = 7;
+        var changedFrame = retained.Clone();
+        changedFrame.Objects[0].ActivatedAnimationFrame = 8;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(retained));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(retained),
+            SnapshotStateHasher.Compute(changedFrame));
+    }
+
+    [Fact]
     public void QuestPoolAvailabilityChangesTheHash()
     {
         var available = new Snapshot {

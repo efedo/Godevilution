@@ -2873,6 +2873,14 @@ behavior contract: `activate_on_occupancy` makes a player-entered tile invoke th
 authored operation, and `required_activated_linked_objects` gates it on other
 activated objects sharing the quest identity.
 
+Object presentation lifecycle metadata is optional and additive:
+`hide_when_activated` preserves the legacy one-shot hide behavior (default `1`),
+while `animation_frame` and `activated_animation_frame` select the native
+presentation frame before and after activation (both default `0`). The server
+still rejects a second operation on an activated object; setting
+`hide_when_activated=0` only keeps the already-completed object visible to
+clients.
+
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
 | `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, FastBlock timing, and class-specific ranged-arrow speed tuning. |

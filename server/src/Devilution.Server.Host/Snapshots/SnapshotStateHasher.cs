@@ -599,6 +599,14 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-object-trap-v1");
                     hasher.AppendBool(true);
                 }
+                if (@object.KeepVisibleAfterActivation
+                    || @object.AnimationFrame != 0
+                    || @object.ActivatedAnimationFrame != 0) {
+                    hasher.AppendString("godevilution-object-presentation-v1");
+                    hasher.AppendBool(!@object.KeepVisibleAfterActivation);
+                    hasher.AppendInt32(checked((int)@object.AnimationFrame));
+                    hasher.AppendInt32(checked((int)@object.ActivatedAnimationFrame));
+                }
                 if (@object.QuestProgressAmount != 1) {
                     hasher.AppendString("godevilution-object-quest-progress-v1");
                     hasher.AppendUInt32(@object.QuestProgressAmount);

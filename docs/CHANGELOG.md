@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve authoritative object presentation lifecycle metadata across content,
+  snapshots, saves, hashes, protocol projections, native compatibility, and
+  Godot visibility. Objects remain one-shot server interactions while authored
+  templates may stay visible and select an activated animation frame; omitted
+  metadata retains legacy hide behavior.
 - Extract deterministic overflow-safe Bresenham line traversal into the
   engine-neutral assembly; authoritative movement and missile line-of-sight
   checks now share one endpoint and interior-cell contract, while malformed
