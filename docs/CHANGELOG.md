@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore set-level-anchored native DUN fragments after origins are hydrated,
+  including their persisted behavior objects. Snapshot restore now treats an
+  already-present matching fragment object as idempotent while still rejecting
+  conflicting entity state.
+
 - Make dynamic set-piece origin publication and snapshot rollback transactional;
   failed deferred geometry or object materialization no longer leaves partial
   origins, objects, fragments, or projected mutation state behind.

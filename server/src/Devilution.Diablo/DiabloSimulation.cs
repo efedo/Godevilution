@@ -831,9 +831,12 @@ public sealed partial class DiabloSimulation
                     targetPool,
                     setLevelObjectOrigins);
             foreach (var generatedObject in generatedObjects) {
-                if (WorldState.IsEntityIdOccupied(generatedObject.EntityId))
-                    throw new InvalidDataException(
-                        $"Deferred native DUN fragment object entity {generatedObject.EntityId} is already occupied.");
+                if (WorldState.Objects.TryGetValue(generatedObject.EntityId, out var existing)) {
+                    if (!existing.HasSameAuthoritativeState(generatedObject))
+                        throw new InvalidDataException(
+                            $"Deferred native DUN fragment object entity {generatedObject.EntityId} is already occupied with different state.");
+                    continue;
+                }
                 WorldState.Objects.Add(generatedObject.EntityId, generatedObject);
             }
             AuthoritativeWorldObjectCatalog.ValidateWorld(

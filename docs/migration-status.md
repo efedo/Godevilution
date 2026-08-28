@@ -22,6 +22,12 @@ Dynamic origin publication and snapshot rollback now restore origins, generated
 objects, native fragments, and projected geometry together when deferred
 materialization or validation fails.
 
+Snapshot restore now hydrates saved set-level origins before replaying deferred
+native DUN fragments. This rebuilds set-level fragment geometry on a replacement
+session even when the origin was not preloaded, and accepts the matching
+persisted behavior objects without duplicating their entity IDs; conflicting
+object state still fails closed.
+
 Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.

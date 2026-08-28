@@ -1849,10 +1849,6 @@ public sealed partial class DiabloSimulation
         foreach (var corpse in restoredCorpses)
             WorldState.Corpses.Add(corpse.EntityId, corpse);
         RestoreObjects(restoredObjects);
-        // Restored unique encounters can be the first available anchors for
-        // deferred native-DUN fragments. Re-run publication after hydration so
-        // replacement simulations rebuild the same geometry as the source.
-        ApplyDeferredNativeDunFragments();
         setLevelObjectOrigins.Clear();
         foreach (var origin in restoredSetLevelObjectOrigins)
             setLevelObjectOrigins.Add(
@@ -1861,6 +1857,11 @@ public sealed partial class DiabloSimulation
                     origin.LevelId,
                     origin.PositionX,
                     origin.PositionY));
+        WorldState.RefreshProjectedGeometry();
+        // Restored unique encounters can be the first available anchors for
+        // deferred native-DUN fragments. Set-level origins are restored first
+        // so those fragments rebuild the same geometry as the source.
+        ApplyDeferredNativeDunFragments();
         WorldState.RefreshProjectedGeometry();
         WorldState.Portals.Clear();
         foreach (var portal in savedPortals) {

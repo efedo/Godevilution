@@ -299,6 +299,52 @@ public sealed class AuthoritativeWorldObject
             RewardSetLevelId);
     }
 
+    /** Returns whether another object has the same authoritative authored state. */
+    internal bool HasSameAuthoritativeState(AuthoritativeWorldObject other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        return EntityId == other.EntityId
+            && ObjectId == other.ObjectId
+            && LevelId == other.LevelId
+            && PositionX == other.PositionX
+            && PositionY == other.PositionY
+            && Activated == other.Activated
+            && QuestId == other.QuestId
+            && QuestProgressAmount == other.QuestProgressAmount
+            && EffectKind == other.EffectKind
+            && EffectAmount == other.EffectAmount
+            && QuestTransitionKind == other.QuestTransitionKind
+            && QuestTransitionAmount == other.QuestTransitionAmount
+            && QuestTransitionRequiredVariable1 == other.QuestTransitionRequiredVariable1
+            && QuestTransitionRequiredVariable2 == other.QuestTransitionRequiredVariable2
+            && RewardKind == other.RewardKind
+            && RewardId == other.RewardId
+            && RewardItemLevel == other.RewardItemLevel
+            && RewardOffsetX == other.RewardOffsetX
+            && RewardOffsetY == other.RewardOffsetY
+            && RewardOriginKind == other.RewardOriginKind
+            && RewardSetLevelId == other.RewardSetLevelId
+            && ProjectileTargetOffsetX == other.ProjectileTargetOffsetX
+            && ProjectileTargetOffsetY == other.ProjectileTargetOffsetY
+            && QuestSequenceFollowUpKind == other.QuestSequenceFollowUpKind
+            && QuestSequenceFollowUpAmount == other.QuestSequenceFollowUpAmount
+            && QuestSequenceFollowUpOffsetX == other.QuestSequenceFollowUpOffsetX
+            && QuestSequenceFollowUpOffsetY == other.QuestSequenceFollowUpOffsetY
+            && QuestSequenceFollowUpWorldMutationId == other.QuestSequenceFollowUpWorldMutationId
+            && ProjectileSourceKind == other.ProjectileSourceKind
+            && ActivateOnOccupancy == other.ActivateOnOccupancy
+            && RequiredActivatedLinkedObjects == other.RequiredActivatedLinkedObjects
+            && NativeObjectId == other.NativeObjectId
+            && HideWhenActivated == other.HideWhenActivated
+            && AnimationFrame == other.AnimationFrame
+            && ActivatedAnimationFrame == other.ActivatedAnimationFrame
+            && MissilePassable == other.MissilePassable
+            && Breakable == other.Breakable
+            && Destroyed == other.Destroyed
+            && TrapArmed == other.TrapArmed
+            && IsShrine == other.IsShrine;
+    }
+
     public static bool IsValidQuestTransition(
         AuthoritativeObjectQuestTransitionKind kind,
         int amount,
