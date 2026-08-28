@@ -1439,6 +1439,29 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ObjectInteractionRejectsWrappedExtremeDistanceWithoutMutation()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            int.MinValue,
+            0);
+        var world = new DiabloWorldState(objects: [@object]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: int.MaxValue, entityId: 7);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloOperateObjectIntent(@object.EntityId),
+                5,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(@object.Activated);
+    }
+
+    [Fact]
     public void ArmedTrapUsesNativeHalfTrapDamageEquipmentAndPreservesQ6EventAmount()
     {
         var @object = new AuthoritativeWorldObject(
@@ -3866,6 +3889,33 @@ public sealed class DiabloWorldCommandProcessorTests
                 5,
                 [player]),
             DiabloRuleFailure.NotAllowed);
+        Assert.True(@object.TrapArmed);
+    }
+
+    [Fact]
+    public void TrapDisarmRejectsWrappedExtremeDistanceWithoutMutation()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            int.MinValue,
+            0,
+            trapArmed: true);
+        var world = new DiabloWorldState(objects: [@object]);
+        var player = CreatePlayer(positionX: int.MaxValue, entityId: 7);
+        player.AbilitySpellId = 28;
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            trapDisarmAbilitySpellId: 28);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloDisarmTrapIntent(@object.EntityId),
+                5,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
         Assert.True(@object.TrapArmed);
     }
 

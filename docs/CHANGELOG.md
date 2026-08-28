@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Centralize authoritative Chebyshev range checks on widened coordinate
+  arithmetic across monster unity/spawn validation, world interactions, and
+  combat cast/target admission; extreme wrapped coordinates now fail closed
+  without mutating server state.
 - Clarify Hellfire migration status: the monster-type catalog is complete,
   while encounter placement, world behavior, map synthesis, and unported data
   remain follow-up work.

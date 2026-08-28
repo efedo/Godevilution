@@ -1121,9 +1121,11 @@ public sealed partial class DiabloSimulation
                             monster.LevelId,
                             monster.FuturePositionX,
                             monster.FuturePositionY)
-                        || Math.Max(
-                            Math.Abs(monster.FuturePositionX - monster.PositionX),
-                            Math.Abs(monster.FuturePositionY - monster.PositionY)) != 1))
+                        || AuthoritativeCombatTarget.ChebyshevDistance(
+                            monster.FuturePositionX,
+                            monster.FuturePositionY,
+                            monster.PositionX,
+                            monster.PositionY) != 1))
                 || (!monster.Moving
                     && (monster.FuturePositionX != monster.PositionX
                         || monster.FuturePositionY != monster.PositionY))

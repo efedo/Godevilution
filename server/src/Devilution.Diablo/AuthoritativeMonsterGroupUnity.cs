@@ -35,9 +35,11 @@ public static class AuthoritativeMonsterGroupUnity
         var futureY = leader.IsMoving ? leader.FuturePositionY : leader.PositionY;
         return leashedMembers.All(member =>
             member.LevelId == leader.LevelId
-            && Math.Max(
-                Math.Abs(member.PositionX - futureX),
-                Math.Abs(member.PositionY - futureY)) < ReunionDistance);
+            && AuthoritativeCombatTarget.ChebyshevDistance(
+                member.PositionX,
+                member.PositionY,
+                futureX,
+                futureY) < ReunionDistance);
     }
 
     /** Native isDirOK gate for a leashed member's candidate movement cell. */
@@ -61,9 +63,11 @@ public static class AuthoritativeMonsterGroupUnity
         var leaderY = leader.IsMoving ? leader.FuturePositionY : leader.PositionY;
         var memberX = member.IsMoving ? member.FuturePositionX : member.PositionX;
         var memberY = member.IsMoving ? member.FuturePositionY : member.PositionY;
-        return Math.Max(
-                Math.Abs(memberX - leaderX),
-                Math.Abs(memberY - leaderY)) < ReunionDistance;
+        return AuthoritativeCombatTarget.ChebyshevDistance(
+            memberX,
+            memberY,
+            leaderX,
+            leaderY) < ReunionDistance;
     }
 
     /** Native FollowTheLeader activation timing for a leashed member. */
@@ -121,9 +125,11 @@ public static class AuthoritativeMonsterGroupUnity
             leaderY);
         if (lineIsClear) {
             if (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.Separated
-                && Math.Max(
-                    Math.Abs(monster.PositionX - leaderX),
-                    Math.Abs(monster.PositionY - leaderY)) < ReunionDistance) {
+                && AuthoritativeCombatTarget.ChebyshevDistance(
+                    monster.PositionX,
+                    monster.PositionY,
+                    leaderX,
+                    leaderY) < ReunionDistance) {
                 leader.IncrementPackSize();
                 monster.SetLeaderRelation(AuthoritativeMonsterLeaderRelation.Leashed);
             }

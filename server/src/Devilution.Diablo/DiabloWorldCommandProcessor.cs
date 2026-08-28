@@ -617,9 +617,11 @@ public sealed class DiabloWorldCommandProcessor
             intent.TargetY,
             participants,
             player.EntityId);
-        var targetDistance = Math.Max(
-            Math.Abs(intent.TargetX - player.PositionX),
-            Math.Abs(intent.TargetY - player.PositionY));
+        var targetDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+            intent.TargetX,
+            intent.TargetY,
+            player.PositionX,
+            player.PositionY);
         if (targetOccupied && targetDistance <= 1)
             return DiabloWorldIntentResult.Accepted;
 
@@ -782,9 +784,12 @@ public sealed class DiabloWorldCommandProcessor
     {
         if (!world.WorldItems.TryGetValue(itemEntityId, out var item)
             || item.LevelId != player.LevelId
-            || (requireAdjacent && Math.Max(
-                Math.Abs(item.PositionX - player.PositionX),
-                Math.Abs(item.PositionY - player.PositionY)) > 1)) {
+            || (requireAdjacent
+                && AuthoritativeCombatTarget.ChebyshevDistance(
+                    item.PositionX,
+                    item.PositionY,
+                    player.PositionX,
+                    player.PositionY) > 1)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
         var itemState = ResolveWorldItemState(player, item);
@@ -1130,9 +1135,11 @@ public sealed class DiabloWorldCommandProcessor
         var originY = player.FuturePositionY;
         if (!world.ContainsPosition(player.LevelId, targetX, targetY))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        if (Math.Max(
-                Math.Abs(targetX - originX),
-                Math.Abs(targetY - originY)) > 1
+        if (AuthoritativeCombatTarget.ChebyshevDistance(
+                targetX,
+                targetY,
+                originX,
+                originY) > 1
             || !world.IsWalkable(player.LevelId, targetX, targetY)
             || world.IsOccupied(
                 player.LevelId,
@@ -1224,9 +1231,12 @@ public sealed class DiabloWorldCommandProcessor
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
             || @object.Activated
             || @object.LevelId != player.LevelId
-            || (requireAdjacent && Math.Max(
-                Math.Abs(@object.PositionX - player.PositionX),
-                Math.Abs(@object.PositionY - player.PositionY)) > 1)) {
+            || (requireAdjacent
+                && AuthoritativeCombatTarget.ChebyshevDistance(
+                    @object.PositionX,
+                    @object.PositionY,
+                    player.PositionX,
+                    player.PositionY) > 1)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
         if (@object.QuestId != 0
@@ -1833,9 +1843,11 @@ public sealed class DiabloWorldCommandProcessor
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
             || !@object.TrapArmed
             || @object.LevelId != player.LevelId
-            || Math.Max(
-                Math.Abs(@object.PositionX - player.PositionX),
-                Math.Abs(@object.PositionY - player.PositionY)) > 1) {
+            || AuthoritativeCombatTarget.ChebyshevDistance(
+                @object.PositionX,
+                @object.PositionY,
+                player.PositionX,
+                player.PositionY) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
@@ -1916,9 +1928,11 @@ public sealed class DiabloWorldCommandProcessor
                 target.UniqueIdentity,
                 quest.CompletionUniqueIdentity,
                 StringComparison.Ordinal)
-            || Math.Max(
-                Math.Abs(target.PositionX - player.PositionX),
-                Math.Abs(target.PositionY - player.PositionY)) > 1) {
+            || AuthoritativeCombatTarget.ChebyshevDistance(
+                target.PositionX,
+                target.PositionY,
+                player.PositionX,
+                player.PositionY) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
@@ -2264,9 +2278,11 @@ public sealed class DiabloWorldCommandProcessor
                 continue;
             hasActiveInteraction = true;
             if (interaction.LevelId != player.LevelId
-                || Math.Max(
-                    Math.Abs(interaction.PositionX - player.PositionX),
-                    Math.Abs(interaction.PositionY - player.PositionY)) > 1)
+                || AuthoritativeCombatTarget.ChebyshevDistance(
+                    interaction.PositionX,
+                    interaction.PositionY,
+                    player.PositionX,
+                    player.PositionY) > 1)
                 continue;
 
             if (interaction.ItemId != 0) {
@@ -2425,9 +2441,11 @@ public sealed class DiabloWorldCommandProcessor
             || (quest.TurnInBlockedVisitedLevel != 0
                 && player.HasVisitedLevel(quest.TurnInBlockedVisitedLevel))
             || quest.TurnInLevelId != player.LevelId
-            || Math.Max(
-                Math.Abs(quest.TurnInPositionX - player.PositionX),
-                Math.Abs(quest.TurnInPositionY - player.PositionY)) > 1) {
+            || AuthoritativeCombatTarget.ChebyshevDistance(
+                quest.TurnInPositionX,
+                quest.TurnInPositionY,
+                player.PositionX,
+                player.PositionY) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 

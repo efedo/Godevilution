@@ -172,6 +172,40 @@ public sealed class AuthoritativeMonsterGroupUnityTests
     }
 
     [Fact]
+    public void RejectsMovingTargetCoordinatesThatOverflowAdjacentDistance()
+    {
+        Assert.Throws<ArgumentException>(() => new AuthoritativeCombatTarget(
+            1,
+            int.MaxValue,
+            0,
+            10,
+            moving: true,
+            futurePositionX: int.MinValue,
+            futurePositionY: 0));
+    }
+
+    [Fact]
+    public void PackUnityDoesNotTreatWrappedExtremeCoordinatesAsAdjacent()
+    {
+        var leader = new AuthoritativeCombatTarget(1, int.MaxValue, 0, 10, packSize: 1);
+        var member = new AuthoritativeCombatTarget(
+            2,
+            int.MinValue,
+            0,
+            10,
+            leaderEntityId: leader.EntityId,
+            leaderRelation: AuthoritativeMonsterLeaderRelation.Leashed);
+        var world = new DiabloWorldState(combatTargets: [leader, member]);
+
+        Assert.False(AuthoritativeMonsterGroupUnity.CanLeaderMove(
+            leader,
+            world.CombatTargets));
+        Assert.False(AuthoritativeMonsterGroupUnity.CanLeashedMemberMove(
+            member,
+            world.CombatTargets));
+    }
+
+    [Fact]
     public void FollowTheLeaderPropagatesActivationFromLeaderToMember()
     {
         var leader = new AuthoritativeCombatTarget(

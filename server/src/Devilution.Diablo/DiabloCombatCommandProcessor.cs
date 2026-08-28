@@ -771,9 +771,11 @@ public sealed class DiabloCombatCommandProcessor
             targetY);
         var displacement = DiabloPlayerDirections.GetDisplacement(direction);
         var steps = ranged
-            ? Math.Max(
-                Math.Abs(targetX - player.PositionX),
-                Math.Abs(targetY - player.PositionY))
+            ? AuthoritativeCombatTarget.ChebyshevDistance(
+                targetX,
+                targetY,
+                player.PositionX,
+                player.PositionY)
             : 1;
         for (var step = 1; step <= steps; step++) {
             var positionX = checked(player.PositionX + displacement.X * step);
@@ -813,9 +815,11 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState target,
         ulong appliedTick)
     {
-        var targetDistance = Math.Max(
-            Math.Abs(target.PositionX - player.PositionX),
-            Math.Abs(target.PositionY - player.PositionY));
+        var targetDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            player.PositionX,
+            player.PositionY);
         var direction = DiabloPlayerDirections.Toward(
             player.PositionX,
             player.PositionY,
@@ -1021,9 +1025,11 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (arrowCount is < 1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(arrowCount));
-        var targetDistance = Math.Max(
-            Math.Abs(target.PositionX - player.PositionX),
-            Math.Abs(target.PositionY - player.PositionY));
+        var targetDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            player.PositionX,
+            player.PositionY);
         var direction = DiabloPlayerDirections.Toward(
             player.PositionX,
             player.PositionY,
@@ -1103,7 +1109,7 @@ public sealed class DiabloCombatCommandProcessor
     /** Native AddArrow velocity and the corresponding tile-travel lifetime. */
     private (int Speed, uint Lifetime) ResolveWeaponArrowTravelTiming(
         AuthoritativePlayerState player,
-        int targetDistance)
+        long targetDistance)
     {
         var speed = 32;
         if (HasUsableEquipmentFlag(
@@ -1134,12 +1140,15 @@ public sealed class DiabloCombatCommandProcessor
         // Preserve the compact legacy representation when native AddArrow
         // resolves to its default 32-pixel cadence.
         if (speed == 32)
-            return (0, checked((uint)Math.Max(1, targetDistance)));
+            return (0, (uint)Math.Min(
+                (long)uint.MaxValue,
+                Math.Max(1L, targetDistance)));
 
-        var travelTiles = Math.Max(0, targetDistance - 1);
-        var travelTicks = checked(
-            (travelTiles * 32 + speed - 1) / speed);
-        return (speed, checked((uint)(travelTicks + 1)));
+        var travelTiles = Math.Max(0L, targetDistance - 1);
+        var travelTicks = (travelTiles * 32 + speed - 1) / speed;
+        return (speed, (uint)Math.Min(
+            (long)uint.MaxValue,
+            travelTicks + 1));
     }
 
     /** Applies native fire/lightning weapon channels after a physical hit. */
@@ -1689,9 +1698,11 @@ public sealed class DiabloCombatCommandProcessor
             || (target.LevelId != 0 && target.LevelId != player.LevelId)) {
             return false;
         }
-        var distance = Math.Max(
-            Math.Abs(target.PositionX - player.PositionX),
-            Math.Abs(target.PositionY - player.PositionY));
+        var distance = AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            player.PositionX,
+            player.PositionY);
         return ranged
             ? distance > 0 && world.HasMissileLineOfSight(
                 player.LevelId,
@@ -1760,9 +1771,11 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
-        var distance = Math.Max(
-            Math.Abs(target.PositionX - player.PositionX),
-            Math.Abs(target.PositionY - player.PositionY));
+        var distance = AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            player.PositionX,
+            player.PositionY);
         return ranged
             ? distance > 0 && world.HasMissileLineOfSight(
                 player.LevelId,
@@ -1927,9 +1940,11 @@ public sealed class DiabloCombatCommandProcessor
                 || intent.TargetEntityId == player.EntityId
                 || resurrectionTarget is null
                 || resurrectionTarget.LevelId != player.LevelId
-                || Math.Max(
-                    Math.Abs(resurrectionTarget.PositionX - player.PositionX),
-                    Math.Abs(resurrectionTarget.PositionY - player.PositionY)) > spell.Range) {
+                || AuthoritativeCombatTarget.ChebyshevDistance(
+                    resurrectionTarget.PositionX,
+                    resurrectionTarget.PositionY,
+                    player.PositionX,
+                    player.PositionY) > spell.Range) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
             centerX = resurrectionTarget.PositionX;
@@ -1944,9 +1959,11 @@ public sealed class DiabloCombatCommandProcessor
                 || healOtherTarget is null
                 || healOtherTarget.Life <= 0
                 || healOtherTarget.LevelId != player.LevelId
-                || Math.Max(
-                    Math.Abs(healOtherTarget.PositionX - player.PositionX),
-                    Math.Abs(healOtherTarget.PositionY - player.PositionY)) > spell.Range) {
+                || AuthoritativeCombatTarget.ChebyshevDistance(
+                    healOtherTarget.PositionX,
+                    healOtherTarget.PositionY,
+                    player.PositionX,
+                    player.PositionY) > spell.Range) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
             centerX = healOtherTarget.PositionX;
@@ -2010,9 +2027,11 @@ public sealed class DiabloCombatCommandProcessor
                         || target.SneakHidden
                         || IsQuestDialogueTarget(target)
                         || (target.LevelId != 0 && target.LevelId != player.LevelId)))
-                || Math.Max(
-                    Math.Abs(centerX - player.PositionX),
-                    Math.Abs(centerY - player.PositionY)) > spell.Range
+                || AuthoritativeCombatTarget.ChebyshevDistance(
+                    centerX,
+                    centerY,
+                    player.PositionX,
+                    player.PositionY) > spell.Range
                 || (!(isFireWall || isLightningWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova || isJester) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null
@@ -2042,9 +2061,11 @@ public sealed class DiabloCombatCommandProcessor
                     .Where(candidate => candidate.HitPoints > 0
                         && !candidate.SneakHidden
                         && (candidate.LevelId == 0 || candidate.LevelId == player.LevelId)
-                        && Math.Max(
-                            Math.Abs(candidate.PositionX - centerX),
-                            Math.Abs(candidate.PositionY - centerY)) <= spell.AreaRadius)
+                        && AuthoritativeCombatTarget.ChebyshevDistance(
+                            candidate.PositionX,
+                            candidate.PositionY,
+                            centerX,
+                            centerY) <= spell.AreaRadius)
                     .OrderBy(candidate => candidate.EntityId)
                     .ToArray();
             if (spell.AreaRadius == 0 && target is not null)
@@ -2067,14 +2088,16 @@ public sealed class DiabloCombatCommandProcessor
                 ? ResolveSearchDuration(spell, player.CharacterLevel, effectiveSpellLevel)
             : spell.StatusDuration;
 
-        var projectileTravelTicks = 0;
+        long projectileTravelTicks = 0;
         if (spell.ProjectileSpeed > 0
             && spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Targeted) {
-            var distance = Math.Max(
-                Math.Abs(centerX - player.PositionX),
-                Math.Abs(centerY - player.PositionY));
+            var distance = AuthoritativeCombatTarget.ChebyshevDistance(
+                centerX,
+                centerY,
+                player.PositionX,
+                player.PositionY);
             projectileTravelTicks = Math.Max(
-                1,
+                1L,
                 (distance + spell.ProjectileSpeed - 1) / spell.ProjectileSpeed);
             if (projectileTravelTicks > spell.ProjectileLifetime)
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -2122,9 +2145,11 @@ public sealed class DiabloCombatCommandProcessor
                 || player.LevelId == rules.TownLevelId
                 || intent.TargetEntityId != 0
                 || !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
-                || Math.Max(
-                    Math.Abs(intent.TargetX - player.PositionX),
-                    Math.Abs(intent.TargetY - player.PositionY)) > spell.Range
+                || AuthoritativeCombatTarget.ChebyshevDistance(
+                    intent.TargetX,
+                    intent.TargetY,
+                    player.PositionX,
+                    player.PositionY) > spell.Range
                 || !world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -2153,9 +2178,11 @@ public sealed class DiabloCombatCommandProcessor
         if (isGolem) {
             if (intent.TargetEntityId != 0
                 || !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
-                || Math.Max(
-                    Math.Abs(intent.TargetX - player.PositionX),
-                    Math.Abs(intent.TargetY - player.PositionY)) > spell.Range
+                || AuthoritativeCombatTarget.ChebyshevDistance(
+                    intent.TargetX,
+                    intent.TargetY,
+                    player.PositionX,
+                    player.PositionY) > spell.Range
                 || !world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -2662,7 +2689,7 @@ public sealed class DiabloCombatCommandProcessor
                         spell.DamageAmount,
                         spell.DamageType,
                         spell.AreaRadius,
-                        (uint)projectileTravelTicks),
+                        checked((uint)projectileTravelTicks)),
                 };
                 world.Projectiles.Add(projectileEntityId, projectile);
             }

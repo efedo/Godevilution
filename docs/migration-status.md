@@ -2,6 +2,11 @@
 
 Status date: 2026-08-27
 
+Authoritative monster unity and spawn spacing, world interaction adjacency,
+and combat cast/target range gates now share widened Chebyshev distance
+arithmetic. Extreme integer-boundary coordinates therefore fail closed
+without wrapped adjacency or state mutation.
+
 Damage-targeted casts now reject raw coordinates outside the active level
 before distance arithmetic, keeping malformed client spell targets fail-closed
 instead of allowing integer-overflow exceptions during authoritative admission.

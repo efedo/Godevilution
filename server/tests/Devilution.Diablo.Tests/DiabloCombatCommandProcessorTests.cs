@@ -18619,6 +18619,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireboltRejectsWrappedExtremePlayerTargetDistance()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireboltSpell()]),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            positionX: int.MaxValue,
+            entityId: 7,
+            mana: 1000,
+            manaMaximum: 1000,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+        var target = CreatePlayer(
+            positionX: int.MinValue,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                1,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(1000, caster.Mana);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void DamageCastRejectsOutOfLevelRawCoordinatesBeforeDistanceArithmetic()
     {
         var world = new DiabloWorldState();
