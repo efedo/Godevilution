@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Set-level map validation now fails closed when any declared native binary is
+present without the complete `.dun`/`.til`/`.sol` bundle (or declared
+transparency layer), while rows with no supplied binaries remain metadata-only.
+
 Set-level quest entry state is now enforced across world commands, simulation
 ticks, store/combat entry, and snapshot restoration, so a player already on a
 materialized active set-level cannot bypass native QUEST_INIT activation.

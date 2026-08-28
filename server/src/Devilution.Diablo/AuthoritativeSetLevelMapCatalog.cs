@@ -131,9 +131,14 @@ public sealed class AuthoritativeSetLevelMapCatalog
         ArgumentNullException.ThrowIfNull(content);
         foreach (var definition in definitions) {
             var paths = GetNativeAssetPaths(definition);
-            if (paths.Length == 0)
-                continue;
             var present = paths.Count(path => content.TryGetAsset(path, out _));
+            if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
+                if (present != 0)
+                    throw new InvalidDataException(
+                        $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle without its .til/.sol geometry inputs.");
+                continue;
+            }
             if (present != 0 && present != paths.Length)
                 throw new InvalidDataException(
                     $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle.");
@@ -153,10 +158,11 @@ public sealed class AuthoritativeSetLevelMapCatalog
         ValidateAssets(content);
         var levels = new List<AuthoritativeLevel>();
         foreach (var definition in definitions) {
-            var paths = GetNativeAssetPaths(definition);
-            if (paths.Length == 0) {
+            if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
                 continue;
             }
+            var paths = GetNativeAssetPaths(definition);
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (present == 0)
                 continue;
@@ -222,18 +228,17 @@ public sealed class AuthoritativeSetLevelMapCatalog
     private static string[] GetNativeAssetPaths(
         AuthoritativeSetLevelMapDefinition definition)
     {
-        if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
-            || string.IsNullOrWhiteSpace(definition.SolAssetPath))
-            return [];
-        var paths = new[] {
+        var paths = new List<string> {
             definition.PreMapAssetPath,
             definition.ActiveMapAssetPath,
-            definition.TileAssetPath,
-            definition.SolAssetPath,
         };
-        return string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)
-            ? paths
-            : [.. paths, definition.TransparencyAssetPath];
+        if (!string.IsNullOrWhiteSpace(definition.TileAssetPath))
+            paths.Add(definition.TileAssetPath);
+        if (!string.IsNullOrWhiteSpace(definition.SolAssetPath))
+            paths.Add(definition.SolAssetPath);
+        if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath))
+            paths.Add(definition.TransparencyAssetPath);
+        return paths.ToArray();
     }
 
     public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)

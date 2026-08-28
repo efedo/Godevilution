@@ -1,4 +1,5 @@
 using Devilution.Diablo;
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -79,5 +80,28 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
         Assert.False(AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(0));
         Assert.False(AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(
             AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(5, activeMap: true)));
+    }
+
+    [Fact]
+    public void DeclaredDunAssetWithoutItsPairIsRejectedEvenWhenTileAssetsAreOmitted()
+    {
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(
+                1,
+                "levels/pre.dun",
+                "levels/active.dun",
+                "Cathedral",
+                1,
+                1),
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/pre.dun", new byte[] { 1 }),
+            ]),
+        ]));
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.ValidateAssets(content));
+
+        Assert.Contains("incomplete native asset bundle", exception.Message, StringComparison.Ordinal);
     }
 }

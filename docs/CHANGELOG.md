@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject partial declared set-level native map bundles instead of silently
+  ignoring supplied `.dun` assets when `.til`/`.sol` data is absent.
 - Apply external quest route activation when an authoritative player enters a
   materialized active set-level runtime map, preserving native set-level entry
   markers without treating pre-map variants as visited gameplay levels.
