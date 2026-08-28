@@ -2,3 +2,7 @@ interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	
 301901	3019	little_girl	11	0	town	77	43	0		Activate	-1	-1	1	-1	283	false	false	17	0	true	2102	theodore	false	false	false
 301902	3019	little_girl	11	0	town	77	43	0		Dialogue	1	-1	-1	-1	284	false	false	0	0	false	2102	theodore	false	false	false
 301903	3019	little_girl	11	0	town	77	43	2102	theodore	Complete	-1	-1	-1	-1	285	true	false	0	0	false	0		true	true	true
+301801	3018	farmers_orchard	10	0	town	62	16	0	NONE	Activate	-1	-1	1	-1	277	false	false	0	0	false	0		false	false	true
+301701	3017	grave_matters	7	0	town	43	66	43	cathedral_map	Dialogue	-1	-1	-1	-1	274	false	false	0	0	true	0		false	false	false
+302401	3024	jerseys_jersey	12	0	town	61	22	2105	grey_suit	Dialogue	-1	-1	-1	-1	303	true	false	0	0	false	0		false	false	false
+302402	3024	jerseys_jersey	12	0	town	61	22	2104	brown_suit	Complete	-1	1	-1	-1	304	true	false	0	0	false	0		false	false	true

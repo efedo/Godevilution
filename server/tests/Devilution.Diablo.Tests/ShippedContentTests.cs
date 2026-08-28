@@ -3183,7 +3183,7 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(13, mushroomInteractions.Count);
+        Assert.Equal(17, mushroomInteractions.Count);
         Assert.Equal(
             [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
@@ -3195,9 +3195,13 @@ public sealed class ShippedContentTests
              (300208U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 88),
              (300209U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 39),
              (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39),
+             (301701U, 7, 43U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 274),
+             (301801U, 10, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 277),
              (301901U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 283),
              (301902U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, 1, -1, 284),
-             (301903U, 11, 2102U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 285)],
+             (301903U, 11, 2102U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 285),
+             (302401U, 12, 2105U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 303),
+             (302402U, 12, 2104U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 304)],
             mushroomInteractions.Select(interaction => (
                 interaction.InteractionId,
                 interaction.TownerId,
@@ -3206,6 +3210,17 @@ public sealed class ShippedContentTests
                 interaction.RequiredVariable1,
                 interaction.Variable1,
                 interaction.MessageId)));
+        var graveMattersDialogue = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301701);
+        Assert.False(graveMattersDialogue.ConsumeItem);
+        Assert.True(graveMattersDialogue.RequireUnlogged);
+        var farmersOrchardActivation = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301801);
+        Assert.True(farmersOrchardActivation.UseQuestTurnInReward);
+        var jerseyCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 302402);
+        Assert.True(jerseyCompletion.UseQuestTurnInReward);
+        Assert.Equal(1, jerseyCompletion.RequiredVariable2);
         var kingCompletionDialogue = mushroomInteractions.Single(interaction => interaction.InteractionId == 300205);
         Assert.True(kingCompletionDialogue.AllowCompleted);
         Assert.Equal(1, kingCompletionDialogue.RequiredVariable2);

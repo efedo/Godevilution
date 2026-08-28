@@ -76,9 +76,10 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 throw new InvalidDataException(
                     $"Quest/towner interaction {definition.InteractionId} may allow initial state only for completion stages.");
             if (definition.UseQuestTurnInReward
-                && definition.Kind != AuthoritativeQuestTownerInteractionKind.Complete)
+                && definition.Kind is not (AuthoritativeQuestTownerInteractionKind.Activate
+                    or AuthoritativeQuestTownerInteractionKind.Complete))
                 throw new InvalidDataException(
-                    $"Quest/towner interaction {definition.InteractionId} may reuse a quest turn-in reward only for completion stages.");
+                    $"Quest/towner interaction {definition.InteractionId} may reuse a quest turn-in reward only for activation or completion stages.");
             switch (definition.Kind) {
             case AuthoritativeQuestTownerInteractionKind.Activate:
                 if (definition.ConsumeItem && definition.ItemId == 0

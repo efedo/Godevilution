@@ -22,6 +22,13 @@ both the authoritative state and completed command receipts. Cold hosts prefer
 that checkpoint and fall back to the legacy separate files when it is absent,
 closing the crash window between the two compatibility publications.
 
+The content-owned quest/towner interaction catalog now covers the shipped
+Hellfire Grave Matters dialogue, Farmer's Orchard activation and Rune Bomb
+reward, and Jersey's Jersey alternate Grey Suit dialogue plus Brown Suit
+completion. Activation stages may reuse their quest-declared normal-item reward;
+legacy quest-state turn-in handling remains available for completion-only stages
+that have not yet been migrated.
+
 Hellfire Little Girl now uses authored quest/towner stages for its opening,
 active dialogue, and pre-activation Theodore hand-in branches. The itemless
 stages require Theodore to be absent, while the completion stage is explicitly

@@ -2348,8 +2348,9 @@ public sealed class DiabloWorldCommandProcessor
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
                 }
             }
-            if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Complete
-                && interaction.UseQuestTurnInReward
+            if (interaction.UseQuestTurnInReward
+                && interaction.Kind is (AuthoritativeQuestTownerInteractionKind.Activate
+                    or AuthoritativeQuestTownerInteractionKind.Complete)
                 && (quest.TurnInRewardUniqueId != 0 || quest.TurnInRewardItemId != 0)
                 && !CanPlaceWorldItemReward(
                     quest.TurnInLevelId,
@@ -2360,7 +2361,6 @@ public sealed class DiabloWorldCommandProcessor
                     requireWalkable: false)) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
-
             quest.Logged = true;
             if (interaction.Variable1 >= 0)
                 quest.Variable1 = Math.Max(quest.Variable1, interaction.Variable1);
@@ -2370,6 +2370,11 @@ public sealed class DiabloWorldCommandProcessor
                 quest.MessageId = interaction.MessageId;
             if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate)
                 quest.Active = true;
+            if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate
+                && interaction.UseQuestTurnInReward
+                && items is not null) {
+                SpawnQuestTurnInReward(quest, participants);
+            }
             if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Complete) {
                 quest.Progress = quest.RequiredProgress;
                 quest.Completed = true;
@@ -2383,39 +2388,8 @@ public sealed class DiabloWorldCommandProcessor
                     nextQuest.Active = true;
                     nextQuest.Logged = true;
                 }
-                if (interaction.UseQuestTurnInReward && items is not null) {
-                    if (quest.TurnInRewardUniqueId != 0) {
-                        var itemSeed = AllocateGoldStackSeed();
-                        var rewardState = items.GenerateUnique(
-                            quest.TurnInRewardUniqueId,
-                            itemSeed,
-                            quest.TurnInRewardItemLevel);
-                        var entityId = AllocateWorldItemEntityId(participants);
-                        world.WorldItems[entityId] = new AuthoritativeWorldItem(
-                            entityId,
-                            quest.TurnInLevelId,
-                            quest.TurnInRewardPositionX,
-                            quest.TurnInRewardPositionY,
-                            itemSeed,
-                            0,
-                            rewardState);
-                    } else if (quest.TurnInRewardItemId != 0) {
-                        var itemSeed = AllocateGoldStackSeed();
-                        var rewardState = items.Generate(
-                            quest.TurnInRewardItemId,
-                            itemSeed,
-                            quest.TurnInRewardItemLevel);
-                        var entityId = AllocateWorldItemEntityId(participants);
-                        world.WorldItems[entityId] = new AuthoritativeWorldItem(
-                            entityId,
-                            quest.TurnInLevelId,
-                            quest.TurnInRewardPositionX,
-                            quest.TurnInRewardPositionY,
-                            itemSeed,
-                            checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                            rewardState);
-                    }
-                }
+                if (interaction.UseQuestTurnInReward && items is not null)
+                    SpawnQuestTurnInReward(quest, participants);
             }
 
             return DiabloWorldIntentResult.AcceptedWith(
@@ -2429,6 +2403,46 @@ public sealed class DiabloWorldCommandProcessor
                 });
         }
         return null;
+    }
+
+    /** Generates the normal item or unique reward authored on a quest turn-in. */
+    private void SpawnQuestTurnInReward(
+        AuthoritativeQuestState quest,
+        IReadOnlyList<AuthoritativePlayerState> participants)
+    {
+        if (items is null)
+            throw new InvalidOperationException("Quest turn-in reward generation requires an item catalog.");
+        if (quest.TurnInRewardUniqueId == 0 && quest.TurnInRewardItemId == 0)
+            return;
+        var itemSeed = AllocateGoldStackSeed();
+        var entityId = AllocateWorldItemEntityId(participants);
+        if (quest.TurnInRewardUniqueId != 0) {
+            var rewardState = items.GenerateUnique(
+                quest.TurnInRewardUniqueId,
+                itemSeed,
+                quest.TurnInRewardItemLevel);
+            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                entityId,
+                quest.TurnInLevelId,
+                quest.TurnInRewardPositionX,
+                quest.TurnInRewardPositionY,
+                itemSeed,
+                0,
+                rewardState);
+        } else if (quest.TurnInRewardItemId != 0) {
+            var rewardState = items.Generate(
+                quest.TurnInRewardItemId,
+                itemSeed,
+                quest.TurnInRewardItemLevel);
+            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                entityId,
+                quest.TurnInLevelId,
+                quest.TurnInRewardPositionX,
+                quest.TurnInRewardPositionY,
+                itemSeed,
+                checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                rewardState);
+        }
     }
 
     private bool IsRequiredItemConditionSatisfied(

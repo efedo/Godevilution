@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the content-owned quest/towner pipeline across shipped Hellfire
+  interactions: Grave Matters dialogue, Farmer's Orchard activation (including
+  its Rune Bomb reward), and Jersey's Jersey's Grey Suit alternate and Brown
+  Suit completion stages now use validated interaction rows instead of the
+  legacy turn-in fallback.
+
 - Add an atomic per-session checkpoint containing the exported authoritative
   state and completed command receipts. Fresh hosts prefer this checkpoint and
   retain the separate save/ledger files as compatibility fallbacks, closing

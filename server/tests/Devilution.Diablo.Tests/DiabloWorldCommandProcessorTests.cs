@@ -3714,6 +3714,74 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredInteractionActivationCanReuseQuestTurnInReward()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2101, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3018,
+            9,
+            1,
+            active: false,
+            completionVariable1: 1,
+            turnInTownerId: 10,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 16,
+            turnInRewardItemId: 2101,
+            turnInRewardItemLevel: 1,
+            turnInRewardPositionX: 63,
+            turnInRewardPositionY: 16,
+            turnInActivationOnly: true);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new AuthoritativeQuestTownerInteractionDefinition(
+                301801,
+                3018,
+                10,
+                0,
+                62,
+                16,
+                0,
+                AuthoritativeQuestTownerInteractionKind.Activate,
+                Variable1: 1,
+                MessageId: 277,
+                ConsumeItem: false,
+                UseQuestTurnInReward: true),
+        ]);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 61, positionY: 16, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3018, 10),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Active);
+        Assert.Equal(1, quest.Variable1);
+        Assert.Equal(277, Assert.Single(result.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal((2101U, 63, 16), (
+            reward.State.StableItemId,
+            reward.PositionX,
+            reward.PositionY));
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3018, 10),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Single(world.WorldItems);
+    }
+
+    [Fact]
     public void NativeButcherActivationUsesAuthoredDeadGuyInteraction()
     {
         var quest = new AuthoritativeQuestState(

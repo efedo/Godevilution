@@ -1552,6 +1552,13 @@ authored initial item at the native position. Hellfire Farmer's Orchard is the
 first shipped use: the Farmer activates quest 3018, sets the native `_qvar1`
 gate, and creates Rune Bomb before the existing Hive object completes the quest.
 
+The repeatable `quest_towner_interactions.tsv` catalog now carries that same
+Farmer activation reward through `use_quest_turn_in_reward`, and also owns the
+Hellfire Grave Matters dialogue plus both Jersey's Jersey hand-in branches.
+These rows are validated against the active quest, item, level, and stable-ID
+catalogs before activation; older quest-state turn-in fields remain compatible
+for stages not yet represented as interaction rows.
+
 Schema 1.331 adds `turn_in_on_completion` and its completion-stage metadata. A
 quest may expose a one-shot towner interaction after its authoritative completion;
 the server advances the authored `_qvar2` marker, creates the normal or unique
