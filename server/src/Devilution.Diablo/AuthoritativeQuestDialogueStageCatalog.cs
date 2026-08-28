@@ -138,6 +138,10 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
     /** Returns true when this catalog owns the complete dialogue route for a quest. */
     public bool ContainsQuest(uint questId) => questIds.Contains(questId);
 
+    /** Returns true when an authored stage still owns the current dialogue gate. */
+    public bool HasPendingStage(uint questId, int variable1, int variable2)
+        => TryGet(questId, variable1, variable2, out _);
+
     /** Resolves an exact variable-2 gate before a wildcard gate. */
     public bool TryGet(
         uint questId,

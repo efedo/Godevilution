@@ -17206,7 +17206,7 @@ public sealed class DiabloCombatCommandProcessorTests
             active: true,
             completionUniqueIdentity: "Warlord",
             dialogueVariable1: 2,
-            dialogueCompletionVariable1: 3);
+            dialogueCompletionVariable1: -1);
         var monster = new AuthoritativeCombatTarget(
             9,
             1,
@@ -17219,10 +17219,26 @@ public sealed class DiabloCombatCommandProcessorTests
             intelligence: 3,
             unique: true,
             uniqueIdentity: "Warlord");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new AuthoritativeQuestDialogueStage(
+                3012,
+                0,
+                -1,
+                110,
+                2,
+                0),
+            new AuthoritativeQuestDialogueStage(
+                3012,
+                2,
+                -1,
+                110,
+                3,
+                0),
+        ]);
         var world = new DiabloWorldState(
             combatTargets: [monster],
             quests: [quest]);
-        var processor = CreateProcessor(world);
+        var processor = CreateProcessor(world, questDialogueStages: stages);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,
@@ -25808,7 +25824,8 @@ public sealed class DiabloCombatCommandProcessorTests
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeWorldRules? worldRules = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
-        uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId)
+        uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId,
+        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -25831,7 +25848,8 @@ public sealed class DiabloCombatCommandProcessorTests
             difficulty: difficulty,
             worldRules: worldRules,
             spellBooks: spellBooks,
-            monsterFlashSpellId: monsterFlashSpellId);
+            monsterFlashSpellId: monsterFlashSpellId,
+            questDialogueStages: questDialogueStages);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(

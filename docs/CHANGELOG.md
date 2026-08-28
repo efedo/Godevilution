@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make staged unique-monster dialogue own combat admission while a matching
+  authored stage is pending. Server combat now reads the same dialogue catalog
+  as `TalkToQuestRequested`, and the live Godot fixture proves direct attacks
+  are rejected even when the legacy completion marker is absent; older packs
+  retain the marker fallback.
+
 - Move Snotspill's initial unique-monster conversation into the authored
   staged-dialogue catalog. The server and Godot live fixture now verify the
   event, quest-variable advance, and projected next-message identity under

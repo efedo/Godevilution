@@ -32,6 +32,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
     private readonly AuthoritativeWorldRules? worldRules;
     private readonly AuthoritativeExperienceCatalog? experience;
+    private readonly AuthoritativeQuestDialogueStageCatalog? questDialogueStages;
     private IReadOnlyList<AuthoritativePlayerState> activePlayers = [];
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator monsterEntityIds = new(0x10000000);
@@ -139,7 +140,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeWorldRules? worldRules = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId,
-        AuthoritativeExperienceCatalog? experience = null)
+        AuthoritativeExperienceCatalog? experience = null,
+        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -166,6 +168,7 @@ public sealed class DiabloCombatCommandProcessor
             : monsterFlashSpellId;
         this.worldRules = worldRules?.Validate();
         this.experience = experience;
+        this.questDialogueStages = questDialogueStages;
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
@@ -1712,19 +1715,37 @@ public sealed class DiabloCombatCommandProcessor
      */
     private bool IsQuestDialogueTarget(AuthoritativeCombatTarget target)
     {
-        return target.IsUnique
-            && target.UniqueIdentity.Length > 0
-            && world.Quests.Values.Any(quest =>
-                quest.Active
-                && !quest.Unavailable
-                && !quest.Completed
-                && quest.DialogueCompletionVariable1 >= 0
-                && quest.Variable1 < quest.DialogueCompletionVariable1
-                && (quest.LevelId == 0 || quest.LevelId == target.LevelId)
-                && string.Equals(
+        if (!target.IsUnique || target.UniqueIdentity.Length == 0)
+            return false;
+
+        foreach (var quest in world.Quests.Values) {
+            if (!quest.Active
+                || quest.Unavailable
+                || quest.Completed
+                || (quest.LevelId != 0 && quest.LevelId != target.LevelId)
+                || !string.Equals(
                     quest.CompletionUniqueIdentity,
                     target.UniqueIdentity,
-                    StringComparison.Ordinal));
+                    StringComparison.Ordinal)) {
+                continue;
+            }
+
+            if (questDialogueStages?.HasPendingStage(
+                    quest.QuestId,
+                    quest.Variable1,
+                    quest.Variable2) == true) {
+                return true;
+            }
+
+            // Older packs retain the native terminal marker until their staged
+            // dialogue route is migrated.
+            if (quest.DialogueCompletionVariable1 >= 0
+                && quest.Variable1 < quest.DialogueCompletionVariable1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Native LazarusMinionAi keeps summoned succubi non-combatant until the single-player quest gate opens. */

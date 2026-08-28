@@ -4,9 +4,10 @@ Status date: 2026-08-28
 
 Snotspill's initial unique-monster conversation now enters through the authored
 staged-dialogue catalog instead of the legacy quest-dialogue fallback. The
-live Godot fixture verifies the server event, quest-variable advance, and next
-projected message identity. The active content schema is now `1.442.0`, with
-`1.441.0` accepted as the previous additive contract.
+live Godot fixture verifies the server event, quest-variable advance, next
+projected message identity, and rejection of direct combat while the authored
+stage is pending. The active content schema is now `1.442.0`, with `1.441.0`
+accepted as the previous additive contract.
 
 The authored object follow-up boundary is now covered end to end through the
 shared protocol. A live Godot fixture activates a quest-transition object,
@@ -2794,8 +2795,10 @@ scaled hit points), not only the client's difficulty label.
   definition. Authored `dialogue_completion_variable1` now also gates unique
   monster combat: the Warlord remains non-combatant while its staged dialogue
   is pending, and direct attacks are rejected until the native terminal marker
-  is reached. Legacy hardcoded monster conversations remain fallback behavior
-  until their content actions are externalized.
+  is reached. Staged routes now read that pending state directly from
+  `quest_dialogue_stages.tsv`, while the completion marker remains the fallback
+  for older packs. Legacy hardcoded monster conversations remain fallback
+  behavior until their content actions are externalized.
 
 - Staged unique-monster dialogue may now declare a deterministic
   `RandomUniqueMonsterDrop` reward. The server selects the native unique-drop

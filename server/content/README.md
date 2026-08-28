@@ -38,6 +38,11 @@ quest-variable transition. Native-DUN placement, book-specific rewards, and
 map replacement remain deferred until generated geometry and licensed assets
 are available; no server path infers those values from a native object ID.
 
+The staged unique-monster dialogue catalog also owns combat admission while a
+matching conversation stage is pending. Older packs without a staged route
+continue to use their legacy dialogue-completion marker as a compatibility
+fallback.
+
 The optional `unique_monster_placements.tsv` table owns generated unique
 encounter placement. Rows are validated against unique identities, monster
 types, level geometry, reserved warp/portal/object cells, entity IDs reserved
@@ -1690,8 +1695,8 @@ follow-up, while the opening state mutation remains a native fallback.
 
 Schema 1.356 adds the authored Warlord dialogue stages. Its two message-110
 rows advance `_qvar1` from `0` to `2` and from `2` to `3`, preserving the
-native combat gate while keeping encounter-state presentation in the native
-fallback.
+native encounter-state presentation fallback while combat admission is gated
+by the matching authored stage.
 
 Schema 1.357 adds `dialogue_messages.tsv`, a validated server-owned text
 catalog keyed by the native message identity. Base authored Gharbad, Snotspill,

@@ -564,6 +564,7 @@ public sealed class LiveAuthoritativeServerTests
             questState[QuestStateColumn("logged")] = "0";
             questState[QuestStateColumn("variable1")] = "0";
             questState[QuestStateColumn("variable2")] = "0";
+            questState[QuestStateColumn("dialogue_completion_variable1")] = "-1";
             questState[QuestStateColumn("completion_unique_identity")] = "FixtureUnique";
             await File.WriteAllLinesAsync(
                 Path.Combine(overlayRoot, "quest_states.tsv"),
@@ -624,6 +625,16 @@ public sealed class LiveAuthoritativeServerTests
             Assert.Equal((0, 0), (player.PositionX, player.PositionY));
             Assert.Equal((0, 1), (target.PositionX, target.PositionY));
             Assert.Equal(0, Assert.Single(model.Snapshot.Quests, quest => quest.QuestId == 3008).Variable1);
+
+            var attackSequence = client.Queue(new Command {
+                AttackRequested = new AttackRequested {
+                    TargetEntityId = target.EntityId,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var attackAcknowledgement = await WaitForAcknowledgementAsync(client, attackSequence);
+            Assert.Equal(CommandStatus.Rejected, attackAcknowledgement.Status);
+            Assert.Equal(CommandRejectReason.InvalidTarget, attackAcknowledgement.RejectReason);
 
             var sequence = client.Queue(new Command {
                 TalkToQuestRequested = new TalkToQuestRequested {
