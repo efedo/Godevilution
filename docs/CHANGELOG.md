@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract stable non-zero entity-ID allocation into the engine-neutral
+  assembly; the server host retains its source-compatible allocator facade
+  while authoritative runtimes can share the deterministic primitive.
 - Extract the native-compatible deterministic LCG into the engine-neutral
   assembly; the Diablo module retains its source-compatible `DiabloRandom`
   facade while other authoritative modules can reuse the same parity primitive.
