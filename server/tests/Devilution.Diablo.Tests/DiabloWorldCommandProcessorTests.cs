@@ -1081,6 +1081,26 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void HeldItemDropRejectsOutOfBoundsCoordinatesBeforeDistanceArithmetic()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var heldItem = CreateGoldStack(42, 65, rules);
+        var world = new DiabloWorldState(fallbackWidth: 8, fallbackHeight: 8);
+        var processor = new DiabloWorldCommandProcessor(world, combatRules: rules);
+        var player = CreatePlayer(entityId: 1, gold: 0, heldItem: heldItem);
+
+        var result = processor.Execute(
+            player,
+            new DiabloDropHeldItemIntent(int.MinValue, 0),
+            1,
+            [player]);
+
+        AssertRejected(result, DiabloRuleFailure.NotAllowed);
+        Assert.Same(heldItem, player.HeldItem);
+        Assert.Empty(world.WorldItems);
+    }
+
+    [Fact]
     public void HeldItemDropUsesTheReservedMovementDestination()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

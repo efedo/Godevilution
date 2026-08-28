@@ -1128,6 +1128,8 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         var originX = player.FuturePositionX;
         var originY = player.FuturePositionY;
+        if (!world.ContainsPosition(player.LevelId, targetX, targetY))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (Math.Max(
                 Math.Abs(targetX - originX),
                 Math.Abs(targetY - originY)) > 1

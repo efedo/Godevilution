@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Held-item drop intents now reject out-of-level target coordinates before
+computing adjacency distance, keeping the direct client target path fail-closed
+for malformed coordinates in both projected and fallback worlds.
+
 Authoritative generic and fallback line-of-sight checks now reject endpoints
 outside the validated level before calculating coordinate deltas, preventing
 malformed remote targets from overflowing arithmetic or causing an unbounded

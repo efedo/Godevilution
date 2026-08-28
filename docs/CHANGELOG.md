@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject out-of-level held-item drop targets before adjacency arithmetic, so
+  malformed client coordinates cannot overflow the authoritative range check.
 - Make authoritative projected and fallback line-of-sight checks fail closed
   for out-of-level endpoints before coordinate arithmetic, preventing malformed
   targets from overflowing deltas or forcing an unbounded grid traversal.
