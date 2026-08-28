@@ -475,3 +475,7 @@ uwp-project/Assets/ui_art
 /compile_commands.json
 /tools/tmp
 Testing/
+
+# Historical local build/test reports; do not commit generated output.
+/build_output.txt
+/objects_test_results.json

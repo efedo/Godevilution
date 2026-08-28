@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Validate that shipped content and project documentation share one schema contract."""
+
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMA_SOURCE = ROOT / "server/src/Devilution.Diablo/DiabloContentSchema.cs"
+CONTENT_ROOT = ROOT / "server/content"
+
+
+def fail(message: str) -> None:
+    print(f"content-contract: error: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def read_schema() -> tuple[str, str, str]:
+    source = SCHEMA_SOURCE.read_text(encoding="utf-8")
+    current_match = re.search(
+        r"Current\s*\{[^=]*\}\s*=\s*new\(\s*\"([^\"]+)\"\s*,\s*\"([^\"]+)\"\s*\)",
+        source,
+        re.DOTALL,
+    )
+    previous_match = re.search(
+        r"PreviousAdditive\s*\{[^=]*\}\s*=\s*new\(\s*\"([^\"]+)\"\s*,\s*\"([^\"]+)\"\s*\)",
+        source,
+        re.DOTALL,
+    )
+    if current_match is None or previous_match is None:
+        fail(f"unable to read current and previous schema from {SCHEMA_SOURCE}")
+    current = (current_match.group(1), current_match.group(2))
+    previous = (previous_match.group(1), previous_match.group(2))
+    if current[0] != previous[0]:
+        fail("current and previous schemas use different identities")
+    if current == previous:
+        fail("current and previous schemas are identical")
+    return current[0], current[1], previous[1]
+
+
+def validate_manifests(schema_id: str, current_version: str) -> int:
+    manifests = sorted(CONTENT_ROOT.glob("*/content-pack.json"))
+    if not manifests:
+        fail(f"no first-party manifests found below {CONTENT_ROOT}")
+    for manifest_path in manifests:
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            fail(f"{manifest_path.relative_to(ROOT)} is not valid JSON: {exc}")
+        schema = manifest.get("schema")
+        if not isinstance(schema, dict):
+            fail(f"{manifest_path.relative_to(ROOT)} has no schema object")
+        if schema.get("id") != schema_id or schema.get("version") != current_version:
+            fail(
+                f"{manifest_path.relative_to(ROOT)} declares "
+                f"{schema.get('id')}@{schema.get('version')}, expected {schema_id}@{current_version}"
+            )
+    return len(manifests)
+
+
+def require_text(path: Path, *fragments: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    for fragment in fragments:
+        if fragment not in text:
+            fail(f"{path.relative_to(ROOT)} is missing required text: {fragment}")
+
+
+def main() -> int:
+    schema_id, current_version, previous_version = read_schema()
+    manifest_count = validate_manifests(schema_id, current_version)
+    require_text(
+        CONTENT_ROOT / "README.md",
+        f"`{schema_id}@{current_version}` schema",
+        f"previous additive `{previous_version}` schema",
+    )
+    require_text(
+        ROOT / "docs/migration-status.md",
+        f"schema is now `{current_version}`",
+        f"previous additive `{previous_version}` schema",
+    )
+    require_text(ROOT / "docs/CHANGELOG.md", f"schema `{current_version}`")
+    print(
+        f"content-contract: validated {manifest_count} manifests and documentation "
+        f"for {schema_id}@{current_version} (previous additive {previous_version})"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

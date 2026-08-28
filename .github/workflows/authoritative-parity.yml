@@ -38,6 +38,9 @@ jobs:
         diff -u /tmp/replay-fixtures.expected /tmp/replay-fixtures.native
         diff -u /tmp/replay-fixtures.expected /tmp/replay-fixtures.server
 
+    - name: Verify shipped content contract documentation
+      run: python3 tools/validate_content_contract.py
+
     - name: Configure native replay runner
       run: cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DDEVILUTIONX_SYSTEM_BENCHMARK=OFF
 

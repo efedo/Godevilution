@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a repository-level content-contract check that derives the active and
+  previous additive schema from the Diablo module, validates first-party
+  manifests, and catches stale contract text in the content and migration docs
+  for schema `1.431.0`.
 - Require active spell content to provide the native projectile ordering
   patterns used by authoritative Charged Bolt, Fireball, Elemental, Flash,
   Guardian, and Resurrection handlers; direct compatibility catalogs retain
