@@ -1750,7 +1750,10 @@ Schema 1.366 adds the optional `transparency_asset` column. A declared native
 transparency `.dun` layer is included in bundle completeness checks and must
 match the active map's d-piece dimensions before activation succeeds; its
 values remain attached to authoritative level geometry for later presentation
-projection. Packs without the optional layer remain compatible.
+projection. A transparency layer may be shipped ahead of deferred map and
+`.til`/`.sol` geometry; it is shape-validated and remains metadata-only until
+the complete bundle arrives. Packs without the optional layer remain
+compatible.
 
 Schema 1.367 adds the optional `template_entity_id` column to
 `set_level_objects.tsv`. A placement may reference an `objects.tsv` entity with

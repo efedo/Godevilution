@@ -1,4 +1,4 @@
-set_level_id	set_level_symbol	pre_map_asset	active_map_asset	til_asset	sol_asset	dungeon_type	spawn_x	spawn_y
-1	SL_SKELKING	levels/l1data/sklkng1.dun	levels/l1data/sklkng2.dun	levels/l1data/l1.til	levels/l1data/l1.sol	Cathedral	83	44
-2	SL_BONECHAMB	levels/l2data/bonecha2.dun	levels/l2data/bonecha1.dun	levels/l2data/l2.til	levels/l2data/l2.sol	Catacombs	70	40
-5	SL_VILEBETRAYER	levels/l1data/vile1.dun	levels/l1data/vile2.dun	levels/l1data/l1.til	levels/l1data/l1.sol	Cathedral	35	36
+set_level_id	set_level_symbol	pre_map_asset	active_map_asset	til_asset	sol_asset	transparency_asset	dungeon_type	spawn_x	spawn_y
+1	SL_SKELKING	levels/l1data/sklkng1.dun	levels/l1data/sklkng2.dun	levels/l1data/l1.til	levels/l1data/l1.sol	levels/l1data/sklkngt.dun	Cathedral	83	44
+2	SL_BONECHAMB	levels/l2data/bonecha2.dun	levels/l2data/bonecha1.dun	levels/l2data/l2.til	levels/l2data/l2.sol	levels/l2data/bonechat.dun	Catacombs	70	40
+5	SL_VILEBETRAYER	levels/l1data/vile1.dun	levels/l1data/vile2.dun	levels/l1data/l1.til	levels/l1data/l1.sol	levels/l1data/vile1.dun	Cathedral	35	36

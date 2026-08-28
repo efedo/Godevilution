@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Author the native transparency layers for Skeleton King's Lair, the Chamber
+  of Bone, and Archbishop Lazarus' Lair in `set_level_maps.tsv`. Transparency
+  binaries may now be validated and retained while their deferred native map
+  and `.til`/`.sol` geometry inputs are still unavailable; complete bundles
+  continue to project the layer onto authoritative set-level geometry.
 - Add template-only authoritative behavior rows for the native Halls of the
   Blind book, Gateway of Blood book, and Warlord steel tome. The rows carry
   stable object identities and initial quest transitions so future native-DUN

@@ -130,14 +130,50 @@ public sealed class AuthoritativeSetLevelMapCatalog
     {
         ArgumentNullException.ThrowIfNull(content);
         foreach (var definition in definitions) {
+            var corePaths = new[] {
+                definition.PreMapAssetPath,
+                definition.ActiveMapAssetPath,
+            };
+            var corePresent = corePaths.Count(path => content.TryGetAsset(path, out _));
+            var geometryPaths = new[] {
+                definition.TileAssetPath,
+                definition.SolAssetPath,
+            }.Where(path => !string.IsNullOrWhiteSpace(path)).ToArray();
+            var geometryPresent = geometryPaths.Count(path => content.TryGetAsset(path, out _));
+            var hasGeometry = !string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                || !string.IsNullOrWhiteSpace(definition.SolAssetPath);
+            if (!hasGeometry && corePresent != 0)
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle without its .til/.sol geometry inputs.");
+
+            // A transparency layer may arrive ahead of the complete native
+            // map bundle. Keep that metadata deferred while neither the map
+            // nor the geometry inputs have started materializing.
+            if (corePresent == 0 && geometryPresent == 0) {
+                if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)
+                    && content.TryGetAsset(definition.TransparencyAssetPath, out var transparencyAsset)) {
+                    _ = AuthoritativeDunMapAsset.Load(
+                        definition.TransparencyAssetPath,
+                        transparencyAsset.Contents);
+                }
+                continue;
+            }
+
+            // Validate transparency alongside a partial or complete native
+            // bundle so malformed layers fail before activation.
+            if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)
+                && content.TryGetAsset(definition.TransparencyAssetPath, out var transparencyAssetValue)) {
+                _ = AuthoritativeDunMapAsset.Load(
+                    definition.TransparencyAssetPath,
+                    transparencyAssetValue.Contents);
+            }
+
             var paths = GetNativeAssetPaths(definition);
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
                 || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
-                if (present != 0)
-                    throw new InvalidDataException(
-                        $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle without its .til/.sol geometry inputs.");
-                continue;
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle without its .til/.sol geometry inputs.");
             }
             if (present != 0 && present != paths.Length)
                 throw new InvalidDataException(

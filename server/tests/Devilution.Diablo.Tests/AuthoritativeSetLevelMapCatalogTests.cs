@@ -104,4 +104,42 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
 
         Assert.Contains("incomplete native asset bundle", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void TransparencyMayBeShippedBeforeDeferredMapGeometry()
+    {
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(
+                1,
+                "levels/l1data/sklkng1.dun",
+                "levels/l1data/sklkng2.dun",
+                "Cathedral",
+                83,
+                44) {
+                TransparencyAssetPath = "levels/l1data/sklkngt.dun",
+            },
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/l1data/sklkngt.dun", MinimalDun(1)),
+            ]),
+        ]));
+
+        catalog.ValidateAssets(content);
+
+        Assert.Empty(catalog.LoadAvailableGeometry(content));
+    }
+
+    private static byte[] MinimalDun(ushort transparencyValue)
+    {
+        // A 1x1 mega-tile DUN has two header words, one tile word, and four
+        // four-cell d-piece layers (reserved, monster, object, transparency).
+        var words = new ushort[19];
+        words[0] = 1;
+        words[1] = 1;
+        words[^1] = transparencyValue;
+        var bytes = new byte[words.Length * sizeof(ushort)];
+        Buffer.BlockCopy(words, 0, bytes, 0, bytes.Length);
+        return bytes;
+    }
 }

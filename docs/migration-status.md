@@ -2791,8 +2791,10 @@ scaled hit points), not only the client's difficulty label.
 - Schema 1.366 adds the optional native `transparency_asset` path to
   `set_level_maps.tsv`. When declared, activation composes and validates the
   transparency `.dun` layer against the active-map dimensions and retains its
-  d-piece values on the authoritative level geometry; older packs remain
-  compatible without it.
+  d-piece values on the authoritative level geometry; a transparency layer
+  may also arrive before deferred map and `.til`/`.sol` geometry, in which
+  case it is shape-validated and retained as metadata until the complete
+  bundle is available. Older packs remain compatible without it.
 
 - Schema 1.367 adds the optional `template_entity_id` link to
   `set_level_objects.tsv`. A validated set-level placement can now clone the

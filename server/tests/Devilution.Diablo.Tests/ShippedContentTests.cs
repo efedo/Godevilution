@@ -919,9 +919,14 @@ public sealed class ShippedContentTests
         Assert.Equal("levels/l1data/sklkng2.dun", skeletonKing.ActiveMapAssetPath);
         Assert.Equal("levels/l1data/l1.til", skeletonKing.TileAssetPath);
         Assert.Equal("levels/l1data/l1.sol", skeletonKing.SolAssetPath);
+        Assert.Equal("levels/l1data/sklkngt.dun", skeletonKing.TransparencyAssetPath);
         Assert.Equal((83, 44), (skeletonKing.SpawnX, skeletonKing.SpawnY));
-        Assert.Equal("Catacombs", maps.Definitions.Single(map => map.SetLevelId == 2).DungeonType);
-        Assert.Equal("Cathedral", maps.Definitions.Single(map => map.SetLevelId == 5).DungeonType);
+        var boneChamber = maps.Definitions.Single(map => map.SetLevelId == 2);
+        Assert.Equal("Catacombs", boneChamber.DungeonType);
+        Assert.Equal("levels/l2data/bonechat.dun", boneChamber.TransparencyAssetPath);
+        var vileBetrayer = maps.Definitions.Single(map => map.SetLevelId == 5);
+        Assert.Equal("Cathedral", vileBetrayer.DungeonType);
+        Assert.Equal("levels/l1data/vile1.dun", vileBetrayer.TransparencyAssetPath);
     }
 
     [Fact]
@@ -1346,8 +1351,8 @@ public sealed class ShippedContentTests
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var mapTable = TsvTable.Parse(
             "set_level_maps.tsv",
-            "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\tdungeon_type\tspawn_x\tspawn_y\n"
-                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t5\n");
+            "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\ttransparency_asset\tdungeon_type\tspawn_x\tspawn_y\n"
+                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\t\tCathedral\t4\t5\n");
         var objectTable = TsvTable.Parse(
             "objects.tsv",
             "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\tprojectile_source\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\tquest_transition_required_variable2\tactivate_on_occupancy\trequired_activated_linked_objects\tnative_object_id\treward_kind\treward_id\treward_item_level\treward_offset_x\treward_offset_y\n"
