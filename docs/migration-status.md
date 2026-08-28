@@ -2,12 +2,18 @@
 
 Status date: 2026-08-28
 
+The base Black Mushroom healer hand-in now uses an authored `Advance` stage.
+The server validates the Spectral Elixir placement before consuming the Brain,
+then advances native `_qvar1` from 5 to 6, emits message 124, and creates the
+declared reward. The content schema is now `1.436.0`; the previous additive `1.435.0` schema
+remains accepted for pack compatibility.
+
 The remaining shipped base item hand-ins now use authored quest/towner rows:
 Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
 and the Butcher activation preserve their native town coordinates, variable
-gates, messages, item consumption, and quest-declared rewards. The content
-schema is now `1.435.0`; the previous additive `1.434.0` schema remains
-accepted for pack compatibility. Legacy quest-state turn-in fields remain
+gates, messages, item consumption, and quest-declared rewards. Those rows were
+introduced under schema `1.435.0` and remain compatible with the current
+`1.436.0` pack contract. Legacy quest-state turn-in fields remain
 available to older packs and direct compatibility callers.
 
 The generic host now persists each initialized session's completed command

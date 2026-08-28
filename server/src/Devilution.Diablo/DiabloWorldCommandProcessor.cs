@@ -2343,13 +2343,14 @@ public sealed class DiabloWorldCommandProcessor
                     || !TryFindPlayerItem(
                         player,
                         itemDefinition,
-                        interaction.ConsumeItem,
+                        consume: false,
                         out _)) {
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
                 }
             }
             if (interaction.UseQuestTurnInReward
                 && interaction.Kind is (AuthoritativeQuestTownerInteractionKind.Activate
+                    or AuthoritativeQuestTownerInteractionKind.Advance
                     or AuthoritativeQuestTownerInteractionKind.Complete)
                 && (quest.TurnInRewardUniqueId != 0 || quest.TurnInRewardItemId != 0)
                 && !CanPlaceWorldItemReward(
@@ -2374,6 +2375,17 @@ public sealed class DiabloWorldCommandProcessor
                     requireWalkable: false)) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
+            if (interaction.ItemId != 0 && interaction.ConsumeItem) {
+                if (items is null
+                    || !items.TryGet(interaction.ItemId, out var itemDefinition)
+                    || !TryFindPlayerItem(
+                        player,
+                        itemDefinition,
+                        consume: true,
+                        out _)) {
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                }
+            }
             quest.Logged = true;
             if (interaction.Variable1 >= 0)
                 quest.Variable1 = Math.Max(quest.Variable1, interaction.Variable1);
@@ -2383,7 +2395,8 @@ public sealed class DiabloWorldCommandProcessor
                 quest.MessageId = interaction.MessageId;
             if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate)
                 quest.Active = true;
-            if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate
+            if (interaction.Kind is (AuthoritativeQuestTownerInteractionKind.Activate
+                    or AuthoritativeQuestTownerInteractionKind.Advance)
                 && interaction.UseQuestTurnInReward
                 && items is not null) {
                 SpawnQuestTurnInReward(quest, participants);

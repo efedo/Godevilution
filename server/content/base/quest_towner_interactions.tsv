@@ -10,6 +10,7 @@ interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	
 300208	3011	anvil_of_fury	0	0	town	62	63	0	NONE	Activate	-1	0	0	1	88	false	false	9	10	false	0		true	false	false	false
 300209	3014	poisoned_water	1	0	town	55	79	0	NONE	Activate	-1	-1	0	-1	39	false	false	1	5	true	0		true	false	false	false
 300210	3014	poisoned_water	1	0	town	55	79	0	NONE	Dialogue	-1	-1	-1	-1	39	false	false	0	0	true	0		true	false	false	false
+300211	3002	black_mushroom	1	0	town	55	79	2140	brain	Advance	5	-1	6	-1	124	true	false	0	0	false	0		true	false	true	false
 300701	3007	butcher	2	0	town	24	32	0	NONE	Activate	-1	-1	1	-1	63	false	false	0	0	false	0		true	false	false	false
 300801	3008	ogdens_sign	3	0	town	55	62	0	NONE	Activate	-1	0	1	1	12	false	false	3	4	false	0		true	false	false	false
 300802	3008	ogdens_sign	3	0	town	55	62	2136	tavern_sign	Complete	-1	1	-1	-1	13	true	false	0	0	false	0		true	false	true	false

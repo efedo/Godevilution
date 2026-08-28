@@ -4,11 +4,17 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authored quest/towner rewards to `Advance` stages and make item
+  consumption atomic with reward placement validation. The base Black Mushroom
+  healer hand-in now consumes the Brain, advances its native marker, and spawns
+  the declared Spectral Elixir entirely through the server-owned path;
+  schema `1.436.0` is current with `1.435.0` retained for additive compatibility.
+
 - Externalize the remaining shipped base quest/towner item stages for Magic
   Rock, Anvil of Fury, Ogden's Sign, and the Butcher. Their server-owned
   activation/completion rows preserve native gates, messages, item consumption,
-  and authored rewards; the content schema `1.435.0` is now current while
-  retaining `1.434.0` as the additive compatibility version.
+  and authored rewards; those rows were introduced under schema `1.435.0` and
+  remain compatible through the current `1.436.0` content contract.
 
 - Add the additive `CompleteAfterQuest` interaction kind and completion-reward
   flag. Lazarus, Poisoned Water, and Farmer's Orchard completion conversations

@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.435.0` schema in
+It declares its identity and `devilution.diablo@1.436.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.434.0` schema so existing manifest-based packs remain
+previous additive `1.435.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1967,6 +1967,11 @@ activation rows for Magic Rock, Anvil of Fury, Ogden's Sign, and the Butcher.
 These rows reuse the validated interaction contract, native variable gates,
 messages, item identities, and quest-declared rewards.
 
+Schema 1.436 allows `use_quest_turn_in_reward` on `Advance` stages. The base
+Black Mushroom healer hand-in now consumes the Brain only after its Spectral
+Elixir reward position is validated, then advances the native variable and
+spawns the authored reward through the same server-owned interaction path.
+
 Schema 1.422 adds the optional `native_object_id` compatibility presentation
 value to `objects.tsv`. The stable `object_id` remains the authoritative
 behavior identity; when supplied, `native_object_id` selects the native object
@@ -2976,7 +2981,7 @@ clients.
 | `set_level_maps.tsv` | `set_level_id`, `pre_map_asset`, `active_map_asset` | Validated native set-level map asset paths, optional shared `til_asset`/`sol_asset` geometry inputs, optional `transparency_asset`, dungeon type, and entry spawn positions. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; map and transparency paths are relative `.dun` assets, geometry paths are relative `.til`/`.sol` assets, and traversal is rejected. |
 | Native binary assets (`.dun`, `.til`, `.sol`) | relative asset path | Immutable native map, mega-tile, and d-piece property bytes carried beside TSV tables. Asset bytes are included in the content manifest identity; identical inherited copies are accepted and conflicting copies reject composition. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional first/subsequent dialogue and completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional route-entry `_qvar1` marker in `route_activation_variable1`, optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, content-owned towner turn-ins with optional item-consuming `turn_in_activation_only` rows and `turn_in_activation_variable1` markers, active staged item turn-ins gated by `turn_in_required_variable1` and advancing `turn_in_variable1` with `turn_in_progress_only`, one-shot `turn_in_on_completion` stages with optional required/marker `_qvar1` fields, non-consuming item-gated `turn_in_dialogue_only` stages optionally suppressed after `turn_in_blocked_visited_level`, and alternate-item interactions, and unique-monster dialogue definitions with optional item hand-ins, relative unique/normal rewards, and one-time `dialogue_reward_on_activation` rewards. |
-| `quest_towner_interactions.tsv` | `interaction_id` | Repeatable content-owned quest/towner stages keyed by quest and towner identity, level/adjacency position, optional item identity, and interaction kind (`Activate`, `Advance`, `Complete`, `Dialogue`, or `CompleteAfterQuest`); optional `_qvar1`/`_qvar2` gates and authored markers/messages reproduce multi-stage native conversations while preserving inventory/belt consumption rules. Itemless activation/dialogue stages are supported, activation stages may use variable gates on already-active quests, `allow_completed` explicitly permits a post-completion dialogue stage, and `CompleteAfterQuest` models a one-shot conversation after native DONE. `required_visited_level1`/`required_visited_level2` provide an OR-gate over server-owned native `_pLvlVisited` state, and `require_unlogged` preserves native branches that only surface before the quest is logged. `required_item_id` plus `require_item_present=false` makes an itemless stage available only when the item is absent, allowing a direct hand-in to take precedence. `allow_initial` permits a completion stage before activation, `use_quest_turn_in_reward` reuses the quest's declared normal or unique reward, and `use_quest_completion_reward` reuses a completion-stage reward. |
+| `quest_towner_interactions.tsv` | `interaction_id` | Repeatable content-owned quest/towner stages keyed by quest and towner identity, level/adjacency position, optional item identity, and interaction kind (`Activate`, `Advance`, `Complete`, `Dialogue`, or `CompleteAfterQuest`); optional `_qvar1`/`_qvar2` gates and authored markers/messages reproduce multi-stage native conversations while preserving inventory/belt consumption rules. Itemless activation/dialogue stages are supported, activation stages may use variable gates on already-active quests, `allow_completed` explicitly permits a post-completion dialogue stage, and `CompleteAfterQuest` models a one-shot conversation after native DONE. `required_visited_level1`/`required_visited_level2` provide an OR-gate over server-owned native `_pLvlVisited` state, and `require_unlogged` preserves native branches that only surface before the quest is logged. `required_item_id` plus `require_item_present=false` makes an itemless stage available only when the item is absent, allowing a direct hand-in to take precedence. `allow_initial` permits a completion stage before activation, `use_quest_turn_in_reward` reuses the quest's declared normal or unique reward on activation, advancement, or completion, and `use_quest_completion_reward` reuses a completion-stage reward. |
 | `quest_dialogue_stages.tsv` | `quest_id`, `required_variable1`, `required_variable2` | Server-owned user-visible unique-monster dialogue stages. Exact `_qvar2` gates take precedence over `-1` wildcards; each row emits its authored message and advances monotonic `_qvar1`/`_qvar2` values. Optional `next_message_id` preserves an authored intermediate message identity after the transition; omitted values resolve the next stage's message as before. Optional `required_item_symbol` gates a stage on a stable inventory item; `consume_item` removes it atomically, and `complete_quest` closes the quest after the transition. Optional `reward_kind=RandomUniqueMonsterDrop` generates one deterministic native-quality random drop at the authored relative offset. Optional `follow_up_kind=WorldMutation` with `follow_up_amount` applies one validated world overlay after the accepted transition, including native mega-tile and transparency state. Base Gharbad, Ogden's Sign/Snotspill, and Warlord use the staged contract. Staged quests require a unique identity and cannot also declare legacy unique-dialogue hand-ins or rewards. |
 | `dialogue_messages.tsv` | `message_id`, `message_symbol`, `text` | Validated server-owned text for authored dialogue events. Literal `\\n` sequences become line breaks at load; the protocol carries the resulting text additively and falls back to the numeric identity when the table is absent. |
 | `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol`, `completion_activate_quest_symbol`, `completion_reward_item_symbol`, and completion-stage towner reward symbols resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variables, message, dialogue/completion-transition, follow-on activation, route-entry `_qvar1` marker, completion-trigger, optional completion-reward item, item-consuming activation-only or completing towner turn-in, active staged item turn-ins with required/marker `_qvar1` fields and progress-only advancement, completion-stage `_qvar1` required/marker fields, non-consuming item-gated dialogue-only towner stages with optional `turn_in_blocked_visited_level`, activation markers, one-shot completion-stage and alternate-item towner interactions, and unique-monster dialogue/reward fields, including optional subsequent-dialogue `_qvar1` transitions. |
@@ -3021,7 +3026,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.435.0"
+    "version": "1.436.0"
   },
   "dependencyConstraints": [
     {
@@ -3055,7 +3060,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.435.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.436.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

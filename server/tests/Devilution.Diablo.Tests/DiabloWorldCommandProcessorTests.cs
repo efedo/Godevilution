@@ -2552,6 +2552,91 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedAdvanceStageSpawnsRewardOnlyAfterPlacementValidation()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2140, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+            new AuthoritativeItemDefinition(2142, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3002,
+            9,
+            1,
+            active: true,
+            variable1: 5,
+            turnInTownerId: 1,
+            turnInLevelId: 0,
+            turnInPositionX: 55,
+            turnInPositionY: 79,
+            turnInItemId: 2140,
+            turnInRewardItemLevel: 0,
+            turnInRewardPositionX: 55,
+            turnInRewardPositionY: 80,
+            turnInRewardItemId: 2142,
+            turnInMessageId: 124);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(
+                300211,
+                3002,
+                1,
+                0,
+                55,
+                79,
+                2140,
+                AuthoritativeQuestTownerInteractionKind.Advance,
+                RequiredVariable1: 5,
+                Variable1: 6,
+                MessageId: 124,
+                UseQuestTurnInReward: true),
+        ]);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var brain = items.Generate(2140, 42);
+        var player = CreatePlayer(
+            positionX: 54,
+            positionY: 79,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, brain.CreateInfo, 0, 0, brain)],
+            entityId: 7);
+        var blocker = CreatePlayer(positionX: 55, positionY: 80, entityId: 8);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3002, 1),
+                1,
+                [player, blocker]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Single(player.Inventory);
+        Assert.Equal(5, quest.Variable1);
+
+        blocker.PositionX = 0;
+        blocker.PositionY = 0;
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 1),
+            2,
+            [player, blocker]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal((6, 124), (quest.Variable1, Assert.Single(result.Events).MessageId));
+        Assert.Empty(player.Inventory);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(2142U, reward.State.StableItemId);
+        Assert.Equal((55, 80), (reward.PositionX, reward.PositionY));
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3002, 1),
+                3,
+                [player, blocker]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void ContentOwnedQuestTownerDialogueCanApplyAfterCompletionWithoutAnItem()
     {
         var interactions = new AuthoritativeQuestTownerInteractionCatalog([
