@@ -48,6 +48,8 @@ The engine currently owns:
   mirrored quarter-ring truncation;
 - stable 32-bit mixing and aligned walkable-footprint selection for authored
   deterministic placement;
+- native-compatible Fisher–Yates ordering with caller-owned bounded random
+  sources for deterministic spawn and content selection;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;

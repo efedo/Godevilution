@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
 - Extract native alternating and turn-pair direction candidate ordering into
   the engine-neutral assembly; Diablo movement AI retains its RandomWalk,
   fear, stealth, counselor, and minion fallback sequences.
+- Extract native-compatible Fisher–Yates ordering into the engine-neutral
+  assembly; Diablo monster placement preserves its random stream and uses the
+  shared stable hash for runtime seeds.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** One deterministic server-owned monster placement produced from validated content. */
@@ -109,9 +111,9 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             return [];
 
         var random = new AuthoritativeLegacyRandom(seed ^ levelId);
-        Shuffle(positions, random);
+        DeterministicRandomOrdering.Shuffle(positions, random.Next);
         var orderedCandidates = candidates.ToArray();
-        Shuffle(orderedCandidates, random);
+        DeterministicRandomOrdering.Shuffle(orderedCandidates, random.Next);
         var spawns = new AuthoritativeMonsterSpawn[spawnCount];
         for (var index = 0; index < spawnCount; index++) {
             var definition = orderedCandidates[index % orderedCandidates.Length];
@@ -604,12 +606,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
 
     private static uint CreateRuntimeSeed(uint seed, uint salt)
     {
-        var mixed = seed ^ unchecked(salt * 0x9E3779B9U);
-        mixed ^= mixed >> 16;
-        mixed *= 0x7FEB352DU;
-        mixed ^= mixed >> 15;
-        mixed *= 0x846CA68BU;
-        mixed ^= mixed >> 16;
+        var mixed = DeterministicHash.Mix32(
+            seed ^ unchecked(salt * 0x9E3779B9U));
         return mixed == 0 ? 1U : mixed;
     }
 
@@ -632,11 +630,4 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         return (tick, frame);
     }
 
-    private static void Shuffle<T>(T[] values, AuthoritativeLegacyRandom random)
-    {
-        for (var index = values.Length - 1; index > 0; index--) {
-            var swapIndex = random.Next(index + 1);
-            (values[index], values[swapIndex]) = (values[swapIndex], values[index]);
-        }
-    }
 }

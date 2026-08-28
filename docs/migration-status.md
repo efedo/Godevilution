@@ -1493,6 +1493,11 @@ turn-pair candidate ordering. The Diablo module retains AI-specific admission,
 occupancy, and movement state while sharing the exact RandomWalk-compatible
 direction sequences across fear, stealth, counselor, and minion fallbacks.
 
+Monster spawn planning now delegates its native descending Fisher–Yates order
+to the engine-neutral deterministic ordering primitive. Diablo retains the
+legacy random-stream facade and spawn-specific selection rules, while runtime
+seed mixing is shared with other authoritative deterministic systems.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.
