@@ -107,6 +107,9 @@ Sprite flags are restricted to the native `MonsterOwned` and `NotAnimated`
 vocabulary during validation.
 Every non-alias native missile graphic is also required to resolve through the
 active `native_missile_sprites.tsv` catalog during activation.
+When `native_missiles.tsv` or `monster_missiles.tsv` mappings are active, both
+the native missile namespace and its sprite catalog are required; activation
+does not silently skip either reference check when a table is missing.
 
 `classes.tsv` defines the native-compatible class IDs `0` through `5`, their
 base-game or Hellfire availability, exactly one active default, class flags,

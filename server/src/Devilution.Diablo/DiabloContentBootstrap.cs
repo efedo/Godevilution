@@ -305,6 +305,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeMissileSpritesTable.SourcePath,
                 nativeMissileSpritesTable.ToCanonicalTsv())
             : null;
+        if (nativeMissiles is not null && nativeMissileSprites is null)
+            throw new InvalidDataException(
+                "native_missiles.tsv requires native_missile_sprites.tsv during production activation.");
         if (nativeMissiles is not null && nativeMissileSprites is not null)
             nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
         var nativeMisc = content.TryGetTable(
@@ -657,6 +660,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             monsterMissiles.ValidateMonsterSelectorReferences(monsterTypes);
             monsterMissiles.ValidateSpawnMonsterReferences(monsterTypes);
         }
+        if (monsterMissiles is not null && nativeMissiles is null)
+            throw new InvalidDataException(
+                "monster_missiles.tsv requires native_missiles.tsv during production activation.");
         if (monsterMissiles is not null && nativeMissiles is not null)
             monsterMissiles.ValidateMissileReferences(nativeMissiles);
         var monsters = content.TryGetTable("monsters.tsv", out var monstersTable)

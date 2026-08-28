@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   patterns used by authoritative Charged Bolt, Fireball, Elemental, Flash,
   Guardian, and Resurrection handlers; direct compatibility catalogs retain
   embedded native defaults.
+- Require active native missile mappings to provide both the external missile
+  namespace and sprite catalog so missing reference validation fails closed.
 - Route authoritative item, spawn, quest, spell-book, and unique-item random
   consumers through the engine LCG primitive, retaining Diablo random wrappers
   and overloads only as source-compatible shims and adding sequence-parity
