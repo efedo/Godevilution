@@ -207,12 +207,13 @@ public sealed class DiabloWorldCommandProcessor
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
-        var directionX = Math.Sign(target.PositionX - player.PositionX);
-        var directionY = Math.Sign(target.PositionY - player.PositionY);
+        var directionX = Math.Sign((long)target.PositionX - player.PositionX);
+        var directionY = Math.Sign((long)target.PositionY - player.PositionY);
         if (directionX == 0 && directionY == 0)
             return DiabloWorldIntentResult.Accepted;
-        var destinationX = target.PositionX + directionX;
-        var destinationY = target.PositionY + directionY;
+        if (!TryOffsetCoordinate(target.PositionX, directionX, out var destinationX)
+            || !TryOffsetCoordinate(target.PositionY, directionY, out var destinationY))
+            return DiabloWorldIntentResult.Accepted;
         if (world.IsWalkable(target.LevelId, destinationX, destinationY)
             && !world.IsOccupied(
                 target.LevelId,
@@ -533,6 +534,18 @@ public sealed class DiabloWorldCommandProcessor
         return DiabloWorldIntentResult.Accepted;
     }
 
+    /** Adds a one-cell movement offset without allowing malformed coordinates to wrap. */
+    private static bool TryOffsetCoordinate(int coordinate, int offset, out int result)
+    {
+        var candidate = (long)coordinate + offset;
+        if (candidate is < int.MinValue or > int.MaxValue) {
+            result = 0;
+            return false;
+        }
+        result = (int)candidate;
+        return true;
+    }
+
     private DiabloWorldIntentResult Move(
         AuthoritativePlayerState player,
         DiabloMoveIntent intent,
@@ -544,8 +557,9 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
         }
 
-        var targetX = player.PositionX + intent.DirectionX;
-        var targetY = player.PositionY + intent.DirectionY;
+        if (!TryOffsetCoordinate(player.PositionX, intent.DirectionX, out var targetX)
+            || !TryOffsetCoordinate(player.PositionY, intent.DirectionY, out var targetY))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!world.IsWalkable(player.LevelId, targetX, targetY)
             || world.IsOccupied(player.LevelId, targetX, targetY, players, player.EntityId)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);

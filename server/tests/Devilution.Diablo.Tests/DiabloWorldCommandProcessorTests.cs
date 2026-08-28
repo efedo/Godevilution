@@ -53,6 +53,23 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void MovementRejectsCoordinateOverflowWithoutWrappingOrMutating()
+    {
+        var processor = new DiabloWorldCommandProcessor(new DiabloWorldState());
+        var player = CreatePlayer(positionX: int.MaxValue, entityId: 1);
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [player]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal((int.MaxValue, 0), (player.PositionX, player.PositionY));
+        Assert.Equal(DiabloPlayerDirection.South, player.FacingDirection);
+    }
+
+    [Fact]
     public void QuestSequenceFollowUpMaterializesDeterministicUniqueMonster()
     {
         var world = new AuthoritativeWorld();

@@ -2,6 +2,12 @@
 
 Status date: 2026-08-27
 
+Monster aggro and retreat selection, scavenger/fallen radius checks, minion
+targeting, projectile retargeting and area resolution, and native light-radius
+vision now use the shared widened Chebyshev arithmetic. One-cell player movement
+and Telekinesis knockback also reject coordinate-boundary wraparound before
+consulting geometry or mutating authoritative state.
+
 Authoritative monster unity and spawn spacing, world interaction adjacency,
 and combat cast/target range gates now share widened Chebyshev distance
 arithmetic. Extreme integer-boundary coordinates therefore fail closed

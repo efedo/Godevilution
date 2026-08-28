@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend widened authoritative coordinate arithmetic through monster aggro,
+  retreat, scavenger/fallen radius, minion, projectile, and native-vision
+  targeting paths; malformed extreme coordinates no longer wrap during AI
+  selection or projectile area resolution.
+- Guard one-cell player movement and Telekinesis knockback offsets against
+  integer-boundary wraparound, rejecting or accepting without mutation when a
+  malformed state cannot represent the requested destination.
 - Centralize authoritative Chebyshev range checks on widened coordinate
   arithmetic across monster unity/spawn validation, world interactions, and
   combat cast/target admission; extreme wrapped coordinates now fail closed

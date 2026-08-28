@@ -1287,8 +1287,8 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var directionX = Math.Sign(target.PositionX - player.PositionX);
-        var directionY = Math.Sign(target.PositionY - player.PositionY);
+        var directionX = Math.Sign((long)target.PositionX - player.PositionX);
+        var directionY = Math.Sign((long)target.PositionY - player.PositionY);
         if (directionX == 0 && directionY == 0)
             return;
         var destinationX = target.PositionX + directionX;
@@ -1318,8 +1318,8 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var directionX = Math.Sign(target.PositionX - player.PositionX);
-        var directionY = Math.Sign(target.PositionY - player.PositionY);
+        var directionX = Math.Sign((long)target.PositionX - player.PositionX);
+        var directionY = Math.Sign((long)target.PositionY - player.PositionY);
         if (directionX == 0 && directionY == 0)
             return;
         var destinationX = checked(target.PositionX + directionX);
@@ -5040,12 +5040,16 @@ public sealed class DiabloCombatCommandProcessor
                         or DiabloPlayerCombatMode.Quit)
                     && player.LevelId == target.LevelId
                     && (fallenRallyActive
-                        || Math.Max(
-                        Math.Abs(player.PositionX - target.PositionX),
-                        Math.Abs(player.PositionY - target.PositionY)) <= target.AggroRange))
-                .OrderBy(player => Math.Max(
-                    Math.Abs(player.PositionX - target.PositionX),
-                    Math.Abs(player.PositionY - target.PositionY)))
+                        || AuthoritativeCombatTarget.ChebyshevDistance(
+                            player.PositionX,
+                            player.PositionY,
+                            target.PositionX,
+                            target.PositionY) <= target.AggroRange))
+                .OrderBy(player => AuthoritativeCombatTarget.ChebyshevDistance(
+                    player.PositionX,
+                    player.PositionY,
+                    target.PositionX,
+                    target.PositionY))
                 .ThenBy(player => player.EntityId)
                 .FirstOrDefault();
             if (victim is null) {
@@ -5054,9 +5058,12 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             }
 
-            var distance = Math.Max(
-                Math.Abs(victim.PositionX - target.PositionX),
-                Math.Abs(victim.PositionY - target.PositionY));
+            var victimDistance = AuthoritativeCombatTarget.ChebyshevDistance(
+                victim.PositionX,
+                victim.PositionY,
+                target.PositionX,
+                target.PositionY);
+            var distance = ClampNativeDistance(victimDistance);
             if (TryAdvanceFallenRally(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceSneakAi(target, victim, players, distance))
@@ -5374,8 +5381,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             }
 
-            var deltaX = Math.Sign(victim.PositionX - target.PositionX);
-            var deltaY = Math.Sign(victim.PositionY - target.PositionY);
+            var deltaX = Math.Sign((long)victim.PositionX - target.PositionX);
+            var deltaY = Math.Sign((long)victim.PositionY - target.PositionY);
             var candidates = new[] {
                 (X: target.PositionX + deltaX, Y: target.PositionY + deltaY),
                 (X: target.PositionX + deltaX, Y: target.PositionY),
@@ -5392,9 +5399,11 @@ public sealed class DiabloCombatCommandProcessor
                         candidate.Y,
                         players,
                         target.EntityId)
-                    || Math.Max(
-                        Math.Abs(victim.PositionX - candidate.X),
-                        Math.Abs(victim.PositionY - candidate.Y)) >= distance) {
+                    || AuthoritativeCombatTarget.ChebyshevDistance(
+                        victim.PositionX,
+                        victim.PositionY,
+                        candidate.X,
+                        candidate.Y) >= distance) {
                     continue;
                 }
                 target.BeginMovement(candidate.X, candidate.Y);
@@ -5466,10 +5475,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         AuthoritativePlayerState player)
     {
-        var deltaX = target.PositionX - player.PositionX;
-        var deltaY = target.PositionY - player.PositionY;
+        var deltaX = (long)target.PositionX - player.PositionX;
+        var deltaY = (long)target.PositionY - player.PositionY;
         var nativeVisionRadius = player.LightRadius;
-        if ((long)deltaX * deltaX + (long)deltaY * deltaY
+        if (deltaX * deltaX + deltaY * deltaY
             > (long)nativeVisionRadius * nativeVisionRadius)
             return false;
         return level.HasNativeVisionLineOfSight(
@@ -5478,6 +5487,10 @@ public sealed class DiabloCombatCommandProcessor
             target.PositionX,
             target.PositionY);
     }
+
+    /** Keeps legacy int distance consumers fail-closed for malformed coordinates. */
+    private static int ClampNativeDistance(long distance)
+        => distance >= int.MaxValue ? int.MaxValue : (int)distance;
 
     /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */
     private void AdvanceNativeMonsterAiSeed(AuthoritativeCombatTarget target)
@@ -6466,9 +6479,11 @@ public sealed class DiabloCombatCommandProcessor
             world.Corpses.TryGetValue(target.ScavengerCorpseEntityId, out corpse);
         if (corpse is null
             || (corpse.LevelId != 0 && corpse.LevelId != target.LevelId)
-            || Math.Max(
-                Math.Abs(corpse.PositionX - target.PositionX),
-                Math.Abs(corpse.PositionY - target.PositionY))
+            || AuthoritativeCombatTarget.ChebyshevDistance(
+                corpse.PositionX,
+                corpse.PositionY,
+                target.PositionX,
+                target.PositionY)
                 > scavengerTuning.Value.CorpseSearchRadius
             || !world.HasLineOfSight(
                 target.LevelId,
@@ -7352,8 +7367,8 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed)
     {
-        var deltaX = Math.Sign(player.PositionX - monster.PositionX);
-        var deltaY = Math.Sign(player.PositionY - monster.PositionY);
+        var deltaX = Math.Sign((long)player.PositionX - monster.PositionX);
+        var deltaY = Math.Sign((long)player.PositionY - monster.PositionY);
         var directions = new[] {
             (X: deltaX, Y: deltaY),
             (X: deltaX, Y: 0),
@@ -7844,12 +7859,16 @@ public sealed class DiabloCombatCommandProcessor
                 candidate.Y,
                 players,
                 monster.EntityId))
-            .Where(candidate => Math.Max(
-                Math.Abs(player.PositionX - candidate.X),
-                Math.Abs(player.PositionY - candidate.Y)) >= currentDistance)
-            .OrderByDescending(candidate => Math.Max(
-                Math.Abs(player.PositionX - candidate.X),
-                Math.Abs(player.PositionY - candidate.Y)))
+            .Where(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                player.PositionX,
+                player.PositionY,
+                candidate.X,
+                candidate.Y) >= currentDistance)
+            .OrderByDescending(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                player.PositionX,
+                player.PositionY,
+                candidate.X,
+                candidate.Y))
             .ThenBy(candidate => candidate.Y)
             .ThenBy(candidate => candidate.X)
             .Select(candidate => ((int X, int Y)?)candidate)
@@ -8651,12 +8670,16 @@ public sealed class DiabloCombatCommandProcessor
                 candidate.Y,
                 players,
                 monster.EntityId))
-            .Where(candidate => Math.Max(
-                Math.Abs(player.PositionX - candidate.X),
-                Math.Abs(player.PositionY - candidate.Y)) >= currentDistance)
-            .OrderByDescending(candidate => Math.Max(
-                Math.Abs(player.PositionX - candidate.X),
-                Math.Abs(player.PositionY - candidate.Y)))
+            .Where(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                player.PositionX,
+                player.PositionY,
+                candidate.X,
+                candidate.Y) >= currentDistance)
+            .OrderByDescending(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                player.PositionX,
+                player.PositionY,
+                candidate.X,
+                candidate.Y))
             .ThenBy(candidate => candidate.Y)
             .ThenBy(candidate => candidate.X)
             .ToArray();
@@ -10628,9 +10651,11 @@ public sealed class DiabloCombatCommandProcessor
                     monster.PositionY,
                     candidate.X,
                     candidate.Y))
-            .OrderBy(candidate => Math.Max(
-                Math.Abs(candidate.X - monster.PositionX),
-                Math.Abs(candidate.Y - monster.PositionY)))
+            .OrderBy(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                candidate.X,
+                candidate.Y,
+                monster.PositionX,
+                monster.PositionY))
             .ThenBy(candidate => candidate.Y)
             .ThenBy(candidate => candidate.X)
             .Select(candidate => ((int X, int Y)?)candidate)
@@ -10789,9 +10814,11 @@ public sealed class DiabloCombatCommandProcessor
                 && !candidate.IsPlayerMinion
                 && candidate.HitPoints > 0
                 && (candidate.LevelId == 0 || candidate.LevelId == minion.LevelId))
-            .OrderBy(candidate => Math.Max(
-                Math.Abs(candidate.PositionX - minion.PositionX),
-                Math.Abs(candidate.PositionY - minion.PositionY)))
+            .OrderBy(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                candidate.PositionX,
+                candidate.PositionY,
+                minion.PositionX,
+                minion.PositionY))
             .ThenBy(candidate => candidate.EntityId)
             .FirstOrDefault();
         if (enemy is null) {
@@ -10807,9 +10834,11 @@ public sealed class DiabloCombatCommandProcessor
             minion.PositionY,
             enemy.PositionX,
             enemy.PositionY));
-        var distance = Math.Max(
-            Math.Abs(enemy.PositionX - minion.PositionX),
-            Math.Abs(enemy.PositionY - minion.PositionY));
+        var distance = ClampNativeDistance(AuthoritativeCombatTarget.ChebyshevDistance(
+            enemy.PositionX,
+            enemy.PositionY,
+            minion.PositionX,
+            minion.PositionY));
         if (distance <= 1) {
             var rolledDamage = random.RandomIntBetween(minion.MinDamage, minion.MaxDamage);
             var damage = rules.ResolveAttackDamage(
@@ -11152,9 +11181,9 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 if (projectile.RemainingTicks > 1) {
                     var nextX = projectile.PositionX
-                        + Math.Sign(projectile.TargetX - projectile.PositionX);
+                        + Math.Sign((long)projectile.TargetX - projectile.PositionX);
                     var nextY = projectile.PositionY
-                        + Math.Sign(projectile.TargetY - projectile.PositionY);
+                        + Math.Sign((long)projectile.TargetY - projectile.PositionY);
                     if (world.IsMissileBlocked(projectile.LevelId, nextX, nextY)
                         || !world.HasMissileLineOfSight(
                             projectile.LevelId,
@@ -11183,10 +11212,12 @@ public sealed class DiabloCombatCommandProcessor
                                  .Where(target => target.HitPoints > 0
                                      && (target.LevelId == 0
                                          || target.LevelId == projectile.LevelId)
-                                     && Math.Max(
-                                         Math.Abs(target.PositionX - projectile.TargetX),
-                                         Math.Abs(target.PositionY - projectile.TargetY))
-                                         <= projectile.AreaRadius)
+                                      && AuthoritativeCombatTarget.ChebyshevDistance(
+                                          target.PositionX,
+                                          target.PositionY,
+                                          projectile.TargetX,
+                                          projectile.TargetY)
+                                          <= projectile.AreaRadius)
                                  .OrderBy(target => target.EntityId)) {
                         ResolveProjectileDamage(projectile, target, players, events);
                     }
@@ -11257,9 +11288,9 @@ public sealed class DiabloCombatCommandProcessor
                 return;
             for (var step = 0; step < travelSteps; step++) {
                 var nextX = projectile.PositionX
-                    + Math.Sign(projectile.TargetX - projectile.PositionX);
+                    + Math.Sign((long)projectile.TargetX - projectile.PositionX);
                 var nextY = projectile.PositionY
-                    + Math.Sign(projectile.TargetY - projectile.PositionY);
+                    + Math.Sign((long)projectile.TargetY - projectile.PositionY);
                 if (world.IsMissileBlocked(projectile.LevelId, nextX, nextY)
                     || !world.HasMissileLineOfSight(
                         projectile.LevelId,
@@ -11391,9 +11422,9 @@ public sealed class DiabloCombatCommandProcessor
         var travelSteps = Math.Max(1, projectile.Speed);
         for (var step = 0; step < travelSteps; step++) {
             var nextX = projectile.PositionX
-                + Math.Sign(projectile.TargetX - projectile.PositionX);
+                + Math.Sign((long)projectile.TargetX - projectile.PositionX);
             var nextY = projectile.PositionY
-                + Math.Sign(projectile.TargetY - projectile.PositionY);
+                + Math.Sign((long)projectile.TargetY - projectile.PositionY);
             if (!world.ContainsPosition(projectile.LevelId, nextX, nextY)
                 || world.IsMissileBlocked(projectile.LevelId, nextX, nextY)) {
                 BreakMissileBlockingObject(projectile.LevelId, nextX, nextY);
@@ -12286,9 +12317,11 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerEtherealized(target))
             return false;
 
-        var distance = Math.Max(
-            Math.Abs(target.PositionX - monster.PositionX),
-            Math.Abs(target.PositionY - monster.PositionY));
+        var distance = ClampNativeDistance(AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            monster.PositionX,
+            monster.PositionY));
         if (distance >= 2)
             return false;
 
@@ -13187,12 +13220,16 @@ public sealed class DiabloCombatCommandProcessor
         var target = world.CombatTargets.Values
             .Where(candidate => candidate.HitPointsQ6 > 0
                 && (candidate.LevelId == 0 || candidate.LevelId == projectile.LevelId)
-                && Math.Max(
-                    Math.Abs(candidate.PositionX - projectile.PositionX),
-                    Math.Abs(candidate.PositionY - projectile.PositionY)) <= 19)
-            .OrderBy(candidate => Math.Max(
-                Math.Abs(candidate.PositionX - projectile.PositionX),
-                Math.Abs(candidate.PositionY - projectile.PositionY)))
+                && AuthoritativeCombatTarget.ChebyshevDistance(
+                    candidate.PositionX,
+                    candidate.PositionY,
+                    projectile.PositionX,
+                    projectile.PositionY) <= 19)
+            .OrderBy(candidate => AuthoritativeCombatTarget.ChebyshevDistance(
+                candidate.PositionX,
+                candidate.PositionY,
+                projectile.PositionX,
+                projectile.PositionY))
             .ThenBy(candidate => candidate.EntityId)
             .FirstOrDefault();
         var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
@@ -14093,9 +14130,11 @@ public sealed class DiabloCombatCommandProcessor
                 targetX,
                 targetY))
             return false;
-        if (Math.Max(
-                Math.Abs(targetX - controller.PositionX),
-                Math.Abs(targetY - controller.PositionY)) > spell.GuardianTargetSearchRadius)
+        if (AuthoritativeCombatTarget.ChebyshevDistance(
+                targetX,
+                targetY,
+                controller.PositionX,
+                controller.PositionY) > spell.GuardianTargetSearchRadius)
             return false;
         var target = FindProjectileTarget(controller.LevelId, targetX, targetY);
         if (target is null || target.HitPointsQ6 <= 0 || target.IsPlayerMinion)
@@ -14125,12 +14164,16 @@ public sealed class DiabloCombatCommandProcessor
             .Where(target => target.HitPointsQ6 > 0
                 && !target.IsPlayerMinion
                 && (target.LevelId == 0 || target.LevelId == projectile.LevelId)
-                && Math.Max(
-                    Math.Abs(target.PositionX - projectile.PositionX),
-                    Math.Abs(target.PositionY - projectile.PositionY)) <= 19)
-            .OrderBy(target => Math.Max(
-                Math.Abs(target.PositionX - projectile.PositionX),
-                Math.Abs(target.PositionY - projectile.PositionY)))
+                && AuthoritativeCombatTarget.ChebyshevDistance(
+                    target.PositionX,
+                    target.PositionY,
+                    projectile.PositionX,
+                    projectile.PositionY) <= 19)
+            .OrderBy(target => AuthoritativeCombatTarget.ChebyshevDistance(
+                target.PositionX,
+                target.PositionY,
+                projectile.PositionX,
+                projectile.PositionY))
             .ThenBy(target => target.EntityId)
             .FirstOrDefault();
         var targetX = nextMonster?.PositionX
@@ -14560,11 +14603,13 @@ public sealed class DiabloCombatCommandProcessor
         projectile.PositionY = finalTile.Y;
 
         var possibleVisitedTiles = projectile.VelocityX == 0 || projectile.VelocityY == 0
-            ? Math.Max(
-                Math.Abs(previousX - finalTile.X),
-                Math.Abs(previousY - finalTile.Y))
-            : Math.Abs(previousX - finalTile.X)
-                + Math.Abs(previousY - finalTile.Y);
+            ? AuthoritativeCombatTarget.ChebyshevDistance(
+                previousX,
+                previousY,
+                finalTile.X,
+                finalTile.Y)
+            : Math.Abs((long)previousX - finalTile.X)
+                + Math.Abs((long)previousY - finalTile.Y);
         if (possibleVisitedTiles == 0)
             return [];
 
@@ -14857,9 +14902,11 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
-        var distance = Math.Max(
-            Math.Abs(target.PositionX - monster.PositionX),
-            Math.Abs(target.PositionY - monster.PositionY));
+        var distance = ClampNativeDistance(AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            monster.PositionX,
+            monster.PositionY));
         var hitChance = rules.ResolveMonsterMagicProjectileHitChance(
             GetEffectiveMonsterLevel(monster),
             target.CharacterLevel,
@@ -14944,9 +14991,11 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerProtectedByFlash(target))
             return false;
 
-        var distance = Math.Max(
-            Math.Abs(target.PositionX - monster.PositionX),
-            Math.Abs(target.PositionY - monster.PositionY));
+        var distance = checked((int)AuthoritativeCombatTarget.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            monster.PositionX,
+            monster.PositionY));
         if (random.RandomIntLessThan(100)
             >= rules.ResolveMonsterMagicProjectileHitChance(
                 GetEffectiveMonsterLevel(monster),
@@ -16473,10 +16522,12 @@ public sealed class DiabloCombatCommandProcessor
                              && tuning.HasValue
                              && candidate.HitPointsQ6 > 0
                              && (candidate.LevelId == 0 || candidate.LevelId == deceased.LevelId)
-                             && Math.Max(
-                                 Math.Abs(candidate.PositionX - deceased.PositionX),
-                                 Math.Abs(candidate.PositionY - deceased.PositionY))
-                                 <= deceasedTuning.Value.Radius;
+                              && AuthoritativeCombatTarget.ChebyshevDistance(
+                                  candidate.PositionX,
+                                  candidate.PositionY,
+                                  deceased.PositionX,
+                                  deceased.PositionY)
+                                  <= deceasedTuning.Value.Radius;
                      })
                      .OrderBy(candidate => candidate.EntityId)) {
             var tuning = GetFallenFearTuning(fallen)!.Value;
@@ -16501,9 +16552,11 @@ public sealed class DiabloCombatCommandProcessor
                          UsesNativeAi(candidate, "Fallen")
                          && candidate.HitPointsQ6 > 0
                          && (candidate.LevelId == 0 || candidate.LevelId == leader.LevelId)
-                         && Math.Max(
-                             Math.Abs(candidate.PositionX - leader.PositionX),
-                             Math.Abs(candidate.PositionY - leader.PositionY)) <= radius)
+                          && AuthoritativeCombatTarget.ChebyshevDistance(
+                              candidate.PositionX,
+                              candidate.PositionY,
+                              leader.PositionX,
+                              leader.PositionY) <= radius)
                      .OrderBy(candidate => candidate.EntityId)) {
             fallen.StartFallenRally(rallyTicks);
         }
