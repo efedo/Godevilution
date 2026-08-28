@@ -6,10 +6,11 @@ dependencies. It must not reference the server host, Protobuf contracts, Godot,
 content loaders, or a game-specific rules module.
 
 The extracted capabilities currently include canonical little-endian hashing
-and the authoritative inventory-grid layout: geometry, footprint validation,
-placement, occupancy mutation, and index compaction. Server and data adapters
-supply primitive values; domain components do not know about stores, protocol,
-persistence, files, or content schemas.
+and the authoritative inventory-grid layout: geometry, native-compatible
+dimension-specific placement order, deterministic external-footprint fallback,
+footprint validation, occupancy mutation, and index compaction. Server and data
+adapters supply primitive values; domain components do not know about stores,
+protocol, persistence, files, or content schemas.
 
 Run its independent xUnit v3 suite from the repository root:
 

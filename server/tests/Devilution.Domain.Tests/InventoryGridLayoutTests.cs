@@ -61,6 +61,43 @@ public sealed class InventoryGridLayoutTests
     }
 
     [Theory]
+    [InlineData(1, 1, 30)]
+    [InlineData(2, 1, 30)]
+    [InlineData(1, 2, 9)]
+    [InlineData(2, 2, 8)]
+    [InlineData(1, 3, 0)]
+    [InlineData(2, 3, 0)]
+    [InlineData(3, 3, 0)]
+    [InlineData(1, 4, 0)]
+    public void NativePlacementPreservesDimensionSpecificScanOrder(
+        int width,
+        int height,
+        int expectedCell)
+    {
+        var cells = Enumerable.Repeat(-1, 40).ToArray();
+
+        Assert.Equal(expectedCell, InventoryGridLayout.FindNativePlacement(cells, width, height));
+    }
+
+    [Fact]
+    public void NativePlacementUsesBeltBeforeMainInventoryForOneRowItems()
+    {
+        var cells = Enumerable.Repeat(-1, 40).ToArray();
+        cells[30] = 7;
+
+        Assert.Equal(31, InventoryGridLayout.FindNativePlacement(cells, width: 1, height: 1));
+    }
+
+    [Fact]
+    public void NativePlacementFallsBackToFirstFitForExternalFootprints()
+    {
+        var cells = Enumerable.Repeat(-1, 40).ToArray();
+        InventoryGridLayout.Fill(cells, targetCell: 0, itemIndex: 4, width: 3, height: 3);
+
+        Assert.Equal(3, InventoryGridLayout.FindNativePlacement(cells, width: 3, height: 3));
+    }
+
+    [Theory]
     [InlineData(1, 1, true)]
     [InlineData(10, 40, true)]
     [InlineData(0, 1, false)]

@@ -260,7 +260,7 @@ public sealed class DiabloStoreCommandProcessor
         var sortedGrid = Enumerable.Repeat(-1, player.InventoryGrid.Count).ToArray();
         for (var index = 0; index < sortedItems.Length; index++) {
             var state = sortedItems[index].State;
-            var targetCell = FindNativeInventoryPlacement(
+            var targetCell = InventoryGridLayout.FindNativePlacement(
                 sortedGrid,
                 state.InventoryWidth,
                 state.InventoryHeight);
@@ -300,7 +300,7 @@ public sealed class DiabloStoreCommandProcessor
         // Gold topology controls wallet mutation; it does not determine whether
         // a supplied inventory grid must receive the purchased item.
         if (player.InventoryGrid.Count > 0) {
-            targetCell = FindNativeInventoryPlacement(
+            targetCell = InventoryGridLayout.FindNativePlacement(
                 player.InventoryGrid,
                 item.State.InventoryWidth,
                 item.State.InventoryHeight);
@@ -1576,7 +1576,7 @@ public sealed class DiabloStoreCommandProcessor
                 displacements.Clear();
                 return null;
             }
-            var targetCell = FindNativeInventoryPlacement(
+            var targetCell = InventoryGridLayout.FindNativePlacement(
                 planningGrid,
                 displacement.State.InventoryWidth,
                 displacement.State.InventoryHeight);
@@ -1637,7 +1637,7 @@ public sealed class DiabloStoreCommandProcessor
                         slot),
                     out var displacement))
                 return null;
-            var targetCell = FindNativeInventoryPlacement(
+            var targetCell = InventoryGridLayout.FindNativePlacement(
                 planningGrid,
                 displacement.State.InventoryWidth,
                 displacement.State.InventoryHeight);
@@ -1664,7 +1664,7 @@ public sealed class DiabloStoreCommandProcessor
         InventoryGridLayout.Clear(planningGrid, checked((int)sourceInventoryIndex));
         var cells = new List<int>(displacements.Count);
         foreach (var displacement in displacements) {
-            var targetCell = FindNativeInventoryPlacement(
+            var targetCell = InventoryGridLayout.FindNativePlacement(
                 planningGrid,
                 displacement.Item.State.InventoryWidth,
                 displacement.Item.State.InventoryHeight);
@@ -2230,70 +2230,6 @@ public sealed class DiabloStoreCommandProcessor
             seed = AllocateGoldStackSeed();
         } while (seed == 0);
         return seed;
-    }
-
-    private static int FindNativeInventoryPlacement(
-        IReadOnlyList<int> inventoryGrid,
-        int width,
-        int height)
-    {
-        width = Math.Max(1, width);
-        height = Math.Max(1, height);
-        if (height == 1) {
-            for (var cell = 30; cell <= Math.Min(39, inventoryGrid.Count - 1); cell++) {
-                if (InventoryGridLayout.CanPlace(inventoryGrid, checked((uint)cell), width, height))
-                    return cell;
-            }
-            for (var x = 9; x >= 0; x--) {
-                for (var y = 2; y >= 0; y--) {
-                    var cell = y * InventoryGridLayout.ColumnCount + x;
-                    if (cell < inventoryGrid.Count
-                        && InventoryGridLayout.CanPlace(
-                            inventoryGrid,
-                            checked((uint)cell),
-                            width,
-                            height)) {
-                        return cell;
-                    }
-                }
-            }
-            return -1;
-        }
-        if (height == 2) {
-            for (var x = InventoryGridLayout.ColumnCount - width; x >= 0; x--) {
-                for (var y = 0; y < 3; y++) {
-                    var cell = y * InventoryGridLayout.ColumnCount + x;
-                    if (InventoryGridLayout.CanPlace(
-                            inventoryGrid,
-                            checked((uint)cell),
-                            width,
-                            height)) {
-                        return cell;
-                    }
-                }
-            }
-            return -1;
-        }
-        if (width == 1 && height == 3) {
-            for (var cell = 0; cell < Math.Min(20, inventoryGrid.Count); cell++) {
-                if (InventoryGridLayout.CanPlace(inventoryGrid, checked((uint)cell), width, height))
-                    return cell;
-            }
-            return -1;
-        }
-        if (width == 2 && height == 3) {
-            for (var cell = 0; cell < Math.Min(9, inventoryGrid.Count); cell++) {
-                if (InventoryGridLayout.CanPlace(inventoryGrid, checked((uint)cell), width, height))
-                    return cell;
-            }
-            for (var cell = 10; cell < Math.Min(19, inventoryGrid.Count); cell++) {
-                if (InventoryGridLayout.CanPlace(inventoryGrid, checked((uint)cell), width, height))
-                    return cell;
-            }
-        }
-        // Preserve native placement order above, then support any other
-        // validated external-content footprint deterministically.
-        return InventoryGridLayout.FindFirstPlacement(inventoryGrid, width, height);
     }
 
     private static ItemTopologySnapshot CaptureItemTopology(

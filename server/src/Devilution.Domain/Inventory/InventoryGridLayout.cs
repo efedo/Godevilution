@@ -88,6 +88,61 @@ public static class InventoryGridLayout
         return -1;
     }
 
+    /// <summary>
+    /// Finds a placement using the native inventory scan order, followed by a
+    /// deterministic first-fit fallback for validated external footprints.
+    /// </summary>
+    public static int FindNativePlacement(IReadOnlyList<int> cells, int width, int height)
+    {
+        ArgumentNullException.ThrowIfNull(cells);
+        width = Math.Max(1, width);
+        height = Math.Max(1, height);
+        if (height == 1) {
+            for (var cell = 30; cell <= Math.Min(39, cells.Count - 1); cell++) {
+                if (CanPlace(cells, checked((uint)cell), width, height))
+                    return cell;
+            }
+            for (var x = 9; x >= 0; x--) {
+                for (var y = 2; y >= 0; y--) {
+                    var cell = y * ColumnCount + x;
+                    if (cell < cells.Count
+                        && CanPlace(cells, checked((uint)cell), width, height)) {
+                        return cell;
+                    }
+                }
+            }
+            return -1;
+        }
+        if (height == 2) {
+            for (var x = ColumnCount - width; x >= 0; x--) {
+                for (var y = 0; y < 3; y++) {
+                    var cell = y * ColumnCount + x;
+                    if (CanPlace(cells, checked((uint)cell), width, height))
+                        return cell;
+                }
+            }
+            return -1;
+        }
+        if (width == 1 && height == 3) {
+            for (var cell = 0; cell < Math.Min(20, cells.Count); cell++) {
+                if (CanPlace(cells, checked((uint)cell), width, height))
+                    return cell;
+            }
+            return -1;
+        }
+        if (width == 2 && height == 3) {
+            for (var cell = 0; cell < Math.Min(9, cells.Count); cell++) {
+                if (CanPlace(cells, checked((uint)cell), width, height))
+                    return cell;
+            }
+            for (var cell = 10; cell < Math.Min(19, cells.Count); cell++) {
+                if (CanPlace(cells, checked((uint)cell), width, height))
+                    return cell;
+            }
+        }
+        return FindFirstPlacement(cells, width, height);
+    }
+
     public static int GetItemIndexAt(IReadOnlyList<int> cells, uint cell)
     {
         ArgumentNullException.ThrowIfNull(cells);

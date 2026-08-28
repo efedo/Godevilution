@@ -771,6 +771,12 @@ external footprint within the native 10x4 grid. Connected native object
 interactions likewise fail closed when an object has no authoritative
 projection; legacy object behavior remains an offline compatibility path.
 
+The native-compatible inventory placement scan now lives in the engine-neutral
+domain layout instead of the Diablo store processor. Sorting, purchases, and
+equipment-displacement planning therefore share one deterministic placement
+primitive while retaining the same dimension-specific scan order and external
+footprint fallback.
+
 Connected native spell targeting now also fails closed when a visible player or
 combat-entity cursor target has no authoritative entity projection, preventing
 presentation-only cursor state from becoming an unintended tile cast for both

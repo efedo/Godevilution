@@ -34,6 +34,10 @@ All notable changes to this fork are documented below.
 - Generalize engine-owned bounded grid navigation to caller-selected goal cells
   and expose its stable neighbor order; Diablo player-minion pursuit now uses
   the shared pathfinder instead of a private breadth-first implementation.
+- Move native-compatible inventory placement ordering into the engine-neutral
+  domain inventory layout; Diablo store sorting, purchases, and equipment
+  displacement now share the same deterministic footprint search, including
+  first-fit handling for validated external footprints.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe
