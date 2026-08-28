@@ -16,7 +16,7 @@ public enum DeterministicGridDirection
 /** Deterministic direction math shared by authoritative grid systems. */
 public static class DeterministicGridDirections
 {
-    private static readonly (int X, int Y)[] Displacements = [
+    private static readonly IReadOnlyList<(int X, int Y)> Displacements = [
         (1, 1),
         (0, 1),
         (-1, 1),
@@ -27,10 +27,14 @@ public static class DeterministicGridDirections
         (1, 0),
     ];
 
+    /** Native direction-indexed displacements shared by movement and combat. */
+    public static IReadOnlyList<(int X, int Y)> AdjacentDisplacements
+        => Displacements;
+
     /** Converts one native adjacent-cell displacement to its facing direction. */
     public static DeterministicGridDirection FromAdjacentStep(int directionX, int directionY)
     {
-        for (var index = 0; index < Displacements.Length; index++) {
+        for (var index = 0; index < Displacements.Count; index++) {
             if (Displacements[index] == (directionX, directionY))
                 return (DeterministicGridDirection)index;
         }

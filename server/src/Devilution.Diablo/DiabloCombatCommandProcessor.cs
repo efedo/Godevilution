@@ -52,16 +52,8 @@ public sealed class DiabloCombatCommandProcessor
         -1, 0, 1, -1, 0, 1, -1, -1, 0, 0, 1, 1, 0, 1, -1, 0,
     ];
 
-    private static readonly (int X, int Y)[] DirectionDisplacements = [
-        (1, 1),
-        (0, 1),
-        (-1, 1),
-        (-1, 0),
-        (-1, -1),
-        (0, -1),
-        (1, -1),
-        (1, 0),
-    ];
+    private static IReadOnlyList<(int X, int Y)> DirectionDisplacements
+        => DeterministicGridDirections.AdjacentDisplacements;
 
     private static readonly int[] SnakeDriftPattern = [1, 1, 0, -1, -1, 0];
 
@@ -4775,8 +4767,8 @@ public sealed class DiabloCombatCommandProcessor
 
     private static int RotateDirection(int direction, int offset)
     {
-        var rotated = (direction + offset) % DirectionDisplacements.Length;
-        return rotated < 0 ? rotated + DirectionDisplacements.Length : rotated;
+        var rotated = (direction + offset) % DirectionDisplacements.Count;
+        return rotated < 0 ? rotated + DirectionDisplacements.Count : rotated;
     }
 
     private (int X, int Y)? FindPhasingDestination(
@@ -5526,7 +5518,7 @@ public sealed class DiabloCombatCommandProcessor
             // Preserve the deterministic compatibility path for targets
             // without a native multiplayer stream.
             retreat = null;
-            for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+            for (var offset = 0; offset < DirectionDisplacements.Count; offset++) {
                 var candidateDirection = offset == 0
                     ? target.FallenFearDirection
                     : offset % 2 == 1
@@ -6668,7 +6660,7 @@ public sealed class DiabloCombatCommandProcessor
                 retreat = FindNativeRandomWalkStepFromRandom(target, direction, players);
             } else {
                 retreat = null;
-                for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+                for (var offset = 0; offset < DirectionDisplacements.Count; offset++) {
                     var candidateDirection = offset == 0
                         ? direction
                         : offset % 2 == 1
@@ -10868,7 +10860,7 @@ public sealed class DiabloCombatCommandProcessor
             // GolumAi sweeps every direction clockwise from its current
             // facing after a failed RandomWalk, without invoking generic
             // navigation. Preserve that bounded native fallback order.
-            for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+            for (var offset = 0; offset < DirectionDisplacements.Count; offset++) {
                 var direction = RotateDirection(minion.Direction, offset);
                 if (FindStepInDirection(minion, direction, players) is not { } step)
                     continue;
@@ -10906,7 +10898,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         var fallbackDirection = RotateDirection(ownerDirection, -1);
-        for (var index = 0; index < DirectionDisplacements.Length; index++) {
+        for (var index = 0; index < DirectionDisplacements.Count; index++) {
             fallbackDirection = RotateDirection(fallbackDirection, 1);
             if (TryBeginPlayerMinionWalk(minion, fallbackDirection, players))
                 return;
@@ -16343,40 +16335,11 @@ public sealed class DiabloCombatCommandProcessor
         int startY,
         int destinationX,
         int destinationY)
-    {
-        var deltaX = destinationX - startX;
-        var deltaY = destinationY - startY;
-        int direction;
-        if (deltaX >= 0) {
-            if (deltaY >= 0) {
-                if (5 * deltaX <= deltaY * 2)
-                    return 1;
-                direction = 0;
-            } else {
-                deltaY = -deltaY;
-                if (5 * deltaX <= deltaY * 2)
-                    return 5;
-                direction = 6;
-            }
-            if (5 * deltaY <= deltaX * 2)
-                direction = 7;
-        } else {
-            deltaX = -deltaX;
-            if (deltaY >= 0) {
-                if (5 * deltaX <= deltaY * 2)
-                    return 1;
-                direction = 2;
-            } else {
-                deltaY = -deltaY;
-                if (5 * deltaX <= deltaY * 2)
-                    return 5;
-                direction = 4;
-            }
-            if (5 * deltaY <= deltaX * 2)
-                direction = 3;
-        }
-        return direction;
-    }
+        => (int)DeterministicGridDirections.Toward(
+            startX,
+            startY,
+            destinationX,
+            destinationY);
 
     private static (int X, int Y) CalculateVelocity(
         int startX,

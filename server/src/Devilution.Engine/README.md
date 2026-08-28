@@ -36,7 +36,8 @@ The engine currently owns:
 - deterministic overflow-safe Bresenham line traversal shared by movement and
   missile line-of-sight checks, with a bounded step limit for malformed inputs;
 - native-compatible eight-way direction sectors, coordinate-to-facing
-  selection, rotation, and adjacent-cell displacement;
+  selection, rotation, and adjacent-cell displacement, including the stable
+  direction-indexed sequence consumed by Diablo combat;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;

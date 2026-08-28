@@ -90,4 +90,21 @@ public sealed class DeterministicGridDirectionsTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => DeterministicGridDirections.GetDisplacement((DeterministicGridDirection)99));
     }
+
+    [Fact]
+    public void AdjacentDisplacementsExposeTheNativeCombatIndexOrder()
+    {
+        Assert.Equal(
+            new[] {
+                (1, 1),
+                (0, 1),
+                (-1, 1),
+                (-1, 0),
+                (-1, -1),
+                (0, -1),
+                (1, -1),
+                (1, 0),
+            },
+            DeterministicGridDirections.AdjacentDisplacements);
+    }
 }

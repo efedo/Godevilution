@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   changing the legacy `objects.tsv` header or breaking older overlays.
 - Bump the Diablo content schema to `1.431.0`; `1.430.0` remains accepted as
   the immediately previous additive contract for existing manifests.
+- Share the engine-owned native direction displacement sequence and sector
+  selection with Diablo combat, removing a duplicate compatibility table while
+  preserving direction indices and extreme-coordinate behavior.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe
