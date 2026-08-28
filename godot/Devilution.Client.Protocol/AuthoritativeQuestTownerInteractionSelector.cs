@@ -91,7 +91,17 @@ public static class AuthoritativeQuestTownerInteractionSelector
             return false;
         }
 
-        return interaction.ItemId == 0 || HasItem(player, interaction.ItemId);
+        if (interaction.ItemId != 0 && !HasItem(player, interaction.ItemId))
+            return false;
+        if (interaction.RequiredItemId != 0) {
+            var hasRequiredItem = HasItem(player, interaction.RequiredItemId);
+            if (interaction.HasRequireItemPresent
+                ? interaction.RequireItemPresent != hasRequiredItem
+                : !hasRequiredItem) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static bool HasItem(PlayerSnapshot player, uint itemId)

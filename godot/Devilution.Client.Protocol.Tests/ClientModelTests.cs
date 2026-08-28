@@ -472,6 +472,53 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void ItemAbsentQuestTownerStageYieldsToDirectHandInWhenRequiredItemIsCarried()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = 77,
+                    PositionY = 43,
+                    VisitedLevelIds = { 0, 17 },
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3019,
+                    Initial = true,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 301901,
+                    QuestId = 3019,
+                    TownerId = 11,
+                    LevelId = 0,
+                    PositionX = 77,
+                    PositionY = 43,
+                    Kind = 0,
+                    MessageId = 283,
+                    RequiredVisitedLevel1 = 17,
+                    RequiredItemId = 2102,
+                    RequireItemPresent = false,
+                },
+            },
+        };
+
+        Assert.Equal(
+            301901U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+
+        snapshot.Players[0].Inventory.Add(new ItemSnapshot {
+            ItemSeed = 42,
+            State = new ItemStateSnapshot { StableItemId = 2102 },
+        });
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+    }
+
+    [Fact]
     public void RejectsExtremeQuestTownerCoordinatesWithoutOverflowing()
     {
         var snapshot = new Snapshot {

@@ -967,6 +967,7 @@ public sealed class AuthoritativeClientModel
                 || interaction.LevelId > ushort.MaxValue
                 || interaction.RequiredVisitedLevel1 > ushort.MaxValue
                 || interaction.RequiredVisitedLevel2 > ushort.MaxValue
+                || interaction.RequiredItemId > ushort.MaxValue
                 || interaction.PositionX < 0
                 || interaction.PositionY < 0
                 || interaction.Kind is < 0 or > 3

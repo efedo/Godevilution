@@ -30,7 +30,9 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
     bool AllowCompleted = false,
     uint RequiredVisitedLevel1 = 0,
     uint RequiredVisitedLevel2 = 0,
-    bool RequireUnlogged = false);
+    bool RequireUnlogged = false,
+    uint RequiredItemId = 0,
+    bool RequireItemPresent = true);
 
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
@@ -51,6 +53,7 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 || definition.PositionY < 0
                 || definition.RequiredVisitedLevel1 > ushort.MaxValue
                 || definition.RequiredVisitedLevel2 > ushort.MaxValue
+                || definition.RequiredItemId > ushort.MaxValue
                 || !Enum.IsDefined(definition.Kind)
                 || definition.RequiredVariable1 is < -1 or > byte.MaxValue
                 || definition.RequiredVariable2 is < -1 or > byte.MaxValue
@@ -122,11 +125,14 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
     {
         ArgumentNullException.ThrowIfNull(items);
         foreach (var definition in definitions) {
-            if (definition.ItemId == 0)
-                continue;
-            if (!items.TryGet(definition.ItemId, out _))
+            if (definition.ItemId != 0
+                && !items.TryGet(definition.ItemId, out _))
                 throw new InvalidDataException(
                     $"Quest/towner interaction {definition.InteractionId} references unknown item {definition.ItemId}.");
+            if (definition.RequiredItemId != 0
+                && !items.TryGet(definition.RequiredItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest/towner interaction {definition.InteractionId} references unknown required item {definition.RequiredItemId}.");
         }
     }
 
@@ -193,7 +199,13 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 row.OptionalBoolean("allow_completed", false),
                 row.OptionalUInt32("required_visited_level1"),
                 row.OptionalUInt32("required_visited_level2"),
-                row.OptionalBoolean("require_unlogged", false))));
+                row.OptionalBoolean("require_unlogged", false),
+                AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "required_item_id",
+                    "required_item_symbol"),
+                row.OptionalBoolean("require_item_present", true))));
     }
 
     private static AuthoritativeQuestTownerInteractionKind ParseKind(

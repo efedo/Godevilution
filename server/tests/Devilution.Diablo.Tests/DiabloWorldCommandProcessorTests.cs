@@ -2559,6 +2559,89 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireLittleGirlUsesItemAbsenceForConversationAndDirectTheodoreHandIn()
+    {
+        var items = new AuthoritativeItemCatalog([
+            CreateQuestItem(2102),
+            CreateQuestItem(171),
+        ]);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(301901, 3019, 11, 0, 77, 43, 0,
+                AuthoritativeQuestTownerInteractionKind.Activate,
+                Variable1: 1,
+                MessageId: 283,
+                ConsumeItem: false,
+                RequiredVisitedLevel1: 17,
+                RequireUnlogged: true,
+                RequiredItemId: 2102,
+                RequireItemPresent: false),
+            new(301902, 3019, 11, 0, 77, 43, 0,
+                AuthoritativeQuestTownerInteractionKind.Dialogue,
+                RequiredVariable1: 1,
+                MessageId: 284,
+                ConsumeItem: false,
+                RequiredItemId: 2102,
+                RequireItemPresent: false),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3019,
+            17,
+            1,
+            active: false,
+            logged: false,
+            variable1: 0,
+            turnInTownerId: 11,
+            turnInLevelId: 0,
+            turnInPositionX: 77,
+            turnInPositionY: 43,
+            turnInItemId: 2102,
+            turnInMessageId: 285,
+            turnInRewardItemId: 171,
+            turnInRewardItemLevel: 13,
+            turnInRewardPositionX: 77,
+            turnInRewardPositionY: 43);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 77, positionY: 43);
+        player.MarkLevelVisited(17);
+
+        var activation = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3019, 11),
+            1,
+            [player]);
+        Assert.True(activation.Succeeded, activation.Failure?.ToString());
+        Assert.Equal((true, true, 1, 283),
+            (quest.Active, quest.Logged, quest.Variable1, Assert.Single(activation.Events).MessageId));
+
+        var activeDialogue = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3019, 11),
+            2,
+            [player]);
+        Assert.True(activeDialogue.Succeeded, activeDialogue.Failure?.ToString());
+        Assert.Equal(284, Assert.Single(activeDialogue.Events).MessageId);
+        Assert.True(quest.Active);
+
+        player.Inventory.Add(CreateQuestOwnedItem(items, 2102, 42));
+        var completion = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3019, 11),
+            3,
+            [player]);
+        Assert.True(completion.Succeeded, completion.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(285, Assert.Single(completion.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(171U, reward.State.StableItemId);
+        Assert.Equal((77, 43), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void ContentOwnedActivationCanAdvanceAnActiveQuestWhenItsVariableGateMatches()
     {
         var interactions = new AuthoritativeQuestTownerInteractionCatalog([

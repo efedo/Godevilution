@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the Hellfire Little Girl's opening and active dialogue through
+  authored quest/towner stages. New required-item presence metadata keeps those
+  itemless branches from intercepting the server-owned Theodore hand-in while
+  preserving the native visited-level gate and dialogue messages while keeping
+  the existing `1.434.0` content identity backward compatible.
+
 - Add a validated `--starting-level` authoritative-server override for new
   participants. Development and live-client fixtures can now select an
   authored content level explicitly, avoiding accidental interaction with

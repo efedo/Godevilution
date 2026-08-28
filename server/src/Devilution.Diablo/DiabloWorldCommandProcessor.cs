@@ -2319,6 +2319,14 @@ public sealed class DiabloWorldCommandProcessor
                      .OrderBy(definition => definition.InteractionId)) {
             if (!IsQuestTownerInteractionActive(player, quest, interaction))
                 continue;
+            if (!IsRequiredItemConditionSatisfied(player, interaction)) {
+                // A missing item-present gate still owns the interaction and
+                // must prevent a fallback turn-in from mutating the quest.
+                if (interaction.RequiredItemId != 0
+                    && interaction.RequireItemPresent)
+                    hasActiveInteraction = true;
+                continue;
+            }
             hasActiveInteraction = true;
             if (interaction.LevelId != player.LevelId
                 || DeterministicGridMetrics.ChebyshevDistance(
@@ -2375,6 +2383,18 @@ public sealed class DiabloWorldCommandProcessor
                 });
         }
         return null;
+    }
+
+    private bool IsRequiredItemConditionSatisfied(
+        AuthoritativePlayerState player,
+        AuthoritativeQuestTownerInteractionDefinition interaction)
+    {
+        if (interaction.RequiredItemId == 0)
+            return true;
+        if (items is null || !items.TryGet(interaction.RequiredItemId, out var itemDefinition))
+            return false;
+        var hasItem = TryFindPlayerItem(player, itemDefinition, consume: false, out _);
+        return interaction.RequireItemPresent == hasItem;
     }
 
     private static bool IsQuestTownerInteractionActive(

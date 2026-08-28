@@ -318,6 +318,8 @@ internal static class DiabloProtocolMapper
                 RequiredVisitedLevel1 = interaction.RequiredVisitedLevel1,
                 RequiredVisitedLevel2 = interaction.RequiredVisitedLevel2,
                 RequireUnlogged = interaction.RequireUnlogged,
+                RequiredItemId = interaction.RequiredItemId,
+                RequireItemPresent = interaction.RequireItemPresent,
             };
             if (interaction.RequiredVariable1 >= 0)
                 projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;
@@ -723,6 +725,7 @@ internal static class DiabloProtocolMapper
                 || interaction.LevelId > ushort.MaxValue
                 || interaction.RequiredVisitedLevel1 > ushort.MaxValue
                 || interaction.RequiredVisitedLevel2 > ushort.MaxValue
+                || interaction.RequiredItemId > ushort.MaxValue
                 || interaction.PositionX < 0
                 || interaction.PositionY < 0
                 || interaction.Kind is < AuthoritativeQuestTownerInteractionKind.Activate

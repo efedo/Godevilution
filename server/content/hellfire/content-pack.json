@@ -96,6 +96,11 @@
       "mode": "upsert"
     },
     {
+      "table": "quest_towner_interactions.tsv",
+      "keys": ["interaction_id"],
+      "mode": "upsert"
+    },
+    {
       "table": "objects.tsv",
       "keys": ["entity_id"],
       "mode": "upsert"

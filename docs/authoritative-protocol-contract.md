@@ -308,6 +308,11 @@ state. The server and clients apply the same variable gate before presenting
 or executing that stage. Field 18, `require_unlogged`, preserves native
 branches that are available only while the quest-log bit is clear; the server
 and clients reject the stage after the quest is logged.
+Fields 19-20 carry an optional required item identity and presence polarity.
+An item-present stage retains the existing item gate; an item-absent stage is
+available only when the player does not carry that item. This supports native
+conversation branches that must yield to a direct item hand-in, including the
+Hellfire Little Girl opening and active dialogue.
 
 `PlayerSnapshot.visited_level_ids` is the canonical per-player visitation set.
 The server marks a level when the player enters it through a warp, portal, or

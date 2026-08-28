@@ -3183,7 +3183,7 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(10, mushroomInteractions.Count);
+        Assert.Equal(12, mushroomInteractions.Count);
         Assert.Equal(
             [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
@@ -3194,7 +3194,9 @@ public sealed class ShippedContentTests
              (300207U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 115),
              (300208U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 88),
              (300209U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 39),
-             (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39)],
+             (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39),
+             (301901U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 283),
+             (301902U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, 1, -1, 284)],
             mushroomInteractions.Select(interaction => (
                 interaction.InteractionId,
                 interaction.TownerId,
@@ -3234,6 +3236,18 @@ public sealed class ShippedContentTests
         var poisonedWaterFallback = mushroomInteractions.Single(
             interaction => interaction.InteractionId == 300210);
         Assert.True(poisonedWaterFallback.RequireUnlogged);
+        var girlActivation = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301901);
+        Assert.Equal((17U, 2102U, false), (
+            girlActivation.RequiredVisitedLevel1,
+            girlActivation.RequiredItemId,
+            girlActivation.RequireItemPresent));
+        var girlDialogue = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301902);
+        Assert.Equal((1, 2102U, false), (
+            girlDialogue.RequiredVariable1,
+            girlDialogue.RequiredItemId,
+            girlDialogue.RequireItemPresent));
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,

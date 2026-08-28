@@ -981,6 +981,10 @@ message QuestTownerInteractionSnapshot {
 	uint32 required_visited_level2 = 17;
 	// Whether the stage requires the native quest-log bit to remain clear.
 	bool require_unlogged = 18;
+	// Optional item identity whose presence or absence gates the stage.
+	uint32 required_item_id = 19;
+	// Whether required_item_id must be present; omitted defaults to present.
+	optional bool require_item_present = 20;
 }
 
 message ProjectileSnapshot {
