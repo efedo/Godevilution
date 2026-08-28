@@ -14,6 +14,8 @@ All notable changes to this fork are documented below.
   path.
 - Widen Godot monster movement deltas during snapshot validation so malformed
   coordinates fail as invalid snapshots instead of overflowing first.
+- Correct the shipped Etherealize native spell identity from `ItemRepair` (26)
+  to the native `Etherealize` ID (25), including catalog fixtures.
 - Make shared bounded crawl searches skip overflowing candidate coordinates,
   keeping raw client target cells fail-closed across authoritative placement
   and target-search paths.

@@ -26073,7 +26073,7 @@ public sealed class DiabloCombatCommandProcessorTests
     private static AuthoritativeSpellDefinition CreateEtherealizeSpell()
     {
         return new AuthoritativeSpellDefinition(53, 100, 0, 53, uint.MaxValue, 0) {
-            NativeSpellId = 26,
+            NativeSpellId = 25,
             Range = 1,
             DamageType = AuthoritativeDamageType.Magic,
             ProjectileLifetime = 1,

@@ -382,7 +382,7 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
-    public void ShippedEtherealizeCarriesNativeLevelScopedStatusIdentity()
+    public void ShippedEtherealizeCarriesNativeSpellIdentity()
     {
         var path = Path.Combine(
             FindRepositoryRoot(),
@@ -393,7 +393,7 @@ public sealed class AuthoritativeSpellCatalogTests
         var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(53, out var etherealize));
-        Assert.Equal(26U, etherealize.NativeSpellId);
+        Assert.Equal(25U, etherealize.NativeSpellId);
         Assert.Equal(AuthoritativeProjectileBehavior.Etherealize, etherealize.ProjectileBehavior);
         Assert.Equal(53U, etherealize.StatusEffectId);
         Assert.Equal(uint.MaxValue, etherealize.StatusDuration);
