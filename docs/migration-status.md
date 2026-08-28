@@ -2,6 +2,10 @@
 
 Status date: 2026-08-27
 
+Damage-targeted casts now reject raw coordinates outside the active level
+before distance arithmetic, keeping malformed client spell targets fail-closed
+instead of allowing integer-overflow exceptions during authoritative admission.
+
 Shared bounded crawl searches now skip candidate coordinates that overflow the
 integer domain, so raw client target cells fail closed across teleport, stone
 curse, wall, portal, and berserk placement paths instead of faulting a session.

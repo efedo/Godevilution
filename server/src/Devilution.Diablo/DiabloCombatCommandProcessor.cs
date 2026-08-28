@@ -1953,6 +1953,10 @@ public sealed class DiabloCombatCommandProcessor
             centerY = healOtherTarget.PositionY;
         }
         if ((hasDamage || isBerserk) && !isSelfCenteredFlash && !isApocalypse && !isRingOfFire) {
+            if (intent.TargetEntityId == 0
+                && !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)) {
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
             if (isBerserk) {
                 target = FindBerserkTarget(
                     player.LevelId,

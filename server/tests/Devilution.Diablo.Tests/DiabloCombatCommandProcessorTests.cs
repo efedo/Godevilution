@@ -18586,6 +18586,34 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void DamageCastRejectsOutOfLevelRawCoordinatesBeforeDistanceArithmetic()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireboltSpell()]));
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 1000,
+            manaMaximum: 1000,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                int.MinValue,
+                int.MinValue,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(1000, player.Mana);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void FireboltPlayerHitUsesConfiguredDirectMagicAccuracyBounds()
     {
         var world = new DiabloWorldState();
