@@ -2088,6 +2088,11 @@ public sealed class DiabloCombatCommandProcessor
         var guardianSpawnPosition = isGuardian
             ? FindGuardianSpawnPosition(player, centerX, centerY, spell, players)
             : null;
+        if (isGolem
+            && intent.TargetEntityId == 0
+            && !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)) {
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
         var golemSpawnPosition = isGolem
             ? FindGolemSpawnPosition(player, centerX, centerY, players)
             : null;
@@ -2116,6 +2121,7 @@ public sealed class DiabloCombatCommandProcessor
             if (worldCommands is null
                 || player.LevelId == rules.TownLevelId
                 || intent.TargetEntityId != 0
+                || !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
                 || Math.Max(
                     Math.Abs(intent.TargetX - player.PositionX),
                     Math.Abs(intent.TargetY - player.PositionY)) > spell.Range
@@ -2146,6 +2152,7 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (isGolem) {
             if (intent.TargetEntityId != 0
+                || !world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
                 || Math.Max(
                     Math.Abs(intent.TargetX - player.PositionX),
                     Math.Abs(intent.TargetY - player.PositionY)) > spell.Range

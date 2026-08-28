@@ -6,6 +6,10 @@ Damage-targeted casts now reject raw coordinates outside the active level
 before distance arithmetic, keeping malformed client spell targets fail-closed
 instead of allowing integer-overflow exceptions during authoritative admission.
 
+Town Portal and Golem casts apply the same active-level coordinate gate before
+their range checks or spawn searches, covering special casts that do not enter
+the damage-target resolution branch.
+
 Shared bounded crawl searches now skip candidate coordinates that overflow the
 integer domain, so raw client target cells fail closed across teleport, stone
 curse, wall, portal, and berserk placement paths instead of faulting a session.

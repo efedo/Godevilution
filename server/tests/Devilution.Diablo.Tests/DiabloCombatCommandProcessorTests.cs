@@ -387,6 +387,39 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TownPortalRejectsOutOfLevelRawCoordinatesBeforeDistanceArithmetic()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTownPortalSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            levelId: 1,
+            entityId: 7,
+            mana: 3000,
+            manaMaximum: 3000,
+            memorizedSpells: [new MemorizedSpellState(39, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                39,
+                0,
+                int.MinValue,
+                int.MinValue,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(3000, player.Mana);
+        Assert.Empty(world.Portals);
+    }
+
+    [Fact]
     public void AttackAppliesDamageExperienceDropAndOrderedEvents()
     {
         var target = new AuthoritativeCombatTarget(
@@ -20273,6 +20306,36 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(13, secondGolem.PositionX);
         Assert.Equal(10, secondGolem.PositionY);
         Assert.Equal(7U, secondGolem.OwnerPlayerId);
+    }
+
+    [Fact]
+    public void GolemCastRejectsOutOfLevelRawCoordinatesBeforeDistanceArithmetic()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateGolemSpell()]));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(52, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                52,
+                0,
+                int.MinValue,
+                int.MinValue,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(20000, player.Mana);
+        Assert.Empty(world.CombatTargets);
     }
 
     [Fact]

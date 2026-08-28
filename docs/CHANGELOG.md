@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   remain follow-up work.
 - Reject out-of-level raw damage-cast coordinates before distance arithmetic,
   so malformed client spell targets fail closed during authoritative admission.
+- Extend the raw cast-coordinate boundary to Town Portal and Golem range checks
+  and spawn searches, covering special casts outside the shared damage-target
+  path.
 - Make shared bounded crawl searches skip overflowing candidate coordinates,
   keeping raw client target cells fail-closed across authoritative placement
   and target-search paths.
