@@ -1821,6 +1821,11 @@ public sealed class ReplayFixtureTests
             executor,
             new AuthoritativeCommandServer(executor));
 
+        Assert.Equal(
+            [1U, 8U],
+            result.InitialSnapshot.Players
+                .OrderBy(player => player.EntityId)
+                .Select(player => player.EntityId));
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         var players = result.FinalSnapshot.Players.OrderBy(player => player.EntityId).ToArray();
         Assert.Equal([1U, 8U], players.Select(player => player.EntityId));
@@ -1831,6 +1836,21 @@ public sealed class ReplayFixtureTests
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
         Assert.Equal(fixture.Checkpoints[^1].StateSha256, result.FinalSnapshot.StateSha256);
+
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var restored = new StoreSimulationExecutor(new StoreCatalog(), startingGold: 0);
+        // Import in the opposite order as the replay setup to prove that the
+        // persisted participant set and visited-level state do not depend on
+        // which reconnecting session is restored first.
+        restored.ImportPlayerSave(secondary.Player, executor.ExportPlayerSave(secondary.Player));
+        restored.ImportPlayerSave(fixture.InitialState.Player, executor.ExportPlayerSave(fixture.InitialState.Player));
+        var restoredSnapshot = restored.CreateSnapshot(fixture.InitialState.Player, 1, result.FinalSnapshot.Tick);
+
+        Assert.Equal(result.FinalSnapshot.StateSha256, restoredSnapshot.StateSha256);
+        var restoredSecondary = Assert.Single(
+            restoredSnapshot.Players,
+            player => player.EntityId == secondary.EntityId);
+        Assert.Equal([1U, 2U], restoredSecondary.VisitedLevelIds.OrderBy(levelId => levelId));
     }
 
     [Fact]

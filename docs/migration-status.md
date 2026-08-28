@@ -25,6 +25,10 @@ their legacy bookkeeping contract, documented in the entity-pool guides, while
 focused GTest coverage protects the container behavior used by future
 presentation-pool extraction.
 
+The shared secondary-portal replay now captures a complete initial participant
+set and verifies reverse-order save restoration, preserving the secondary
+participant's visited-level history across a reconnect-style reconstruction.
+
 The generic host now exposes the active combined ruleset identity and retired
 generation count through the live server status surface. Operators can verify
 that a replacement was published and that old generations were drained without

@@ -26,7 +26,6 @@ public static class ReplayFixtureExecutor
         ArgumentNullException.ThrowIfNull(commandServer);
 
         var sessionId = fixture.InitialState.Player;
-        var initialSnapshot = executor.CreateSnapshot(sessionId, entityId, 0);
         if (fixture.InitialState.SecondaryPlayer is { } secondary) {
             if (string.Equals(sessionId, secondary.Player, StringComparison.Ordinal)
                 || secondary.EntityId == entityId) {
@@ -76,6 +75,10 @@ public static class ReplayFixtureExecutor
                 secondary.EntityId,
                 0);
         }
+        // Capture only after every fixture participant has been registered so
+        // the replay's initial snapshot has the same complete participant set
+        // as later authoritative snapshots and reconnect captures.
+        var initialSnapshot = executor.CreateSnapshot(sessionId, entityId, 0);
         if (initialSnapshot.RandomState != checked((uint)fixture.RngSeed)) {
             throw new InvalidDataException(
                 $"Replay RNG seed mismatch: fixture {fixture.RngSeed}, simulation {initialSnapshot.RandomState}.");

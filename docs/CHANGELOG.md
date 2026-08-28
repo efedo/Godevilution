@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make multiplayer replay initial snapshots complete before command execution
+  and add a secondary-portal persistence round-trip that restores both
+  participants and visited-level history in reverse reconnect order.
 - Initialize the generic entity-pool free-list at construction, make repeated
   releases harmless, and correctly pack dense-pool elements after deletion;
   restore the referenced entity-pool contract and modernization guides with

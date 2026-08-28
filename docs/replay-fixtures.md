@@ -328,7 +328,10 @@ boundary in both runners.
 `gameplay-multiplayer-secondary-portal.json` routes a portal transition from
 the secondary participant while the primary remains on its original level. The
 fixture proves session-specific world-command routing, level/position
-projection, and per-participant visited-level history in both runners.
+projection, and per-participant visited-level history in both runners. The
+managed replay harness also captures both participants in its initial snapshot
+and round-trips the resulting two-session state through persistence in reverse
+restore order, covering reconnect reconstruction of the secondary history.
 
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified
