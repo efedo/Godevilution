@@ -55,6 +55,7 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 		serverHello.mutable_server_hello()->set_server_build_id("server");
 		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
 		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_ruleset_identity_hash("ruleset");
 		serverHello.mutable_server_hello()->set_tick_rate_hz(20);
 		serverHello.mutable_server_hello()->set_session_token("session");
 		serverHello.mutable_server_hello()->set_game_mode(protocol::GAME_MODE_MULTIPLAYER);
@@ -63,6 +64,8 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 		protocol::Envelope initialSnapshot;
 		initialSnapshot.mutable_snapshot()->set_tick(11);
 		initialSnapshot.mutable_snapshot()->set_state_sha256("initial-state");
+		initialSnapshot.mutable_snapshot()->set_content_manifest_hash("content");
+		initialSnapshot.mutable_snapshot()->set_ruleset_identity_hash("ruleset");
 		WriteEnvelope(socket, initialSnapshot);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);
@@ -85,6 +88,8 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 		protocol::Envelope snapshot;
 		snapshot.mutable_snapshot()->set_tick(12);
 		snapshot.mutable_snapshot()->set_state_sha256("state");
+		snapshot.mutable_snapshot()->set_content_manifest_hash("reloaded-content");
+		snapshot.mutable_snapshot()->set_ruleset_identity_hash("reloaded-ruleset");
 		WriteEnvelope(socket, snapshot);
 		serverObservedExpectedMessages = true;
 	});
@@ -103,6 +108,8 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 	ASSERT_TRUE(client.has_value()) << client.error();
 	ASSERT_EQ((*client)->ServerHello().session_token(), "session");
 	EXPECT_EQ((*client)->ServerHello().game_mode(), protocol::GAME_MODE_MULTIPLAYER);
+	EXPECT_EQ((*client)->ServerHello().content_manifest_hash(), "content");
+	EXPECT_EQ((*client)->ServerHello().ruleset_identity_hash(), "ruleset");
 	auto initialSnapshot = (*client)->ReadSnapshot();
 	ASSERT_TRUE(initialSnapshot.has_value()) << initialSnapshot.error();
 	EXPECT_EQ(initialSnapshot->tick(), 11U);
@@ -122,6 +129,10 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 	ASSERT_TRUE(snapshot.has_value()) << snapshot.error();
 	EXPECT_EQ(snapshot->tick(), 12U);
 	EXPECT_EQ(snapshot->state_sha256(), "state");
+	EXPECT_EQ(snapshot->content_manifest_hash(), "reloaded-content");
+	EXPECT_EQ(snapshot->ruleset_identity_hash(), "reloaded-ruleset");
+	EXPECT_EQ((*client)->ServerHello().content_manifest_hash(), "reloaded-content");
+	EXPECT_EQ((*client)->ServerHello().ruleset_identity_hash(), "reloaded-ruleset");
 
 	(*client)->Close();
 	server.join();
@@ -176,6 +187,46 @@ TEST(ServerBackedClient, RequestsAutonomousSnapshotsAfterHandshake)
 	EXPECT_EQ(snapshot->tick(), 25U);
 	EXPECT_EQ(snapshot->state_sha256(), "autonomous-state");
 	(*client)->Close();
+	server.join();
+	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClient, RejectsIncompleteSnapshotIdentity)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool serverObservedExpectedMessages = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		WriteEnvelope(socket, serverHello);
+		protocol::Envelope malformedSnapshot;
+		malformedSnapshot.mutable_snapshot()->set_tick(11);
+		malformedSnapshot.mutable_snapshot()->set_content_manifest_hash("content");
+		WriteEnvelope(socket, malformedSnapshot);
+		serverObservedExpectedMessages = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	ASSERT_FALSE(client.has_value());
+	EXPECT_EQ(client.error(), "The authoritative snapshot contains an incomplete ruleset identity.");
 	server.join();
 	EXPECT_TRUE(serverObservedExpectedMessages);
 }
@@ -338,6 +389,11 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 		initialServerHello.mutable_server_hello()->set_content_manifest_hash("content");
 		initialServerHello.mutable_server_hello()->set_session_token("resume-session");
 		WriteEnvelope(initialSocket, initialServerHello);
+		protocol::Envelope initialSnapshot;
+		initialSnapshot.mutable_snapshot()->set_tick(30);
+		initialSnapshot.mutable_snapshot()->set_content_manifest_hash("reloaded-content");
+		initialSnapshot.mutable_snapshot()->set_ruleset_identity_hash("reloaded-ruleset");
+		WriteEnvelope(initialSocket, initialSnapshot);
 
 		auto firstCommandPayload = EnvelopeCodec::Read(initialSocket);
 		if (!firstCommandPayload.has_value() || !firstCommandPayload->has_value())
@@ -359,18 +415,23 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 		protocol::Envelope resumedHello;
 		if (!resumedHello.ParseFromArray(resumedHelloPayload->value().data(), static_cast<int>(resumedHelloPayload->value().size()))
 		    || resumedHello.payload_case() != protocol::Envelope::kClientHello
-		    || resumedHello.client_hello().resume_token() != "resume-session")
+		    || resumedHello.client_hello().resume_token() != "resume-session"
+		    || resumedHello.client_hello().content_manifest_hash() != "reloaded-content"
+		    || resumedHello.client_hello().ruleset_identity_hash() != "reloaded-ruleset")
 			return;
 
 		protocol::Envelope resumedServerHello;
 		resumedServerHello.mutable_server_hello()->set_protocol_schema_version("1");
-		resumedServerHello.mutable_server_hello()->set_content_manifest_hash("content");
+		resumedServerHello.mutable_server_hello()->set_content_manifest_hash("reloaded-content");
+		resumedServerHello.mutable_server_hello()->set_ruleset_identity_hash("reloaded-ruleset");
 		resumedServerHello.mutable_server_hello()->set_session_token("resume-session");
 		WriteEnvelope(resumedSocket, resumedServerHello);
 
 		protocol::Envelope resynchronizationSnapshot;
 		resynchronizationSnapshot.mutable_snapshot()->set_tick(40);
 		resynchronizationSnapshot.mutable_snapshot()->set_state_sha256("resynchronized-state");
+		resynchronizationSnapshot.mutable_snapshot()->set_content_manifest_hash("reloaded-content");
+		resynchronizationSnapshot.mutable_snapshot()->set_ruleset_identity_hash("reloaded-ruleset");
 		WriteEnvelope(resumedSocket, resynchronizationSnapshot);
 
 		auto resentCommandsPayload = EnvelopeCodec::Read(resumedSocket);
@@ -402,6 +463,7 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 		.clientBuildId = "client",
 		.protocolSchemaVersion = "1",
 		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
 	};
 	auto client = ServerBackedClient::Connect(configuration);
 	ASSERT_TRUE(client.has_value()) << client.error();

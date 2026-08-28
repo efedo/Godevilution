@@ -87,6 +87,7 @@ private:
 	tl::expected<void, std::string> ConnectTransport(bool expectInitialSnapshot);
 	tl::expected<protocol::Envelope, std::string> ReadEnvelope();
 	tl::expected<void, std::string> WriteEnvelope(const protocol::Envelope &envelope);
+	tl::expected<void, std::string> ObserveSnapshotIdentity(const protocol::Snapshot &snapshot);
 	[[nodiscard]] std::string WriteHandshakeDiagnosticDump(std::string_view reason, const protocol::Envelope *response) const noexcept;
 
 	asio::io_context ioContext_;

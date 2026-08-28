@@ -143,6 +143,8 @@ tl::expected<void, std::string> ServerBackedClient::ConnectTransport(bool expect
 	}
 
 	serverHello_ = response->server_hello();
+	configuration_.contentManifestHash = serverHello_.content_manifest_hash();
+	configuration_.rulesetIdentityHash = serverHello_.ruleset_identity_hash();
 	if (!serverHello_.session_token().empty())
 		configuration_.resumeToken = serverHello_.session_token();
 	if (expectInitialSnapshot) {
@@ -151,6 +153,8 @@ tl::expected<void, std::string> ServerBackedClient::ConnectTransport(bool expect
 			return tl::make_unexpected(initialSnapshot.error());
 		if (initialSnapshot->payload_case() != protocol::Envelope::kSnapshot)
 			return tl::make_unexpected(ProtocolErrorMessage(*initialSnapshot));
+		if (auto identity = ObserveSnapshotIdentity(initialSnapshot->snapshot()); !identity.has_value())
+			return identity;
 		pendingSnapshot_ = initialSnapshot->snapshot();
 	}
 	return {};
@@ -231,6 +235,8 @@ tl::expected<protocol::Snapshot, std::string> ServerBackedClient::ReadSnapshot()
 	if (pendingSnapshot_.has_value()) {
 		protocol::Snapshot snapshot = std::move(*pendingSnapshot_);
 		pendingSnapshot_.reset();
+		if (auto identity = ObserveSnapshotIdentity(snapshot); !identity.has_value())
+			return tl::make_unexpected(identity.error());
 		return snapshot;
 	}
 
@@ -244,8 +250,25 @@ tl::expected<protocol::Snapshot, std::string> ServerBackedClient::ReadSnapshot()
 		}
 		if (response->payload_case() != protocol::Envelope::kSnapshot)
 			return tl::make_unexpected(ProtocolErrorMessage(*response));
+		if (auto identity = ObserveSnapshotIdentity(response->snapshot()); !identity.has_value())
+			return tl::make_unexpected(identity.error());
 		return response->snapshot();
 	}
+}
+
+tl::expected<void, std::string> ServerBackedClient::ObserveSnapshotIdentity(const protocol::Snapshot &snapshot)
+{
+	const bool hasContentManifestHash = !snapshot.content_manifest_hash().empty();
+	const bool hasRulesetIdentityHash = !snapshot.ruleset_identity_hash().empty();
+	if (!hasContentManifestHash && !hasRulesetIdentityHash)
+		return {};
+	if (hasContentManifestHash != hasRulesetIdentityHash)
+		return tl::make_unexpected(std::string("The authoritative snapshot contains an incomplete ruleset identity."));
+	serverHello_.set_content_manifest_hash(snapshot.content_manifest_hash());
+	serverHello_.set_ruleset_identity_hash(snapshot.ruleset_identity_hash());
+	configuration_.contentManifestHash = snapshot.content_manifest_hash();
+	configuration_.rulesetIdentityHash = snapshot.ruleset_identity_hash();
+	return {};
 }
 
 tl::expected<protocol::Snapshot, std::string> ServerBackedClient::RequestSnapshot()

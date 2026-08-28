@@ -31,6 +31,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private ulong nextClientSequence;
     private long lastSnapshotRequestMs;
     private double roundTripMilliseconds = 100;
+    private string effectiveContentManifestHash;
+    private string effectiveRulesetIdentityHash;
 
     public string SessionToken { get; private set; } = string.Empty;
 
@@ -50,6 +52,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public AuthoritativeClient(ClientConnectionOptions options)
     {
         this.options = options ?? throw new ArgumentNullException(nameof(options));
+        effectiveContentManifestHash = options.ContentManifestHash;
+        effectiveRulesetIdentityHash = options.RulesetIdentityHash;
     }
 
     public bool IsConnected => Volatile.Read(ref transportConnected) == 1;
@@ -74,13 +78,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             throw new InvalidOperationException("The authoritative client is already connected.");
         if (!ClientConnectionOptions.TryValidateEndpoint(options.Host, options.Port, out var endpointError))
             throw new InvalidOperationException(endpointError);
-        if (string.IsNullOrWhiteSpace(options.ContentManifestHash))
+        if (string.IsNullOrWhiteSpace(effectiveContentManifestHash))
             throw new InvalidOperationException("DEVILUTION_CONTENT_HASH must match the server manifest before connecting.");
         if (string.Equals(
                 options.ProtocolSchemaVersion,
                 ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
                 StringComparison.Ordinal)
-            && string.IsNullOrWhiteSpace(options.RulesetIdentityHash))
+            && string.IsNullOrWhiteSpace(effectiveRulesetIdentityHash))
             throw new InvalidOperationException(
                 "DEVILUTION_RULESET_HASH is required by this protocol version.");
 
@@ -91,8 +95,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var clientHello = new ClientHello {
                 ClientBuildId = options.ClientBuildId,
                 ProtocolSchemaVersion = options.ProtocolSchemaVersion,
-                ContentManifestHash = options.ContentManifestHash,
-                RulesetIdentityHash = options.RulesetIdentityHash,
+                ContentManifestHash = effectiveContentManifestHash,
+                RulesetIdentityHash = effectiveRulesetIdentityHash,
                 ResumeToken = string.IsNullOrWhiteSpace(SessionToken) ? options.ResumeToken : SessionToken,
             };
             if (options.RequestedCharacterClassId.HasValue) {
@@ -110,15 +114,17 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (hello.PayloadCase != Envelope.PayloadOneofCase.ServerHello)
                 throw new InvalidDataException("The first server response must be ServerHello.");
             if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
-                || hello.ServerHello.ContentManifestHash != options.ContentManifestHash
-                || (!string.IsNullOrWhiteSpace(options.RulesetIdentityHash)
-                    && hello.ServerHello.RulesetIdentityHash != options.RulesetIdentityHash)
+                || hello.ServerHello.ContentManifestHash != effectiveContentManifestHash
+                || (!string.IsNullOrWhiteSpace(effectiveRulesetIdentityHash)
+                    && hello.ServerHello.RulesetIdentityHash != effectiveRulesetIdentityHash)
                 || hello.ServerHello.GameMode is not (GameMode.SinglePlayer or GameMode.Multiplayer))
                 throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");
 
             SessionToken = hello.ServerHello.SessionToken;
             ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
             ServerGameMode = hello.ServerHello.GameMode;
+            effectiveContentManifestHash = hello.ServerHello.ContentManifestHash;
+            effectiveRulesetIdentityHash = hello.ServerHello.RulesetIdentityHash;
             ServerIdentity = new AuthoritativeServerIdentity(
                 hello.ServerHello.ServerBuildId,
                 hello.ServerHello.ProtocolSchemaVersion,
@@ -317,6 +323,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 ContentManifestHash = snapshot.ContentManifestHash,
                 RulesetIdentityHash = snapshot.RulesetIdentityHash,
             };
+        effectiveContentManifestHash = snapshot.ContentManifestHash;
+        effectiveRulesetIdentityHash = snapshot.RulesetIdentityHash;
         return true;
     }
 

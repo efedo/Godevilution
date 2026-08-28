@@ -60,6 +60,13 @@ authoritative rules. The standalone server defaults to multiplayer; a local
 single-player launch passes `--game-mode single-player` while using the same
 protocol and server implementation.
 
+The accepted handshake identity is retained and refreshed from each complete
+authoritative snapshot, and the refreshed values are used on reconnect. This
+lets a connected native client observe a successful live ruleset replacement
+without changing gameplay state or falling back to local simulation. A snapshot
+that supplies only one of the two identity fields is rejected before
+presentation.
+
 Authoritative player snapshots also project the stable content class ID into
 the native hero-class enum before applying class-dependent attributes. The
 compatibility client rejects an unsupported class ID instead of silently

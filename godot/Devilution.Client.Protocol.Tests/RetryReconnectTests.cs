@@ -71,14 +71,8 @@ public sealed class RetryReconnectTests
             "content-hash"));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
-        var identity = new AuthoritativeServerIdentity(
-            "test-server",
-            "0.1.0",
-            "content-hash",
-            "content-hash",
-            20,
-            GameMode.SinglePlayer);
-        Assert.Equal(identity, client.ServerIdentity);
+        Assert.Equal("reloaded-content", client.ServerIdentity!.ContentManifestHash);
+        Assert.Equal("reloaded-ruleset", client.ServerIdentity.RulesetIdentityHash);
         var sessionToken = client.SessionToken;
         _ = client.DrainMessages();
         for (var attempt = 0; attempt < 50 && client.IsConnected; attempt++)
@@ -92,7 +86,8 @@ public sealed class RetryReconnectTests
         await client.PollAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(sessionToken, client.SessionToken);
-        Assert.Equal(identity, client.ServerIdentity);
+        Assert.Equal("reloaded-content", client.ServerIdentity!.ContentManifestHash);
+        Assert.Equal("reloaded-ruleset", client.ServerIdentity.RulesetIdentityHash);
         var snapshot = Assert.Single(client.DrainMessages()).Snapshot;
         Assert.NotNull(snapshot);
         Assert.Equal(9UL, snapshot!.Tick);
@@ -182,25 +177,37 @@ public sealed class RetryReconnectTests
     {
         using (var firstClient = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
             await using var stream = firstClient.GetStream();
-            await CompleteHandshakeAsync(stream, "same-instance-token", 7);
+            await CompleteHandshakeAsync(
+                stream,
+                "same-instance-token",
+                7,
+                contentManifestHash: "reloaded-content",
+                rulesetIdentityHash: "reloaded-ruleset");
         }
         using (var resumedClient = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
             await using var stream = resumedClient.GetStream();
             var hello = await ReadEnvelopeAsync(stream);
             Assert.Equal("same-instance-token", hello.ClientHello.ResumeToken);
+            Assert.Equal("reloaded-content", hello.ClientHello.ContentManifestHash);
+            Assert.Equal("reloaded-ruleset", hello.ClientHello.RulesetIdentityHash);
             await WriteEnvelopeAsync(stream, new Envelope {
                 ServerHello = new ServerHello {
                     ServerBuildId = "test-server",
                     ProtocolSchemaVersion = "0.1.0",
-                    ContentManifestHash = "content-hash",
-                    RulesetIdentityHash = "content-hash",
+                    ContentManifestHash = "reloaded-content",
+                    RulesetIdentityHash = "reloaded-ruleset",
                     TickRateHz = 20,
                     SessionToken = "same-instance-token",
                     GameMode = GameMode.SinglePlayer,
                 },
             });
             await WriteEnvelopeAsync(stream, new Envelope {
-                Snapshot = new Snapshot { Tick = 9, Players = { new PlayerSnapshot { EntityId = 7 } } },
+                Snapshot = new Snapshot {
+                    Tick = 9,
+                    ContentManifestHash = "reloaded-content",
+                    RulesetIdentityHash = "reloaded-ruleset",
+                    Players = { new PlayerSnapshot { EntityId = 7 } },
+                },
             });
             var commandEnvelope = await ReadEnvelopeAsync(stream);
             var command = Assert.Single(commandEnvelope.CommandBatch.Commands);
@@ -234,7 +241,12 @@ public sealed class RetryReconnectTests
         listener.Stop();
     }
 
-    private static async Task CompleteHandshakeAsync(NetworkStream stream, string sessionToken, ulong tick)
+    private static async Task CompleteHandshakeAsync(
+        NetworkStream stream,
+        string sessionToken,
+        ulong tick,
+        string? contentManifestHash = null,
+        string? rulesetIdentityHash = null)
     {
         var hello = await ReadEnvelopeAsync(stream);
         Assert.Equal("0.1.0", hello.ClientHello.ProtocolSchemaVersion);
@@ -250,9 +262,12 @@ public sealed class RetryReconnectTests
                 GameMode = GameMode.SinglePlayer,
             },
         });
-        await WriteEnvelopeAsync(stream, new Envelope {
-            Snapshot = new Snapshot { Tick = tick, Players = { new PlayerSnapshot { EntityId = 7 } } },
-        });
+        var snapshot = new Snapshot { Tick = tick, Players = { new PlayerSnapshot { EntityId = 7 } } };
+        if (contentManifestHash is not null)
+            snapshot.ContentManifestHash = contentManifestHash;
+        if (rulesetIdentityHash is not null)
+            snapshot.RulesetIdentityHash = rulesetIdentityHash;
+        await WriteEnvelopeAsync(stream, new Envelope { Snapshot = snapshot });
     }
 
     private static async Task<Envelope> ReadEnvelopeAsync(NetworkStream stream)

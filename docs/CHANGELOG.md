@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend live snapshot identity propagation to both clients, including
+  reconnecting with refreshed identity, fail-closed rejection of incomplete
+  paired metadata, and focused handshake coverage.
 - Add additive snapshot content/ruleset identity metadata. The generic host
   stamps live snapshots after ruleset replacement and the Godot protocol client
   updates its retained identity, without changing canonical gameplay hashes or

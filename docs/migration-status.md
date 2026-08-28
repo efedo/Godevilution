@@ -2,6 +2,11 @@
 
 Status date: 2026-08-28
 
+The native compatibility client now retains the server's content and ruleset
+identity from complete authoritative snapshots and reuses refreshed values on
+reconnect, so live ruleset replacement is visible to both presentation clients
+while malformed paired metadata fails closed at the transport boundaries.
+
 The multiplayer death-suppression replay checkpoint now matches the canonical
 snapshot hash produced after the accumulated additive snapshot fields; the
 complete replay fixture class validates all 76 cases.
