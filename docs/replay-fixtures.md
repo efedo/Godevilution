@@ -132,8 +132,8 @@ fixture.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
-spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-26,
-the native replay gate contains 80 checked-in JSON fixtures and 106 registered
+spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-28,
+the native replay gate contains 81 checked-in JSON fixtures and 107 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -152,7 +152,9 @@ SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
 and BoneDemon MonsterMagic tests passed, including the new Lich block lane and
 the two-projectile MonsterArrow volley, as did
 the focused managed counterparts. The full suites remain
-scheduled for the next periodic verification window.
+scheduled for the next periodic verification window; the newly added
+secondary-portal fixture is managed-verified and registered for the next native
+run.
 
 ## Current Coverage
 
@@ -162,7 +164,8 @@ pickup, status expiry, object-linked quest advancement, deterministic quest-pool
 selection, a 1,000-tick autonomous regeneration soak, a multiplayer
 autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
-occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
+occupancy, a secondary-session portal transition, seeded MonsterArrow
+travel/impact/removal, autonomous GoatRanged and
 SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
 travel, player impact, and secondary-player block, Hellfire HorkDemon Hork Spawn
 admission, multiplayer target selection, decision-delay state,
@@ -321,6 +324,11 @@ the same spawn and post-hit checkpoints.
 secondary participant to an adjacent monster. The fixture proves participant
 identity routing, shared combat-target admission, and the native unarmed damage
 boundary in both runners.
+
+`gameplay-multiplayer-secondary-portal.json` routes a portal transition from
+the secondary participant while the primary remains on its original level. The
+fixture proves session-specific world-command routing and level/position
+projection in both runners.
 
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified

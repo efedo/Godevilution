@@ -1790,6 +1790,49 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerSecondaryPortalTransitionRoutesTheSecondarySession()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-portal.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 40, 40, []));
+        world.AddLevel(new AuthoritativeLevel(2, 40, 40, []));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingManaMaximum: fixture.InitialState.ManaMaximum,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingWorld: world,
+            startingPortals: [new AuthoritativePortal(5, 1, 1, 1, 2, 3, 4)],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var players = result.FinalSnapshot.Players.OrderBy(player => player.EntityId).ToArray();
+        Assert.Equal([1U, 8U], players.Select(player => player.EntityId));
+        Assert.Equal((1U, 0, 0), (players[0].LevelId, players[0].PositionX, players[0].PositionY));
+        Assert.Equal((2U, 3, 4), (players[1].LevelId, players[1].PositionX, players[1].PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+        Assert.Equal(fixture.Checkpoints[^1].StateSha256, result.FinalSnapshot.StateSha256);
+    }
+
+    [Fact]
     public void GameplayHorkDemonDelayMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -3171,7 +3214,7 @@ public sealed class ReplayFixtureTests
             () => ReplayFixtureLoader.Load(json));
 
         Assert.Equal(
-            "Secondary replay participant currently supports Move and Attack commands only.",
+            "Secondary replay participant supports Move, Attack, and UsePortal commands only.",
             exception.Message);
     }
 

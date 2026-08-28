@@ -83,20 +83,87 @@ set(devilutionx_fixtures
   memory_map/player.txt
   memory_map/portal.txt
   memory_map/quest.txt
-  replay/stores/basic-buy.json
-  replay/stores/base-content-purchase.json
-  replay/stores/transaction-parity.json
-  replay/gameplay-movement-combat.json
-  replay/gameplay-elemental-equipment.json
+  replay/gameplay-autonomous-regen-soak.json
+  replay/gameplay-blood-star-autonomous.json
+  replay/gameplay-blood-star-impact.json
+  replay/gameplay-blood-star-multiplayer-target.json
+  replay/gameplay-blood-star-secondary-block.json
+  replay/gameplay-bone-spirit-homing.json
+  replay/gameplay-bone-spirit-pvp.json
+  replay/gameplay-charged-bolt-hellfire-block.json
+  replay/gameplay-charged-bolt-moving-occupancy.json
+  replay/gameplay-charged-bolt-object-collision.json
+  replay/gameplay-charged-bolt-pvp.json
+  replay/gameplay-charged-bolt-resolution.json
+  replay/gameplay-charged-bolt.json
   replay/gameplay-elemental-arrows.json
+  replay/gameplay-elemental-equipment.json
+  replay/gameplay-fireball-hellfire-block.json
+  replay/gameplay-fireball-pvp.json
+  replay/gameplay-fireball-resolution.json
+  replay/gameplay-firebolt-hellfire-block.json
+  replay/gameplay-firebolt-pvp.json
+  replay/gameplay-firebolt-resolution.json
+  replay/gameplay-flash-resolution.json
+  replay/gameplay-gold-pickup-overflow.json
+  replay/gameplay-heal-other-resolution.json
+  replay/gameplay-healing-resolution.json
+  replay/gameplay-hork-spawn-autonomous.json
+  replay/gameplay-hork-spawn-delay.json
+  replay/gameplay-hork-spawn-impact.json
+  replay/gameplay-hork-spawn-miss.json
+  replay/gameplay-hork-spawn-multiplayer-target.json
+  replay/gameplay-hork-spawn-object-break.json
+  replay/gameplay-hork-spawn-primary-block.json
+  replay/gameplay-hork-spawn-secondary-block.json
+  replay/gameplay-hork-spawn-secondary-impact.json
+  replay/gameplay-infravision-resolution.json
+  replay/gameplay-lightning-resolution.json
+  replay/gameplay-mana-shield-resolution.json
+  replay/gameplay-monster-arrow-autonomous.json
+  replay/gameplay-monster-arrow-multiplayer-target.json
+  replay/gameplay-monster-arrow-resolution.json
+  replay/gameplay-monster-arrow-skeleton-ranged.json
+  replay/gameplay-monster-magic-arch-lich.json
+  replay/gameplay-monster-magic-autonomous.json
+  replay/gameplay-monster-magic-bone-demon.json
+  replay/gameplay-monster-magic-miss.json
+  replay/gameplay-monster-magic-multiplayer-target.json
+  replay/gameplay-monster-magic-necromorb.json
+  replay/gameplay-monster-magic-psychorb.json
+  replay/gameplay-monster-magic-secondary-block.json
+  replay/gameplay-monster-magic-secondary-impact.json
+  replay/gameplay-movement-combat.json
+  replay/gameplay-multi-level-occupancy.json
+  replay/gameplay-multiplayer-autonomous-tick.json
+  replay/gameplay-multiplayer-death-suppression.json
+  replay/gameplay-multiplayer-monster-arrow-volley.json
+  replay/gameplay-multiplayer-monster-arrow.json
+  replay/gameplay-multiplayer-secondary-attack.json
+  replay/gameplay-multiplayer-secondary-portal.json
+  replay/gameplay-object-quest.json
+  replay/gameplay-phasing-resolution.json
+  replay/gameplay-player-action-lifecycle.json
   replay/gameplay-player-action-ranged-diablo.json
   replay/gameplay-player-action-ranged-hellfire.json
-  replay/gameplay-spell-cast.json
+  replay/gameplay-player-death-lifecycle.json
+  replay/gameplay-player-equipped-death-drops.json
+  replay/gameplay-player-level-transition.json
+  replay/gameplay-player-restart-town.json
   replay/gameplay-portal-transition.json
-  replay/gameplay-world-item-pickup.json
-  replay/gameplay-object-quest.json
+  replay/gameplay-pvp-ear-death.json
+  replay/gameplay-quest-selection.json
+  replay/gameplay-resurrection-resolution.json
+  replay/gameplay-search-resolution.json
+  replay/gameplay-spell-cast.json
   replay/gameplay-status-expiry.json
-  replay/gameplay-multi-level-occupancy.json
+  replay/gameplay-stone-curse-resolution.json
+  replay/gameplay-teleport-resolution.json
+  replay/gameplay-world-item-pickup.json
+  replay/stores/base-content-purchase.json
+  replay/stores/basic-buy.json
+  replay/stores/gold-topology-parity.json
+  replay/stores/transaction-parity.json
   timedemo/WarriorLevel1to2/demo_0.dmo
   timedemo/WarriorLevel1to2/demo_0_reference_spawn_0.sv
   timedemo/WarriorLevel1to2/spawn_0.sv

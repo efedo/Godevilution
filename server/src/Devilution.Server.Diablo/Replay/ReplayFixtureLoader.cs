@@ -145,9 +145,9 @@ public static class ReplayFixtureLoader
                 command.Player,
                 fixture.InitialState.SecondaryPlayer?.Player,
                 StringComparison.Ordinal)
-                && command.Kind is not ("Move" or "Attack")))
+                && command.Kind is not ("Move" or "Attack" or "UsePortal")))
             throw new InvalidDataException(
-                "Secondary replay participant currently supports Move and Attack commands only.");
+                "Secondary replay participant supports Move, Attack, and UsePortal commands only.");
         if (fixture.Checkpoints.Select(checkpoint => checkpoint.Tick).Distinct().Count() != fixture.Checkpoints.Count)
             throw new InvalidDataException("Replay fixture checkpoint ticks must be unique.");
         if (fixture.ContentManifest is not null) {

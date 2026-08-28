@@ -6557,8 +6557,8 @@ bool ExecuteReplayFixture(
 				continue;
 			bool accepted = false;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
-				if (command.kind != "Move" && command.kind != "Attack") {
-					error = "Secondary replay participant currently supports Move and Attack commands only.";
+				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal") {
+					error = "Secondary replay participant supports Move, Attack, and UsePortal commands only.";
 					return false;
 				}
 				if (command.kind == "Move") {
@@ -6574,6 +6574,13 @@ bool ExecuteReplayFixture(
 					    && !occupiedByPrimary) {
 						state.secondaryPlayerPositionX = targetX;
 						state.secondaryPlayerPositionY = targetY;
+						accepted = true;
+					}
+				} else if (command.kind == "UsePortal") {
+					if (command.portalId == state.portalId) {
+						state.secondaryPlayerLevelId = state.portalDestinationLevelId;
+						state.secondaryPlayerPositionX = state.portalDestinationX;
+						state.secondaryPlayerPositionY = state.portalDestinationY;
 						accepted = true;
 					}
 				} else if (command.targetEntityId == state.combatTargetEntityId

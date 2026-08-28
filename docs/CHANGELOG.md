@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   geometry, monster occupancy, and remote-player occupancy already present in
   the latest snapshot; unknown collision data remains non-blocking for
   compatibility.
+- Route secondary-participant portal transitions through the shared replay
+  fixture gate, preserving the primary session while updating the secondary
+  level and position in both native and managed runners.
 - Add a repository-level content-contract check that derives the active and
   previous additive schema from the Diablo module, validates first-party
   manifests, and catches stale contract text in the content and migration docs
@@ -516,8 +519,8 @@ All notable changes to this fork are documented below.
   the additive visual identity still render the server-owned projectile.
 - Updated Godot's behavior fallback to distinguish Lightning Wall segments by
   their authoritative damage channel when older snapshots omit presentation metadata.
-- Corrected the replay-gate documentation to report the current 80 checked-in
-  JSON fixtures and 106 native registered tests, including parser and validation
+- Corrected the replay-gate documentation to report the current 81 checked-in
+  JSON fixtures and 107 native registered tests, including parser and validation
   cases that do not add a fixture file.
 - Added a shared multiplayer MonsterArrow volley replay fixture proving two
   simultaneous server-owned projectiles route deterministic impacts to the
