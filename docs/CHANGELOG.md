@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract native-compatible bounded grid crawl ordering into the engine-neutral
+  assembly; Diablo retains its source-compatible crawl facade while teleport,
+  portal, resurrection, drop, and multi-target searches share overflow-safe
+  nearest-cell behavior.
 - Extract native-compatible eight-way direction math into the engine-neutral
   assembly; Diablo retains its source-compatible direction facade while
   authoritative callers share overflow-safe coordinate-to-facing selection,

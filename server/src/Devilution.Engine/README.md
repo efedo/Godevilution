@@ -23,6 +23,8 @@ The engine currently owns:
   and per-session transient-event queues;
 - bounded deterministic grid navigation with caller-supplied walkability and
   occupancy predicates, so game modules do not own reusable path-search logic;
+- native-compatible bounded grid crawl ordering and overflow-safe nearest-cell
+  search, exposed independently from Diablo's compatibility facade;
 - the native-compatible deterministic legacy LCG, exposed as a reusable
   primitive while Diablo retains its source-compatible `DiabloRandom` facade;
 - native-compatible signed 26.6 fixed-point arithmetic, exposed as a reusable
