@@ -10,6 +10,10 @@ All notable changes to this fork are documented below.
   source removal, and authoritative world-item materialization. The legacy
   `DropHeldItem` replay path remains covered separately.
 
+- Extend stable-reference replay coverage to belt and equipment sources with
+  dedicated fixtures and native/managed tests. All three carried-item source
+  locations now exercise the same explicit drop intent in parity fixtures.
+
 - Add the additive `DropItemRequested` protocol intent for stable-reference
   inventory, belt, and equipment-to-world drops. The server keeps the native
   cursor-only `DropHeldItemRequested` compatibility path while validating the

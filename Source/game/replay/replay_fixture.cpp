@@ -5712,6 +5712,8 @@ private:
 					    definedFields |= 1U << 1;
 					    return true;
 				    }
+				    if (key == "stable_item_id")
+					    return ParseUnsigned(item.stableItemId);
 				    if (key == "item_type") {
 					    if (!ParseSigned(item.itemType))
 						    return false;
@@ -5808,6 +5810,8 @@ private:
 					    definedFields |= 1U << 1;
 					    return true;
 				    }
+				    if (key == "stable_item_id")
+					    return ParseUnsigned(item.stableItemId);
 				    if (key == "item_type") {
 					    if (!ParseSigned(item.itemType))
 						    return false;
@@ -6368,6 +6372,7 @@ bool ExecuteReplayFixture(
 	if (state.equipment.empty() && !fixture.initialState.equipment.empty()) {
 		for (const auto &source : fixture.initialState.equipment) {
 			ReplayFixtureItemState item;
+			item.stableItemId = source.stableItemId;
 			item.itemType = source.itemType;
 			item.itemClass = source.itemClass;
 			item.itemIndex = source.itemIndex;
@@ -6387,6 +6392,7 @@ bool ExecuteReplayFixture(
 	if (state.belt.empty() && !fixture.initialState.belt.empty()) {
 		for (const auto &source : fixture.initialState.belt) {
 			ReplayFixtureItemState item;
+			item.stableItemId = source.stableItemId;
 			item.itemType = source.itemType;
 			item.itemIndex = source.itemIndex;
 			item.miscId = source.miscId;
@@ -6998,16 +7004,42 @@ bool ExecuteReplayFixture(
 				        && state.worldItemLevelId == state.levelId
 				        && state.worldItemPositionX == command.targetX
 				        && state.worldItemPositionY == command.targetY);
-				if (command.itemLocation == "Inventory"
-				    && command.storeSlot < state.inventory.size()
+				ReplayFixtureInventoryItem source;
+				bool sourceFound = false;
+				if (command.itemLocation == "Inventory" && command.storeSlot < state.inventory.size()) {
+					source = state.inventory[command.storeSlot];
+					sourceFound = true;
+				} else if (command.itemLocation == "Belt") {
+					auto item = std::find_if(state.belt.begin(), state.belt.end(), [&](const auto &candidate) {
+						return candidate.slot == command.storeSlot;
+					});
+					if (item != state.belt.end()) {
+						const int value = item->state.identified && item->state.identifiedValue > 0
+						    ? item->state.identifiedValue
+						    : item->state.value;
+						source = { 0, item->slot, item->itemSeed, static_cast<uint32_t>(std::max(value, 1)), 0, item->state };
+						sourceFound = true;
+					}
+				} else if (command.itemLocation == "Equipment") {
+					auto item = std::find_if(state.equipment.begin(), state.equipment.end(), [&](const auto &candidate) {
+						return candidate.slot == command.storeSlot;
+					});
+					if (item != state.equipment.end()) {
+						const int value = item->state.identified && item->state.identifiedValue > 0
+						    ? item->state.identifiedValue
+						    : item->state.value;
+						source = { 0, item->slot, item->itemSeed, static_cast<uint32_t>(std::max(value, 1)), 0, item->state };
+						sourceFound = true;
+					}
+				}
+				if (sourceFound
 				    && !state.heldItemDefined
 				    && (command.stableItemId == 0
-				        || state.inventory[command.storeSlot].state.stableItemId == command.stableItemId)
+				        || source.state.stableItemId == command.stableItemId)
 				    && distance <= 1
 				    && command.targetX >= 0 && command.targetX < 40
 				    && command.targetY >= 0 && command.targetY < 40
 				    && !targetOccupied) {
-					const ReplayFixtureInventoryItem source = state.inventory[command.storeSlot];
 					uint32_t entityId = 0x40000000U;
 					while (entityId == state.entityId
 					    || entityId == state.secondaryPlayerEntityId
@@ -7021,7 +7053,17 @@ bool ExecuteReplayFixture(
 					state.worldItemSeed = source.itemSeed;
 					state.worldItemPrice = source.price;
 					state.worldItemState = source.state;
-					RemoveReplayInventoryItem(state, command.storeSlot);
+					if (command.itemLocation == "Inventory") {
+						RemoveReplayInventoryItem(state, command.storeSlot);
+					} else if (command.itemLocation == "Belt") {
+						state.belt.erase(std::find_if(state.belt.begin(), state.belt.end(), [&](const auto &candidate) {
+							return candidate.slot == command.storeSlot;
+						}));
+					} else {
+						state.equipment.erase(std::find_if(state.equipment.begin(), state.equipment.end(), [&](const auto &candidate) {
+							return candidate.slot == command.storeSlot;
+						}));
+					}
 					accepted = true;
 				}
 			} else if (command.kind == "OperateObject") {

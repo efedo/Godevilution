@@ -15,6 +15,8 @@ public sealed record ReplayEquippedItem(
     uint Flags,
     bool StatFlag)
 {
+    public uint StableItemId { get; init; }
+
     public int ItemIndex { get; init; } = -1;
 
     public int Value { get; init; }
@@ -51,6 +53,7 @@ public sealed record ReplayEquippedItem(
                 FireMaxDamage = FireMaxDamage,
                 LightningMinDamage = LightningMinDamage,
                 LightningMaxDamage = LightningMaxDamage,
+                StableItemId = StableItemId,
                 StatFlag = StatFlag,
             });
     }
@@ -66,6 +69,8 @@ public sealed record ReplayBeltItem(
     int SpellId,
     bool StatFlag)
 {
+    public uint StableItemId { get; init; }
+
     public BeltStoreItem ToBeltStoreItem()
     {
         return new BeltStoreItem(
@@ -76,6 +81,7 @@ public sealed record ReplayBeltItem(
                 ItemIndex = ItemIndex,
                 MiscId = MiscId,
                 SpellId = SpellId,
+                StableItemId = StableItemId,
                 StatFlag = StatFlag,
             });
     }

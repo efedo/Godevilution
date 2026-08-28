@@ -2340,6 +2340,52 @@ TEST(ReplayFixture, ExecutesStableInventoryItemDropTransition)
 	EXPECT_EQ(state.worldItemPositionY, 0);
 }
 
+TEST(ReplayFixture, ExecutesStableBeltItemDropTransition)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-stable-belt-drop.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.levelId = fixture.initialState.levelId;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(state.belt.empty());
+	EXPECT_EQ(state.worldItemSeed, 321U);
+	EXPECT_EQ(state.worldItemState.stableItemId, 7002U);
+}
+
+TEST(ReplayFixture, ExecutesStableEquipmentItemDropTransition)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-stable-equipment-drop.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.levelId = fixture.initialState.levelId;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(state.equipment.empty());
+	EXPECT_EQ(state.worldItemSeed, 654U);
+	EXPECT_EQ(state.worldItemState.stableItemId, 7003U);
+}
+
 TEST(ReplayFixture, ExecutesGoldPickupOverflowAndHeldItemDrop)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-gold-pickup-overflow.json");

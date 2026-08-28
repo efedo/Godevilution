@@ -571,6 +571,7 @@ public static class ReplayFixtureLoader
                 FireMaxDamage = GetOptionalInt(item, "fire_max_damage"),
                 LightningMinDamage = GetOptionalInt(item, "lightning_min_damage"),
                 LightningMaxDamage = GetOptionalInt(item, "lightning_max_damage"),
+                StableItemId = GetOptionalUInt(item, "stable_item_id"),
             })
             .ToArray();
         if (result.Any(item => item.Slot >= 7
@@ -603,7 +604,9 @@ public static class ReplayFixtureLoader
                 RequiredInt(item, "item_index"),
                 RequiredInt(item, "misc_id"),
                 RequiredInt(item, "spell_id"),
-                RequiredBool(item, "stat_flag")))
+                RequiredBool(item, "stat_flag")) {
+                StableItemId = GetOptionalUInt(item, "stable_item_id"),
+            })
             .ToArray();
         if (result.Length > 8
             || result.Any(item => item.Slot >= 8

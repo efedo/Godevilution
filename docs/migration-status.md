@@ -22,6 +22,10 @@ the inventory source, and create the authoritative adjacent world item,
 extending parity coverage for the protocol path behind the native and Godot
 clients.
 
+Dedicated replay fixtures now cover stable-reference drops from inventory,
+belt, and equipment sources, matching the three carried-item locations exposed
+by the protocol boundary.
+
 Initial staged-dialogue projection now chooses a shared-safe message for
 item-gated encounters. When a conversation has item-present and item-absent
 branches, snapshots advertise the item-absent branch; the server still selects

@@ -92,6 +92,7 @@ struct ReplayFixtureSecondaryPlayer {
 struct ReplayFixtureEquippedItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
+	uint32_t stableItemId = 0;
 	int32_t itemType = -1;
 	int32_t itemClass = 0;
 	uint32_t flags = 0;
@@ -111,6 +112,7 @@ struct ReplayFixtureEquippedItem {
 struct ReplayFixtureBeltItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
+	uint32_t stableItemId = 0;
 	int32_t itemType = 0;
 	int32_t itemIndex = -1;
 	int32_t miscId = 0;

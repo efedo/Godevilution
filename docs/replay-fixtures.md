@@ -142,7 +142,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-28,
-the native replay gate contains 82 checked-in JSON fixtures and 108 registered
+the native replay gate contains 84 checked-in JSON fixtures and 110 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -250,6 +250,11 @@ inventory cell 0. Both runners submit `DropItemRequested` with the stable
 identity, remove the source pile, and materialize it at `(1,0)` as world entity
 `0x40000000`. This keeps explicit stable-reference drops in the shared replay
 baseline while preserving the separate legacy held-item fixture.
+
+`gameplay-stable-belt-drop.json` and `gameplay-stable-equipment-drop.json`
+exercise the same intent from belt slot 0 and equipment slot 0. Their stable
+identities are validated before the slotted source is removed, keeping replay
+coverage aligned with the protocol's three carried-item source locations.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied

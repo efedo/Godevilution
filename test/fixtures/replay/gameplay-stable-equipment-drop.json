@@ -1,0 +1,47 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/stable-equipment-drop",
+  "protocol_schema_version": "0.1.0",
+  "tick_rate_hz": 20,
+  "rng_seed": 0,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 0,
+    "equipment": [
+      {
+        "slot": 0,
+        "item_seed": 654,
+        "stable_item_id": 7003,
+        "item_type": 1,
+        "item_class": 0,
+        "flags": 0,
+        "stat_flag": true,
+        "item_index": 0,
+        "value": 10,
+        "identified_value": 10
+      }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "DropItem",
+      "payload": {
+        "location": "Equipment",
+        "inventory_index": 0,
+        "stable_item_id": 7003,
+        "target_x": 1,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": []
+}

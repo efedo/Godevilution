@@ -1191,6 +1191,61 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayStableBeltDropFixtureUsesStableBeltIdentity()
+    {
+        var result = ExecuteStableSlottedDropFixture("gameplay-stable-belt-drop.json");
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Empty(player.Belt);
+        var dropped = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(321U, dropped.ItemSeed);
+        Assert.Equal(7002U, dropped.State.StableItemId);
+    }
+
+    [Fact]
+    public void GameplayStableEquipmentDropFixtureUsesStableEquipmentIdentity()
+    {
+        var result = ExecuteStableSlottedDropFixture("gameplay-stable-equipment-drop.json");
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Empty(player.Equipment);
+        var dropped = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(654U, dropped.ItemSeed);
+        Assert.Equal(7003U, dropped.State.StableItemId);
+    }
+
+    private static ReplayExecutionResult ExecuteStableSlottedDropFixture(string fileName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", fileName);
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingEquipment: fixture.InitialState.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingBelt: fixture.InitialState.Belt
+                .Select(item => item.ToBeltStoreItem())
+                .ToArray(),
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingWorld: world,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        return ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+    }
+
+    [Fact]
     public void GameplayGoldOverflowFixtureCarriesAndDropsNativeRemainder()
     {
         var path = Path.Combine(
