@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
 - Extend the raw cast-coordinate boundary to Town Portal and Golem range checks
   and spawn searches, covering special casts outside the shared damage-target
   path.
+- Widen Godot monster movement deltas during snapshot validation so malformed
+  coordinates fail as invalid snapshots instead of overflowing first.
 - Make shared bounded crawl searches skip overflowing candidate coordinates,
   keeping raw client target cells fail-closed across authoritative placement
   and target-search paths.

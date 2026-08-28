@@ -1261,8 +1261,10 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateMonsterMovementState(MonsterSnapshot monster)
     {
-        var futureDeltaX = Math.Abs(monster.FuturePositionX - monster.PositionX);
-        var futureDeltaY = Math.Abs(monster.FuturePositionY - monster.PositionY);
+        // Movement validation runs before entity-coordinate validation, so
+        // widen network-derived deltas before subtracting malformed values.
+        var futureDeltaX = Math.Abs((long)monster.FuturePositionX - monster.PositionX);
+        var futureDeltaY = Math.Abs((long)monster.FuturePositionY - monster.PositionY);
         if ((monster.Moving
                 && Math.Max(futureDeltaX, futureDeltaY) != 1)
             || (!monster.Moving

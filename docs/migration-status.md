@@ -10,6 +10,10 @@ Town Portal and Golem casts apply the same active-level coordinate gate before
 their range checks or spawn searches, covering special casts that do not enter
 the damage-target resolution branch.
 
+Godot snapshot validation now widens monster movement deltas before checking
+occupancy, so malformed coordinates are rejected as invalid snapshots rather
+than surfacing an integer-overflow exception before the coordinate gate.
+
 Shared bounded crawl searches now skip candidate coordinates that overflow the
 integer domain, so raw client target cells fail closed across teleport, stone
 curse, wall, portal, and berserk placement paths instead of faulting a session.

@@ -2594,6 +2594,28 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsOverflowingMonsterMovementDeltaAsInvalidSnapshot()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    PositionX = 0,
+                    PositionY = 0,
+                    Moving = true,
+                    FuturePositionX = int.MinValue,
+                    FuturePositionY = 0,
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void ValidatesAndRetainsAuthoritativePlayerFacing()
     {
         var model = new AuthoritativeClientModel();
