@@ -567,6 +567,7 @@ public sealed class AuthoritativeTcpServerTests
             .ToLowerInvariant();
         uint initialEntityId;
         string expectedStateHash;
+        ulong acceptedCommandCount = 0;
 
         try {
             var initial = new ReloadableHostAdapter("initial");
@@ -622,11 +623,12 @@ public sealed class AuthoritativeTcpServerTests
                         } },
                     },
                 }, cancellationToken);
-                Assert.Equal(
-                    CommandStatus.Accepted,
-                    (await EnvelopeCodec.ReadAsync(
-                        stream,
-                        cancellationToken))!.CommandAck.Results.Single().Status);
+                var initialAcknowledgement = (await EnvelopeCodec.ReadAsync(
+                    stream,
+                    cancellationToken))!.CommandAck.Results.Single();
+                Assert.Equal(CommandStatus.Accepted, initialAcknowledgement.Status);
+                Assert.Equal(1UL, initialAcknowledgement.ServerReceiptSequence);
+                acceptedCommandCount = 1;
                 Assert.Equal(
                     "Persistent-Hero",
                     Assert.Single((await EnvelopeCodec.ReadAsync(
@@ -685,23 +687,52 @@ public sealed class AuthoritativeTcpServerTests
                         SnapshotStateHasher.Compute(resumedSnapshot),
                         resumedSnapshot.StateSha256);
 
-                    await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
-                        CommandBatch = new CommandBatch {
-                            Commands = { new Command {
-                                ClientSequence = 1,
-                                RequestedTick = 10,
-                                AttackRequested = new AttackRequested {
-                                    TargetEntityId = initialEntityId,
-                                },
-                            } },
-                        },
-                    }, restartCancellationToken);
-                    var duplicate = (await EnvelopeCodec.ReadAsync(
-                        resumedStream,
-                        restartCancellationToken))!.CommandAck.Results.Single();
-                    Assert.Equal(CommandStatus.Duplicate, duplicate.Status);
-                    Assert.Equal(1UL, duplicate.ClientSequence);
-                    await EnvelopeCodec.ReadAsync(resumedStream, restartCancellationToken);
+                    for (ulong replaySequence = 1; replaySequence <= acceptedCommandCount; replaySequence++) {
+                        await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
+                            CommandBatch = new CommandBatch {
+                                Commands = { new Command {
+                                    ClientSequence = replaySequence,
+                                    RequestedTick = 10,
+                                    AttackRequested = new AttackRequested {
+                                        TargetEntityId = initialEntityId,
+                                    },
+                                } },
+                            },
+                        }, restartCancellationToken);
+                        var duplicate = (await EnvelopeCodec.ReadAsync(
+                            resumedStream,
+                            restartCancellationToken))!.CommandAck.Results.Single();
+                        Assert.Equal(CommandStatus.Duplicate, duplicate.Status);
+                        Assert.Equal(replaySequence, duplicate.ClientSequence);
+                        Assert.Equal(replaySequence, duplicate.ServerReceiptSequence);
+                        await EnvelopeCodec.ReadAsync(resumedStream, restartCancellationToken);
+                    }
+
+                    if (restart < freshAdapterRestarts) {
+                        var nextSequence = acceptedCommandCount + 1;
+                        await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
+                            CommandBatch = new CommandBatch {
+                                Commands = { new Command {
+                                    ClientSequence = nextSequence,
+                                    RequestedTick = 10,
+                                    AttackRequested = new AttackRequested {
+                                        TargetEntityId = initialEntityId,
+                                    },
+                                } },
+                            },
+                        }, restartCancellationToken);
+                        var accepted = (await EnvelopeCodec.ReadAsync(
+                            resumedStream,
+                            restartCancellationToken))!.CommandAck.Results.Single();
+                        Assert.Equal(CommandStatus.Accepted, accepted.Status);
+                        Assert.Equal(nextSequence, accepted.ClientSequence);
+                        Assert.Equal(nextSequence, accepted.ServerReceiptSequence);
+                        await EnvelopeCodec.ReadAsync(resumedStream, restartCancellationToken);
+                        acceptedCommandCount = nextSequence;
+                        Assert.Equal(1, replacement.ExecuteCount);
+                    } else {
+                        Assert.Equal(0, replacement.ExecuteCount);
+                    }
                 }
 
                 Assert.True(replacement.Disposed);
@@ -1988,15 +2019,19 @@ public sealed class AuthoritativeTcpServerTests
     {
         private readonly Dictionary<string, string> sessionStates = new(StringComparer.Ordinal);
         private readonly object initializationSynchronization = new();
+        private int executeCount;
 
         public bool Disposed { get; private set; }
 
         public bool SessionStateImported { get; private set; }
 
+        public int ExecuteCount => Volatile.Read(ref executeCount);
+
         public List<string> InitializedNames { get; } = [];
 
         public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
         {
+            Interlocked.Increment(ref executeCount);
             return CommandExecutionResult.Accepted;
         }
 

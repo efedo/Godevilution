@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand fresh-host persistence coverage into a four-cycle, multi-command soak:
+  every previously accepted client sequence is replayed after each restart,
+  receipt identities remain stable, and the next sequence is accepted exactly
+  once by the replacement adapter.
+
 - Persist per-session command receipts beside authoritative saves and hydrate
   them before reconnect processing. Retried client sequences now remain
   idempotent across a fresh host process, while receipt allocation resumes
