@@ -140,6 +140,7 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-monster-arrow-volley.json
   replay/gameplay-multiplayer-monster-arrow.json
   replay/gameplay-multiplayer-secondary-attack.json
+  replay/gameplay-multiplayer-secondary-item-drop.json
   replay/gameplay-multiplayer-secondary-portal.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json

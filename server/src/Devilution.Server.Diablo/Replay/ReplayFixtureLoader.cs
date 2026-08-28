@@ -146,9 +146,9 @@ public static class ReplayFixtureLoader
                 command.Player,
                 fixture.InitialState.SecondaryPlayer?.Player,
                 StringComparison.Ordinal)
-                && command.Kind is not ("Move" or "Attack" or "UsePortal")))
+                && command.Kind is not ("Move" or "Attack" or "UsePortal" or "DropItem")))
             throw new InvalidDataException(
-                "Secondary replay participant supports Move, Attack, and UsePortal commands only.");
+                "Secondary replay participant supports Move, Attack, UsePortal, and DropItem commands only.");
         if (fixture.Checkpoints.Select(checkpoint => checkpoint.Tick).Distinct().Count() != fixture.Checkpoints.Count)
             throw new InvalidDataException("Replay fixture checkpoint ticks must be unique.");
         if (fixture.ContentManifest is not null) {
@@ -502,6 +502,7 @@ public static class ReplayFixtureLoader
                 out var combatModeEndTick)
                 ? combatModeEndTick.GetUInt64()
                 : 0,
+            InventoryItem = ParseSecondaryInventoryItem(player),
         };
         if (result.EntityId == 0
             || result.Life < 0
@@ -522,6 +523,33 @@ public static class ReplayFixtureLoader
             throw new InvalidDataException(
                 "Replay fixture contains invalid secondary-player state.");
         }
+        return result;
+    }
+
+    private static ReplaySecondaryInventoryItem? ParseSecondaryInventoryItem(JsonElement player)
+    {
+        if (!player.TryGetProperty("inventory_item", out var item))
+            return null;
+        if (item.ValueKind != JsonValueKind.Object)
+            throw new InvalidDataException("Replay fixture secondary inventory_item must be an object.");
+        var result = new ReplaySecondaryInventoryItem(
+            RequiredUInt(item, "slot"),
+            RequiredUInt(item, "item_seed"),
+            RequiredUInt(item, "stable_item_id"),
+            RequiredUInt(item, "price"),
+            RequiredInt(item, "item_type"),
+            item.TryGetProperty("item_index", out var itemIndex)
+                ? itemIndex.GetInt32()
+                : -1,
+            RequiredBool(item, "stat_flag"));
+        if (result.Slot >= 40
+            || result.ItemSeed == 0
+            || result.StableItemId == 0
+            || result.Price > int.MaxValue
+            || result.ItemType is < 0 or > byte.MaxValue
+            || result.ItemIndex is < -1 or > byte.MaxValue)
+            throw new InvalidDataException(
+                "Replay fixture secondary inventory_item contains invalid item state.");
         return result;
     }
 

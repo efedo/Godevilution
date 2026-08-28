@@ -32,6 +32,12 @@ public static class ReplayFixtureExecutor
                 throw new InvalidDataException(
                     "Replay secondary-player identity must differ from the primary player.");
             }
+            var secondaryInventory = secondary.InventoryItem is { } inventoryItem
+                ? [inventoryItem.ToOwnedStoreItem()]
+                : Array.Empty<OwnedStoreItem>();
+            var secondaryInventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+            if (secondary.InventoryItem is { } secondaryItem)
+                secondaryInventoryGrid[checked((int)secondaryItem.Slot)] = 0;
             executor.InitializeParticipant(
                 secondary.Player,
                 new DiabloPlayerTemplate(
@@ -57,7 +63,7 @@ public static class ReplayFixtureExecutor
                                 StatFlag = true,
                             })]
                         : [],
-                    Enumerable.Repeat(-1, 40).ToArray(),
+                    secondaryInventoryGrid,
                     [],
                     secondary.PositionX,
                     secondary.PositionY,
@@ -66,6 +72,7 @@ public static class ReplayFixtureExecutor
                     secondary.LevelId,
                     0,
                     secondary.CharacterClass,
+                    inventory: secondaryInventory,
                     friendlyMode: secondary.FriendlyMode,
                     combatMode: secondary.CombatMode,
                     combatModeEndTick: secondary.CombatModeEndTick,

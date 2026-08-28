@@ -88,6 +88,35 @@ public sealed record ReplayBeltItem(
     }
 }
 
+/** One optional stable-reference inventory item used by secondary-player replay coverage. */
+public sealed record ReplaySecondaryInventoryItem(
+    uint Slot,
+    uint ItemSeed,
+    uint StableItemId,
+    uint Price,
+    int ItemType,
+    int ItemIndex,
+    bool StatFlag)
+{
+    public OwnedStoreItem ToOwnedStoreItem()
+    {
+        return new OwnedStoreItem(
+            0,
+            Slot,
+            ItemSeed,
+            Price,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = ItemType,
+                ItemIndex = ItemIndex,
+                StableItemId = StableItemId,
+                Value = checked((int)Price),
+                IdentifiedValue = checked((int)Price),
+                StatFlag = StatFlag,
+            });
+    }
+}
+
 public sealed record ReplaySecondaryPlayer(
     string Player,
     uint EntityId,
@@ -107,6 +136,7 @@ public sealed record ReplaySecondaryPlayer(
     public bool BlockCapable { get; init; }
     public DiabloPlayerCombatMode CombatMode { get; init; }
     public ulong CombatModeEndTick { get; init; }
+    public ReplaySecondaryInventoryItem? InventoryItem { get; init; }
 }
 
 public sealed record ReplayInitialState(string Player, uint Gold, uint Experience, int Life, int Mana)

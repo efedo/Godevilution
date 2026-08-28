@@ -17,6 +17,11 @@ All notable changes to this fork are documented below.
   source removal, and authoritative world-item materialization. The legacy
   `DropHeldItem` replay path remains covered separately.
 
+- Add multiplayer secondary-participant stable-reference drop coverage. The
+  shared fixture initializes one secondary inventory item and verifies
+  participant routing, stable identity validation, source removal, and
+  adjacent world-item materialization in both replay runners.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

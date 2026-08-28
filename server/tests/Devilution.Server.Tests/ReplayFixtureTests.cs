@@ -1611,6 +1611,46 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerSecondaryItemDropProjectsNativeParticipantState()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-item-drop.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var secondary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == fixture.InitialState.SecondaryPlayer!.EntityId);
+        Assert.Empty(secondary.Inventory);
+        var worldItem = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(9001U, worldItem.ItemSeed);
+        Assert.Equal(9901U, worldItem.State.StableItemId);
+        Assert.Equal(4, worldItem.PositionX);
+        Assert.Equal(5, worldItem.PositionY);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryAttackMatchesNativeParticipantHash()
     {
         var path = Path.Combine(
@@ -3367,7 +3407,7 @@ public sealed class ReplayFixtureTests
             () => ReplayFixtureLoader.Load(json));
 
         Assert.Equal(
-            "Secondary replay participant supports Move, Attack, and UsePortal commands only.",
+            "Secondary replay participant supports Move, Attack, UsePortal, and DropItem commands only.",
             exception.Message);
     }
 

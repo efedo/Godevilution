@@ -22,6 +22,11 @@ the inventory source, and create the authoritative adjacent world item,
 extending parity coverage for the protocol path behind the native and Godot
 clients.
 
+Multiplayer replay coverage now also routes an explicit stable-reference drop
+from a secondary participant. The new fixture validates secondary inventory
+source removal, adjacent world-item projection, and a shared canonical
+checkpoint hash in both runners.
+
 Dedicated replay fixtures now cover stable-reference drops from inventory,
 belt, and equipment sources, matching the three carried-item locations exposed
 by the protocol boundary. Command-level expected statuses are now part of the

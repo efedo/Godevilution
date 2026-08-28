@@ -2719,6 +2719,35 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMultiplayerSecondaryItemDropAgainstCSharpProjection)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-item-drop.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.inventoryItemDefined);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(state.secondaryInventory.empty());
+	EXPECT_EQ(state.worldItemSeed, 9001U);
+	EXPECT_EQ(state.worldItemState.stableItemId, 9901U);
+	EXPECT_EQ(std::pair(state.worldItemPositionX, state.worldItemPositionY), std::pair(4, 5));
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMonsterArrowResolutionAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-resolution.json");

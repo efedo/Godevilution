@@ -103,6 +103,11 @@ put the receiving player first, but both runners sort every player by entity ID
 before hashing, so receiver-relative wire order cannot alter a checkpoint. A
 secondary player's resources, attributes, equipment, combat mode, and inventory
 topology therefore expose multiplayer divergence directly.
+The optional `secondary_player.inventory_item` fields exercise an explicit
+stable-reference `DropItem` from a secondary participant. The corresponding
+fixture verifies participant routing, source removal, adjacent world-item
+materialization, stable identity validation, and a shared checkpoint hash in
+both runners.
 An initial state with one canonical Gold pile may add
 `inventory_filler_count`. Both runners place that many deterministic one-cell
 non-Gold items into the remaining native inventory cells. This forces the same
@@ -141,6 +146,9 @@ the first drop remains authoritative.
   content pack. Preserve existing checkpoint hashes when a change only updates
   manifest identity or adds a non-observable catalog entry; regenerate hashes
   only when canonical state actually changes, then verify both runners.
+- A checkpoint label that is not a 64-character hexadecimal digest is a
+  projection-only marker: runners still advance and execute that tick, but the
+  marker deliberately does not compare canonical hashes.
 
 ## Parity status
 
@@ -148,7 +156,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-28,
-the native replay gate contains 86 checked-in JSON fixtures and 112 registered
+the native replay gate contains 87 checked-in JSON fixtures and 113 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

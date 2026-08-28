@@ -228,10 +228,30 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 		hasher.AppendUint64(0);
 	}
 	hasher.AppendUint64(0);
-	hasher.AppendUint64(0);
-	hasher.AppendUint64(40);
-	for (size_t cell = 0; cell < 40; ++cell)
-		hasher.AppendInt32(-1);
+	std::vector<ReplayFixtureInventoryItem> inventory = state.secondaryInventory;
+	std::sort(inventory.begin(), inventory.end(), [](const auto &left, const auto &right) {
+		if (left.storeId != right.storeId)
+			return left.storeId < right.storeId;
+		if (left.storeSlot != right.storeSlot)
+			return left.storeSlot < right.storeSlot;
+		if (left.itemSeed != right.itemSeed)
+			return left.itemSeed < right.itemSeed;
+		if (left.price != right.price)
+			return left.price < right.price;
+		return left.purchasedAtTick < right.purchasedAtTick;
+	});
+	hasher.AppendUint64(inventory.size());
+	for (const auto &item : inventory) {
+		hasher.AppendUint32(item.storeId);
+		hasher.AppendUint32(item.storeSlot);
+		hasher.AppendUint32(item.itemSeed);
+		hasher.AppendUint32(item.price);
+		hasher.AppendUint64(item.purchasedAtTick);
+		AppendItemState(hasher, item.state);
+	}
+	hasher.AppendUint64(state.secondaryInventoryGrid.size());
+	for (const int32_t cell : state.secondaryInventoryGrid)
+		hasher.AppendInt32(cell);
 }
 
 void DefeatReplayCombatTarget(ReplayFixtureExecutionState &state)
@@ -4046,10 +4066,23 @@ bool HasReplayGoldTopology(const ReplayFixtureExecutionState &state)
 	return found ? total == state.gold : state.gold == 0 && state.inventoryGrid.size() == 40;
 }
 
+void RemoveReplayInventoryItem(
+	std::vector<ReplayFixtureInventoryItem> &inventory,
+	std::vector<int32_t> &inventoryGrid,
+	size_t index);
+
 void RemoveReplayInventoryItem(ReplayFixtureExecutionState &state, size_t index)
 {
-	state.inventory.erase(state.inventory.begin() + static_cast<std::ptrdiff_t>(index));
-	for (int32_t &cell : state.inventoryGrid) {
+	RemoveReplayInventoryItem(state.inventory, state.inventoryGrid, index);
+}
+
+void RemoveReplayInventoryItem(
+	std::vector<ReplayFixtureInventoryItem> &inventory,
+	std::vector<int32_t> &inventoryGrid,
+	size_t index)
+{
+	inventory.erase(inventory.begin() + static_cast<std::ptrdiff_t>(index));
+	for (int32_t &cell : inventoryGrid) {
 		if (cell == static_cast<int32_t>(index))
 			cell = -1;
 		else if (cell > static_cast<int32_t>(index))
@@ -5648,6 +5681,26 @@ private:
 				return ParseUnsigned(player.combatMode);
 			if (key == "combat_mode_end_tick")
 				return ParseUnsigned(player.combatModeEndTick);
+			if (key == "inventory_item") {
+				player.inventoryItemDefined = true;
+				return ParseObject([this, &player](std::string_view itemKey) {
+					if (itemKey == "slot")
+						return ParseUnsigned(player.inventoryItemSlot);
+					if (itemKey == "item_seed")
+						return ParseUnsigned(player.inventoryItemSeed);
+					if (itemKey == "stable_item_id")
+						return ParseUnsigned(player.inventoryItemStableItemId);
+					if (itemKey == "price")
+						return ParseUnsigned(player.inventoryItemPrice);
+					if (itemKey == "item_type")
+						return ParseSigned(player.inventoryItemType);
+					if (itemKey == "item_index")
+						return ParseSigned(player.inventoryItemIndex);
+					if (itemKey == "stat_flag")
+						return ParseBool(player.inventoryItemStatFlag);
+					return SkipValue();
+				});
+			}
 			return SkipValue();
 		});
 	}
@@ -6334,6 +6387,18 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		error = "Replay fixture contains invalid secondary-player state.";
 		return false;
 	}
+	if (secondaryPlayer.defined && secondaryPlayer.inventoryItemDefined
+	    && (secondaryPlayer.inventoryItemSlot >= 40
+	        || secondaryPlayer.inventoryItemSeed == 0
+	        || secondaryPlayer.inventoryItemStableItemId == 0
+	        || secondaryPlayer.inventoryItemPrice > INT32_MAX
+	        || secondaryPlayer.inventoryItemType < 0
+	        || secondaryPlayer.inventoryItemType > UINT8_MAX
+	        || secondaryPlayer.inventoryItemIndex < -1
+	        || secondaryPlayer.inventoryItemIndex > UINT8_MAX)) {
+		error = "Replay fixture secondary inventory item contains invalid item state.";
+		return false;
+	}
 	for (const auto &command : fixture.commands) {
 		if (!command.expectedStatus.empty()
 		    && command.expectedStatus != "Accepted"
@@ -6482,6 +6547,25 @@ bool ExecuteReplayFixture(
 		state.secondaryPlayerBlockCapable = secondary.blockCapable;
 		state.secondaryPlayerCombatMode = secondary.combatMode;
 		state.secondaryPlayerCombatModeEndTick = secondary.combatModeEndTick;
+		state.secondaryInventoryGrid.assign(40, -1);
+		if (secondary.inventoryItemDefined) {
+			ReplayFixtureItemState itemState;
+			itemState.itemType = secondary.inventoryItemType;
+			itemState.itemIndex = secondary.inventoryItemIndex;
+			itemState.stableItemId = secondary.inventoryItemStableItemId;
+			itemState.value = static_cast<int32_t>(secondary.inventoryItemPrice);
+			itemState.identifiedValue = itemState.value;
+			itemState.statFlag = secondary.inventoryItemStatFlag;
+			state.secondaryInventory.push_back({
+			    0,
+			    secondary.inventoryItemSlot,
+			    secondary.inventoryItemSeed,
+			    secondary.inventoryItemPrice,
+			    0,
+			    itemState,
+			});
+			state.secondaryInventoryGrid[secondary.inventoryItemSlot] = 0;
+		}
 	}
 	if (state.combatTargetEntityId == 0 && fixture.initialState.combatTargetEntityId != 0) {
 		state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
@@ -6604,8 +6688,8 @@ bool ExecuteReplayFixture(
 			bool accepted = false;
 			std::string rejectReason;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
-				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal") {
-					error = "Secondary replay participant supports Move, Attack, and UsePortal commands only.";
+				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal" && command.kind != "DropItem") {
+					error = "Secondary replay participant supports Move, Attack, UsePortal, and DropItem commands only.";
 					return false;
 				}
 				if (command.kind == "Move") {
@@ -6636,6 +6720,66 @@ bool ExecuteReplayFixture(
 						state.secondaryPlayerPositionX = state.portalDestinationX;
 						state.secondaryPlayerPositionY = state.portalDestinationY;
 						accepted = true;
+					}
+				} else if (command.kind == "DropItem") {
+					ReplayFixtureInventoryItem source;
+					bool sourceFound = false;
+					if (command.itemLocation == "Inventory" && command.storeSlot < state.secondaryInventory.size()) {
+						source = state.secondaryInventory[command.storeSlot];
+						sourceFound = true;
+					}
+					const int distance = std::max(
+					    std::abs(state.secondaryPlayerPositionX - command.targetX),
+					    std::abs(state.secondaryPlayerPositionY - command.targetY));
+					const bool targetOccupied = (state.worldItemEntityId != 0
+					        && state.worldItemLevelId == state.secondaryPlayerLevelId
+					        && state.worldItemPositionX == command.targetX
+					        && state.worldItemPositionY == command.targetY)
+					    || std::any_of(state.worldItems.begin(), state.worldItems.end(), [&](const auto &item) {
+						       return item.levelId == state.secondaryPlayerLevelId
+						           && item.positionX == command.targetX
+						           && item.positionY == command.targetY;
+					       })
+					    || (state.entityId != 0
+					        && state.life > 0
+					        && state.levelId == state.secondaryPlayerLevelId
+					        && state.positionX == command.targetX
+					        && state.positionY == command.targetY)
+					    || (state.combatTargetEntityId != 0
+					        && state.combatTargetHitPointsQ6 > 0
+					        && state.combatTargetLevelId == state.secondaryPlayerLevelId
+					        && state.combatTargetPositionX == command.targetX
+					        && state.combatTargetPositionY == command.targetY)
+					    || (state.objectEntityId != 0
+					        && !state.objectActivated
+					        && !state.objectDestroyed
+					        && state.objectLevelId == state.secondaryPlayerLevelId
+					        && state.objectPositionX == command.targetX
+					        && state.objectPositionY == command.targetY);
+					if (sourceFound
+					    && (command.itemLocation == "Inventory")
+					    && !state.heldItemDefined
+					    && (command.stableItemId == 0
+					        || source.state.stableItemId == command.stableItemId)
+					    && distance <= 1
+					    && command.targetX >= 0 && command.targetX < 40
+					    && command.targetY >= 0 && command.targetY < 40
+					    && !targetOccupied) {
+						state.worldItemEntityId = AllocateReplayWorldItemEntityId(state);
+						state.worldItemLevelId = state.secondaryPlayerLevelId;
+						state.worldItemPositionX = command.targetX;
+						state.worldItemPositionY = command.targetY;
+						state.worldItemSeed = source.itemSeed;
+						state.worldItemPrice = source.price;
+						state.worldItemState = source.state;
+						RemoveReplayInventoryItem(state.secondaryInventory, state.secondaryInventoryGrid, command.storeSlot);
+						accepted = true;
+					} else if (!sourceFound
+					    || state.heldItemDefined
+					    || (command.stableItemId != 0 && source.state.stableItemId != command.stableItemId)) {
+						rejectReason = "InvalidTarget";
+					} else {
+						rejectReason = "NotAllowed";
 					}
 				} else if (command.targetEntityId == state.combatTargetEntityId
 				    && state.combatTargetHitPointsQ6 > 0

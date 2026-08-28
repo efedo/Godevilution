@@ -90,6 +90,14 @@ struct ReplayFixtureSecondaryPlayer {
 	bool blockCapable = false;
 	uint32_t combatMode = 0;
 	uint64_t combatModeEndTick = 0;
+	bool inventoryItemDefined = false;
+	uint32_t inventoryItemSlot = 0;
+	uint32_t inventoryItemSeed = 0;
+	uint32_t inventoryItemStableItemId = 0;
+	uint32_t inventoryItemPrice = 0;
+	int32_t inventoryItemType = -1;
+	int32_t inventoryItemIndex = -1;
+	bool inventoryItemStatFlag = false;
 };
 
 /** Minimal protocol-shaped equipment state carried by replay initial state. */
@@ -502,6 +510,8 @@ struct ReplayFixtureExecutionState {
 	bool secondaryPlayerBlockCapable = false;
 	uint32_t secondaryPlayerCombatMode = 0;
 	uint64_t secondaryPlayerCombatModeEndTick = 0;
+	std::vector<ReplayFixtureInventoryItem> secondaryInventory;
+	std::vector<int32_t> secondaryInventoryGrid;
 	bool hellfire = false;
 	uint32_t combatTargetEntityId = 0;
 	uint32_t combatTargetLevelId = 0;
