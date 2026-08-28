@@ -2289,6 +2289,53 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredInitialSnotspillDialogueUsesTheStagedRoute()
+    {
+        var quest = new AuthoritativeQuestState(
+            3008,
+            4,
+            1,
+            variable1: 0,
+            completionUniqueIdentity: "Snotspill",
+            messageId: 12,
+            dialogueVariable1: 1);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            25,
+            25,
+            100,
+            levelId: 4,
+            unique: true,
+            uniqueIdentity: "Snotspill");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(3008, 0, -1, 12, 1, 0),
+            new(3008, 1, -1, 21, 2, 0, NextMessageId: 22),
+        ]);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questDialogueStages: stages);
+        var player = CreatePlayer(
+            positionX: 24,
+            positionY: 25,
+            levelId: 4,
+            entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3008, 20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal((1, 0), (quest.Variable1, quest.Variable2));
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(21, target.DialogueMessageId);
+        Assert.Equal(12, Assert.Single(result.Events).MessageId);
+    }
+
+    [Fact]
     public void SnotspillOpeningDialogueAppliesItsAuthoritativeTransparencyFollowUp()
     {
         var quest = new AuthoritativeQuestState(

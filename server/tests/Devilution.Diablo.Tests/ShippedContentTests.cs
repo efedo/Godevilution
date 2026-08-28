@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.441.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.442.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -663,7 +663,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.440.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.441.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1000,10 +1000,15 @@ public sealed class ShippedContentTests
         Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.None, gharbadReward.FollowUpKind);
         var snotspillIntro = Assert.Single(
             catalog.Definitions,
+            stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 0);
+        Assert.Equal((12, 1), (snotspillIntro.MessageId, snotspillIntro.NextVariable1));
+        var snotspillOpening = Assert.Single(
+            catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 1);
-        Assert.Equal(22, snotspillIntro.NextMessageId);
-        Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.WorldMutation, snotspillIntro.FollowUpKind);
-        Assert.Equal(9301U, snotspillIntro.FollowUpAmount);
+        Assert.Equal(21, snotspillOpening.MessageId);
+        Assert.Equal(22, snotspillOpening.NextMessageId);
+        Assert.Equal(AuthoritativeQuestDialogueFollowUpKind.WorldMutation, snotspillOpening.FollowUpKind);
+        Assert.Equal(9301U, snotspillOpening.FollowUpAmount);
         var snotspill = Assert.Single(
             catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 2);
@@ -1042,8 +1047,11 @@ public sealed class ShippedContentTests
             table.SourcePath,
             table.ToCanonicalTsv());
 
-        Assert.Equal([21, 22, 23, 110, 144, 145, 146, 147, 148, 254, 255, 256],
+        Assert.Equal([12, 21, 22, 23, 110, 144, 145, 146, 147, 148, 254, 255, 256],
             catalog.Definitions.Select(message => message.MessageId));
+        Assert.Equal(
+            "Master, I have a strange experience to relate. I know that you have a great knowledge of those monstrosities that inhabit the labyrinth, and this is something that I cannot understand for the very life of me... I was awakened during the night by a scraping sound just outside of my tavern. When I looked out from my bedroom, I saw the shapes of small demon-like creatures in the inn yard. After a short time, they ran off, but not before stealing the sign to my inn. I don't know why the demons would steal my sign but leave my family in peace... 'tis strange, no?",
+            catalog.TryGet(12, out var ogden) ? ogden.Text : null);
         Assert.Equal(
             "Something for you I am making. Again, not kill Gharbad. Live and give good. \n \nYou take this as proof I keep word...",
             catalog.TryGet(145, out var gharbad) ? gharbad.Text : null);
@@ -3000,7 +3008,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.441.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.442.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
