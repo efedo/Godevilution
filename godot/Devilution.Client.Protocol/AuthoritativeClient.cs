@@ -272,6 +272,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private void Enqueue(Envelope envelope)
     {
+        if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
+            && !ObserveSnapshotIdentity(envelope.Snapshot))
+            return;
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck) {
             try {
                 AuthoritativeCommandAckValidator.Validate(envelope.CommandAck);
@@ -294,6 +297,27 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 Detail = $"Unexpected server payload: {envelope.PayloadCase}",
             }),
         });
+    }
+
+    private bool ObserveSnapshotIdentity(Snapshot snapshot)
+    {
+        if (string.IsNullOrEmpty(snapshot.ContentManifestHash)
+            && string.IsNullOrEmpty(snapshot.RulesetIdentityHash))
+            return true;
+        if (string.IsNullOrEmpty(snapshot.ContentManifestHash)
+            || string.IsNullOrEmpty(snapshot.RulesetIdentityHash)) {
+            incoming.Enqueue(new AuthoritativeClientMessage(Error: new ProtocolError {
+                Code = ProtocolErrorCode.InvalidMessage,
+                Detail = "The authoritative snapshot contains an incomplete ruleset identity.",
+            }));
+            return false;
+        }
+        if (ServerIdentity is { } identity)
+            ServerIdentity = identity with {
+                ContentManifestHash = snapshot.ContentManifestHash,
+                RulesetIdentityHash = snapshot.RulesetIdentityHash,
+            };
+        return true;
     }
 
     private void Acknowledge(CommandAck acknowledgement)

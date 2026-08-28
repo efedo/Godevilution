@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add additive snapshot content/ruleset identity metadata. The generic host
+  stamps live snapshots after ruleset replacement and the Godot protocol client
+  updates its retained identity, without changing canonical gameplay hashes or
+  save bytes.
 - Enforce the documented complete native spell namespace during production
   content activation, while retaining partial catalogs for compatibility-only
   callers.

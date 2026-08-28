@@ -431,6 +431,9 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             return;
 
         var snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
+        var currentIdentity = handshake.Identity;
+        snapshot.ContentManifestHash = currentIdentity.ContentManifestHash;
+        snapshot.RulesetIdentityHash = currentIdentity.RulesetIdentityHash;
         AuthoritativeSnapshotValidator.Validate(snapshot);
         await EnvelopeCodec.WriteAsync(stream, new Envelope { Snapshot = snapshot }, cancellationToken);
     }

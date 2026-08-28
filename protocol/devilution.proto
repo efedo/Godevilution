@@ -442,6 +442,11 @@ message Snapshot {
 	repeated SetLevelObjectOriginSnapshot set_level_object_origins = 18;
 	// Procedural encounter levels that have already been materialized.
 	repeated uint32 materialized_procedural_level_ids = 19;
+	// Active content identity stamped by the generic host for live replacement
+	// visibility. These fields are transport metadata and are excluded from the
+	// canonical gameplay state hash.
+	string content_manifest_hash = 20;
+	string ruleset_identity_hash = 21;
 }
 
 message SetLevelObjectOriginSnapshot {

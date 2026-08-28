@@ -850,6 +850,8 @@ public sealed class AuthoritativeTcpServerTests
             var initialSnapshot = (await EnvelopeCodec.ReadAsync(
                 firstStream,
                 cancellationToken))!.Snapshot;
+            Assert.Equal(handshake.Identity.ContentManifestHash, initialSnapshot.ContentManifestHash);
+            Assert.Equal(handshake.Identity.RulesetIdentityHash, initialSnapshot.RulesetIdentityHash);
             var initialPlayer = Assert.Single(initialSnapshot.Players);
             entityId = initialPlayer.EntityId;
             Assert.Equal("Migrating-Hero", initialPlayer.CharacterName);
@@ -886,6 +888,8 @@ public sealed class AuthoritativeTcpServerTests
             var migratedSnapshot = (await EnvelopeCodec.ReadAsync(
                 firstStream,
                 cancellationToken))!.Snapshot;
+            Assert.Equal(handshake.Identity.ContentManifestHash, migratedSnapshot.ContentManifestHash);
+            Assert.Equal(handshake.Identity.RulesetIdentityHash, migratedSnapshot.RulesetIdentityHash);
             Assert.Equal("Migrating-Hero", Assert.Single(migratedSnapshot.Players).CharacterName);
         }
 
@@ -909,6 +913,8 @@ public sealed class AuthoritativeTcpServerTests
         var resumedSnapshot = (await EnvelopeCodec.ReadAsync(
             resumedStream,
             cancellationToken))!.Snapshot;
+        Assert.Equal(handshake.Identity.ContentManifestHash, resumedSnapshot.ContentManifestHash);
+        Assert.Equal(handshake.Identity.RulesetIdentityHash, resumedSnapshot.RulesetIdentityHash);
         var resumedPlayer = Assert.Single(resumedSnapshot.Players);
         Assert.Equal(entityId, resumedPlayer.EntityId);
         Assert.Equal("Migrating-Hero", resumedPlayer.CharacterName);

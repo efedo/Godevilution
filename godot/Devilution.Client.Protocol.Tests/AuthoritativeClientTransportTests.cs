@@ -75,14 +75,32 @@ public sealed class AuthoritativeClientTransportTests
         var initialSnapshot = initial.Snapshot;
         Assert.NotNull(initialSnapshot);
         Assert.Equal(12UL, initialSnapshot!.Tick);
+        Assert.Equal("content-hash", initialSnapshot.ContentManifestHash);
+        Assert.Equal("ruleset-hash", initialSnapshot.RulesetIdentityHash);
 
         client.Queue(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 13);
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(25, TestContext.Current.CancellationToken);
-
-        var acknowledgement = Assert.Single(client.DrainMessages()).Acknowledgement;
+        AuthoritativeClientMessage? acknowledgementMessage = null;
+        Snapshot? reloadedSnapshot = null;
+        for (var attempt = 0; attempt < 50 && (acknowledgementMessage is null || reloadedSnapshot is null); attempt++) {
+            foreach (var message in client.DrainMessages()) {
+                if (message.Acknowledgement is not null)
+                    acknowledgementMessage = message;
+                if (message.Snapshot?.Tick == 13)
+                    reloadedSnapshot = message.Snapshot;
+            }
+            if (acknowledgementMessage is null || reloadedSnapshot is null)
+                await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+        Assert.NotNull(acknowledgementMessage);
+        var acknowledgement = acknowledgementMessage!.Acknowledgement;
         Assert.NotNull(acknowledgement);
         Assert.Equal(CommandStatus.Accepted, Assert.Single(acknowledgement.Results).Status);
+        Assert.NotNull(reloadedSnapshot);
+        Assert.Equal("reloaded-content", reloadedSnapshot!.ContentManifestHash);
+        Assert.Equal("reloaded-ruleset", reloadedSnapshot.RulesetIdentityHash);
+        Assert.Equal("reloaded-content", client.ServerIdentity!.ContentManifestHash);
+        Assert.Equal("reloaded-ruleset", client.ServerIdentity.RulesetIdentityHash);
         await serverTask;
     }
 
@@ -222,6 +240,8 @@ public sealed class AuthoritativeClientTransportTests
         await WriteEnvelopeAsync(stream, new Envelope {
             Snapshot = new Snapshot {
                 Tick = 12,
+                ContentManifestHash = "content-hash",
+                RulesetIdentityHash = "ruleset-hash",
                 Players = { new PlayerSnapshot { EntityId = 7 } },
             },
         });
@@ -232,6 +252,14 @@ public sealed class AuthoritativeClientTransportTests
         await WriteEnvelopeAsync(stream, new Envelope {
             CommandAck = new CommandAck {
                 Results = { new CommandResult { ClientSequence = 1, Status = CommandStatus.Accepted } },
+            },
+        });
+        await WriteEnvelopeAsync(stream, new Envelope {
+            Snapshot = new Snapshot {
+                Tick = 13,
+                ContentManifestHash = "reloaded-content",
+                RulesetIdentityHash = "reloaded-ruleset",
+                Players = { new PlayerSnapshot { EntityId = 7 } },
             },
         });
         listener.Stop();

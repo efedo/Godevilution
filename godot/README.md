@@ -16,6 +16,8 @@ The accepted `ServerHello` is retained as a typed `AuthoritativeServerIdentity`
 across reconnects. The diagnostics panel shows the server build plus shortened
 content and ruleset hashes, making it clear which validated ruleset the
 presentation client is consuming without giving the client gameplay authority.
+Live snapshots repeat the content and ruleset identities, allowing that display
+to update when the host replaces a ruleset while the connection remains open.
 
 The protocol model retains the latest 256 accepted event entries. A monotonic
 sequence window lets feedback advance past entries that roll off, so a

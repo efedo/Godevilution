@@ -98,6 +98,11 @@ The live host also reports the active combined ruleset identity and the count of
 retired generations awaiting disposal. These diagnostics are operational only;
 they do not expose game-specific state or alter the protocol contract.
 
+Each outbound snapshot also carries additive content and ruleset identity
+metadata. The generic host stamps these fields after adapter projection, so a
+connected client observes a successful live replacement without requiring a
+second gameplay authority or changing the canonical state hash.
+
 The host persists the server/world seed beside authoritative saves. A restart
 reuses that seed before content activation, so generated level geometry remains
 identical when saved participants are restored; an explicitly supplied
