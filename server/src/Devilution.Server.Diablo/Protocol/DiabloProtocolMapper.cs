@@ -320,6 +320,8 @@ internal static class DiabloProtocolMapper
                 RequireUnlogged = interaction.RequireUnlogged,
                 RequiredItemId = interaction.RequiredItemId,
                 RequireItemPresent = interaction.RequireItemPresent,
+                AllowInitial = interaction.AllowInitial,
+                UseQuestTurnInReward = interaction.UseQuestTurnInReward,
             };
             if (interaction.RequiredVariable1 >= 0)
                 projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;

@@ -239,6 +239,9 @@ Magic Rock, Ogden's Sign, Anvil of Fury/Blacksmith, Skeleton King, Butcher/Dead 
 Jersey/Complete Nut, and Ogden's itemless post-completion King Leoric dialogue
 (including its Grey Suit tease) are shipped
 definitions; additional legacy towner paths remain local until authored.
+The Little Girl stages preserve native ordering: the server accepts Theodore
+even while the quest is still initial, and the opening/active dialogue stages
+are offered only when Theodore is absent.
 The adapter also consumes server-owned `visited_level_ids` and only presents
 the authored King activation after the Catacombs or Caves visitation gate is
 satisfied, preserving native `_pLvlVisited` behavior without local history.

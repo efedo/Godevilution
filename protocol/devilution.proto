@@ -985,6 +985,10 @@ message QuestTownerInteractionSnapshot {
 	uint32 required_item_id = 19;
 	// Whether required_item_id must be present; omitted defaults to present.
 	optional bool require_item_present = 20;
+	// Whether this completion stage may run while the quest is still initial.
+	bool allow_initial = 21;
+	// Whether completion reuses the quest's declared normal or unique turn-in reward.
+	bool use_quest_turn_in_reward = 22;
 }
 
 message ProjectileSnapshot {

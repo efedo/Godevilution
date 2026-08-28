@@ -313,6 +313,9 @@ An item-present stage retains the existing item gate; an item-absent stage is
 available only when the player does not carry that item. This supports native
 conversation branches that must yield to a direct item hand-in, including the
 Hellfire Little Girl opening and active dialogue.
+Fields 21-22 mark completion stages that may run while a quest is still in its
+initial state and may reuse the quest's declared turn-in reward. This preserves
+native item hand-ins that are valid before the opening conversation.
 
 `PlayerSnapshot.visited_level_ids` is the canonical per-player visitation set.
 The server marks a level when the player enters it through a warp, portal, or

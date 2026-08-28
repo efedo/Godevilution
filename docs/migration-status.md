@@ -2,11 +2,12 @@
 
 Status date: 2026-08-28
 
-Hellfire Little Girl now uses authored quest/towner stages for its opening and
-active dialogue branches. The stages require Theodore to be absent, so the
-existing server-owned Theodore hand-in remains the first matching path when the
-player carries the item; the authoritative visited-level gate and native
-messages 283/284 are preserved.
+Hellfire Little Girl now uses authored quest/towner stages for its opening,
+active dialogue, and pre-activation Theodore hand-in branches. The itemless
+stages require Theodore to be absent, while the completion stage is explicitly
+allowed during initial quest state and reuses the quest-declared amulet reward;
+the authoritative visited-level gate and native messages 283/284/285 are
+preserved.
 
 The base content pack now includes template-only authoritative behavior rows
 for the Halls of the Blind book, Gateway of Blood book, and Warlord steel tome.

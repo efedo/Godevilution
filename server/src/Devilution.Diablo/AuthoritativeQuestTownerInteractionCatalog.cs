@@ -32,7 +32,9 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
     uint RequiredVisitedLevel2 = 0,
     bool RequireUnlogged = false,
     uint RequiredItemId = 0,
-    bool RequireItemPresent = true);
+    bool RequireItemPresent = true,
+    bool AllowInitial = false,
+    bool UseQuestTurnInReward = false);
 
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
@@ -69,6 +71,14 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 "Quest/towner interactions contain duplicate interaction IDs.");
         }
         foreach (var definition in values) {
+            if (definition.AllowInitial
+                && definition.Kind != AuthoritativeQuestTownerInteractionKind.Complete)
+                throw new InvalidDataException(
+                    $"Quest/towner interaction {definition.InteractionId} may allow initial state only for completion stages.");
+            if (definition.UseQuestTurnInReward
+                && definition.Kind != AuthoritativeQuestTownerInteractionKind.Complete)
+                throw new InvalidDataException(
+                    $"Quest/towner interaction {definition.InteractionId} may reuse a quest turn-in reward only for completion stages.");
             switch (definition.Kind) {
             case AuthoritativeQuestTownerInteractionKind.Activate:
                 if (definition.ConsumeItem && definition.ItemId == 0
@@ -94,7 +104,9 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
             case AuthoritativeQuestTownerInteractionKind.Complete:
                 if (!definition.ConsumeItem
                     || definition.ItemId == 0
-                    || (definition.RequiredVariable1 < 0 && definition.RequiredVariable2 < 0)
+                    || (definition.RequiredVariable1 < 0
+                        && definition.RequiredVariable2 < 0
+                        && !definition.AllowInitial)
                     || definition.MessageId == 0
                     || definition.AllowCompleted) {
                     throw new InvalidDataException(
@@ -205,7 +217,9 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                     stableIds,
                     "required_item_id",
                     "required_item_symbol"),
-                row.OptionalBoolean("require_item_present", true))));
+                row.OptionalBoolean("require_item_present", true),
+                row.OptionalBoolean("allow_initial", false),
+                row.OptionalBoolean("use_quest_turn_in_reward", false))));
     }
 
     private static AuthoritativeQuestTownerInteractionKind ParseKind(

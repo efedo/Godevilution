@@ -1003,6 +1003,7 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		    || interaction.level_id() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_visited_level1() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_visited_level2() > std::numeric_limits<uint16_t>::max()
+		    || interaction.required_item_id() > std::numeric_limits<uint16_t>::max()
 		    || interaction.position_x() < 0 || interaction.position_y() < 0
 		    || interaction.kind() < 0 || interaction.kind() > 3
 		    || !interaction.has_message_id()

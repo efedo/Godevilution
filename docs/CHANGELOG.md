@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve native Little Girl ordering when Theodore is already in the player's
+  inventory: the authored completion stage may run during initial quest state,
+  reuses the declared amulet reward, and is projected consistently to Godot and
+  the native compatibility client.
+
 - Externalize the Hellfire Little Girl's opening and active dialogue through
   authored quest/towner stages. New required-item presence metadata keeps those
   itemless branches from intercepting the server-owned Theodore hand-in while

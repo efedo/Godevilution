@@ -1,3 +1,4 @@
-interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	position_y	item_id	item_symbol	kind	required_variable1	required_variable2	variable1	variable2	message_id	consume_item	allow_completed	required_visited_level1	required_visited_level2	require_unlogged	required_item_id	required_item_symbol	require_item_present
-301901	3019	little_girl	11	0	town	77	43	0		Activate	-1	-1	1	-1	283	false	false	17	0	true	2102	theodore	false
-301902	3019	little_girl	11	0	town	77	43	0		Dialogue	1	-1	-1	-1	284	false	false	0	0	false	2102	theodore	false
+interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	position_y	item_id	item_symbol	kind	required_variable1	required_variable2	variable1	variable2	message_id	consume_item	allow_completed	required_visited_level1	required_visited_level2	require_unlogged	required_item_id	required_item_symbol	require_item_present	allow_initial	use_quest_turn_in_reward
+301901	3019	little_girl	11	0	town	77	43	0		Activate	-1	-1	1	-1	283	false	false	17	0	true	2102	theodore	false	false	false
+301902	3019	little_girl	11	0	town	77	43	0		Dialogue	1	-1	-1	-1	284	false	false	0	0	false	2102	theodore	false	false	false
+301903	3019	little_girl	11	0	town	77	43	2102	theodore	Complete	-1	-1	-1	-1	285	true	false	0	0	false	0		true	true	true

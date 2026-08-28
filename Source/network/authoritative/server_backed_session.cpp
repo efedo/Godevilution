@@ -313,6 +313,16 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 			       levelId)
 			        != currentPlayer->visitedLevelIds.end();
 	};
+	const auto hasItem = [&](uint32_t itemId) {
+		if (currentPlayer == nullptr || itemId == 0)
+			return false;
+		return std::any_of(currentPlayer->inventory.begin(), currentPlayer->inventory.end(), [itemId](const auto &item) {
+			       return item.stableItemId == itemId;
+		       })
+		    || std::any_of(currentPlayer->belt.begin(), currentPlayer->belt.end(), [itemId](const auto &item) {
+			       return item.stableItemId == itemId;
+		       });
+	};
 	for (const auto &interaction : questTownerInteractions_) {
 		if (interaction.towner_id() < 0
 		    || static_cast<uint32_t>(interaction.towner_id()) != townerId) {
@@ -335,11 +345,21 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    && !hasVisitedLevel(interaction.required_visited_level2())) {
 			continue;
 		}
+		if (interaction.item_id() != 0 && !hasItem(interaction.item_id()))
+			continue;
+		if (interaction.required_item_id() != 0) {
+			const bool requiredItemPresent = hasItem(interaction.required_item_id());
+			const bool requireItemPresent = !interaction.has_require_item_present()
+			    || interaction.require_item_present();
+			if (requireItemPresent != requiredItemPresent)
+				continue;
+		}
 		const bool active = interaction.kind() == 0
 		    ? questIt->initial()
 		        || interaction.has_required_variable1()
 		        || interaction.has_required_variable2()
-		    : !questIt->initial();
+		    : !questIt->initial()
+		        || interaction.allow_initial() && questIt->initial();
 		if (!active
 		    || (interaction.has_required_variable1()
 		        && questIt->variable_1() != interaction.required_variable1())

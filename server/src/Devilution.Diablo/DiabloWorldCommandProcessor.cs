@@ -2304,6 +2304,7 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         uint questId,
         uint townerId,
+        IReadOnlyList<AuthoritativePlayerState> participants,
         out bool hasActiveInteraction)
     {
         hasActiveInteraction = false;
@@ -2347,6 +2348,18 @@ public sealed class DiabloWorldCommandProcessor
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
                 }
             }
+            if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Complete
+                && interaction.UseQuestTurnInReward
+                && (quest.TurnInRewardUniqueId != 0 || quest.TurnInRewardItemId != 0)
+                && !CanPlaceWorldItemReward(
+                    quest.TurnInLevelId,
+                    quest.TurnInRewardPositionX,
+                    quest.TurnInRewardPositionY,
+                    participants,
+                    player.EntityId,
+                    requireWalkable: false)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
 
             quest.Logged = true;
             if (interaction.Variable1 >= 0)
@@ -2369,6 +2382,39 @@ public sealed class DiabloWorldCommandProcessor
                     && !nextQuest.Completed) {
                     nextQuest.Active = true;
                     nextQuest.Logged = true;
+                }
+                if (interaction.UseQuestTurnInReward && items is not null) {
+                    if (quest.TurnInRewardUniqueId != 0) {
+                        var itemSeed = AllocateGoldStackSeed();
+                        var rewardState = items.GenerateUnique(
+                            quest.TurnInRewardUniqueId,
+                            itemSeed,
+                            quest.TurnInRewardItemLevel);
+                        var entityId = AllocateWorldItemEntityId(participants);
+                        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                            entityId,
+                            quest.TurnInLevelId,
+                            quest.TurnInRewardPositionX,
+                            quest.TurnInRewardPositionY,
+                            itemSeed,
+                            0,
+                            rewardState);
+                    } else if (quest.TurnInRewardItemId != 0) {
+                        var itemSeed = AllocateGoldStackSeed();
+                        var rewardState = items.Generate(
+                            quest.TurnInRewardItemId,
+                            itemSeed,
+                            quest.TurnInRewardItemLevel);
+                        var entityId = AllocateWorldItemEntityId(participants);
+                        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                            entityId,
+                            quest.TurnInLevelId,
+                            quest.TurnInRewardPositionX,
+                            quest.TurnInRewardPositionY,
+                            itemSeed,
+                            checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                            rewardState);
+                    }
                 }
             }
 
@@ -2411,7 +2457,9 @@ public sealed class DiabloWorldCommandProcessor
                     && interaction.RequiredVariable1 < 0
                     && interaction.RequiredVariable2 < 0))
                 return false;
-        } else if (!quest.Active || quest.Completed || quest.Unavailable) {
+        } else if ((!quest.Active && !interaction.AllowInitial)
+            || quest.Completed
+            || quest.Unavailable) {
             return false;
         }
         if (interaction.RequireUnlogged && quest.Logged)
@@ -2469,6 +2517,7 @@ public sealed class DiabloWorldCommandProcessor
             player,
             questId,
             townerId,
+            participants,
             out var hasActiveInteraction);
         if (hasActiveInteraction)
             return authoredInteraction

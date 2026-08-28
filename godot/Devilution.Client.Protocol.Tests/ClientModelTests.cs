@@ -504,6 +504,19 @@ public sealed class ClientModelTests
                     RequiredItemId = 2102,
                     RequireItemPresent = false,
                 },
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 301903,
+                    QuestId = 3019,
+                    TownerId = 11,
+                    LevelId = 0,
+                    PositionX = 77,
+                    PositionY = 43,
+                    ItemId = 2102,
+                    Kind = 2,
+                    MessageId = 285,
+                    ConsumeItem = true,
+                    AllowInitial = true,
+                },
             },
         };
 
@@ -515,7 +528,9 @@ public sealed class ClientModelTests
             ItemSeed = 42,
             State = new ItemStateSnapshot { StableItemId = 2102 },
         });
-        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+        Assert.Equal(
+            301903U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
     }
 
     [Fact]

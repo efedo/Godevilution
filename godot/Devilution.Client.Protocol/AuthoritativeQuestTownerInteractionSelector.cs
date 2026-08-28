@@ -82,7 +82,8 @@ public static class AuthoritativeQuestTownerInteractionSelector
             ? quest.Initial
                 || (interaction.HasRequiredVariable1
                     || interaction.HasRequiredVariable2)
-            : !quest.Initial;
+            : !quest.Initial
+                || interaction.AllowInitial && quest.Initial;
         if (!active
             || (interaction.HasRequiredVariable1
                 && quest.Variable1 != interaction.RequiredVariable1)

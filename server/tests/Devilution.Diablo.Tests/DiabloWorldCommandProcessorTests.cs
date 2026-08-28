@@ -2642,6 +2642,61 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireLittleGirlAcceptsTheodoreBeforeOpeningDialogue()
+    {
+        var items = new AuthoritativeItemCatalog([
+            CreateQuestItem(2102),
+            CreateQuestItem(171),
+        ]);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(301903, 3019, 11, 0, 77, 43, 2102,
+                AuthoritativeQuestTownerInteractionKind.Complete,
+                MessageId: 285,
+                AllowInitial: true,
+                UseQuestTurnInReward: true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3019,
+            17,
+            1,
+            active: false,
+            turnInTownerId: 11,
+            turnInLevelId: 0,
+            turnInPositionX: 77,
+            turnInPositionY: 43,
+            turnInItemId: 2102,
+            turnInRewardItemId: 171,
+            turnInRewardItemLevel: 13,
+            turnInRewardPositionX: 77,
+            turnInRewardPositionY: 43);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(
+            positionX: 77,
+            positionY: 43,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [CreateQuestOwnedItem(items, 2102, 42)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3019, 11),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(285, Assert.Single(result.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(171U, reward.State.StableItemId);
+        Assert.Equal((77, 43), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void ContentOwnedActivationCanAdvanceAnActiveQuestWhenItsVariableGateMatches()
     {
         var interactions = new AuthoritativeQuestTownerInteractionCatalog([

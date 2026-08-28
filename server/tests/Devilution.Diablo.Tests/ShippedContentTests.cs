@@ -3183,7 +3183,7 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(12, mushroomInteractions.Count);
+        Assert.Equal(13, mushroomInteractions.Count);
         Assert.Equal(
             [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
@@ -3196,7 +3196,8 @@ public sealed class ShippedContentTests
              (300209U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 39),
              (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39),
              (301901U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 283),
-             (301902U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, 1, -1, 284)],
+             (301902U, 11, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, 1, -1, 284),
+             (301903U, 11, 2102U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 285)],
             mushroomInteractions.Select(interaction => (
                 interaction.InteractionId,
                 interaction.TownerId,
@@ -3248,6 +3249,10 @@ public sealed class ShippedContentTests
             girlDialogue.RequiredVariable1,
             girlDialogue.RequiredItemId,
             girlDialogue.RequireItemPresent));
+        var girlCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301903);
+        Assert.True(girlCompletion.AllowInitial);
+        Assert.True(girlCompletion.UseQuestTurnInReward);
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,
