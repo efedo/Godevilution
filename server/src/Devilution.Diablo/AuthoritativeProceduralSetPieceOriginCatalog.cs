@@ -1,3 +1,4 @@
+using Devilution.Engine;
 using Devilution.Data;
 
 namespace Devilution.Diablo;
@@ -69,25 +70,24 @@ public sealed class AuthoritativeProceduralSetPieceOriginCatalog
             if (level is null)
                 continue;
 
-            var candidates = new List<(int X, int Y)>();
-            var maxX = level.Width - definition.FootprintWidth;
-            var maxY = level.Height - definition.FootprintHeight;
-            for (var y = 0; y <= maxY; y += definition.Alignment) {
-                for (var x = 0; x <= maxX; x += definition.Alignment) {
-                    if (IsWalkableFootprint(level, x, y, definition.FootprintWidth, definition.FootprintHeight))
-                        candidates.Add((x, y));
-                }
-            }
-            if (candidates.Count == 0) {
-                throw new InvalidDataException(
-                    $"Procedural set-piece origin {definition.SetLevelId} has no walkable placement on level {definition.LevelId}.");
-            }
-
-            var selectionSeed = Mix(
+            var selectionSeed = DeterministicHash.Mix32(
                 definition.SelectionSeed
                 ^ worldSeed
                 ^ unchecked((uint)definition.LevelId * 0x9E3779B9U));
-            var selected = candidates[(int)(selectionSeed % (uint)candidates.Count)];
+            (int X, int Y) selected;
+            try {
+                selected = DeterministicGridPlacement.SelectAlignedWalkableFootprint(
+                    level.Width,
+                    level.Height,
+                    definition.FootprintWidth,
+                    definition.FootprintHeight,
+                    definition.Alignment,
+                    selectionSeed,
+                    level.IsWalkable);
+            } catch (InvalidOperationException) {
+                throw new InvalidDataException(
+                    $"Procedural set-piece origin {definition.SetLevelId} has no walkable placement on level {definition.LevelId}.");
+            }
             origins.Add(
                 definition.SetLevelId,
                 new AuthoritativeSetLevelObjectOrigin(
@@ -129,28 +129,4 @@ public sealed class AuthoritativeProceduralSetPieceOriginCatalog
             }));
     }
 
-    private static bool IsWalkableFootprint(
-        AuthoritativeLevel level,
-        int originX,
-        int originY,
-        int width,
-        int height)
-    {
-        for (var y = originY; y < originY + height; y++) {
-            for (var x = originX; x < originX + width; x++) {
-                if (!level.IsWalkable(x, y))
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    private static uint Mix(uint value)
-    {
-        value ^= value >> 16;
-        value *= 0x7FEB352DU;
-        value ^= value >> 15;
-        value *= 0x846CA68BU;
-        return value ^ (value >> 16);
-    }
 }

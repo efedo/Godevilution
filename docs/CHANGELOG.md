@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
   world construction.
 - Extract native radial projectile fan-out ordering into the engine-neutral
   assembly while preserving mirrored quarter-ring truncation.
+- Extract stable 32-bit mixing and aligned walkable-footprint selection into
+  the engine-neutral assembly; Diablo set-piece origins retain their existing
+  row-major candidate order and seed selection.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

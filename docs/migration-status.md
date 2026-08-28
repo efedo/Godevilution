@@ -1483,6 +1483,11 @@ Native radial projectile fan-out ordering is likewise engine-owned. Diablo's
 Nova and related controllers retain their source-compatible helper while using
 the shared mirrored quarter-ring sequence and count truncation.
 
+Deterministic authored set-piece placement now uses engine-owned 32-bit mixing
+and aligned walkable-footprint selection. Diablo still owns set-level identity,
+content validation, and world-origin records, while the reusable candidate
+ordering and seed selection remain outside the game module.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.

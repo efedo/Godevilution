@@ -39,10 +39,11 @@ public static class DeterministicProceduralGrid
                 if (x % 4 != 2 || y % 4 != 2)
                     continue;
                 var cell = y * width + x;
-                var hash = Mix(seed + checked((uint)cell) * 0x9E3779B9U);
+                var hash = DeterministicHash.Mix32(
+                    seed + checked((uint)cell) * 0x9E3779B9U);
                 if (hash % 100U < (uint)blockedPercent)
                     blocked.Add(cell);
-                var missileHash = Mix(
+                var missileHash = DeterministicHash.Mix32(
                     seed + checked((uint)cell) * 0x9E3779B9U ^ 0xA511E9B3U);
                 if (missileHash % 100U < (uint)missileBlockedPercent)
                     missileBlocked.Add(cell);
@@ -56,12 +57,4 @@ public static class DeterministicProceduralGrid
             Array.AsReadOnly(missileBlocked.OrderBy(cell => cell).ToArray()));
     }
 
-    private static uint Mix(uint value)
-    {
-        value ^= value >> 16;
-        value *= 0x7FEB352DU;
-        value ^= value >> 15;
-        value *= 0x846CA68BU;
-        return value ^ (value >> 16);
-    }
 }

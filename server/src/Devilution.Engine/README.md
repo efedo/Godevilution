@@ -44,6 +44,8 @@ The engine currently owns:
   independently seeded missile occlusion, and stable cell ordering;
 - native-compatible radial projectile fan-out ordering with deterministic
   mirrored quarter-ring truncation;
+- stable 32-bit mixing and aligned walkable-footprint selection for authored
+  deterministic placement;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;
