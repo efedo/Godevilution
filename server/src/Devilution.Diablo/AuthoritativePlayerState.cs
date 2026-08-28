@@ -1,4 +1,5 @@
 using Devilution.Domain.Protocol;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -35,77 +36,27 @@ public enum DiabloPlayerDirection
 /** Exact native direction conversion and rotation used by authoritative player rules. */
 internal static class DiabloPlayerDirections
 {
-    private static readonly (int X, int Y)[] Displacements = [
-        (1, 1),
-        (0, 1),
-        (-1, 1),
-        (-1, 0),
-        (-1, -1),
-        (0, -1),
-        (1, -1),
-        (1, 0),
-    ];
-
     public static DiabloPlayerDirection FromAdjacentStep(int directionX, int directionY)
-    {
-        for (var index = 0; index < Displacements.Length; index++) {
-            if (Displacements[index] == (directionX, directionY))
-                return (DiabloPlayerDirection)index;
-        }
-        throw new ArgumentOutOfRangeException(nameof(directionX));
-    }
+        => (DiabloPlayerDirection)DeterministicGridDirections.FromAdjacentStep(directionX, directionY);
 
     public static DiabloPlayerDirection Toward(
         int startX,
         int startY,
         int destinationX,
         int destinationY)
-    {
-        var deltaX = destinationX - startX;
-        var deltaY = destinationY - startY;
-        int direction;
-        if (deltaX >= 0) {
-            if (deltaY >= 0) {
-                if (5 * deltaX <= deltaY * 2)
-                    return DiabloPlayerDirection.SouthWest;
-                direction = (int)DiabloPlayerDirection.South;
-            } else {
-                deltaY = -deltaY;
-                if (5 * deltaX <= deltaY * 2)
-                    return DiabloPlayerDirection.NorthEast;
-                direction = (int)DiabloPlayerDirection.East;
-            }
-            if (5 * deltaY <= deltaX * 2)
-                direction = (int)DiabloPlayerDirection.SouthEast;
-        } else {
-            deltaX = -deltaX;
-            if (deltaY >= 0) {
-                if (5 * deltaX <= deltaY * 2)
-                    return DiabloPlayerDirection.SouthWest;
-                direction = (int)DiabloPlayerDirection.West;
-            } else {
-                deltaY = -deltaY;
-                if (5 * deltaX <= deltaY * 2)
-                    return DiabloPlayerDirection.NorthEast;
-                direction = (int)DiabloPlayerDirection.North;
-            }
-            if (5 * deltaY <= deltaX * 2)
-                direction = (int)DiabloPlayerDirection.NorthWest;
-        }
-        return (DiabloPlayerDirection)direction;
-    }
+        => (DiabloPlayerDirection)DeterministicGridDirections.Toward(
+            startX,
+            startY,
+            destinationX,
+            destinationY);
 
     public static DiabloPlayerDirection RotateLeft(DiabloPlayerDirection direction, int steps = 1)
-    {
-        return (DiabloPlayerDirection)(((int)direction + 8 - (steps % 8)) % 8);
-    }
+        => (DiabloPlayerDirection)DeterministicGridDirections.RotateLeft(
+            (DeterministicGridDirection)direction,
+            steps);
 
     public static (int X, int Y) GetDisplacement(DiabloPlayerDirection direction)
-    {
-        if (!Enum.IsDefined(direction))
-            throw new ArgumentOutOfRangeException(nameof(direction));
-        return Displacements[(int)direction];
-    }
+        => DeterministicGridDirections.GetDisplacement((DeterministicGridDirection)direction);
 }
 
 /** Protocol-independent authoritative inventory item owned by a player. */

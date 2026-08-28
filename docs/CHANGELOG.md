@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract native-compatible eight-way direction math into the engine-neutral
+  assembly; Diablo retains its source-compatible direction facade while
+  authoritative callers share overflow-safe coordinate-to-facing selection,
+  rotation, and adjacent-cell displacement.
 - Preserve authoritative object presentation lifecycle metadata across content,
   snapshots, saves, hashes, protocol projections, native compatibility, and
   Godot visibility. Objects remain one-shot server interactions while authored

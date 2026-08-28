@@ -1448,6 +1448,12 @@ operation, and select the post-activation frame across save/restore, hashing,
 the protocol, native compatibility presentation, and Godot visibility. Existing
 packs omit these columns and retain the previous behavior.
 
+Native-compatible eight-way direction sectors and coordinate-to-facing selection
+are now implemented by the engine-neutral deterministic grid primitive; the
+Diablo module keeps its existing direction enum and facade for source
+compatibility while extreme coordinate differences are evaluated without
+integer wraparound.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.
