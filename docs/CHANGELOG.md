@@ -11,7 +11,9 @@ All notable changes to this fork are documented below.
 
 - Make dynamic set-piece origin publication and snapshot rollback transactional;
   failed deferred geometry or object materialization no longer leaves partial
-  origins, objects, fragments, or projected mutation state behind.
+  origins, objects, fragments, or projected mutation state behind. Snapshot
+  restore now rolls back the complete captured module state after any late
+  validation or materialization failure.
 
 - Add validated set-level-origin anchors to native DUN fragments and their
   behavior-object placements. Rows now defer until a generated set-piece origin

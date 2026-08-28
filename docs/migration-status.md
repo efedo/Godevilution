@@ -20,7 +20,9 @@ published, then rebuild through the authoritative world projection.
 
 Dynamic origin publication and snapshot rollback now restore origins, generated
 objects, native fragments, and projected geometry together when deferred
-materialization or validation fails.
+materialization or validation fails. Snapshot restore also checkpoints the
+complete module state before applying a save and restores that checkpoint after
+late validation or materialization failures.
 
 Snapshot restore now hydrates saved set-level origins before replaying deferred
 native DUN fragments. This rebuilds set-level fragment geometry on a replacement

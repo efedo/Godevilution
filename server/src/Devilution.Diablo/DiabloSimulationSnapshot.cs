@@ -911,25 +911,19 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
-        var previousWorldMutationIds = WorldState.ActiveWorldMutationIds.ToArray();
-        var previousSetLevelObjectOrigins = setLevelObjectOrigins.ToArray();
-        var previousAppliedNativeDunFragments = appliedNativeDunFragments.ToArray();
-        var previousMaterializedProceduralLevels = materializedProceduralLevels.ToArray();
-        var previousNextGeneratedMonsterEntityId = nextGeneratedMonsterEntityId;
+        var previous = CaptureSnapshot(destination, snapshot.Tick);
         try {
             RestoreSnapshotCore(destination, snapshot);
         }
-        catch {
-            setLevelObjectOrigins.Clear();
-            foreach (var (setLevelId, origin) in previousSetLevelObjectOrigins)
-                setLevelObjectOrigins.Add(setLevelId, origin);
-            WorldState.RestoreWorldMutations(previousWorldMutationIds);
-            appliedNativeDunFragments.Clear();
-            appliedNativeDunFragments.UnionWith(previousAppliedNativeDunFragments);
-            materializedProceduralLevels.Clear();
-            materializedProceduralLevels.UnionWith(previousMaterializedProceduralLevels);
-            nextGeneratedMonsterEntityId = previousNextGeneratedMonsterEntityId;
-            WorldState.RefreshProjectedGeometry();
+        catch (Exception exception) {
+            try {
+                RestoreSnapshotCore(destination, previous);
+            } catch (Exception rollbackException) {
+                throw new AggregateException(
+                    "The authoritative snapshot restore failed and its rollback also failed.",
+                    exception,
+                    rollbackException);
+            }
             throw;
         }
     }
@@ -958,6 +952,19 @@ public sealed partial class DiabloSimulation
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
+        var restoredSetLevelObjectOrigins = ValidateSavedSetLevelObjectOrigins(
+            snapshot.SetLevelObjectOrigins);
+        var restoredMaterializedProceduralLevelIds =
+            ValidateSavedMaterializedProceduralLevelIds(
+                snapshot.MaterializedProceduralLevelIds);
+        setLevelObjectOrigins.Clear();
+        foreach (var origin in restoredSetLevelObjectOrigins)
+            setLevelObjectOrigins.Add(
+                origin.SetLevelId,
+                new AuthoritativeSetLevelObjectOrigin(
+                    origin.LevelId,
+                    origin.PositionX,
+                    origin.PositionY));
         source = ResolveSnapshotItemFootprints(source);
         snapshot = snapshot with {
             Player = source,
@@ -1805,11 +1812,6 @@ public sealed partial class DiabloSimulation
             return quest;
         }).ToArray();
         var restoredStore = ValidateSavedStore(source, snapshot.ActiveStore);
-        var restoredSetLevelObjectOrigins = ValidateSavedSetLevelObjectOrigins(
-            snapshot.SetLevelObjectOrigins);
-        var restoredMaterializedProceduralLevelIds =
-            ValidateSavedMaterializedProceduralLevelIds(
-                snapshot.MaterializedProceduralLevelIds);
 
         DiabloWorldState.ValidateOccupancy(
             source.LevelId,
@@ -1849,14 +1851,6 @@ public sealed partial class DiabloSimulation
         foreach (var corpse in restoredCorpses)
             WorldState.Corpses.Add(corpse.EntityId, corpse);
         RestoreObjects(restoredObjects);
-        setLevelObjectOrigins.Clear();
-        foreach (var origin in restoredSetLevelObjectOrigins)
-            setLevelObjectOrigins.Add(
-                origin.SetLevelId,
-                new AuthoritativeSetLevelObjectOrigin(
-                    origin.LevelId,
-                    origin.PositionX,
-                    origin.PositionY));
         WorldState.RefreshProjectedGeometry();
         // Restored unique encounters can be the first available anchors for
         // deferred native-DUN fragments. Set-level origins are restored first

@@ -444,6 +444,77 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void FailedSnapshotRestoreRollsBackLateFragmentObjectConflict()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorSetLevelId: 6),
+        ]);
+        var fragmentObjects = new AuthoritativeNativeDunFragmentObjectCatalog([
+            new AuthoritativeNativeDunFragmentObjectPlacement(1, 1, 900, 0, 1, 1) {
+                AnchorSetLevelId = 6,
+                TemplateEntityId = 100,
+            },
+        ]);
+        var template = new AuthoritativeWorldObject(100, 97, 24, 0, 0);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Content = content,
+                NativeDunFragments = catalog,
+                NativeDunFragmentObjects = fragmentObjects,
+                NativeObjectTemplates = [template],
+            });
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            10,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            4,
+            4,
+            10,
+            1,
+            24,
+            0);
+
+        simulation.PublishSetLevelObjectOrigin(
+            6,
+            new AuthoritativeSetLevelObjectOrigin(24, 4, 4));
+        var valid = simulation.CaptureSnapshot(player, 3);
+        simulation.RestoreSnapshot(player, valid);
+        var invalid = valid with {
+            Objects = [valid.Objects.Single() with { LevelId = 0 }],
+        };
+
+        Assert.Throws<InvalidDataException>(() => simulation.RestoreSnapshot(player, invalid));
+
+        var restoredObject = Assert.Single(simulation.WorldState.Objects.Values);
+        Assert.Equal(97U, restoredObject.ObjectId);
+        Assert.Equal((ushort)42, simulation.WorldState.World!.Levels.Single().NativeMegaTileLayer[1 * 4 + 1]);
+        Assert.Equal(
+            new AuthoritativeSetLevelObjectOrigin(24, 4, 4),
+            simulation.SetLevelObjectOrigins[6]);
+    }
+
+    [Fact]
     public void ValidatesDeferredFragmentAssetsBeforeEncounterMaterialization()
     {
         var catalog = new AuthoritativeNativeDunFragmentCatalog([
