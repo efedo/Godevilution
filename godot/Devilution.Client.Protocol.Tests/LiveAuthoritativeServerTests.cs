@@ -1364,6 +1364,76 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportDropsAStableInventoryReferenceIntoTheWorld()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            gameMode: "single-player");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-stable-world-drop", requestedClassId: 0));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        model.Apply(await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null));
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.NotEmpty(player.Inventory);
+        var inventoryItem = player.Inventory[0];
+        var inventoryReference = new PlayerItemReference {
+            Location = PlayerItemLocation.Inventory,
+            Slot = 0,
+            StableItemId = inventoryItem.State.StableItemId,
+        };
+
+        async Task DropAsync(PlayerItemReference reference, int targetX, int targetY)
+        {
+            var sequence = client.Queue(new Command {
+                DropItemRequested = new DropItemRequested {
+                    Item = reference.Clone(),
+                    TargetX = targetX,
+                    TargetY = targetY,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+            var dropped = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.WorldItems.Any(item =>
+                    item.PositionX == targetX
+                    && item.PositionY == targetY
+                    && item.State.StableItemId == reference.StableItemId) == true);
+            model.Apply(dropped);
+        }
+
+        await DropAsync(inventoryReference, 0, 1);
+
+        var finalPlayer = Assert.Single(model.Snapshot!.Players);
+        Assert.DoesNotContain(
+            finalPlayer.Inventory,
+            item => item.State.StableItemId == inventoryReference.StableItemId);
+        Assert.Contains(
+            model.Snapshot.WorldItems,
+            item => item.PositionX == 0
+                && item.PositionY == 1
+                && item.State.StableItemId == inventoryReference.StableItemId);
+
+        var staleSequence = client.Queue(new Command {
+            DropItemRequested = new DropItemRequested {
+                Item = inventoryReference.Clone(),
+                TargetX = 0,
+                TargetY = 1,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var staleAcknowledgement = await WaitForAcknowledgementAsync(client, staleSequence);
+        Assert.Equal(CommandStatus.Rejected, staleAcknowledgement.Status);
+        Assert.Equal(CommandRejectReason.InvalidTarget, staleAcknowledgement.RejectReason);
+    }
+
+    [Fact]
     public async Task LiveServerConsumesBeltPotionThroughStableReference()
     {
         using var server = await StartedServer.StartAsync(

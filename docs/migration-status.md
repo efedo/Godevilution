@@ -10,7 +10,9 @@ cursor-only `DropHeldItemRequested` compatibility command. This closes the
 Godot protocol gap for item-placement interactions and exercises the
 content-owned Cornerstone anchor path. Godot inventory selection now routes
 world clicks through the same stable-reference intent, while native cursor
-input remains backward compatible.
+input remains backward compatible. A live Godot/server fixture now verifies
+inventory-source removal, authoritative world-item projection, and stale
+reference rejection over the transport boundary.
 
 Initial staged-dialogue projection now chooses a shared-safe message for
 item-gated encounters. When a conversation has item-present and item-absent

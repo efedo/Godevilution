@@ -9,7 +9,10 @@ All notable changes to this fork are documented below.
   cursor-only `DropHeldItemRequested` compatibility path while validating the
   new source reference atomically, including content-owned Cornerstone anchor
   completion and stale-reference rejection. Godot now preflights the selected
-  carried item and routes world clicks through the same intent.
+  carried item and routes world clicks through the same intent. A live
+  Godot/server fixture now verifies an inventory source is removed and
+  materialized as an authoritative world item, while a retry with the stale
+  reference is rejected.
 
 - Add a live two-participant Godot/server Lachdanan fixture for shared-safe
   staged dialogue. The fixture composes the shipped Hellfire pack, validates
