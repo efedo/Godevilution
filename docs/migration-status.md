@@ -6,8 +6,12 @@ Snotspill's initial unique-monster conversation now enters through the authored
 staged-dialogue catalog instead of the legacy quest-dialogue fallback. The
 live Godot fixture verifies the server event, quest-variable advance, next
 projected message identity, and rejection of direct combat while the authored
-stage is pending. The active content schema is now `1.442.0`, with `1.441.0`
-accepted as the previous additive contract.
+stage is pending. The same initial snapshot now projects the authored message
+identity, allowing Godot's target selector to resolve the dialogue before the
+first interaction. Snapshot restore reapplies the same projection after quest
+state hydration, including saves created before the projection was introduced.
+The active content schema is now `1.442.0`, with `1.441.0` accepted as the
+previous additive contract.
 
 The authored object follow-up boundary is now covered end to end through the
 shared protocol. A live Godot fixture activates a quest-transition object,

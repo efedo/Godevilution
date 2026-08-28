@@ -467,6 +467,7 @@ public sealed partial class DiabloSimulation
         ApplyDeferredNativeDunFragments();
         MaterializeNativeDunMonsters();
         ReconcileProceduralSpawnState();
+        RefreshAuthoredDialogueTargets();
     }
 
     public DiabloWorldState WorldState { get; }
@@ -707,7 +708,46 @@ public sealed partial class DiabloSimulation
             PublishAvailableProceduralSetPieceOrigins();
         if (result.Succeeded)
             EnsureProceduralMonsterSpawns(player.LevelId, participants);
+        if (result.Succeeded)
+            RefreshAuthoredDialogueTargets();
         return result;
+    }
+
+    /** Projects the current authored message identity onto pending unique-dialogue targets. */
+    private void RefreshAuthoredDialogueTargets()
+    {
+        if (QuestDialogueStages is null)
+            return;
+
+        foreach (var target in WorldState.CombatTargets.Values
+                     .Where(target => target.IsUnique
+                         && !string.IsNullOrWhiteSpace(target.UniqueIdentity))) {
+            var quest = WorldState.Quests.Values
+                .Where(quest => QuestDialogueStages.ContainsQuest(quest.QuestId)
+                    && (quest.LevelId == 0 || quest.LevelId == target.LevelId)
+                    && string.Equals(
+                        quest.CompletionUniqueIdentity,
+                        target.UniqueIdentity,
+                        StringComparison.Ordinal))
+                .OrderBy(quest => quest.QuestId)
+                .FirstOrDefault();
+            if (quest is null) {
+                continue;
+            }
+
+            if (quest.Unavailable || quest.Completed || !quest.Active) {
+                target.DialogueMessageId = 0;
+                continue;
+            }
+
+            target.DialogueMessageId = QuestDialogueStages.TryGet(
+                    quest.QuestId,
+                    quest.Variable1,
+                    quest.Variable2,
+                    out var stage)
+                ? stage.MessageId
+                : 0;
+        }
     }
 
     /** Materializes one deterministic encounter set when a player enters a level. */
@@ -752,6 +792,7 @@ public sealed partial class DiabloSimulation
         MaterializeNativeDunMonsters();
         if (targets.Count != 0)
             nextGeneratedMonsterEntityId = checked(targets[^1].EntityId + 1);
+        RefreshAuthoredDialogueTargets();
     }
 
     /** Materializes mapped native DUN monster cells after deferred geometry appears. */
@@ -785,6 +826,7 @@ public sealed partial class DiabloSimulation
         }
         if (targets.Count != 0)
             ApplyDeferredNativeDunFragments();
+        RefreshAuthoredDialogueTargets();
     }
 
     /** Applies unique-anchored fragments once their generated encounter exists. */

@@ -17,7 +17,7 @@ public sealed class DiabloSimulationTests
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.440.0", true)]
+    [InlineData("devilution.diablo", "1.441.0", true)]
     [InlineData("devilution.diablo", "1.429.0", false)]
     [InlineData("devilution.diablo", "1.415.0", false)]
     [InlineData("other.game", "1.424.0", false)]
@@ -501,6 +501,54 @@ public sealed class DiabloSimulationTests
         Assert.Equal(145, restored.DialogueMessageId);
         Assert.Equal((0x12345678U, 0x87654321U),
             (restored.MonsterItemSeed, restored.MonsterAiSeed));
+    }
+
+    [Fact]
+    public void SimulationProjectsTheCurrentAuthoredDialogueMessageOnInitialTarget()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            unique: true,
+            uniqueIdentity: "Warlord");
+        var quest = new AuthoritativeQuestState(
+            3012,
+            0,
+            1,
+            active: true,
+            completionUniqueIdentity: "Warlord");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new AuthoritativeQuestDialogueStage(
+                3012,
+                0,
+                -1,
+                110,
+                2,
+                0),
+        ]);
+
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+                Quests = [quest],
+                QuestDialogueStages = stages,
+            });
+
+        Assert.Equal(110, Assert.Single(simulation.WorldState.CombatTargets.Values).DialogueMessageId);
+
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 1);
+        var legacySnapshot = snapshot with {
+            Monsters = [snapshot.Monsters[0] with { DialogueMessageId = 0 }],
+        };
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                QuestDialogueStages = stages,
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), legacySnapshot);
+
+        Assert.Equal(110, Assert.Single(replacement.WorldState.CombatTargets.Values).DialogueMessageId);
     }
 
     [Fact]

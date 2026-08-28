@@ -625,6 +625,10 @@ public sealed class LiveAuthoritativeServerTests
             Assert.Equal((0, 0), (player.PositionX, player.PositionY));
             Assert.Equal((0, 1), (target.PositionX, target.PositionY));
             Assert.Equal(0, Assert.Single(model.Snapshot.Quests, quest => quest.QuestId == 3008).Variable1);
+            Assert.Equal(12, target.DialogueMessageId);
+            Assert.Equal(
+                new AuthoritativeMonsterDialogueTarget(3008, 100),
+                AuthoritativeMonsterDialogueSelector.Select(model.Snapshot, player.EntityId, 0, 1));
 
             var attackSequence = client.Queue(new Command {
                 AttackRequested = new AttackRequested {

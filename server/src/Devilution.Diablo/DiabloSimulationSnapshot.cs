@@ -1884,6 +1884,7 @@ public sealed partial class DiabloSimulation
             WorldState.Projectiles.Add(projectile.EntityId, projectile);
         random.Restore(snapshot.RandomState);
         RestoreQuests(restoredQuests);
+        RefreshAuthoredDialogueTargets();
         worldCommands.EnsureLevelEntryState(destination.LevelId);
         WorldState.VictoryTriggered = snapshot.VictoryTriggered;
         if (restoredStore is not null)

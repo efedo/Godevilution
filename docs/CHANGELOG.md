@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project the current authored dialogue message onto staged unique-monster
+  targets as soon as the server materializes or restores them. Godot can now
+  resolve and submit the dialogue target directly from the initial
+  authoritative snapshot, before any local interaction or legacy fallback is
+  needed.
+
 - Make staged unique-monster dialogue own combat admission while a matching
   authored stage is pending. Server combat now reads the same dialogue catalog
   as `TalkToQuestRequested`, and the live Godot fixture proves direct attacks
