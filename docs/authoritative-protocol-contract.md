@@ -183,7 +183,8 @@ inventory, belt, or equipment item without relying on a native cursor. The
 server rejects stash references, occupied or non-adjacent destinations, stale
 stable identities, and drops while another cursor item is held; accepted drops
 remove the source item atomically and apply content-owned world-item anchor
-quests. The cursor-only field-28 command remains unchanged for native
+quests. Godot preflights the selected carried reference before sending the
+intent. The cursor-only field-28 command remains unchanged for native
 compatibility.
 
 `TalkToQuestRequested` is the additive command at field 30. It names a stable

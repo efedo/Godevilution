@@ -8,7 +8,8 @@ All notable changes to this fork are documented below.
   inventory, belt, and equipment-to-world drops. The server keeps the native
   cursor-only `DropHeldItemRequested` compatibility path while validating the
   new source reference atomically, including content-owned Cornerstone anchor
-  completion and stale-reference rejection.
+  completion and stale-reference rejection. Godot now preflights the selected
+  carried item and routes world clicks through the same intent.
 
 - Add a live two-participant Godot/server Lachdanan fixture for shared-safe
   staged dialogue. The fixture composes the shipped Hellfire pack, validates

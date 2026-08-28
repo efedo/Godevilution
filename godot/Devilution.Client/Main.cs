@@ -301,6 +301,20 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            if (player is not null
+                && hud?.SelectedItemReference is { } selectedItem
+                && AuthoritativeItemDropRules.IsCarriedItem(player, selectedItem)) {
+                Queue(new Command {
+                    DropItemRequested = new DropItemRequested {
+                        Item = selectedItem.Clone(),
+                        TargetX = target.X,
+                        TargetY = target.Y,
+                    },
+                });
+                hud.ClearItemSelection();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             var selectedSpellSource = AuthoritativeSpellSourceSelector.Select(
                 AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
                 selectedSpellSourceKey);

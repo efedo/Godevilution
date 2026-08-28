@@ -115,6 +115,12 @@ public partial class HudPresentation : CanvasLayer
     public event Action? ClearEventsRequested;
     public event Action<string>? SpellSourceSelected;
 
+    /** Selected carried item used by world-drop routing; stash items are rejected by the client rules. */
+    public PlayerItemReference? SelectedItemReference => selectedItemReference;
+
+    /** Clears the HUD's item selection after a world-drop intent is queued. */
+    public void ClearItemSelection() => ClearSelectedItem();
+
     public override void _Ready()
     {
         var statusPanel = new PanelContainer { Position = new Vector2(16, 16), Size = new Vector2(760, 100) };
