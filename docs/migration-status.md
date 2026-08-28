@@ -2,6 +2,14 @@
 
 Status date: 2026-08-28
 
+The shared protocol now admits an additive `DropItemRequested` intent carrying
+the same stable item references used by inventory and stash transfers. The
+authoritative server validates and removes the referenced carried item only
+after checking the adjacent destination, while retaining the native
+cursor-only `DropHeldItemRequested` compatibility command. This closes the
+Godot protocol gap for item-placement interactions and exercises the
+content-owned Cornerstone anchor path; client UI wiring remains follow-up work.
+
 Initial staged-dialogue projection now chooses a shared-safe message for
 item-gated encounters. When a conversation has item-present and item-absent
 branches, snapshots advertise the item-absent branch; the server still selects

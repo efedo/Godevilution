@@ -352,6 +352,11 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                         command.DropHeldItemRequested.TargetX,
                         command.DropHeldItemRequested.TargetY),
                     appliedTick),
+                Command.IntentOneofCase.DropItemRequested => ExecuteDropItemIntent(
+                    player,
+                    participants,
+                    command.DropItemRequested,
+                    appliedTick),
                 Command.IntentOneofCase.OperateObjectRequested => ExecuteWorldIntent(
                     player,
                     participants,
@@ -753,6 +758,28 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         return ExecuteStoreIntent(
             player,
             new DiabloMoveItemIntent(item.Value, destination.Value),
+            appliedTick);
+    }
+
+    private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteDropItemIntent(
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> participants,
+        DropItemRequested request,
+        ulong appliedTick)
+    {
+        if (!TryMapItemReference(request.Item, out var item)
+            || !item.HasValue) {
+            return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
+                CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
+        }
+
+        return ExecuteWorldIntent(
+            player,
+            participants,
+            new DiabloDropItemIntent(
+                item.Value,
+                request.TargetX,
+                request.TargetY),
             appliedTick);
     }
 

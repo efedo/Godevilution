@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the additive `DropItemRequested` protocol intent for stable-reference
+  inventory, belt, and equipment-to-world drops. The server keeps the native
+  cursor-only `DropHeldItemRequested` compatibility path while validating the
+  new source reference atomically, including content-owned Cornerstone anchor
+  completion and stale-reference rejection.
+
 - Add a live two-participant Godot/server Lachdanan fixture for shared-safe
   staged dialogue. The fixture composes the shipped Hellfire pack, validates
   an explicit Lachdanan target binding, and confirms both multiplayer

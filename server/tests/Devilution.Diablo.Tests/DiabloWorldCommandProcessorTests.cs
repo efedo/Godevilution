@@ -1323,6 +1323,126 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StableInventoryItemDropCompletesAContentOwnedWorldItemAnchorQuest()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var quest = new AuthoritativeQuestState(3023, 21, 1, active: true);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3023,
+                22,
+                "Cornerstone of the World",
+                21,
+                -1,
+                string.Empty,
+                0,
+                true) {
+                WorldItemAnchorPositionX = 14,
+                WorldItemAnchorPositionY = 14,
+            },
+        ]);
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            75,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 1,
+                Value = 75,
+                IdentifiedValue = 75,
+                StableItemId = 7001,
+            });
+        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+        inventoryGrid[0] = 0;
+        var world = new DiabloWorldState(
+            fallbackWidth: 40,
+            fallbackHeight: 40,
+            quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            combatRules: rules,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(
+            positionX: 13,
+            positionY: 14,
+            levelId: 21,
+            entityId: 1,
+            gold: 0,
+            inventory: [item],
+            inventoryGrid: inventoryGrid);
+
+        var result = processor.Execute(
+            player,
+            new DiabloDropItemIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    StableItemId: 7001),
+                14,
+                14),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        var dropped = Assert.Single(world.WorldItems).Value;
+        Assert.Equal((21U, 14, 14, 7001U), (
+            dropped.LevelId,
+            dropped.PositionX,
+            dropped.PositionY,
+            dropped.State.StableItemId));
+    }
+
+    [Fact]
+    public void StableInventoryItemDropRejectsAStaleReferenceWithoutMutation()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            75,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 1,
+                Value = 75,
+                IdentifiedValue = 75,
+                StableItemId = 7001,
+            });
+        var inventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
+        inventoryGrid[0] = 0;
+        var world = new DiabloWorldState(fallbackWidth: 40, fallbackHeight: 40);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 1,
+            inventory: [item],
+            inventoryGrid: inventoryGrid);
+
+        var result = processor.Execute(
+            player,
+            new DiabloDropItemIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    StableItemId: 7002),
+                1,
+                0),
+            1,
+            [player]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Single(player.Inventory);
+        Assert.Empty(world.WorldItems);
+    }
+
+    [Fact]
     public void HeldItemDropDoesNotCompleteAnInactiveWorldItemAnchorQuest()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

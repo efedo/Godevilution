@@ -14,6 +14,12 @@ public sealed record DiabloPickupWorldItemIntent(uint ItemEntityId) : DiabloWorl
 
 public sealed record DiabloDropHeldItemIntent(int TargetX, int TargetY) : DiabloWorldIntent;
 
+/** Drops one stable-referenced carried inventory item into an adjacent world cell. */
+public sealed record DiabloDropItemIntent(
+    DiabloPlayerItemReference Item,
+    int TargetX,
+    int TargetY) : DiabloWorldIntent;
+
 public sealed record DiabloOperateObjectIntent(uint ObjectEntityId) : DiabloWorldIntent;
 
 public sealed record DiabloDisarmTrapIntent(uint ObjectEntityId) : DiabloWorldIntent;

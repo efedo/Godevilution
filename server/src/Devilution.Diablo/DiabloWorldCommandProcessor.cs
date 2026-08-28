@@ -132,6 +132,12 @@ public sealed class DiabloWorldCommandProcessor
                 drop.TargetX,
                 drop.TargetY,
                 players.ToArray()),
+            DiabloDropItemIntent drop => DropItem(
+                player,
+                drop.Item,
+                drop.TargetX,
+                drop.TargetY,
+                players.ToArray()),
             DiabloOperateObjectIntent operation => OperateObject(
                 player,
                 operation.ObjectEntityId,
@@ -1152,8 +1158,28 @@ public sealed class DiabloWorldCommandProcessor
         int targetY,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        if (player.HeldItem is not { } heldItem)
+        return DropItem(player, null, targetX, targetY, players);
+    }
+
+    private DiabloWorldIntentResult DropItem(
+        AuthoritativePlayerState player,
+        DiabloPlayerItemReference? sourceReference,
+        int targetX,
+        int targetY,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        OwnedStoreItem? sourceItem;
+        if (sourceReference is { } reference) {
+            if (reference.Location == DiabloPlayerItemLocation.Stash
+                || player.HeldItem is not null
+                || !DiabloPlayerItemAccess.TryGet(player, reference, out sourceItem)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+        } else if (player.HeldItem is { } heldItem) {
+            sourceItem = heldItem;
+        } else {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
         var originX = player.FuturePositionX;
         var originY = player.FuturePositionY;
         if (!world.ContainsPosition(player.LevelId, targetX, targetY))
@@ -1178,17 +1204,23 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         var entityId = AllocateWorldItemEntityId(players);
-        var droppedItem = new AuthoritativeWorldItem(
+        var worldItem = new AuthoritativeWorldItem(
             entityId,
             player.LevelId,
             targetX,
             targetY,
-            heldItem.ItemSeed,
-            heldItem.Price,
-            heldItem.State);
-        world.WorldItems.Add(entityId, droppedItem);
-        player.HeldItem = null;
-        ApplyWorldItemAnchorQuest(droppedItem);
+            sourceItem!.ItemSeed,
+            sourceItem.Price,
+            sourceItem.State);
+        world.WorldItems.Add(entityId, worldItem);
+        if (sourceReference is { } source) {
+            DiabloPlayerItemAccess.Remove(player, source);
+            if (source.Location == DiabloPlayerItemLocation.Equipment)
+                player.RecalculateEquipmentResources();
+        } else {
+            player.HeldItem = null;
+        }
+        ApplyWorldItemAnchorQuest(worldItem);
         return DiabloWorldIntentResult.Accepted;
     }
 

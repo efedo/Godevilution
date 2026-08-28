@@ -139,6 +139,7 @@ message Command {
 		WithdrawStashGoldRequested withdraw_stash_gold_requested = 40;
 		SplitGoldRequested split_gold_requested = 41;
 		SortInventoryRequested sort_inventory_requested = 42;
+		DropItemRequested drop_item_requested = 43;
 	}
 }
 
@@ -313,6 +314,15 @@ message PickupWorldItemRequested {
 message DropHeldItemRequested {
 	int32 target_x = 1;
 	int32 target_y = 2;
+}
+
+// Explicitly drops one stable-referenced carried item into an adjacent world
+// cell. The legacy DropHeldItemRequested command remains the native cursor
+// compatibility path and does not require an item reference.
+message DropItemRequested {
+	PlayerItemReference item = 1;
+	int32 target_x = 2;
+	int32 target_y = 3;
 }
 
 message OperateObjectRequested {

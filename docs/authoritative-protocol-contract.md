@@ -177,6 +177,15 @@ creates the world item with the same item seed, price, and complete state. A
 retry cannot duplicate the item because normal command deduplication and the
 following snapshot remain authoritative.
 
+`DropItemRequested` is the additive command at field 43. It carries a stable
+`PlayerItemReference` plus a target tile, allowing protocol clients to drop an
+inventory, belt, or equipment item without relying on a native cursor. The
+server rejects stash references, occupied or non-adjacent destinations, stale
+stable identities, and drops while another cursor item is held; accepted drops
+remove the source item atomically and apply content-owned world-item anchor
+quests. The cursor-only field-28 command remains unchanged for native
+compatibility.
+
 `TalkToQuestRequested` is the additive command at field 30. It names a stable
 quest ID and target entity ID; the server requires a living adjacent unique
 encounter whose validated identity matches the quest's completion identity.

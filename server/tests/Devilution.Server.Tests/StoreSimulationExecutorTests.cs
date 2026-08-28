@@ -2914,6 +2914,53 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void DropItemCommandMovesAStableInventoryItemToTheAuthoritativeWorld()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            65,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 1,
+                Value = 65,
+                IdentifiedValue = 65,
+                StableItemId = 7001,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingPositionX: 0,
+            startingPositionY: 0,
+            startingInventory: [item],
+            startingInventoryGrid: [0, ..Enumerable.Repeat(-1, 39)]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            DropItemRequested = new DropItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = 7001,
+                },
+                TargetX = 1,
+                TargetY = 0,
+            },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var snapshot = executor.CreateSnapshot("player-a", 7, 1);
+        Assert.Empty(Assert.Single(snapshot.Players).Inventory);
+        var dropped = Assert.Single(snapshot.WorldItems);
+        Assert.Equal(7001U, dropped.State.StableItemId);
+        Assert.Equal((1, 0), (dropped.PositionX, dropped.PositionY));
+    }
+
+    [Fact]
     public void ObjectInteractionAndQuestProgressAreAuthoritative()
     {
         var executor = new StoreSimulationExecutor(
