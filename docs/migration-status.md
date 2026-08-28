@@ -2,6 +2,11 @@
 
 Status date: 2026-08-28
 
+Live Godot overlay fixtures now declare the active `1.431.0` content schema,
+matching the shipped base pack. Manifest composition continues to reject a
+mixed current/previous schema set before module activation; the Diablo module
+still accepts a previous additive schema when a complete manifest uses it.
+
 Godot local movement prediction now stops at authoritative blocked cells and
 known live monster or remote-player occupancy while retaining bounded queued
 input for cells whose collision state is not yet projected. This keeps the

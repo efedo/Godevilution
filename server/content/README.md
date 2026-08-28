@@ -6,8 +6,11 @@ included in its content manifest and combined ruleset identity.
 It declares its identity and `devilution.diablo@1.431.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
 previous additive `1.430.0` schema so existing manifest-based packs remain
-loadable. The standalone host falls back to legacy command-line identity only
-for external roots that do not yet provide a manifest.
+loadable. A composed manifest must still use one exact schema identity across
+all declared packs; use the previous schema only for a complete compatible
+manifest rather than mixing it with the current pack. The standalone host falls
+back to legacy command-line identity only for external roots that do not yet
+provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
 `combat.tsv` variant selector plus the first content-owned towner turn-in row,
 the native `Crystalline`, `Jester's`, and `Doppelganger's` weapon prefixes and

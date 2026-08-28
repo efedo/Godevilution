@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh all live Godot overlay fixtures to the active `1.431.0` content
+  schema and add coverage for rejecting mixed current/previous schema packs
+  during manifest composition; clarify the exact-schema composition rule in
+  the content-pack guide.
 - Refresh the native Lua-boundary characterization for the centralized
   `ShouldInitializeLegacyLua` lifecycle policy, covering both guarded startup
   and shutdown while retaining the authoritative debug-console exclusion.

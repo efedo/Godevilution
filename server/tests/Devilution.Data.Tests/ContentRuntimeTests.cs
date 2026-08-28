@@ -531,6 +531,18 @@ public sealed class ContentRuntimeTests
         ]);
 
         Assert.Equal(schema, compatible.Schema);
+        var previousAdditiveSchema = new ContentSchemaIdentity("devilution.diablo", "1.430.0");
+        var currentSchema = new ContentSchemaIdentity("devilution.diablo", "1.431.0");
+        Assert.Throws<ArgumentException>(() => new ContentManifest("rules", "1", [
+            new ContentPack("base", "1.2.0", [table], [], [], currentSchema),
+            new ContentPack(
+                "previous-overlay",
+                "1.0.0",
+                [TsvTable.Parse("extra.tsv", "id\nextra\n")],
+                ["base"],
+                [],
+                previousAdditiveSchema),
+        ]));
         Assert.Throws<ArgumentException>(() => new ContentManifest("rules", "1", [
             new ContentPack("base", "2.0.0", [table], [], [], schema),
             new ContentPack(
