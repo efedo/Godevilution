@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add optional validated `object_presentations.tsv` sidecars so content packs
+  can author activated-object visibility and native animation frames without
+  changing the legacy `objects.tsv` header or breaking older overlays.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

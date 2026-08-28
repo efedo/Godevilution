@@ -730,6 +730,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var objectPresentations = content.TryGetTable(
+            "object_presentations.tsv",
+            out var objectPresentationsTable)
+            ? AuthoritativeWorldObjectPresentationCatalog.LoadTsv(
+                objectPresentationsTable.SourcePath,
+                objectPresentationsTable.ToCanonicalTsv())
+            : null;
+        objectPresentations?.Apply((objects ?? []).Concat(objectTemplates ?? []));
         nativeDunFragmentObjects?.ValidateTemplates(objectTemplates ?? []);
         var objectDefinitions = (objects ?? [])
             .Concat(objectTemplates ?? [])

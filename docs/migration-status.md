@@ -1448,6 +1448,12 @@ operation, and select the post-activation frame across save/restore, hashing,
 the protocol, native compatibility presentation, and Godot visibility. Existing
 packs omit these columns and retain the previous behavior.
 
+Content packs can now supply the same values through optional validated
+`object_presentations.tsv` sidecars keyed by authored object entity. Activation
+applies sidecar metadata to both ordinary object rows and behavior-only templates
+before set-level or native-DUN placements clone them, so existing `objects.tsv`
+overlay headers remain compatible.
+
 Native-compatible eight-way direction sectors and coordinate-to-facing selection
 are now implemented by the engine-neutral deterministic grid primitive; the
 Diablo module keeps its existing direction enum and facade for source
