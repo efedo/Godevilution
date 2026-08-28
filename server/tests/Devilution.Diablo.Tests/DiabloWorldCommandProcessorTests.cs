@@ -108,6 +108,51 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestTransitionAppliesItsAuthoredFollowUpAfterTheTransition()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n24\t8\t8\tnone\n");
+        var quest = new AuthoritativeQuestState(
+            3022,
+            24,
+            1,
+            active: true,
+            variable1: 2,
+            completionVariable1: 3);
+        var lever = new AuthoritativeWorldObject(
+            2409,
+            6007,
+            24,
+            3,
+            3,
+            questId: 3022,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.CompleteQuest,
+            questTransitionRequiredVariable1: 2,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
+            questSequenceFollowUpAmount: 7);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [lever],
+            quests: [quest],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(7, 24, blockedCellsAdd: [27]),
+            ]));
+        var player = CreatePlayer(levelId: 24, positionX: 3, positionY: 2, entityId: 1);
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(lever.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.Contains(7U, world.ActiveWorldMutationIds);
+        Assert.Contains(27, world.LevelGeometry.Single().BlockedCells);
+    }
+
+    [Fact]
     public void MovementRejectsMalformedBlockedAndOccupiedDestinationsWithoutMutation()
     {
         var world = new DiabloWorldState(

@@ -127,6 +127,7 @@ public sealed class AuthoritativeWorldObject
         ProjectileTargetOffsetY = projectileTargetOffsetY;
         if (!IsValidQuestSequenceFollowUp(
                 effectKind,
+                questTransitionKind,
                 questSequenceFollowUpKind,
                 questSequenceFollowUpAmount,
                 questSequenceFollowUpOffsetX,
@@ -141,6 +142,7 @@ public sealed class AuthoritativeWorldObject
         }
         if (questSequenceFollowUpWorldMutationId != 0
             && (effectKind != AuthoritativeObjectEffectKind.QuestSequence
+                && questTransitionKind == AuthoritativeObjectQuestTransitionKind.None
                 || questSequenceFollowUpKind == AuthoritativeQuestSequenceFollowUpKind.None)) {
             throw new InvalidDataException(
                 "Object quest-sequence world-mutation follow-up values are invalid.");
@@ -451,12 +453,14 @@ public sealed class AuthoritativeWorldObject
 
     public static bool IsValidQuestSequenceFollowUp(
         AuthoritativeObjectEffectKind effectKind,
+        AuthoritativeObjectQuestTransitionKind questTransitionKind,
         AuthoritativeQuestSequenceFollowUpKind followUpKind,
         uint amount,
         int offsetX,
         int offsetY)
     {
-        var allowsQuestSequenceFollowUp = effectKind == AuthoritativeObjectEffectKind.QuestSequence;
+        var allowsQuestSequenceFollowUp = effectKind == AuthoritativeObjectEffectKind.QuestSequence
+            || questTransitionKind != AuthoritativeObjectQuestTransitionKind.None;
         var allowsWorldMutationProjectileFollowUp = effectKind
             == AuthoritativeObjectEffectKind.WorldMutation
             && followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile;
@@ -480,6 +484,21 @@ public sealed class AuthoritativeWorldObject
             _ => false,
         };
     }
+
+    /** Compatibility overload for callers that do not model quest transitions. */
+    public static bool IsValidQuestSequenceFollowUp(
+        AuthoritativeObjectEffectKind effectKind,
+        AuthoritativeQuestSequenceFollowUpKind followUpKind,
+        uint amount,
+        int offsetX,
+        int offsetY)
+        => IsValidQuestSequenceFollowUp(
+            effectKind,
+            AuthoritativeObjectQuestTransitionKind.None,
+            followUpKind,
+            amount,
+            offsetX,
+            offsetY);
 
     public static bool IsValidProjectileSource(
         AuthoritativeObjectEffectKind effectKind,

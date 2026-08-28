@@ -1317,6 +1317,13 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
             world.ApplyWorldMutation((uint)@object.EffectAmount);
             ApplyAuthoredObjectFollowUp(@object, player, participants);
+        } else if (@object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
+            && (@object.QuestSequenceFollowUpKind != AuthoritativeQuestSequenceFollowUpKind.None
+                || @object.QuestSequenceFollowUpWorldMutationId != 0)) {
+            // Quest-transition objects (books, levers, and similar set-piece
+            // controls) may apply their authored map/encounter follow-up only
+            // after the transition succeeds.
+            ApplyAuthoredObjectFollowUp(@object, player, participants);
         }
 
         SpawnObjectReward(@object, participants);

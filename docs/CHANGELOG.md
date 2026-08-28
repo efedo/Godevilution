@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authored object follow-ups to quest-transition objects. Books, levers,
+  and similar set-piece controls can now apply a validated server-owned map,
+  projectile, or encounter follow-up after their quest transition succeeds;
+  schema `1.441.0` is current with `1.440.0` retained for additive
+  compatibility.
+
 - Externalize the Halls of the Blind, Gateway of Blood, and Warlord steel-tome
   activation dialogue through authored object metadata. The server now records
   each native quest message and emits it as a server-owned dialogue event;

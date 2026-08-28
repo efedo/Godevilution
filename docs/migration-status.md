@@ -7,7 +7,10 @@ templates now carry authored activation-message identities. Server object
 operations record the message on the linked quest and emit the dialogue event,
 removing native quest speech from the authoritative path. Their native-DUN
 placement and map mutations remain deferred until the licensed geometry is
-available. The content schema is now `1.440.0`; the previous additive `1.439.0` schema
+available. Quest-transition objects can now also apply an authored follow-up
+mutation or encounter after the transition succeeds, providing the server-side
+hook needed by those future set-piece replacements without fabricating geometry.
+The content schema is now `1.441.0`; the previous additive `1.440.0` schema
 remains accepted for pack compatibility.
 
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
@@ -16,7 +19,7 @@ item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,
 validates the Veil of Steel unique reward placement, consumes the Elixir, and
 applies the native dialogue defeat boundary. The legacy dialogue item/reward
 fields are empty in the shipped row. The stage rows remain compatible with the
-current `1.440.0` contract; `1.439.0` remains accepted as the previous additive
+current `1.441.0` contract; `1.440.0` remains accepted as the previous additive
 schema.
 
 Zhar's activation conversation now uses an authored unique-monster dialogue
@@ -24,7 +27,7 @@ stage with a validated normal-item reward. The server checks the target tile
 before advancing `_qvar1` from 0 to 2, emits native message 148, and generates
 the level-14 book from content; the legacy dialogue reward fields are empty in
 the shipped quest row. The stage row remains compatible with the current
-`1.440.0` contract; `1.439.0` remains accepted as the previous additive schema.
+`1.441.0` contract; `1.440.0` remains accepted as the previous additive schema.
 
 The Lazarus storyteller opening now uses authored quest/towner stages. The
 single-player Staff of Lazarus hand-in consumes its item and advances native
