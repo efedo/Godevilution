@@ -22,7 +22,8 @@ The engine currently owns:
 - deterministic generic session/state coordination, reverse participant lookup,
   and per-session transient-event queues;
 - bounded deterministic grid navigation with caller-supplied walkability and
-  occupancy predicates, so game modules do not own reusable path-search logic;
+  occupancy and goal predicates, plus a stable neighbor sequence, so game
+  modules do not own reusable path-search logic;
 - native-compatible bounded grid crawl ordering and overflow-safe nearest-cell
   search, exposed independently from Diablo's compatibility facade;
 - the native-compatible deterministic legacy LCG, exposed as a reusable

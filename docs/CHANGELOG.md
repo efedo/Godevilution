@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
 - Complete the direction-ordering migration by moving native RoundWalk,
   Snake lateral, clockwise fallback, and adjacent-step mapping behind the
   engine-neutral direction primitive.
+- Generalize engine-owned bounded grid navigation to caller-selected goal cells
+  and expose its stable neighbor order; Diablo player-minion pursuit now uses
+  the shared pathfinder instead of a private breadth-first implementation.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

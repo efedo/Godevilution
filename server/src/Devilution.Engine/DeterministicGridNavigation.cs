@@ -14,6 +14,10 @@ public static class DeterministicGridNavigation
         (1, -1),
     ];
 
+    /** Stable neighbor order shared by all bounded grid searches. */
+    public static IReadOnlyList<(int X, int Y)> NeighborDisplacements
+        => NeighborOffsets;
+
     /**
      * Finds the first step to a walkable cell adjacent to the target.
      *
@@ -30,7 +34,29 @@ public static class DeterministicGridNavigation
         Func<int, int, bool> isWalkable,
         Func<int, int, bool> isOccupied)
     {
+        return FindStepToGoal(
+            startX,
+            startY,
+            maximumDepth,
+            (x, y) => IsAdjacentTo((x, y), targetX, targetY),
+            isWalkable,
+            isOccupied);
+    }
+
+    /**
+     * Finds the first step to any caller-selected goal cell using the same
+     * bounded breadth-first order as FindStep.
+     */
+    public static (int X, int Y)? FindStepToGoal(
+        int startX,
+        int startY,
+        int maximumDepth,
+        Func<int, int, bool> isGoal,
+        Func<int, int, bool> isWalkable,
+        Func<int, int, bool> isOccupied)
+    {
         ArgumentOutOfRangeException.ThrowIfNegative(maximumDepth);
+        ArgumentNullException.ThrowIfNull(isGoal);
         ArgumentNullException.ThrowIfNull(isWalkable);
         ArgumentNullException.ThrowIfNull(isOccupied);
 
@@ -62,10 +88,12 @@ public static class DeterministicGridNavigation
                     continue;
                 }
 
+                if (depth == int.MaxValue)
+                    continue;
                 var nextDepth = depth + 1;
                 distances.Add(next, nextDepth);
                 parents.Add(next, current);
-                if (IsAdjacentTo(next, targetX, targetY))
+                if (isGoal(next.X, next.Y))
                     return ReconstructFirstStep(start, next, parents);
                 queue.Enqueue(next);
             }

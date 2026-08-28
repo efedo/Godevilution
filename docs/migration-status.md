@@ -1503,6 +1503,11 @@ monster adjacent-step paths now use engine-owned direction ordering and
 rotation. Diablo retains only source-compatible facades around those generic
 primitives; no combat controller owns a duplicate direction ring algorithm.
 
+Player-minion pursuit now delegates its goal-set breadth-first search and
+neighbor ordering to the engine navigation primitive. Diablo retains goal
+construction, occupancy policy, and minion identity while reusable path search
+logic is no longer duplicated in the game module.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.

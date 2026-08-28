@@ -90,6 +90,37 @@ public sealed class DeterministicGridNavigationTests
     }
 
     [Fact]
+    public void FindsTheFirstStepToAnyCallerSelectedGoal()
+    {
+        var step = DeterministicGridNavigation.FindStepToGoal(
+            0,
+            0,
+            maximumDepth: 8,
+            isGoal: static (x, y) => (x, y) is (2, 1) or (3, 0),
+            isWalkable: static (_, _) => true,
+            isOccupied: static (_, _) => false);
+
+        Assert.Equal((1, 0), step);
+    }
+
+    [Fact]
+    public void ExposesTheStableNeighborOrderUsedBySearch()
+    {
+        Assert.Equal(
+            new[] {
+                (1, 0),
+                (1, 1),
+                (0, 1),
+                (-1, 1),
+                (-1, 0),
+                (-1, -1),
+                (0, -1),
+                (1, -1),
+            },
+            DeterministicGridNavigation.NeighborDisplacements);
+    }
+
+    [Fact]
     public void RejectsInvalidArguments()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -109,6 +140,14 @@ public sealed class DeterministicGridNavigationTests
                 0,
                 1,
                 null!,
+                static (_, _) => false));
+        Assert.Throws<ArgumentNullException>(() =>
+            DeterministicGridNavigation.FindStepToGoal(
+                0,
+                0,
+                1,
+                null!,
+                static (_, _) => true,
                 static (_, _) => false));
     }
 }

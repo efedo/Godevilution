@@ -10905,51 +10905,21 @@ public sealed class DiabloCombatCommandProcessor
         if (goals.Count == 0)
             return null;
 
-        var queue = new Queue<(int X, int Y)>();
-        var previous = new Dictionary<(int X, int Y), (int X, int Y)>();
-        queue.Enqueue(start);
-        previous[start] = start;
-        while (queue.Count > 0) {
-            var current = queue.Dequeue();
-            if (goals.Contains(current)) {
-                var step = current;
-                while (previous[step] != start)
-                    step = previous[step];
-                return step;
-            }
-
-            foreach (var displacement in MinionPathDisplacements) {
-                var candidate = (
-                    X: current.X + displacement.X,
-                    Y: current.Y + displacement.Y);
-                if (previous.ContainsKey(candidate)
-                    || !world.IsWalkable(minion.LevelId, candidate.X, candidate.Y)
-                    || (!goals.Contains(candidate)
-                        && world.IsOccupied(
-                            minion.LevelId,
-                            candidate.X,
-                            candidate.Y,
-                            players,
-                            minion.EntityId))) {
-                    continue;
-                }
-                previous[candidate] = current;
-                queue.Enqueue(candidate);
-            }
-        }
-        return null;
+        if (goals.Contains(start))
+            return start;
+        return DeterministicGridNavigation.FindStepToGoal(
+            start.X,
+            start.Y,
+            int.MaxValue,
+            (x, y) => goals.Contains((x, y)),
+            (x, y) => world.IsWalkable(minion.LevelId, x, y),
+            (x, y) => world.IsOccupied(
+                minion.LevelId,
+                x,
+                y,
+                players,
+                minion.EntityId));
     }
-
-    private static readonly (int X, int Y)[] MinionPathDisplacements = [
-        (1, 0),
-        (1, 1),
-        (0, 1),
-        (-1, 1),
-        (-1, 0),
-        (-1, -1),
-        (0, -1),
-        (1, -1),
-    ];
 
     private void AdvanceProjectiles(
         ulong tick,
