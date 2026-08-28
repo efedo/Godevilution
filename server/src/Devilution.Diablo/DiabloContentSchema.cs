@@ -7,11 +7,11 @@ public static class DiabloContentSchema
 {
     public static ContentSchemaIdentity Current { get; } = new(
         "devilution.diablo",
-        "1.436.0");
+        "1.437.0");
 
     private static ContentSchemaIdentity PreviousAdditive { get; } = new(
         "devilution.diablo",
-        "1.435.0");
+        "1.436.0");
 
     /** Accepts the immediately previous additive contract for pack compatibility. */
     public static bool IsCompatible(ContentSchemaIdentity schema)

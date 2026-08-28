@@ -4,11 +4,18 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the Lazarus storyteller opening through authored quest/towner
+  stages. Single-player Staff of Lazarus activation and multiplayer unlogged
+  dialogue now preserve the native message and progression marker under the
+  server-owned path; schema `1.437.0` is current with `1.436.0` retained for
+  additive compatibility.
+
 - Extend authored quest/towner rewards to `Advance` stages and make item
   consumption atomic with reward placement validation. The base Black Mushroom
   healer hand-in now consumes the Brain, advances its native marker, and spawns
   the declared Spectral Elixir entirely through the server-owned path;
-  schema `1.436.0` is current with `1.435.0` retained for additive compatibility.
+  those rows were introduced under schema `1.436.0` and remain compatible
+  through the current `1.437.0` content contract.
 
 - Externalize the remaining shipped base quest/towner item stages for Magic
   Rock, Anvil of Fury, Ogden's Sign, and the Butcher. Their server-owned

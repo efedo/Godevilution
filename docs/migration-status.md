@@ -2,11 +2,19 @@
 
 Status date: 2026-08-28
 
+The Lazarus storyteller opening now uses authored quest/towner stages. The
+single-player Staff of Lazarus hand-in consumes its item and advances native
+`_qvar1` to 2, while the multiplayer unlogged opening dialogue records the
+same native message without an item; the existing completion stage remains
+authored. The content schema is now `1.437.0`; the previous additive `1.436.0` schema
+remains accepted for pack compatibility.
+
 The base Black Mushroom healer hand-in now uses an authored `Advance` stage.
 The server validates the Spectral Elixir placement before consuming the Brain,
 then advances native `_qvar1` from 5 to 6, emits message 124, and creates the
-declared reward. The content schema is now `1.436.0`; the previous additive `1.435.0` schema
-remains accepted for pack compatibility.
+declared reward. Those rows were introduced under schema `1.436.0` and remain
+compatible with the current `1.437.0` pack contract, which also accepts
+`1.436.0` as its previous additive schema.
 
 The remaining shipped base item hand-ins now use authored quest/towner rows:
 Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
