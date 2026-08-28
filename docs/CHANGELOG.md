@@ -90,6 +90,8 @@ All notable changes to this fork are documented below.
 - Route Server host ID allocation and Diablo protocol/replay projections through
   engine-owned deterministic primitives directly; the existing host and Diablo
   facades remain available for compatibility callers and fixtures.
+- Refresh the multiplayer death-suppression replay checkpoint to the current
+  canonical snapshot hash; all 76 replay fixture tests now validate cleanly.
 - Extend widened authoritative coordinate arithmetic through monster aggro,
   retreat, scavenger/fallen radius, minion, projectile, and native-vision
   targeting paths; malformed extreme coordinates no longer wrap during AI

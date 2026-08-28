@@ -1,6 +1,10 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-27
+Status date: 2026-08-28
+
+The multiplayer death-suppression replay checkpoint now matches the canonical
+snapshot hash produced after the accumulated additive snapshot fields; the
+complete replay fixture class validates all 76 cases.
 
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative
