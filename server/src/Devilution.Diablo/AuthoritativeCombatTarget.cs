@@ -1414,7 +1414,7 @@ public sealed class AuthoritativeCombatTarget
         }
         FuturePositionX = futurePositionX;
         FuturePositionY = futurePositionY;
-        Direction = DirectionFromStep(
+        Direction = (int)DeterministicGridDirections.FromAdjacentStep(
             futurePositionX - PositionX,
             futurePositionY - PositionY);
         IsMoving = true;
@@ -1547,21 +1547,6 @@ public sealed class AuthoritativeCombatTarget
         IsMoving = false;
         MovementStartedTick = 0;
         MovementEffectTick = 0;
-    }
-
-    private static int DirectionFromStep(int directionX, int directionY)
-    {
-        return (directionX, directionY) switch {
-            (1, 1) => 0,
-            (0, 1) => 1,
-            (-1, 1) => 2,
-            (-1, 0) => 3,
-            (-1, -1) => 4,
-            (0, -1) => 5,
-            (1, -1) => 6,
-            (1, 0) => 7,
-            _ => throw new ArgumentOutOfRangeException(nameof(directionX)),
-        };
     }
 
     internal void RestoreOccupancy(

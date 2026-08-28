@@ -137,5 +137,21 @@ public sealed class DeterministicGridDirectionsTests
         Assert.Equal(
             0,
             DeterministicGridDirections.Rotate(0, int.MinValue));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => DeterministicGridDirections.EnumerateRoundWalkPrimary(0, 0));
+    }
+
+    [Fact]
+    public void RoundWalkAndLateralHelpersPreserveNativeOrders()
+    {
+        Assert.Equal(
+            new[] { 5, 4, 3 },
+            DeterministicGridDirections.EnumerateRoundWalkPrimary(3, 1));
+        Assert.Equal(
+            new[] { 3, 2, 4 },
+            DeterministicGridDirections.EnumerateStraightAndLateral(3, -1));
+        Assert.Equal(
+            new[] { 6, 7, 0, 1, 2, 3, 4, 5 },
+            DeterministicGridDirections.EnumerateClockwise(6));
     }
 }

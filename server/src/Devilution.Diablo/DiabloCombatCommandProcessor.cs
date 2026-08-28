@@ -4765,11 +4765,9 @@ public sealed class DiabloCombatCommandProcessor
         world.CombatTargets.Add(entityId, golem);
     }
 
+    /** Source-compatible combat facade over engine-owned direction rotation. */
     private static int RotateDirection(int direction, int offset)
-    {
-        var rotated = (direction + offset) % DirectionDisplacements.Count;
-        return rotated < 0 ? rotated + DirectionDisplacements.Count : rotated;
-    }
+        => DeterministicGridDirections.Rotate(direction, offset);
 
     private (int X, int Y)? FindPhasingDestination(
         AuthoritativePlayerState player,
@@ -5849,21 +5847,17 @@ public sealed class DiabloCombatCommandProcessor
         var turn = turnOverride.HasValue
             ? turnOverride.Value == 0 ? 1 : -1
             : (seed / 100U) % 2U == 0U ? 1 : -1;
-        var turn45 = RotateDirection(direction, turn);
-        var turn90 = RotateDirection(turn45, turn);
+        var primaryDirections = DeterministicGridDirections.EnumerateRoundWalkPrimary(
+            direction,
+            turn);
+        var turn90 = primaryDirections[0];
         var fallbackDirection = RotateDirection(turn90, 4);
         var fallbackTurn = (seed / 200U) % 2U == 0U ? 1 : -1;
-        var directions = new[] {
-            turn90,
-            turn45,
-            direction,
+        var fallbackDirections = DeterministicGridDirections.EnumerateTurnCandidates(
             fallbackDirection,
-            RotateDirection(fallbackDirection, fallbackTurn),
-            RotateDirection(fallbackDirection, -fallbackTurn),
-            RotateDirection(fallbackDirection, 2),
-            RotateDirection(fallbackDirection, -2),
-        };
-        foreach (var candidateDirection in directions) {
+            fallbackTurn,
+            2);
+        foreach (var candidateDirection in primaryDirections.Concat(fallbackDirections)) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
             var candidateY = checked(monster.PositionY + displacement.Y);
@@ -5893,9 +5887,10 @@ public sealed class DiabloCombatCommandProcessor
         // Leoric initializes goalVar2 with GenerateRnd(2) when entering its
         // Move goal; the value selects the clockwise/counter-clockwise turn.
         var turn = random.RandomIntLessThan(2) == 0 ? 1 : -1;
-        var turn45 = RotateDirection(direction, turn);
-        var turn90 = RotateDirection(turn45, turn);
-        foreach (var candidateDirection in new[] { turn90, turn45, direction }) {
+        var primaryDirections = DeterministicGridDirections.EnumerateRoundWalkPrimary(
+            direction,
+            turn);
+        foreach (var candidateDirection in primaryDirections) {
             var step = FindStepInDirection(monster, candidateDirection, players);
             if (step.HasValue)
                 return step;
@@ -5903,15 +5898,12 @@ public sealed class DiabloCombatCommandProcessor
 
         // RoundWalk falls back to RandomWalk in the opposite direction. Keep
         // its two native coin draws even when the fallback has no open tile.
-        var fallbackDirection = RotateDirection(turn90, 4);
+        var fallbackDirection = RotateDirection(primaryDirections[0], 4);
         var fallbackTurn = random.FlipCoin(2) ? 1 : -1;
-        foreach (var candidateDirection in new[] {
+        foreach (var candidateDirection in DeterministicGridDirections.EnumerateTurnCandidates(
                      fallbackDirection,
-                     RotateDirection(fallbackDirection, fallbackTurn),
-                     RotateDirection(fallbackDirection, -fallbackTurn),
-                     RotateDirection(fallbackDirection, 2),
-                     RotateDirection(fallbackDirection, -2),
-                 }) {
+                     fallbackTurn,
+                     2)) {
             var step = FindStepInDirection(monster, candidateDirection, players);
             if (step.HasValue)
                 return step;
@@ -8291,11 +8283,9 @@ public sealed class DiabloCombatCommandProcessor
         // Native RandomWalk2 starts from monster.direction (the unmodified
         // target direction) and only considers straight, left, and right.
         var fallbackTurn = (seed / 600U) % 2U == 0 ? 1 : -1;
-        var targetDirections = new[] {
+        var targetDirections = DeterministicGridDirections.EnumerateStraightAndLateral(
             targetDirection,
-            RotateDirection(targetDirection, fallbackTurn),
-            RotateDirection(targetDirection, -fallbackTurn),
-        };
+            fallbackTurn);
         foreach (var candidateDirection in targetDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
@@ -8339,11 +8329,9 @@ public sealed class DiabloCombatCommandProcessor
         // Native RandomWalk2 consumes one coin to order the two lateral
         // candidates after its straight candidate is unavailable.
         var fallbackTurn = random.FlipCoin(2) ? 1 : -1;
-        foreach (var candidateDirection in new[] {
+        foreach (var candidateDirection in DeterministicGridDirections.EnumerateStraightAndLateral(
                      targetDirection,
-                     RotateDirection(targetDirection, fallbackTurn),
-                     RotateDirection(targetDirection, -fallbackTurn),
-                 }) {
+                     fallbackTurn)) {
             var step = FindStepInDirection(monster, candidateDirection, players);
             if (step.HasValue)
                 return step;
@@ -9593,9 +9581,9 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY);
         var turn = turnState == 0 ? 1 : -1;
-        var turn45 = RotateDirection(direction, turn);
-        var turn90 = RotateDirection(turn45, turn);
-        var primaryDirections = new[] { turn90, turn45, direction };
+        var primaryDirections = DeterministicGridDirections.EnumerateRoundWalkPrimary(
+            direction,
+            turn);
         foreach (var candidateDirection in primaryDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
@@ -9616,15 +9604,12 @@ public sealed class DiabloCombatCommandProcessor
         // opposite direction. Keep the deterministic fallback order shared
         // with the existing RoundWalk approximation.
         nextTurnState = turnState == 0 ? 1 : 0;
-        var fallbackDirection = RotateDirection(turn90, 4);
+        var fallbackDirection = RotateDirection(primaryDirections[0], 4);
         var fallbackTurn = (seed / 200U) % 2U == 0U ? 1 : -1;
-        var fallbackDirections = new[] {
+        var fallbackDirections = DeterministicGridDirections.EnumerateTurnCandidates(
             fallbackDirection,
-            RotateDirection(fallbackDirection, fallbackTurn),
-            RotateDirection(fallbackDirection, -fallbackTurn),
-            RotateDirection(fallbackDirection, 2),
-            RotateDirection(fallbackDirection, -2),
-        };
+            fallbackTurn,
+            2);
         foreach (var candidateDirection in fallbackDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
@@ -9655,9 +9640,9 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY);
         var turn = turnState == 0 ? 1 : -1;
-        var turn45 = RotateDirection(direction, turn);
-        var turn90 = RotateDirection(turn45, turn);
-        var primaryDirections = new[] { turn90, turn45, direction };
+        var primaryDirections = DeterministicGridDirections.EnumerateRoundWalkPrimary(
+            direction,
+            turn);
         foreach (var candidateDirection in primaryDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
@@ -9675,16 +9660,13 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         nextTurnState = turnState == 0 ? 1 : 0;
-        var fallbackDirection = RotateDirection(turn90, 4);
+        var fallbackDirection = RotateDirection(primaryDirections[0], 4);
         var firstTurn = random.FlipCoin(2) ? 1 : -1;
         var secondTurn = random.FlipCoin(2) ? 2 : -2;
-        var fallbackDirections = new[] {
+        var fallbackDirections = DeterministicGridDirections.EnumerateTurnCandidates(
             fallbackDirection,
-            RotateDirection(fallbackDirection, firstTurn),
-            RotateDirection(fallbackDirection, -firstTurn),
-            RotateDirection(fallbackDirection, secondTurn),
-            RotateDirection(fallbackDirection, -secondTurn),
-        };
+            firstTurn,
+            secondTurn);
         foreach (var candidateDirection in fallbackDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
@@ -10840,10 +10822,8 @@ public sealed class DiabloCombatCommandProcessor
             // GolumAi sweeps every direction clockwise from its current
             // facing after a failed RandomWalk, without invoking generic
             // navigation. Preserve that bounded native fallback order.
-            foreach (var direction in Enumerable.Range(0, DirectionDisplacements.Count)
-                         .Select(offset => DeterministicGridDirections.Rotate(
-                             minion.Direction,
-                             offset))) {
+            foreach (var direction in DeterministicGridDirections.EnumerateClockwise(
+                         minion.Direction)) {
                 if (FindStepInDirection(minion, direction, players) is not { } step)
                     continue;
                 minion.BeginMovement(step.X, step.Y);

@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
 - Extract native-compatible Fisher–Yates ordering into the engine-neutral
   assembly; Diablo monster placement preserves its random stream and uses the
   shared stable hash for runtime seeds.
+- Complete the direction-ordering migration by moving native RoundWalk,
+  Snake lateral, clockwise fallback, and adjacent-step mapping behind the
+  engine-neutral direction primitive.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

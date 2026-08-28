@@ -127,6 +127,43 @@ public static class DeterministicGridDirections
         });
     }
 
+    /** Enumerates native RoundWalk's turn-90, turn-45, straight order. */
+    public static IReadOnlyList<int> EnumerateRoundWalkPrimary(
+        int direction,
+        int turn)
+    {
+        ValidateDirection(direction);
+        if (turn == 0)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        var turn45 = Rotate(direction, turn);
+        var turn90 = Rotate(turn45, turn);
+        return Array.AsReadOnly(new[] { turn90, turn45, direction });
+    }
+
+    /** Enumerates native straight, left/right lateral candidate order. */
+    public static IReadOnlyList<int> EnumerateStraightAndLateral(
+        int direction,
+        int turn)
+    {
+        ValidateDirection(direction);
+        if (turn == 0)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        return Array.AsReadOnly(new[] {
+            direction,
+            Rotate(direction, turn),
+            Rotate(direction, -turn),
+        });
+    }
+
+    /** Enumerates every direction clockwise from the supplied direction. */
+    public static IReadOnlyList<int> EnumerateClockwise(int direction)
+    {
+        ValidateDirection(direction);
+        return Array.AsReadOnly(Enumerable.Range(0, Displacements.Count)
+            .Select(offset => Rotate(direction, offset))
+            .ToArray());
+    }
+
     /** Returns the native adjacent-cell displacement for a direction. */
     public static (int X, int Y) GetDisplacement(DeterministicGridDirection direction)
     {

@@ -40,6 +40,8 @@ The engine currently owns:
   direction-indexed sequence consumed by Diablo combat;
 - native alternating and turn-pair direction candidate ordering used by
   movement AI, preserving the native RandomWalk sweep sequences;
+- native RoundWalk primary/fallback, straight-and-lateral, and clockwise
+  direction candidate ordering used by Diablo movement controllers;
 - native-compatible rotated-grid projectile velocity construction with the
   legacy fixed-point scaling contract;
 - deterministic procedural grid generation with connected corridor topology,

@@ -1498,6 +1498,11 @@ to the engine-neutral deterministic ordering primitive. Diablo retains the
 legacy random-stream facade and spawn-specific selection rules, while runtime
 seed mixing is shared with other authoritative deterministic systems.
 
+The remaining Diablo RoundWalk, Snake lateral, clockwise fallback, and moving
+monster adjacent-step paths now use engine-owned direction ordering and
+rotation. Diablo retains only source-compatible facades around those generic
+primitives; no combat controller owns a duplicate direction ring algorithm.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.
