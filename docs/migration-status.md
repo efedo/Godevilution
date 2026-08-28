@@ -1479,6 +1479,10 @@ independent missile-occlusion hash layers to an engine-neutral generator;
 Diablo still owns the external level definitions and authoritative world
 instances, while other modules can reuse the deterministic layout primitive.
 
+Native radial projectile fan-out ordering is likewise engine-owned. Diablo's
+Nova and related controllers retain their source-compatible helper while using
+the shared mirrored quarter-ring sequence and count truncation.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.

@@ -13671,36 +13671,7 @@ public sealed class DiabloCombatCommandProcessor
     private static IReadOnlyList<(int X, int Y)> CreateRadialProjectileOffsets(
         int radius,
         int projectileCount)
-    {
-        var offsets = new List<(int X, int Y)>(projectileCount);
-        for (var y = 0; y <= radius && offsets.Count < projectileCount; y++) {
-            AddRadialProjectileOffsets(offsets, radius, y, projectileCount);
-        }
-        for (var x = radius - 1; x >= 0 && offsets.Count < projectileCount; x--) {
-            AddRadialProjectileOffsets(offsets, x, radius, projectileCount);
-        }
-        return offsets;
-    }
-
-    private static void AddRadialProjectileOffsets(
-        ICollection<(int X, int Y)> offsets,
-        int x,
-        int y,
-        int projectileCount)
-    {
-        var quarter = (X: x, Y: y);
-        var candidates = new[] {
-            quarter,
-            (-quarter.X, -quarter.Y),
-            (-quarter.X, quarter.Y),
-            (quarter.X, -quarter.Y),
-        };
-        foreach (var offset in candidates) {
-            if (offsets.Count >= projectileCount)
-                return;
-            offsets.Add(offset);
-        }
-    }
+        => DeterministicGridRadialFan.Enumerate(radius, projectileCount);
 
     private void AdvanceApocalypseController(
         AuthoritativeProjectile controller,

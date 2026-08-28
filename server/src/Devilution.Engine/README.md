@@ -42,6 +42,8 @@ The engine currently owns:
   legacy fixed-point scaling contract;
 - deterministic procedural grid generation with connected corridor topology,
   independently seeded missile occlusion, and stable cell ordering;
+- native-compatible radial projectile fan-out ordering with deterministic
+  mirrored quarter-ring truncation;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;
