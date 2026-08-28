@@ -25,6 +25,9 @@ The engine currently owns:
   occupancy predicates, so game modules do not own reusable path-search logic;
 - the native-compatible deterministic legacy LCG, exposed as a reusable
   primitive while Diablo retains its source-compatible `DiabloRandom` facade;
+- native-compatible signed 26.6 fixed-point arithmetic, exposed as a reusable
+  primitive while Diablo retains its source-compatible `DiabloFixedPointQ6`
+  facade;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;

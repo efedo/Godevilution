@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract native-compatible signed 26.6 fixed-point arithmetic into the
+  engine-neutral assembly; the Diablo module retains its source-compatible
+  `DiabloFixedPointQ6` facade while other authoritative modules can reuse the
+  same truncation, ceiling, and checked whole-value conversion rules.
 - Extract stable non-zero entity-ID allocation into the engine-neutral
   assembly; the server host retains its source-compatible allocator facade
   while authoritative runtimes can share the deterministic primitive.
