@@ -243,9 +243,9 @@ public sealed record DiabloMonsterState(
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
-    public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
+    public int HitPointsQ6 { get; init; } = DeterministicFixedPointQ6.FromWhole(HitPoints);
 
-    public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
+    public int MaxHitPointsQ6 { get; init; } = DeterministicFixedPointQ6.FromWhole(MaxHitPoints);
 }
 
 /** Immutable protocol-neutral world-item projection. */
@@ -1056,8 +1056,8 @@ public sealed partial class DiabloSimulation
                 || monster.MaxHitPoints < 0
                 || monster.HitPointsQ6 < 0
                 || monster.MaxHitPointsQ6 < monster.HitPointsQ6
-                || monster.HitPoints != DiabloFixedPointQ6.ToWholeCeiling(monster.HitPointsQ6)
-                || monster.MaxHitPoints != DiabloFixedPointQ6.ToWholeCeiling(monster.MaxHitPointsQ6)
+                || monster.HitPoints != DeterministicFixedPointQ6.ToWholeCeiling(monster.HitPointsQ6)
+                || monster.MaxHitPoints != DeterministicFixedPointQ6.ToWholeCeiling(monster.MaxHitPointsQ6)
                 || monster.AttackDamage < 0
                 || (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0)
                 || monster.MinDamage < 0
@@ -1268,7 +1268,7 @@ public sealed partial class DiabloSimulation
                         || projectile.Speed > 74
                         || projectile.Speed is > 0 and < 16
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
-                        || projectile.Damage != DiabloFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)
+                        || projectile.Damage != DeterministicFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)
                         || projectile.ActivationDelayTicks > 2
                         || projectile.VelocityX != 0
                         || projectile.VelocityY != 0

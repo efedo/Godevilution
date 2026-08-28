@@ -16,6 +16,9 @@ Native-compatible signed 26.6 fixed-point arithmetic now lives in the
 engine-neutral assembly as a reusable primitive. `DiabloFixedPointQ6` remains
 a source-compatible facade so Diablo hit-point and damage callers preserve the
 same checked whole-value conversion and signed truncation/ceiling semantics.
+Authoritative Diablo callers now use `DeterministicFixedPointQ6` directly for
+hit-point, damage, healing, and snapshot arithmetic; the facade is retained
+only for existing compatibility consumers.
 
 The native-compatible deterministic LCG now lives in the engine-neutral
 assembly as a reusable primitive. `Devilution.Diablo.DiabloRandom` remains a

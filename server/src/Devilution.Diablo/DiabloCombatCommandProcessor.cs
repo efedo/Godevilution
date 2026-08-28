@@ -271,8 +271,8 @@ public sealed class DiabloCombatCommandProcessor
     {
         var range = GetEffectiveMonsterDamageRange(monster, special);
         return random.RandomIntBetween(
-            DiabloFixedPointQ6.FromWhole(range.Minimum),
-            DiabloFixedPointQ6.FromWhole(range.Maximum));
+            DeterministicFixedPointQ6.FromWhole(range.Minimum),
+            DeterministicFixedPointQ6.FromWhole(range.Maximum));
     }
 
     /** Resolves native Monster::exp for the active difficulty and uniqueness. */
@@ -418,7 +418,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     player.EntityId,
                     player.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(
+                    DeterministicFixedPointQ6.ToWholeTruncated(
                         damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
@@ -693,7 +693,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     player.EntityId,
                     player.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(
+                    DeterministicFixedPointQ6.ToWholeTruncated(
                         damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 });
@@ -871,7 +871,7 @@ public sealed class DiabloCombatCommandProcessor
                 arrowPositionY,
                 target.PositionX,
                 target.PositionY,
-                DiabloFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
+                DeterministicFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
                 AuthoritativeDamageType.Physical,
                 0,
                 arrowLifetime,
@@ -945,7 +945,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     player.EntityId,
                     player.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(
+                    DeterministicFixedPointQ6.ToWholeTruncated(
                         selfDamageResult.IncomingDamageQ6)) {
                     AmountQ6 = selfDamageResult.IncomingDamageQ6,
                 });
@@ -973,7 +973,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloGameplayEventKind.Damage,
                 player.EntityId,
                 target.EntityId,
-                DiabloFixedPointQ6.ToWholeTruncated(
+                DeterministicFixedPointQ6.ToWholeTruncated(
                     damageResult.IncomingDamageQ6)) {
                 AmountQ6 = damageResult.IncomingDamageQ6,
             });
@@ -1075,7 +1075,7 @@ public sealed class DiabloCombatCommandProcessor
                 arrowPositionY,
                 target.PositionX,
                 target.PositionY,
-                DiabloFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
+                DeterministicFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
                 AuthoritativeDamageType.Physical,
                 0,
                 arrowLifetime,
@@ -1213,7 +1213,7 @@ public sealed class DiabloCombatCommandProcessor
             ApplyPlayerElementalDamageQ6(
                 player,
                 target,
-                DiabloFixedPointQ6.FromWhole(fireDamage),
+                DeterministicFixedPointQ6.FromWhole(fireDamage),
                 appliedTick,
                 players,
                 events);
@@ -1227,7 +1227,7 @@ public sealed class DiabloCombatCommandProcessor
             ApplyPlayerElementalDamageQ6(
                 player,
                 target,
-                DiabloFixedPointQ6.FromWhole(lightningDamage),
+                DeterministicFixedPointQ6.FromWhole(lightningDamage),
                 appliedTick,
                 players,
                 events);
@@ -1250,7 +1250,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloGameplayEventKind.Damage,
                 player.EntityId,
                 target.EntityId,
-                DiabloFixedPointQ6.ToWholeTruncated(
+                DeterministicFixedPointQ6.ToWholeTruncated(
                     damageResult.IncomingDamageQ6)) {
                 AmountQ6 = damageResult.IncomingDamageQ6,
             });
@@ -1391,7 +1391,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloGameplayEventKind.Healing,
                 player.EntityId,
                 player.EntityId,
-                DiabloFixedPointQ6.ToWholeTruncated(lifeGain)) {
+                DeterministicFixedPointQ6.ToWholeTruncated(lifeGain)) {
                 AmountQ6 = lifeGain,
             });
         }
@@ -1502,9 +1502,9 @@ public sealed class DiabloCombatCommandProcessor
         perilSelfDamageQ6 = 0;
         if (perilActive) {
             perilSelfDamageQ6 = checked(
-                DiabloFixedPointQ6.FromWhole(
+                DeterministicFixedPointQ6.FromWhole(
                     damageBeforeFlat)
-                + DiabloFixedPointQ6.FromWhole(
+                + DeterministicFixedPointQ6.FromWhole(
                     AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(
                         player.Equipment)));
             perilSelfDamageQ6 = Math.Max(0, perilSelfDamageQ6);
@@ -1581,7 +1581,7 @@ public sealed class DiabloCombatCommandProcessor
             && random.RandomIntLessThan(100) < rules.HellfireDoppelgangerChancePercent) {
             doppelgangerProc = true;
         }
-        var resolvedDamageQ6 = DiabloFixedPointQ6.FromWhole(resolvedDamage);
+        var resolvedDamageQ6 = DeterministicFixedPointQ6.FromWhole(resolvedDamage);
         if (rules.GameVariant == DiabloGameVariant.Hellfire
             && resolvedDamageQ6 > 0
             && HasUsableHellfireDamageArmorFlag(
@@ -1628,9 +1628,9 @@ public sealed class DiabloCombatCommandProcessor
             entityId,
             position.Value.X,
             position.Value.Y,
-            DiabloFixedPointQ6.ToWholeCeiling(target.MaxHitPointsQ6),
+            DeterministicFixedPointQ6.ToWholeCeiling(target.MaxHitPointsQ6),
             armorClass: target.ArmorClass,
-            maxHitPoints: DiabloFixedPointQ6.ToWholeCeiling(target.MaxHitPointsQ6),
+            maxHitPoints: DeterministicFixedPointQ6.ToWholeCeiling(target.MaxHitPointsQ6),
             levelId: target.LevelId,
             monsterId: target.MonsterId,
             attackDamage: target.AttackDamage,
@@ -2326,7 +2326,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Healing,
                     player.EntityId,
                     healOtherTarget.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
                     AmountQ6 = appliedHealingQ6,
                 });
             }
@@ -2390,7 +2390,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Healing,
                     player.EntityId,
                     player.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
                     AmountQ6 = appliedHealingQ6,
                 });
             }
@@ -2757,13 +2757,13 @@ public sealed class DiabloCombatCommandProcessor
 
         var damageResult = playerDamage.Apply(
             player,
-            DiabloFixedPointQ6.FromWhole(spell.SelfDamage));
+            DeterministicFixedPointQ6.FromWhole(spell.SelfDamage));
         if (damageResult.IncomingDamageQ6 > 0) {
             events.Add(new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Damage,
                 player.EntityId,
                 player.EntityId,
-                DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                 AmountQ6 = damageResult.IncomingDamageQ6,
             });
         }
@@ -4708,9 +4708,9 @@ public sealed class DiabloCombatCommandProcessor
         var entityId = AllocateProjectileEntityId();
         var hitPointsQ6 = checked(
             spell.GolemHitPointsLevelMultiplier * (spell.GolemHitPointsLevelBaseQ6 * effectiveSpellLevel
-                + DiabloFixedPointQ6.FromWhole(player.ManaMaximum)
+                + DeterministicFixedPointQ6.FromWhole(player.ManaMaximum)
                     / spell.GolemHitPointsManaDivisor));
-        var hitPoints = DiabloFixedPointQ6.ToWholeCeiling(hitPointsQ6);
+        var hitPoints = DeterministicFixedPointQ6.ToWholeCeiling(hitPointsQ6);
         var minimumDamage = checked(
             spell.GolemDamageLevelMultiplier
                 * (effectiveSpellLevel + spell.GolemMinimumDamageLevelOffset));
@@ -5243,7 +5243,7 @@ public sealed class DiabloCombatCommandProcessor
                 if (usesNativeFixedPointDamage) {
                     damageQ6 = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHitQ6(
                         RollEffectiveMonsterDamageQ6(target, usesSpecialAttack),
-                        DiabloFixedPointQ6.Scale,
+                        DeterministicFixedPointQ6.Scale,
                         victim.Equipment);
                 } else {
                     var attackDamage = usesSpecialAttack
@@ -5271,13 +5271,13 @@ public sealed class DiabloCombatCommandProcessor
                             target.LevelId,
                             armorClass,
                             attackSeed);
-                    damageQ6 = DiabloFixedPointQ6.FromWhole(
+                    damageQ6 = DeterministicFixedPointQ6.FromWhole(
                         AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
                             resolvedDamage,
                             rules.MinimumDamage,
                             victim.Equipment));
                 }
-                var damage = DiabloFixedPointQ6.ToWholeTruncated(damageQ6);
+                var damage = DeterministicFixedPointQ6.ToWholeTruncated(damageQ6);
                 var reflectedDamage = 0;
                 if (damage > 0 && victim.ReflectCharges > 0) {
                     victim.ReflectCharges--;
@@ -5294,7 +5294,7 @@ public sealed class DiabloCombatCommandProcessor
                         ApplyResolvedDamageQ6(
                             victim,
                             target,
-                            DiabloFixedPointQ6.FromWhole(reflectedDamage),
+                            DeterministicFixedPointQ6.FromWhole(reflectedDamage),
                             reflectedEvents);
                         foreach (var reflectedEvent in reflectedEvents)
                             events.Add(new DiabloDirectedGameplayEvent(victim, reflectedEvent));
@@ -5302,12 +5302,12 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 var incomingDamageQ6 = Math.Max(
                     0,
-                    damageQ6 - DiabloFixedPointQ6.FromWhole(reflectedDamage));
+                    damageQ6 - DeterministicFixedPointQ6.FromWhole(reflectedDamage));
                 // Direct compatibility fixtures historically store whole life
                 // points, while authoritative class-backed players store Q6.
-                var usesLegacyWholeLife = victim.LifeMaximum % DiabloFixedPointQ6.Scale != 0;
+                var usesLegacyWholeLife = victim.LifeMaximum % DeterministicFixedPointQ6.Scale != 0;
                 var appliedDamageQ6 = usesLegacyWholeLife
-                    ? DiabloFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
+                    ? DeterministicFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
                     : incomingDamageQ6;
                 var damageResult = playerDamage.Apply(victim, appliedDamageQ6);
                 if (damageResult.IncomingDamageQ6 > 0) {
@@ -5320,7 +5320,7 @@ public sealed class DiabloCombatCommandProcessor
                             DiabloGameplayEventKind.Damage,
                             target.EntityId,
                             victim.EntityId,
-                            DiabloFixedPointQ6.ToWholeTruncated(
+                            DeterministicFixedPointQ6.ToWholeTruncated(
                                 eventDamageQ6)) {
                             AmountQ6 = eventDamageQ6,
                         }));
@@ -5336,7 +5336,7 @@ public sealed class DiabloCombatCommandProcessor
                     ApplyResolvedDamageQ6(
                         victim,
                         target,
-                        DiabloFixedPointQ6.FromWhole(random.RandomIntBetween(
+                        DeterministicFixedPointQ6.FromWhole(random.RandomIntBetween(
                             rules.ThornsDamageMinimum,
                             rules.ThornsDamageMaximum)),
                         thornsEvents);
@@ -5560,7 +5560,7 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         target.ApplyHealingQ6(
-            DiabloFixedPointQ6.FromWhole(
+            DeterministicFixedPointQ6.FromWhole(
                 checked((2 * target.Intelligence) + 2)));
         TriggerFallenRally(target);
         return true;
@@ -6486,9 +6486,9 @@ public sealed class DiabloCombatCommandProcessor
             && target.PositionY == corpse.PositionY) {
             var healingQ6 = rules.GameVariant == DiabloGameVariant.Hellfire
                 ? target.MaxHitPointsQ6 / scavengerTuning.Value.HellfireHealingDivisor
-                : DiabloFixedPointQ6.FromWhole(scavengerTuning.Value.BaseHealingAmount);
+                : DeterministicFixedPointQ6.FromWhole(scavengerTuning.Value.BaseHealingAmount);
             if (rules.GameVariant != DiabloGameVariant.Hellfire)
-                healingQ6 = DiabloFixedPointQ6.FromWhole(scavengerTuning.Value.BaseHealingAmount);
+                healingQ6 = DeterministicFixedPointQ6.FromWhole(scavengerTuning.Value.BaseHealingAmount);
             target.ApplyHealingQ6(healingQ6);
             target.AdvanceScavengerHealing();
             var targetHealthQ6 = rules.GameVariant == DiabloGameVariant.Hellfire
@@ -7262,7 +7262,7 @@ public sealed class DiabloCombatCommandProcessor
         var healing = effectiveMonsterLevel > 1
             ? effectiveMonsterLevel / levelDivisor
             : effectiveMonsterLevel;
-        monster.ApplyHealingQ6(DiabloFixedPointQ6.FromWhole(healing));
+        monster.ApplyHealingQ6(DeterministicFixedPointQ6.FromWhole(healing));
     }
 
     /** Native ZombieAi action band and long-range walk boundary. */
@@ -7638,7 +7638,7 @@ public sealed class DiabloCombatCommandProcessor
         var divisor = gargoyleTuning.Value.HealDivisorMultiplier
             * (healRoll
                 + gargoyleTuning.Value.HealDivisorRandomOffset);
-        var healingQ6 = DiabloFixedPointQ6.FromWhole(
+        var healingQ6 = DeterministicFixedPointQ6.FromWhole(
             monster.MaxHitPoints / divisor);
         var appliedHealingQ6 = monster.ApplyHealingQ6(healingQ6);
         if (appliedHealingQ6 > 0) {
@@ -7648,7 +7648,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Healing,
                     monster.EntityId,
                     monster.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
                     AmountQ6 = appliedHealingQ6,
                 }));
         }
@@ -10800,7 +10800,7 @@ public sealed class DiabloCombatCommandProcessor
             ApplyResolvedDamageQ6(
                 owner,
                 enemy,
-                DiabloFixedPointQ6.FromWhole(damage),
+                DeterministicFixedPointQ6.FromWhole(damage),
                 minionEvents);
             foreach (var minionEvent in minionEvents)
                 events.Add(new DiabloDirectedGameplayEvent(owner, minionEvent));
@@ -11392,10 +11392,10 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (resistance > 0)
             damage -= damage * resistance / 100;
-        var incomingDamageQ6 = DiabloFixedPointQ6.FromWhole(Math.Max(0, damage));
-        var usesLegacyWholeLife = target.LifeMaximum % DiabloFixedPointQ6.Scale != 0;
+        var incomingDamageQ6 = DeterministicFixedPointQ6.FromWhole(Math.Max(0, damage));
+        var usesLegacyWholeLife = target.LifeMaximum % DeterministicFixedPointQ6.Scale != 0;
         var appliedDamageQ6 = usesLegacyWholeLife
-            ? DiabloFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
+            ? DeterministicFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
             : incomingDamageQ6;
         var damageResult = playerDamage.Apply(target, appliedDamageQ6);
         if (damageResult.IncomingDamageQ6 > 0) {
@@ -11408,7 +11408,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     projectile.SourceEntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(eventDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(eventDamageQ6)) {
                     AmountQ6 = eventDamageQ6,
                 }));
         }
@@ -11442,7 +11442,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     owner.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(
+                    DeterministicFixedPointQ6.ToWholeTruncated(
                         selfDamageResult.IncomingDamageQ6)) {
                     AmountQ6 = selfDamageResult.IncomingDamageQ6,
                 });
@@ -11479,7 +11479,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloGameplayEventKind.Damage,
                 owner.EntityId,
                 target.EntityId,
-                DiabloFixedPointQ6.ToWholeTruncated(
+                DeterministicFixedPointQ6.ToWholeTruncated(
                     damageResult.IncomingDamageQ6)) {
                 AmountQ6 = damageResult.IncomingDamageQ6,
             });
@@ -11537,7 +11537,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     owner.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(
+                    DeterministicFixedPointQ6.ToWholeTruncated(
                         damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 });
@@ -12281,10 +12281,10 @@ public sealed class DiabloCombatCommandProcessor
                         : random.RandomIntBetween(
                             specialDamageRange.Minimum,
                             specialDamageRange.Maximum))
-                    * DiabloFixedPointQ6.Scale)
+                    * DeterministicFixedPointQ6.Scale)
                     + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
-                        * DiabloFixedPointQ6.Scale,
-                DiabloFixedPointQ6.Scale));
+                        * DeterministicFixedPointQ6.Scale,
+                DeterministicFixedPointQ6.Scale));
         var resistance = GetPlayerResistance(
             target,
             targetClass,
@@ -12299,7 +12299,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     monster.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -13835,7 +13835,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     owner.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -14761,7 +14761,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!target.IsPetrified && hitRoll >= hitChance)
             return false;
 
-        var damageQ6 = DiabloFixedPointQ6.FromWhole(projectile.Damage);
+        var damageQ6 = DeterministicFixedPointQ6.FromWhole(projectile.Damage);
         if (resistance > 0)
             damageQ6 /= projectile.ResistantDamageDivisor;
         var gameplayEvents = new List<DiabloGameplayEvent>();
@@ -14832,9 +14832,9 @@ public sealed class DiabloCombatCommandProcessor
                 damageShifted
                     ? random.RandomIntBetween(projectileDamage, projectileDamage)
                     : projectileDamage)
-                * DiabloFixedPointQ6.Scale
+                * DeterministicFixedPointQ6.Scale
             + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
-                * DiabloFixedPointQ6.Scale);
+                * DeterministicFixedPointQ6.Scale);
         if (resistance > 0)
             damageQ6 -= damageQ6 * resistance / 100;
         var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
@@ -14845,7 +14845,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     monster.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -14909,7 +14909,7 @@ public sealed class DiabloCombatCommandProcessor
         var damageQ6 = checked(
             Math.Max(64, random.RandomIntBetween(0, 0))
             + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
-                * DiabloFixedPointQ6.Scale);
+                * DeterministicFixedPointQ6.Scale);
         var damageResult = playerDamage.Apply(target, damageQ6);
         if (damageResult.IncomingDamageQ6 > 0) {
             events.Add(new DiabloDirectedGameplayEvent(
@@ -14918,7 +14918,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     monster.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -14971,9 +14971,9 @@ public sealed class DiabloCombatCommandProcessor
             AuthoritativeDamageType.Acid);
         var damageQ6 = checked(
             random.RandomIntBetween(projectile.Damage, projectile.Damage)
-                * DiabloFixedPointQ6.Scale
+                * DeterministicFixedPointQ6.Scale
             + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
-                * DiabloFixedPointQ6.Scale);
+                * DeterministicFixedPointQ6.Scale);
         if (resistance > 0)
             damageQ6 -= damageQ6 * resistance / 100;
 
@@ -14985,7 +14985,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     projectile.SourceEntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -15069,8 +15069,8 @@ public sealed class DiabloCombatCommandProcessor
         if (!target.IsPetrified && random.RandomIntLessThan(100) >= hitChance)
             return false;
 
-        var damageQ6 = target.HitPointsQ6 / damageHitPointsDivisor / DiabloFixedPointQ6.Scale
-            * DiabloFixedPointQ6.Scale;
+        var damageQ6 = target.HitPointsQ6 / damageHitPointsDivisor / DeterministicFixedPointQ6.Scale
+            * DeterministicFixedPointQ6.Scale;
         if (resistance > 0)
             damageQ6 /= projectile.ResistantDamageDivisor;
         var gameplayEvents = new List<DiabloGameplayEvent>();
@@ -15145,7 +15145,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -15196,7 +15196,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!target.IsPetrified && hitRoll >= hitChance)
             return false;
 
-        var damageQ6 = DiabloFixedPointQ6.FromWhole(
+        var damageQ6 = DeterministicFixedPointQ6.FromWhole(
             random.RandomIntBetween(projectile.Damage, projectile.Damage));
         if (resistance > 0)
             damageQ6 /= projectile.ResistantDamageDivisor;
@@ -15273,7 +15273,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -15393,7 +15393,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -15517,7 +15517,7 @@ public sealed class DiabloCombatCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     owner.EntityId,
                     target.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
                     AmountQ6 = damageResult.IncomingDamageQ6,
                 }));
         }
@@ -16207,7 +16207,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!target.IsPetrified && hitRoll >= hitChance)
             return false;
 
-        var damageQ6 = DiabloFixedPointQ6.FromWhole(
+        var damageQ6 = DeterministicFixedPointQ6.FromWhole(
             random.RandomIntBetween(projectile.Damage, projectile.Damage));
         if (target.LightningResistance > 0)
             damageQ6 /= projectile.ResistantDamageDivisor;
@@ -16283,7 +16283,7 @@ public sealed class DiabloCombatCommandProcessor
         ApplyResolvedDamageQ6(
             player,
             target,
-            DiabloFixedPointQ6.FromWhole(damage),
+            DeterministicFixedPointQ6.FromWhole(damage),
             events);
     }
 
@@ -16300,7 +16300,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloGameplayEventKind.Damage,
                 player.EntityId,
                 target.EntityId,
-                DiabloFixedPointQ6.ToWholeTruncated(damageQ6)) {
+                DeterministicFixedPointQ6.ToWholeTruncated(damageQ6)) {
                 AmountQ6 = damageQ6,
             });
         }

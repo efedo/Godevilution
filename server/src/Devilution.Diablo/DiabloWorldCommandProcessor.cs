@@ -1345,7 +1345,7 @@ public sealed class DiabloWorldCommandProcessor
                     DiabloGameplayEventKind.Damage,
                     @object.EntityId,
                     player.EntityId,
-                    DiabloFixedPointQ6.ToWholeTruncated(
+                    DeterministicFixedPointQ6.ToWholeTruncated(
                         damage.IncomingDamageQ6)) {
                     AmountQ6 = damage.IncomingDamageQ6,
                 })

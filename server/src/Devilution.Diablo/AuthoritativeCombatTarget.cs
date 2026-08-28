@@ -330,9 +330,9 @@ public sealed class AuthoritativeCombatTarget
         MegaDelayTicks = megaDelayTicks;
         MonsterItemSeed = monsterItemSeed;
         MonsterAiSeed = monsterAiSeed;
-        hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
+        hitPointsQ6 = DeterministicFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
-        maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
+        maxHitPointsQ6 = DeterministicFixedPointQ6.FromWhole(
             Math.Max(hitPoints, maxHitPoints ?? hitPoints));
         LevelId = levelId;
         MonsterId = monsterId;
@@ -589,11 +589,11 @@ public sealed class AuthoritativeCombatTarget
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
     public int HitPoints
     {
-        get => DiabloFixedPointQ6.ToWholeCeiling(hitPointsQ6);
+        get => DeterministicFixedPointQ6.ToWholeCeiling(hitPointsQ6);
         set {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
-            hitPointsQ6 = DiabloFixedPointQ6.FromWhole(value);
+            hitPointsQ6 = DeterministicFixedPointQ6.FromWhole(value);
         }
     }
 
@@ -602,11 +602,11 @@ public sealed class AuthoritativeCombatTarget
     /** Whole-point compatibility projection; exact authoritative state is MaxHitPointsQ6. */
     public int MaxHitPoints
     {
-        get => DiabloFixedPointQ6.ToWholeCeiling(maxHitPointsQ6);
+        get => DeterministicFixedPointQ6.ToWholeCeiling(maxHitPointsQ6);
         set {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
-            maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(value);
+            maxHitPointsQ6 = DeterministicFixedPointQ6.FromWhole(value);
         }
     }
 

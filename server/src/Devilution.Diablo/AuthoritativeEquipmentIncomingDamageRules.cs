@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Native usable equipment modifiers applied to incoming physical player damage. */
@@ -79,7 +81,7 @@ public static class AuthoritativeEquipmentIncomingDamageRules
         return Math.Max(
             minimumDamageQ6,
             checked(incomingDamageQ6
-                + DiabloFixedPointQ6.FromWhole(ResolveGetHitBonus(equipment))));
+                + DeterministicFixedPointQ6.FromWhole(ResolveGetHitBonus(equipment))));
     }
 
     /** Resolves the native `_pIGetHit` total from eligible equipped items. */

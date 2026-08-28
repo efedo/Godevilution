@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Applies native difficulty modifiers when a monster is first materialized. */
@@ -22,7 +24,7 @@ internal static class DiabloDifficultyMonsterScaling
 
         var effectiveMaximumQ6 = checked((int)(
             checked((long)baseMaximumQ6 * multiplier)
-            + checked((long)bonusWhole * DiabloFixedPointQ6.Scale)));
+            + checked((long)bonusWhole * DeterministicFixedPointQ6.Scale)));
         var effectiveCurrentQ6 = baseMaximumQ6 == 0
             ? 0
             : checked((int)(

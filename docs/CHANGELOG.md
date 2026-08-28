@@ -50,6 +50,10 @@ All notable changes to this fork are documented below.
 - Complete the authoritative distance migration: Diablo targeting, movement,
   AI, projectile, snapshot, and world validation now call the engine metrics
   primitive directly while removing the redundant combat-target facade.
+- Complete the authoritative fixed-point migration: Diablo hit-point, damage,
+  healing, and snapshot paths now call the engine Q6 primitive directly;
+  `DiabloFixedPointQ6` remains only as a source-compatible facade for existing
+  callers.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

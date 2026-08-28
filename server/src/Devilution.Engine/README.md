@@ -29,8 +29,8 @@ The engine currently owns:
 - the native-compatible deterministic legacy LCG, exposed as a reusable
   primitive while Diablo retains its source-compatible `DiabloRandom` facade;
 - native-compatible signed 26.6 fixed-point arithmetic, exposed as a reusable
-  primitive while Diablo retains its source-compatible `DiabloFixedPointQ6`
-  facade;
+  primitive and used directly by Diablo authoritative callers while the module
+  retains its source-compatible `DiabloFixedPointQ6` facade;
 - overflow-safe Chebyshev grid-distance metrics shared by bounded navigation
   and authoritative gameplay, while Diablo retains its compatibility entry
   point;
