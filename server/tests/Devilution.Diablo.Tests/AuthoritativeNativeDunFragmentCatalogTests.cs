@@ -221,6 +221,59 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void AppliesAFragmentFromAPublishedSetLevelOrigin()
+    {
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tlevel_symbol\tasset_path\tanchor_entity_id\tanchor_set_level_id\tanchor_offset_x\tanchor_offset_y\n"
+                + "1\t24\thellfire_level_24\tfragment.dun\t0\t6\t-2\t-2\n");
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        catalog.Apply(
+            content,
+            world,
+            [],
+            setLevelOrigins: new Dictionary<int, AuthoritativeSetLevelObjectOrigin> {
+                [6] = new(24, 4, 4),
+            });
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal((ushort)42, level.NativeMegaTileLayer[1 * 4 + 1]);
+    }
+
+    [Fact]
+    public void RejectsUnpublishedSetLevelOrigin()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorSetLevelId: 6),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.Apply(content, world, []));
+
+        Assert.Contains("unpublished set-level origin 6", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SimulationDefersUniqueAnchoredFragmentsUntilTheEncounterExists()
     {
         var catalog = new AuthoritativeNativeDunFragmentCatalog([
@@ -273,6 +326,39 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         Assert.Equal((target.PositionX - 2, target.PositionY - 2), (
             mappedObject.PositionX,
             mappedObject.PositionY));
+    }
+
+    [Fact]
+    public void SimulationDefersSetLevelOriginFragmentUntilOriginPublication()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorSetLevelId: 6),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                NativeDunFragments = catalog,
+                Content = content,
+            });
+
+        Assert.Empty(simulation.WorldState.World!.Levels.Single().NativeMegaTileLayer);
+        simulation.PublishSetLevelObjectOrigin(6, new AuthoritativeSetLevelObjectOrigin(24, 4, 4));
+
+        Assert.Equal((ushort)42, simulation.WorldState.World.Levels.Single().NativeMegaTileLayer[1 * 4 + 1]);
     }
 
     [Fact]

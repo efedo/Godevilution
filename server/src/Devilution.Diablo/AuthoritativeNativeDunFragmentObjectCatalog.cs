@@ -15,16 +15,26 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
     /** Optional generated unique encounter used as the placement anchor. */
     public string AnchorUniqueIdentity { get; init; } = string.Empty;
 
+    /** Optional generated set-level origin used as the placement anchor. */
+    public int? AnchorSetLevelId { get; init; }
+
+    /** Stable set-level symbol retained for composed-pack diagnostics. */
+    public string AnchorSetLevelSymbol { get; init; } = string.Empty;
+
     /** Optional behavior-only object entity cloned when the placement materializes. */
     public uint TemplateEntityId { get; init; }
 
     public AuthoritativeNativeDunFragmentObjectPlacement Validate()
     {
         var anchorUniqueIdentity = AnchorUniqueIdentity.Trim();
+        var anchorSetLevelSymbol = AnchorSetLevelSymbol.Trim();
         if (PlacementId == 0
             || FragmentId == 0
             || EntityId == 0
             || AnchorEntityId != 0 && anchorUniqueIdentity.Length != 0
+            || AnchorEntityId != 0 && AnchorSetLevelId is not null
+            || anchorUniqueIdentity.Length != 0 && AnchorSetLevelId is not null
+            || AnchorSetLevelId is < 0 or > 8
             || EntityId == AnchorEntityId
             || OffsetX is < -80 or > 80
             || OffsetY is < -80 or > 80
@@ -32,9 +42,16 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
             throw new InvalidDataException(
                 $"Native DUN fragment object placement {PlacementId} contains invalid identity or offset metadata.");
         }
+        if (!NativeTextLimits.IsIdentityWithinLimit(anchorSetLevelSymbol))
+            throw new InvalidDataException(
+                $"Native DUN fragment object placement {PlacementId} contains an invalid set-level anchor symbol.");
         return anchorUniqueIdentity == AnchorUniqueIdentity
+            && anchorSetLevelSymbol == AnchorSetLevelSymbol
             ? this
-            : this with { AnchorUniqueIdentity = anchorUniqueIdentity };
+            : this with {
+                AnchorUniqueIdentity = anchorUniqueIdentity,
+                AnchorSetLevelSymbol = anchorSetLevelSymbol,
+            };
     }
 }
 
@@ -82,6 +99,17 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
         }
     }
 
+    /** Validates optional set-level-origin anchors against the active set-level catalog. */
+    public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)
+    {
+        ArgumentNullException.ThrowIfNull(setLevels);
+        foreach (var placement in placements.Where(placement => placement.AnchorSetLevelId is not null)) {
+            if (!setLevels.TryGet(placement.AnchorSetLevelId!.Value, out _))
+                throw new InvalidDataException(
+                    $"Native DUN fragment object placement {placement.PlacementId} references unknown set level {placement.AnchorSetLevelId}.");
+        }
+    }
+
     /** Returns placements admitted by the active anchor lifecycle. */
     public AuthoritativeNativeDunFragmentObjectCatalog Filter(
         Func<AuthoritativeNativeDunFragmentObjectPlacement, bool> predicate)
@@ -95,9 +123,10 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject> objects,
         AuthoritativeNativeDunFragmentCatalog fragments,
-        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null,
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null)
     {
-        _ = Materialize(world, objects, [], fragments, combatTargets);
+        _ = Materialize(world, objects, [], fragments, combatTargets, setLevelOrigins);
     }
 
     /** Applies placements and returns any objects cloned from behavior templates. */
@@ -106,7 +135,8 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
         IEnumerable<AuthoritativeWorldObject> objects,
         IEnumerable<AuthoritativeWorldObject> templates,
         AuthoritativeNativeDunFragmentCatalog fragments,
-        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null)
+        IEnumerable<AuthoritativeCombatTarget>? combatTargets = null,
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(objects);
@@ -128,6 +158,7 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
             if (!fragmentsById.TryGetValue(placement.FragmentId, out var fragment))
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} references unknown fragment {placement.FragmentId}.");
+            var anchorSetLevelId = placement.AnchorSetLevelId ?? fragment.AnchorSetLevelId;
             objectsById.TryGetValue(placement.EntityId, out var target);
             if (target is null && placement.TemplateEntityId == 0)
                 throw new InvalidDataException(
@@ -158,6 +189,13 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 }
                 var uniqueTarget = matchingTargets[0];
                 anchor = (uniqueTarget.LevelId, uniqueTarget.PositionX, uniqueTarget.PositionY);
+            } else if (anchorSetLevelId is { } placementSetLevelId) {
+                if (setLevelOrigins is null
+                    || !setLevelOrigins.TryGetValue(placementSetLevelId, out var origin)) {
+                    throw new InvalidDataException(
+                        $"Native DUN fragment object placement {placement.PlacementId} references unpublished set-level origin {placementSetLevelId}.");
+                }
+                anchor = (origin.LevelId, origin.PositionX, origin.PositionY);
             } else if (fragment.AnchorPositionX is { } fragmentPositionX
                 && fragment.AnchorPositionY is { } fragmentPositionY) {
                 anchor = (fragment.LevelId, fragmentPositionX, fragmentPositionY);
@@ -174,7 +212,8 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 || !string.Equals(
                     fragment.AnchorUniqueIdentity,
                     placement.AnchorUniqueIdentity,
-                    StringComparison.Ordinal)) {
+                    StringComparison.Ordinal)
+                || fragment.AnchorSetLevelId != anchorSetLevelId) {
                 throw new InvalidDataException(
                     $"Native DUN fragment object placement {placement.PlacementId} does not match its fragment anchor or level.");
             }
@@ -206,7 +245,8 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
 
     public static AuthoritativeNativeDunFragmentObjectCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeNativeDunFragmentObjectCatalog(table.Rows.Select(row =>
@@ -221,7 +261,32 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                     && !string.Equals(identity, "none", StringComparison.OrdinalIgnoreCase)
                     ? identity
                     : string.Empty,
+                AnchorSetLevelId = OptionalSetLevelId(row, stableIds),
+                AnchorSetLevelSymbol = row.TryGet("anchor_set_level_symbol", out var symbol)
+                    ? symbol
+                    : string.Empty,
                 TemplateEntityId = row.OptionalUInt32("template_entity_id"),
             }));
+    }
+
+    private static int? OptionalSetLevelId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericPresent = row.TryGet("anchor_set_level_id", out var numericText)
+            && !string.IsNullOrWhiteSpace(numericText);
+        var symbolPresent = row.TryGet("anchor_set_level_symbol", out var symbol)
+            && !string.IsNullOrWhiteSpace(symbol)
+            && !string.Equals(symbol, "none", StringComparison.OrdinalIgnoreCase);
+        if (!numericPresent && !symbolPresent)
+            return null;
+        if (stableIds is null && !numericPresent)
+            throw new InvalidDataException(
+                $"Native DUN fragment object row {row.LineNumber} requires stable IDs to resolve set-level anchor '{symbol}'.");
+        return AuthoritativeSetLevelIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "anchor_set_level_id",
+            "anchor_set_level_symbol");
     }
 }

@@ -579,7 +579,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 out var nativeDunFragmentObjectsTable)
             ? AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
                 nativeDunFragmentObjectsTable.SourcePath,
-                nativeDunFragmentObjectsTable.ToCanonicalTsv())
+                nativeDunFragmentObjectsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         var questSequenceVariants = content.TryGetTable(
                 "quest_sequence_variants.tsv",
@@ -1205,7 +1206,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 throw new InvalidDataException(
                     "Native DUN fragment object placements require a world, fragments, and authored objects.");
             var generatedObjects = nativeDunFragmentObjects
-                .Filter(placement => placement.AnchorEntityId == 0)
+                .Filter(placement => placement.AnchorEntityId == 0
+                    && placement.AnchorSetLevelId is null
+                    && (nativeDunFragments.Definitions
+                        .FirstOrDefault(fragment => fragment.FragmentId == placement.FragmentId)
+                        ?.AnchorSetLevelId is null))
                 .Materialize(
                     world,
                     objects ?? [],
@@ -1222,6 +1227,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 throw new InvalidDataException(
                     "Native DUN fragments require a world and authored anchors.");
             nativeDunFragments.ValidateWorld(world);
+            if (setLevelNames is not null)
+                nativeDunFragments.ValidateSetLevels(setLevelNames);
+            if (setLevelNames is not null)
+                nativeDunFragmentObjects?.ValidateSetLevels(setLevelNames);
             nativeDunFragments.ValidateAssets(content);
             nativeDunFragments
                 .Filter(definition => definition.AnchorEntityId != 0

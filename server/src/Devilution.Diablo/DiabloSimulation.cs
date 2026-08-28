@@ -529,7 +529,9 @@ public sealed partial class DiabloSimulation
         AuthoritativeSetLevelObjectOrigin origin)
     {
         ArgumentNullException.ThrowIfNull(origin);
-        return PublishSetLevelObjectOrigin(setLevelId, origin, materialize: true);
+        var generated = PublishSetLevelObjectOrigin(setLevelId, origin, materialize: true);
+        ApplyDeferredNativeDunFragments();
+        return generated;
     }
 
     /**
@@ -558,6 +560,8 @@ public sealed partial class DiabloSimulation
             published.Add(setLevelId, origin);
             MaterializeRelativeSetLevelObjects(setLevelId);
         }
+        if (published.Count != 0)
+            ApplyDeferredNativeDunFragments();
         return published;
     }
 
@@ -740,6 +744,8 @@ public sealed partial class DiabloSimulation
                 && definition.AnchorPositionX is null
                 && !appliedNativeDunFragments.Contains(definition.FragmentId))
             .Where(definition => {
+                if (definition.AnchorSetLevelId is { } setLevelId)
+                    return setLevelObjectOrigins.ContainsKey(setLevelId);
                 var matches = targetPool.Where(target => target.IsUnique
                     && target.LevelId == definition.LevelId
                     && string.Equals(
@@ -767,7 +773,8 @@ public sealed partial class DiabloSimulation
                     WorldState.Objects.Values,
                     nativeObjectTemplates,
                     catalog,
-                    targetPool);
+                    targetPool,
+                    setLevelObjectOrigins);
             foreach (var generatedObject in generatedObjects) {
                 if (WorldState.IsEntityIdOccupied(generatedObject.EntityId))
                     throw new InvalidDataException(
@@ -782,7 +789,8 @@ public sealed partial class DiabloSimulation
             content,
             WorldState.World,
             WorldState.Objects.Values,
-            targetPool);
+            targetPool,
+            setLevelObjectOrigins);
         WorldState.RefreshProjectedGeometry();
         // The fragment may have introduced mapped native-DUN object cells.
         // Reconcile after geometry publication so deferred set-piece objects

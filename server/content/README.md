@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.431.0` schema in
+It declares its identity and `devilution.diablo@1.432.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.430.0` schema so existing manifest-based packs remain
+previous additive `1.431.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -2935,8 +2935,8 @@ clients.
 | `procedural_set_piece_origins.tsv` | `set_level_id`, `level_id` | Optional deterministic origins for generated set-piece footprints. Rows select aligned walkable rectangles from authoritative generated geometry using a content seed; unavailable target levels defer materialization. |
 | `native_dun_objects.tsv` | `native_object_id`, one level target | Optional explicit mapping from native DUN object-layer values to authoritative object identities for either a set-level variant (`set_level_id`/`set_level_symbol` plus `active_map`) or an ordinary runtime level (`level_id`/`level_symbol`). Optional `object_symbol` cross-checks the authored object identity. Duplicate mappings, ambiguous targets, unknown identities, missing native layers, and mismatched templates reject activation; unmapped values remain inert. |
 | `native_dun_levels.tsv` | `level_id`, `asset_path` | Optional ordinary-level native `.dun` object-layer assets. Stable `level_symbol` values cross-check the active level catalog; missing assets, unknown levels, invalid paths, malformed DUN data, and dimension mismatches reject activation. Optional `tile_asset_path` and `sol_asset_path` form a required pair of relative `.til`/`.sol` assets; when present, their effective d-piece layer and validated collision properties replace the level's prior movement/missile geometry and remain available for later d-piece mutation recomputation. |
-| `native_dun_fragments.tsv` | `fragment_id` | Optional native `.dun` set-piece fragments targeting an ordinary level and either a validated `anchor_entity_id`, `anchor_unique_identity`, or exclusive `anchor_position_x`/`anchor_position_y` coordinate anchor. `anchor_offset_x`/`anchor_offset_y` are d-piece offsets and must produce an even in-bounds origin. Fixed-object anchors compose during activation; unique anchors defer until exactly one matching generated encounter is materialized, including on later level entry; coordinate anchors resolve deterministically during activation. Fragment mega-tile, transparency, and object-layer values are composed into authoritative level state. When optional `.til`/`.sol` assets are supplied, their effective d-piece layer and validated collision properties are also composed into authoritative blocked and missile-blocked geometry and remain available for later d-piece mutation recomputation. |
-| `native_dun_fragment_objects.tsv` | `placement_id`, `fragment_id`, `entity_id` | Optional anchor-relative placement for existing authored objects or behavior-only templates. `offset_x`/`offset_y` are validated relative to either the referenced fragment's `anchor_entity_id`, its optional `anchor_unique_identity`, or an inherited coordinate anchor; unique anchors resolve after generated encounters materialize. Optional `template_entity_id` clones a `template_only=1` object when the target entity is absent. Each object may be targeted once and resulting positions must remain in bounds. |
+| `native_dun_fragments.tsv` | `fragment_id` | Optional native `.dun` set-piece fragments targeting an ordinary level and either a validated `anchor_entity_id`, `anchor_unique_identity`, exclusive `anchor_position_x`/`anchor_position_y` coordinate anchor, or `anchor_set_level_id`/`anchor_set_level_symbol` generated-origin anchor. `anchor_offset_x`/`anchor_offset_y` are d-piece offsets and must produce an even in-bounds origin. Fixed-object and coordinate anchors compose during activation; unique and set-level-origin anchors defer until their runtime anchor exists, including on later level entry. Fragment mega-tile, transparency, and object-layer values are composed into authoritative level state. When optional `.til`/`.sol` assets are supplied, their effective d-piece layer and validated collision properties are also composed into authoritative blocked and missile-blocked geometry and remain available for later d-piece mutation recomputation. |
+| `native_dun_fragment_objects.tsv` | `placement_id`, `fragment_id`, `entity_id` | Optional anchor-relative placement for existing authored objects or behavior-only templates. `offset_x`/`offset_y` are validated relative to the referenced fragment's entity, unique encounter, explicit `anchor_set_level_id`/`anchor_set_level_symbol`, or an inherited coordinate/set-level-origin anchor; unique and set-level anchors resolve after their runtime anchors materialize. Optional `template_entity_id` clones a `template_only=1` object when the target entity is absent. Each object may be targeted once and resulting positions must remain in bounds. |
 | `quest_sequence_variants.tsv` | `variant_id`, `slot_index` | Optional complete permutations for ordered quest-object layouts. Each variant uses the same quest and object slots, and activation selects one variant per quest with the native-compatible deterministic RNG before simulation creation. |
 | `set_level_maps.tsv` | `set_level_id`, `pre_map_asset`, `active_map_asset` | Validated native set-level map asset paths, optional shared `til_asset`/`sol_asset` geometry inputs, optional `transparency_asset`, dungeon type, and entry spawn positions. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; map and transparency paths are relative `.dun` assets, geometry paths are relative `.til`/`.sol` assets, and traversal is rejected. |
 | Native binary assets (`.dun`, `.til`, `.sol`) | relative asset path | Immutable native map, mega-tile, and d-piece property bytes carried beside TSV tables. Asset bytes are included in the content manifest identity; identical inherited copies are accepted and conflicting copies reject composition. |
@@ -2986,7 +2986,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.431.0"
+    "version": "1.432.0"
   },
   "dependencyConstraints": [
     {
@@ -3020,7 +3020,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.431.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.432.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

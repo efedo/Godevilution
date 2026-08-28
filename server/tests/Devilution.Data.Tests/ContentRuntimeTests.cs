@@ -531,8 +531,8 @@ public sealed class ContentRuntimeTests
         ]);
 
         Assert.Equal(schema, compatible.Schema);
-        var previousAdditiveSchema = new ContentSchemaIdentity("devilution.diablo", "1.430.0");
-        var currentSchema = new ContentSchemaIdentity("devilution.diablo", "1.431.0");
+        var previousAdditiveSchema = new ContentSchemaIdentity("devilution.diablo", "1.431.0");
+        var currentSchema = new ContentSchemaIdentity("devilution.diablo", "1.432.0");
         Assert.Throws<ArgumentException>(() => new ContentManifest("rules", "1", [
             new ContentPack("base", "1.2.0", [table], [], [], currentSchema),
             new ContentPack(

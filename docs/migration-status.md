@@ -8,11 +8,17 @@ Their native identities and initial quest-variable transitions are validated by
 the module-owned shipped-content test; native-DUN placement, rewards, and map
 replacement remain deferred pending generated geometry and licensed assets.
 
+Native DUN fragments and fragment-object placements now accept validated
+set-level-origin anchors. The server defers those rows until the corresponding
+generated origin is published, then composes the fragment and its behavior
+objects atomically; existing entity, unique-encounter, and coordinate anchors
+remain backward compatible.
+
 Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.
 
-Live Godot overlay fixtures now declare the active `1.431.0` content schema,
+Live Godot overlay fixtures now declare the active `1.432.0` content schema,
 matching the shipped base pack. Manifest composition continues to reject a
 mixed current/previous schema set before module activation; the Diablo module
 still accepts a previous additive schema when a complete manifest uses it.
@@ -1525,8 +1531,8 @@ catalog when authored by `cursor_symbol`.
 Spell-book single-player exclusions now resolve through authored
 `single_player_excluded` metadata when supplied, retaining native fallbacks for
 older rows.
-The Diablo content schema is now `1.431.0` for these table contracts; the
-module continues to accept the immediately previous additive `1.430.0` schema
+The Diablo content schema is now `1.432.0` for these table contracts; the
+module continues to accept the immediately previous additive `1.431.0` schema
 for existing manifest-based packs. Schema 1.431 adds the optional validated
 `object_presentations.tsv` sidecar, keyed by authored object entity, so
 activation visibility and animation frames can evolve without changing the
