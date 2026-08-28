@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.434.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.435.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -647,7 +647,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.433.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.434.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -2975,7 +2975,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.434.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.435.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -3183,9 +3183,10 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(20, mushroomInteractions.Count);
+        Assert.Equal(25, mushroomInteractions.Count);
         Assert.Equal(
-            [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
+            [(300101U, 0, 2135U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 117),
+             (300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
              (300203U, 6, 2140U, AuthoritativeQuestTownerInteractionKind.Dialogue, 5, -1, 132),
              (300204U, 6, 2142U, AuthoritativeQuestTownerInteractionKind.Complete, 7, -1, 133),
@@ -3195,6 +3196,10 @@ public sealed class ShippedContentTests
              (300208U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 88),
              (300209U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 39),
              (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39),
+             (300701U, 2, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 63),
+             (300801U, 3, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 12),
+             (300802U, 3, 2136U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 13),
+             (301101U, 0, 2138U, AuthoritativeQuestTownerInteractionKind.Complete, -1, -1, 90),
              (301401U, 1, 0U, AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest, 0, 2, 41),
              (301601U, 4, 0U, AuthoritativeQuestTownerInteractionKind.CompleteAfterQuest, 7, 8, 25),
              (301701U, 7, 43U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 274),
@@ -3253,6 +3258,32 @@ public sealed class ShippedContentTests
             magicRockActivation.Variable2,
             magicRockActivation.RequiredVisitedLevel1,
             magicRockActivation.RequiredVisitedLevel2));
+        var magicRockCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 300101);
+        Assert.True(magicRockCompletion.UseQuestTurnInReward);
+        Assert.Equal(1, magicRockCompletion.RequiredVariable2);
+        var butcherActivation = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 300701);
+        Assert.Equal((2, 24, 32), (
+            butcherActivation.TownerId,
+            butcherActivation.PositionX,
+            butcherActivation.PositionY));
+        var ogdenActivation = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 300801);
+        Assert.Equal((0, 1, 1, 3U, 4U), (
+            ogdenActivation.RequiredVariable2,
+            ogdenActivation.Variable1,
+            ogdenActivation.Variable2,
+            ogdenActivation.RequiredVisitedLevel1,
+            ogdenActivation.RequiredVisitedLevel2));
+        var ogdenCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 300802);
+        Assert.True(ogdenCompletion.UseQuestTurnInReward);
+        Assert.Equal(2136U, ogdenCompletion.ItemId);
+        var anvilCompletion = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 301101);
+        Assert.True(anvilCompletion.UseQuestTurnInReward);
+        Assert.Equal(1, anvilCompletion.RequiredVariable2);
         var anvilActivation = mushroomInteractions.Single(
             interaction => interaction.InteractionId == 300208);
         Assert.Equal((0, 1, 9U, 10U), (

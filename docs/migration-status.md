@@ -2,6 +2,14 @@
 
 Status date: 2026-08-28
 
+The remaining shipped base item hand-ins now use authored quest/towner rows:
+Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
+and the Butcher activation preserve their native town coordinates, variable
+gates, messages, item consumption, and quest-declared rewards. The content
+schema is now `1.435.0`; the previous additive `1.434.0` schema remains
+accepted for pack compatibility. Legacy quest-state turn-in fields remain
+available to older packs and direct compatibility callers.
+
 The generic host now persists each initialized session's completed command
 receipt ledger beside its authoritative save and restores it before handshake
 processing. A client retry therefore remains a duplicate across a fresh host

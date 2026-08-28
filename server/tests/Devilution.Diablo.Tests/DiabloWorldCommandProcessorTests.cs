@@ -2475,6 +2475,83 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedCompletionStageConsumesItemAndSpawnsQuestReward()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1004, "Empyrean Band", 113, 1, 8000, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(113, 1, 8000, 8000, 0, 0, 0, 0, 0, 1, 1, true),
+            new AuthoritativeItemDefinition(2135, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var quest = new AuthoritativeQuestState(
+            3001,
+            1,
+            3,
+            active: true,
+            variable2: 1,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 63,
+            turnInItemId: 2135,
+            turnInRequiredVariable2: 1,
+            turnInRewardUniqueId: 1004,
+            turnInRewardItemLevel: 5,
+            turnInRewardPositionX: 61,
+            turnInRewardPositionY: 64,
+            turnInMessageId: 117);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(
+                300101,
+                3001,
+                0,
+                0,
+                62,
+                63,
+                2135,
+                AuthoritativeQuestTownerInteractionKind.Complete,
+                RequiredVariable2: 1,
+                MessageId: 117,
+                UseQuestTurnInReward: true),
+        ]);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var requiredItem = items.Generate(2135, 42);
+        var player = CreatePlayer(
+            positionX: 61,
+            positionY: 63,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, requiredItem.CreateInfo, 0, 0, requiredItem)],
+            entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3001, 0),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(117, Assert.Single(result.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1004, reward.State.UniqueId);
+        Assert.Equal((61, 64), (reward.PositionX, reward.PositionY));
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3001, 0),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void ContentOwnedQuestTownerDialogueCanApplyAfterCompletionWithoutAnItem()
     {
         var interactions = new AuthoritativeQuestTownerInteractionCatalog([

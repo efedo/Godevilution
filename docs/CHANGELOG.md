@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the remaining shipped base quest/towner item stages for Magic
+  Rock, Anvil of Fury, Ogden's Sign, and the Butcher. Their server-owned
+  activation/completion rows preserve native gates, messages, item consumption,
+  and authored rewards; the content schema `1.435.0` is now current while
+  retaining `1.434.0` as the additive compatibility version.
+
 - Add the additive `CompleteAfterQuest` interaction kind and completion-reward
   flag. Lazarus, Poisoned Water, and Farmer's Orchard completion conversations
   now use validated content rows with server-owned variable gates, follow-on

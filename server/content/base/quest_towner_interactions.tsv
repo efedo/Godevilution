@@ -1,4 +1,5 @@
 interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	position_y	item_id	item_symbol	kind	required_variable1	required_variable2	variable1	variable2	message_id	consume_item	allow_completed	required_visited_level1	required_visited_level2	require_unlogged	required_item_id	required_item_symbol	require_item_present	allow_initial	use_quest_turn_in_reward	use_quest_completion_reward
+300101	3001	magic_rock	0	0	town	62	63	2135	magic_rock	Complete	-1	1	-1	-1	117	true	false	0	0	false	0		true	false	true	false
 300201	3002	black_mushroom	6	0	town	80	20	2141	fungal_tome	Activate	-1	-1	2	-1	129	true	false	0	0	false	0		true	false	false	false
 300202	3002	black_mushroom	6	0	town	80	20	2139	black_mushroom	Advance	2	-1	5	-1	131	true	false	0	0	false	0		true	false	false	false
 300203	3002	black_mushroom	6	0	town	80	20	2140	brain	Dialogue	5	-1	-1	-1	132	false	false	0	0	false	0		true	false	false	false
@@ -9,5 +10,9 @@ interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	
 300208	3011	anvil_of_fury	0	0	town	62	63	0	NONE	Activate	-1	0	0	1	88	false	false	9	10	false	0		true	false	false	false
 300209	3014	poisoned_water	1	0	town	55	79	0	NONE	Activate	-1	-1	0	-1	39	false	false	1	5	true	0		true	false	false	false
 300210	3014	poisoned_water	1	0	town	55	79	0	NONE	Dialogue	-1	-1	-1	-1	39	false	false	0	0	true	0		true	false	false	false
+300701	3007	butcher	2	0	town	24	32	0	NONE	Activate	-1	-1	1	-1	63	false	false	0	0	false	0		true	false	false	false
+300801	3008	ogdens_sign	3	0	town	55	62	0	NONE	Activate	-1	0	1	1	12	false	false	3	4	false	0		true	false	false	false
+300802	3008	ogdens_sign	3	0	town	55	62	2136	tavern_sign	Complete	-1	1	-1	-1	13	true	false	0	0	false	0		true	false	true	false
+301101	3011	anvil_of_fury	0	0	town	62	63	2138	anvil_of_fury	Complete	-1	1	-1	-1	90	true	false	0	0	false	0		true	false	true	false
 301401	3014	poisoned_water	1	0	town	55	79	0	NONE	CompleteAfterQuest	0	-1	2	-1	41	false	true	0	0	false	0		true	false	false	true
 301601	3016	lazarus	4	0	town	62	71	0	NONE	CompleteAfterQuest	7	0	8	1	25	false	true	0	0	false	0		true	false	false	false
