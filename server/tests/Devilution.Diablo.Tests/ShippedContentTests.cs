@@ -404,6 +404,41 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseSpellBehaviorRowsMatchNativeSpellIdentityNamespace()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var nativeSpellTable = basePack.Tables.Single(
+            table => table.SourcePath == "native_spells.tsv");
+        var nativeCatalog = AuthoritativeNativeSpellCatalog.LoadTsv(
+            nativeSpellTable.SourcePath,
+            nativeSpellTable.ToCanonicalTsv());
+        var nativeById = nativeCatalog.Definitions.ToDictionary(
+            definition => definition.NativeSpellId);
+        var spellRows = basePack.Tables
+            .Single(table => table.SourcePath == "spells.tsv")
+            .Rows;
+
+        foreach (var row in spellRows) {
+            var nativeId = row.RequiredUInt32("native_spell_id");
+            Assert.True(
+                nativeById.TryGetValue(nativeId, out var native),
+                $"Spell row '{row.Required("spell_symbol")}' references unknown native spell {nativeId}.");
+            var spellSymbol = NormalizeSpellSymbol(row.Required("spell_symbol"));
+            var nativeSymbol = NormalizeSpellSymbol(native!.Symbol);
+            Assert.True(
+                spellSymbol == nativeSymbol
+                    || spellSymbol == "resurrection" && nativeSymbol == "resurrect",
+                $"Spell row '{row.Required("spell_symbol")}' does not match native spell '{native.Symbol}'.");
+        }
+
+        static string NormalizeSpellSymbol(string symbol)
+            => symbol.Replace("_", string.Empty, StringComparison.Ordinal)
+                .ToLowerInvariant();
+    }
+
+    [Fact]
     public void HellfireNativeSpellNamespaceRetainsCompatibilityEntriesAndRuneAliases()
     {
         var repositoryRoot = FindRepositoryRoot();

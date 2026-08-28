@@ -17,6 +17,8 @@ than surfacing an integer-overflow exception before the coordinate gate.
 The shipped Etherealize content row now resolves to native spell identity 25
 (`Etherealize`) instead of 26 (`ItemRepair`), keeping external spell identity
 mapping aligned with the inherited native catalog.
+Shipped-content verification now cross-checks every external spell behavior row
+against that native identity namespace.
 
 Shared bounded crawl searches now skip candidate coordinates that overflow the
 integer domain, so raw client target cells fail closed across teleport, stone
