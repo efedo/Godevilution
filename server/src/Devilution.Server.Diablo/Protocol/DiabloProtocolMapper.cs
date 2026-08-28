@@ -554,16 +554,19 @@ internal static class DiabloProtocolMapper
                         && @object.QuestSequenceFollowUpOffsetX == 0
                         && @object.QuestSequenceFollowUpOffsetY == 0,
                 AuthoritativeQuestSequenceFollowUpKind.WorldMutation
-                    => effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                    => (effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                        || transitionKind != AuthoritativeObjectQuestTransitionKind.None)
                         && @object.QuestSequenceFollowUpAmount != 0
                         && @object.QuestSequenceFollowUpOffsetX == 0
                         && @object.QuestSequenceFollowUpOffsetY == 0,
                 AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
                     => (effectKind == AuthoritativeObjectEffectKind.QuestSequence
-                        || effectKind == AuthoritativeObjectEffectKind.WorldMutation)
+                        || effectKind == AuthoritativeObjectEffectKind.WorldMutation
+                        || transitionKind != AuthoritativeObjectQuestTransitionKind.None)
                         && @object.QuestSequenceFollowUpAmount != 0,
                 AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster
-                    => effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                    => (effectKind == AuthoritativeObjectEffectKind.QuestSequence
+                        || transitionKind != AuthoritativeObjectQuestTransitionKind.None)
                         && @object.QuestSequenceFollowUpAmount != 0,
                 _ => false,
             };

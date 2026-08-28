@@ -1527,6 +1527,18 @@ public sealed class ClientModelTests
         nativeMonsterFollowUp.Objects[0].QuestSequenceFollowUpOffsetX = 1;
         model.Apply(new AuthoritativeClientMessage(Snapshot: nativeMonsterFollowUp));
 
+        var transitionFollowUp = valid.Clone();
+        transitionFollowUp.Objects[0].QuestId = 3002;
+        transitionFollowUp.Quests.Add(new QuestSnapshot {
+            QuestId = 3002,
+            RequiredProgress = 1,
+        });
+        transitionFollowUp.Objects[0].QuestTransitionKind = 8;
+        transitionFollowUp.Objects[0].QuestTransitionAmount = 1;
+        transitionFollowUp.Objects[0].QuestSequenceFollowUpKind = 1;
+        transitionFollowUp.Objects[0].QuestSequenceFollowUpAmount = 9901;
+        model.Apply(new AuthoritativeClientMessage(Snapshot: transitionFollowUp));
+
         var invalidFollowUp = valid.Clone();
         invalidFollowUp.Objects[0].EffectKind = 4;
         invalidFollowUp.Objects[0].QuestSequenceFollowUpKind = 1;

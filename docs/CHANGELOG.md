@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Complete the quest-transition object follow-up slice across the protocol
+  boundary. Server and Godot validation now accept authored map, projectile,
+  and encounter follow-ups on quest-transition objects, with a live Godot
+  fixture proving the command acknowledgement, quest completion, and projected
+  world-mutation geometry.
+
 - Extend authored object follow-ups to quest-transition objects. Books, levers,
   and similar set-piece controls can now apply a validated server-owned map,
   projectile, or encounter follow-up after their quest transition succeeds;

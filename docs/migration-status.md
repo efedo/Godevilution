@@ -2,6 +2,14 @@
 
 Status date: 2026-08-28
 
+The authored object follow-up boundary is now covered end to end through the
+shared protocol. A live Godot fixture activates a quest-transition object,
+verifies its quest state and activation acknowledgement, and observes the
+server-persisted world-mutation cell in the projected level geometry. Both
+protocol mappers and the Godot model accept world-mutation, projectile, and
+encounter follow-ups on quest-transition objects; schema `1.441.0` remains
+current with `1.440.0` accepted for additive compatibility.
+
 The Halls of the Blind, Gateway of Blood, and Warlord steel-tome object
 templates now carry authored activation-message identities. Server object
 operations record the message on the linked quest and emit the dialogue event,

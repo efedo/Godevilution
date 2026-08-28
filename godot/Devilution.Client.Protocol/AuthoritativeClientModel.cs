@@ -852,13 +852,13 @@ public sealed class AuthoritativeClientModel
             0 => @object.QuestSequenceFollowUpAmount == 0
                 && @object.QuestSequenceFollowUpOffsetX == 0
                 && @object.QuestSequenceFollowUpOffsetY == 0,
-            1 => effectKind == 4
+            1 => (effectKind == 4 || transitionKind != 0)
                 && @object.QuestSequenceFollowUpAmount != 0
                 && @object.QuestSequenceFollowUpOffsetX == 0
                 && @object.QuestSequenceFollowUpOffsetY == 0,
-            2 => (effectKind == 4 || effectKind == 6)
+            2 => (effectKind == 4 || effectKind == 6 || transitionKind != 0)
                 && @object.QuestSequenceFollowUpAmount != 0,
-            3 => effectKind == 4
+            3 => (effectKind == 4 || transitionKind != 0)
                 && @object.QuestSequenceFollowUpAmount != 0,
             _ => false,
         };

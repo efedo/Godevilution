@@ -386,6 +386,128 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportAppliesQuestTransitionFollowUpToAuthoritativeGeometry()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Object-Follow-Up-Overlay-"
+                + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.godot-object-follow-up",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.441.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    { "table": "quest_states.tsv", "keys": ["quest_id"], "mode": "upsert" },
+                    { "table": "objects.tsv", "keys": ["entity_id"], "mode": "upsert" },
+                    { "table": "world_mutations.tsv", "keys": ["mutation_id"], "mode": "upsert" }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+
+            var repositoryRoot = FindRepositoryRoot();
+            var questStatesPath = Path.Combine(
+                repositoryRoot,
+                "server",
+                "content",
+                "base",
+                "quest_states.tsv");
+            var questStateLines = await File.ReadAllLinesAsync(
+                questStatesPath,
+                TestContext.Current.CancellationToken);
+            var questStateHeader = questStateLines[0].Split('\t');
+            var questState = questStateLines
+                .Single(line => line.StartsWith("3008\t", StringComparison.Ordinal))
+                .Split('\t');
+            void SetQuestState(string column, string value)
+                => questState[Array.IndexOf(questStateHeader, column)] = value;
+            SetQuestState("level_id", "1");
+            SetQuestState("level_symbol", "cathedral");
+            SetQuestState("initial", "0");
+            SetQuestState("completed", "0");
+            SetQuestState("unavailable", "0");
+            SetQuestState("variable1", "0");
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "quest_states.tsv"),
+                [questStateLines[0], string.Join('\t', questState)],
+                TestContext.Current.CancellationToken);
+
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "objects.tsv"),
+                "entity_id\tobject_id\tobject_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\teffect_item_symbol\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\ttemplate_only\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_monster_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\tquest_sequence_follow_up_world_mutation_id\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\tprojectile_source\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\tquest_transition_required_variable2\tactivate_on_occupancy\trequired_activated_linked_objects\tnative_object_id\treward_kind\treward_id\treward_item_level\treward_offset_x\treward_offset_y\tdialogue_message_id\n2999\t1\tl1_left_door\t1\tcathedral\t0\t1\t0\t3008\togdens_sign\tNone\t0\t\t0\t0\t0\t0\t0\tWorldMutation\t9901\t\t0\t0\t0\t\t0\t0\tObject\tCompleteAndSetVariable1\t1\t0\t-1\tfalse\t0\t1\tNone\t0\t0\t0\t0\t0\n",
+                TestContext.Current.CancellationToken);
+
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "world_mutations.tsv"),
+                "mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\n9901\t1\t0\t\t42\tnone\tnone\tnone\tnone\tnone\tnone\tnone\tnone\t0\t0\tnone\tfalse\t0\tnone\tnone\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingLevelOverride: 1,
+                gameMode: "single-player");
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-object-follow-up", requestedClassId: 2));
+            var model = new AuthoritativeClientModel();
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            model.Apply(await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null));
+            Assert.Equal(1U, Assert.Single(model.Snapshot!.Players).LevelId);
+            var authoredObject = Assert.Single(
+                model.Snapshot.Objects,
+                @object => @object.EntityId == 2999);
+            Assert.Equal(7, authoredObject.QuestTransitionKind);
+            Assert.Equal(1, authoredObject.QuestTransitionAmount);
+            Assert.Equal(1, authoredObject.QuestSequenceFollowUpKind);
+            Assert.Equal(9901U, authoredObject.QuestSequenceFollowUpAmount);
+            var initialGeometry = model.Snapshot.LevelGeometry
+                .Single(level => level.LevelId == 1);
+            Assert.DoesNotContain(42, initialGeometry.BlockedCells);
+
+            var sequence = client.Queue(new Command {
+                OperateObjectRequested = new OperateObjectRequested {
+                    ObjectEntityId = authoredObject.EntityId,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+
+            var applied = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is { } snapshot
+                    && snapshot.Objects.Single(@object => @object.EntityId == 2999).Activated);
+            model.Apply(applied);
+            Assert.True(Assert.Single(model.Snapshot!.Objects, @object => @object.EntityId == 2999).Activated);
+            Assert.True(Assert.Single(model.Snapshot.Quests, quest => quest.QuestId == 3008).Completed);
+            Assert.Contains(
+                42,
+                model.Snapshot.LevelGeometry.Single(level => level.LevelId == 1).BlockedCells);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GodotTransportFollowsAnAuthoredProgressionWarp()
     {
         var overlayRoot = Path.Combine(

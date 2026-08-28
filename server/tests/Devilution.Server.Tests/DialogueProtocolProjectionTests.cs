@@ -1407,6 +1407,21 @@ public sealed class DialogueProtocolProjectionTests
             QuestSequenceFollowUpKind = AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
             QuestSequenceFollowUpAmount = 1,
         });
+
+        var transitionFollowUp = @object with {
+            QuestId = 1,
+            QuestTransitionKind = AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable1,
+            QuestTransitionAmount = 1,
+            QuestSequenceFollowUpKind = AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
+            QuestSequenceFollowUpAmount = 1,
+        };
+        var transitionSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Objects = [transitionFollowUp],
+            Quests = [new DiabloQuestState(1, 1, 0, 2, false)],
+        });
+        Assert.Equal(
+            (int)AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
+            transitionSnapshot.Objects.Single().QuestSequenceFollowUpKind);
         AssertRejected(value => value with { ProjectileSourceKind = (AuthoritativeObjectProjectileSourceKind)99 });
         AssertRejected(value => value with {
             ProjectileSourceKind = AuthoritativeObjectProjectileSourceKind.ActivatingPlayer,
