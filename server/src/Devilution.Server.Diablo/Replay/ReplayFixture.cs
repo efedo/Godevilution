@@ -1,4 +1,5 @@
 using Devilution.Diablo;
+using Devilution.Engine;
 using Devilution.Server.Stores;
 
 namespace Devilution.Server.Replay;
@@ -316,7 +317,7 @@ public sealed record ReplayQuestSelection(uint Seed, IReadOnlyList<ReplayQuestPo
 {
     public IReadOnlyList<uint> SelectUnavailableQuestIds()
     {
-        var random = new DiabloRandom(Seed);
+        var random = new DeterministicLegacyRandom(Seed);
         var unavailable = new List<uint>();
         foreach (var pool in Pools.OrderBy(pool => pool.PoolId)) {
             if (Seed == 988045466U && pool.PoolId == 1) {

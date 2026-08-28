@@ -87,6 +87,9 @@ All notable changes to this fork are documented below.
   facade while other authoritative modules can reuse the same parity primitive.
   Diablo combat, world, store, simulation, spawn, and quest code now consumes
   `DeterministicLegacyRandom` directly.
+- Route Server host ID allocation and Diablo protocol/replay projections through
+  engine-owned deterministic primitives directly; the existing host and Diablo
+  facades remain available for compatibility callers and fixtures.
 - Extend widened authoritative coordinate arithmetic through monster aggro,
   retreat, scavenger/fallen radius, minion, projectile, and native-vision
   targeting paths; malformed extreme coordinates no longer wrap during AI

@@ -5,6 +5,7 @@ using EngineClock = Devilution.Engine.IAuthoritativeClock;
 using System.Security.Cryptography;
 using System.Text;
 using Devilution.Data;
+using EngineEntityIdAllocator = Devilution.Engine.DeterministicEntityIdAllocator;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Protocol;
@@ -33,7 +34,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private readonly IAuthoritativeSaveProvider? saveProvider;
     private readonly IAuthoritativeParticipantInitializer? participantInitializer;
     private IAuthoritativeGameHostAdapter? gameAdapter;
-    private readonly StableEntityIdAllocator entityIds = new();
+    private readonly EngineEntityIdAllocator entityIds = new();
     private readonly ConcurrentDictionary<TcpClient, byte> clients = new();
     private readonly ConcurrentDictionary<string, SessionState> sessionsByToken = new(StringComparer.Ordinal);
     private readonly object sessionCreationSynchronization = new();

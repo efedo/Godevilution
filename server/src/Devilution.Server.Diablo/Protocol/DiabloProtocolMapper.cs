@@ -1,6 +1,7 @@
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Domain.Protocol;
+using Devilution.Engine;
 using Devilution.Server.Snapshots;
 
 namespace Devilution.Server.Protocol;
@@ -2243,7 +2244,7 @@ internal static class DiabloProtocolMapper
     private static int ResolveQ6(int whole, int raw)
     {
         return raw == 0 && whole != 0
-            ? DiabloFixedPointQ6.FromWhole(whole)
+            ? DeterministicFixedPointQ6.FromWhole(whole)
             : raw;
     }
 

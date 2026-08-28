@@ -56,8 +56,8 @@ The engine currently owns:
   sources for deterministic spawn and content selection;
 - deterministic non-zero entity-ID allocation, including caller-owned
   collision skipping and stateless first-available lookup, exposed as a
-  reusable primitive while the server host retains its source-compatible
-  allocator facade;
+  reusable primitive and used directly by the server host while the host
+  retains its source-compatible allocator facade;
 - serialized participant operations, exactly-once deterministic tick advancement,
   module-supplied lifecycle hooks, and directed event routing.
 

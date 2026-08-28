@@ -29,8 +29,13 @@ and constructs the engine primitive directly; the Diablo facade is retained
 only for compatibility consumers and existing test fixtures.
 
 Stable non-zero entity-ID allocation now follows the same boundary: its
-implementation lives in `Devilution.Engine`, while the server host keeps its
-source-compatible `StableEntityIdAllocator` facade.
+implementation lives in `Devilution.Engine`, and the TCP host now allocates
+directly from that primitive while retaining its source-compatible
+`StableEntityIdAllocator` facade for existing callers.
+
+The Server Diablo protocol mapper and replay fixture now likewise consume the
+engine fixed-point and legacy-random primitives directly; their Diablo-facing
+wire and fixture contracts remain unchanged.
 
 Monster aggro and retreat selection, scavenger/fallen radius checks, minion
 targeting, projectile retargeting and area resolution, and native light-radius
