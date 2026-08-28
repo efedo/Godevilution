@@ -32,6 +32,12 @@ namespaces, partial base sprite catalogs, and missing tables no longer silently
 skip reference validation. Hellfire overlays may add their 13 variant sprite
 identities on top of the required 46 base definitions.
 
+Persisted item states that carry an item seed but omit a randomized armor value
+now restore the native inclusive armor roll consistently through item metadata
+hydration, snapshots, stores, world-item pickup, and equipment-stat
+calculation. Seedless compatibility states remain unresolved until their
+authoritative generator supplies the rolled value.
+
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative
 targeting paths; the Diablo compatibility entry point preserves the same
@@ -2123,8 +2129,8 @@ scaled hit points), not only the client's difficulty label.
 - Equipped physical damage now resolves omitted weapon ranges from authored
   item metadata before calculating the server-owned player damage profile.
 - Equipped fixed armor now resolves omitted armor values from authored item
-  metadata; randomized armor ranges remain unresolved unless state supplies the
-  rolled value.
+  metadata, and seeded randomized armor ranges restore their native inclusive
+  roll; seedless compatibility states remain unresolved.
 - `ReadBook` now resolves omitted spell and minimum-magic fields from
   unambiguous authored book metadata keyed by `misc_id`.
 - Store intent processing now hydrates omitted inventory footprints from

@@ -969,7 +969,7 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         AuthoritativeWorldItem item)
     {
-        var state = items?.ResolveAuthoredMetadata(item.State) ?? item.State;
+        var state = items?.ResolveAuthoredMetadata(item.State, item.ItemSeed) ?? item.State;
         if (item.Price <= int.MaxValue
             && DiabloGoldInventory.HasGoldIdentity(
                 state,

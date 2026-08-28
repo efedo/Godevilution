@@ -199,6 +199,44 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AuthoredMetadataHydrationRestoresSeededArmorRange()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 6, 100, 100, 0, 0, 0, 20, 20, 1, 1, true) {
+                MinArmorClass = 10,
+                MaxArmorClass = 20,
+            },
+        ]);
+
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = 7,
+            ArmorClass = 0,
+        };
+
+        var first = catalog.ResolveAuthoredMetadata(state, 42);
+        var second = catalog.ResolveAuthoredMetadata(state, 42);
+
+        Assert.Equal(12, first.ArmorClass);
+        Assert.Equal(first.ArmorClass, second.ArmorClass);
+    }
+
+    [Fact]
+    public void AuthoredMetadataHydrationLeavesRandomArmorUnresolvedWithoutSeed()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 6, 100, 100, 0, 0, 0, 20, 20, 1, 1, true) {
+                MinArmorClass = 10,
+                MaxArmorClass = 20,
+            },
+        ]);
+
+        var resolved = catalog.ResolveAuthoredMetadata(
+            AuthoritativeItemState.Empty with { StableItemId = 7 });
+
+        Assert.Equal(0, resolved.ArmorClass);
+    }
+
+    [Fact]
     public void AuthoredPresentationHydrationPreservesExplicitOverrides()
     {
         var catalog = new AuthoritativeItemCatalog([
@@ -1694,7 +1732,7 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
-    public void EquippedArmorDoesNotGuessRandomArmorByMiscId()
+    public void EquippedArmorRestoresRandomArmorByMiscIdAndSeed()
     {
         var items = new AuthoritativeItemCatalog([
             new AuthoritativeItemDefinition(7, 6, 100, 100, 0, 0, 0, 20, 20, 1, 1, true) {
@@ -1719,7 +1757,7 @@ public sealed class AuthoritativeItemCatalogTests
             [armorItem],
             items: items);
 
-        Assert.Equal(5 + (23 / 5), armor);
+        Assert.Equal(5 + (23 / 5) + 12, armor);
     }
 
     [Fact]

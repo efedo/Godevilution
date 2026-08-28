@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Native equipment-derived defensive statistics shared by authoritative paths. */
@@ -30,7 +32,7 @@ public static class AuthoritativeEquipmentStatRules
             if (!state.StatFlag)
                 continue;
 
-            var itemArmorClass = ResolveArmorClass(state, items);
+            var itemArmorClass = ResolveArmorClass(state, equippedItem.ItemSeed, items);
             armorClass = checked(armorClass + itemArmorClass);
             if (state.Magical != 0 && !state.Identified)
                 continue;
@@ -73,19 +75,38 @@ public static class AuthoritativeEquipmentStatRules
 
     private static int ResolveArmorClass(
         AuthoritativeItemState state,
+        uint itemSeed,
         AuthoritativeItemCatalog? items)
     {
         if (state.ArmorClass > 0 || items is null)
             return state.ArmorClass;
         if (items.TryGetByState(state, out var definition)) {
-            if (definition.MinArmorClass >= 0
-                && definition.MaxArmorClass == definition.MinArmorClass)
-                return definition.MinArmorClass;
+            if (definition.MinArmorClass >= 0) {
+                if (definition.MaxArmorClass == definition.MinArmorClass)
+                    return definition.MinArmorClass;
+                if (itemSeed == 0)
+                    return state.ArmorClass;
+                return checked(
+                    definition.MinArmorClass
+                    + new DeterministicLegacyRandom(itemSeed)
+                        .Next(checked(definition.MaxArmorClass - definition.MinArmorClass + 1)));
+            }
             if (definition.MinArmorClass < 0 && definition.ArmorClass > 0)
                 return definition.ArmorClass;
         }
-        if (items.TryGetFixedArmorClassByMiscId(state.MiscId, out var armorClass))
-            return armorClass;
+        if (items.TryGetArmorClassRangeByMiscId(
+                state.MiscId,
+                out var minimumArmorClass,
+                out var maximumArmorClass)) {
+            if (minimumArmorClass == maximumArmorClass)
+                return minimumArmorClass;
+            if (itemSeed == 0)
+                return state.ArmorClass;
+            return checked(
+                minimumArmorClass
+                + new DeterministicLegacyRandom(itemSeed)
+                    .Next(checked(maximumArmorClass - minimumArmorClass + 1)));
+        }
         return state.ArmorClass;
     }
 

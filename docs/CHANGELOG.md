@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
   permissive until explicitly validated.
 - Require the active native missile sprite catalog to retain all 46 base
   `missile_sprites.tsv` identities while permitting Hellfire overlay additions.
+- Restore omitted randomized armor values from the authoritative item seed
+  across snapshot, store, world-item, and equipment paths; compatibility states
+  without a seed remain unresolved instead of receiving a guessed roll.
 - Route authoritative item, spawn, quest, spell-book, and unique-item random
   consumers through the engine LCG primitive, retaining Diablo random wrappers
   and overloads only as source-compatible shims and adding sequence-parity

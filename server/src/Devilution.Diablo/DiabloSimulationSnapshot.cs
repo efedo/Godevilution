@@ -593,7 +593,9 @@ public sealed partial class DiabloSimulation
             ? new DiabloStoreState(
                 storeId,
                 storeCatalog.GetItems(storeId)
-                    .Select(item => item with { State = ResolveItemState(item.State) })
+                    .Select(item => item with {
+                        State = ResolveItemState(item.State, item.ItemSeed),
+                    })
                     .ToArray())
             : null;
         foreach (var target in WorldState.CombatTargets.Values)
@@ -1890,36 +1892,40 @@ public sealed partial class DiabloSimulation
                 ? null!
                 : source.Inventory.Select(item => item is null || item.State is null
                     ? item!
-                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+                    : item with { State = ResolveItemState(item.State, item.ItemSeed) }).ToArray(),
             Equipment = source.Equipment is null
                 ? null!
                 : source.Equipment.Select(item => item is null || item.State is null
                     ? item!
-                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+                    : item with { State = ResolveItemState(item.State, item.ItemSeed) }).ToArray(),
             Belt = source.Belt is null
                 ? null!
                 : source.Belt.Select(item => item is null || item.State is null
                     ? item!
-                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+                    : item with { State = ResolveItemState(item.State, item.ItemSeed) }).ToArray(),
             Stash = source.Stash is null
                 ? null!
                 : source.Stash.Select(item => item is null || item.State is null
                     ? item!
-                    : item with { State = ResolveItemState(item.State) }).ToArray(),
+                    : item with { State = ResolveItemState(item.State, item.ItemSeed) }).ToArray(),
             HeldItem = source.HeldItem is null || source.HeldItem.State is null
                 ? source.HeldItem
-                : source.HeldItem with { State = ResolveItemState(source.HeldItem.State) },
+                : source.HeldItem with {
+                    State = ResolveItemState(source.HeldItem.State, source.HeldItem.ItemSeed),
+                },
         };
     }
 
-    private AuthoritativeItemState ResolveItemState(AuthoritativeItemState state)
+    private AuthoritativeItemState ResolveItemState(
+        AuthoritativeItemState state,
+        uint itemSeed)
     {
-        return Items?.ResolveAuthoredMetadata(state) ?? state;
+        return Items?.ResolveAuthoredMetadata(state, itemSeed) ?? state;
     }
 
     private AuthoritativeItemState ResolveWorldItemState(AuthoritativeWorldItem item)
     {
-        return ResolveWorldItemState(item.State, item.Price);
+        return ResolveWorldItemState(item.State, item.Price, item.ItemSeed);
     }
 
     private DiabloWorldItemState ResolveWorldItemState(DiabloWorldItemState item)
@@ -1927,14 +1933,17 @@ public sealed partial class DiabloSimulation
         if (item.State is null)
             return item;
 
-        return item with { State = ResolveWorldItemState(item.State, item.Price) };
+        return item with {
+            State = ResolveWorldItemState(item.State, item.Price, item.ItemSeed),
+        };
     }
 
     private AuthoritativeItemState ResolveWorldItemState(
         AuthoritativeItemState source,
-        uint price)
+        uint price,
+        uint itemSeed)
     {
-        var state = ResolveItemState(source);
+        var state = ResolveItemState(source, itemSeed);
         if (price <= int.MaxValue
             && DiabloGoldInventory.HasGoldIdentity(state, CombatRules, Items)) {
             state = state with {
@@ -1955,7 +1964,7 @@ public sealed partial class DiabloSimulation
         return store with {
             Items = store.Items.Select(item => item is null || item.State is null
                 ? item!
-                : item with { State = ResolveItemState(item.State) }).ToArray(),
+                : item with { State = ResolveItemState(item.State, item.ItemSeed) }).ToArray(),
         };
     }
 

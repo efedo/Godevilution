@@ -495,6 +495,38 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves an unambiguous authored armor range by misc ID. */
+    public bool TryGetArmorClassRangeByMiscId(
+        int miscId,
+        out int minimumArmorClass,
+        out int maximumArmorClass)
+    {
+        minimumArmorClass = 0;
+        maximumArmorClass = 0;
+        if (miscId <= 0)
+            return false;
+
+        var values = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .Select(definition => (
+                Minimum: definition.MinArmorClass >= 0
+                    ? definition.MinArmorClass
+                    : definition.ArmorClass,
+                Maximum: definition.MaxArmorClass >= 0
+                    ? definition.MaxArmorClass
+                    : definition.ArmorClass))
+            .Distinct()
+            .ToArray();
+        if (values.Length != 1
+            || values[0].Minimum < 0
+            || values[0].Maximum < values[0].Minimum)
+            return false;
+
+        minimumArmorClass = values[0].Minimum;
+        maximumArmorClass = values[0].Maximum;
+        return true;
+    }
+
     /** Resolves unambiguous authored spell-book metadata by misc ID. */
     public bool TryGetBookMetadataByMiscId(
         int miscId,
@@ -589,6 +621,24 @@ public sealed class AuthoritativeItemCatalog
 
     /** Resolves omitted persisted gameplay metadata without changing item identity. */
     public AuthoritativeItemState ResolveAuthoredMetadata(AuthoritativeItemState state)
+        => ResolveAuthoredMetadata(state, null);
+
+    /**
+     * Resolves omitted persisted gameplay metadata, using the stable item seed
+     * to restore a native inclusive armor roll when the state omitted it.
+     */
+    public AuthoritativeItemState ResolveAuthoredMetadata(
+        AuthoritativeItemState state,
+        uint itemSeed)
+    {
+        if (itemSeed == 0)
+            return ResolveAuthoredMetadata(state, null);
+        return ResolveAuthoredMetadata(state, (uint?)itemSeed);
+    }
+
+    private AuthoritativeItemState ResolveAuthoredMetadata(
+        AuthoritativeItemState state,
+        uint? itemSeed)
     {
         ArgumentNullException.ThrowIfNull(state);
         var result = ResolveInventoryDimensions(state);
@@ -638,9 +688,11 @@ public sealed class AuthoritativeItemCatalog
                     MaxDamage = definition.MaxDamage,
                 };
             if (result.ArmorClass == 0
-                && definition.MinArmorClass >= 0
-                && definition.MinArmorClass == definition.MaxArmorClass)
-                result = result with { ArmorClass = definition.MinArmorClass };
+                && definition.MinArmorClass >= 0) {
+                var armorClass = ResolveAuthoredArmorClass(definition, itemSeed);
+                if (armorClass > 0)
+                    result = result with { ArmorClass = armorClass };
+            }
             if (result.MaxDurability == 0 && definition.MaxDurability > 0)
                 result = result with {
                     Durability = result.Durability == 0
@@ -681,8 +733,17 @@ public sealed class AuthoritativeItemCatalog
                 MaxDamage = maximumDamage,
             };
         if (result.ArmorClass == 0
-            && TryGetFixedArmorClassByMiscId(result.MiscId, out var armorClass))
-            result = result with { ArmorClass = armorClass };
+            && TryGetArmorClassRangeByMiscId(
+                result.MiscId,
+                out var minimumArmorClass,
+                out var maximumArmorClass)) {
+            var armorClass = ResolveAuthoredArmorClass(
+                minimumArmorClass,
+                maximumArmorClass,
+                itemSeed);
+            if (armorClass > 0)
+                result = result with { ArmorClass = armorClass };
+        }
         if (result.MaxDurability == 0
             && TryGetDurabilityMetadataByMiscId(
                 result.MiscId,
@@ -717,6 +778,33 @@ public sealed class AuthoritativeItemCatalog
                 out _))
             result = result with { ItemActionKind = actionKind };
         return result;
+    }
+
+    private static int ResolveAuthoredArmorClass(
+        AuthoritativeItemDefinition definition,
+        uint? itemSeed)
+        => ResolveAuthoredArmorClass(
+            definition.MinArmorClass,
+            definition.MaxArmorClass,
+            itemSeed,
+            definition.ArmorClass);
+
+    private static int ResolveAuthoredArmorClass(
+        int minimumArmorClass,
+        int maximumArmorClass,
+        uint? itemSeed,
+        int fixedArmorClass = 0)
+    {
+        if (minimumArmorClass < 0 || maximumArmorClass < minimumArmorClass)
+            return fixedArmorClass;
+        if (minimumArmorClass == maximumArmorClass)
+            return minimumArmorClass;
+        if (itemSeed is null)
+            return fixedArmorClass;
+        return checked(
+            minimumArmorClass
+            + new DeterministicLegacyRandom(itemSeed.Value)
+                .Next(checked(maximumArmorClass - minimumArmorClass + 1)));
     }
 
     /** Resolves unambiguous consumable action metadata by misc ID. */
