@@ -8,6 +8,8 @@ public enum AuthoritativeQuestDialogueRewardKind
     None,
     /** Selects and generates one native-quality unique-monster item drop. */
     RandomUniqueMonsterDrop,
+    /** Generates the authored normal item at the dialogue target's offset. */
+    NormalItem,
 }
 
 /** Server-owned follow-up applied after an accepted staged conversation. */
@@ -35,7 +37,9 @@ public sealed record AuthoritativeQuestDialogueStage(
     int RewardOffsetY = 0,
     AuthoritativeQuestDialogueFollowUpKind FollowUpKind = AuthoritativeQuestDialogueFollowUpKind.None,
     uint FollowUpAmount = 0,
-    int NextMessageId = 0);
+    int NextMessageId = 0,
+    uint RewardItemId = 0,
+    bool DefeatTarget = false);
 
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
@@ -72,7 +76,13 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 || stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.WorldMutation
                     && stage.FollowUpAmount == 0
                 || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None
-                    && stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)) {
+                    && stage.RewardKind is not (AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop
+                        or AuthoritativeQuestDialogueRewardKind.NormalItem)
+                || stage.RewardKind == AuthoritativeQuestDialogueRewardKind.NormalItem
+                    && stage.RewardItemId == 0
+                || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.NormalItem
+                    && stage.RewardItemId != 0
+                || stage.DefeatTarget && !stage.CompleteQuest)) {
             throw new InvalidDataException(
                 "Quest dialogue stages contain invalid values or a non-increasing variable-1 transition.");
         }
@@ -170,6 +180,11 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 throw new InvalidDataException(
                     $"Quest dialogue stage for quest {stage.QuestId} references unknown item {stage.RequiredItemId}.");
         }
+        foreach (var stage in definitions.Where(stage => stage.RewardItemId != 0)) {
+            if (!items.TryGet(stage.RewardItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest dialogue stage for quest {stage.QuestId} references unknown reward item {stage.RewardItemId}.");
+        }
     }
 
     /** Validates world-mutation references used by staged dialogue follow-ups. */
@@ -211,7 +226,13 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 row.OptionalInt32("reward_offset_y"),
                 ParseFollowUpKind(row),
                 row.OptionalUInt32("follow_up_amount"),
-                row.OptionalInt32("next_message_id"))));
+                row.OptionalInt32("next_message_id"),
+                AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "reward_item_id",
+                    "reward_item_symbol"),
+                row.OptionalBoolean("defeat_target"))));
     }
 
     private static AuthoritativeQuestDialogueRewardKind ParseRewardKind(TsvRow row)

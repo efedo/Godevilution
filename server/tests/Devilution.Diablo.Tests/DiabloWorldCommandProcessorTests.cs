@@ -2109,6 +2109,87 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StagedNormalItemDialogueRewardWaitsForPlacementBeforeAdvancingZhar()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2203, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3004,
+            8,
+            1,
+            active: false,
+            messageId: 148,
+            completionUniqueIdentity: "Zhar",
+            completionVariable1: 3);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 8,
+            monsterId: 3,
+            monsterLevel: 8,
+            unique: true,
+            uniqueIdentity: "Zhar");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3004,
+                0,
+                -1,
+                148,
+                2,
+                0,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.NormalItem,
+                RewardItemLevel: 8,
+                RewardOffsetX: 1,
+                RewardOffsetY: 1,
+                RewardItemId: 2203),
+        ]);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questDialogueStages: stages);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 8,
+            entityId: 7);
+        var blocker = CreatePlayer(positionX: 21, positionY: 21, levelId: 8, entityId: 8);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTalkToQuestIntent(3004, 20),
+                1,
+                [player, blocker]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(quest.Active);
+        Assert.Equal(0, quest.Variable1);
+        Assert.Empty(world.WorldItems);
+
+        blocker.PositionX = 0;
+        blocker.PositionY = 0;
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3004, 20),
+            2,
+            [player, blocker]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(2, quest.Variable1);
+        Assert.Equal(148, Assert.Single(result.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal((2203U, 21, 21), (
+            reward.State.StableItemId,
+            reward.PositionX,
+            reward.PositionY));
+    }
+
+    [Fact]
     public void ItemGatedQuestDialogueConsumesTheItemAndCompletesTheQuest()
     {
         var items = new AuthoritativeItemCatalog([

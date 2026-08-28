@@ -1989,8 +1989,7 @@ public sealed class DiabloWorldCommandProcessor
             }
 
             if (stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None) {
-                if (items is null
-                    || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)
+                if (items is null)
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
                 var rewardX = checked(target.PositionX + stage.RewardOffsetX);
                 var rewardY = checked(target.PositionY + stage.RewardOffsetY);
@@ -2055,6 +2054,8 @@ public sealed class DiabloWorldCommandProcessor
             if (stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None)
                 SpawnDialogueStageReward(stage, target, participants);
             ApplyQuestDialogueFollowUp(stage);
+            if (stage.DefeatTarget)
+                target.DefeatForDialogue();
             return DiabloWorldIntentResult.AcceptedWith(
                 new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Dialogue,
@@ -2213,18 +2214,30 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeCombatTarget target,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
-        if (items is null || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)
+        if (items is null)
             throw new InvalidDataException("The dialogue stage reward requires an active item catalog.");
 
-        var rewardSeed = CreateDialogueRewardSeed(target.EntityId, target.MonsterId, stage.QuestId);
-        var rewardLevel = stage.RewardItemLevel > 0
-            ? stage.RewardItemLevel
-            : target.MonsterLevel;
-        var rewardState = items.GenerateRandomUniqueMonsterDrop(
-            rewardSeed,
-            rewardLevel,
-            spellBooks,
-            gameMode);
+        var itemSeed = stage.RewardKind == AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop
+            ? CreateDialogueRewardSeed(target.EntityId, target.MonsterId, stage.QuestId)
+            : AllocateGoldStackSeed();
+        var rewardState = stage.RewardKind switch {
+            AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop => items.GenerateRandomUniqueMonsterDrop(
+                itemSeed,
+                stage.RewardItemLevel > 0 ? stage.RewardItemLevel : target.MonsterLevel,
+                spellBooks,
+                gameMode),
+            AuthoritativeQuestDialogueRewardKind.NormalItem => spellBooks is not null
+                && spellBooks.IsBookTemplate(items, stage.RewardItemId)
+                ? spellBooks.GenerateRandom(
+                    items,
+                    itemSeed,
+                    stage.RewardItemLevel,
+                    gameMode,
+                    stage.RewardItemId)
+                : items.Generate(stage.RewardItemId, itemSeed, stage.RewardItemLevel),
+            _ => throw new InvalidDataException(
+                $"Dialogue stage reward kind '{stage.RewardKind}' is unsupported."),
+        };
         var rewardX = checked(target.PositionX + stage.RewardOffsetX);
         var rewardY = checked(target.PositionY + stage.RewardOffsetY);
         var entityId = AllocateWorldItemEntityId(participants);
@@ -2233,7 +2246,7 @@ public sealed class DiabloWorldCommandProcessor
             target.LevelId,
             rewardX,
             rewardY,
-            rewardSeed,
+            itemSeed,
             checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
             rewardState);
     }

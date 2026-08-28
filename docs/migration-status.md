@@ -2,26 +2,34 @@
 
 Status date: 2026-08-28
 
+Zhar's activation conversation now uses an authored unique-monster dialogue
+stage with a validated normal-item reward. The server checks the target tile
+before advancing `_qvar1` from 0 to 2, emits native message 148, and generates
+the level-14 book from content; the legacy dialogue reward fields are empty in
+the shipped quest row. The content schema is now `1.438.0`; the previous additive `1.437.0` schema
+remains accepted for pack compatibility.
+
 The Lazarus storyteller opening now uses authored quest/towner stages. The
 single-player Staff of Lazarus hand-in consumes its item and advances native
 `_qvar1` to 2, while the multiplayer unlogged opening dialogue records the
 same native message without an item; the existing completion stage remains
-authored. The content schema is now `1.437.0`; the previous additive `1.436.0` schema
-remains accepted for pack compatibility.
+authored. Those rows were introduced under schema `1.437.0` and remain
+compatible with the current `1.438.0` pack contract, which also accepts
+`1.437.0` as its previous additive schema.
 
 The base Black Mushroom healer hand-in now uses an authored `Advance` stage.
 The server validates the Spectral Elixir placement before consuming the Brain,
 then advances native `_qvar1` from 5 to 6, emits message 124, and creates the
 declared reward. Those rows were introduced under schema `1.436.0` and remain
-compatible with the current `1.437.0` pack contract, which also accepts
-`1.436.0` as its previous additive schema.
+compatible with the current `1.438.0` pack contract, which also accepts
+`1.437.0` as its previous additive schema.
 
 The remaining shipped base item hand-ins now use authored quest/towner rows:
 Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
 and the Butcher activation preserve their native town coordinates, variable
 gates, messages, item consumption, and quest-declared rewards. Those rows were
 introduced under schema `1.435.0` and remain compatible with the current
-`1.436.0` pack contract. Legacy quest-state turn-in fields remain
+`1.438.0` pack contract. Legacy quest-state turn-in fields remain
 available to older packs and direct compatibility callers.
 
 The generic host now persists each initialized session's completed command

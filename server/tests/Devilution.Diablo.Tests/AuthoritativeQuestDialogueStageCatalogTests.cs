@@ -65,4 +65,28 @@ public sealed class AuthoritativeQuestDialogueStageCatalogTests
 
         Assert.Throws<InvalidDataException>(() => catalog.ValidateQuests([withLegacyItem]));
     }
+
+    [Fact]
+    public void NormalItemRewardRequiresAnAuthoredKnownItem()
+    {
+        var catalog = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3004,
+                0,
+                -1,
+                148,
+                2,
+                0,
+                RewardKind: AuthoritativeQuestDialogueRewardKind.NormalItem,
+                RewardItemId: 2203),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2203, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+
+        catalog.ValidateItems(items);
+        var reward = Assert.Single(catalog.Definitions);
+        Assert.Equal(AuthoritativeQuestDialogueRewardKind.NormalItem, reward.RewardKind);
+        Assert.Equal(2203U, reward.RewardItemId);
+    }
 }

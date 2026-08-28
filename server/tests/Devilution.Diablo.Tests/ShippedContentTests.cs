@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.437.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.438.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -647,7 +647,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.436.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.437.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1005,6 +1005,15 @@ public sealed class ShippedContentTests
                     stage.RequiredVariable1,
                     stage.MessageId,
                     stage.NextVariable1)));
+        var zhar = Assert.Single(
+            catalog.Definitions,
+            stage => stage.QuestId == 3004);
+        Assert.Equal((AuthoritativeQuestDialogueRewardKind.NormalItem, 2203U, 8, 1, 1), (
+            zhar.RewardKind,
+            zhar.RewardItemId,
+            zhar.RewardItemLevel,
+            zhar.RewardOffsetX,
+            zhar.RewardOffsetY));
     }
 
     [Fact]
@@ -1017,7 +1026,7 @@ public sealed class ShippedContentTests
             table.SourcePath,
             table.ToCanonicalTsv());
 
-        Assert.Equal([21, 22, 23, 110, 144, 145, 146, 147],
+        Assert.Equal([21, 22, 23, 110, 144, 145, 146, 147, 148],
             catalog.Definitions.Select(message => message.MessageId));
         Assert.Equal(
             "Something for you I am making. Again, not kill Gharbad. Live and give good. \n \nYou take this as proof I keep word...",
@@ -1025,7 +1034,7 @@ public sealed class ShippedContentTests
         Assert.Equal(
             "You kill uglies, get banner. You bring to me, or else...",
             catalog.TryGet(22, out var snotspill) ? snotspill.Text : null);
-        catalog.ValidateMessageIds([144, 145, 146, 147, 21, 22, 23, 110]);
+        catalog.ValidateMessageIds([144, 145, 146, 147, 148, 21, 22, 23, 110]);
     }
 
     [Fact]
@@ -2975,7 +2984,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.437.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.438.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -3593,7 +3602,7 @@ public sealed class ShippedContentTests
             activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetY,
             activation.Simulation.WorldState.Quests[3005].DialogueCompletionMessageId,
             activation.Simulation.WorldState.Quests[3005].DialogueCompletionDefeatsTarget));
-        Assert.Equal((2203U, 8, 1, 1, true), (
+        Assert.Equal((0U, 0, 0, 0, false), (
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemId,
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemLevel,
             activation.Simulation.WorldState.Quests[3004].DialogueRewardOffsetX,
