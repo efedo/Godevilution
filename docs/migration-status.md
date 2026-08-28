@@ -27,6 +27,11 @@ Monster visibility distance checks and timed walk interpolation likewise widen
 coordinate arithmetic before squaring or interpolating, preserving stable
 fail-closed presentation behavior at the protocol boundary.
 
+The engine-neutral bounded navigation helper now skips neighbor offsets that
+would cross the integer coordinate boundary and widens target-distance checks,
+so caller-owned grid predicates cannot observe wrapped cells during a bounded
+search.
+
 Shared bounded crawl searches now skip candidate coordinates that overflow the
 integer domain, so raw client target cells fail closed across teleport, stone
 curse, wall, portal, and berserk placement paths instead of faulting a session.

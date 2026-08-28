@@ -49,6 +49,12 @@ public static class DeterministicGridNavigation
                 continue;
 
             foreach (var offset in NeighborOffsets) {
+                if (offset.X > 0 && current.X == int.MaxValue
+                    || offset.X < 0 && current.X == int.MinValue
+                    || offset.Y > 0 && current.Y == int.MaxValue
+                    || offset.Y < 0 && current.Y == int.MinValue) {
+                    continue;
+                }
                 var next = (X: current.X + offset.X, Y: current.Y + offset.Y);
                 if (distances.ContainsKey(next)
                     || !isWalkable(next.X, next.Y)
@@ -74,8 +80,8 @@ public static class DeterministicGridNavigation
         int targetY)
     {
         return Math.Max(
-            Math.Abs(position.X - targetX),
-            Math.Abs(position.Y - targetY)) <= 1
+            Math.Abs((long)position.X - targetX),
+            Math.Abs((long)position.Y - targetY)) <= 1
             && (position.X != targetX || position.Y != targetY);
     }
 

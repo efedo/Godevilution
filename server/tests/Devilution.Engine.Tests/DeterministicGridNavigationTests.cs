@@ -36,6 +36,36 @@ public sealed class DeterministicGridNavigationTests
     }
 
     [Fact]
+    public void DoesNotWrapNeighborCoordinatesAtIntegerMaximum()
+    {
+        var step = DeterministicGridNavigation.FindStep(
+            int.MaxValue,
+            int.MaxValue,
+            int.MinValue,
+            int.MinValue,
+            maximumDepth: 1,
+            isWalkable: static (_, _) => true,
+            isOccupied: static (_, _) => false);
+
+        Assert.Null(step);
+    }
+
+    [Fact]
+    public void RejectsExtremeAdjacencyDistanceWithoutOverflowing()
+    {
+        var step = DeterministicGridNavigation.FindStep(
+            0,
+            0,
+            int.MaxValue,
+            int.MaxValue,
+            maximumDepth: 1,
+            isWalkable: static (_, _) => true,
+            isOccupied: static (_, _) => false);
+
+        Assert.Null(step);
+    }
+
+    [Fact]
     public void HonorsDepthAndOccupancyBoundaries()
     {
         var depthLimited = DeterministicGridNavigation.FindStep(

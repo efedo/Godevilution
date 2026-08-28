@@ -21,6 +21,9 @@ All notable changes to this fork are documented below.
 - Widen Godot interaction, quest/towner selection, visibility, and monster
   interpolation coordinate arithmetic so extreme malformed snapshots cannot
   overflow or throw at the presentation protocol boundary.
+- Make engine-neutral bounded navigation skip integer-boundary neighbor
+  overflow and widen adjacency checks, keeping caller-owned grid searches
+  deterministic and fail-closed for extreme coordinates.
 - Make shared bounded crawl searches skip overflowing candidate coordinates,
   keeping raw client target cells fail-closed across authoritative placement
   and target-search paths.
