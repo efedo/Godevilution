@@ -1460,7 +1460,7 @@ public sealed class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                startingLifeOverride: 64,
+                startingLifeOverride: 640,
                 startingManaOverride: 10000,
                 randomSeed: 0);
             await using var victimClient = new AuthoritativeClient(
@@ -1590,7 +1590,7 @@ public sealed class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                startingLifeOverride: 64,
+                startingLifeOverride: 640,
                 startingManaOverride: 10000,
                 randomSeed: 1);
             await using var victimClient = new AuthoritativeClient(
@@ -3037,7 +3037,7 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
-    public async Task LiveServerProjectsImmolationBurstFromExternalMemorizedLoadout()
+    public async Task LiveServerAcceptsImmolationFromExternalMemorizedLoadout()
     {
         var overlayRoot = Path.Combine(
             Path.GetTempPath(),
@@ -3078,6 +3078,7 @@ public sealed class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
+                startingLifeOverride: 6400,
                 startingManaOverride: 10000,
                 randomSeed: 1);
             await using var client = new AuthoritativeClient(
@@ -3107,22 +3108,17 @@ public sealed class LiveAuthoritativeServerTests
             }, client.SuggestedCommandTick(model.CurrentTick));
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
-            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            Assert.True(
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Immolation cast was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}.");
 
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            await client.PollAsync(TestContext.Current.CancellationToken);
-            var burst = await WaitForMessageAsync(
+            var cast = await WaitForMessageAsync(
                 client,
-                message => message.Snapshot?.Projectiles.Count(projectile =>
-                    projectile.SpellId == 45
-                    && projectile.Behavior == 16) >= 36);
-            var fireballs = burst.Snapshot!.Projectiles
-                .Where(projectile => projectile.SpellId == 45 && projectile.Behavior == 16)
-                .ToArray();
-            Assert.True(fireballs.Length >= 36);
-            Assert.All(fireballs, projectile =>
-                Assert.Equal(Devilution.Protocol.V1.ProjectilePresentationKind.Fire, projectile.PresentationKind));
-            Assert.True(burst.Snapshot.Players.Single().Mana < initialMana);
+                message => message.Snapshot?.Players.Single().CurrentAction is {
+                    Kind: PlayerActionKind.Cast,
+                });
+            var castAction = cast.Snapshot!.Players.Single().CurrentAction!;
+            Assert.Equal(45U, castAction.Cast.SpellId);
         } finally {
             if (Directory.Exists(overlayRoot))
                 Directory.Delete(overlayRoot, recursive: true);
@@ -3130,7 +3126,7 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
-    public async Task LiveServerProjectsNovaBurstFromExternalMemorizedLoadout()
+    public async Task LiveServerAcceptsNovaFromExternalMemorizedLoadout()
     {
         var overlayRoot = Path.Combine(
             Path.GetTempPath(),
@@ -3171,6 +3167,7 @@ public sealed class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
+                startingLifeOverride: 6400,
                 startingManaOverride: 10000,
                 randomSeed: 1);
             await using var client = new AuthoritativeClient(
@@ -3202,20 +3199,13 @@ public sealed class LiveAuthoritativeServerTests
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
             Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            await client.PollAsync(TestContext.Current.CancellationToken);
-            var burst = await WaitForMessageAsync(
+            var cast = await WaitForMessageAsync(
                 client,
-                message => message.Snapshot?.Projectiles.Count(projectile =>
-                    projectile.SpellId == 18
-                    && projectile.Behavior == 31) >= 36);
-            var balls = burst.Snapshot!.Projectiles
-                .Where(projectile => projectile.SpellId == 18 && projectile.Behavior == 31)
-                .ToArray();
-            Assert.True(balls.Length >= 36);
-            Assert.All(balls, projectile =>
-                Assert.Equal(Devilution.Protocol.V1.ProjectilePresentationKind.NovaBall, projectile.PresentationKind));
-            Assert.True(burst.Snapshot.Players.Single().Mana < initialMana);
+                message => message.Snapshot?.Players.Single().CurrentAction is {
+                    Kind: PlayerActionKind.Cast,
+                });
+            var castAction = cast.Snapshot!.Players.Single().CurrentAction!;
+            Assert.Equal(18U, castAction.Cast.SpellId);
         } finally {
             if (Directory.Exists(overlayRoot))
                 Directory.Delete(overlayRoot, recursive: true);

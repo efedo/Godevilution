@@ -650,14 +650,17 @@ The same live Godot boundary now exercises an externally declared memorized
 Golem spell, proving that the server creates an alive player-owned minion and
 projects its owner identity through the protocol for presentation.
 
-It also exercises externally declared memorized Immolation: after the
-authoritative cast, the client receives the native 36-projectile fire burst and
-the server-selected fire presentation metadata rather than simulating the fan
-out locally.
+It also exercises externally declared memorized Immolation: the authoritative
+server accepts the cast and projects the selected spell identity through the
+shared protocol. The Diablo combat tests retain the native 36-projectile fire
+fan-out and presentation-metadata assertions without depending on a transient
+live snapshot.
 
 Live Godot coverage now also exercises externally declared memorized Nova,
-confirming the server-owned 36-ball radial fan-out and `NovaBall` presentation
-metadata across the shared protocol.
+confirming that the authoritative server accepts the external spell loadout and
+projects the selected spell identity. The Diablo combat tests retain the
+server-owned 36-ball radial fan-out and `NovaBall` presentation-metadata
+assertions without depending on a transient live snapshot.
 
 The same live boundary now exercises an externally declared memorized Teleport,
 confirming that destination resolution, movement, and mana consumption remain

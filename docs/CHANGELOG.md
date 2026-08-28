@@ -618,11 +618,12 @@ All notable changes to this fork are documented below.
   including authoritative charge creation and mana consumption.
 - Added live Godot coverage for an externally declared memorized Golem spell,
   including server-owned minion creation and owner identity projection.
-- Added live Godot coverage for an externally declared memorized Immolation
-  burst, including the server-owned 36-projectile fire fan-out and presentation
-  metadata.
-- Added live Godot coverage for an externally declared memorized Nova burst,
-  including the server-owned 36-ball radial fan-out and presentation metadata.
+- Added live Godot coverage for externally declared memorized Immolation and
+  Nova casts, while keeping native 36-projectile fan-out and presentation
+  assertions in deterministic Diablo combat tests rather than relying on
+  transient live snapshots.
+- Stabilized live Heal Other and Resurrection fixtures by giving dungeon
+  participants enough Q6 life to survive until their intended interaction.
 - Added live Godot coverage for an externally declared memorized Teleport,
   confirming server-owned destination resolution, movement, and mana use.
 - Added live Godot reconnect coverage proving a queued store purchase retries
