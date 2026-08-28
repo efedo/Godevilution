@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -34,47 +35,22 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     public AuthoritativeLevel Generate(uint worldSeed = 0)
     {
         Validate();
-        var seed = GenerationSeed ^ worldSeed;
-        var missileBlockedPercent = MissileBlockedPercent ?? BlockedPercent;
-        var blocked = new HashSet<int>();
-        var missileBlocked = new HashSet<int>();
-        for (var y = 1; y < Height - 1; y++) {
-            for (var x = 1; x < Width - 1; x++) {
-                // Keep a one-cell lattice of corridors and only block pocket
-                // cells adjacent to that lattice, so every generated map
-                // remains connected even when the authored density is high.
-                if (x % 4 != 2 || y % 4 != 2)
-                    continue;
-                var cell = y * Width + x;
-                var hash = Mix(seed + checked((uint)cell) * 0x9E3779B9U);
-                if (hash % 100U < (uint)BlockedPercent)
-                    blocked.Add(cell);
-                var missileHash = Mix(
-                    seed + checked((uint)cell) * 0x9E3779B9U ^ 0xA511E9B3U);
-                if (missileHash % 100U < (uint)missileBlockedPercent)
-                    missileBlocked.Add(cell);
-            }
-        }
-        missileBlocked.UnionWith(blocked);
+        var layout = DeterministicProceduralGrid.Generate(
+            Width,
+            Height,
+            GenerationSeed ^ worldSeed,
+            BlockedPercent,
+            MissileBlockedPercent ?? BlockedPercent);
         return new AuthoritativeLevel(
             LevelId,
             Width,
             Height,
-            blocked,
-            missileBlocked,
+            layout.BlockedCells,
+            layout.MissileBlockedCells,
             IsDefaultStart,
             SuppressMultiplayerDeathDrops) {
             StableSymbol = StableSymbol,
         };
-    }
-
-    private static uint Mix(uint value)
-    {
-        value ^= value >> 16;
-        value *= 0x7FEB352DU;
-        value ^= value >> 15;
-        value *= 0x846CA68BU;
-        return value ^ (value >> 16);
     }
 }
 

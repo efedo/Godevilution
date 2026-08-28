@@ -1474,6 +1474,11 @@ engine-neutral assembly. Diablo retains its private source-compatible helper,
 but all projectile callers share the same fixed-point scaling and mirrored
 trajectory behavior.
 
+The procedural level catalog now delegates its connected lattice sampling and
+independent missile-occlusion hash layers to an engine-neutral generator;
+Diablo still owns the external level definitions and authoritative world
+instances, while other modules can reuse the deterministic layout primitive.
+
 Complete native set-level map bundles now parse and validate both map variants,
 their optional transparency layer, and the active-map spawn point during
 content preflight, even when world activation is deferred.

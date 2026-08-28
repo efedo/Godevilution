@@ -14,6 +14,9 @@ All notable changes to this fork are documented below.
   preserving direction indices and extreme-coordinate behavior.
 - Extract native rotated-grid projectile velocity construction into the
   engine-neutral assembly while preserving Diablo's fixed-point scaling.
+- Extract deterministic procedural level lattice/hash generation into the
+  engine-neutral assembly while retaining Diablo-owned level identity and
+  world construction.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe
