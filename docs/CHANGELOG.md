@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract overflow-safe Chebyshev grid-distance metrics into the
+  engine-neutral assembly; bounded navigation and Diablo's authoritative
+  targeting callers now share the same native-compatible extreme-coordinate
+  behavior while the Diablo entry point remains source-compatible.
 - Extract native-compatible signed 26.6 fixed-point arithmetic into the
   engine-neutral assembly; the Diablo module retains its source-compatible
   `DiabloFixedPointQ6` facade while other authoritative modules can reuse the

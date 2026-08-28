@@ -79,9 +79,11 @@ public static class DeterministicGridNavigation
         int targetX,
         int targetY)
     {
-        return Math.Max(
-            Math.Abs((long)position.X - targetX),
-            Math.Abs((long)position.Y - targetY)) <= 1
+        return DeterministicGridMetrics.ChebyshevDistance(
+            position.X,
+            position.Y,
+            targetX,
+            targetY) <= 1
             && (position.X != targetX || position.Y != targetY);
     }
 

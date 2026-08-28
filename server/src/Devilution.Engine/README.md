@@ -28,6 +28,9 @@ The engine currently owns:
 - native-compatible signed 26.6 fixed-point arithmetic, exposed as a reusable
   primitive while Diablo retains its source-compatible `DiabloFixedPointQ6`
   facade;
+- overflow-safe Chebyshev grid-distance metrics shared by bounded navigation
+  and authoritative gameplay, while Diablo retains its compatibility entry
+  point;
 - deterministic non-zero entity-ID allocation, exposed as a reusable
   primitive while the server host retains its source-compatible allocator
   facade;

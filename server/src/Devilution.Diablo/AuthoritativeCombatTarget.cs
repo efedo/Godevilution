@@ -1,5 +1,6 @@
 
 using Devilution.Domain.Protocol;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -1425,9 +1426,11 @@ public sealed class AuthoritativeCombatTarget
         int firstY,
         int secondX,
         int secondY)
-        => Math.Max(
-            Math.Abs((long)secondX - firstX),
-            Math.Abs((long)secondY - firstY));
+        => DeterministicGridMetrics.ChebyshevDistance(
+            firstX,
+            firstY,
+            secondX,
+            secondY);
 
     /** Stamps legacy or newly admitted movement when it enters a snapshot. */
     internal void EnsureMovementTiming(ulong snapshotTick)
