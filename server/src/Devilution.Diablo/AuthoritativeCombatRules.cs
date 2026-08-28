@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -291,7 +292,7 @@ public sealed class AuthoritativeCombatRules
             || deathGoldMaximumStack <= 0
             || deathGoldItemType < 0
             || deathGoldItemIndex < 0
-            || deathDropSearchRadius is < 1 or > DiabloCrawl.MaximumSupportedRadius
+            || deathDropSearchRadius is < 1 or > DeterministicGridCrawl.MaximumSupportedRadius
             || pvpEarItemId == 0
             || pvpEarNativeItemIndex < 0
             || pvpEarMiscId < 0) {

@@ -2,7 +2,11 @@ using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
-/** Native-compatible nearest-position search used by Diablo gameplay rules. */
+/**
+ * Source-compatible facade for callers that still use the Diablo module
+ * surface. Authoritative Diablo paths call <see cref="DeterministicGridCrawl"/>
+ * directly so reusable crawl behavior remains engine-owned.
+ */
 public static class DiabloCrawl
 {
     public const int MaximumSupportedRadius = DeterministicGridCrawl.MaximumSupportedRadius;

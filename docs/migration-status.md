@@ -777,6 +777,11 @@ equipment-displacement planning therefore share one deterministic placement
 primitive while retaining the same dimension-specific scan order and external
 footprint fallback.
 
+Authoritative Diablo world and combat paths now call the engine-owned bounded
+crawl primitive directly for portal, warp, teleport, resurrection, projectile,
+and multi-target searches. `DiabloCrawl` remains available only as a
+source-compatible facade for older module callers.
+
 Connected native spell targeting now also fails closed when a visible player or
 combat-entity cursor target has no authoritative entity projection, preventing
 presentation-only cursor state from becoming an unintended tile cast for both

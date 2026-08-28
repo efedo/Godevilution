@@ -4506,7 +4506,7 @@ public sealed class DiabloCombatCommandProcessor
                 return (candidateX, candidateY);
         }
 
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
                 target.PositionX,
                 target.PositionY,
                 1,
@@ -4571,7 +4571,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int searchRadius)
     {
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -4591,7 +4591,7 @@ public sealed class DiabloCombatCommandProcessor
         int targetX,
         int targetY)
     {
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -4615,7 +4615,7 @@ public sealed class DiabloCombatCommandProcessor
         int targetX,
         int targetY)
     {
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -4644,7 +4644,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeSpellDefinition spell,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -4672,7 +4672,7 @@ public sealed class DiabloCombatCommandProcessor
         int targetY,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -4809,7 +4809,7 @@ public sealed class DiabloCombatCommandProcessor
         int targetY,
         int searchRadius)
     {
-        var position = DiabloCrawl.FindClosestValidPosition(
+        var position = DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -4847,7 +4847,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         AuthoritativeCombatTarget? selectedTarget = null;
-        var position = DiabloCrawl.FindClosestValidPosition(
+        var position = DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -11829,7 +11829,7 @@ public sealed class DiabloCombatCommandProcessor
             || world.CombatTargets.Count >= 256)
             return;
 
-        var spawnPosition = DiabloCrawl.FindClosestValidPosition(
+        var spawnPosition = DeterministicGridCrawl.FindClosestValidPosition(
             projectile.PositionX,
             projectile.PositionY,
             0,
@@ -12427,7 +12427,7 @@ public sealed class DiabloCombatCommandProcessor
         _ = random.GenerateRnd(10);
         _ = random.GenerateRnd(10);
         if (!controller.RingOfFireLimitReached) {
-            foreach (var displacement in DiabloCrawl.EnumerateDisplacements(
+            foreach (var displacement in DeterministicGridCrawl.EnumerateDisplacements(
                          spell.RingOfFireSearchRadius,
                          spell.RingOfFireSearchRadius)) {
                 var targetX = checked(controller.StartX + displacement.X);
@@ -13495,9 +13495,9 @@ public sealed class DiabloCombatCommandProcessor
         };
         var radius = Math.Min(
             controller.EffectiveSpellLevel + spell.ChainLightningSearchRadiusBonus,
-            DiabloCrawl.MaximumSupportedRadius);
+            DeterministicGridCrawl.MaximumSupportedRadius);
         var targetIds = new HashSet<uint>();
-        foreach (var displacement in DiabloCrawl.EnumerateDisplacements(1, radius)) {
+        foreach (var displacement in DeterministicGridCrawl.EnumerateDisplacements(1, radius)) {
             var positionX = checked(controller.PositionX + displacement.X);
             var positionY = checked(controller.PositionY + displacement.Y);
             var target = FindProjectileTarget(controller.LevelId, positionX, positionY);
@@ -15798,7 +15798,7 @@ public sealed class DiabloCombatCommandProcessor
             if (IsDeathDropPositionAvailable(player, players, preferredX, preferredY))
                 return (preferredX, preferredY);
         }
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             player.PositionX,
             player.PositionY,
             1,
@@ -16526,7 +16526,7 @@ public sealed class DiabloCombatCommandProcessor
         int originY,
         uint excludedEntityId)
     {
-        return DiabloCrawl.FindClosestValidPosition(
+        return DeterministicGridCrawl.FindClosestValidPosition(
             originX,
             originY,
             0,

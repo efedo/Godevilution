@@ -38,6 +38,9 @@ All notable changes to this fork are documented below.
   domain inventory layout; Diablo store sorting, purchases, and equipment
   displacement now share the same deterministic footprint search, including
   first-fit handling for validated external footprints.
+- Route authoritative Diablo world and combat crawl searches through the
+  engine-owned deterministic crawl primitive; the Diablo crawl type remains
+  only as a source-compatible facade for existing callers.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

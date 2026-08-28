@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Engine;
 
 namespace Devilution.Diablo;
 
@@ -1338,7 +1339,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileCountLevelDivisor != 0
                     || definition.AreaRadius != 0
                     || definition.TeleportSearchRadius <= 0
-                    || definition.TeleportSearchRadius > DiabloCrawl.MaximumSupportedRadius)) {
+                    || definition.TeleportSearchRadius > DeterministicGridCrawl.MaximumSupportedRadius)) {
                 throw new InvalidDataException(
                     "Teleport behavior requires one stationary two-tick movement controller without gameplay effects.");
             }
@@ -1355,7 +1356,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileCount != 1
                     || definition.ProjectileCountLevelDivisor != 0
                     || definition.TownPortalSearchRadius <= 0
-                    || definition.TownPortalSearchRadius > DiabloCrawl.MaximumSupportedRadius
+                    || definition.TownPortalSearchRadius > DeterministicGridCrawl.MaximumSupportedRadius
                     || definition.TownPortalLifetime <= 0
                     || definition.TownPortalDestinationPositionX < 0
                     || definition.TownPortalDestinationPositionY < 0
@@ -1385,7 +1386,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ResurrectionLifeScale <= 0
                     || definition.ResurrectionLifeScale > 64
                     || definition.ResurrectionSearchRadius <= 0
-                    || definition.ResurrectionSearchRadius > DiabloCrawl.MaximumSupportedRadius)) {
+                    || definition.ResurrectionSearchRadius > DeterministicGridCrawl.MaximumSupportedRadius)) {
                 throw new InvalidDataException(
                     "Resurrection behavior requires one stationary player-target effect with positive life and crawl tuning.");
             }
@@ -1395,8 +1396,8 @@ public sealed class AuthoritativeSpellCatalog
                     "Resurrection initial placement requires exactly eight ordered probes when configured.");
             }
             if (definition.ResurrectionInitialOffsets.Any(offset =>
-                    offset.X is < -DiabloCrawl.MaximumSupportedRadius or > DiabloCrawl.MaximumSupportedRadius
-                    || offset.Y is < -DiabloCrawl.MaximumSupportedRadius or > DiabloCrawl.MaximumSupportedRadius)) {
+                    offset.X is < -DeterministicGridCrawl.MaximumSupportedRadius or > DeterministicGridCrawl.MaximumSupportedRadius
+                    || offset.Y is < -DeterministicGridCrawl.MaximumSupportedRadius or > DeterministicGridCrawl.MaximumSupportedRadius)) {
                 throw new InvalidDataException(
                     "Resurrection initial placement offsets exceed the supported crawl radius.");
             }
@@ -1457,7 +1458,7 @@ public sealed class AuthoritativeSpellCatalog
                         * definition.StoneCurseDurationScale > uint.MaxValue
                     || definition.StoneCurseSearchRadius <= 0
                     || definition.StoneCurseSearchRadius
-                        > DiabloCrawl.MaximumSupportedRadius)) {
+                        > DeterministicGridCrawl.MaximumSupportedRadius)) {
                 throw new InvalidDataException(
                     "Stone Curse behavior requires one stationary monster-target controller with safe duration and crawl tuning.");
             }
@@ -1935,7 +1936,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileCount != 1
                     || definition.ProjectileCountLevelDivisor != 0
                     || definition.WarpSearchRadius <= 0
-                    || definition.WarpSearchRadius > DiabloCrawl.MaximumSupportedRadius)) {
+                    || definition.WarpSearchRadius > DeterministicGridCrawl.MaximumSupportedRadius)) {
                 throw new InvalidDataException(
                     "Warp behavior requires the native two-tick level transition tuning.");
             }

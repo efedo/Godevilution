@@ -243,7 +243,7 @@ public sealed class DiabloWorldCommandProcessor
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(players);
-        if (searchRadius is <= 0 or > DiabloCrawl.MaximumSupportedRadius || lifetime <= 0)
+        if (searchRadius is <= 0 or > DeterministicGridCrawl.MaximumSupportedRadius || lifetime <= 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
         if (destinationPositionX < 0
             || destinationPositionY < 0
@@ -261,7 +261,7 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
-        var portalPosition = DiabloCrawl.FindClosestValidPosition(
+        var portalPosition = DeterministicGridCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
@@ -418,7 +418,7 @@ public sealed class DiabloWorldCommandProcessor
     {
 
         var participants = players.ToArray();
-        var destination = DiabloCrawl.FindClosestValidPosition(
+        var destination = DeterministicGridCrawl.FindClosestValidPosition(
             warp.TargetX,
             warp.TargetY,
             0,
