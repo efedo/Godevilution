@@ -2098,6 +2098,49 @@ public sealed class AuthoritativeSpellCatalog
 
     public bool TryGet(uint spellId, out AuthoritativeSpellDefinition definition) => spells.TryGetValue(spellId, out definition!);
 
+    /**
+     * Requires production content to supply every native ordering consumed by
+     * the authoritative projectile handlers. Direct compatibility callers may
+     * continue to use the embedded native defaults.
+     */
+    public void ValidateExternalizedNativePatterns()
+    {
+        foreach (var definition in Definitions) {
+            switch (definition.ProjectileBehavior) {
+                case AuthoritativeProjectileBehavior.ChargedBolt:
+                    RequirePattern(definition, definition.ChargedBoltPathPattern.Count, 16, "charged_bolt_path_pattern");
+                    break;
+                case AuthoritativeProjectileBehavior.Fireball:
+                    RequirePattern(definition, definition.FireballExplosionOffsets.Count, 9, "fireball_explosion_offsets");
+                    break;
+                case AuthoritativeProjectileBehavior.Elemental:
+                    RequirePattern(definition, definition.ElementalBurstOffsets.Count, 9, "elemental_burst_offsets");
+                    break;
+                case AuthoritativeProjectileBehavior.Flash:
+                    RequirePattern(definition, definition.FlashBottomOffsets.Count, 6, "flash_bottom_offsets");
+                    RequirePattern(definition, definition.FlashTopOffsets.Count, 3, "flash_top_offsets");
+                    break;
+                case AuthoritativeProjectileBehavior.GuardianController:
+                    RequirePattern(definition, definition.GuardianArcOffsets.Count, 48, "guardian_arc_offsets");
+                    break;
+                case AuthoritativeProjectileBehavior.Resurrection:
+                    RequirePattern(definition, definition.ResurrectionInitialOffsets.Count, 8, "resurrection_initial_offsets");
+                    break;
+            }
+        }
+    }
+
+    private static void RequirePattern(
+        AuthoritativeSpellDefinition definition,
+        int actualCount,
+        int expectedCount,
+        string column)
+    {
+        if (actualCount != expectedCount)
+            throw new InvalidDataException(
+                $"Spell {definition.SpellId} ({definition.DisplayName}) requires {expectedCount} entries in {column} for production activation.");
+    }
+
     /** Validates stable spell and class-ability symbols against active catalogs. */
     public void ValidateStableReferences(
         StableContentIdCatalog stableIds,

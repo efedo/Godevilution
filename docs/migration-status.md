@@ -20,6 +20,11 @@ Production Diablo activation now rejects a present `native_spells.tsv` table
 that omits any native compatibility ID from 0 through 51; partial catalogs
 remain available only to explicit compatibility callers.
 
+Production Diablo activation now also requires externally authored ordering
+patterns for every native projectile behavior that consumes one (Charged Bolt,
+Fireball, Elemental, Flash, Guardian, and Resurrection). Compatibility callers
+retain the embedded native defaults when constructing catalogs directly.
+
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative
 targeting paths; the Diablo compatibility entry point preserves the same

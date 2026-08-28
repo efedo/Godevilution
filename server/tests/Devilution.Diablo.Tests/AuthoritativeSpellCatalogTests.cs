@@ -51,6 +51,42 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedDirectSpellsCarryExternalizedNativePatterns()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            path,
+            File.ReadAllText(path));
+
+        catalog.ValidateExternalizedNativePatterns();
+    }
+
+    [Fact]
+    public void ProductionValidationRejectsMissingNativePatterns()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var shipped = AuthoritativeSpellCatalog.LoadTsv(
+            path,
+            File.ReadAllText(path));
+        var incomplete = new AuthoritativeSpellCatalog(shipped.Definitions.Select(
+            spell => spell.SpellId == 12
+                ? spell with { FireballExplosionOffsets = [] }
+                : spell));
+
+        Assert.Throws<InvalidDataException>(incomplete.ValidateExternalizedNativePatterns);
+    }
+
+    [Fact]
     public void RejectsSymbolicSpellIdNumericMismatch()
     {
         var stableIds = new StableContentIdCatalog([

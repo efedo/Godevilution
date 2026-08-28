@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Require active spell content to provide the native projectile ordering
+  patterns used by authoritative Charged Bolt, Fireball, Elemental, Flash,
+  Guardian, and Resurrection handlers; direct compatibility catalogs retain
+  embedded native defaults.
 - Route authoritative item, spawn, quest, spell-book, and unique-item random
   consumers through the engine LCG primitive, retaining Diablo random wrappers
   and overloads only as source-compatible shims and adding sequence-parity

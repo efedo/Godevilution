@@ -271,7 +271,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIds)
             : null;
         if (spells is not null)
+        {
             pricing.ValidateSpellReferences(spells);
+            spells.ValidateExternalizedNativePatterns();
+        }
         var nativeSpells = content.TryGetTable(
             "native_spells.tsv",
             out var nativeSpellsTable)
