@@ -11,6 +11,10 @@ generation count through the live server status surface. Operators can verify
 that a replacement was published and that old generations were drained without
 reaching into game-specific adapter state.
 
+Production Diablo activation now rejects a present `native_spells.tsv` table
+that omits any native compatibility ID from 0 through 51; partial catalogs
+remain available only to explicit compatibility callers.
+
 Overflow-safe Chebyshev grid-distance metrics now live in the engine-neutral
 assembly and are reused by bounded navigation and Diablo's authoritative
 targeting paths; the Diablo compatibility entry point preserves the same

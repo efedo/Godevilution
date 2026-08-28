@@ -277,7 +277,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var nativeSpellsTable)
             ? AuthoritativeNativeSpellCatalog.LoadTsv(
                 nativeSpellsTable.SourcePath,
-                nativeSpellsTable.ToCanonicalTsv())
+                nativeSpellsTable.ToCanonicalTsv(),
+                requireCompleteNamespace: true)
             : null;
         var nativeMissileAliases = content.TryGetTable(
             "native_missile_aliases.tsv",

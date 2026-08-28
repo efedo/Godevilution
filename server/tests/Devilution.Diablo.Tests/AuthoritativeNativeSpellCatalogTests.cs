@@ -46,6 +46,31 @@ public sealed class AuthoritativeNativeSpellCatalogTests
     }
 
     [Fact]
+    public void RejectsIncompleteNamespaceWhenProductionValidationIsRequested()
+    {
+        var catalog = new AuthoritativeNativeSpellCatalog([
+            new(0, "Null"),
+            new(1, "Firebolt"),
+            new(51, "RuneOfStone"),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateCompleteNamespace());
+
+        Assert.Contains("missing IDs: 2, 3, 4", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ProductionTsvLoadCanRequireTheCompleteNamespace()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeSpellCatalog.LoadTsv(
+                "native_spells.tsv",
+                "native_spell_id\tnative_spell_symbol\n0\tNull\n",
+                requireCompleteNamespace: true));
+    }
+
+    [Fact]
     public void LegacyItemLoadingUsesTheExternalNamespaceWhenProvided()
     {
         var catalog = new AuthoritativeNativeSpellCatalog([

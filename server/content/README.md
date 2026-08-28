@@ -63,6 +63,9 @@ positions.
 `native_spells.tsv` defines the complete native spell-name namespace, including
 unused legacy ordinals, so `itemdat.tsv` compatibility names are data-driven
 and validated before they can resolve into the active stable spell catalog.
+Production activation requires every native ID from 0 through 51 when this
+table is present; direct compatibility callers may still construct a partial
+catalog explicitly.
 The unused `DoomSerpents`, `BloodRitual`, and `Invisibility` identities, the
 service-capability identities (`ItemRepair`, `StaffRecharge`, and `TrapDisarm`),
 and the five rune identities remain namespace entries; rune items resolve to

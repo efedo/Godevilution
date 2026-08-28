@@ -60,15 +60,31 @@ public sealed class AuthoritativeNativeSpellCatalog
                 $"Native spell symbol '{symbol}' is not defined by the active content pack.");
     }
 
+    /** Rejects a partial namespace when loading a production compatibility pack. */
+    public void ValidateCompleteNamespace()
+    {
+        var missing = Enumerable.Range(0, checked((int)MaximumNativeSpellId + 1))
+            .Where(nativeSpellId => !byId.ContainsKey(checked((uint)nativeSpellId)))
+            .Select(nativeSpellId => nativeSpellId.ToString())
+            .ToArray();
+        if (missing.Length != 0)
+            throw new InvalidDataException(
+                $"The native spell namespace is incomplete; missing IDs: {string.Join(", ", missing)}.");
+    }
+
     public static AuthoritativeNativeSpellCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        bool requireCompleteNamespace = false)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows.Select(row =>
             new AuthoritativeNativeSpellDefinition(
                 row.RequiredUInt32("native_spell_id"),
                 row.Required("native_spell_symbol")));
-        return new AuthoritativeNativeSpellCatalog(definitions);
+        var catalog = new AuthoritativeNativeSpellCatalog(definitions);
+        if (requireCompleteNamespace)
+            catalog.ValidateCompleteNamespace();
+        return catalog;
     }
 }

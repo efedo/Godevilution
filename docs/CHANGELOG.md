@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforce the documented complete native spell namespace during production
+  content activation, while retaining partial catalogs for compatibility-only
+  callers.
 - Expose active ruleset identity and retired-generation counts through the
   generic host and operator `status` command, making live replacement and safe
   retirement observable without coupling the host to Diablo.
