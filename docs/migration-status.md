@@ -782,6 +782,11 @@ crawl primitive directly for portal, warp, teleport, resurrection, projectile,
 and multi-target searches. `DiabloCrawl` remains available only as a
 source-compatible facade for older module callers.
 
+The engine entity-ID allocator now owns collision skipping and identity-space
+exhaustion handling. Diablo combat and world processors retain their native
+world-item, monster, projectile, and authored-projectile ranges while routing
+all allocations through that shared deterministic primitive.
+
 Connected native spell targeting now also fails closed when a visible player or
 combat-entity cursor target has no authoritative entity projection, preventing
 presentation-only cursor state from becoming an unintended tile cast for both

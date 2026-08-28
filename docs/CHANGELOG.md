@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
 - Route authoritative Diablo world and combat crawl searches through the
   engine-owned deterministic crawl primitive; the Diablo crawl type remains
   only as a source-compatible facade for existing callers.
+- Extend the engine-owned entity-ID allocator with deterministic collision
+  skipping and migrate Diablo combat/world allocation ranges to it, preserving
+  native range partitioning and non-zero exhaustion behavior.
 - Extract native-compatible bounded grid crawl ordering into the engine-neutral
   assembly; Diablo retains its source-compatible crawl facade while teleport,
   portal, resurrection, drop, and multi-target searches share overflow-safe

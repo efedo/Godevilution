@@ -33,9 +33,9 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativeWorldRules? worldRules;
     private readonly AuthoritativeExperienceCatalog? experience;
     private IReadOnlyList<AuthoritativePlayerState> activePlayers = [];
-    private uint nextWorldItemEntityId = 0x40000000;
-    private uint nextMonsterEntityId = 0x10000000;
-    private uint nextProjectileEntityId = 0x80000000;
+    private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
+    private readonly DeterministicEntityIdAllocator monsterEntityIds = new(0x10000000);
+    private readonly DeterministicEntityIdAllocator projectileEntityIds = new(0x80000000);
 
     private const uint FastHitRecoveryFlag = 1U << 21;
     private const uint FasterHitRecoveryFlag = 1U << 22;
@@ -1664,17 +1664,14 @@ public sealed class DiabloCombatCommandProcessor
     private uint AllocateMonsterEntityId(
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        while (nextMonsterEntityId == 0
-            || world.CombatTargets.ContainsKey(nextMonsterEntityId)
-            || world.WorldItems.ContainsKey(nextMonsterEntityId)
-            || world.Objects.ContainsKey(nextMonsterEntityId)
-            || world.Projectiles.ContainsKey(nextMonsterEntityId)
-            || world.Portals.ContainsKey(nextMonsterEntityId)
-            || world.Corpses.ContainsKey(nextMonsterEntityId)
-            || players.Any(player => player.EntityId == nextMonsterEntityId)) {
-            nextMonsterEntityId = checked(nextMonsterEntityId + 1);
-        }
-        return nextMonsterEntityId++;
+        return monsterEntityIds.Allocate(entityId =>
+            world.CombatTargets.ContainsKey(entityId)
+            || world.WorldItems.ContainsKey(entityId)
+            || world.Objects.ContainsKey(entityId)
+            || world.Projectiles.ContainsKey(entityId)
+            || world.Portals.ContainsKey(entityId)
+            || world.Corpses.ContainsKey(entityId)
+            || players.Any(player => player.EntityId == entityId));
     }
 
     private bool TryGetAttackTarget(
@@ -15874,12 +15871,9 @@ public sealed class DiabloCombatCommandProcessor
     private uint AllocateWorldItemEntityId(
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        while (nextWorldItemEntityId == 0
-            || players.Any(player => player.EntityId == nextWorldItemEntityId)
-            || world.IsEntityIdOccupied(nextWorldItemEntityId)) {
-            nextWorldItemEntityId = checked(nextWorldItemEntityId + 1);
-        }
-        return nextWorldItemEntityId++;
+        return worldItemEntityIds.Allocate(entityId =>
+            players.Any(player => player.EntityId == entityId)
+            || world.IsEntityIdOccupied(entityId));
     }
 
     private void StartBlock(
@@ -16547,17 +16541,14 @@ public sealed class DiabloCombatCommandProcessor
 
     private uint AllocateProjectileEntityId()
     {
-        while (nextProjectileEntityId == 0
-            || activePlayers.Any(player => player.EntityId == nextProjectileEntityId)
-            || world.CombatTargets.ContainsKey(nextProjectileEntityId)
-            || world.WorldItems.ContainsKey(nextProjectileEntityId)
-            || world.Objects.ContainsKey(nextProjectileEntityId)
-            || world.Projectiles.ContainsKey(nextProjectileEntityId)
-            || world.Portals.ContainsKey(nextProjectileEntityId)
-            || world.Corpses.ContainsKey(nextProjectileEntityId)) {
-            nextProjectileEntityId = checked(nextProjectileEntityId + 1);
-        }
-        return nextProjectileEntityId++;
+        return projectileEntityIds.Allocate(entityId =>
+            activePlayers.Any(player => player.EntityId == entityId)
+            || world.CombatTargets.ContainsKey(entityId)
+            || world.WorldItems.ContainsKey(entityId)
+            || world.Objects.ContainsKey(entityId)
+            || world.Projectiles.ContainsKey(entityId)
+            || world.Portals.ContainsKey(entityId)
+            || world.Corpses.ContainsKey(entityId));
     }
 
 }

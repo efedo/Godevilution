@@ -27,9 +27,10 @@ public sealed class DiabloWorldCommandProcessor
     private readonly DiabloGameVariant gameVariant;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeExperienceCatalog? experience;
-    private uint nextWorldItemEntityId = 0x40000000;
-    private uint nextAuthoredProjectileEntityId = 0xC0000000;
-    private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
+    private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
+    private readonly DeterministicEntityIdAllocator authoredProjectileEntityIds = new(0xC0000000);
+    private readonly DeterministicEntityIdAllocator generatedMonsterEntityIds = new(
+        AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId);
 
     public DiabloWorldCommandProcessor(
         DiabloWorldState world,
@@ -1225,12 +1226,9 @@ public sealed class DiabloWorldCommandProcessor
     private uint AllocateWorldItemEntityId(
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        while (nextWorldItemEntityId == 0
-            || players.Any(player => player.EntityId == nextWorldItemEntityId)
-            || world.IsEntityIdOccupied(nextWorldItemEntityId)) {
-            nextWorldItemEntityId = checked(nextWorldItemEntityId + 1);
-        }
-        return nextWorldItemEntityId++;
+        return worldItemEntityIds.Allocate(entityId =>
+            players.Any(player => player.EntityId == entityId)
+            || world.IsEntityIdOccupied(entityId));
     }
 
     private DiabloWorldIntentResult OperateObject(
@@ -1477,11 +1475,7 @@ public sealed class DiabloWorldCommandProcessor
 
     private uint AllocateGeneratedMonsterEntityId()
     {
-        while (nextGeneratedMonsterEntityId == 0
-            || world.IsEntityIdOccupied(nextGeneratedMonsterEntityId)) {
-            nextGeneratedMonsterEntityId = checked(nextGeneratedMonsterEntityId + 1);
-        }
-        return nextGeneratedMonsterEntityId++;
+        return generatedMonsterEntityIds.Allocate(world.IsEntityIdOccupied);
     }
 
     private bool CanSpawnObjectSpellProjectile(
@@ -1614,11 +1608,7 @@ public sealed class DiabloWorldCommandProcessor
 
     private uint AllocateAuthoredProjectileEntityId()
     {
-        while (nextAuthoredProjectileEntityId == 0
-            || world.IsEntityIdOccupied(nextAuthoredProjectileEntityId)) {
-            nextAuthoredProjectileEntityId = checked(nextAuthoredProjectileEntityId + 1);
-        }
-        return nextAuthoredProjectileEntityId++;
+        return authoredProjectileEntityIds.Allocate(world.IsEntityIdOccupied);
     }
 
     private void ApplyQuestTransition(AuthoritativeWorldObject @object)
