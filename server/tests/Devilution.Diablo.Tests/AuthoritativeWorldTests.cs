@@ -848,6 +848,15 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LineOfSightRejectsEndpointsOutsideTheLevelBeforeArithmetic()
+    {
+        var level = new AuthoritativeLevel(1, 8, 8);
+
+        Assert.False(level.HasLineOfSight(int.MinValue, 0, 0, 0));
+        Assert.False(level.HasLineOfSight(0, 0, int.MaxValue, 0));
+    }
+
+    [Fact]
     public void NativeTransparencyRegionsMatchNativePlacementSemantics()
     {
         var level = new AuthoritativeLevel(

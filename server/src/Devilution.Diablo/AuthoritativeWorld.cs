@@ -389,6 +389,12 @@ public sealed class AuthoritativeLevel
 
     public bool HasLineOfSight(int startX, int startY, int endX, int endY)
     {
+        // Network-originated targets must never turn this bounded grid walk into
+        // an overflowing or unbounded traversal. Valid callers already provide
+        // level-contained endpoints; reject anything else before arithmetic.
+        if (!ContainsPosition(startX, startY) || !ContainsPosition(endX, endY))
+            return false;
+
         var x = startX;
         var y = startY;
         var deltaX = Math.Abs(endX - startX);
