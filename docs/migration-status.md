@@ -34,22 +34,22 @@ single-player Staff of Lazarus hand-in consumes its item and advances native
 `_qvar1` to 2, while the multiplayer unlogged opening dialogue records the
 same native message without an item; the existing completion stage remains
 authored. Those rows were introduced under schema `1.438.0` and remain
-compatible with the current `1.439.0` pack contract, which also accepts
-`1.438.0` as its previous additive schema.
+compatible with the current `1.441.0` pack contract, which also accepts
+`1.440.0` as its previous additive schema.
 
 The base Black Mushroom healer hand-in now uses an authored `Advance` stage.
 The server validates the Spectral Elixir placement before consuming the Brain,
 then advances native `_qvar1` from 5 to 6, emits message 124, and creates the
 declared reward. Those rows were introduced under schema `1.436.0` and remain
-compatible with the current `1.439.0` pack contract, which also accepts
-`1.438.0` as its previous additive schema.
+compatible with the current `1.441.0` pack contract, which also accepts
+`1.440.0` as its previous additive schema.
 
 The remaining shipped base item hand-ins now use authored quest/towner rows:
 Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
 and the Butcher activation preserve their native town coordinates, variable
 gates, messages, item consumption, and quest-declared rewards. Those rows were
 introduced under schema `1.435.0` and remain compatible with the current
-`1.439.0` pack contract. Legacy quest-state turn-in fields remain
+`1.441.0` pack contract. Legacy quest-state turn-in fields remain
 available to older packs and direct compatibility callers.
 
 The generic host now persists each initialized session's completed command
@@ -132,10 +132,11 @@ Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.
 
-Live Godot overlay fixtures now declare the active `1.434.0` content schema,
+Live Godot overlay fixtures now declare the active `1.441.0` content schema,
 matching the shipped base pack. Manifest composition continues to reject a
 mixed current/previous schema set before module activation; the Diablo module
-still accepts a previous additive schema when a complete manifest uses it.
+still accepts the previous additive `1.440.0` schema when a complete manifest
+uses it.
 
 Godot local movement prediction now stops at authoritative blocked cells and
 known live monster or remote-player occupancy while retaining bounded queued
