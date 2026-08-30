@@ -149,6 +149,8 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-secondary-gold-pickup-overflow.json
   replay/gameplay-primary-held-item-pickup-rejection.json
   replay/gameplay-primary-held-item-pickup-replacement.json
+  replay/gameplay-multiplayer-secondary-held-item-pickup-replacement.json
+  replay/gameplay-multiplayer-secondary-held-item-pickup-rejection.json
   replay/gameplay-multiplayer-secondary-portal.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json

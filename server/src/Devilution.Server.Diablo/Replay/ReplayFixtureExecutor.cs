@@ -97,7 +97,8 @@ public static class ReplayFixtureExecutor
                     combatMode: secondary.CombatMode,
                     combatModeEndTick: secondary.CombatModeEndTick,
                     characterName: secondary.CharacterName,
-                    goldTopologyEnabled: false));
+                    goldTopologyEnabled: false,
+                    heldItem: secondary.HeldItem?.ToOwnedStoreItem()));
             _ = executor.CreateSnapshot(
                 secondary.Player,
                 secondary.EntityId,

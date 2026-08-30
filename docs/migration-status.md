@@ -117,6 +117,16 @@ The complementary accepted cursor-replacement lane now also has a shared
 checkpoint. Both runners drop the held item at the pickup origin and place the
 adjacent world item in inventory with matching entity and identity state.
 
+The shared replay schema now carries an optional secondary cursor item. Native
+and managed multiplayer runners use it to verify accepted secondary pickup
+replacement, including authoritative origin-drop placement and participant
+checkpoint parity.
+
+The secondary cursor boundary now also rejects pickup on an occupied origin as
+`NotAllowed`, preserving both items. Secondary movement updates the native
+facing projection so movement-then-rejection checkpoints remain cross-language
+identical.
+
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or
 item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,

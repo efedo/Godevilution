@@ -505,6 +505,7 @@ public static class ReplayFixtureLoader
                 : 0,
             InventoryFillerCount = GetOptionalUInt(player, "inventory_filler_count"),
             InventoryItem = ParseSecondaryInventoryItem(player),
+            HeldItem = ParseSecondaryHeldItem(player),
         };
         if (result.EntityId == 0
             || result.Life < 0
@@ -523,7 +524,8 @@ public static class ReplayFixtureLoader
                     or DiabloPlayerCombatMode.GotHit)
                 && result.CombatModeEndTick == 0)
             || result.InventoryFillerCount > 40
-            || (result.InventoryItem is not null && result.InventoryFillerCount > 39)) {
+            || (result.InventoryItem is not null && result.InventoryFillerCount > 39)
+            || (result.HeldItem is not null && result.HeldItem.Slot != 0)) {
             throw new InvalidDataException(
                 "Replay fixture contains invalid secondary-player state.");
         }
@@ -532,10 +534,23 @@ public static class ReplayFixtureLoader
 
     private static ReplaySecondaryInventoryItem? ParseSecondaryInventoryItem(JsonElement player)
     {
-        if (!player.TryGetProperty("inventory_item", out var item))
+        return ParseSecondaryItem(player, "inventory_item", "secondary inventory_item");
+    }
+
+    private static ReplaySecondaryInventoryItem? ParseSecondaryHeldItem(JsonElement player)
+    {
+        return ParseSecondaryItem(player, "held_item", "secondary held_item");
+    }
+
+    private static ReplaySecondaryInventoryItem? ParseSecondaryItem(
+        JsonElement player,
+        string propertyName,
+        string description)
+    {
+        if (!player.TryGetProperty(propertyName, out var item))
             return null;
         if (item.ValueKind != JsonValueKind.Object)
-            throw new InvalidDataException("Replay fixture secondary inventory_item must be an object.");
+            throw new InvalidDataException($"Replay fixture {description} must be an object.");
         var result = new ReplaySecondaryInventoryItem(
             RequiredUInt(item, "slot"),
             RequiredUInt(item, "item_seed"),
@@ -553,7 +568,7 @@ public static class ReplayFixtureLoader
             || result.ItemType is < 0 or > byte.MaxValue
             || result.ItemIndex is < -1 or > byte.MaxValue)
             throw new InvalidDataException(
-                "Replay fixture secondary inventory_item contains invalid item state.");
+                $"Replay fixture {description} contains invalid item state.");
         return result;
     }
 

@@ -139,6 +139,7 @@ public sealed record ReplaySecondaryPlayer(
     public ulong CombatModeEndTick { get; init; }
     public uint InventoryFillerCount { get; init; }
     public ReplaySecondaryInventoryItem? InventoryItem { get; init; }
+    public ReplaySecondaryInventoryItem? HeldItem { get; init; }
 }
 
 public sealed record ReplayInitialState(string Player, uint Gold, uint Experience, int Life, int Mana)

@@ -1956,6 +1956,125 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerSecondaryHeldItemPickupReplacesCursorAtPickupOrigin()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-held-item-pickup-replacement.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9920,
+            StatFlag = true,
+        };
+        var secondary = fixture.InitialState.SecondaryPlayer!;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                fixture.InitialState.WorldItemEntityId,
+                fixture.InitialState.LevelId,
+                secondary.PositionX - 1,
+                secondary.PositionY,
+                fixture.InitialState.WorldItemSeed,
+                fixture.InitialState.WorldItemPrice,
+                itemState)],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = Assert.Single(
+            result.FinalSnapshot.Players,
+            candidate => candidate.EntityId == secondary.EntityId);
+        var inventoryItem = Assert.Single(player.Inventory);
+        var worldItem = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Null(player.HeldItem);
+        Assert.Equal(fixture.InitialState.WorldItemSeed, inventoryItem.ItemSeed);
+        Assert.Equal(9920U, inventoryItem.State.StableItemId);
+        Assert.Equal(1U, inventoryItem.PurchasedAtTick);
+        Assert.Equal(0x40000000U, worldItem.EntityId);
+        Assert.Equal(9010U, worldItem.ItemSeed);
+        Assert.Equal(9921U, worldItem.State.StableItemId);
+        Assert.Equal(secondary.PositionX, worldItem.PositionX);
+        Assert.Equal(secondary.PositionY, worldItem.PositionY);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
+    public void GameplayMultiplayerSecondaryHeldItemPickupOnOccupiedTileIsRejected()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-held-item-pickup-rejection.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9920,
+            StatFlag = true,
+        };
+        var secondary = fixture.InitialState.SecondaryPlayer!;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                fixture.InitialState.WorldItemEntityId,
+                fixture.InitialState.LevelId,
+                secondary.PositionX,
+                secondary.PositionY + 1,
+                fixture.InitialState.WorldItemSeed,
+                fixture.InitialState.WorldItemPrice,
+                itemState)],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = Assert.Single(
+            result.FinalSnapshot.Players,
+            candidate => candidate.EntityId == secondary.EntityId);
+        var worldItem = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(2, result.Results.Count);
+        Assert.Equal(CommandStatus.Accepted, result.Results[0].Status);
+        Assert.Equal(CommandStatus.Rejected, result.Results[1].Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, result.Results[1].RejectReason);
+        Assert.Equal(9010U, player.HeldItem?.ItemSeed);
+        Assert.Equal(9921U, player.HeldItem?.State.StableItemId);
+        Assert.Equal(fixture.InitialState.WorldItemSeed, worldItem.ItemSeed);
+        Assert.Equal(9920U, worldItem.State.StableItemId);
+        Assert.Equal(secondary.PositionX, player.PositionX);
+        Assert.Equal(secondary.PositionY + 1, player.PositionY);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryGoldPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

@@ -100,6 +100,14 @@ struct ReplayFixtureSecondaryPlayer {
 	int32_t inventoryItemType = -1;
 	int32_t inventoryItemIndex = -1;
 	bool inventoryItemStatFlag = false;
+	bool heldItemDefined = false;
+	uint32_t heldItemSlot = 0;
+	uint32_t heldItemSeed = 0;
+	uint32_t heldItemStableItemId = 0;
+	uint32_t heldItemPrice = 0;
+	int32_t heldItemType = -1;
+	int32_t heldItemIndex = -1;
+	bool heldItemStatFlag = false;
 };
 
 /** Minimal protocol-shaped equipment state carried by replay initial state. */
@@ -510,6 +518,7 @@ struct ReplayFixtureExecutionState {
 	int32_t secondaryPlayerMagic = 0;
 	int32_t secondaryPlayerDexterity = 0;
 	bool secondaryPlayerFriendlyMode = true;
+	uint32_t secondaryPlayerFacingDirection = 0;
 	bool secondaryPlayerBlockCapable = false;
 	uint32_t secondaryPlayerCombatMode = 0;
 	uint64_t secondaryPlayerCombatModeEndTick = 0;

@@ -199,6 +199,10 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 		hasher.AppendString("godevilution-player-hostile-mode-v1");
 		hasher.AppendBool(true);
 	}
+	if (state.secondaryPlayerFacingDirection != 0) {
+		hasher.AppendString("godevilution-player-facing-v1");
+		hasher.AppendInt32(static_cast<int32_t>(state.secondaryPlayerFacingDirection));
+	}
 	if (state.secondaryPlayerCombatMode != 0 || state.secondaryPlayerCombatModeEndTick != 0) {
 		hasher.AppendString("godevilution-player-combat-mode-v1");
 		hasher.AppendInt32(static_cast<int32_t>(state.secondaryPlayerCombatMode));
@@ -5739,6 +5743,26 @@ private:
 					return SkipValue();
 				});
 			}
+			if (key == "held_item") {
+				player.heldItemDefined = true;
+				return ParseObject([this, &player](std::string_view itemKey) {
+					if (itemKey == "slot")
+						return ParseUnsigned(player.heldItemSlot);
+					if (itemKey == "item_seed")
+						return ParseUnsigned(player.heldItemSeed);
+					if (itemKey == "stable_item_id")
+						return ParseUnsigned(player.heldItemStableItemId);
+					if (itemKey == "price")
+						return ParseUnsigned(player.heldItemPrice);
+					if (itemKey == "item_type")
+						return ParseSigned(player.heldItemType);
+					if (itemKey == "item_index")
+						return ParseSigned(player.heldItemIndex);
+					if (itemKey == "stat_flag")
+						return ParseBool(player.heldItemStatFlag);
+					return SkipValue();
+				});
+			}
 			return SkipValue();
 		});
 	}
@@ -6437,6 +6461,18 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		error = "Replay fixture secondary inventory item contains invalid item state.";
 		return false;
 	}
+	if (secondaryPlayer.defined && secondaryPlayer.heldItemDefined
+	    && (secondaryPlayer.heldItemSlot != 0
+	        || secondaryPlayer.heldItemSeed == 0
+	        || secondaryPlayer.heldItemStableItemId == 0
+	        || secondaryPlayer.heldItemPrice > INT32_MAX
+	        || secondaryPlayer.heldItemType < 0
+	        || secondaryPlayer.heldItemType > UINT8_MAX
+	        || secondaryPlayer.heldItemIndex < -1
+	        || secondaryPlayer.heldItemIndex > UINT8_MAX)) {
+		error = "Replay fixture secondary held item contains invalid item state.";
+		return false;
+	}
 	if (secondaryPlayer.defined
 	    && (secondaryPlayer.inventoryFillerCount > 40
 	        || (secondaryPlayer.inventoryItemDefined
@@ -6612,6 +6648,24 @@ bool ExecuteReplayFixture(
 			});
 			state.secondaryInventoryGrid[secondary.inventoryItemSlot] = 0;
 		}
+		if (secondary.heldItemDefined) {
+			ReplayFixtureItemState itemState;
+			itemState.itemType = secondary.heldItemType;
+			itemState.itemIndex = secondary.heldItemIndex;
+			itemState.stableItemId = secondary.heldItemStableItemId;
+			itemState.value = static_cast<int32_t>(secondary.heldItemPrice);
+			itemState.identifiedValue = itemState.value;
+			itemState.statFlag = secondary.heldItemStatFlag;
+			state.secondaryHeldItemDefined = true;
+			state.secondaryHeldItem = {
+			    0,
+			    secondary.heldItemSlot,
+			    secondary.heldItemSeed,
+			    secondary.heldItemPrice,
+			    0,
+			    itemState,
+			};
+		}
 		ReplayFixtureItemState fillerState;
 		fillerState.itemType = 1;
 		fillerState.itemIndex = 1;
@@ -6773,6 +6827,11 @@ bool ExecuteReplayFixture(
 					    && targetX >= 0 && targetX < 40
 					    && targetY >= 0 && targetY < 40
 					    && !occupiedByPrimary) {
+						state.secondaryPlayerFacingDirection = static_cast<uint32_t>(GetDirection(
+						    state.secondaryPlayerPositionX,
+						    state.secondaryPlayerPositionY,
+						    targetX,
+						    targetY));
 						state.secondaryPlayerPositionX = targetX;
 						state.secondaryPlayerPositionY = targetY;
 						accepted = true;
@@ -6804,9 +6863,54 @@ bool ExecuteReplayFixture(
 					    && distance <= 1;
 					const bool isGold = state.worldItemState.itemType == 11
 					    && state.worldItemState.itemIndex == 0;
+					const bool heldItemDropOccupied = (state.worldItemEntityId != 0
+					        && state.worldItemLevelId == state.secondaryPlayerLevelId
+					        && state.worldItemPositionX == state.secondaryPlayerPositionX
+					        && state.worldItemPositionY == state.secondaryPlayerPositionY)
+					    || std::any_of(state.worldItems.begin(), state.worldItems.end(), [&](const auto &item) {
+						       return item.levelId == state.secondaryPlayerLevelId
+						           && item.positionX == state.secondaryPlayerPositionX
+						           && item.positionY == state.secondaryPlayerPositionY;
+					       })
+					    || (state.entityId != 0
+					        && state.life > 0
+					        && state.levelId == state.secondaryPlayerLevelId
+					        && state.positionX == state.secondaryPlayerPositionX
+					        && state.positionY == state.secondaryPlayerPositionY)
+					    || (state.combatTargetEntityId != 0
+					        && state.combatTargetHitPointsQ6 > 0
+					        && state.combatTargetLevelId == state.secondaryPlayerLevelId
+					        && state.combatTargetPositionX == state.secondaryPlayerPositionX
+					        && state.combatTargetPositionY == state.secondaryPlayerPositionY)
+					    || (state.objectEntityId != 0
+					        && !state.objectActivated
+					        && !state.objectDestroyed
+					        && state.objectLevelId == state.secondaryPlayerLevelId
+					        && state.objectPositionX == state.secondaryPlayerPositionX
+					        && state.objectPositionY == state.secondaryPlayerPositionY);
+					const auto dropSecondaryHeldItem = [&]() {
+						if (!state.secondaryHeldItemDefined)
+							return;
+						state.worldItems.push_back({
+						    AllocateReplayWorldItemEntityId(state),
+						    state.secondaryPlayerLevelId,
+						    state.secondaryPlayerPositionX,
+						    state.secondaryPlayerPositionY,
+						    state.secondaryHeldItem.itemSeed,
+						    state.secondaryHeldItem.price,
+						    state.secondaryHeldItem.state,
+						});
+						state.secondaryHeldItemDefined = false;
+						state.secondaryHeldItem = { };
+					};
 					if (!validTarget) {
 						rejectReason = "InvalidTarget";
-					} else if (state.secondaryHeldItemDefined) {
+					} else if (state.secondaryHeldItemDefined
+					    && (state.secondaryPlayerPositionX < 0
+					        || state.secondaryPlayerPositionX >= 40
+					        || state.secondaryPlayerPositionY < 0
+					        || state.secondaryPlayerPositionY >= 40
+					        || heldItemDropOccupied)) {
 						rejectReason = "NotAllowed";
 					} else if (isGold) {
 						if (state.worldItemState.value <= 0
@@ -6819,11 +6923,13 @@ bool ExecuteReplayFixture(
 						    || std::numeric_limits<uint32_t>::max() - state.secondaryPlayerGold < state.worldItemPrice) {
 							rejectReason = "Malformed";
 						} else {
+							dropSecondaryHeldItem();
 							state.secondaryPlayerGold += state.worldItemPrice;
 							state.worldItemEntityId = 0;
 							accepted = true;
 						}
 					} else if (targetCell >= 0 && state.secondaryInventory.size() < 40) {
+						dropSecondaryHeldItem();
 						const size_t inventoryIndex = state.secondaryInventory.size();
 						state.secondaryInventory.push_back({
 						    0,
@@ -6841,6 +6947,7 @@ bool ExecuteReplayFixture(
 						state.worldItemEntityId = 0;
 						accepted = true;
 					} else {
+						dropSecondaryHeldItem();
 						state.secondaryHeldItemDefined = true;
 						state.secondaryHeldItem = {
 						    0,

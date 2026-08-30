@@ -108,6 +108,9 @@ stable-reference `DropItem` from a secondary participant. The corresponding
 fixture verifies participant routing, source removal, adjacent world-item
 materialization, stable identity validation, and a shared checkpoint hash in
 both runners.
+The optional `secondary_player.held_item` fields seed the authoritative cursor
+for pickup-replacement fixtures; both runners validate its identity and preserve
+the dropped cursor item in the projected world state.
 The companion `gameplay-multiplayer-secondary-item-pickup.json` fixture routes
 `PickupWorldItem` from the secondary participant, proving authoritative world
 item removal, inventory placement, purchased-tick propagation, and the shared
@@ -176,7 +179,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 96 checked-in JSON fixtures and 126 registered
+the native replay gate contains 98 checked-in JSON fixtures and 130 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -306,6 +309,15 @@ legacy native placement preference, while preserving both item identities.
 inventory, verifies that pickup remains accepted and projects the item as a
 secondary held item, then submits `DropHeldItem` and verifies adjacent world
 placement and the resulting checkpoint hash.
+
+`gameplay-multiplayer-secondary-held-item-pickup-replacement.json` starts with
+an occupied secondary cursor and an adjacent world item. Both runners drop the
+cursor item at the secondary pickup origin, place the picked item in inventory,
+and preserve the participant checkpoint hash.
+
+`gameplay-multiplayer-secondary-held-item-pickup-rejection.json` moves an
+occupied secondary cursor onto the world item tile before pickup. Both runners
+record `NotAllowed` and preserve the cursor and world item without mutation.
 
 `gameplay-multiplayer-secondary-gold-pickup.json` routes an adjacent Gold pile
 through the secondary participant. The authoritative wallet is credited and
@@ -529,6 +541,10 @@ Notable shared fixtures include:
   occupied-inventory first-fit placement and participant checkpoint parity;
 - `gameplay-multiplayer-secondary-item-pickup-overflow.json` for full-secondary
   inventory cursor overflow and participant checkpoint parity;
+- `gameplay-multiplayer-secondary-held-item-pickup-replacement.json` for
+  secondary cursor replacement and participant checkpoint parity;
+- `gameplay-multiplayer-secondary-held-item-pickup-rejection.json` for
+  occupied-tile secondary cursor rejection and state preservation;
 - `gameplay-multiplayer-secondary-gold-pickup.json` for direct secondary wallet
   credit, world-pile removal, and participant checkpoint parity;
 - `gameplay-multiplayer-secondary-gold-pickup-malformed.json` for malformed

@@ -2976,6 +2976,91 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryItemPickupOverflowAgainstCSharpC
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMultiplayerSecondaryHeldItemPickupReplacement)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-held-item-pickup-replacement.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.worldItemEntityId = fixture.initialState.worldItemEntityId;
+	state.worldItemLevelId = fixture.initialState.levelId;
+	state.worldItemPositionX = fixture.initialState.secondaryPlayer.positionX - 1;
+	state.worldItemPositionY = fixture.initialState.secondaryPlayer.positionY;
+	state.worldItemSeed = fixture.initialState.worldItemSeed;
+	state.worldItemPrice = fixture.initialState.worldItemPrice;
+	state.worldItemState.itemType = 1;
+	state.worldItemState.itemIndex = 1;
+	state.worldItemState.stableItemId = 9920;
+	state.worldItemState.statFlag = true;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
+	EXPECT_FALSE(state.secondaryHeldItemDefined);
+	ASSERT_EQ(state.secondaryInventory.size(), 1U);
+	EXPECT_EQ(state.secondaryInventory[0].itemSeed, fixture.initialState.worldItemSeed);
+	EXPECT_EQ(state.secondaryInventory[0].state.stableItemId, 9920U);
+	ASSERT_EQ(state.worldItems.size(), 1U);
+	EXPECT_EQ(state.worldItems[0].entityId, 0x40000000U);
+	EXPECT_EQ(state.worldItems[0].itemSeed, 9010U);
+	EXPECT_EQ(state.worldItems[0].state.stableItemId, 9921U);
+	EXPECT_EQ(state.worldItems[0].positionX, fixture.initialState.secondaryPlayer.positionX);
+	EXPECT_EQ(state.worldItems[0].positionY, fixture.initialState.secondaryPlayer.positionY);
+}
+
+TEST(ReplayFixture, RejectsMultiplayerSecondaryHeldItemPickupOnOccupiedTile)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-held-item-pickup-rejection.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.worldItemEntityId = fixture.initialState.worldItemEntityId;
+	state.worldItemLevelId = fixture.initialState.levelId;
+	state.worldItemPositionX = fixture.initialState.secondaryPlayer.positionX;
+	state.worldItemPositionY = fixture.initialState.secondaryPlayer.positionY + 1;
+	state.worldItemSeed = fixture.initialState.worldItemSeed;
+	state.worldItemPrice = fixture.initialState.worldItemPrice;
+	state.worldItemState.itemType = 1;
+	state.worldItemState.itemIndex = 1;
+	state.worldItemState.stableItemId = 9920;
+	state.worldItemState.statFlag = true;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_FALSE(result.transitions[1].accepted);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
+	EXPECT_EQ(result.transitions[1].stateSha256, fixture.checkpoints[1].stateSha256);
+	EXPECT_TRUE(state.secondaryHeldItemDefined);
+	EXPECT_EQ(state.secondaryHeldItem.itemSeed, 9010U);
+	EXPECT_EQ(state.secondaryHeldItem.state.stableItemId, 9921U);
+	EXPECT_EQ(state.worldItemEntityId, fixture.initialState.worldItemEntityId);
+	EXPECT_TRUE(state.worldItems.empty());
+}
+
 TEST(ReplayFixture, ExecutesMultiplayerSecondaryGoldPickupAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-gold-pickup.json");
