@@ -14,6 +14,7 @@
 #include <iterator>
 #include <limits>
 #include <optional>
+#include <queue>
 #include <utility>
 
 #include "engine/crawl.hpp"
@@ -4546,9 +4547,8 @@ void AdvanceReplayMonsterAttack(
 			        && candidate.second == state.combatTargetPositionY)
 			    || candidate.first < 0 || candidate.first >= 40
 			    || candidate.second < 0 || candidate.second >= 40
-			    || (candidate.first == victim.positionX && candidate.second == victim.positionY)
+			    || (candidate.first == state.positionX && candidate.second == state.positionY)
 			    || (state.secondaryPlayerEntityId != 0
-			        && state.secondaryPlayerLife > 0
 			        && candidate.first == state.secondaryPlayerPositionX
 			        && candidate.second == state.secondaryPlayerPositionY)) {
 				continue;
@@ -4562,6 +4562,84 @@ void AdvanceReplayMonsterAttack(
 			    candidate.first,
 			    candidate.second);
 			break;
+		}
+		if (state.combatTargetMoving)
+			return;
+
+		// Match the managed bounded breadth-first fallback when all three
+		// native crawl candidates are blocked by participants or geometry.
+		constexpr std::array<std::pair<int32_t, int32_t>, 8> NeighborOffsets = {
+			std::pair<int32_t, int32_t> { 1, 0 },
+			{ 1, 1 },
+			{ 0, 1 },
+			{ -1, 1 },
+			{ -1, 0 },
+			{ -1, -1 },
+			{ 0, -1 },
+			{ 1, -1 },
+		};
+		const int maximumDepth = std::clamp(
+			state.combatTargetAggroRange * 2 + 2,
+			8,
+			256);
+		struct SearchNode {
+			int32_t x;
+			int32_t y;
+			int32_t depth;
+			int32_t firstX;
+			int32_t firstY;
+		};
+		std::array<int32_t, 40 * 40> visited;
+		visited.fill(-1);
+		std::queue<SearchNode> queue;
+		const auto cellIndex = [](int32_t x, int32_t y) {
+			return y * 40 + x;
+		};
+		const auto participantOccupied = [&](int32_t x, int32_t y) {
+			return (x == state.positionX && y == state.positionY)
+			    || (state.secondaryPlayerEntityId != 0
+			        && x == state.secondaryPlayerPositionX
+			        && y == state.secondaryPlayerPositionY);
+		};
+		visited[cellIndex(state.combatTargetPositionX, state.combatTargetPositionY)] = 0;
+		queue.push({
+			state.combatTargetPositionX,
+			state.combatTargetPositionY,
+			0,
+			state.combatTargetPositionX,
+			state.combatTargetPositionY,
+		});
+		while (!queue.empty()) {
+			const SearchNode current = queue.front();
+			queue.pop();
+			if (current.depth >= maximumDepth)
+				continue;
+			for (const auto &offset : NeighborOffsets) {
+				const int32_t nextX = current.x + offset.first;
+				const int32_t nextY = current.y + offset.second;
+				if (nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40
+				    || visited[cellIndex(nextX, nextY)] != -1
+				    || participantOccupied(nextX, nextY))
+					continue;
+				const int32_t nextDepth = current.depth + 1;
+				const int32_t firstX = current.depth == 0 ? nextX : current.firstX;
+				const int32_t firstY = current.depth == 0 ? nextY : current.firstY;
+				visited[cellIndex(nextX, nextY)] = nextDepth;
+				if (std::max(
+				        std::abs(nextX - victim.positionX),
+				        std::abs(nextY - victim.positionY)) <= 1) {
+					state.combatTargetMoving = true;
+					state.combatTargetFuturePositionX = firstX;
+					state.combatTargetFuturePositionY = firstY;
+					state.combatTargetDirection = GetDirection(
+						state.combatTargetPositionX,
+						state.combatTargetPositionY,
+						state.combatTargetFuturePositionX,
+						state.combatTargetFuturePositionY);
+					return;
+				}
+				queue.push({ nextX, nextY, nextDepth, firstX, firstY });
+			}
 		}
 		return;
 	}

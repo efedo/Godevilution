@@ -32,7 +32,9 @@ same drop suppression and item-seed rules as the managed simulation.
 Generic autonomous monster melee now selects the nearest live participant in
 both runners, with stable entity-ID tie breaking. The shared secondary-melee
 fixture verifies that a closer secondary participant is attacked while the
-primary remains untouched.
+primary remains untouched. The same native crawl now has the managed bounded
+breadth-first fallback, preserving participant occupancy when direct approach
+tiles are blocked.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory

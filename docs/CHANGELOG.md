@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Align generic autonomous monster melee with the managed participant model.
   Native and C# runners now select the nearest live participant with stable
   entity-ID tie breaking, including secondary-player damage and death state.
+- Match the managed bounded breadth-first fallback for generic monster crawl.
+  Native replay now preserves both participants as occupancy blockers and
+  selects the same alternate first step when direct approach tiles are blocked.
 
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind

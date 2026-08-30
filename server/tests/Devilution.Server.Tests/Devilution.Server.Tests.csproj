@@ -91,6 +91,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-held-item-pickup-rejection.json" Link="Fixtures/gameplay-multiplayer-secondary-held-item-pickup-rejection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-death-drops.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-death-drops.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-melee.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-melee.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-pathing.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-pathing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-portal.json" Link="Fixtures/gameplay-multiplayer-secondary-portal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-resolution.json" Link="Fixtures/gameplay-monster-arrow-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-autonomous.json" Link="Fixtures/gameplay-monster-arrow-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
