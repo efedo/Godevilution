@@ -5367,6 +5367,58 @@ TEST(ReplayFixture, ExecutesGoatRangedDelayAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSkeletonRangedCloseRetreatAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-skeleton-ranged-close-retreat.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_TRUE(fixture.initialProjectiles.empty());
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.secondaryPlayerLife, 100);
+	EXPECT_TRUE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetPositionX, 3);
+	EXPECT_EQ(state.combatTargetPositionY, 0);
+	EXPECT_EQ(state.combatTargetFuturePositionX, 4);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 0);
+	EXPECT_EQ(state.combatTargetSkeletonRangedMovementIdleTicks, 0);
+	EXPECT_EQ(state.combatTargetSkeletonRangedMovementMode, 1);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesLichMonsterMagicAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-monster-magic-autonomous.json");

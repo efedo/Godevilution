@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared SkeletonRanged close-retreat replay fixture. Native and managed
+  runners now preserve nearest-participant selection, deterministic retreat
+  destinations, movement counters, and same-tick arrow suppression.
+
 - Extend the shared GoatRanged replay contract with persisted ranged-delay
   state. Native and managed runners now agree on delayed admission and the
   following secondary-targeted arrow checkpoint.

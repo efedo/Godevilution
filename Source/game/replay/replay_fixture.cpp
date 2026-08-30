@@ -573,6 +573,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-skeleton-delay-v1");
 			hasher.AppendInt32(state.combatTargetSkeletonMeleeDelayTicks);
 		}
+		if (state.combatTargetSkeletonRangedMovementIdleTicks != -1
+		    || state.combatTargetSkeletonRangedMovementMode != 0) {
+			hasher.AppendString("godevilution-monster-skeleton-ranged-counter-v1");
+			hasher.AppendInt32(state.combatTargetSkeletonRangedMovementIdleTicks);
+			hasher.AppendInt32(state.combatTargetSkeletonRangedMovementMode);
+		}
 		if (state.combatTargetFatMovementIdleTicks != -1
 		    || state.combatTargetFatMovementMode != 0) {
 			hasher.AppendString("godevilution-monster-fat-counter-v1");
@@ -4889,6 +4895,114 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
+	if (state.combatTargetNativeAi == "SkeletonRanged") {
+		struct Victim {
+			uint32_t entityId;
+			int32_t positionX;
+			int32_t positionY;
+		};
+		std::vector<Victim> victims;
+		if (primaryAlive)
+			victims.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+		if (secondaryAlive)
+			victims.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+		if (victims.empty())
+			return;
+		const auto victimDistance = [&](const Victim &victim) {
+			return std::max(
+				std::abs(victim.positionX - state.combatTargetPositionX),
+				std::abs(victim.positionY - state.combatTargetPositionY));
+		};
+		std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
+			const int leftDistance = victimDistance(left);
+			const int rightDistance = victimDistance(right);
+			return leftDistance != rightDistance
+			    ? leftDistance < rightDistance
+			    : left.entityId < right.entityId;
+		});
+		const Victim &victim = victims.front();
+		const int distance = victimDistance(victim);
+		if (distance < 4) {
+			const uint32_t actionSeed = static_cast<uint32_t>(tick)
+			    ^ state.combatTargetEntityId
+			    ^ victim.entityId;
+			const int movementChance = std::min(
+				100,
+				(state.combatTargetSkeletonRangedMovementIdleTicks == -1
+				        || state.combatTargetSkeletonRangedMovementIdleTicks > 20
+				    ? 13
+				    : state.combatTargetSkeletonRangedMovementIdleTicks == 0
+				        && state.combatTargetSkeletonRangedMovementMode >= 1
+				        && state.combatTargetSkeletonRangedMovementMode <= 3
+				        ? 63
+				        : 0)
+				    + 2 * state.combatTargetIntelligence);
+			const int movementRoll = state.combatTargetMonsterAiSeed != 0
+			    ? std::max(GenerateRnd(state, 100), 0)
+			    : static_cast<int>((actionSeed / 100U) % 100U);
+			if (movementRoll < movementChance) {
+				std::vector<std::pair<int32_t, int32_t>> destinations;
+				for (int32_t offsetY = -1; offsetY <= 1; ++offsetY) {
+					for (int32_t offsetX = -1; offsetX <= 1; ++offsetX) {
+						if (offsetX == 0 && offsetY == 0)
+							continue;
+						const int32_t candidateX = state.combatTargetPositionX + offsetX;
+						const int32_t candidateY = state.combatTargetPositionY + offsetY;
+						if (candidateX < 0 || candidateX >= 40
+						    || candidateY < 0 || candidateY >= 40
+						    || (candidateX == state.positionX && candidateY == state.positionY)
+						    || (state.secondaryPlayerEntityId != 0
+						        && candidateX == state.secondaryPlayerPositionX
+						        && candidateY == state.secondaryPlayerPositionY)
+						    || (state.objectEntityId != 0
+						        && !state.objectActivated
+						        && !state.objectDestroyed
+						        && !state.objectMissilePassable
+						        && state.objectLevelId == state.combatTargetLevelId
+						        && candidateX == state.objectPositionX
+						        && candidateY == state.objectPositionY))
+							continue;
+						const int candidateDistance = std::max(
+							std::abs(candidateX - victim.positionX),
+							std::abs(candidateY - victim.positionY));
+						if (candidateDistance >= distance)
+							destinations.emplace_back(candidateX, candidateY);
+					}
+				}
+				std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
+					const int leftDistance = std::max(
+						std::abs(left.first - victim.positionX),
+						std::abs(left.second - victim.positionY));
+					const int rightDistance = std::max(
+						std::abs(right.first - victim.positionX),
+						std::abs(right.second - victim.positionY));
+					return leftDistance != rightDistance
+					    ? leftDistance > rightDistance
+					    : left.second != right.second
+					        ? left.second < right.second
+					        : left.first < right.first;
+				});
+				if (!destinations.empty()) {
+					state.combatTargetMoving = true;
+					state.combatTargetFuturePositionX = destinations.front().first;
+					state.combatTargetFuturePositionY = destinations.front().second;
+					state.combatTargetDirection = GetDirection(
+						state.combatTargetPositionX,
+						state.combatTargetPositionY,
+						state.combatTargetFuturePositionX,
+						state.combatTargetFuturePositionY);
+					state.combatTargetSkeletonRangedMovementMode =
+						state.combatTargetFuturePositionX - state.combatTargetPositionX;
+					state.combatTargetSkeletonRangedMovementIdleTicks =
+						state.combatTargetFuturePositionY - state.combatTargetPositionY;
+					return;
+				}
+			}
+			if (state.combatTargetSkeletonRangedMovementIdleTicks < 1024)
+				++state.combatTargetSkeletonRangedMovementIdleTicks;
+		}
+		return;
+	}
 	if (state.combatTargetNativeAi == "SkeletonRanged"
 	    || state.combatTargetNativeAi == "HorkDemon"
 	    || state.combatTargetNativeAi == "Succubus"
@@ -5984,7 +6098,9 @@ void AdmitReplayAutonomousMonsterArrow(
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetToHit <= 0
 	    || state.combatTargetMaxDamage <= 0
-	    || (state.combatTargetNativeAi == "GoatRanged" && state.combatTargetMoving)
+	    || ((state.combatTargetNativeAi == "GoatRanged"
+	            || state.combatTargetNativeAi == "SkeletonRanged")
+	        && state.combatTargetMoving)
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
 			return projectile.sourceEntityId == state.combatTargetEntityId
 			    && projectile.behavior == MonsterArrowBehavior;
@@ -6906,6 +7022,10 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
 			if (key == "combat_target_ranged_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetRangedDelayTicks);
+			if (key == "combat_target_skeleton_ranged_movement_idle_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetSkeletonRangedMovementIdleTicks);
+			if (key == "combat_target_skeleton_ranged_movement_mode")
+				return ParseSigned(fixture_.initialState.combatTargetSkeletonRangedMovementMode);
 			if (key == "combat_target_sneak_hidden")
 				return ParseBool(fixture_.initialState.combatTargetSneakHidden);
 			if (key == "combat_target_sneak_retreat_ticks")
@@ -7745,6 +7865,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetSkeletonMeleeDelayTicks != 0
 		    || target.combatTargetSnakeDelayTicks != 0
 		    || target.combatTargetRangedDelayTicks != 0
+		    || target.combatTargetSkeletonRangedMovementIdleTicks != -1
+		    || target.combatTargetSkeletonRangedMovementMode != 0
 		    || target.combatTargetSneakHidden
 		    || target.combatTargetSneakRetreatTicks != 0
 		    || target.combatTargetBatRetreatTicks != 0
@@ -7778,6 +7900,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetSnakeDelayTicks > 1024
 		|| target.combatTargetRangedDelayTicks < 0
 		|| target.combatTargetRangedDelayTicks > 1024
+		|| target.combatTargetSkeletonRangedMovementIdleTicks < -1
+		|| target.combatTargetSkeletonRangedMovementIdleTicks > 1024
+		|| target.combatTargetSkeletonRangedMovementMode < -1
+		|| target.combatTargetSkeletonRangedMovementMode > 3
 		|| target.combatTargetSneakRetreatTicks < 0
 		|| target.combatTargetSneakRetreatTicks > 1024
 		|| target.combatTargetBatRetreatTicks < 0
@@ -8139,6 +8265,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
 		state.combatTargetRangedDelayTicks = fixture.initialState.combatTargetRangedDelayTicks;
+		state.combatTargetSkeletonRangedMovementIdleTicks = fixture.initialState.combatTargetSkeletonRangedMovementIdleTicks;
+		state.combatTargetSkeletonRangedMovementMode = fixture.initialState.combatTargetSkeletonRangedMovementMode;
 		state.combatTargetSneakHidden = fixture.initialState.combatTargetSneakHidden;
 		state.combatTargetSneakRetreatTicks = fixture.initialState.combatTargetSneakRetreatTicks;
 		state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;
