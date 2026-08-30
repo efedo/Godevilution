@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers seeded SkeletonRanged arrow admission.
+Native and managed runners consume the same native AI stream, preserve the
+updated monster seed, and agree on the canonical projectile checkpoint.
+
 The shared replay contract now covers SkeletonRanged close-range retreat.
 Native and managed runners preserve nearest-participant selection,
 deterministic retreat destinations, movement counters, and suppression of

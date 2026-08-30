@@ -4678,6 +4678,38 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySkeletonRangedNativeAiSeedMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-arrow-skeleton-ranged-native-ai-seed.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterArrowExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(6U, projectile.RemainingTicks);
+        Assert.Equal(0, monster.RangedDelayTicks);
+        Assert.Equal(1788971303U, monster.MonsterAiSeed);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5596,7 +5628,12 @@ public sealed class ReplayFixtureTests
             monsterLevel: initial.CombatTargetMonsterLevel,
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
-            intelligence: initial.CombatTargetIntelligence);
+            intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed,
+            rangedDelayTicks: initial.CombatTargetRangedDelayTicks,
+            skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
+            skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
         var missiles = new AuthoritativeMonsterMissileCatalog([
             new AuthoritativeMonsterMissileDefinition(
                 initial.CombatTargetNativeAi,

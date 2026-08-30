@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add seeded SkeletonRanged replay coverage. Native and managed runners now
+  consume the same native AI stream for arrow admission and preserve the
+  updated monster seed through the canonical checkpoint.
+
 - Add a shared SkeletonRanged close-retreat replay fixture. Native and managed
   runners now preserve nearest-participant selection, deterministic retreat
   destinations, movement counters, and same-tick arrow suppression.

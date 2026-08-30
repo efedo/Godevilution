@@ -6148,7 +6148,12 @@ void AdmitReplayAutonomousMonsterArrow(
 		const int32_t attackChance = std::min(
 		    100,
 		    3 + 2 * state.combatTargetIntelligence);
-		if (attackSeed % 100U >= static_cast<uint32_t>(attackChance))
+		if (state.combatTargetMonsterAiSeed != 0)
+			static_cast<void>(GenerateRnd(state, 100));
+		const int attackRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(attackSeed % 100U);
+		if (attackRoll >= attackChance)
 			return;
 	}
 
