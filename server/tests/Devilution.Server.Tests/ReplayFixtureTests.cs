@@ -617,6 +617,73 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void FlameWaveFixtureMatchesNativeBranchAdmissionAndMovement()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-flame-wave-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(15, 35, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.FlameWaveController,
+                RandomDamageRange = 10,
+                DamageBonus = 1,
+                SecondaryProjectileLifetime = 255,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 1,
+                ManaAdjustment = 3,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 20,
+                ManaCostScale = 64,
+                FlameWaveControllerLifetime = 1,
+                FlameWaveBranchBase = 2,
+                FlameWaveBranchSpellLevelDivisor = 2,
+                FlameWaveCharacterLevelDamageBonus = 1,
+            },
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingManaMaximum: fixture.InitialState.ManaMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingWorld: world,
+            startingSpells: spells,
+            startingAbilitySpellId: fixture.InitialState.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(9, result.FinalSnapshot.Projectiles.Count);
+        Assert.All(
+            result.FinalSnapshot.Projectiles,
+            projectile => {
+                Assert.Equal((int)AuthoritativeProjectileBehavior.FlameWaveSegment, projectile.Behavior);
+                Assert.Equal((int)AuthoritativeDamageType.Fire, projectile.DamageType);
+                Assert.Equal(254U, projectile.RemainingTicks);
+                Assert.Equal(16, projectile.Speed);
+            });
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

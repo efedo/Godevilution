@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Flame Wave replay coverage. Native and managed runners now preserve
+  the one-tick controller, deterministic center/branch geometry, per-segment
+  damage, same-tick movement, and canonical projectile checkpoints.
+
 - Add shared Nova replay coverage. Native and managed runners now preserve
   the one-tick controller, native 36-ball radial fan ordering, first-tick
   movement, and canonical projectile checkpoints.

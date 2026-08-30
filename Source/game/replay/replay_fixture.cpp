@@ -47,6 +47,8 @@ constexpr int32_t InfernoSegmentBehavior = 27;
 constexpr int32_t FireWallControllerBehavior = 22;
 constexpr int32_t FireWallSegmentBehavior = 23;
 constexpr int32_t LightningWallControllerBehavior = 47;
+constexpr int32_t FlameWaveControllerBehavior = 24;
+constexpr int32_t FlameWaveSegmentBehavior = 25;
 constexpr int32_t RingOfFireControllerBehavior = 42;
 constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
@@ -3463,6 +3465,37 @@ void CreateReplayFireWallController(
 	state.projectiles.push_back(controller);
 }
 
+void CreateReplayFlameWaveController(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command,
+	int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		controller.entityId = std::max(controller.entityId, projectile.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 15;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = command.targetX;
+	controller.targetY = command.targetY;
+	controller.damageType = 1;
+	controller.remainingTicks = 1;
+	controller.behavior = FlameWaveControllerBehavior;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.originalDirection = GetDirection(
+		state.positionX,
+		state.positionY,
+		command.targetX,
+		command.targetY);
+	controller.resistantDamageDivisor = 4;
+	controller.effectiveSpellLevel = spellLevel;
+	state.projectiles.push_back(controller);
+}
+
 void CreateReplayRingOfFireController(
 	ReplayFixtureExecutionState &state,
 	int32_t spellLevel)
@@ -3599,6 +3632,41 @@ ReplayFixtureProjectileState CreateReplayNovaBall(
 	ball.resistantDamageDivisor = 4;
 	ball.effectiveSpellLevel = controller.effectiveSpellLevel;
 	return ball;
+}
+
+ReplayFixtureProjectileState CreateReplayFlameWaveSegment(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureProjectileState &controller,
+	int32_t positionX,
+	int32_t positionY)
+{
+	ReplayFixtureProjectileState segment;
+	segment.sourceEntityId = controller.sourceEntityId;
+	segment.spellId = controller.spellId;
+	segment.levelId = controller.levelId;
+	segment.positionX = positionX;
+	segment.positionY = positionY;
+	segment.targetX = positionX + DirectionDisplacements[controller.originalDirection].first;
+	segment.targetY = positionY + DirectionDisplacements[controller.originalDirection].second;
+	segment.damage = GenerateRnd(state, 10) + static_cast<int32_t>(state.characterLevel) + 1;
+	segment.damageType = 1;
+	segment.remainingTicks = 255;
+	segment.behavior = FlameWaveSegmentBehavior;
+	segment.startX = positionX;
+	segment.startY = positionY;
+	segment.originalDirection = controller.originalDirection;
+	const auto velocity = CalculateVelocity(
+		positionX,
+		positionY,
+		segment.targetX,
+		segment.targetY,
+		16);
+	segment.velocityX = velocity.first;
+	segment.velocityY = velocity.second;
+	segment.speed = 16;
+	segment.resistantDamageDivisor = 4;
+	segment.effectiveSpellLevel = controller.effectiveSpellLevel;
+	return segment;
 }
 
 ReplayFixtureProjectileState CreateReplayFireWallSegment(
@@ -3800,6 +3868,94 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state)
 			iterator = state.projectiles.erase(iterator);
 		else
 			++iterator;
+	}
+}
+
+void AdvanceReplayFlameWaveOneTick(ReplayFixtureExecutionState &state)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != FlameWaveSegmentBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.remainingTicks == 0) {
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
+		MoveReplayNativeProjectile(projectile);
+		if (projectile.positionX < 0 || projectile.positionX >= 40
+		    || projectile.positionY < 0 || projectile.positionY >= 40
+		    || !ReplayWallPositionIsValid(state, projectile.positionX, projectile.positionY)) {
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
+		++iterator;
+	}
+
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &controller = state.projectiles[index];
+		if (controller.behavior != FlameWaveControllerBehavior)
+			continue;
+		const auto controllerState = controller;
+		const int32_t spreadDirection = GetDirection(
+			controller.positionX,
+			controller.positionY,
+			controller.targetX,
+			controller.targetY);
+		const auto start = std::pair<int32_t, int32_t> {
+			controller.positionX + DirectionDisplacements[spreadDirection].first,
+			controller.positionY + DirectionDisplacements[spreadDirection].second,
+		};
+		std::vector<ReplayFixtureProjectileState> created;
+		const auto place = [&](int32_t x, int32_t y) {
+			if (ReplayWallPositionIsValid(state, x, y))
+				created.push_back(CreateReplayFlameWaveSegment(state, controllerState, x, y));
+		};
+		place(start.first, start.second);
+		const int32_t branchCount = 2 + controller.effectiveSpellLevel / 2;
+		const auto grow = [&](int32_t &x, int32_t &y, int32_t direction) {
+			const int32_t rightDirection = RotateReplayDirection(direction, 1);
+			const int32_t gapX = x + DirectionDisplacements[rightDirection].first - DirectionDisplacements[direction].first;
+			const int32_t gapY = y + DirectionDisplacements[rightDirection].second - DirectionDisplacements[direction].second;
+			place(gapX, gapY);
+			if (!ReplayWallPositionIsValid(state, x, y))
+				return false;
+			place(x, y);
+			return true;
+		};
+		int32_t leftX = start.first;
+		int32_t leftY = start.second;
+		const int32_t leftDirection = RotateReplayDirection(spreadDirection, -2);
+		for (int32_t branch = 0; branch < branchCount; ++branch) {
+			leftX += DirectionDisplacements[leftDirection].first;
+			leftY += DirectionDisplacements[leftDirection].second;
+			if (!grow(leftX, leftY, leftDirection))
+				break;
+		}
+		int32_t rightX = start.first;
+		int32_t rightY = start.second;
+		const int32_t rightDirection = RotateReplayDirection(spreadDirection, 2);
+		for (int32_t branch = 0; branch < branchCount; ++branch) {
+			rightX += DirectionDisplacements[rightDirection].first;
+			rightY += DirectionDisplacements[rightDirection].second;
+			if (!grow(rightX, rightY, rightDirection))
+				break;
+		}
+		uint32_t nextEntityId = 0x80000000U;
+		for (const auto &existing : state.projectiles)
+			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
+		for (auto &spawned : created)
+			spawned.entityId = nextEntityId++;
+		for (auto &spawned : created) {
+			--spawned.remainingTicks;
+			MoveReplayNativeProjectile(spawned);
+		}
+		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+		state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+		return;
 	}
 }
 
@@ -4144,6 +4300,29 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 				spellLevel,
 				50,
 				LightningWallControllerBehavior);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 15
+	    && state.spellProjectileBehavior == FlameWaveControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			20,
+			35 - std::max(spellLevel - 1, 0) * 3)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			CreateReplayFlameWaveController(state, command, spellLevel);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -7288,6 +7467,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
 		AdvanceReplayInfernoOneTick(state);
 		AdvanceReplayRingOfFireOneTick(state);
+		AdvanceReplayFlameWaveOneTick(state);
 		AdvanceReplayNovaOneTick(state);
 		AdvanceReplayNovaBallsOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);

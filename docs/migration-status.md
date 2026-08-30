@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers player Flame Wave casts. Native and
+managed runners preserve the one-tick controller, deterministic center/branch
+geometry, per-segment damage, same-tick movement, and canonical checkpoints.
+
 The shared replay contract now covers player Nova casts. Native and managed
 runners preserve the one-tick controller, native 36-ball radial fan ordering,
 first-tick movement, and canonical projectile checkpoints.
