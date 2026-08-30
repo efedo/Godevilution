@@ -266,6 +266,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native Snake decision-delay state. */
     public int CombatTargetSnakeDelayTicks { get; init; }
 
+    /** Optional native AiRanged delay state. */
+    public int CombatTargetRangedDelayTicks { get; init; }
+
     /** Optional native Sneak visibility state. */
     public bool CombatTargetSneakHidden { get; init; }
 

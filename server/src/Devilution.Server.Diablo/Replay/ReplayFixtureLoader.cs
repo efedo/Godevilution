@@ -96,6 +96,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
                     || initialTarget.CombatTargetSnakeDelayTicks != 0
+                    || initialTarget.CombatTargetRangedDelayTicks != 0
                     || initialTarget.CombatTargetSneakHidden
                     || initialTarget.CombatTargetSneakRetreatTicks != 0
                     || initialTarget.CombatTargetBatRetreatTicks != 0
@@ -126,6 +127,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetRangedDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > 1024
             || initialTarget.CombatTargetBatRetreatTicks is < 0 or > 1024
             || initialTarget.CombatTargetBatRetreatDirection is < 0 or > 7
@@ -380,6 +382,9 @@ public static class ReplayFixtureLoader
             CombatTargetSnakeDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_snake_delay_ticks"),
+            CombatTargetRangedDelayTicks = GetOptionalInt(
+                value,
+                "combat_target_ranged_delay_ticks"),
             CombatTargetSneakHidden = GetOptionalBool(
                 value,
                 "combat_target_sneak_hidden"),

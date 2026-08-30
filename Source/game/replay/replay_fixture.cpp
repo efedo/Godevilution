@@ -587,6 +587,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-snake-delay-v1");
 			hasher.AppendInt32(state.combatTargetSnakeDelayTicks);
 		}
+		if (state.combatTargetRangedDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-ranged-delay-v1");
+			hasher.AppendInt32(state.combatTargetRangedDelayTicks);
+		}
 	}
 
 	if (!state.corpses.empty()) {
@@ -6016,6 +6020,11 @@ void AdmitReplayAutonomousMonsterArrow(
 	const Candidate &target = candidates.front();
 	if (candidateDistance(target) > state.combatTargetAggroRange)
 		return;
+	if (state.combatTargetNativeAi == "GoatRanged"
+	    && state.combatTargetRangedDelayTicks > 0) {
+		--state.combatTargetRangedDelayTicks;
+		return;
+	}
 	if (state.combatTargetNativeAi == "SkeletonRanged") {
 		const uint32_t attackSeed = static_cast<uint32_t>(tick)
 		    ^ state.combatTargetEntityId
@@ -6047,6 +6056,13 @@ void AdmitReplayAutonomousMonsterArrow(
 	projectile.speed = 1;
 	projectile.impactLifetime = 1;
 	state.projectiles.push_back(std::move(projectile));
+	if (state.combatTargetNativeAi == "GoatRanged") {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ target.entityId;
+		state.combatTargetRangedDelayTicks = static_cast<int32_t>(
+			(attackSeed / 200U) % 20U);
+	}
 }
 
 /** Admits the compact Hellfire HorkDemon Hork Spawn branch. */
@@ -6888,6 +6904,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
 			if (key == "combat_target_snake_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
+			if (key == "combat_target_ranged_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetRangedDelayTicks);
 			if (key == "combat_target_sneak_hidden")
 				return ParseBool(fixture_.initialState.combatTargetSneakHidden);
 			if (key == "combat_target_sneak_retreat_ticks")
@@ -7723,9 +7741,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetMaxDamage != 0
 			|| target.combatTargetIntelligence != 0
 			|| target.combatTargetGargoyleSpecialActive
-			|| target.combatTargetHorkDemonDelayTicks != 0
-			|| target.combatTargetSkeletonMeleeDelayTicks != 0
+		    || target.combatTargetHorkDemonDelayTicks != 0
+		    || target.combatTargetSkeletonMeleeDelayTicks != 0
 		    || target.combatTargetSnakeDelayTicks != 0
+		    || target.combatTargetRangedDelayTicks != 0
 		    || target.combatTargetSneakHidden
 		    || target.combatTargetSneakRetreatTicks != 0
 		    || target.combatTargetBatRetreatTicks != 0
@@ -7757,6 +7776,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
 		|| target.combatTargetSnakeDelayTicks < 0
 		|| target.combatTargetSnakeDelayTicks > 1024
+		|| target.combatTargetRangedDelayTicks < 0
+		|| target.combatTargetRangedDelayTicks > 1024
 		|| target.combatTargetSneakRetreatTicks < 0
 		|| target.combatTargetSneakRetreatTicks > 1024
 		|| target.combatTargetBatRetreatTicks < 0
@@ -8117,6 +8138,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
+		state.combatTargetRangedDelayTicks = fixture.initialState.combatTargetRangedDelayTicks;
 		state.combatTargetSneakHidden = fixture.initialState.combatTargetSneakHidden;
 		state.combatTargetSneakRetreatTicks = fixture.initialState.combatTargetSneakRetreatTicks;
 		state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;

@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now carries GoatRanged ranged-delay state through
+the native and managed projections, verifying delayed admission before the
+subsequent secondary-targeted MonsterArrow checkpoint.
+
 The shared replay contract now covers GoatRanged close-range retreat. Native
 and managed runners preserve nearest-participant selection, deterministic
 retreat destinations, and suppression of same-tick arrow admission.
