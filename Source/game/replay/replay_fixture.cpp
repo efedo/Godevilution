@@ -540,6 +540,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetAvoidanceMovementIdleTicks != -1
+		    || state.combatTargetAvoidanceMovementMode != 0) {
+			hasher.AppendString("godevilution-monster-avoidance-counter-v1");
+			hasher.AppendInt32(state.combatTargetAvoidanceMovementIdleTicks);
+			hasher.AppendInt32(state.combatTargetAvoidanceMovementMode);
+		}
 		if (state.combatTargetHorkDemonDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
 			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
@@ -4602,10 +4608,32 @@ void AdvanceReplayMonsterAttack(
 	const int distance = victimDistance(victim);
 	if (distance > state.combatTargetAggroRange)
 		return;
-	// Gargoyle's non-adjacent behavior is owned by its healing/avoidance
-	// controller; the compact generic attack path admits only its adjacent band.
-	if (state.combatTargetNativeAi == "Gargoyle" && distance > 1)
+	if (state.combatTargetNativeAi == "Gargoyle" && distance > 1) {
+		const bool wounded = state.combatTargetMaxHitPoints > 0
+		    && state.combatTargetHitPoints * 100
+		        < state.combatTargetMaxHitPoints * 50;
+		if (wounded || state.combatTargetGargoyleSpecialActive)
+			return;
+		// Compact the healthy AiAvoidance idle band. The managed controller
+		// persists this counter even when no walk is admitted.
+		const int actionRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>((static_cast<uint32_t>(tick)
+		        ^ state.combatTargetEntityId
+		        ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId))
+		        % 100U);
+		const int movementChance = std::min(
+		    100,
+		    28 + 2 * state.combatTargetIntelligence);
+		if (actionRoll >= movementChance) {
+			if (state.combatTargetAvoidanceMovementIdleTicks < 1024)
+				++state.combatTargetAvoidanceMovementIdleTicks;
+			return;
+		}
+		// A later fixture will cover the admitted RandomWalk branch; preserve
+		// the stream boundary here without falling through to generic crawl.
 		return;
+	}
 	if (distance > 1) {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;

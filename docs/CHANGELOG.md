@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
   managed runners now consume the extra attack-band draw before hit/block
   resolution, including secondary-player block timing and the multiplayer
   monster RNG stream.
+- Add Gargoyle avoidance-idle replay parity. Native and managed runners now
+  consume the healthy non-adjacent action draw and preserve the authoritative
+  avoidance counter when no movement is admitted.
 - Guard the legacy native client loop against opt-in authoritative-runtime
   references when server-backed client support is disabled, restoring the
   default replay-test build.

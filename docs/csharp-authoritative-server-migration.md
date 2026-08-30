@@ -183,7 +183,9 @@ The replay boundary also characterizes the wounded Gargoyle self-heal and
 adjacent-attack transitions: native and managed runners consume the same
 divisor and intelligence-band RNG draws, apply fixed-point healing, retain the
 special lock across autonomous ticks, and preserve secondary-player block
-timing on the multiplayer monster stream.
+timing on the multiplayer monster stream. Healthy non-adjacent Gargoyle ticks
+also preserve the avoidance action draw and idle counter across the replay
+boundary.
 
 ## Content and gameplay modules
 
