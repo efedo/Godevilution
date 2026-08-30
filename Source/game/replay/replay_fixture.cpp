@@ -541,6 +541,16 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetSneakHidden || state.combatTargetSneakRetreatTicks != 0) {
+			hasher.AppendString("godevilution-monster-sneak-v1");
+			hasher.AppendBool(state.combatTargetSneakHidden);
+			hasher.AppendInt32(state.combatTargetSneakRetreatTicks);
+		}
+		if (state.combatTargetBatRetreatTicks != 0 || state.combatTargetBatRetreatDirection != 0) {
+			hasher.AppendString("godevilution-monster-bat-retreat-v1");
+			hasher.AppendInt32(state.combatTargetBatRetreatTicks);
+			hasher.AppendInt32(state.combatTargetBatRetreatDirection);
+		}
 		if (state.combatTargetAvoidanceMovementTicks != -1
 		    || state.combatTargetAvoidanceMovementTurn != 0) {
 			hasher.AppendString("godevilution-monster-avoidance-movement-v1");
@@ -4703,6 +4713,52 @@ void AdvanceReplayMonsterAttack(
 	const int distance = victimDistance(victim);
 	if (distance > state.combatTargetAggroRange)
 		return;
+	// Compact the native Sneak visibility controller. Zero-seed fixtures use
+	// the compatibility path, so conceal/reveal transitions do not consume RNG.
+	if (state.combatTargetNativeAi == "Sneak") {
+		const int preferredDistance = std::max(
+		    1,
+		    5 - state.combatTargetIntelligence);
+		if (state.combatTargetSneakHidden) {
+			if (distance < preferredDistance)
+				state.combatTargetSneakHidden = false;
+			return;
+		}
+		if (distance >= preferredDistance + 1) {
+			state.combatTargetSneakHidden = true;
+			return;
+		}
+	}
+	// Compact the native Bat retreat countdown. The managed compatibility
+	// controller rotates once away from the initial direction, then alternates
+	// one-sided turns while the retreat state remains active.
+	if (state.combatTargetNativeAi == "Bat"
+	    && state.combatTargetBatRetreatTicks != 0) {
+		const int direction = state.combatTargetBatRetreatTicks == 2
+		    ? (state.combatTargetBatRetreatDirection + 4) % 8
+		    : (state.combatTargetBatRetreatDirection
+		    + ((static_cast<uint32_t>(tick) ^ state.combatTargetEntityId) & 1U
+		        ? 7
+		        : 1)) % 8;
+		const auto displacement = DirectionDisplacements[direction];
+		const int candidateX = state.combatTargetPositionX + displacement.first;
+		const int candidateY = state.combatTargetPositionY + displacement.second;
+		if (candidateX >= 0 && candidateX < 40
+		    && candidateY >= 0 && candidateY < 40
+		    && !(candidateX == state.positionX && candidateY == state.positionY)
+		    && !(state.secondaryPlayerEntityId != 0
+		        && candidateX == state.secondaryPlayerPositionX
+		        && candidateY == state.secondaryPlayerPositionY)) {
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = direction;
+		}
+		--state.combatTargetBatRetreatTicks;
+		if (state.combatTargetBatRetreatTicks == 0)
+			state.combatTargetBatRetreatDirection = 0;
+		return;
+	}
 	if (state.combatTargetNativeAi == "Gargoyle" && distance > 1) {
 		const bool wounded = state.combatTargetMaxHitPoints > 0
 		    && state.combatTargetHitPoints * 100
@@ -6407,6 +6463,14 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
 			if (key == "combat_target_snake_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
+			if (key == "combat_target_sneak_hidden")
+				return ParseBool(fixture_.initialState.combatTargetSneakHidden);
+			if (key == "combat_target_sneak_retreat_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetSneakRetreatTicks);
+			if (key == "combat_target_bat_retreat_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetBatRetreatTicks);
+			if (key == "combat_target_bat_retreat_direction")
+				return ParseSigned(fixture_.initialState.combatTargetBatRetreatDirection);
 			if (key == "combat_target_fire_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetFireResistance);
 			if (key == "combat_target_lightning_resistance")
@@ -7226,7 +7290,11 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetGargoyleSpecialActive
 			|| target.combatTargetHorkDemonDelayTicks != 0
 			|| target.combatTargetSkeletonMeleeDelayTicks != 0
-			|| target.combatTargetSnakeDelayTicks != 0
+		    || target.combatTargetSnakeDelayTicks != 0
+		    || target.combatTargetSneakHidden
+		    || target.combatTargetSneakRetreatTicks != 0
+		    || target.combatTargetBatRetreatTicks != 0
+		    || target.combatTargetBatRetreatDirection != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
@@ -7250,6 +7318,12 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
 		|| target.combatTargetSnakeDelayTicks < 0
 		|| target.combatTargetSnakeDelayTicks > 1024
+		|| target.combatTargetSneakRetreatTicks < 0
+		|| target.combatTargetSneakRetreatTicks > 1024
+		|| target.combatTargetBatRetreatTicks < 0
+		|| target.combatTargetBatRetreatTicks > 1024
+		|| target.combatTargetBatRetreatDirection < 0
+		|| target.combatTargetBatRetreatDirection > 7
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -7598,6 +7672,10 @@ bool ExecuteReplayFixture(
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
+		state.combatTargetSneakHidden = fixture.initialState.combatTargetSneakHidden;
+		state.combatTargetSneakRetreatTicks = fixture.initialState.combatTargetSneakRetreatTicks;
+		state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;
+		state.combatTargetBatRetreatDirection = fixture.initialState.combatTargetBatRetreatDirection;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Sneak conceal/reveal and Bat retreat replay fixtures. Native and
+  managed runners now preserve stealth visibility transitions, retreat
+  movement, countdown state, and canonical checkpoint parity.
+
 - Add a shared SnakeCharge replay fixture covering native admission, projectile
   travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and

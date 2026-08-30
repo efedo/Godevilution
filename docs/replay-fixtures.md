@@ -202,7 +202,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 114 checked-in JSON fixtures and 150 registered
+the native replay gate contains 117 checked-in JSON fixtures and 153 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -223,7 +223,9 @@ tick, SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Rhino charge admission, special damage, and
 knockback are also covered in both runners. Snake distant-delay and failed
 adjacent-attack admission/countdown are also covered in both runners, as is
-the mapped SnakeCharge travel, player collision, and impact phase. The
+the mapped SnakeCharge travel, player collision, and impact phase. Sneak
+conceal/reveal transitions and the Bat retreat movement/countdown lifecycle
+are also covered in both runners. The
 dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
@@ -268,7 +270,8 @@ continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
 attack admission/countdown lifecycles, Rhino charge admission, special
 damage, relocation, and player knockback, and Snake distant-delay and failed
 adjacent-attack admission/countdown lifecycles, plus mapped SnakeCharge
-travel, player collision, and impact-phase timing.
+travel, player collision, and impact-phase timing, plus Sneak conceal/reveal
+transitions and Bat retreat movement/countdown timing.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and

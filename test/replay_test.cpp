@@ -3196,6 +3196,115 @@ TEST(ReplayFixture, ExecutesSnakeChargeLifecycleAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSneakConcealmentAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-sneak-conceal.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(state.combatTargetSneakHidden);
+	EXPECT_EQ(state.combatTargetPositionX, 4);
+	EXPECT_EQ(state.combatTargetPositionY, 10);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesSneakRevealAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-sneak-reveal.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetSneakHidden = fixture.initialState.combatTargetSneakHidden;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_FALSE(state.combatTargetSneakHidden);
+	EXPECT_EQ(state.combatTargetPositionX, 4);
+	EXPECT_EQ(state.combatTargetPositionY, 10);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesBatRetreatAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-bat-retreat.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;
+	state.combatTargetBatRetreatDirection = fixture.initialState.combatTargetBatRetreatDirection;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_EQ(state.combatTargetPositionX, 9);
+	EXPECT_EQ(state.combatTargetPositionY, 9);
+	EXPECT_EQ(state.combatTargetBatRetreatTicks, 0);
+	EXPECT_EQ(state.combatTargetBatRetreatDirection, 0);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMultiplayerAutonomousTickAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-autonomous-tick.json");

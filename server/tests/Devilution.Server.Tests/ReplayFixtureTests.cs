@@ -3144,6 +3144,65 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySneakConcealmentMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-sneak-conceal.json");
+        var executor = CreateStealthReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.True(monster.SneakHidden);
+        Assert.Equal((4, 10), (monster.PositionX, monster.PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplaySneakRevealMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-sneak-reveal.json");
+        var executor = CreateStealthReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.False(monster.SneakHidden);
+        Assert.Equal((4, 10), (monster.PositionX, monster.PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplayBatRetreatMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-bat-retreat.json");
+        var executor = CreateStealthReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal((9, 9), (monster.PositionX, monster.PositionY));
+        Assert.Equal(0, monster.BatRetreatTicks);
+        Assert.Equal(0, monster.BatRetreatDirection);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5354,6 +5413,41 @@ public sealed class ReplayFixtureTests
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateStealthReplayExecutor(
+        ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            sneakHidden: initial.CombatTargetSneakHidden,
+            sneakRetreatTicks: initial.CombatTargetSneakRetreatTicks,
+            batRetreatTicks: initial.CombatTargetBatRetreatTicks,
+            batRetreatDirection: initial.CombatTargetBatRetreatDirection);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

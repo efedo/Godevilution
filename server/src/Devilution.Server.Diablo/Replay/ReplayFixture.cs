@@ -263,6 +263,17 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native Snake decision-delay state. */
     public int CombatTargetSnakeDelayTicks { get; init; }
 
+    /** Optional native Sneak visibility state. */
+    public bool CombatTargetSneakHidden { get; init; }
+
+    /** Optional native Sneak retreat countdown. */
+    public int CombatTargetSneakRetreatTicks { get; init; }
+
+    /** Optional native Bat retreat countdown and direction. */
+    public int CombatTargetBatRetreatTicks { get; init; }
+
+    public int CombatTargetBatRetreatDirection { get; init; }
+
     public bool CombatTargetMoving { get; init; }
 
     public int CombatTargetFuturePositionX { get; init; }

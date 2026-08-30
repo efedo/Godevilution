@@ -96,6 +96,10 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
                     || initialTarget.CombatTargetSnakeDelayTicks != 0
+                    || initialTarget.CombatTargetSneakHidden
+                    || initialTarget.CombatTargetSneakRetreatTicks != 0
+                    || initialTarget.CombatTargetBatRetreatTicks != 0
+                    || initialTarget.CombatTargetBatRetreatDirection != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
@@ -118,6 +122,9 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > 1024
+            || initialTarget.CombatTargetBatRetreatTicks is < 0 or > 1024
+            || initialTarget.CombatTargetBatRetreatDirection is < 0 or > 7
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
                     initialTarget.CombatTargetNativeAi))
@@ -366,6 +373,18 @@ public static class ReplayFixtureLoader
             CombatTargetSnakeDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_snake_delay_ticks"),
+            CombatTargetSneakHidden = GetOptionalBool(
+                value,
+                "combat_target_sneak_hidden"),
+            CombatTargetSneakRetreatTicks = GetOptionalInt(
+                value,
+                "combat_target_sneak_retreat_ticks"),
+            CombatTargetBatRetreatTicks = GetOptionalInt(
+                value,
+                "combat_target_bat_retreat_ticks"),
+            CombatTargetBatRetreatDirection = GetOptionalInt(
+                value,
+                "combat_target_bat_retreat_direction"),
             CombatTargetMoving = GetOptionalBool(value, "combat_target_moving"),
             CombatTargetFuturePositionX = value.TryGetProperty(
                 "combat_target_future_position_x",
