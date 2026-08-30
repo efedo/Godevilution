@@ -91,6 +91,7 @@ struct ReplayFixtureSecondaryPlayer {
 	uint32_t combatMode = 0;
 	uint64_t combatModeEndTick = 0;
 	bool inventoryItemDefined = false;
+	uint32_t inventoryFillerCount = 0;
 	uint32_t inventoryItemSlot = 0;
 	uint32_t inventoryItemSeed = 0;
 	uint32_t inventoryItemStableItemId = 0;
@@ -512,6 +513,8 @@ struct ReplayFixtureExecutionState {
 	uint64_t secondaryPlayerCombatModeEndTick = 0;
 	std::vector<ReplayFixtureInventoryItem> secondaryInventory;
 	std::vector<int32_t> secondaryInventoryGrid;
+	bool secondaryHeldItemDefined = false;
+	ReplayFixtureInventoryItem secondaryHeldItem;
 	bool hellfire = false;
 	uint32_t combatTargetEntityId = 0;
 	uint32_t combatTargetLevelId = 0;

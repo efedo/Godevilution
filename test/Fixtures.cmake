@@ -143,6 +143,7 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-secondary-item-drop.json
   replay/gameplay-multiplayer-secondary-item-pickup.json
   replay/gameplay-multiplayer-secondary-item-pickup-with-existing-item.json
+  replay/gameplay-multiplayer-secondary-item-pickup-overflow.json
   replay/gameplay-multiplayer-secondary-portal.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json

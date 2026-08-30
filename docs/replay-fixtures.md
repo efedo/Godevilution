@@ -116,6 +116,9 @@ The companion `gameplay-multiplayer-secondary-item-pickup-with-existing-item.jso
 fixture repeats that route with secondary inventory cell 0 occupied. Both
 runners must choose cell 1 through the same first-fit placement rule, preserving
 the existing item and producing the same participant hash.
+The `gameplay-multiplayer-secondary-item-pickup-overflow.json` fixture fills
+all 40 secondary inventory cells and verifies that the accepted pickup moves to
+the secondary authoritative cursor while preserving the world-item identity.
 An initial state with one canonical Gold pile may add
 `inventory_filler_count`. Both runners place that many deterministic one-cell
 non-Gold items into the remaining native inventory cells. This forces the same
@@ -164,7 +167,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-29,
-the native replay gate contains 90 checked-in JSON fixtures and 116 registered
+the native replay gate contains 91 checked-in JSON fixtures and 117 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -289,6 +292,10 @@ rejected as `InvalidTarget` by both runners.
 that pickup with a stable item already occupying secondary cell 0. The shared
 replay contract therefore checks first-fit placement at cell 1 instead of the
 legacy native placement preference, while preserving both item identities.
+
+`gameplay-multiplayer-secondary-item-pickup-overflow.json` fills the secondary
+inventory and verifies that pickup remains accepted, removes the world entity,
+and projects the item as a secondary held item with its purchased tick.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied
@@ -489,6 +496,8 @@ Notable shared fixtures include:
   checkpoint parity;
 - `gameplay-multiplayer-secondary-item-pickup-with-existing-item.json` for
   occupied-inventory first-fit placement and participant checkpoint parity;
+- `gameplay-multiplayer-secondary-item-pickup-overflow.json` for full-secondary
+  inventory cursor overflow and participant checkpoint parity;
 - `gameplay-stable-item-drop-retry.json` for accepted-then-rejected stale
   stable-reference retry ordering and `InvalidTarget` rejection reason;
 - `gameplay-stable-belt-drop-invalid-target.json` for `NotAllowed` rejection

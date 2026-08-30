@@ -34,6 +34,10 @@ All notable changes to this fork are documented below.
   Native and managed replay runners now agree on the authoritative
   `InvalidTarget` rejection reason after the world entity is consumed.
 
+- Add secondary-participant inventory-overflow pickup coverage. A full
+  secondary inventory now accepts a world-item pickup into the authoritative
+  secondary cursor, with native and managed checkpoint parity.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

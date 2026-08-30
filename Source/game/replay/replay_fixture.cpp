@@ -252,6 +252,15 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 	hasher.AppendUint64(state.secondaryInventoryGrid.size());
 	for (const int32_t cell : state.secondaryInventoryGrid)
 		hasher.AppendInt32(cell);
+	if (state.secondaryHeldItemDefined) {
+		hasher.AppendString("godevilution-player-held-item-v1");
+		hasher.AppendUint32(state.secondaryHeldItem.storeId);
+		hasher.AppendUint32(state.secondaryHeldItem.storeSlot);
+		hasher.AppendUint32(state.secondaryHeldItem.itemSeed);
+		hasher.AppendUint32(state.secondaryHeldItem.price);
+		hasher.AppendUint64(state.secondaryHeldItem.purchasedAtTick);
+		AppendItemState(hasher, state.secondaryHeldItem.state);
+	}
 }
 
 void DefeatReplayCombatTarget(ReplayFixtureExecutionState &state)
@@ -5706,6 +5715,8 @@ private:
 				return ParseUnsigned(player.combatMode);
 			if (key == "combat_mode_end_tick")
 				return ParseUnsigned(player.combatModeEndTick);
+			if (key == "inventory_filler_count")
+				return ParseUnsigned(player.inventoryFillerCount);
 			if (key == "inventory_item") {
 				player.inventoryItemDefined = true;
 				return ParseObject([this, &player](std::string_view itemKey) {
@@ -6424,6 +6435,13 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		error = "Replay fixture secondary inventory item contains invalid item state.";
 		return false;
 	}
+	if (secondaryPlayer.defined
+	    && (secondaryPlayer.inventoryFillerCount > 40
+	        || (secondaryPlayer.inventoryItemDefined
+	            && secondaryPlayer.inventoryFillerCount > 39))) {
+		error = "Replay fixture secondary inventory filler state is invalid.";
+		return false;
+	}
 	for (const auto &command : fixture.commands) {
 		if (!command.expectedStatus.empty()
 		    && command.expectedStatus != "Accepted"
@@ -6591,6 +6609,30 @@ bool ExecuteReplayFixture(
 			});
 			state.secondaryInventoryGrid[secondary.inventoryItemSlot] = 0;
 		}
+		ReplayFixtureItemState fillerState;
+		fillerState.itemType = 1;
+		fillerState.itemIndex = 1;
+		fillerState.value = 1;
+		fillerState.identifiedValue = 1;
+		fillerState.statFlag = true;
+		for (uint32_t filler = 0; filler < secondary.inventoryFillerCount; ++filler) {
+			const auto emptyCell = std::find(
+			    state.secondaryInventoryGrid.begin(),
+			    state.secondaryInventoryGrid.end(),
+			    -1);
+			if (emptyCell == state.secondaryInventoryGrid.end())
+				break;
+			const size_t inventoryIndex = state.secondaryInventory.size();
+			state.secondaryInventory.push_back({
+			    0,
+			    0,
+			    200U + filler,
+			    1,
+			    0,
+			    fillerState,
+			});
+			*emptyCell = static_cast<int32_t>(inventoryIndex);
+		}
 	}
 	if (state.combatTargetEntityId == 0 && fixture.initialState.combatTargetEntityId != 0) {
 		state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
@@ -6757,22 +6799,33 @@ bool ExecuteReplayFixture(
 					    && state.worldItemSeed != 0
 					    && state.secondaryPlayerLevelId == state.worldItemLevelId
 					    && distance <= 1
-					    && state.secondaryInventory.size() < 40
-					    && targetCell >= 0) {
-						const size_t inventoryIndex = state.secondaryInventory.size();
-						state.secondaryInventory.push_back({
-						    0,
-						    0,
-						    state.worldItemSeed,
-						    state.worldItemPrice,
-						    command.order.targetTick,
-						    state.worldItemState,
-						});
-						FillReplayInventoryGrid(
-						    state.secondaryInventoryGrid,
-						    targetCell,
-						    inventoryIndex,
-						    state.worldItemState);
+					    && !state.secondaryHeldItemDefined) {
+						if (targetCell >= 0 && state.secondaryInventory.size() < 40) {
+							const size_t inventoryIndex = state.secondaryInventory.size();
+							state.secondaryInventory.push_back({
+							    0,
+							    0,
+							    state.worldItemSeed,
+							    state.worldItemPrice,
+							    command.order.targetTick,
+							    state.worldItemState,
+							});
+							FillReplayInventoryGrid(
+							    state.secondaryInventoryGrid,
+							    targetCell,
+							    inventoryIndex,
+							    state.worldItemState);
+						} else {
+							state.secondaryHeldItemDefined = true;
+							state.secondaryHeldItem = {
+							    0,
+							    0,
+							    state.worldItemSeed,
+							    state.worldItemPrice,
+							    command.order.targetTick,
+							    state.worldItemState,
+							};
+						}
 						state.worldItemEntityId = 0;
 						accepted = true;
 					} else if (command.worldItemEntityId != state.worldItemEntityId

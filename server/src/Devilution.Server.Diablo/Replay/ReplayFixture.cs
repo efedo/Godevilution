@@ -136,6 +136,7 @@ public sealed record ReplaySecondaryPlayer(
     public bool BlockCapable { get; init; }
     public DiabloPlayerCombatMode CombatMode { get; init; }
     public ulong CombatModeEndTick { get; init; }
+    public uint InventoryFillerCount { get; init; }
     public ReplaySecondaryInventoryItem? InventoryItem { get; init; }
 }
 

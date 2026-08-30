@@ -32,12 +32,32 @@ public static class ReplayFixtureExecutor
                 throw new InvalidDataException(
                     "Replay secondary-player identity must differ from the primary player.");
             }
-            var secondaryInventory = secondary.InventoryItem is { } inventoryItem
-                ? [inventoryItem.ToOwnedStoreItem()]
-                : Array.Empty<OwnedStoreItem>();
             var secondaryInventoryGrid = Enumerable.Repeat(-1, 40).ToArray();
-            if (secondary.InventoryItem is { } secondaryItem)
+            var secondaryInventory = new List<OwnedStoreItem>();
+            if (secondary.InventoryItem is { } secondaryItem) {
+                secondaryInventory.Add(secondaryItem.ToOwnedStoreItem());
                 secondaryInventoryGrid[checked((int)secondaryItem.Slot)] = 0;
+            }
+            var fillerState = AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 1,
+                Value = 1,
+                IdentifiedValue = 1,
+                StatFlag = true,
+            };
+            for (var filler = 0U; filler < secondary.InventoryFillerCount; filler++) {
+                var cell = Array.IndexOf(secondaryInventoryGrid, -1);
+                if (cell < 0)
+                    throw new InvalidDataException("Replay secondary inventory filler exceeds available cells.");
+                secondaryInventory.Add(new OwnedStoreItem(
+                    0,
+                    0,
+                    checked(200U + filler),
+                    1,
+                    0,
+                    fillerState));
+                secondaryInventoryGrid[cell] = secondaryInventory.Count - 1;
+            }
             executor.InitializeParticipant(
                 secondary.Player,
                 new DiabloPlayerTemplate(

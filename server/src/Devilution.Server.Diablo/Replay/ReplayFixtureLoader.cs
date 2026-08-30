@@ -502,6 +502,7 @@ public static class ReplayFixtureLoader
                 out var combatModeEndTick)
                 ? combatModeEndTick.GetUInt64()
                 : 0,
+            InventoryFillerCount = GetOptionalUInt(player, "inventory_filler_count"),
             InventoryItem = ParseSecondaryInventoryItem(player),
         };
         if (result.EntityId == 0
@@ -519,7 +520,9 @@ public static class ReplayFixtureLoader
                 && result.CombatModeEndTick != 0)
             || ((result.CombatMode is DiabloPlayerCombatMode.Block
                     or DiabloPlayerCombatMode.GotHit)
-                && result.CombatModeEndTick == 0)) {
+                && result.CombatModeEndTick == 0)
+            || result.InventoryFillerCount > 40
+            || (result.InventoryItem is not null && result.InventoryFillerCount > 39)) {
             throw new InvalidDataException(
                 "Replay fixture contains invalid secondary-player state.");
         }
