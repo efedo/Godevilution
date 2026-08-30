@@ -202,7 +202,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 123 checked-in JSON fixtures and 159 registered
+the native replay gate contains 124 checked-in JSON fixtures and 160 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -685,6 +685,8 @@ Notable shared fixtures include:
   clear-lane admission, long-range travel, impact damage, and lifecycle parity;
 - `gameplay-blood-star-autonomous.json` for validated Succubus BloodStar
   admission, native velocity/runtime state, and pre-impact lifecycle parity;
+- `gameplay-blood-star-lazarus-succubus.json` for the LazarusSuccubus
+  BloodStar alias mapping and admission parity;
 - `gameplay-blood-star-impact.json` for deterministic monster-magic hit RNG,
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,
