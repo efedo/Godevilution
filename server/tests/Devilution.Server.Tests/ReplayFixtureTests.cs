@@ -3203,6 +3203,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayScavengerCorpseLifecycleMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-scavenger-corpse.json");
+        var executor = CreateScavengerReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var corpse = Assert.Single(result.FinalSnapshot.Corpses);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal(16, monster.HitPoints);
+        Assert.Equal((5, 10), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(8, monster.ScavengerHealingTicks);
+        Assert.Equal(30U, monster.ScavengerCorpseEntityId);
+        Assert.Equal(30U, corpse.EntityId);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5448,6 +5473,46 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateScavengerReplayExecutor(
+        ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            scavengerHealingTicks: initial.CombatTargetScavengerHealingTicks,
+            scavengerCorpseEntityId: initial.CombatTargetScavengerCorpseEntityId);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingCorpses: initial.Corpses
+                .Select(corpse => new AuthoritativeCorpse(
+                    corpse.EntityId,
+                    corpse.LevelId,
+                    corpse.PositionX,
+                    corpse.PositionY))
+                .ToArray(),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

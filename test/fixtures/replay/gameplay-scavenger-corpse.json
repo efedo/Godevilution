@@ -1,0 +1,39 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/scavenger-corpse",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": { "id": "test-content", "version": "1", "sha256": "scavenger-corpse-content" },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 4,
+    "combat_target_position_y": 10,
+    "combat_target_hit_points": 15,
+    "combat_target_max_hit_points": 40,
+    "combat_target_aggro_range": 8,
+    "combat_target_native_ai": "Scavenger",
+    "corpses": [
+      { "entity_id": 30, "level_id": 1, "position_x": 5, "position_y": 10 }
+    ]
+  },
+  "commands": [
+    { "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } },
+    { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "2c7c63dbd4470c6687f8450e4412a6001cff380855a686e01ce4ae4b883b5e98" },
+    { "tick": 2, "state_sha256": "51907cda25161186c9486e7667065ff86df4cd7b9eeb592f5ca9ffac82f75810" }
+  ]
+}

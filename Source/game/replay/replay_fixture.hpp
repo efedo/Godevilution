@@ -143,6 +143,14 @@ struct ReplayFixtureBeltItem {
 	bool statFlag = false;
 };
 
+/** Minimal authoritative corpse tile carried by the compact replay projection. */
+struct ReplayFixtureCorpseState {
+	uint32_t entityId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+};
+
 struct ReplayFixtureInitialState {
 	std::string player;
 	std::string characterName;
@@ -200,6 +208,8 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetSneakRetreatTicks = 0;
 	int32_t combatTargetBatRetreatTicks = 0;
 	int32_t combatTargetBatRetreatDirection = 0;
+	int32_t combatTargetScavengerHealingTicks = 0;
+	uint32_t combatTargetScavengerCorpseEntityId = 0;
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
 	int32_t combatTargetMagicResistance = 0;
@@ -221,6 +231,7 @@ struct ReplayFixtureInitialState {
 	std::vector<ReplayFixtureMemorizedSpell> memorizedSpells;
 	std::vector<ReplayFixtureEquippedItem> equipment;
 	std::vector<ReplayFixtureBeltItem> belt;
+	std::vector<ReplayFixtureCorpseState> corpses;
 	ReplayFixtureSecondaryPlayer secondaryPlayer;
 };
 
@@ -463,14 +474,6 @@ struct ReplayFixturePlayerActionState {
 	uint32_t castSourceItemSlot = 0;
 };
 
-/** Minimal authoritative corpse tile carried by the compact replay projection. */
-struct ReplayFixtureCorpseState {
-	uint32_t entityId = 0;
-	uint32_t levelId = 0;
-	int32_t positionX = 0;
-	int32_t positionY = 0;
-};
-
 /** Minimal protocol-shaped state used by native replay transition tests. */
 struct ReplayFixtureExecutionState {
 	uint32_t entityId = 1;
@@ -573,6 +576,8 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetSneakRetreatTicks = 0;
 	int32_t combatTargetBatRetreatTicks = 0;
 	int32_t combatTargetBatRetreatDirection = 0;
+	int32_t combatTargetScavengerHealingTicks = 0;
+	uint32_t combatTargetScavengerCorpseEntityId = 0;
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
 	int32_t combatTargetMagicResistance = 0;

@@ -100,6 +100,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetSneakRetreatTicks != 0
                     || initialTarget.CombatTargetBatRetreatTicks != 0
                     || initialTarget.CombatTargetBatRetreatDirection != 0
+                    || initialTarget.CombatTargetScavengerHealingTicks != 0
+                    || initialTarget.CombatTargetScavengerCorpseEntityId != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
@@ -125,6 +127,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > 1024
             || initialTarget.CombatTargetBatRetreatTicks is < 0 or > 1024
             || initialTarget.CombatTargetBatRetreatDirection is < 0 or > 7
+            || initialTarget.CombatTargetScavengerHealingTicks is < 0 or > 1024
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
                     initialTarget.CombatTargetNativeAi))
@@ -385,6 +388,13 @@ public static class ReplayFixtureLoader
             CombatTargetBatRetreatDirection = GetOptionalInt(
                 value,
                 "combat_target_bat_retreat_direction"),
+            CombatTargetScavengerHealingTicks = GetOptionalInt(
+                value,
+                "combat_target_scavenger_healing_ticks"),
+            CombatTargetScavengerCorpseEntityId = GetOptionalUInt(
+                value,
+                "combat_target_scavenger_corpse_entity_id"),
+            Corpses = ParseCorpses(value),
             CombatTargetMoving = GetOptionalBool(value, "combat_target_moving"),
             CombatTargetFuturePositionX = value.TryGetProperty(
                 "combat_target_future_position_x",
@@ -799,6 +809,25 @@ public static class ReplayFixtureLoader
             _ => throw new InvalidDataException(
                 "Replay fixture command expected_status must be Accepted or Rejected."),
         };
+    }
+
+    private static IReadOnlyList<ReplayCorpse> ParseCorpses(JsonElement value)
+    {
+        if (!value.TryGetProperty("corpses", out var corpses))
+            return [];
+        if (corpses.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException("Replay fixture corpses must be an array.");
+        var result = corpses.EnumerateArray()
+            .Select(corpse => new ReplayCorpse(
+                RequiredUInt(corpse, "entity_id"),
+                GetOptionalUInt(corpse, "level_id"),
+                RequiredInt(corpse, "position_x"),
+                RequiredInt(corpse, "position_y")))
+            .ToArray();
+        if (result.Any(corpse => corpse.EntityId == 0)
+            || result.Select(corpse => corpse.EntityId).Distinct().Count() != result.Length)
+            throw new InvalidDataException("Replay fixture corpses contain invalid or duplicate state.");
+        return result;
     }
 
     private static CommandRejectReason? ParseExpectedRejectReason(JsonElement command)

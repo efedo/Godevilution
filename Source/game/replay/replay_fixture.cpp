@@ -551,6 +551,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendInt32(state.combatTargetBatRetreatTicks);
 			hasher.AppendInt32(state.combatTargetBatRetreatDirection);
 		}
+		if (state.combatTargetScavengerHealingTicks != 0
+		    || state.combatTargetScavengerCorpseEntityId != 0) {
+			hasher.AppendString("godevilution-monster-scavenger-v1");
+			hasher.AppendInt32(state.combatTargetScavengerHealingTicks);
+			hasher.AppendUint32(state.combatTargetScavengerCorpseEntityId);
+		}
 		if (state.combatTargetAvoidanceMovementTicks != -1
 		    || state.combatTargetAvoidanceMovementTurn != 0) {
 			hasher.AppendString("godevilution-monster-avoidance-movement-v1");
@@ -4672,6 +4678,97 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetPetrified) {
 		return;
 	}
+	// Compact the native Scavenger corpse-eating goal. The replay boundary
+	// carries authored corpse tiles so movement, healing, and selected-corpse
+	// state remain visible in the same canonical projection as managed state.
+	if (state.combatTargetNativeAi == "Scavenger") {
+		if (state.combatTargetScavengerHealingTicks == 0
+		    && state.combatTargetHitPointsQ6 * 100
+		        >= state.combatTargetMaxHitPointsQ6 * 50)
+			return;
+		if (state.combatTargetScavengerHealingTicks == 0) {
+			state.combatTargetScavengerHealingTicks = 10;
+			state.combatTargetScavengerCorpseEntityId = 0;
+		}
+		ReplayFixtureCorpseState *corpse = nullptr;
+		if (state.combatTargetScavengerCorpseEntityId != 0) {
+			const auto selected = std::find_if(
+			    state.corpses.begin(),
+			    state.corpses.end(),
+			    [&](auto &candidate) {
+				    return candidate.entityId == state.combatTargetScavengerCorpseEntityId;
+			    });
+			if (selected != state.corpses.end())
+				corpse = &*selected;
+		}
+		if (corpse == nullptr) {
+			// Native ScavengerFindCorpse consumes one gameplay random value for
+			// its coin-selected scan direction, even when this compact fixture
+			// controller resolves the only corpse directly.
+			AdvanceRandom(state);
+			const auto selected = std::find_if(
+			    state.corpses.begin(),
+			    state.corpses.end(),
+			    [&](auto &candidate) {
+				    return (candidate.levelId == 0
+				            || candidate.levelId == state.combatTargetLevelId)
+				        && std::max(
+				               std::abs(candidate.positionX - state.combatTargetPositionX),
+				               std::abs(candidate.positionY - state.combatTargetPositionY)) <= 4;
+			    });
+			if (selected != state.corpses.end()) {
+				state.combatTargetScavengerCorpseEntityId = selected->entityId;
+				corpse = &*selected;
+			}
+		}
+		if (corpse == nullptr) {
+			--state.combatTargetScavengerHealingTicks;
+			if (state.combatTargetScavengerHealingTicks == 0)
+				state.combatTargetScavengerCorpseEntityId = 0;
+			return;
+		}
+		if (state.combatTargetPositionX == corpse->positionX
+		    && state.combatTargetPositionY == corpse->positionY) {
+			state.combatTargetHitPointsQ6 = std::min(
+			    state.combatTargetMaxHitPointsQ6,
+			    state.combatTargetHitPointsQ6 + 64);
+			state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+			--state.combatTargetScavengerHealingTicks;
+			if (state.combatTargetHitPointsQ6
+			        >= state.combatTargetMaxHitPointsQ6 * 75 / 100
+			    || state.combatTargetScavengerHealingTicks == 0) {
+				state.combatTargetScavengerHealingTicks = 0;
+				state.combatTargetScavengerCorpseEntityId = 0;
+			}
+			return;
+		}
+		const int deltaX = (corpse->positionX > state.combatTargetPositionX)
+		    - (corpse->positionX < state.combatTargetPositionX);
+		const int deltaY = (corpse->positionY > state.combatTargetPositionY)
+		    - (corpse->positionY < state.combatTargetPositionY);
+		const int candidateX = state.combatTargetPositionX + deltaX;
+		const int candidateY = state.combatTargetPositionY + deltaY;
+		if (std::max(
+		        std::abs(candidateX - state.combatTargetPositionX),
+		        std::abs(candidateY - state.combatTargetPositionY)) == 1) {
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = GetDirection(
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY,
+			    candidateX,
+			    candidateY);
+		}
+		--state.combatTargetScavengerHealingTicks;
+		if (state.combatTargetScavengerHealingTicks == 0) {
+			state.combatTargetScavengerCorpseEntityId = 0;
+			state.combatTargetMoving = false;
+			state.combatTargetFuturePositionX = state.combatTargetPositionX;
+			state.combatTargetFuturePositionY = state.combatTargetPositionY;
+		}
+		return;
+	}
 	// Autonomous ranged identities own their movement and projectile admission
 	// below; the generic compact monster branch must not pursue them into melee.
 	if (state.combatTargetNativeAi == "SkeletonRanged"
@@ -6349,6 +6446,47 @@ private:
 		return true;
 	}
 
+	bool ParseInitialCorpses()
+	{
+		if (!Consume('['))
+			return Fail("expected corpse array");
+		fixture_.initialState.corpses.clear();
+		SkipWhitespace();
+		if (Consume(']'))
+			return true;
+		while (true) {
+			ReplayFixtureCorpseState corpse;
+			if (!ParseObject([this, &corpse](std::string_view key) {
+				if (key == "entity_id")
+					return ParseUnsigned(corpse.entityId);
+				if (key == "level_id")
+					return ParseUnsigned(corpse.levelId);
+				if (key == "position_x")
+					return ParseSigned(corpse.positionX);
+				if (key == "position_y")
+					return ParseSigned(corpse.positionY);
+				return SkipValue();
+			}))
+				return false;
+			if (corpse.entityId == 0)
+				return Fail("corpse entity identity must be non-zero");
+			if (std::any_of(
+			        fixture_.initialState.corpses.begin(),
+			        fixture_.initialState.corpses.end(),
+			        [&](const auto &existing) {
+				        return existing.entityId == corpse.entityId;
+			        }))
+				return Fail("duplicate corpse entity identity");
+			fixture_.initialState.corpses.push_back(corpse);
+			SkipWhitespace();
+			if (Consume(']'))
+				return true;
+			if (!Consume(','))
+				return Fail("expected comma or closing bracket");
+			SkipWhitespace();
+		}
+	}
+
 	bool ParseInitialState()
 	{
 		return ParseObject([this](std::string_view key) {
@@ -6471,6 +6609,12 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetBatRetreatTicks);
 			if (key == "combat_target_bat_retreat_direction")
 				return ParseSigned(fixture_.initialState.combatTargetBatRetreatDirection);
+			if (key == "combat_target_scavenger_healing_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetScavengerHealingTicks);
+			if (key == "combat_target_scavenger_corpse_entity_id")
+				return ParseUnsigned(fixture_.initialState.combatTargetScavengerCorpseEntityId);
+			if (key == "corpses")
+				return ParseInitialCorpses();
 			if (key == "combat_target_fire_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetFireResistance);
 			if (key == "combat_target_lightning_resistance")
@@ -7295,6 +7439,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetSneakRetreatTicks != 0
 		    || target.combatTargetBatRetreatTicks != 0
 		    || target.combatTargetBatRetreatDirection != 0
+		    || target.combatTargetScavengerHealingTicks != 0
+		    || target.combatTargetScavengerCorpseEntityId != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
@@ -7324,6 +7470,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetBatRetreatTicks > 1024
 		|| target.combatTargetBatRetreatDirection < 0
 		|| target.combatTargetBatRetreatDirection > 7
+		|| target.combatTargetScavengerHealingTicks < 0
+		|| target.combatTargetScavengerHealingTicks > 1024
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -7676,6 +7824,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetSneakRetreatTicks = fixture.initialState.combatTargetSneakRetreatTicks;
 		state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;
 		state.combatTargetBatRetreatDirection = fixture.initialState.combatTargetBatRetreatDirection;
+		state.combatTargetScavengerHealingTicks = fixture.initialState.combatTargetScavengerHealingTicks;
+		state.combatTargetScavengerCorpseEntityId = fixture.initialState.combatTargetScavengerCorpseEntityId;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;
@@ -7686,6 +7836,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetPetrified = fixture.initialState.combatTargetPetrified;
 		state.combatTargetStoneCurseImmune = fixture.initialState.combatTargetStoneCurseImmune;
 	}
+	state.corpses = fixture.initialState.corpses;
 	if (state.combatTargetEntityId != 0) {
 		if (!state.combatTargetMoving
 		    && state.combatTargetFuturePositionX == 0

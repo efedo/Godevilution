@@ -14,6 +14,10 @@ The shared replay contract now covers native Sneak conceal/reveal transitions
 and the Bat retreat lifecycle. Native and managed runners preserve visibility,
 retreat movement, countdown state, and canonical checkpoint parity.
 
+The shared replay contract now covers the server-owned Scavenger corpse goal.
+Native and managed runners preserve corpse selection, movement, Q6 healing,
+countdown state, and the native gameplay-RNG draw across the lifecycle.
+
 The shared protocol now admits an additive `DropItemRequested` intent carrying
 the same stable item references used by inventory and stash transfers. The
 authoritative server validates and removes the referenced carried item only

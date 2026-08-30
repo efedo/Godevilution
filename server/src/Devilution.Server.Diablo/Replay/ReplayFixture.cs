@@ -7,6 +7,9 @@ namespace Devilution.Server.Replay;
 
 public sealed record ReplayMemorizedSpell(uint SpellId, uint Level);
 
+/** Minimal server-owned corpse tile used by corpse-consuming AI fixtures. */
+public sealed record ReplayCorpse(uint EntityId, uint LevelId, int PositionX, int PositionY);
+
 /** Minimal protocol-shaped equipment state needed by action-timing fixtures. */
 public sealed record ReplayEquippedItem(
     uint Slot,
@@ -273,6 +276,13 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     public int CombatTargetBatRetreatTicks { get; init; }
 
     public int CombatTargetBatRetreatDirection { get; init; }
+
+    /** Optional native Scavenger healing state and selected corpse identity. */
+    public int CombatTargetScavengerHealingTicks { get; init; }
+
+    public uint CombatTargetScavengerCorpseEntityId { get; init; }
+
+    public IReadOnlyList<ReplayCorpse> Corpses { get; init; } = [];
 
     public bool CombatTargetMoving { get; init; }
 
