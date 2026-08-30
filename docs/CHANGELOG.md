@@ -30,6 +30,12 @@ All notable changes to this fork are documented below.
   multiplayer AI seed now advances on the authoritative tick boundary, and
   generic secondary-player melee matches native hit/block stream consumption,
   block timing, and canonical state hashing.
+- Extend seeded secondary melee coverage through successful impact. Both
+  runners now consume the native min/max damage draw and preserve the shared
+  post-impact RNG state and participant hash.
+- Guard the legacy native client loop against opt-in authoritative-runtime
+  references when server-backed client support is disabled, restoring the
+  default replay-test build.
 
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind

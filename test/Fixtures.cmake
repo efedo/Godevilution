@@ -156,6 +156,7 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-secondary-monster-pathing.json
   replay/gameplay-multiplayer-secondary-monster-object-pathing.json
   replay/gameplay-multiplayer-secondary-monster-native-ai-seed.json
+  replay/gameplay-multiplayer-secondary-monster-native-ai-seed-impact.json
   replay/gameplay-multiplayer-secondary-portal.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json

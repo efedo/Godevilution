@@ -4694,9 +4694,26 @@ void AdvanceReplayMonsterAttack(
 		}
 	}
 	if (victim.secondary) {
-		const int32_t damage = state.combatTargetAttackDamage == 0
+		int32_t damage = state.combatTargetAttackDamage == 0
 		    ? 0
 		    : std::max(1, state.combatTargetAttackDamage);
+		if (state.combatTargetMonsterAiSeed != 0
+		    && state.combatTargetToHit > 0) {
+			const int32_t minimumDamage = state.combatTargetMinDamage == 0
+			        && state.combatTargetMaxDamage == 0
+			    ? damage
+			    : state.combatTargetMinDamage;
+			const int32_t maximumDamage = state.combatTargetMinDamage == 0
+			        && state.combatTargetMaxDamage == 0
+			    ? damage
+			    : state.combatTargetMaxDamage;
+			const int32_t minimumDamageQ6 = minimumDamage * 64;
+			const int32_t maximumDamageQ6 = maximumDamage * 64;
+			const int32_t damageQ6 = minimumDamageQ6 + std::max(
+			    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
+			    0);
+			damage = damageQ6 / 64;
+		}
 		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damage);
 		if (state.secondaryPlayerLife == 0)
 			StartReplaySecondaryPlayerDeath(state, true);

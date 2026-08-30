@@ -1110,7 +1110,11 @@ void RunGameLoop(interface_mode uMsg)
 	gbGameLoopStartup = true;
 	nthread_ignore_mutex(false);
 
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (ShouldProcessLegacyLuaEvents(authoritative::GetServerBackedRuntime().IsAuthoritativeMode()))
+	#else
+	if (ShouldProcessLegacyLuaEvents(false))
+	#endif
 		CurrentGameEventBus.GameStart();
 #ifdef GPERF_HEAP_FIRST_GAME_ITERATION
 	unsigned run_game_iteration = 0;
@@ -1866,6 +1870,7 @@ void GameLogic()
 		gGameLogicStep = GameLogicStep::ProcessPlayers;
 		ProcessPlayers();
 	}
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (serverBackedGameplay) {
 		// The connected server owns all gameplay mutation. The legacy pools remain
 		// presentation data until their authoritative projection is consumed by
@@ -1874,7 +1879,9 @@ void GameLogic()
 		AdvanceAuthoritativePresentationMissileAnimations();
 		CurrentLightManager.ProcessLightList();
 		CurrentLightManager.ProcessVisionList();
-	} else if (levelType() != DTYPE_TOWN) {
+	} else
+	#endif
+	if (levelType() != DTYPE_TOWN) {
 		gGameLogicStep = GameLogicStep::ProcessMonsters;
 #ifdef _DEBUG
 		if (!DebugInvisible)

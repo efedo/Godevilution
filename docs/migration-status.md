@@ -41,6 +41,10 @@ multiplayer AI stream advances once per authoritative multiplayer tick, and
 generic secondary melee consumes that stream for hit and block rolls. The
 cross-language native-AI-seed fixture verifies the resulting block mode,
 timing, seed advancement, and canonical checkpoint hash.
+The companion impact fixture also verifies successful min/max damage draw
+consumption and post-impact RNG-state parity. The default native client build
+now keeps those opt-in runtime references behind the server-backed feature
+guard, allowing the replay target to build without that feature enabled.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory
