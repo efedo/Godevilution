@@ -552,6 +552,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendInt32(state.combatTargetAvoidanceMovementIdleTicks);
 			hasher.AppendInt32(state.combatTargetAvoidanceMovementMode);
 		}
+		if (state.combatTargetSkeletonMeleeDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-skeleton-delay-v1");
+			hasher.AppendInt32(state.combatTargetSkeletonMeleeDelayTicks);
+		}
 		if (state.combatTargetHorkDemonDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
 			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
@@ -4754,6 +4758,32 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
+	// Compact the SkeletonAi movement-delay admission; the managed snapshot
+	// carries the remaining delay so the next autonomous tick can be compared.
+	if (state.combatTargetNativeAi == "SkeletonMelee") {
+		if (state.combatTargetSkeletonMeleeDelayTicks > 0) {
+			--state.combatTargetSkeletonMeleeDelayTicks;
+			return;
+		}
+		if (distance > 1) {
+			const uint32_t actionSeed = static_cast<uint32_t>(tick)
+			    ^ state.combatTargetEntityId
+			    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+			const int actionRoll = state.combatTargetMonsterAiSeed != 0
+			    ? std::max(GenerateRnd(state, 100), 0)
+			    : static_cast<int>(actionSeed % 100U);
+			const int delayBand = std::max(
+			    0,
+			    35 - 4 * state.combatTargetIntelligence);
+			if (actionRoll < delayBand) {
+				state.combatTargetSkeletonMeleeDelayTicks = std::max(
+				    0,
+				    15 - 2 * state.combatTargetIntelligence
+				        + static_cast<int>((actionSeed / 100U) % 10U));
+				return;
+			}
+		}
+	}
 	if (distance > 1) {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;
@@ -6082,6 +6112,8 @@ private:
 				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetHorkDemonDelayTicks);
+			if (key == "combat_target_skeleton_melee_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
 			if (key == "combat_target_fire_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetFireResistance);
 			if (key == "combat_target_lightning_resistance")
@@ -6899,6 +6931,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetIntelligence != 0
 			|| target.combatTargetGargoyleSpecialActive
 			|| target.combatTargetHorkDemonDelayTicks != 0
+			|| target.combatTargetSkeletonMeleeDelayTicks != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
@@ -6917,6 +6950,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
 		|| target.combatTargetHorkDemonDelayTicks < 0
 		|| target.combatTargetHorkDemonDelayTicks > 1024
+		|| target.combatTargetSkeletonMeleeDelayTicks < 0
+		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -7262,6 +7297,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
+		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;

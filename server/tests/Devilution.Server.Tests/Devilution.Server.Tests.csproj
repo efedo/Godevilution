@@ -81,6 +81,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-idle.json" Link="Fixtures/gameplay-gargoyle-avoidance-idle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-walk.json" Link="Fixtures/gameplay-gargoyle-avoidance-walk.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-move.json" Link="Fixtures/gameplay-gargoyle-avoidance-move.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-delay.json" Link="Fixtures/gameplay-skeleton-melee-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-autonomous-tick.json" Link="Fixtures/gameplay-multiplayer-autonomous-tick.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-attack.json" Link="Fixtures/gameplay-multiplayer-secondary-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-item-drop.json" Link="Fixtures/gameplay-multiplayer-secondary-item-drop.json" CopyToOutputDirectory="PreserveNewest" />

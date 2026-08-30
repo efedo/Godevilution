@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared SkeletonMelee replay fixture for native delay admission and
+  next-tick countdown parity. Both runners now preserve the server-owned delay
+  state and unchanged global RNG across the autonomous lifecycle.
 - Extend the shared Gargoyle avoidance Move-goal fixture through its second
   autonomous tick. Native and managed runners now verify movement completion,
   next-tile RoundWalk selection, persisted goal state, per-monster seed advance,

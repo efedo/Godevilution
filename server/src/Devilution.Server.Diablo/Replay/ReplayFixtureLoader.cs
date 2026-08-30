@@ -93,6 +93,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetIntelligence != 0
                     || initialTarget.CombatTargetGargoyleSpecialActive
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
+                    || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
@@ -112,6 +113,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetMaxDamage < initialTarget.CombatTargetMinDamage
             || initialTarget.CombatTargetIntelligence is < 0 or > 255
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
                     initialTarget.CombatTargetNativeAi))
@@ -353,6 +355,9 @@ public static class ReplayFixtureLoader
             CombatTargetHorkDemonDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_hork_demon_delay_ticks"),
+            CombatTargetSkeletonMeleeDelayTicks = GetOptionalInt(
+                value,
+                "combat_target_skeleton_melee_delay_ticks"),
             CombatTargetMoving = GetOptionalBool(value, "combat_target_moving"),
             CombatTargetFuturePositionX = value.TryGetProperty(
                 "combat_target_future_position_x",

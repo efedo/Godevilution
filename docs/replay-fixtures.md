@@ -188,7 +188,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 108 checked-in JSON fixtures and 141 registered
+the native replay gate contains 109 checked-in JSON fixtures and 142 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -205,7 +205,7 @@ Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
-tick. The dated full-suite
+tick, and SkeletonMelee delay admission/countdown. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -245,7 +245,7 @@ plus its adjacent attack-band admission, healthy non-adjacent avoidance
 idle-band lifecycle, an admitted RandomWalk destination with participant and
 active-object occupancy checks, and far-distance Move-goal admission with
 persisted goal ticks, turn state, RoundWalk destination, and next-tick
-continuation parity.
+continuation parity, plus SkeletonMelee delay admission and countdown.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
