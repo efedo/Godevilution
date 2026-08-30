@@ -4634,7 +4634,7 @@ public sealed class ReplayFixtureTests
         Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
         Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
         Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
-        Assert.Equal(5U, projectile.RemainingTicks);
+        Assert.Equal(6U, projectile.RemainingTicks);
         Assert.Equal(0, monster.RangedDelayTicks);
         Assert.Equal(2UL, result.FinalSnapshot.Tick);
         Assert.Equal(
@@ -4702,6 +4702,68 @@ public sealed class ReplayFixtureTests
         Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
         Assert.Equal(6U, projectile.RemainingTicks);
         Assert.Equal(0, monster.RangedDelayTicks);
+        Assert.Equal(1788971303U, monster.MonsterAiSeed);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplayGoatRangedNativeAiSeedMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-arrow-goat-ranged-native-ai-seed.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterArrowExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(6U, projectile.RemainingTicks);
+        Assert.Equal(10, monster.RangedDelayTicks);
+        Assert.Equal(1788971303U, monster.MonsterAiSeed);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplayGoatRangedCloseNativeAiSeedMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-arrow-goat-ranged-close-native-ai-seed.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateMonsterArrowExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.True(monster.Moving);
+        Assert.Equal(4, monster.PositionX);
+        Assert.Equal(0, monster.PositionY);
+        Assert.Equal(5, monster.FuturePositionX);
+        Assert.Equal(0, monster.FuturePositionY);
         Assert.Equal(1788971303U, monster.MonsterAiSeed);
         Assert.Equal(1UL, result.FinalSnapshot.Tick);
         Assert.Equal(

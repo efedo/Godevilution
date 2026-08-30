@@ -67,7 +67,8 @@ captured physical damage and per-tick player collision. Managed combat and
 snapshot tests cover this lifecycle, and the compact cross-runner fixture now
 covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
 and secondary-participant routing. Companion fixtures cover autonomous
-GoatRanged nearest-player selection, SkeletonRanged clear-lane admission, and
+GoatRanged nearest-player selection, seeded GoatRanged close retreat and
+post-shot delay, SkeletonRanged clear-lane admission, and
 Succubus BloodStar admission/travel/impact state, including secondary-player
 block resolution, and Lich-family MonsterMagic admission, hit, miss,
 nearest-participant selection, and secondary-participant impact resolution;
@@ -681,6 +682,12 @@ Notable shared fixtures include:
 - `gameplay-monster-arrow-autonomous.json` for validated GoatRanged admission,
   stable nearest-player target selection, travel, impact damage, and lifecycle
   parity;
+- `gameplay-monster-arrow-goat-ranged-native-ai-seed.json` for restored
+  GoatRanged AI-stream advancement, secondary-player arrow routing, and
+  stream-derived post-shot delay;
+- `gameplay-monster-arrow-goat-ranged-close-native-ai-seed.json` for restored
+  close-range retreat admission, RandomWalk direction draws, and movement
+  checkpoint parity;
 - `gameplay-monster-arrow-skeleton-ranged.json` for validated SkeletonRanged
   clear-lane admission, long-range travel, impact damage, and lifecycle parity;
 - `gameplay-blood-star-autonomous.json` for validated Succubus BloodStar

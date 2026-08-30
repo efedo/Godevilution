@@ -1,0 +1,63 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-goat-ranged-native-ai-seed",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "monster-arrow-goat-ranged-native-ai-seed-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "GoatRanged",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 0,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 305419896,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 3,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "9b2956d98474bb49683fc26c62d80c6c320a017ff352aaf6bb1f5fbd8d5bfae4" }
+  ]
+}

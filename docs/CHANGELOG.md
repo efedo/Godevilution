@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add seeded GoatRanged replay coverage. Native and managed runners now
+  consume the restored AI stream for close-range retreat RandomWalk draws and
+  post-shot ranged-delay state, preserving canonical checkpoints.
+
 - Add seeded SkeletonRanged replay coverage. Native and managed runners now
   consume the same native AI stream for arrow admission and preserve the
   updated monster seed through the canonical checkpoint.
