@@ -202,7 +202,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 121 checked-in JSON fixtures and 157 registered
+the native replay gate contains 122 checked-in JSON fixtures and 158 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -279,7 +279,9 @@ The Hellfire Scavenger lane additionally verifies max-health-fraction healing
 and removal of the consumed corpse.
 Zombie action admission and long-range movement are also covered in both
 runners. Fat/Overlord fresh movement admission, mode, idle counter, and
-occupancy are also covered in both runners. They are wired to preserve the same
+occupancy are also covered in both runners. GoatMelee AiAvoidance movement
+admission, deterministic turn ordering, and occupancy are also covered in both
+runners. They are wired to preserve the same
 baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -647,6 +649,8 @@ Notable shared fixtures include:
   movement-delay and failed adjacent-attack admission/countdown parity;
 - `gameplay-rhino-charge.json` for native charge admission, nearest adjacent
   landing, special damage, monster relocation, player knockback, and RNG parity;
+- `gameplay-goat-melee-movement.json` for zero-seed AiAvoidance movement
+  admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
   native monster runtime-seed advancement, secondary hit/block stream
   consumption, block timing, and cross-language canonical hashing;

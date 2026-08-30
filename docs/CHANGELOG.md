@@ -24,6 +24,10 @@ All notable changes to this fork are documented below.
   now preserve the fresh movement admission band, movement mode, idle counter,
   and current/future occupancy across consecutive ticks.
 
+- Add a shared GoatMelee AiAvoidance movement replay fixture. Native and managed
+  runners now preserve the compatibility movement band, turn ordering, and
+  avoidance counter state without advancing the gameplay RNG.
+
 - Add a shared SnakeCharge replay fixture covering native admission, projectile
   travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and

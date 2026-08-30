@@ -4879,11 +4879,16 @@ void AdvanceReplayMonsterAttack(
 			state.combatTargetBatRetreatDirection = 0;
 		return;
 	}
-	if (state.combatTargetNativeAi == "Gargoyle" && distance > 1) {
-		const bool wounded = state.combatTargetMaxHitPoints > 0
+	if ((state.combatTargetNativeAi == "Gargoyle"
+	        || state.combatTargetNativeAi == "GoatMelee")
+	    && distance > 1) {
+		const bool wounded = state.combatTargetNativeAi == "Gargoyle"
+		    && state.combatTargetMaxHitPoints > 0
 		    && state.combatTargetHitPoints * 100
 		        < state.combatTargetMaxHitPoints * 50;
-		if (wounded || state.combatTargetGargoyleSpecialActive)
+		if (wounded
+		    || (state.combatTargetNativeAi == "Gargoyle"
+		        && state.combatTargetGargoyleSpecialActive))
 			return;
 		// Compact the healthy AiAvoidance idle band. The managed controller
 		// persists this counter even when no walk is admitted.
@@ -4896,6 +4901,13 @@ void AdvanceReplayMonsterAttack(
 		const int movementChance = std::min(
 		    100,
 		    28 + 2 * state.combatTargetIntelligence);
+		// Zero-seed GoatMelee uses the managed action seed so movement turns do
+		// not consume the shared gameplay RNG stream.
+		const uint32_t actionSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const bool usesCompatibilitySeed = state.combatTargetNativeAi == "GoatMelee"
+		    && state.combatTargetMonsterAiSeed == 0;
 		const int direction = GetDirection(
 		    state.combatTargetPositionX,
 		    state.combatTargetPositionY,
@@ -4931,11 +4943,16 @@ void AdvanceReplayMonsterAttack(
 			state.combatTargetAvoidanceMovementIdleTicks = displacement.second;
 			return true;
 		};
-		const bool startsMoveGoal = distance >= 4 && std::max(GenerateRnd(state, 4), 0) == 0;
+		const bool startsMoveGoal = distance >= 4
+		    && (usesCompatibilitySeed
+		        ? (actionSeed / 100U) % 4U == 0U
+		        : std::max(GenerateRnd(state, 4), 0) == 0);
 		if (state.combatTargetAvoidanceMovementTicks >= 0 || startsMoveGoal) {
 			if (state.combatTargetAvoidanceMovementTicks < 0) {
 				state.combatTargetAvoidanceMovementTicks = 0;
-				state.combatTargetAvoidanceMovementTurn = std::max(GenerateRnd(state, 2), 0);
+				state.combatTargetAvoidanceMovementTurn = usesCompatibilitySeed
+				    ? static_cast<int>((actionSeed / 100U) % 2U)
+				    : std::max(GenerateRnd(state, 2), 0);
 			}
 			const bool completes = state.combatTargetAvoidanceMovementTicks >= 2 * distance
 			    && isCandidateAvailable(direction);
@@ -4961,8 +4978,12 @@ void AdvanceReplayMonsterAttack(
 				state.combatTargetAvoidanceMovementTurn =
 				    state.combatTargetAvoidanceMovementTurn == 0 ? 1 : 0;
 				const int fallbackDirection = (turn90 + 4) % 8;
-				const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
-				const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
+				const int firstTurn = usesCompatibilitySeed
+				    ? ((actionSeed / 100U) % 2U == 0U ? 1 : -1)
+				    : (std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1);
+				const int secondTurn = usesCompatibilitySeed
+				    ? ((actionSeed / 200U) % 2U == 0U ? 2 : -2)
+				    : (std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2);
 				const int fallbackCandidates[] = {
 				    fallbackDirection,
 				    (fallbackDirection + firstTurn + 8) % 8,
@@ -4982,8 +5003,12 @@ void AdvanceReplayMonsterAttack(
 				++state.combatTargetAvoidanceMovementIdleTicks;
 			return;
 		}
-		const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
-		const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
+		const int firstTurn = usesCompatibilitySeed
+		    ? ((actionSeed / 100U) % 2U == 0U ? 1 : -1)
+		    : (std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1);
+		const int secondTurn = usesCompatibilitySeed
+		    ? ((actionSeed / 200U) % 2U == 0U ? 2 : -2)
+		    : (std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2);
 		const int candidates[] = {
 			direction,
 			(direction + firstTurn + 8) % 8,

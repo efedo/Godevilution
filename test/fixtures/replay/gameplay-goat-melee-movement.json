@@ -1,0 +1,36 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/goat-melee-movement",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": { "id": "test-content", "version": "1", "sha256": "goat-melee-movement-content" },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "combat_target_entity_id": 10,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 7,
+    "combat_target_position_y": 10,
+    "combat_target_hit_points": 40,
+    "combat_target_max_hit_points": 40,
+    "combat_target_aggro_range": 8,
+    "combat_target_native_ai": "GoatMelee"
+  },
+  "commands": [
+    { "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } },
+    { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "0ad376b28489290aa8bd7b880a9dfd87a4248bfeb9ee6051686bed2698220038" },
+    { "tick": 2, "state_sha256": "3cba8bc7a955bed29fe26a2fcd1bcd8c2c212617d9db90a589048ebe5d34cfb4" }
+  ]
+}
