@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Ring of Fire replay coverage. Native and managed runners now
+  preserve the deterministic radius-three crawl, persistent Fire Wall segment
+  creation, and canonical projectile checkpoints.
+
 - Extend shared wall replay coverage to Lightning Wall. Native and managed
   runners now preserve the shared controller geometry with lightning-specific
   segment damage, duration, presentation identity, and canonical checkpoints.

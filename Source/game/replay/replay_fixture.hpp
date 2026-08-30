@@ -450,6 +450,7 @@ struct ReplayFixtureProjectileState {
 	bool wallLeftStopped = false;
 	bool wallRightStopped = false;
 	int32_t wallHitDirection = -1;
+	bool ringOfFireLimitReached = false;
 	int32_t apocalypseScanX = 0;
 	int32_t apocalypseScanY = 0;
 	bool apocalypseHit = false;

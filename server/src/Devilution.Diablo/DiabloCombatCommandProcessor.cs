@@ -3565,6 +3565,7 @@ public sealed class DiabloCombatCommandProcessor
             0,
             (uint)spell.ProjectileLifetime) {
             Behavior = AuthoritativeProjectileBehavior.RingOfFireController,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
             EffectiveSpellLevel = effectiveSpellLevel,
         };
     }

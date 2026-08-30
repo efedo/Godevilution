@@ -47,6 +47,7 @@ constexpr int32_t InfernoSegmentBehavior = 27;
 constexpr int32_t FireWallControllerBehavior = 22;
 constexpr int32_t FireWallSegmentBehavior = 23;
 constexpr int32_t LightningWallControllerBehavior = 47;
+constexpr int32_t RingOfFireControllerBehavior = 42;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
@@ -3460,6 +3461,31 @@ void CreateReplayFireWallController(
 	state.projectiles.push_back(controller);
 }
 
+void CreateReplayRingOfFireController(
+	ReplayFixtureExecutionState &state,
+	int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		controller.entityId = std::max(controller.entityId, projectile.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 44;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = state.positionX;
+	controller.targetY = state.positionY;
+	controller.damageType = 1;
+	controller.remainingTicks = 1;
+	controller.behavior = RingOfFireControllerBehavior;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.resistantDamageDivisor = 4;
+	controller.effectiveSpellLevel = spellLevel;
+	state.projectiles.push_back(controller);
+}
+
 ReplayFixtureProjectileState CreateReplayFireWallSegment(
 	ReplayFixtureExecutionState &state,
 	const ReplayFixtureProjectileState &controller,
@@ -3580,6 +3606,38 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state)
 	for (auto &spawned : created)
 		--spawned.remainingTicks;
 	state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+		return;
+	}
+}
+
+void AdvanceReplayRingOfFireOneTick(ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &controller = state.projectiles[index];
+		if (controller.behavior != RingOfFireControllerBehavior)
+			continue;
+		if (controller.remainingTicks > 0)
+			--controller.remainingTicks;
+		static_cast<void>(GenerateRnd(state, 10));
+		static_cast<void>(GenerateRnd(state, 10));
+		const auto controllerState = controller;
+		if (!controller.ringOfFireLimitReached) {
+			DoCrawl(3, [&](Displacement displacement) {
+				const int32_t targetX = controllerState.startX + displacement.deltaX;
+				const int32_t targetY = controllerState.startY + displacement.deltaY;
+				if (ReplayWallPositionIsValid(state, targetX, targetY)) {
+					state.projectiles.push_back(CreateReplayFireWallSegment(
+						state,
+						controllerState,
+						targetX,
+						targetY,
+						-1,
+						false));
+				}
+				return true;
+			});
+		}
+		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
 		return;
 	}
 }
@@ -3925,6 +3983,26 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 				spellLevel,
 				50,
 				LightningWallControllerBehavior);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 44
+	    && state.spellProjectileBehavior == RingOfFireControllerBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			8,
+			28 - std::max(spellLevel - 1, 0) * 2)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			CreateReplayRingOfFireController(state, spellLevel);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -7024,6 +7102,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
 		AdvanceReplayInfernoOneTick(state);
+		AdvanceReplayRingOfFireOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
