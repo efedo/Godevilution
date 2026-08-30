@@ -3251,6 +3251,24 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayZombieActionMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-zombie-action.json");
+        var executor = CreateZombieReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal((5, 10), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(7, monster.Direction);
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5541,6 +5559,37 @@ public sealed class ReplayFixtureTests
                 1,
                 100,
                 gameVariant: fixture.GameVariant),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateZombieReplayExecutor(
+        ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

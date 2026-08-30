@@ -5124,6 +5124,95 @@ void AdvanceReplayMonsterAttack(
 			}
 		}
 	}
+	// Compact the native ZombieAi action band and deterministic long-range
+	// walk. Zero-seed fixtures use the same stable compatibility seed as the
+	// managed controller; seeded streams retain the existing native boundary.
+	if (state.combatTargetNativeAi == "Zombie"
+	    && state.combatTargetMonsterAiSeed == 0) {
+		const uint32_t actionSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int actionRoll = static_cast<int>(actionSeed % 100U);
+		const int actionChance = std::min(
+		    100,
+		    10 + 2 * state.combatTargetIntelligence);
+		if (actionRoll >= actionChance)
+			return;
+		const int longRangeDistance = std::max(
+		    2,
+		    4 + 2 * state.combatTargetIntelligence);
+		const int differenceX = victim.positionX - state.combatTargetPositionX;
+		const int differenceY = victim.positionY - state.combatTargetPositionY;
+		std::array<std::pair<int, int>, 4> candidates {};
+		size_t candidateCount = 0;
+		if (distance < longRangeDistance) {
+			if (distance < 2)
+				return;
+			candidates[candidateCount++] = {
+			    (differenceX > 0) - (differenceX < 0),
+			    (differenceY > 0) - (differenceY < 0),
+			};
+			candidates[candidateCount++] = {
+			    (differenceX > 0) - (differenceX < 0),
+			    0,
+			};
+			candidates[candidateCount++] = {
+			    0,
+			    (differenceY > 0) - (differenceY < 0),
+			};
+		} else {
+			const int randomDirection = static_cast<int>((actionSeed / 100U) % 8U);
+			if (actionSeed % 100U < 20U) {
+				const std::array<std::pair<int, int>, 8> zombieDirections {
+				    std::pair<int, int> { 1, 0 },
+				    { 1, 1 },
+				    { 0, 1 },
+				    { -1, 1 },
+				    { -1, 0 },
+				    { -1, -1 },
+				    { 0, -1 },
+				    { 1, -1 },
+				};
+				candidates[candidateCount++] = zombieDirections[randomDirection];
+			}
+			candidates[candidateCount++] = {
+			    (differenceX > 0) - (differenceX < 0),
+			    (differenceY > 0) - (differenceY < 0),
+			};
+			candidates[candidateCount++] = {
+			    (differenceX > 0) - (differenceX < 0),
+			    0,
+			};
+			candidates[candidateCount++] = {
+			    0,
+			    (differenceY > 0) - (differenceY < 0),
+			};
+		}
+		for (size_t index = 0; index < candidateCount; ++index) {
+			const auto [deltaX, deltaY] = candidates[index];
+			if (deltaX == 0 && deltaY == 0)
+				continue;
+			const int candidateX = state.combatTargetPositionX + deltaX;
+			const int candidateY = state.combatTargetPositionY + deltaY;
+			if (candidateX < 0 || candidateX >= 40
+			    || candidateY < 0 || candidateY >= 40
+			    || (candidateX == state.positionX && candidateY == state.positionY)
+			    || (state.secondaryPlayerEntityId != 0
+			        && candidateX == state.secondaryPlayerPositionX
+			        && candidateY == state.secondaryPlayerPositionY))
+				continue;
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = GetDirection(
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY,
+			    candidateX,
+			    candidateY);
+			return;
+		}
+		return;
+	}
 	if (distance > 1 && state.combatTargetNativeAi != "Rhino") {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;

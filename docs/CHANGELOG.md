@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   runners now verify max-health-fraction healing and removal of the consumed
   corpse when the monster reaches full health.
 
+- Add a shared Zombie autonomous-AI replay fixture. Native and managed runners
+  now preserve the action admission band, deterministic long-range walk, and
+  current/future occupancy across the tick boundary.
+
 - Add a shared SnakeCharge replay fixture covering native admission, projectile
   travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and

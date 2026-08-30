@@ -21,6 +21,10 @@ countdown state, and the native gameplay-RNG draw across the lifecycle.
 The Scavenger replay lane now also covers Hellfire's max-health-fraction
 healing and corpse removal when the monster reaches full health.
 
+The shared replay contract now covers the server-owned ZombieAi action band
+and deterministic long-range walk, including current/future occupancy parity
+across the following tick.
+
 The shared protocol now admits an additive `DropItemRequested` intent carrying
 the same stable item references used by inventory and stash transfers. The
 authoritative server validates and removes the referenced carried item only
