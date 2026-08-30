@@ -74,7 +74,11 @@ public static class ReplayFixtureExecutor
                             secondary.Dexterity,
                             secondary.Dexterity),
                     },
-                    secondary.BlockCapable
+                    secondary.Equipment.Count > 0
+                        ? secondary.Equipment
+                            .Select(item => item.ToEquippedStoreItem())
+                            .ToArray()
+                        : secondary.BlockCapable
                         ? [new EquippedStoreItem(
                             5,
                             1,

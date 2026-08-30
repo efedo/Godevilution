@@ -3289,6 +3289,47 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryPortalAgainstCSharpProjection)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMultiplayerSecondaryMonsterDeathDropsAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-monster-death-drops.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_EQ(fixture.initialState.secondaryPlayer.equipment.size(), 1U);
+	ASSERT_EQ(fixture.initialProjectiles.size(), 1U);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 3U);
+	EXPECT_EQ(state.secondaryPlayerLife, 0);
+	EXPECT_EQ(state.secondaryPlayerCombatMode, 8U);
+	EXPECT_EQ(state.secondaryPlayerGold, 50U);
+	EXPECT_TRUE(state.secondaryEquipment.empty());
+	ASSERT_EQ(state.worldItems.size(), 2U);
+	EXPECT_EQ(state.worldItems[0].price, 50U);
+	EXPECT_EQ(state.worldItems[1].itemSeed, 101U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMultiplayerMonsterArrowVolleyAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-monster-arrow-volley.json");

@@ -47,6 +47,10 @@ constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 0 },
 };
 
+std::optional<std::pair<int32_t, int32_t>> FindReplaySecondaryDeathDropPosition(
+	const ReplayFixtureExecutionState &state,
+	std::optional<int32_t> preferredDirection = std::nullopt);
+
 bool IsValidReplayCharacterName(std::string_view name)
 {
 	if (name.empty() || name.size() > 31
@@ -67,7 +71,9 @@ bool IsValidReplayCharacterName(std::string_view name)
 	});
 }
 
-void StartReplaySecondaryPlayerDeath(ReplayFixtureExecutionState &state);
+void StartReplaySecondaryPlayerDeath(
+	ReplayFixtureExecutionState &state,
+	bool monsterOrTrapDeath = false);
 
 void AppendItemState(ReplayStateHasher &hasher, const ReplayFixtureItemState &state)
 {
@@ -220,7 +226,9 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 	hasher.AppendInt32(state.secondaryPlayerDexterity);
 	hasher.AppendInt32(0);
 	hasher.AppendInt32(0);
-	if (state.secondaryPlayerBlockCapable) {
+	if (!state.secondaryEquipment.empty()) {
+		AppendSlottedItems(hasher, state.secondaryEquipment);
+	} else if (state.secondaryPlayerBlockCapable) {
 		hasher.AppendUint64(1);
 		hasher.AppendUint32(5);
 		hasher.AppendUint32(1);
@@ -3292,6 +3300,7 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 				hitLife = &state.secondaryPlayerLife;
 			}
 			if (hitLife != nullptr) {
+				const bool secondaryHit = hitLife == &state.secondaryPlayerLife;
 				int32_t damage = projectile.damage;
 				if (damage > 0 && projectile.damageMinimum > 0
 				    && projectile.damageMaximum >= projectile.damageMinimum) {
@@ -3299,6 +3308,8 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 					    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
 				}
 				*hitLife = std::max(0, *hitLife - std::max(0, damage));
+				if (secondaryHit && *hitLife == 0)
+					StartReplaySecondaryPlayerDeath(state, true);
 				if (projectile.impactLifetime > 0) {
 					projectile.phase = 1;
 					projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
@@ -3933,6 +3944,69 @@ void DropReplayEquipment(ReplayFixtureExecutionState &state)
 	}
 }
 
+void DropReplaySecondaryDeathGold(ReplayFixtureExecutionState &state)
+{
+	constexpr uint32_t GoldDivisor = 2;
+	constexpr uint32_t MaxGold = 5000;
+	constexpr int32_t GoldItemType = 11;
+	constexpr int32_t GoldItemIndex = 0;
+	const uint32_t droppedGold = state.secondaryPlayerGold / GoldDivisor;
+	state.secondaryPlayerGold /= GoldDivisor;
+	for (uint32_t remaining = droppedGold; remaining > 0;) {
+		uint32_t itemSeed;
+		do {
+			itemSeed = AdvanceRandomItemSeed(state);
+		} while (itemSeed == 0);
+		const uint32_t stackValue = std::min(remaining, MaxGold);
+		const auto position = FindReplaySecondaryDeathDropPosition(state);
+		if (!position)
+			return;
+		ReplayFixtureItemState goldState;
+		goldState.itemType = GoldItemType;
+		goldState.value = static_cast<int32_t>(stackValue);
+		goldState.identifiedValue = goldState.value;
+		goldState.itemIndex = GoldItemIndex;
+		goldState.statFlag = true;
+		state.worldItems.push_back({
+		    AllocateReplayWorldItemEntityId(state),
+		    state.secondaryPlayerLevelId,
+		    position->first,
+		    position->second,
+		    itemSeed,
+		    stackValue,
+		    goldState,
+		});
+		remaining -= stackValue;
+	}
+}
+
+void DropReplaySecondaryEquipment(ReplayFixtureExecutionState &state)
+{
+	std::vector<ReplayFixtureSlottedItem> equipment = std::move(state.secondaryEquipment);
+	state.secondaryEquipment.clear();
+	for (uint32_t slot = 0; slot < 7; ++slot) {
+		const auto item = std::find_if(equipment.begin(), equipment.end(), [&](const auto &candidate) {
+			return candidate.slot == slot;
+		});
+		if (item == equipment.end())
+			continue;
+		const int32_t preferredDirection = static_cast<int32_t>(
+		    (state.secondaryPlayerFacingDirection + 8 - ((slot + 1) % 8)) % 8);
+		const auto position = FindReplaySecondaryDeathDropPosition(state, preferredDirection);
+		if (!position)
+			continue;
+		state.worldItems.push_back({
+		    AllocateReplayWorldItemEntityId(state),
+		    state.secondaryPlayerLevelId,
+		    position->first,
+		    position->second,
+		    item->itemSeed,
+		    static_cast<uint32_t>(std::max(0, item->state.identifiedValue)),
+		    item->state,
+		});
+	}
+}
+
 bool IsReplaySecondaryDeathDropPositionAvailable(
     const ReplayFixtureExecutionState &state,
     int32_t candidateX,
@@ -3979,8 +4053,16 @@ bool IsReplaySecondaryDeathDropPositionAvailable(
 }
 
 std::optional<std::pair<int32_t, int32_t>> FindReplaySecondaryDeathDropPosition(
-    const ReplayFixtureExecutionState &state)
+	const ReplayFixtureExecutionState &state,
+	std::optional<int32_t> preferredDirection)
 {
+	if (preferredDirection.has_value()) {
+		const auto displacement = DirectionDisplacements[*preferredDirection % 8];
+		const int32_t candidateX = state.secondaryPlayerPositionX + displacement.first;
+		const int32_t candidateY = state.secondaryPlayerPositionY + displacement.second;
+		if (IsReplaySecondaryDeathDropPositionAvailable(state, candidateX, candidateY))
+			return std::pair<int32_t, int32_t> { candidateX, candidateY };
+	}
 	return Crawl(1, 50, [&](Displacement displacement) -> std::optional<std::pair<int32_t, int32_t>> {
 		const int32_t candidateX = state.secondaryPlayerPositionX + displacement.deltaX;
 		const int32_t candidateY = state.secondaryPlayerPositionY + displacement.deltaY;
@@ -4045,9 +4127,18 @@ void DropReplaySecondaryPvpEar(ReplayFixtureExecutionState &state)
 	});
 }
 
-void StartReplaySecondaryPlayerDeath(ReplayFixtureExecutionState &state)
+void StartReplaySecondaryPlayerDeath(
+	ReplayFixtureExecutionState &state,
+	bool monsterOrTrapDeath)
 {
-	DropReplaySecondaryPvpEar(state);
+	if (!(state.multiplayer && state.suppressMultiplayerDeathDrops)) {
+		if (monsterOrTrapDeath) {
+			DropReplaySecondaryDeathGold(state);
+			DropReplaySecondaryEquipment(state);
+		} else {
+			DropReplaySecondaryPvpEar(state);
+		}
+	}
 	state.secondaryPlayerCombatMode = 8;
 	state.secondaryPlayerCombatModeEndTick = 0;
 }
@@ -4663,7 +4754,9 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			} else {
 				const int32_t damageQ6 = std::max(1, projectile.damage) * 64;
 				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
-				if (state.secondaryPlayerLife > 0
+				if (state.secondaryPlayerLife == 0)
+					StartReplaySecondaryPlayerDeath(state, true);
+				else if (state.secondaryPlayerLife > 0
 				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
 					state.secondaryPlayerCombatMode = 7;
 					state.secondaryPlayerCombatModeEndTick = tick + 6;
@@ -5723,6 +5816,8 @@ private:
 				return ParseUnsigned(player.combatModeEndTick);
 			if (key == "inventory_filler_count")
 				return ParseUnsigned(player.inventoryFillerCount);
+			if (key == "equipment")
+				return ParseEquipment(player.equipment, "secondary equipment");
 			if (key == "inventory_item") {
 				player.inventoryItemDefined = true;
 				return ParseObject([this, &player](std::string_view itemKey) {
@@ -5803,11 +5898,11 @@ private:
 		}
 	}
 
-	bool ParseEquipment()
+	bool ParseEquipment(std::vector<ReplayFixtureEquippedItem> &target, std::string_view description)
 	{
 		if (!Consume('['))
 			return Fail("expected equipment array");
-		fixture_.initialState.equipment.clear();
+		target.clear();
 		SkipWhitespace();
 		if (Consume(']'))
 			return true;
@@ -5886,12 +5981,14 @@ private:
 			    || item.fireMaxDamage < item.fireMinDamage
 			    || item.lightningMinDamage < 0
 			    || item.lightningMaxDamage < item.lightningMinDamage
-			    || std::any_of(fixture_.initialState.equipment.begin(), fixture_.initialState.equipment.end(), [&](const auto &candidate) {
+			    || std::any_of(target.begin(), target.end(), [&](const auto &candidate) {
 				    return candidate.slot == item.slot;
-			    })) {
-				return Fail("invalid or duplicate equipment item");
+				})) {
+				return Fail(description == "equipment"
+				        ? "invalid or duplicate equipment item"
+				        : "invalid or duplicate secondary equipment item");
 			}
-			fixture_.initialState.equipment.push_back(item);
+			target.push_back(item);
 			SkipWhitespace();
 			if (Consume(']'))
 				return true;
@@ -5899,6 +5996,11 @@ private:
 				return Fail("expected comma or closing bracket");
 			SkipWhitespace();
 		}
+	}
+
+	bool ParseEquipment()
+	{
+		return ParseEquipment(fixture_.initialState.equipment, "equipment");
 	}
 
 	bool ParseBelt()
@@ -6629,6 +6731,24 @@ bool ExecuteReplayFixture(
 		state.secondaryPlayerBlockCapable = secondary.blockCapable;
 		state.secondaryPlayerCombatMode = secondary.combatMode;
 		state.secondaryPlayerCombatModeEndTick = secondary.combatModeEndTick;
+		for (const auto &source : secondary.equipment) {
+			ReplayFixtureItemState itemState;
+			itemState.stableItemId = source.stableItemId;
+			itemState.itemType = source.itemType;
+			itemState.itemClass = source.itemClass;
+			itemState.itemIndex = source.itemIndex;
+			itemState.value = source.value;
+			itemState.identifiedValue = source.identifiedValue;
+			itemState.identified = source.identified;
+			itemState.magical = source.magical;
+			itemState.fireMinDamage = source.fireMinDamage;
+			itemState.fireMaxDamage = source.fireMaxDamage;
+			itemState.lightningMinDamage = source.lightningMinDamage;
+			itemState.lightningMaxDamage = source.lightningMaxDamage;
+			itemState.flags = source.flags;
+			itemState.statFlag = source.statFlag;
+			state.secondaryEquipment.push_back({ source.slot, source.itemSeed, itemState });
+		}
 		state.secondaryInventoryGrid.assign(40, -1);
 		if (secondary.inventoryItemDefined) {
 			ReplayFixtureItemState itemState;

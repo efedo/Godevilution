@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
   participant checkpoint parity.
 - Add secondary occupied-tile cursor rejection coverage and preserve native/C#
   facing-state parity when secondary movement precedes the rejected pickup.
+- Extend replay participants with validated secondary equipment and add a
+  cross-language lethal MonsterArrow fixture. Native and managed runners now
+  agree on secondary death mode, Gold halving, deterministic world-drop seeds,
+  facing-ordered equipment placement, and the resulting canonical hash.
 
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind

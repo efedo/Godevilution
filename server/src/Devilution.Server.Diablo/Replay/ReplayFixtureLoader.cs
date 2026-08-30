@@ -497,6 +497,7 @@ public static class ReplayFixtureLoader
             Dexterity = GetOptionalInt(player, "dexterity"),
             FriendlyMode = friendlyMode,
             BlockCapable = GetOptionalBool(player, "block_capable"),
+            Equipment = ParseEquipment(player),
             CombatMode = (DiabloPlayerCombatMode)GetOptionalUInt(player, "combat_mode"),
             CombatModeEndTick = player.TryGetProperty(
                 "combat_mode_end_tick",

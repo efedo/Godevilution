@@ -72,6 +72,26 @@ struct ReplayFixtureMemorizedSpell {
 	uint32_t level = 0;
 };
 
+/** Minimal protocol-shaped equipment state carried by replay initial state. */
+struct ReplayFixtureEquippedItem {
+	uint32_t slot = 0;
+	uint32_t itemSeed = 0;
+	uint32_t stableItemId = 0;
+	int32_t itemType = -1;
+	int32_t itemClass = 0;
+	uint32_t flags = 0;
+	bool statFlag = false;
+	int32_t itemIndex = -1;
+	int32_t value = 0;
+	int32_t identifiedValue = 0;
+	bool identified = false;
+	int32_t magical = 0;
+	int32_t fireMinDamage = 0;
+	int32_t fireMaxDamage = 0;
+	int32_t lightningMinDamage = 0;
+	int32_t lightningMaxDamage = 0;
+};
+
 struct ReplayFixtureSecondaryPlayer {
 	bool defined = false;
 	std::string player;
@@ -91,6 +111,7 @@ struct ReplayFixtureSecondaryPlayer {
 	bool blockCapable = false;
 	uint32_t combatMode = 0;
 	uint64_t combatModeEndTick = 0;
+	std::vector<ReplayFixtureEquippedItem> equipment;
 	bool inventoryItemDefined = false;
 	uint32_t inventoryFillerCount = 0;
 	uint32_t inventoryItemSlot = 0;
@@ -108,26 +129,6 @@ struct ReplayFixtureSecondaryPlayer {
 	int32_t heldItemType = -1;
 	int32_t heldItemIndex = -1;
 	bool heldItemStatFlag = false;
-};
-
-/** Minimal protocol-shaped equipment state carried by replay initial state. */
-struct ReplayFixtureEquippedItem {
-	uint32_t slot = 0;
-	uint32_t itemSeed = 0;
-	uint32_t stableItemId = 0;
-	int32_t itemType = -1;
-	int32_t itemClass = 0;
-	uint32_t flags = 0;
-	bool statFlag = false;
-	int32_t itemIndex = -1;
-	int32_t value = 0;
-	int32_t identifiedValue = 0;
-	bool identified = false;
-	int32_t magical = 0;
-	int32_t fireMinDamage = 0;
-	int32_t fireMaxDamage = 0;
-	int32_t lightningMinDamage = 0;
-	int32_t lightningMaxDamage = 0;
 };
 
 /** Minimal protocol-shaped belt item used by consumable-cast fixtures. */
@@ -524,6 +525,7 @@ struct ReplayFixtureExecutionState {
 	uint64_t secondaryPlayerCombatModeEndTick = 0;
 	std::vector<ReplayFixtureInventoryItem> secondaryInventory;
 	std::vector<int32_t> secondaryInventoryGrid;
+	std::vector<ReplayFixtureSlottedItem> secondaryEquipment;
 	bool secondaryHeldItemDefined = false;
 	ReplayFixtureInventoryItem secondaryHeldItem;
 	bool hellfire = false;

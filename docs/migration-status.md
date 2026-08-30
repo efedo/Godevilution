@@ -22,6 +22,13 @@ the inventory source, and create the authoritative adjacent world item,
 extending parity coverage for the protocol path behind the native and Godot
 clients.
 
+The replay contract now also carries validated equipment for secondary
+participants. A shared lethal MonsterArrow fixture drives the secondary player
+through the authoritative monster-death path, including Gold halving,
+facing-ordered equipment world drops, and canonical participant hashing in both
+runners. Native secondary projectile impacts now enter death mode and apply the
+same drop suppression and item-seed rules as the managed simulation.
+
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory
 source removal, adjacent world-item projection, and a shared canonical

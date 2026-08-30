@@ -103,6 +103,9 @@ put the receiving player first, but both runners sort every player by entity ID
 before hashing, so receiver-relative wire order cannot alter a checkpoint. A
 secondary player's resources, attributes, equipment, combat mode, and inventory
 topology therefore expose multiplayer divergence directly.
+The optional `secondary_player.equipment` array uses the same validated
+equipment schema as the primary player; when present it replaces the synthetic
+block-capable shield used by older fixtures.
 The optional `secondary_player.inventory_item` fields exercise an explicit
 stable-reference `DropItem` from a secondary participant. The corresponding
 fixture verifies participant routing, source removal, adjacent world-item
@@ -179,7 +182,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 98 checked-in JSON fixtures and 130 registered
+the native replay gate contains 99 checked-in JSON fixtures and 131 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -198,9 +201,9 @@ SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
 and BoneDemon MonsterMagic tests passed, including the new Lich block lane and
 the two-projectile MonsterArrow volley, as did
 the focused managed counterparts. The full suites remain
-scheduled for the next periodic verification window; the newly added
-secondary-portal fixture is managed-verified and registered for the next native
-run.
+scheduled for the next periodic verification window. The secondary-portal,
+secondary cursor-pickup, and secondary monster-death-drop fixtures are verified
+in both runners.
 
 ## Current Coverage
 
@@ -222,7 +225,8 @@ MonsterMagic
 impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
 impact against the secondary participant, plus a two-projectile participant
 volley whose managed counterpart also exercises both-participant save/restore
-continuation. The native and C# runners
+continuation, and a lethal secondary MonsterArrow lane that verifies
+authoritative death, Gold, and equipment drops. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -574,6 +578,10 @@ Notable shared fixtures include:
 - `gameplay-player-equipped-death-drops.json` for native facing rotation across
   equipment slots, occupied preferred-tile fallback, retained item identity,
   identified-value world price, and zero death-drop RNG;
+- `gameplay-multiplayer-secondary-monster-death-drops.json` for lethal seeded
+  MonsterArrow impact against a secondary participant, death-mode transition,
+  Gold halving and world-drop RNG, facing-ordered equipment drops, and shared
+  C++/C# participant hashing;
 - `gameplay-player-level-transition.json` for immediate portal destination and
   the one-tick NewLevel action barrier;
 - `gameplay-player-restart-town.json` for terminal-death admission,
