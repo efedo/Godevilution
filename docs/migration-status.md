@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers GoatRanged close-range retreat. Native
+and managed runners preserve nearest-participant selection, deterministic
+retreat destinations, and suppression of same-tick arrow admission.
+
 The shared replay contract now covers GoatRanged multiplayer target
 selection. Native and managed runners preserve nearest-participant ordering,
 MonsterArrow admission, and canonical checkpoint parity while keeping ranged

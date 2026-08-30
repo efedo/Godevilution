@@ -4579,6 +4579,39 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGoatRangedCloseRetreatMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-arrow-goat-ranged-close-retreat.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterArrowExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(100, secondaryState.Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.True(monster.Moving);
+        Assert.Equal(4, monster.PositionX);
+        Assert.Equal(0, monster.PositionY);
+        Assert.Equal(5, monster.FuturePositionX);
+        Assert.Equal(0, monster.FuturePositionY);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMatchesNativeLifecycle()
     {
         var path = Path.Combine(

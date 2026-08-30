@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared GoatRanged close-retreat replay fixture. Native and managed
+  runners now preserve nearest-participant selection, deterministic retreat
+  destinations, and the no-projectile retreat boundary.
+
 - Add a shared GoatRanged multiplayer target-selection replay fixture. Native
   and managed runners now preserve nearest-participant selection, projectile
   admission, and canonical checkpoint parity without generic melee pursuit.

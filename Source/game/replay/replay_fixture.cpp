@@ -4794,8 +4794,98 @@ void AdvanceReplayMonsterAttack(
 	}
 	// Autonomous ranged identities own their movement and projectile admission
 	// below; the generic compact monster branch must not pursue them into melee.
-	if (state.combatTargetNativeAi == "GoatRanged"
-	    || state.combatTargetNativeAi == "SkeletonRanged"
+	// GoatRanged still performs its close-range retreat before considering a shot.
+	if (state.combatTargetNativeAi == "GoatRanged") {
+		struct Victim {
+			uint32_t entityId;
+			int32_t positionX;
+			int32_t positionY;
+		};
+		std::vector<Victim> victims;
+		if (primaryAlive)
+			victims.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+		if (secondaryAlive)
+			victims.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+		if (victims.empty())
+			return;
+		const auto victimDistance = [&](const Victim &victim) {
+			return std::max(
+				std::abs(victim.positionX - state.combatTargetPositionX),
+				std::abs(victim.positionY - state.combatTargetPositionY));
+		};
+		std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
+			const int leftDistance = victimDistance(left);
+			const int rightDistance = victimDistance(right);
+			return leftDistance != rightDistance
+			    ? leftDistance < rightDistance
+			    : left.entityId < right.entityId;
+		});
+		const Victim &victim = victims.front();
+		const int distance = victimDistance(victim);
+		if (distance < 4) {
+			const uint32_t attackSeed = static_cast<uint32_t>(tick)
+			    ^ state.combatTargetEntityId
+			    ^ victim.entityId;
+			const int retreatChance = std::min(
+				100,
+				70 + 10 * state.combatTargetIntelligence);
+			if (attackSeed % 100U < static_cast<uint32_t>(retreatChance)) {
+				std::vector<std::pair<int32_t, int32_t>> destinations;
+				for (int32_t offsetY = -1; offsetY <= 1; ++offsetY) {
+					for (int32_t offsetX = -1; offsetX <= 1; ++offsetX) {
+						if (offsetX == 0 && offsetY == 0)
+							continue;
+						const int32_t candidateX = state.combatTargetPositionX + offsetX;
+						const int32_t candidateY = state.combatTargetPositionY + offsetY;
+						if (candidateX < 0 || candidateX >= 40
+						    || candidateY < 0 || candidateY >= 40
+						    || (candidateX == state.positionX && candidateY == state.positionY)
+						    || (state.secondaryPlayerEntityId != 0
+						        && candidateX == state.secondaryPlayerPositionX
+						        && candidateY == state.secondaryPlayerPositionY)
+						    || (state.objectEntityId != 0
+						        && !state.objectActivated
+						        && !state.objectDestroyed
+						        && !state.objectMissilePassable
+						        && state.objectLevelId == state.combatTargetLevelId
+						        && candidateX == state.objectPositionX
+						        && candidateY == state.objectPositionY))
+							continue;
+						const int candidateDistance = std::max(
+							std::abs(candidateX - victim.positionX),
+							std::abs(candidateY - victim.positionY));
+						if (candidateDistance >= distance)
+							destinations.emplace_back(candidateX, candidateY);
+					}
+				}
+				std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
+					const int leftDistance = std::max(
+						std::abs(left.first - victim.positionX),
+						std::abs(left.second - victim.positionY));
+					const int rightDistance = std::max(
+						std::abs(right.first - victim.positionX),
+						std::abs(right.second - victim.positionY));
+					return leftDistance != rightDistance
+					    ? leftDistance > rightDistance
+					    : left.second != right.second
+					        ? left.second < right.second
+					        : left.first < right.first;
+				});
+				if (!destinations.empty()) {
+					state.combatTargetMoving = true;
+					state.combatTargetFuturePositionX = destinations.front().first;
+					state.combatTargetFuturePositionY = destinations.front().second;
+					state.combatTargetDirection = GetDirection(
+						state.combatTargetPositionX,
+						state.combatTargetPositionY,
+						state.combatTargetFuturePositionX,
+						state.combatTargetFuturePositionY);
+				}
+			}
+		}
+		return;
+	}
+	if (state.combatTargetNativeAi == "SkeletonRanged"
 	    || state.combatTargetNativeAi == "HorkDemon"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
@@ -5890,6 +5980,7 @@ void AdmitReplayAutonomousMonsterArrow(
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetToHit <= 0
 	    || state.combatTargetMaxDamage <= 0
+	    || (state.combatTargetNativeAi == "GoatRanged" && state.combatTargetMoving)
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
 			return projectile.sourceEntityId == state.combatTargetEntityId
 			    && projectile.behavior == MonsterArrowBehavior;
