@@ -560,6 +560,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
 			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
 		}
+		if (state.combatTargetSnakeDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-snake-delay-v1");
+			hasher.AppendInt32(state.combatTargetSnakeDelayTicks);
+		}
 	}
 
 	if (!state.corpses.empty()) {
@@ -4784,6 +4788,38 @@ void AdvanceReplayMonsterAttack(
 			}
 		}
 	}
+	// Compact the SnakeAi decision-delay admissions. The mapped SnakeCharge
+	// controller owns projectile travel; this replay boundary preserves the
+	// native adjacent and distant delay state before movement or attack.
+	if (state.combatTargetNativeAi == "Snake") {
+		if (state.combatTargetSnakeDelayTicks > 0) {
+			--state.combatTargetSnakeDelayTicks;
+			return;
+		}
+		const uint32_t actionSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int actionRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(actionSeed % 100U);
+		if (distance < 2) {
+			if (actionRoll >= 20) {
+				state.combatTargetSnakeDelayTicks = std::max(
+				    0,
+				    10 + static_cast<int>((actionSeed / 100U) % 10U));
+				return;
+			}
+		} else {
+			const int delayBand = 35 - 4 * state.combatTargetIntelligence;
+			if (actionRoll < std::max(0, delayBand)) {
+				state.combatTargetSnakeDelayTicks = std::max(
+				    0,
+				    15 - 2 * state.combatTargetIntelligence
+				        + static_cast<int>((actionSeed / 100U) % 10U));
+				return;
+			}
+		}
+	}
 	if (distance > 1 && state.combatTargetNativeAi != "Rhino") {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;
@@ -6232,8 +6268,10 @@ private:
 				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetHorkDemonDelayTicks);
-			if (key == "combat_target_skeleton_melee_delay_ticks")
+		if (key == "combat_target_skeleton_melee_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
+			if (key == "combat_target_snake_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
 			if (key == "combat_target_fire_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetFireResistance);
 			if (key == "combat_target_lightning_resistance")
@@ -7053,6 +7091,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetGargoyleSpecialActive
 			|| target.combatTargetHorkDemonDelayTicks != 0
 			|| target.combatTargetSkeletonMeleeDelayTicks != 0
+			|| target.combatTargetSnakeDelayTicks != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
@@ -7074,6 +7113,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetHorkDemonDelayTicks > 1024
 		|| target.combatTargetSkeletonMeleeDelayTicks < 0
 		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
+		|| target.combatTargetSnakeDelayTicks < 0
+		|| target.combatTargetSnakeDelayTicks > 1024
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -7421,6 +7462,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
+		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;

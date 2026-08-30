@@ -260,6 +260,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native SkeletonMelee decision-delay state. */
     public int CombatTargetSkeletonMeleeDelayTicks { get; init; }
 
+    /** Optional native Snake decision-delay state. */
+    public int CombatTargetSnakeDelayTicks { get; init; }
+
     public bool CombatTargetMoving { get; init; }
 
     public int CombatTargetFuturePositionX { get; init; }

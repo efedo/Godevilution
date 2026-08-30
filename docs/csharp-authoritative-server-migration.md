@@ -191,7 +191,8 @@ far-distance Move-goal path additionally preserves its admission coin, turn
 initialization, persisted goal tick, RoundWalk destination, and the next-tick
 completion/continuation boundary. The SkeletonMelee path now also preserves
 the native movement-delay admission, failed adjacent-attack admission, and
-their countdown lifecycles. The Rhino path now preserves native charge
+their countdown lifecycles. Snake delay admissions now have shared distant and
+adjacent replay fixtures. The Rhino path now preserves native charge
 admission, nearest adjacent landing, special damage, monster relocation,
 player knockback, and the unchanged single-player RNG boundary.
 

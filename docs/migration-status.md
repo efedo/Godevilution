@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers Snake autonomous-AI delay admissions:
+native and managed runners carry Snake's distant-delay and failed
+adjacent-attack countdowns through the same canonical replay checkpoints.
+
 The shared protocol now admits an additive `DropItemRequested` intent carrying
 the same stable item references used by inventory and stash transfers. The
 authoritative server validates and removes the referenced carried item only

@@ -2528,6 +2528,7 @@ public sealed class ReplayFixtureTests
             new AuthoritativeCommandServer(executor));
         var monster = Assert.Single(result.FinalSnapshot.Monsters);
 
+
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(21, monster.HitPoints);
         Assert.Equal(1344, monster.HitPointsQ6);
@@ -3064,6 +3065,50 @@ public sealed class ReplayFixtureTests
         Assert.Equal(9U, result.FinalSnapshot.RandomState);
         Assert.Equal(1UL, result.FinalSnapshot.Tick);
         Assert.Single(result.Checkpoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplaySnakeDistantDelayMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-snake-distant-delay.json");
+        var executor = CreateSnakeReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.False(monster.Moving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(15, monster.SnakeDelayTicks);
+        Assert.Equal(9U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplaySnakeAdjacentDelayMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-snake-adjacent-delay.json");
+        var executor = CreateSnakeReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.False(monster.Moving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(10, monster.SnakeDelayTicks);
+        Assert.Equal(9U, result.FinalSnapshot.RandomState);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
@@ -5237,6 +5282,51 @@ public sealed class ReplayFixtureTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "basic-buy.json");
         return ReplayFixtureLoader.Load(File.ReadAllText(path));
+    }
+
+    private static ReplayFixture LoadReplayFixture(string fileName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", fileName);
+        return ReplayFixtureLoader.Load(File.ReadAllText(path));
+    }
+
+    private static StoreSimulationExecutor CreateSnakeReplayExecutor(
+        ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            snakeDelayTicks: initial.CombatTargetSnakeDelayTicks);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                initial.CombatTargetNativeAi,
+                "Rhino",
+                AuthoritativeProjectileBehavior.SnakeCharge),
+        ]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
     }
 
     private static string CreateStructuredFixture(string checkpoints, string? finalStateSha256 = null)

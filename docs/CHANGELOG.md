@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Snake autonomous-AI delay fixtures for the distant-delay and
+  failed adjacent-attack admission bands. Native and managed replay runners
+  now carry the server-owned Snake delay state through canonical checkpoints.
+
 - Add a shared Rhino charge replay fixture. Native and managed runners now
   preserve charge admission, the nearest adjacent destination, special damage,
   monster relocation, player knockback, and unchanged single-player RNG.

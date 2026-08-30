@@ -84,6 +84,8 @@
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-delay.json" Link="Fixtures/gameplay-skeleton-melee-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-attack-delay.json" Link="Fixtures/gameplay-skeleton-melee-attack-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge.json" Link="Fixtures/gameplay-rhino-charge.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-snake-distant-delay.json" Link="Fixtures/gameplay-snake-distant-delay.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-snake-adjacent-delay.json" Link="Fixtures/gameplay-snake-adjacent-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-autonomous-tick.json" Link="Fixtures/gameplay-multiplayer-autonomous-tick.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-attack.json" Link="Fixtures/gameplay-multiplayer-secondary-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-item-drop.json" Link="Fixtures/gameplay-multiplayer-secondary-item-drop.json" CopyToOutputDirectory="PreserveNewest" />

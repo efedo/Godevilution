@@ -92,6 +92,8 @@ set(devilutionx_fixtures
   replay/gameplay-skeleton-melee-delay.json
   replay/gameplay-skeleton-melee-attack-delay.json
   replay/gameplay-rhino-charge.json
+  replay/gameplay-snake-distant-delay.json
+  replay/gameplay-snake-adjacent-delay.json
   replay/gameplay-blood-star-autonomous.json
   replay/gameplay-blood-star-impact.json
   replay/gameplay-blood-star-multiplayer-target.json
