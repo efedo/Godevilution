@@ -118,7 +118,8 @@ runners must choose cell 1 through the same first-fit placement rule, preserving
 the existing item and producing the same participant hash.
 The `gameplay-multiplayer-secondary-item-pickup-overflow.json` fixture fills
 all 40 secondary inventory cells and verifies that the accepted pickup moves to
-the secondary authoritative cursor while preserving the world-item identity.
+the secondary authoritative cursor, then drops that held item back to an
+adjacent tile while preserving the world-item identity.
 An initial state with one canonical Gold pile may add
 `inventory_filler_count`. Both runners place that many deterministic one-cell
 non-Gold items into the remaining native inventory cells. This forces the same
@@ -294,8 +295,9 @@ replay contract therefore checks first-fit placement at cell 1 instead of the
 legacy native placement preference, while preserving both item identities.
 
 `gameplay-multiplayer-secondary-item-pickup-overflow.json` fills the secondary
-inventory and verifies that pickup remains accepted, removes the world entity,
-and projects the item as a secondary held item with its purchased tick.
+inventory, verifies that pickup remains accepted and projects the item as a
+secondary held item, then submits `DropHeldItem` and verifies adjacent world
+placement and the resulting checkpoint hash.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied

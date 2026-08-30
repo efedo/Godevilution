@@ -38,6 +38,10 @@ All notable changes to this fork are documented below.
   secondary inventory now accepts a world-item pickup into the authoritative
   secondary cursor, with native and managed checkpoint parity.
 
+- Complete the secondary cursor lifecycle in replay coverage. The overflow
+  fixture now drops the held item through `DropHeldItem` and verifies adjacent
+  authoritative world-item placement in both runners.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

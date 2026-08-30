@@ -6755,8 +6755,8 @@ bool ExecuteReplayFixture(
 			bool accepted = false;
 			std::string rejectReason;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
-				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal" && command.kind != "DropItem" && command.kind != "PickupWorldItem") {
-					error = "Secondary replay participant supports Move, Attack, UsePortal, DropItem, and PickupWorldItem commands only.";
+				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal" && command.kind != "DropItem" && command.kind != "PickupWorldItem" && command.kind != "DropHeldItem") {
+					error = "Secondary replay participant supports Move, Attack, UsePortal, DropItem, PickupWorldItem, and DropHeldItem commands only.";
 					return false;
 				}
 				if (command.kind == "Move") {
@@ -6832,6 +6832,55 @@ bool ExecuteReplayFixture(
 					    || state.worldItemSeed == 0
 					    || state.secondaryPlayerLevelId != state.worldItemLevelId
 					    || distance > 1) {
+						rejectReason = "InvalidTarget";
+						} else {
+							rejectReason = "NotAllowed";
+					}
+				} else if (command.kind == "DropHeldItem") {
+					const int distance = std::max(
+					    std::abs(state.secondaryPlayerPositionX - command.targetX),
+					    std::abs(state.secondaryPlayerPositionY - command.targetY));
+					const bool targetOccupied = (state.worldItemEntityId != 0
+					        && state.worldItemLevelId == state.secondaryPlayerLevelId
+					        && state.worldItemPositionX == command.targetX
+					        && state.worldItemPositionY == command.targetY)
+					    || std::any_of(state.worldItems.begin(), state.worldItems.end(), [&](const auto &item) {
+						       return item.levelId == state.secondaryPlayerLevelId
+						           && item.positionX == command.targetX
+						           && item.positionY == command.targetY;
+					       })
+					    || (state.entityId != 0
+					        && state.life > 0
+					        && state.levelId == state.secondaryPlayerLevelId
+					        && state.positionX == command.targetX
+					        && state.positionY == command.targetY)
+					    || (state.combatTargetEntityId != 0
+					        && state.combatTargetHitPointsQ6 > 0
+					        && state.combatTargetLevelId == state.secondaryPlayerLevelId
+					        && state.combatTargetPositionX == command.targetX
+					        && state.combatTargetPositionY == command.targetY)
+					    || (state.objectEntityId != 0
+					        && !state.objectActivated
+					        && !state.objectDestroyed
+					        && state.objectLevelId == state.secondaryPlayerLevelId
+					        && state.objectPositionX == command.targetX
+					        && state.objectPositionY == command.targetY);
+					if (state.secondaryHeldItemDefined
+					    && distance <= 1
+					    && command.targetX >= 0 && command.targetX < 40
+					    && command.targetY >= 0 && command.targetY < 40
+					    && !targetOccupied) {
+						state.worldItemEntityId = AllocateReplayWorldItemEntityId(state);
+						state.worldItemLevelId = state.secondaryPlayerLevelId;
+						state.worldItemPositionX = command.targetX;
+						state.worldItemPositionY = command.targetY;
+						state.worldItemSeed = state.secondaryHeldItem.itemSeed;
+						state.worldItemPrice = state.secondaryHeldItem.price;
+						state.worldItemState = state.secondaryHeldItem.state;
+						state.secondaryHeldItemDefined = false;
+						state.secondaryHeldItem = { };
+						accepted = true;
+					} else if (!state.secondaryHeldItemDefined) {
 						rejectReason = "InvalidTarget";
 					} else {
 						rejectReason = "NotAllowed";

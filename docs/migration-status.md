@@ -87,9 +87,10 @@ secondary-participant world-item pickup fixture. Native and managed runners
 preserve the existing item, choose the same first-fit destination cell, and
 match the resulting canonical participant hash.
 
-The same replay lane now covers a full secondary inventory. Both runners accept
-the pickup into the secondary held-item projection, remove the world entity,
-and preserve the purchased tick and canonical participant hash.
+The same replay lane now covers a full secondary inventory and cursor lifecycle.
+Both runners accept the pickup into the secondary held-item projection, then
+route `DropHeldItem` to adjacent authoritative world placement with matching
+entity identity and canonical participant hash.
 
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or

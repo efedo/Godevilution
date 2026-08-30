@@ -47,9 +47,22 @@
       "payload": {
         "item_entity_id": 12
       }
+    },
+    {
+      "player": "B",
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "expected_status": "Accepted",
+      "kind": "DropHeldItem",
+      "payload": {
+        "target_x": 5,
+        "target_y": 6
+      }
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "2d94697555ac79d98170ddb8a68e2f2bb6fb0207d379c94b9080763be184aeb7" }
+    { "tick": 1, "state_sha256": "2d94697555ac79d98170ddb8a68e2f2bb6fb0207d379c94b9080763be184aeb7" },
+    { "tick": 2, "state_sha256": "29f6117833b55ab6db6223ad32a1260a5c8b5470a30ff283993e2e8b9e4ce40c" }
   ]
 }

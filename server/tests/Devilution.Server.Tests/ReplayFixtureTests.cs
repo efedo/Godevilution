@@ -1809,14 +1809,17 @@ public sealed class ReplayFixtureTests
             executor,
             new AuthoritativeCommandServer(executor));
 
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
         var player = Assert.Single(
             result.FinalSnapshot.Players,
             candidate => candidate.EntityId == secondary.EntityId);
         Assert.Equal(40, player.Inventory.Count);
-        Assert.NotNull(player.HeldItem);
-        Assert.Equal(fixture.InitialState.WorldItemSeed, player.HeldItem!.ItemSeed);
-        Assert.Equal(1U, player.HeldItem.PurchasedAtTick);
-        Assert.Empty(result.FinalSnapshot.WorldItems);
+        Assert.Null(player.HeldItem);
+        var worldItem = Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(0x40000000U, worldItem.EntityId);
+        Assert.Equal(fixture.InitialState.WorldItemSeed, worldItem.ItemSeed);
+        Assert.Equal((5, 6), (worldItem.PositionX, worldItem.PositionY));
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
@@ -3579,7 +3582,7 @@ public sealed class ReplayFixtureTests
             () => ReplayFixtureLoader.Load(json));
 
         Assert.Equal(
-            "Secondary replay participant supports Move, Attack, UsePortal, DropItem, and PickupWorldItem commands only.",
+            "Secondary replay participant supports Move, Attack, UsePortal, DropItem, PickupWorldItem, and DropHeldItem commands only.",
             exception.Message);
     }
 

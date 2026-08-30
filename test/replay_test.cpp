@@ -2867,14 +2867,16 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryItemPickupOverflowAgainstCSharpC
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 1U);
+	ASSERT_EQ(result.transitions.size(), 2U);
 	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.secondaryInventory.size(), 40U);
-	ASSERT_TRUE(state.secondaryHeldItemDefined);
-	EXPECT_EQ(state.secondaryHeldItem.itemSeed, fixture.initialState.worldItemSeed);
-	EXPECT_EQ(state.secondaryHeldItem.purchasedAtTick, 1U);
+	EXPECT_FALSE(state.secondaryHeldItemDefined);
 	EXPECT_EQ(state.secondaryInventoryGrid[39], 39);
-	EXPECT_EQ(state.worldItemEntityId, 0U);
+	EXPECT_EQ(state.worldItemEntityId, 0x40000000U);
+	EXPECT_EQ(state.worldItemPositionX, 5);
+	EXPECT_EQ(state.worldItemPositionY, 6);
+	EXPECT_EQ(state.worldItemSeed, fixture.initialState.worldItemSeed);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
