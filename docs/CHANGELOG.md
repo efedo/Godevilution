@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend the shared Gargoyle avoidance Move-goal fixture through its second
+  autonomous tick. Native and managed runners now verify movement completion,
+  next-tile RoundWalk selection, persisted goal state, per-monster seed advance,
+  and the preserved global RNG state.
 - Add cross-language coverage for a primary cursor pickup attempted on the
   player's occupied tile. Native and managed runners now record the
   `NotAllowed` rejection while preserving the held and world items.

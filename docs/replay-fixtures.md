@@ -204,7 +204,8 @@ lanes, plus the wounded Gargoyle self-heal/special-lock boundary and adjacent
 Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
-far-distance Move-goal/RoundWalk state boundary. The dated full-suite
+far-distance Move-goal/RoundWalk state boundary across its first continuation
+tick. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -243,7 +244,8 @@ also cover the wounded Gargoyle self-heal and retained special-lock boundary,
 plus its adjacent attack-band admission, healthy non-adjacent avoidance
 idle-band lifecycle, an admitted RandomWalk destination with participant and
 active-object occupancy checks, and far-distance Move-goal admission with
-persisted goal ticks, turn state, and RoundWalk destination.
+persisted goal ticks, turn state, RoundWalk destination, and next-tick
+continuation parity.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and

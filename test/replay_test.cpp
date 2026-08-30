@@ -2942,15 +2942,17 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceMoveAgainstCSharpCheckpoint)
 	EXPECT_TRUE(result.transitions[0].accepted);
 	EXPECT_TRUE(state.combatTargetMoving);
 	EXPECT_EQ(state.combatTargetPositionX, 0);
-	EXPECT_EQ(state.combatTargetPositionY, 0);
+	EXPECT_EQ(state.combatTargetPositionY, 1);
 	EXPECT_EQ(state.combatTargetFuturePositionX, 0);
-	EXPECT_EQ(state.combatTargetFuturePositionY, 1);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 2);
 	EXPECT_EQ(state.combatTargetDirection, 1);
-	EXPECT_EQ(state.combatTargetAvoidanceMovementTicks, 1);
+	EXPECT_EQ(state.combatTargetAvoidanceMovementTicks, 2);
 	EXPECT_EQ(state.combatTargetAvoidanceMovementTurn, 0);
 	EXPECT_EQ(state.combatTargetAvoidanceMovementIdleTicks, 1);
 	EXPECT_EQ(state.combatTargetAvoidanceMovementMode, 0);
-	EXPECT_EQ(state.combatTargetMonsterAiSeed, 363127633U);
+	EXPECT_EQ(state.combatTargetMonsterAiSeed, 203440698U);
+	// The per-monster stream is restored before each multiplayer AI pass;
+	// the global stream therefore remains at the fourth tick-2 draw.
 	EXPECT_EQ(state.randomState, 1084909516U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }

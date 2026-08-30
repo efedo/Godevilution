@@ -2826,16 +2826,19 @@ public sealed class ReplayFixtureTests
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.True(monster.Moving);
         Assert.Equal(0, monster.PositionX);
-        Assert.Equal(0, monster.PositionY);
+        Assert.Equal(1, monster.PositionY);
         Assert.Equal(0, monster.FuturePositionX);
-        Assert.Equal(1, monster.FuturePositionY);
+        Assert.Equal(2, monster.FuturePositionY);
         Assert.Equal(1, monster.Direction);
-        Assert.Equal(1, monster.AvoidanceMovementTicks);
+        Assert.Equal(2, monster.AvoidanceMovementTicks);
         Assert.Equal(0, monster.AvoidanceMovementTurn);
         Assert.Equal(1, monster.AvoidanceMovementIdleTicks);
         Assert.Equal(0, monster.AvoidanceMovementMode);
-        Assert.Equal(363127633U, monster.MonsterAiSeed);
+        Assert.Equal(203440698U, monster.MonsterAiSeed);
+        // The per-monster stream is restored before each multiplayer AI pass;
+        // the global stream therefore remains at the fourth tick-2 draw.
         Assert.Equal(1084909516U, result.FinalSnapshot.RandomState);
+        Assert.Equal(2, result.Checkpoints.Count);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));

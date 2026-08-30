@@ -188,7 +188,8 @@ also preserve the avoidance action draw and idle counter across the replay
 boundary; admitted ticks additionally preserve the two RandomWalk coin draws,
 selected destination, direction, and participant/object occupancy state. The
 far-distance Move-goal path additionally preserves its admission coin, turn
-initialization, persisted goal tick, and RoundWalk destination.
+initialization, persisted goal tick, RoundWalk destination, and the next-tick
+completion/continuation boundary.
 
 ## Content and gameplay modules
 
