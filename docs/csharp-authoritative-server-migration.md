@@ -179,9 +179,11 @@ The inherited native implementation remains available until migrated behavior
 has characterization and replay coverage. Dual execution is a testing tool; a
 production session must have exactly one authoritative simulation.
 
-The replay boundary also characterizes the wounded Gargoyle self-heal
-transition: native and managed runners consume the same divisor RNG draw,
-apply fixed-point healing, and retain the special lock across autonomous ticks.
+The replay boundary also characterizes the wounded Gargoyle self-heal and
+adjacent-attack transitions: native and managed runners consume the same
+divisor and intelligence-band RNG draws, apply fixed-point healing, retain the
+special lock across autonomous ticks, and preserve secondary-player block
+timing on the multiplayer monster stream.
 
 ## Content and gameplay modules
 

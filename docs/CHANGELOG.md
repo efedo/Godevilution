@@ -37,6 +37,10 @@ All notable changes to this fork are documented below.
   runners now consume the same deterministic divisor draw, apply Q6 healing,
   retain the native special lock, and preserve the canonical checkpoint across
   the lock's following tick.
+- Extend Gargoyle replay parity through adjacent attack admission. Native and
+  managed runners now consume the extra attack-band draw before hit/block
+  resolution, including secondary-player block timing and the multiplayer
+  monster RNG stream.
 - Guard the legacy native client loop against opt-in authoritative-runtime
   references when server-backed client support is disabled, restoring the
   default replay-test build.

@@ -50,6 +50,9 @@ The shared replay gate now covers the wounded Gargoyle self-heal boundary.
 Both runners consume the same native divisor draw, apply the resulting Q6
 healing, retain the special lock while the player remains outside the native
 safety distance, and preserve the lock across the next autonomous tick.
+The companion adjacent-attack fixture now verifies Gargoyle's native
+intelligence-scaled attack admission before hit/block resolution, including
+secondary-player block timing and multiplayer AI-stream advancement.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory

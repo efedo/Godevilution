@@ -4479,8 +4479,7 @@ void StartReplayPlayerDeath(
 
 /** Advances the compact native Gargoyle wounded self-heal boundary. */
 bool AdvanceReplayAutonomousGargoyleHealing(
-    ReplayFixtureExecutionState &state,
-    uint64_t tick)
+    ReplayFixtureExecutionState &state)
 {
 	if (state.combatTargetEntityId == 0
 	    || state.combatTargetNativeAi != "Gargoyle"
@@ -4522,9 +4521,9 @@ bool AdvanceReplayAutonomousGargoyleHealing(
 	}
 	if (state.combatTargetHitPointsQ6
 	    >= state.combatTargetMaxHitPointsQ6 * 50 / 100)
-		return true;
+		return false;
 	if (distance < safeDistance)
-		return true;
+		return false;
 	const int healRoll = std::max(GenerateRnd(state, 5), 0);
 	const int divisor = 16 * (healRoll + 4);
 	const int healingQ6 = (state.combatTargetMaxHitPoints / divisor) * 64;
@@ -4534,7 +4533,6 @@ bool AdvanceReplayAutonomousGargoyleHealing(
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	state.combatTargetGargoyleSpecialActive =
 	    state.combatTargetHitPointsQ6 < state.combatTargetMaxHitPointsQ6;
-	(void)tick;
 	return true;
 }
 
@@ -4566,7 +4564,6 @@ void AdvanceReplayMonsterAttack(
 	// Autonomous ranged identities own their movement and projectile admission
 	// below; the generic compact monster branch must not pursue them into melee.
 	if (state.combatTargetNativeAi == "SkeletonRanged"
-	    || state.combatTargetNativeAi == "Gargoyle"
 	    || state.combatTargetNativeAi == "HorkDemon"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
@@ -4575,6 +4572,8 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetNativeAi == "Psychorb"
 	    || state.combatTargetNativeAi == "Necromorb"
 	    || state.combatTargetNativeAi == "BoneDemon")
+		return;
+	if (state.combatTargetAutonomousActionHandled)
 		return;
 	struct Victim {
 		uint32_t entityId;
@@ -4602,6 +4601,10 @@ void AdvanceReplayMonsterAttack(
 	const Victim &victim = victims.front();
 	const int distance = victimDistance(victim);
 	if (distance > state.combatTargetAggroRange)
+		return;
+	// Gargoyle's non-adjacent behavior is owned by its healing/avoidance
+	// controller; the compact generic attack path admits only its adjacent band.
+	if (state.combatTargetNativeAi == "Gargoyle" && distance > 1)
 		return;
 	if (distance > 1) {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
@@ -4727,6 +4730,19 @@ void AdvanceReplayMonsterAttack(
 			}
 		}
 		return;
+	}
+	if (state.combatTargetNativeAi == "Gargoyle") {
+		const int attackChance = std::min(
+		    100,
+		    23 + 2 * state.combatTargetIntelligence);
+		const int attackRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>((static_cast<uint32_t>(tick)
+		        ^ state.combatTargetEntityId
+		        ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId))
+		        % 100U);
+		if (attackRoll >= attackChance)
+			return;
 	}
 	if (state.combatTargetMonsterAiSeed != 0 && state.combatTargetToHit > 0) {
 		const int32_t targetLevel = victim.secondary
@@ -5543,7 +5559,8 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
-		AdvanceReplayAutonomousGargoyleHealing(state, simulationTick);
+		state.combatTargetAutonomousActionHandled =
+			AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
 		AdmitReplayAutonomousBloodStar(state);
 		AdmitReplayAutonomousMonsterMagic(state);

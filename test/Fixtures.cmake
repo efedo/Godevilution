@@ -85,6 +85,7 @@ set(devilutionx_fixtures
   memory_map/quest.txt
   replay/gameplay-autonomous-regen-soak.json
   replay/gameplay-gargoyle-healing.json
+  replay/gameplay-gargoyle-attack.json
   replay/gameplay-blood-star-autonomous.json
   replay/gameplay-blood-star-impact.json
   replay/gameplay-blood-star-multiplayer-target.json
