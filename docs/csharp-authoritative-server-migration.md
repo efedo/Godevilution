@@ -195,6 +195,8 @@ their countdown lifecycles. Snake delay admissions now have shared distant and
 adjacent replay fixtures. The Rhino path now preserves native charge
 admission, nearest adjacent landing, special damage, monster relocation,
 player knockback, and the unchanged single-player RNG boundary.
+The SnakeCharge path now also has a shared lifecycle fixture covering
+server-owned admission, travel, player collision, and impact timing.
 
 ## Content and gameplay modules
 

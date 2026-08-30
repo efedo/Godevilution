@@ -1,0 +1,49 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/snake-charge-lifecycle",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "snake-charge-lifecycle-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 3,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 8,
+    "combat_target_monster_level": 10,
+    "combat_target_native_ai": "Snake",
+    "combat_target_intelligence": 0
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "605e754ad7501f6ada52bde4745f7f57f1e9eb0238f1a1fe7b9520ea2b22986c" },
+    { "tick": 2, "state_sha256": "0df8657fb655acd93afe9acf8f1dba42c78abe241b77edc1030dfbaf402342be" },
+    { "tick": 3, "state_sha256": "8d836e5a6c7670d0f28d965282562496def3d33b1306c5e9f8ef31c4d5220153" },
+    { "tick": 4, "state_sha256": "85bf4c795e1df4287d9730c1922c7a98e8134c8d5e6d8a42c9739ab1388d2925" }
+  ]
+}

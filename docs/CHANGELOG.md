@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared SnakeCharge replay fixture covering native admission, projectile
+  travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and
   failed adjacent-attack admission bands. Native and managed replay runners
   now carry the server-owned Snake delay state through canonical checkpoints.

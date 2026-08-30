@@ -37,6 +37,7 @@ constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t BloodStarBehavior = 20;
 constexpr int32_t MonsterMagicBehavior = 50;
 constexpr int32_t HorkSpawnBehavior = 57;
+constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -3367,6 +3368,86 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+/** Advances the compact SnakeCharge controller through travel and impact. */
+void AdvanceReplaySnakeChargesOneTick(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != SnakeChargeBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.phase == 1) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks == 0)
+				iterator = state.projectiles.erase(iterator);
+			else
+				++iterator;
+			continue;
+		}
+		if (state.combatTargetEntityId == 0
+		    || state.combatTargetHitPointsQ6 <= 0) {
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		const int32_t previousX = projectile.positionX;
+		const int32_t previousY = projectile.positionY;
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		bool removed = false;
+		for (const auto &tile : visitedTiles) {
+			if (tile.x < 0 || tile.x >= 40 || tile.y < 0 || tile.y >= 40
+			    || (state.objectEntityId != 0
+			        && state.objectLevelId == projectile.levelId
+			        && state.objectPositionX == tile.x
+			        && state.objectPositionY == tile.y
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable)) {
+				projectile.positionX = previousX;
+				projectile.positionY = previousY;
+				iterator = state.projectiles.erase(iterator);
+				removed = true;
+				break;
+			}
+			projectile.positionX = tile.x;
+			projectile.positionY = tile.y;
+			projectile.traveledX = tile.traveledX;
+			projectile.traveledY = tile.traveledY;
+			state.combatTargetPositionX = tile.x;
+			state.combatTargetPositionY = tile.y;
+			state.combatTargetFuturePositionX = tile.x;
+			state.combatTargetFuturePositionY = tile.y;
+			if (state.life > 0
+			    && state.levelId == projectile.levelId
+			    && tile.x == state.positionX
+			    && tile.y == state.positionY) {
+				const int hitChance = 100;
+				if (std::max(GenerateRnd(state, 100), 0) < hitChance) {
+					const int32_t damageQ6 = std::max(1, projectile.damage) * 64;
+					state.life = std::max(0, state.life - damageQ6);
+					if (state.life > 0
+					    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+						state.combatMode = 7;
+						state.combatModeEndTick = tick + 6;
+					}
+					EnterReplayProjectileImpact(projectile);
+					break;
+				}
+			}
+		}
+		if (removed)
+			continue;
+		if (projectile.phase == 0 && projectile.remainingTicks == 0)
+			iterator = state.projectiles.erase(iterator);
+		else
+			++iterator;
+	}
+}
+
 bool ApplyReplayAttack(
     ReplayFixtureExecutionState &state,
     uint32_t targetEntityId,
@@ -4796,6 +4877,59 @@ void AdvanceReplayMonsterAttack(
 			--state.combatTargetSnakeDelayTicks;
 			return;
 		}
+		const bool hasSnakeCharge = std::any_of(
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [&](const auto &projectile) {
+			return projectile.sourceEntityId == state.combatTargetEntityId
+			    && projectile.behavior == SnakeChargeBehavior;
+		});
+		if (hasSnakeCharge) {
+			// Managed autonomous dispatch still consumes the adjacent attack
+			// admission draw while an in-flight charge owns the movement path.
+			if (distance < 2)
+				static_cast<void>(GenerateRnd(state, 100));
+			return;
+		}
+		if (distance == 2) {
+			uint32_t nextEntityId = 0x80000000U;
+			for (const auto &projectile : state.projectiles)
+				nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+			const auto velocity = CalculateVelocity(
+				state.combatTargetPositionX,
+				state.combatTargetPositionY,
+				victim.positionX,
+				victim.positionY,
+				18);
+			ReplayFixtureProjectileState projectile;
+			projectile.entityId = nextEntityId;
+			projectile.sourceEntityId = state.combatTargetEntityId;
+			projectile.targetEntityId = victim.entityId;
+			projectile.spellId = 37;
+			projectile.levelId = state.combatTargetLevelId;
+			projectile.positionX = state.combatTargetPositionX;
+			projectile.positionY = state.combatTargetPositionY;
+			projectile.startX = projectile.positionX;
+			projectile.startY = projectile.positionY;
+			projectile.targetX = victim.positionX;
+			projectile.targetY = victim.positionY;
+			projectile.damage = 4;
+			projectile.damageType = 0;
+			projectile.remainingTicks = 4;
+			projectile.behavior = SnakeChargeBehavior;
+			projectile.originalDirection = GetDirection(
+				projectile.positionX,
+				projectile.positionY,
+				projectile.targetX,
+				projectile.targetY);
+			projectile.velocityX = velocity.first;
+			projectile.velocityY = velocity.second;
+			projectile.speed = 18;
+			projectile.impactLifetime = 2;
+			projectile.resistantDamageDivisor = 1;
+			state.projectiles.push_back(std::move(projectile));
+			return;
+		}
 		const uint32_t actionSeed = static_cast<uint32_t>(tick)
 		    ^ state.combatTargetEntityId
 		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
@@ -5900,6 +6034,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
+		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state, simulationTick);

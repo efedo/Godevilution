@@ -3115,6 +3115,35 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySnakeChargeLifecycleMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-snake-charge-lifecycle.json");
+        var executor = CreateSnakeChargeReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6144, player.Life);
+        Assert.Equal(PlayerCombatMode.GotHit, player.CombatMode);
+        Assert.Equal(10UL, player.CombatModeEndTick);
+        Assert.Equal((3, 0), (player.PositionX, player.PositionY));
+        Assert.Equal((3, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(54, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(2U, projectile.RemainingTicks);
+        Assert.Equal(4261773604U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5310,6 +5339,50 @@ public sealed class ReplayFixtureTests
                 initial.CombatTargetNativeAi,
                 "Rhino",
                 AuthoritativeProjectileBehavior.SnakeCharge),
+        ]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateSnakeChargeReplayExecutor(
+        ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                initial.CombatTargetNativeAi,
+                "Rhino",
+                AuthoritativeProjectileBehavior.SnakeCharge,
+                SpellId: 37,
+                ProjectileSpeed: 18,
+                ProjectileLifetime: 4,
+                ProjectileDamage: 4,
+                ProjectileImpactLifetime: 2),
         ]);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);

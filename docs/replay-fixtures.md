@@ -100,6 +100,9 @@ or preserve a failed adjacent-attack countdown across checkpoint ticks.
 Snake fixtures may carry `combat_target_snake_delay_ticks` to replay an
 admitted distant delay or preserve a failed adjacent-attack countdown across
 checkpoint ticks. The paired Snake fixtures cover both native delay bands.
+The `gameplay-snake-charge-lifecycle.json` fixture covers the mapped
+`SnakeCharge` admission, projectile travel, player collision, and impact phase
+through shared native and managed checkpoints.
 `initial_state.secondary_player` may declare a second stable participant for
 multiplayer collision fixtures, including identity, entity ID, Q6 life,
 position, level, and character level. The runners initialize it before the
@@ -199,7 +202,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 113 checked-in JSON fixtures and 148 registered
+the native replay gate contains 114 checked-in JSON fixtures and 150 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -219,7 +222,8 @@ far-distance Move-goal/RoundWalk state boundary across its first continuation
 tick, SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Rhino charge admission, special damage, and
 knockback are also covered in both runners. Snake distant-delay and failed
-adjacent-attack admission/countdown are also covered in both runners. The
+adjacent-attack admission/countdown are also covered in both runners, as is
+the mapped SnakeCharge travel, player collision, and impact phase. The
 dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
@@ -263,7 +267,8 @@ persisted goal ticks, turn state, RoundWalk destination, and next-tick
 continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
 attack admission/countdown lifecycles, Rhino charge admission, special
 damage, relocation, and player knockback, and Snake distant-delay and failed
-adjacent-attack admission/countdown lifecycles.
+adjacent-attack admission/countdown lifecycles, plus mapped SnakeCharge
+travel, player collision, and impact-phase timing.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
