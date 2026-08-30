@@ -205,7 +205,7 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 		hasher.AppendUint64(state.secondaryPlayerCombatModeEndTick);
 	}
 	hasher.AppendUint64(0);
-	hasher.AppendUint32(0);
+	hasher.AppendUint32(state.secondaryPlayerGold);
 	hasher.AppendUint32(0);
 	hasher.AppendUint32(0);
 	hasher.AppendInt32(0);
@@ -5693,6 +5693,8 @@ private:
 				return ParseSigned(player.life);
 			if (key == "life_maximum")
 				return ParseSigned(player.lifeMaximum);
+			if (key == "gold")
+				return ParseUnsigned(player.gold);
 			if (key == "position_x")
 				return ParseSigned(player.positionX);
 			if (key == "position_y")
@@ -6577,6 +6579,7 @@ bool ExecuteReplayFixture(
 		state.secondaryPlayerEntityId = secondary.entityId;
 		state.secondaryPlayerLife = secondary.life;
 		state.secondaryPlayerLifeMaximum = secondary.lifeMaximum;
+		state.secondaryPlayerGold = secondary.gold;
 		state.secondaryPlayerPositionX = secondary.positionX;
 		state.secondaryPlayerPositionY = secondary.positionY;
 		state.secondaryPlayerLevelId = secondary.levelId;
@@ -6795,46 +6798,58 @@ bool ExecuteReplayFixture(
 					const int targetCell = FindReplayInventoryFirstFit(
 					    state.secondaryInventoryGrid,
 					    state.worldItemState);
-					if (command.worldItemEntityId == state.worldItemEntityId
+					const bool validTarget = command.worldItemEntityId == state.worldItemEntityId
 					    && state.worldItemSeed != 0
 					    && state.secondaryPlayerLevelId == state.worldItemLevelId
-					    && distance <= 1
-					    && !state.secondaryHeldItemDefined) {
-						if (targetCell >= 0 && state.secondaryInventory.size() < 40) {
-							const size_t inventoryIndex = state.secondaryInventory.size();
-							state.secondaryInventory.push_back({
-							    0,
-							    0,
-							    state.worldItemSeed,
-							    state.worldItemPrice,
-							    command.order.targetTick,
-							    state.worldItemState,
-							});
-							FillReplayInventoryGrid(
-							    state.secondaryInventoryGrid,
-							    targetCell,
-							    inventoryIndex,
-							    state.worldItemState);
+					    && distance <= 1;
+					const bool isGold = state.worldItemState.itemType == 11
+					    && state.worldItemState.itemIndex == 0;
+					if (!validTarget) {
+						rejectReason = "InvalidTarget";
+					} else if (state.secondaryHeldItemDefined) {
+						rejectReason = "NotAllowed";
+					} else if (isGold) {
+						if (state.worldItemState.value <= 0
+						    || state.worldItemState.value > 5000
+						    || state.worldItemState.identifiedValue != state.worldItemState.value
+						    || !state.worldItemState.statFlag
+						    || state.worldItemPrice != static_cast<uint32_t>(state.worldItemState.value)
+						    || std::numeric_limits<uint32_t>::max() - state.secondaryPlayerGold < state.worldItemPrice) {
+							rejectReason = "Malformed";
 						} else {
-							state.secondaryHeldItemDefined = true;
-							state.secondaryHeldItem = {
-							    0,
-							    0,
-							    state.worldItemSeed,
-							    state.worldItemPrice,
-							    command.order.targetTick,
-							    state.worldItemState,
-							};
+							state.secondaryPlayerGold += state.worldItemPrice;
+							state.worldItemEntityId = 0;
+							accepted = true;
 						}
+					} else if (targetCell >= 0 && state.secondaryInventory.size() < 40) {
+						const size_t inventoryIndex = state.secondaryInventory.size();
+						state.secondaryInventory.push_back({
+						    0,
+						    0,
+						    state.worldItemSeed,
+						    state.worldItemPrice,
+						    command.order.targetTick,
+						    state.worldItemState,
+						});
+						FillReplayInventoryGrid(
+						    state.secondaryInventoryGrid,
+						    targetCell,
+						    inventoryIndex,
+						    state.worldItemState);
 						state.worldItemEntityId = 0;
 						accepted = true;
-					} else if (command.worldItemEntityId != state.worldItemEntityId
-					    || state.worldItemSeed == 0
-					    || state.secondaryPlayerLevelId != state.worldItemLevelId
-					    || distance > 1) {
-						rejectReason = "InvalidTarget";
-						} else {
-							rejectReason = "NotAllowed";
+					} else {
+						state.secondaryHeldItemDefined = true;
+						state.secondaryHeldItem = {
+						    0,
+						    0,
+						    state.worldItemSeed,
+						    state.worldItemPrice,
+						    command.order.targetTick,
+						    state.worldItemState,
+						};
+						state.worldItemEntityId = 0;
+						accepted = true;
 					}
 				} else if (command.kind == "DropHeldItem") {
 					const int distance = std::max(

@@ -487,6 +487,7 @@ public static class ReplayFixtureLoader
                 ? lifeMaximum.GetInt32()
                 : RequiredInt(player, "life"),
             CharacterName = OptionalString(player, "character_name") ?? string.Empty,
+            Gold = GetOptionalUInt(player, "gold"),
             LevelId = GetOptionalUInt(player, "level_id"),
             CharacterLevel = player.TryGetProperty("character_level", out var level)
                 ? level.GetUInt32()

@@ -84,7 +84,8 @@ public sealed class DiabloPlayerTemplate
         AuthoritativeItemCatalog? items = null,
         uint statPoints = 0,
         IReadOnlyList<StashStoreItem>? stash = null,
-        uint stashGold = 0)
+        uint stashGold = 0,
+        bool goldTopologyEnabled = true)
     {
         ValidateCount(equipment, MaximumEquipmentCount, "equipment");
         ValidateCount(inventoryGrid, MaximumInventoryGridCells, "inventory-grid");
@@ -173,6 +174,7 @@ public sealed class DiabloPlayerTemplate
         StatPoints = statPoints;
         Stash = stash?.ToArray() ?? [];
         StashGold = stashGold;
+        GoldTopologyEnabled = goldTopologyEnabled;
 
         static void ValidateCount<T>(
             IReadOnlyList<T>? values,
@@ -444,6 +446,7 @@ public sealed class DiabloPlayerTemplate
     }
 
     public uint Gold { get; }
+    public bool GoldTopologyEnabled { get; }
     public uint Experience { get; }
     public int Life { get; }
     public int Mana { get; }
@@ -517,7 +520,8 @@ public sealed class DiabloPlayerTemplate
             Items,
             statPoints: StatPoints,
             stash: Stash,
-            stashGold: StashGold);
+            stashGold: StashGold,
+            goldTopologyEnabled: GoldTopologyEnabled);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -558,7 +562,8 @@ public sealed class DiabloPlayerTemplate
             Items,
             statPoints: StatPoints,
             stash: Stash,
-            stashGold: StashGold);
+            stashGold: StashGold,
+            goldTopologyEnabled: GoldTopologyEnabled);
         player.RecalculateEquipmentAttributes();
         player.RecalculateEquipmentArmor();
         return player;

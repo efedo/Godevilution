@@ -229,9 +229,13 @@ public sealed class AuthoritativePlayerState(
     IReadOnlyList<uint>? visitedLevelIds = null,
     uint statPoints = 0,
     IReadOnlyList<StashStoreItem>? stash = null,
-    uint stashGold = 0)
+    uint stashGold = 0,
+    bool goldTopologyEnabled = true)
 {
     public uint Gold { get; set; } = gold;
+
+    /** Whether an empty native-sized inventory grid represents Gold topology. */
+    public bool GoldTopologyEnabled { get; } = goldTopologyEnabled;
 
     public uint Experience { get; set; } = experience;
 

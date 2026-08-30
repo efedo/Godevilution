@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-29
+Status date: 2026-08-30
 
 The shared protocol now admits an additive `DropItemRequested` intent carrying
 the same stable item references used by inventory and stash transfers. The
@@ -91,6 +91,11 @@ The same replay lane now covers a full secondary inventory and cursor lifecycle.
 Both runners accept the pickup into the secondary held-item projection, then
 route `DropHeldItem` to adjacent authoritative world placement with matching
 entity identity and canonical participant hash.
+
+The secondary multiplayer replay lane now also covers Gold pickup. Native and
+managed runners credit an adjacent Gold pile directly to the secondary wallet,
+remove the world entity, and match the canonical participant hash without
+creating a presentation-only inventory stack.
 
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or

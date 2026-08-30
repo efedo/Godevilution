@@ -42,6 +42,10 @@ All notable changes to this fork are documented below.
   fixture now drops the held item through `DropHeldItem` and verifies adjacent
   authoritative world-item placement in both runners.
 
+- Add secondary-participant Gold pickup parity coverage. The shared fixture
+  credits Gold directly to the secondary wallet, removes the world pile, and
+  verifies the canonical participant hash in native and managed replay.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

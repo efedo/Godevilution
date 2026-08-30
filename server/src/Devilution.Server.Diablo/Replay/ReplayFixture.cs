@@ -126,6 +126,7 @@ public sealed record ReplaySecondaryPlayer(
 {
     public string CharacterName { get; init; } = string.Empty;
     public int LifeMaximum { get; init; }
+    public uint Gold { get; init; }
     public uint LevelId { get; init; }
 
     public uint CharacterLevel { get; init; } = 1;

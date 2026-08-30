@@ -61,7 +61,7 @@ public static class ReplayFixtureExecutor
             executor.InitializeParticipant(
                 secondary.Player,
                 new DiabloPlayerTemplate(
-                    0,
+                    secondary.Gold,
                     0,
                     secondary.Life,
                     0,
@@ -96,7 +96,8 @@ public static class ReplayFixtureExecutor
                     friendlyMode: secondary.FriendlyMode,
                     combatMode: secondary.CombatMode,
                     combatModeEndTick: secondary.CombatModeEndTick,
-                    characterName: secondary.CharacterName));
+                    characterName: secondary.CharacterName,
+                    goldTopologyEnabled: false));
             _ = executor.CreateSnapshot(
                 secondary.Player,
                 secondary.EntityId,

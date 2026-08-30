@@ -35,7 +35,9 @@ internal static class DiabloGoldInventory
         if (!found) {
             // A native-sized empty grid is canonical zero-Gold topology. Older
             // aggregate compatibility fixtures commonly omit the grid entirely.
-            return player.Gold == 0 && player.InventoryGrid.Count == 40;
+            return player.GoldTopologyEnabled
+                && player.Gold == 0
+                && player.InventoryGrid.Count == 40;
         }
         if (sum < player.Gold)
             return false;

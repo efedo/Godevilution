@@ -79,6 +79,7 @@ struct ReplayFixtureSecondaryPlayer {
 	uint32_t entityId = 0;
 	int32_t life = 0;
 	int32_t lifeMaximum = 0;
+	uint32_t gold = 0;
 	int32_t positionX = 0;
 	int32_t positionY = 0;
 	uint32_t levelId = 0;
@@ -499,6 +500,7 @@ struct ReplayFixtureExecutionState {
 	uint32_t secondaryPlayerEntityId = 0;
 	int32_t secondaryPlayerLife = 0;
 	int32_t secondaryPlayerLifeMaximum = 0;
+	uint32_t secondaryPlayerGold = 0;
 	int32_t secondaryPlayerPositionX = 0;
 	int32_t secondaryPlayerPositionY = 0;
 	uint32_t secondaryPlayerLevelId = 0;
