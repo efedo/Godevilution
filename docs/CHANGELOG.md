@@ -20,6 +20,10 @@ All notable changes to this fork are documented below.
   now preserve the action admission band, deterministic long-range walk, and
   current/future occupancy across the tick boundary.
 
+- Add a shared Fat/Overlord movement replay fixture. Native and managed runners
+  now preserve the fresh movement admission band, movement mode, idle counter,
+  and current/future occupancy across consecutive ticks.
+
 - Add a shared SnakeCharge replay fixture covering native admission, projectile
   travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and

@@ -3321,6 +3321,30 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayFatMovementMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-fat-movement.json");
+        var executor = CreateFatReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal((5, 10), (monster.PositionX, monster.PositionY));
+        Assert.True(monster.Moving);
+        Assert.Equal((6, 10), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(7, monster.Direction);
+        Assert.Equal(0, monster.FatMovementIdleTicks);
+        Assert.Equal(1, monster.FatMovementMode);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterObjectPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5533,7 +5557,9 @@ public sealed class ReplayFixtureTests
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
             scavengerHealingTicks: initial.CombatTargetScavengerHealingTicks,
-            scavengerCorpseEntityId: initial.CombatTargetScavengerCorpseEntityId);
+            scavengerCorpseEntityId: initial.CombatTargetScavengerCorpseEntityId,
+            fatMovementIdleTicks: initial.CombatTargetFatMovementIdleTicks,
+            fatMovementMode: initial.CombatTargetFatMovementMode);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -5577,6 +5603,39 @@ public sealed class ReplayFixtureTests
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateFatReplayExecutor(
+        ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            fatMovementIdleTicks: initial.CombatTargetFatMovementIdleTicks,
+            fatMovementMode: initial.CombatTargetFatMovementMode);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(

@@ -102,6 +102,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetBatRetreatDirection != 0
                     || initialTarget.CombatTargetScavengerHealingTicks != 0
                     || initialTarget.CombatTargetScavengerCorpseEntityId != 0
+                    || initialTarget.CombatTargetFatMovementIdleTicks != -1
+                    || initialTarget.CombatTargetFatMovementMode != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
@@ -128,6 +130,8 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetBatRetreatTicks is < 0 or > 1024
             || initialTarget.CombatTargetBatRetreatDirection is < 0 or > 7
             || initialTarget.CombatTargetScavengerHealingTicks is < 0 or > 1024
+            || initialTarget.CombatTargetFatMovementIdleTicks is < -1 or > 1024
+            || initialTarget.CombatTargetFatMovementMode is < 0 or > 3
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
                     initialTarget.CombatTargetNativeAi))
@@ -394,6 +398,14 @@ public static class ReplayFixtureLoader
             CombatTargetScavengerCorpseEntityId = GetOptionalUInt(
                 value,
                 "combat_target_scavenger_corpse_entity_id"),
+            CombatTargetFatMovementIdleTicks = value.TryGetProperty(
+                "combat_target_fat_movement_idle_ticks",
+                out var fatMovementIdleTicks)
+                ? fatMovementIdleTicks.GetInt32()
+                : -1,
+            CombatTargetFatMovementMode = GetOptionalInt(
+                value,
+                "combat_target_fat_movement_mode"),
             Corpses = ParseCorpses(value),
             CombatTargetMoving = GetOptionalBool(value, "combat_target_moving"),
             CombatTargetFuturePositionX = value.TryGetProperty(

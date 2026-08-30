@@ -25,6 +25,9 @@ The shared replay contract now covers the server-owned ZombieAi action band
 and deterministic long-range walk, including current/future occupancy parity
 across the following tick.
 
+The shared replay contract now covers the server-owned Fat/Overlord movement
+band, including its fresh movement mode, idle counter, and occupancy state.
+
 The shared protocol now admits an additive `DropItemRequested` intent carrying
 the same stable item references used by inventory and stash transfers. The
 authoritative server validates and removes the referenced carried item only

@@ -573,6 +573,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-skeleton-delay-v1");
 			hasher.AppendInt32(state.combatTargetSkeletonMeleeDelayTicks);
 		}
+		if (state.combatTargetFatMovementIdleTicks != -1
+		    || state.combatTargetFatMovementMode != 0) {
+			hasher.AppendString("godevilution-monster-fat-counter-v1");
+			hasher.AppendInt32(state.combatTargetFatMovementIdleTicks);
+			hasher.AppendInt32(state.combatTargetFatMovementMode);
+		}
 		if (state.combatTargetHorkDemonDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
 			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
@@ -5213,6 +5219,63 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
+	// Compact the native Overlord/Fat movement admission and its persisted
+	// idle/mode counter. Seeded Fat streams retain the existing native path;
+	// zero-seed fixtures use the same deterministic compatibility controller.
+	if (state.combatTargetNativeAi == "Fat"
+	    && state.combatTargetMonsterAiSeed == 0) {
+		if (distance <= 1)
+			return;
+		const int longIdleChance = std::min(
+		    100,
+		    20 + 4 * state.combatTargetIntelligence);
+		const int movementChance = state.combatTargetFatMovementIdleTicks == -1
+		    ? longIdleChance
+		    : state.combatTargetFatMovementIdleTicks > 20
+		    ? longIdleChance
+		    : state.combatTargetFatMovementIdleTicks == 0
+		          && state.combatTargetFatMovementMode >= 1
+		          && state.combatTargetFatMovementMode <= 3
+		    ? std::min(100, longIdleChance + 50)
+		    : 0;
+		const uint32_t actionSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		if (static_cast<int>(actionSeed % 100U) >= movementChance) {
+			if (state.combatTargetFatMovementIdleTicks < 1024)
+				++state.combatTargetFatMovementIdleTicks;
+			return;
+		}
+		const int deltaX = (victim.positionX > state.combatTargetPositionX)
+		    - (victim.positionX < state.combatTargetPositionX);
+		const int deltaY = (victim.positionY > state.combatTargetPositionY)
+		    - (victim.positionY < state.combatTargetPositionY);
+		const int candidateX = state.combatTargetPositionX + deltaX;
+		const int candidateY = state.combatTargetPositionY + deltaY;
+		if (deltaX != 0 || deltaY != 0) {
+			const bool blockedByPrimary = candidateX == state.positionX
+			    && candidateY == state.positionY;
+			const bool blockedBySecondary = state.secondaryPlayerEntityId != 0
+			    && candidateX == state.secondaryPlayerPositionX
+			    && candidateY == state.secondaryPlayerPositionY;
+			if (!blockedByPrimary && !blockedBySecondary) {
+				state.combatTargetMoving = true;
+				state.combatTargetFuturePositionX = candidateX;
+				state.combatTargetFuturePositionY = candidateY;
+				state.combatTargetDirection = GetDirection(
+				    state.combatTargetPositionX,
+				    state.combatTargetPositionY,
+				    candidateX,
+				    candidateY);
+				state.combatTargetFatMovementIdleTicks = deltaY;
+				state.combatTargetFatMovementMode = deltaX;
+				return;
+			}
+		}
+		if (state.combatTargetFatMovementIdleTicks < 1024)
+			++state.combatTargetFatMovementIdleTicks;
+		return;
+	}
 	if (distance > 1 && state.combatTargetNativeAi != "Rhino") {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;
@@ -6719,6 +6782,10 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetScavengerHealingTicks);
 			if (key == "combat_target_scavenger_corpse_entity_id")
 				return ParseUnsigned(fixture_.initialState.combatTargetScavengerCorpseEntityId);
+			if (key == "combat_target_fat_movement_idle_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetFatMovementIdleTicks);
+			if (key == "combat_target_fat_movement_mode")
+				return ParseSigned(fixture_.initialState.combatTargetFatMovementMode);
 			if (key == "corpses")
 				return ParseInitialCorpses();
 			if (key == "combat_target_fire_resistance")
@@ -7547,6 +7614,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetBatRetreatDirection != 0
 		    || target.combatTargetScavengerHealingTicks != 0
 		    || target.combatTargetScavengerCorpseEntityId != 0
+		    || target.combatTargetFatMovementIdleTicks != -1
+		    || target.combatTargetFatMovementMode != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
@@ -7578,6 +7647,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetBatRetreatDirection > 7
 		|| target.combatTargetScavengerHealingTicks < 0
 		|| target.combatTargetScavengerHealingTicks > 1024
+		|| target.combatTargetFatMovementIdleTicks < -1
+		|| target.combatTargetFatMovementIdleTicks > 1024
+		|| target.combatTargetFatMovementMode < 0
+		|| target.combatTargetFatMovementMode > 3
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -7932,6 +8005,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetBatRetreatDirection = fixture.initialState.combatTargetBatRetreatDirection;
 		state.combatTargetScavengerHealingTicks = fixture.initialState.combatTargetScavengerHealingTicks;
 		state.combatTargetScavengerCorpseEntityId = fixture.initialState.combatTargetScavengerCorpseEntityId;
+		state.combatTargetFatMovementIdleTicks = fixture.initialState.combatTargetFatMovementIdleTicks;
+		state.combatTargetFatMovementMode = fixture.initialState.combatTargetFatMovementMode;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;

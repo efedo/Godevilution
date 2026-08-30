@@ -282,6 +282,11 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public uint CombatTargetScavengerCorpseEntityId { get; init; }
 
+    /** Optional native Fat/Overlord movement counter and mode state. */
+    public int CombatTargetFatMovementIdleTicks { get; init; } = -1;
+
+    public int CombatTargetFatMovementMode { get; init; }
+
     public IReadOnlyList<ReplayCorpse> Corpses { get; init; } = [];
 
     public bool CombatTargetMoving { get; init; }

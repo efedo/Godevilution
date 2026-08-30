@@ -202,7 +202,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 120 checked-in JSON fixtures and 156 registered
+the native replay gate contains 121 checked-in JSON fixtures and 157 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -278,7 +278,9 @@ selection, movement, healing, countdown, and RNG timing.
 The Hellfire Scavenger lane additionally verifies max-health-fraction healing
 and removal of the consumed corpse.
 Zombie action admission and long-range movement are also covered in both
-runners. They are wired to preserve the same baseline resources,
+runners. Fat/Overlord fresh movement admission, mode, idle counter, and
+occupancy are also covered in both runners. They are wired to preserve the same
+baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
 world items in their canonical projections. Spell fixtures now reject unowned
