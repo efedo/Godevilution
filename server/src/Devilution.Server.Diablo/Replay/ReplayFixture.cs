@@ -242,6 +242,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetToHit { get; init; }
 
+    /** Optional native special-attack accuracy projection. */
+    public int CombatTargetToHitSpecial { get; init; }
+
     public int CombatTargetMinDamage { get; init; }
 
     public int CombatTargetMaxDamage { get; init; }

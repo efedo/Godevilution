@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared Rhino charge replay fixture. Native and managed runners now
+  preserve charge admission, the nearest adjacent destination, special damage,
+  monster relocation, player knockback, and unchanged single-player RNG.
 - Add shared SkeletonMelee replay fixtures for native movement-delay admission,
   failed adjacent-attack admission, and their countdown lifecycles. Both
   runners preserve the server-owned delay state and unchanged global RNG across

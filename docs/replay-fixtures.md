@@ -83,6 +83,11 @@ petrification. It may also declare armor class, attack damage, and aggro range
 for autonomous combat. Both runners reject inconsistent occupancy or negative
 combat data, complete and begin movement on the same tick boundaries, and apply
 the native rule that only a petrified walker is hittable at its future tile.
+Optional `combat_target_to_hit`, `combat_target_to_hit_special`, and paired
+`combat_target_min_damage`/`combat_target_max_damage` fields expose native
+monster accuracy and damage channels for autonomous special attacks. The
+`gameplay-rhino-charge.json` fixture uses them to verify the server-owned charge
+landing and knockback transition.
 Native monster runtime seeds may be supplied as the paired
 `combat_target_monster_item_seed` and `combat_target_monster_ai_seed` fields.
 The multiplayer AI seed advances from the monster-owned stream at each
@@ -191,7 +196,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 110 checked-in JSON fixtures and 143 registered
+the native replay gate contains 111 checked-in JSON fixtures and 144 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -209,7 +214,8 @@ avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
 tick, SkeletonMelee movement-delay admission/countdown, and failed adjacent-
-attack admission/countdown. The dated full-suite
+attack admission/countdown. Rhino charge admission, special damage, and
+knockback are also covered in both runners. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -250,7 +256,8 @@ idle-band lifecycle, an admitted RandomWalk destination with participant and
 active-object occupancy checks, and far-distance Move-goal admission with
 persisted goal ticks, turn state, RoundWalk destination, and next-tick
 continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
-attack admission/countdown lifecycles.
+attack admission/countdown lifecycles, and Rhino charge admission, special
+damage, relocation, and player knockback.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -616,6 +623,8 @@ Notable shared fixtures include:
 - `gameplay-skeleton-melee-delay.json` and
   `gameplay-skeleton-melee-attack-delay.json` for native SkeletonMelee
   movement-delay and failed adjacent-attack admission/countdown parity;
+- `gameplay-rhino-charge.json` for native charge admission, nearest adjacent
+  landing, special damage, monster relocation, player knockback, and RNG parity;
 - `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
   native monster runtime-seed advancement, secondary hit/block stream
   consumption, block timing, and cross-language canonical hashing;

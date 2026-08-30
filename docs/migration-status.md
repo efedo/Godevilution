@@ -16,6 +16,11 @@ reference rejection over the transport boundary. The native authoritative
 client now submits the same stable-reference intent for carried cursor drops;
 legacy mode and stash selections retain fail-closed compatibility behavior.
 
+The shared replay contract now covers the server-owned Rhino charge boundary.
+Native and managed runners agree on charge admission, nearest adjacent landing,
+special damage, monster relocation, player knockback, and unchanged
+single-player RNG in one authoritative tick.
+
 The shared replay contract now includes a stable-reference inventory-drop
 fixture. Native and managed runners both validate the stable identity, remove
 the inventory source, and create the authoritative adjacent world item,

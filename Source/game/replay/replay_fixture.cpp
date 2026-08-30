@@ -523,10 +523,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendInt32(targetMaxDamage);
 			hasher.AppendBool(false);
 		}
-		if (state.combatTargetToHit != 0) {
+		if (state.combatTargetToHit != 0 || state.combatTargetToHitSpecial != 0) {
 			hasher.AppendString("godevilution-monster-accuracy-v1");
 			hasher.AppendInt32(state.combatTargetToHit);
-			hasher.AppendInt32(0);
+			hasher.AppendInt32(state.combatTargetToHitSpecial);
 		}
 		if (!state.combatTargetNativeAi.empty()) {
 			hasher.AppendString("godevilution-monster-native-ai-v1");
@@ -4784,7 +4784,7 @@ void AdvanceReplayMonsterAttack(
 			}
 		}
 	}
-	if (distance > 1) {
+	if (distance > 1 && state.combatTargetNativeAi != "Rhino") {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;
 		const int32_t deltaX = (differenceX > 0) - (differenceX < 0);
@@ -4926,6 +4926,106 @@ void AdvanceReplayMonsterAttack(
 			        + static_cast<int>((attackSeed / 100U) % 10U));
 			return;
 		}
+	}
+	if (state.combatTargetNativeAi == "Rhino"
+	    && distance >= 5
+	    && state.combatTargetToHitSpecial > 0) {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int attackRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(attackSeed % 100U);
+		const int chargeChance = std::min(
+		    100,
+		    43 + 2 * state.combatTargetIntelligence);
+		if (attackRoll >= chargeChance)
+			return;
+		const int originalMonsterX = state.combatTargetPositionX;
+			const int originalMonsterY = state.combatTargetPositionY;
+			std::vector<std::pair<int32_t, int32_t>> destinations;
+			for (int offsetY = -1; offsetY <= 1; ++offsetY) {
+				for (int offsetX = -1; offsetX <= 1; ++offsetX) {
+					if (offsetX == 0 && offsetY == 0)
+						continue;
+					const int candidateX = victim.positionX + offsetX;
+					const int candidateY = victim.positionY + offsetY;
+					if (candidateX < 0 || candidateX >= 40
+					    || candidateY < 0 || candidateY >= 40
+					    || (candidateX == state.positionX
+					        && candidateY == state.positionY)
+					    || (state.secondaryPlayerEntityId != 0
+					        && candidateX == state.secondaryPlayerPositionX
+					        && candidateY == state.secondaryPlayerPositionY))
+						continue;
+					destinations.emplace_back(candidateX, candidateY);
+				}
+			}
+			std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
+				const auto distanceToMonster = [&](const auto &candidate) {
+					return std::max(
+					    std::abs(candidate.first - originalMonsterX),
+					    std::abs(candidate.second - originalMonsterY));
+				};
+				const int leftDistance = distanceToMonster(left);
+				const int rightDistance = distanceToMonster(right);
+				return leftDistance != rightDistance
+				    ? leftDistance < rightDistance
+				    : left.second != right.second
+				        ? left.second < right.second
+				        : left.first < right.first;
+				});
+		if (destinations.empty())
+			return;
+				state.combatTargetPositionX = destinations.front().first;
+				state.combatTargetPositionY = destinations.front().second;
+				state.combatTargetFuturePositionX = state.combatTargetPositionX;
+				state.combatTargetFuturePositionY = state.combatTargetPositionY;
+				state.combatTargetMoving = false;
+				const int minimumDamage = state.combatTargetMinDamage == 0
+				        && state.combatTargetMaxDamage == 0
+				    ? state.combatTargetAttackDamage
+				    : state.combatTargetMinDamage;
+				const int maximumDamage = state.combatTargetMinDamage == 0
+				        && state.combatTargetMaxDamage == 0
+				    ? state.combatTargetAttackDamage
+				    : state.combatTargetMaxDamage;
+				const int damage = maximumDamage >= minimumDamage
+				    ? minimumDamage + static_cast<int>(attackSeed
+				        % static_cast<uint32_t>(maximumDamage - minimumDamage + 1))
+				    : 0;
+				if (victim.secondary)
+					state.secondaryPlayerLife = std::max(
+					    0,
+					    state.secondaryPlayerLife - std::max(0, damage));
+				else
+					state.life = std::max(0, state.life - std::max(0, damage));
+				if (damage > 0
+				    && (victim.secondary
+				        ? state.secondaryPlayerLife > 0
+				        : state.life > 0)) {
+					const int direction = GetDirection(
+					    originalMonsterX,
+					    originalMonsterY,
+					    victim.positionX,
+					    victim.positionY);
+					const auto displacement = DirectionDisplacements[direction];
+					const int knockbackX = victim.positionX + displacement.first;
+					const int knockbackY = victim.positionY + displacement.second;
+					if (knockbackX >= 0 && knockbackX < 40
+					    && knockbackY >= 0 && knockbackY < 40
+					    && !(knockbackX == state.combatTargetPositionX
+					        && knockbackY == state.combatTargetPositionY)) {
+						if (victim.secondary) {
+							state.secondaryPlayerPositionX = knockbackX;
+							state.secondaryPlayerPositionY = knockbackY;
+						} else {
+							state.positionX = knockbackX;
+							state.positionY = knockbackY;
+						}
+					}
+				}
+		return;
 	}
 	if (state.combatTargetNativeAi == "Gargoyle") {
 		const int attackChance = std::min(
@@ -6120,6 +6220,8 @@ private:
 				return ParseUnsigned(fixture_.initialState.combatTargetMonsterId);
 			if (key == "combat_target_to_hit")
 				return ParseSigned(fixture_.initialState.combatTargetToHit);
+			if (key == "combat_target_to_hit_special")
+				return ParseSigned(fixture_.initialState.combatTargetToHitSpecial);
 			if (key == "combat_target_min_damage")
 				return ParseSigned(fixture_.initialState.combatTargetMinDamage);
 			if (key == "combat_target_max_damage")
@@ -6944,6 +7046,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetMonsterAiSeed != 0
 		    || target.combatTargetMonsterId != 0
 			|| target.combatTargetToHit != 0
+			|| target.combatTargetToHitSpecial != 0
 			|| target.combatTargetMinDamage != 0
 			|| target.combatTargetMaxDamage != 0
 			|| target.combatTargetIntelligence != 0
@@ -6963,6 +7066,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetAttackDamage < 0
 		|| target.combatTargetAggroRange < 0
 		|| target.combatTargetToHit < 0 || target.combatTargetToHit > 255
+		|| target.combatTargetToHitSpecial < 0 || target.combatTargetToHitSpecial > 255
 		|| target.combatTargetMinDamage < 0
 		|| target.combatTargetMaxDamage < target.combatTargetMinDamage
 		|| target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
@@ -7310,6 +7414,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 		state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 		state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+		state.combatTargetToHitSpecial = fixture.initialState.combatTargetToHitSpecial;
 		state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 		state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;

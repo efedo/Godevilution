@@ -88,6 +88,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetMonsterAiSeed != 0
                     || initialTarget.CombatTargetMonsterId != 0
                     || initialTarget.CombatTargetToHit != 0
+                    || initialTarget.CombatTargetToHitSpecial != 0
                     || initialTarget.CombatTargetMinDamage != 0
                     || initialTarget.CombatTargetMaxDamage != 0
                     || initialTarget.CombatTargetIntelligence != 0
@@ -109,6 +110,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetAttackDamage < 0
             || initialTarget.CombatTargetAggroRange < 0
             || initialTarget.CombatTargetToHit is < 0 or > 255
+            || initialTarget.CombatTargetToHitSpecial is < 0 or > 255
             || initialTarget.CombatTargetMinDamage < 0
             || initialTarget.CombatTargetMaxDamage < initialTarget.CombatTargetMinDamage
             || initialTarget.CombatTargetIntelligence is < 0 or > 255
@@ -346,6 +348,7 @@ public static class ReplayFixtureLoader
             CombatTargetMonsterAiSeed = GetOptionalUInt(value, "combat_target_monster_ai_seed"),
             CombatTargetMonsterId = GetOptionalUInt(value, "combat_target_monster_id"),
             CombatTargetToHit = GetOptionalInt(value, "combat_target_to_hit"),
+            CombatTargetToHitSpecial = GetOptionalInt(value, "combat_target_to_hit_special"),
             CombatTargetMinDamage = GetOptionalInt(value, "combat_target_min_damage"),
             CombatTargetMaxDamage = GetOptionalInt(value, "combat_target_max_damage"),
             CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
