@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-28
+Status date: 2026-08-29
 
 The shared protocol now admits an additive `DropItemRequested` intent carrying
 the same stable item references used by inventory and stash transfers. The
@@ -31,11 +31,6 @@ The companion multiplayer replay lane now routes `PickupWorldItem` from the
 secondary participant. Native and managed runners agree on world-item removal,
 inventory placement, purchased-tick propagation, and the resulting canonical
 checkpoint hash.
-
-The companion multiplayer replay lane now routes `PickupWorldItem` from the
-secondary participant as well. Native and managed runners agree on world-item
-removal, inventory placement, purchase-tick propagation, and the resulting
-canonical checkpoint hash.
 
 Dedicated replay fixtures now cover stable-reference drops from inventory,
 belt, and equipment sources, matching the three carried-item locations exposed

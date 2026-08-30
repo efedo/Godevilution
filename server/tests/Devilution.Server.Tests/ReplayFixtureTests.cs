@@ -1693,6 +1693,10 @@ public sealed class ReplayFixtureTests
             executor,
             new AuthoritativeCommandServer(executor));
 
+        Assert.Equal(2, result.Results.Count);
+        Assert.Equal(CommandStatus.Accepted, result.Results[0].Status);
+        Assert.Equal(CommandStatus.Rejected, result.Results[1].Status);
+        Assert.Equal(CommandRejectReason.InvalidTarget, result.Results[1].RejectReason);
         var player = Assert.Single(
             result.FinalSnapshot.Players,
             candidate => candidate.EntityId == secondary.EntityId);

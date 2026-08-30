@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
   fixture verifies that native and managed runners preserve an existing item
   and choose the same first-fit cell for the picked world item.
 
+- Extend secondary-participant pickup parity with an accepted-then-stale retry.
+  Native and managed replay runners now agree on the authoritative
+  `InvalidTarget` rejection reason after the world entity is consumed.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

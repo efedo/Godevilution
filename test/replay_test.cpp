@@ -2780,8 +2780,9 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryItemPickupAgainstCSharpCheckpoin
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 1U);
+	ASSERT_EQ(result.transitions.size(), 2U);
 	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_FALSE(result.transitions[1].accepted);
 	ASSERT_EQ(state.secondaryInventory.size(), 1U);
 	EXPECT_EQ(state.secondaryInventory[0].itemSeed, fixture.initialState.worldItemSeed);
 	EXPECT_EQ(state.secondaryInventory[0].purchasedAtTick, 1U);

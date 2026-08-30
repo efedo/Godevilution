@@ -6775,6 +6775,13 @@ bool ExecuteReplayFixture(
 						    state.worldItemState);
 						state.worldItemEntityId = 0;
 						accepted = true;
+					} else if (command.worldItemEntityId != state.worldItemEntityId
+					    || state.worldItemSeed == 0
+					    || state.secondaryPlayerLevelId != state.worldItemLevelId
+					    || distance > 1) {
+						rejectReason = "InvalidTarget";
+					} else {
+						rejectReason = "NotAllowed";
 					}
 				} else if (command.kind == "DropItem") {
 					ReplayFixtureInventoryItem source;

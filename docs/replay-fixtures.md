@@ -282,7 +282,8 @@ coverage aligned with the protocol's three carried-item source locations.
 and routes `PickupWorldItem` through the secondary participant. Both runners
 remove the world entity, place the item in the secondary inventory at the
 native first-fit cell, preserve its purchased tick, and validate the shared
-checkpoint hash.
+checkpoint hash. Its second command retries the consumed entity and must be
+rejected as `InvalidTarget` by both runners.
 
 `gameplay-multiplayer-secondary-item-pickup-with-existing-item.json` repeats
 that pickup with a stable item already occupying secondary cell 0. The shared
