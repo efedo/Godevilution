@@ -28,6 +28,10 @@ All notable changes to this fork are documented below.
   runners now preserve the compatibility movement band, turn ordering, and
   avoidance counter state without advancing the gameplay RNG.
 
+- Add a shared GoatMelee adjacent-attack replay fixture. Native and managed
+  runners now preserve seeded attack admission, block timing, and AI-stream
+  advancement for the melee attack boundary.
+
 - Add a shared SnakeCharge replay fixture covering native admission, projectile
   travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and

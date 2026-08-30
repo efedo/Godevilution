@@ -5544,7 +5544,8 @@ void AdvanceReplayMonsterAttack(
 				}
 		return;
 	}
-	if (state.combatTargetNativeAi == "Gargoyle") {
+	if (state.combatTargetNativeAi == "Gargoyle"
+	    || state.combatTargetNativeAi == "GoatMelee") {
 		const int attackChance = std::min(
 		    100,
 		    23 + 2 * state.combatTargetIntelligence);
