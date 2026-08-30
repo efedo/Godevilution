@@ -4329,6 +4329,68 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySuccubusBloodStarNativeAiSeedMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-blood-star-native-ai-seed.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateBloodStarExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.BloodStar, projectile.Behavior);
+        Assert.Equal(36U, projectile.SpellId);
+        Assert.Equal(255U, projectile.RemainingTicks);
+        Assert.Equal(10, monster.RangedDelayTicks);
+        Assert.Equal(1788971303U, monster.MonsterAiSeed);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplaySuccubusBloodStarCloseNativeAiSeedMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-blood-star-close-native-ai-seed.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateBloodStarExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.True(monster.Moving);
+        Assert.Equal(4, monster.PositionX);
+        Assert.Equal(0, monster.PositionY);
+        Assert.Equal(5, monster.FuturePositionX);
+        Assert.Equal(0, monster.FuturePositionY);
+        Assert.Equal(1788971303U, monster.MonsterAiSeed);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5705,6 +5767,63 @@ public sealed class ReplayFixtureTests
                 ProjectileLifetime: 7,
                 ProjectileImpactLifetime: 1,
                 ProjectileDamage: 4),
+        ]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateBloodStarExecutor(ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            attackDamage: initial.CombatTargetAttackDamage,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            toHit: initial.CombatTargetToHit,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed,
+            rangedDelayTicks: initial.CombatTargetRangedDelayTicks);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                initial.CombatTargetNativeAi,
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar,
+                SpellId: 36,
+                ProjectileSpeed: 16,
+                ProjectileLifetime: 256,
+                DamageType: AuthoritativeDamageType.Magic,
+                RangedRetreatMinimumDistance: 4,
+                RangedRetreatChanceBase: 70,
+                RangedRetreatChanceIntelligenceScale: 10,
+                ProjectileDamage: 4,
+                ProjectileImpactLifetime: 1,
+                RangedDelayRandomRange: 20),
         ]);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);

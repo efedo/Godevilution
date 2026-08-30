@@ -2,6 +2,11 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers seeded Succubus/Lazarus BloodStar
+close retreat and long-range admission. Native and managed runners consume
+the restored AI stream for retreat direction, RandomWalk fallback, and
+post-shot delay, then agree on canonical checkpoints.
+
 The shared replay contract now covers seeded GoatRanged close retreat and
 long-range arrow admission. Native and managed runners consume the restored
 AI stream for retreat direction, RandomWalk fallback, and post-shot delay,

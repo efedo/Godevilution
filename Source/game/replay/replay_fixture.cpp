@@ -6453,19 +6453,24 @@ void AdvanceReplayHorkSpawnsOneTick(
 
 /** Admits the compact Succubus BloodStar native ranged branch. */
 void AdmitReplayAutonomousBloodStar(
-    ReplayFixtureExecutionState &state)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
 {
 	if (state.combatTargetEntityId == 0
 	    || (state.combatTargetNativeAi != "Succubus"
 	        && state.combatTargetNativeAi != "LazarusSuccubus")
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
+	    || state.combatTargetRangedDelayTicks < 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
 			return projectile.sourceEntityId == state.combatTargetEntityId
 			    && projectile.behavior == BloodStarBehavior;
 		}))
 		return;
-
+	if (state.combatTargetRangedDelayTicks > 0) {
+		--state.combatTargetRangedDelayTicks;
+		return;
+	}
 	struct Candidate {
 		uint32_t entityId;
 		int32_t positionX;
@@ -6493,8 +6498,117 @@ void AdmitReplayAutonomousBloodStar(
 		    : left.entityId < right.entityId;
 	});
 	const Candidate &target = candidates.front();
-	if (candidateDistance(target) > state.combatTargetAggroRange)
+	const int distance = candidateDistance(target);
+	if (distance > state.combatTargetAggroRange)
 		return;
+	if (distance < 4) {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ target.entityId;
+		const int retreatChance = std::min(
+		    100,
+		    70 + 10 * state.combatTargetIntelligence);
+		const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
+		const int retreatRoll = usesNativeAiStream
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(attackSeed % 100U);
+		if (retreatRoll < retreatChance) {
+			if (usesNativeAiStream) {
+				const int towardDirection = GetDirection(
+				    state.combatTargetPositionX,
+				    state.combatTargetPositionY,
+				    target.positionX,
+				    target.positionY);
+				const int awayDirection = (towardDirection + 4) % 8;
+				const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
+				const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
+				const int candidateDirections[] = {
+				    awayDirection,
+				    (awayDirection + firstTurn + 8) % 8,
+				    (awayDirection - firstTurn + 8) % 8,
+				    (awayDirection + secondTurn + 8) % 8,
+				    (awayDirection - secondTurn + 8) % 8,
+				};
+				for (const int candidateDirection : candidateDirections) {
+					const auto displacement = DirectionDisplacements[candidateDirection];
+					const int candidateX = state.combatTargetPositionX + displacement.first;
+					const int candidateY = state.combatTargetPositionY + displacement.second;
+					if (candidateX < 0 || candidateX >= 40
+					    || candidateY < 0 || candidateY >= 40
+					    || (candidateX == state.positionX && candidateY == state.positionY)
+					    || (state.secondaryPlayerEntityId != 0
+					        && candidateX == state.secondaryPlayerPositionX
+					        && candidateY == state.secondaryPlayerPositionY)
+					    || (state.objectEntityId != 0
+					        && !state.objectActivated
+					        && !state.objectDestroyed
+					        && !state.objectMissilePassable
+					        && state.objectLevelId == state.combatTargetLevelId
+					        && candidateX == state.objectPositionX
+					        && candidateY == state.objectPositionY))
+						continue;
+					state.combatTargetMoving = true;
+					state.combatTargetFuturePositionX = candidateX;
+					state.combatTargetFuturePositionY = candidateY;
+					state.combatTargetDirection = candidateDirection;
+					return;
+				}
+			} else {
+				std::vector<std::pair<int32_t, int32_t>> destinations;
+				for (int32_t offsetY = -1; offsetY <= 1; ++offsetY) {
+					for (int32_t offsetX = -1; offsetX <= 1; ++offsetX) {
+						if (offsetX == 0 && offsetY == 0)
+							continue;
+						const int32_t candidateX = state.combatTargetPositionX + offsetX;
+						const int32_t candidateY = state.combatTargetPositionY + offsetY;
+						if (candidateX < 0 || candidateX >= 40
+						    || candidateY < 0 || candidateY >= 40
+						    || (candidateX == state.positionX && candidateY == state.positionY)
+						    || (state.secondaryPlayerEntityId != 0
+						        && candidateX == state.secondaryPlayerPositionX
+						        && candidateY == state.secondaryPlayerPositionY)
+						    || (state.objectEntityId != 0
+						        && !state.objectActivated
+						        && !state.objectDestroyed
+						        && !state.objectMissilePassable
+						        && state.objectLevelId == state.combatTargetLevelId
+						        && candidateX == state.objectPositionX
+						        && candidateY == state.objectPositionY))
+							continue;
+						const int candidateDistance = std::max(
+						    std::abs(candidateX - target.positionX),
+						    std::abs(candidateY - target.positionY));
+						if (candidateDistance >= distance)
+							destinations.emplace_back(candidateX, candidateY);
+					}
+				}
+				std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
+					const int leftDistance = std::max(
+					    std::abs(left.first - target.positionX),
+					    std::abs(left.second - target.positionY));
+					const int rightDistance = std::max(
+					    std::abs(right.first - target.positionX),
+					    std::abs(right.second - target.positionY));
+					return leftDistance != rightDistance
+					    ? leftDistance > rightDistance
+					    : left.second != right.second
+					        ? left.second < right.second
+					        : left.first < right.first;
+				});
+				if (!destinations.empty()) {
+					state.combatTargetMoving = true;
+					state.combatTargetFuturePositionX = destinations.front().first;
+					state.combatTargetFuturePositionY = destinations.front().second;
+					state.combatTargetDirection = GetDirection(
+					    state.combatTargetPositionX,
+					    state.combatTargetPositionY,
+					    state.combatTargetFuturePositionX,
+					    state.combatTargetFuturePositionY);
+					return;
+				}
+			}
+		}
+	}
 
 	uint32_t nextEntityId = 0x80000000U;
 	for (const auto &projectile : state.projectiles)
@@ -6532,6 +6646,11 @@ void AdmitReplayAutonomousBloodStar(
 	projectile.impactLifetime = 1;
 	projectile.resistantDamageDivisor = 1;
 	state.projectiles.push_back(std::move(projectile));
+	state.combatTargetRangedDelayTicks = state.combatTargetMonsterAiSeed != 0
+	    ? std::max(GenerateRnd(state, 20), 0)
+	    : static_cast<int32_t>(((static_cast<uint32_t>(tick)
+	        ^ state.combatTargetEntityId
+	        ^ target.entityId) / 200U) % 20U);
 }
 
 /** Admits the compact Lich-family generic MonsterMagic ranged branch. */
@@ -6652,7 +6771,7 @@ void AdvanceReplayStateToTick(
 		state.combatTargetAutonomousActionHandled =
 			AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
-		AdmitReplayAutonomousBloodStar(state);
+		AdmitReplayAutonomousBloodStar(state, simulationTick);
 		AdmitReplayAutonomousMonsterMagic(state);
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add seeded Succubus/Lazarus BloodStar replay coverage. Native and managed
+  runners now consume the restored AI stream for close-range retreat RandomWalk
+  draws and post-shot ranged-delay state, preserving canonical checkpoints.
+
 - Add seeded GoatRanged replay coverage. Native and managed runners now
   consume the restored AI stream for close-range retreat RandomWalk draws and
   post-shot ranged-delay state, preserving canonical checkpoints.

@@ -68,8 +68,9 @@ snapshot tests cover this lifecycle, and the compact cross-runner fixture now
 covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
 and secondary-participant routing. Companion fixtures cover autonomous
 GoatRanged nearest-player selection, seeded GoatRanged close retreat and
-post-shot delay, SkeletonRanged clear-lane admission, and
-Succubus BloodStar admission/travel/impact state, including secondary-player
+post-shot delay, SkeletonRanged clear-lane admission, and seeded
+Succubus/Lazarus BloodStar close retreat, post-shot delay, and
+admission/travel/impact state, including secondary-player
 block resolution, and Lich-family MonsterMagic admission, hit, miss,
 nearest-participant selection, and secondary-participant impact resolution;
 broader monster-AI branches and multi-actor selection remain future replay work.
@@ -698,6 +699,10 @@ Notable shared fixtures include:
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,
   shield-capable block admission, block animation timing, and RNG parity;
+- `gameplay-blood-star-native-ai-seed.json` for restored BloodStar AI-stream
+  advancement, secondary-player routing, and stream-derived post-shot delay;
+- `gameplay-blood-star-close-native-ai-seed.json` for restored close-range
+  retreat admission, RandomWalk direction draws, and movement parity;
 - `gameplay-monster-magic-autonomous.json` for validated Lich-family
   MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
