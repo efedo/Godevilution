@@ -90,6 +90,7 @@ set(devilutionx_fixtures
   replay/gameplay-gargoyle-avoidance-walk.json
   replay/gameplay-gargoyle-avoidance-move.json
   replay/gameplay-skeleton-melee-delay.json
+  replay/gameplay-skeleton-melee-attack-delay.json
   replay/gameplay-blood-star-autonomous.json
   replay/gameplay-blood-star-impact.json
   replay/gameplay-blood-star-multiplayer-target.json

@@ -1,0 +1,48 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/skeleton-melee-attack-delay",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "skeleton-melee-attack-delay-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 30,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 0,
+    "combat_target_aggro_range": 1,
+    "combat_target_native_ai": "SkeletonMelee",
+    "combat_target_intelligence": 0
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "f7669ef4111970bc9b64f27a6d8f58a9f13e7bb8d2010ca510571ecfe61b5de8" },
+    { "tick": 2, "state_sha256": "2e63fa4b59bec4f9ea3d089ce9820a9b1872eda285e444766408220c8a3fa8f9" },
+    { "tick": 12, "state_sha256": "943f2823ec2e1a0e39c2a87b687a08d5189740e5bf0ba2b70c3f5e56c54392df" }
+  ]
+}

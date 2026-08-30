@@ -4909,6 +4909,24 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
+	if (state.combatTargetNativeAi == "SkeletonMelee") {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int attackRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(attackSeed % 100U);
+		const int attackChance = std::min(
+		    100,
+		    20 + 2 * state.combatTargetIntelligence);
+		if (attackRoll >= attackChance) {
+			state.combatTargetSkeletonMeleeDelayTicks = std::max(
+			    0,
+			    10 - 2 * state.combatTargetIntelligence
+			        + static_cast<int>((attackSeed / 100U) % 10U));
+			return;
+		}
+	}
 	if (state.combatTargetNativeAi == "Gargoyle") {
 		const int attackChance = std::min(
 		    100,

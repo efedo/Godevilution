@@ -89,6 +89,9 @@ The multiplayer AI seed advances from the monster-owned stream at each
 authoritative tick; generic melee then uses that stream for hit and block rolls.
 The secondary-player native-AI-seed fixture verifies seed advancement, block
 mode timing, and the canonical hash in both runners.
+SkeletonMelee fixtures may carry
+`combat_target_skeleton_melee_delay_ticks` to replay an admitted native delay
+or preserve a failed adjacent-attack countdown across checkpoint ticks.
 `initial_state.secondary_player` may declare a second stable participant for
 multiplayer collision fixtures, including identity, entity ID, Q6 life,
 position, level, and character level. The runners initialize it before the
@@ -188,7 +191,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 109 checked-in JSON fixtures and 142 registered
+the native replay gate contains 110 checked-in JSON fixtures and 143 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -205,7 +208,8 @@ Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
-tick, and SkeletonMelee delay admission/countdown. The dated full-suite
+tick, SkeletonMelee movement-delay admission/countdown, and failed adjacent-
+attack admission/countdown. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -245,7 +249,8 @@ plus its adjacent attack-band admission, healthy non-adjacent avoidance
 idle-band lifecycle, an admitted RandomWalk destination with participant and
 active-object occupancy checks, and far-distance Move-goal admission with
 persisted goal ticks, turn state, RoundWalk destination, and next-tick
-continuation parity, plus SkeletonMelee delay admission and countdown.
+continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
+attack admission/countdown lifecycles.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -608,6 +613,9 @@ Notable shared fixtures include:
   movement around a dead primary participant and alternate first-step parity;
 - `gameplay-multiplayer-secondary-monster-object-pathing.json` for preserving
   active world-object occupancy while selecting the same fallback first step;
+- `gameplay-skeleton-melee-delay.json` and
+  `gameplay-skeleton-melee-attack-delay.json` for native SkeletonMelee
+  movement-delay and failed adjacent-attack admission/countdown parity;
 - `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
   native monster runtime-seed advancement, secondary hit/block stream
   consumption, block timing, and cross-language canonical hashing;

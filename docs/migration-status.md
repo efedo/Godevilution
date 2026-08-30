@@ -58,8 +58,9 @@ persisted avoidance counter when no walk is admitted, and the admitted
 RandomWalk candidate draws, destination, and participant/object occupancy
 state. The far-distance Move-goal fixture also preserves its admission coin,
 turn initialization, persisted goal tick, RoundWalk destination, and the
-next-tick continuation boundary. A companion SkeletonMelee fixture now covers
-native movement-delay admission and countdown across the following tick.
+next-tick continuation boundary. Companion SkeletonMelee fixtures now cover
+native movement-delay admission, failed adjacent-attack admission, and both
+countdown lifecycles across their following ticks.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory

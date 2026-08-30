@@ -190,7 +190,8 @@ selected destination, direction, and participant/object occupancy state. The
 far-distance Move-goal path additionally preserves its admission coin, turn
 initialization, persisted goal tick, RoundWalk destination, and the next-tick
 completion/continuation boundary. The SkeletonMelee path now also preserves
-the native movement-delay admission and next-tick countdown.
+the native movement-delay admission, failed adjacent-attack admission, and
+their countdown lifecycles.
 
 ## Content and gameplay modules
 

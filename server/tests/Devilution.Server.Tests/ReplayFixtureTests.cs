@@ -2954,6 +2954,61 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySkeletonMeleeAttackDelayMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-skeleton-melee-attack-delay.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            attackDamage: initial.CombatTargetAttackDamage,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            skeletonMeleeDelayTicks: initial.CombatTargetSkeletonMeleeDelayTicks);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, Assert.Single(result.FinalSnapshot.Players).Life);
+        Assert.Equal(0, monster.SkeletonMeleeDelayTicks);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(9U, result.FinalSnapshot.RandomState);
+        Assert.Equal(12UL, result.FinalSnapshot.Tick);
+        Assert.Equal(3, result.Checkpoints.Count);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
