@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/multiplayer-secondary-gold-pickup-malformed",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "multiplayer-secondary-gold-pickup-malformed-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "world_item_entity_id": 12,
+    "world_item_seed": 9007,
+    "world_item_price": 125,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "gold": 0,
+      "position_x": 5,
+      "position_y": 5,
+      "level_id": 1,
+      "character_level": 1,
+      "character_class": 0
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "expected_status": "Rejected",
+      "expected_reject_reason": "Malformed",
+      "kind": "PickupWorldItem",
+      "payload": {
+        "item_entity_id": 12
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "secondary-gold-malformed-state" }
+  ]
+}
