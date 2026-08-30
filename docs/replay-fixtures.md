@@ -202,7 +202,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 118 checked-in JSON fixtures and 154 registered
+the native replay gate contains 119 checked-in JSON fixtures and 155 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -227,8 +227,9 @@ the mapped SnakeCharge travel, player collision, and impact phase. Sneak
 conceal/reveal transitions and the Bat retreat movement/countdown lifecycle
 are also covered in both runners. Scavenger corpse selection, movement, Q6
 healing, countdown, and RNG consumption are also covered in both runners. The
-dated full-suite
-baseline below records the last complete run; on 2026-08-26 the native
+Hellfire Scavenger max-health healing and corpse-removal lifecycle is also
+covered in both runners. The dated full-suite baseline below records the last
+complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
 and BoneDemon MonsterMagic tests passed, including the new Lich block lane and
@@ -274,6 +275,8 @@ adjacent-attack admission/countdown lifecycles, plus mapped SnakeCharge
 travel, player collision, and impact-phase timing, plus Sneak conceal/reveal
 transitions, Bat retreat movement/countdown timing, and Scavenger corpse
 selection, movement, healing, countdown, and RNG timing.
+The Hellfire Scavenger lane additionally verifies max-health-fraction healing
+and removal of the consumed corpse.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and

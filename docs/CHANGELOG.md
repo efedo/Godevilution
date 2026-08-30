@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   runners now preserve corpse selection, movement, Q6 healing, countdown state,
   gameplay RNG consumption, and canonical checkpoint parity.
 
+- Extend Scavenger replay parity through the Hellfire healing variant. Both
+  runners now verify max-health-fraction healing and removal of the consumed
+  corpse when the monster reaches full health.
+
 - Add a shared SnakeCharge replay fixture covering native admission, projectile
   travel, player collision, impact timing, and canonical checkpoint parity.
 - Add shared Snake autonomous-AI delay fixtures for the distant-delay and

@@ -4729,14 +4729,31 @@ void AdvanceReplayMonsterAttack(
 		}
 		if (state.combatTargetPositionX == corpse->positionX
 		    && state.combatTargetPositionY == corpse->positionY) {
+			const int32_t healingQ6 = state.hellfire
+			    ? state.combatTargetMaxHitPointsQ6 / 8
+			    : 64;
 			state.combatTargetHitPointsQ6 = std::min(
 			    state.combatTargetMaxHitPointsQ6,
-			    state.combatTargetHitPointsQ6 + 64);
+			    state.combatTargetHitPointsQ6 + healingQ6);
 			state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 			--state.combatTargetScavengerHealingTicks;
-			if (state.combatTargetHitPointsQ6
-			        >= state.combatTargetMaxHitPointsQ6 * 75 / 100
-			    || state.combatTargetScavengerHealingTicks == 0) {
+			const bool reachedHealingTarget = state.hellfire
+			    ? state.combatTargetHitPointsQ6 == state.combatTargetMaxHitPointsQ6
+			    : state.combatTargetHitPointsQ6
+			        >= state.combatTargetMaxHitPointsQ6 * 75 / 100;
+			if (state.hellfire
+			    && (reachedHealingTarget || state.combatTargetScavengerHealingTicks == 0)) {
+				const uint32_t corpseEntityId = corpse->entityId;
+				state.corpses.erase(
+				    std::remove_if(
+				        state.corpses.begin(),
+				        state.corpses.end(),
+				        [&](const auto &candidate) {
+					        return candidate.entityId == corpseEntityId;
+				        }),
+				    state.corpses.end());
+			}
+			if (reachedHealingTarget || state.combatTargetScavengerHealingTicks == 0) {
 				state.combatTargetScavengerHealingTicks = 0;
 				state.combatTargetScavengerCorpseEntityId = 0;
 			}

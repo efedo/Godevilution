@@ -91,6 +91,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-sneak-reveal.json" Link="Fixtures/gameplay-sneak-reveal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-retreat.json" Link="Fixtures/gameplay-bat-retreat.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-corpse.json" Link="Fixtures/gameplay-scavenger-corpse.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-scavenger-hellfire-corpse.json" Link="Fixtures/gameplay-scavenger-hellfire-corpse.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-autonomous-tick.json" Link="Fixtures/gameplay-multiplayer-autonomous-tick.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-attack.json" Link="Fixtures/gameplay-multiplayer-secondary-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-item-drop.json" Link="Fixtures/gameplay-multiplayer-secondary-item-drop.json" CopyToOutputDirectory="PreserveNewest" />

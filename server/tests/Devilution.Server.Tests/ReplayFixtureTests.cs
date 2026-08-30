@@ -3228,6 +3228,29 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayScavengerHellfireCorpseLifecycleMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-scavenger-hellfire-corpse.json");
+        var executor = CreateScavengerReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(5, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal(64, monster.HitPoints);
+        Assert.Equal(4096, monster.HitPointsQ6);
+        Assert.Equal(0, monster.ScavengerHealingTicks);
+        Assert.Equal(0U, monster.ScavengerCorpseEntityId);
+        Assert.Empty(result.FinalSnapshot.Corpses);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterPathingMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5513,6 +5536,11 @@ public sealed class ReplayFixtureTests
                     corpse.PositionX,
                     corpse.PositionY))
                 .ToArray(),
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }
