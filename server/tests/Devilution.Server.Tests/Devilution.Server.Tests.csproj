@@ -85,6 +85,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-gold-pickup.json" Link="Fixtures/gameplay-multiplayer-secondary-gold-pickup.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-gold-pickup-malformed.json" Link="Fixtures/gameplay-multiplayer-secondary-gold-pickup-malformed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-gold-pickup-overflow.json" Link="Fixtures/gameplay-multiplayer-secondary-gold-pickup-overflow.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-primary-held-item-pickup-rejection.json" Link="Fixtures/gameplay-primary-held-item-pickup-rejection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-portal.json" Link="Fixtures/gameplay-multiplayer-secondary-portal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-resolution.json" Link="Fixtures/gameplay-monster-arrow-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-autonomous.json" Link="Fixtures/gameplay-monster-arrow-autonomous.json" CopyToOutputDirectory="PreserveNewest" />

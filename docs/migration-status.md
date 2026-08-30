@@ -109,6 +109,10 @@ Replay rejection bookkeeping now records malformed primary Gold pickups as
 well, keeping accepted/rejected command timelines complete for both
 participants.
 
+Primary cursor pickup now has an explicit occupied-tile rejection lane. Native
+and managed runners record `NotAllowed` consistently and preserve both the held
+cursor item and the world item.
+
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or
 item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,

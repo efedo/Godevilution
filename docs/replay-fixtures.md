@@ -176,7 +176,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 94 checked-in JSON fixtures and 122 registered
+the native replay gate contains 95 checked-in JSON fixtures and 124 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -319,6 +319,10 @@ and preserve the secondary wallet, cursor, and world item.
 `gameplay-multiplayer-secondary-gold-pickup-overflow.json` starts the secondary
 wallet near the signed protocol limit and verifies that adding a valid pile is
 rejected as `Malformed` without mutating participant or world state.
+
+`gameplay-primary-held-item-pickup-rejection.json` starts with a cursor item and
+a world item on the same tile. Both runners reject the pickup as `NotAllowed`,
+record the rejected transition, and preserve both item states.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied
@@ -527,6 +531,8 @@ Notable shared fixtures include:
   Gold rejection and secondary state preservation;
 - `gameplay-multiplayer-secondary-gold-pickup-overflow.json` for wallet-overflow
   rejection and secondary state preservation;
+- `gameplay-primary-held-item-pickup-rejection.json` for occupied-tile cursor
+  rejection and transition bookkeeping;
 - `gameplay-stable-item-drop-retry.json` for accepted-then-rejected stale
   stable-reference retry ordering and `InvalidTarget` rejection reason;
 - `gameplay-stable-belt-drop-invalid-target.json` for `NotAllowed` rejection

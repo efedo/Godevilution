@@ -7215,11 +7215,12 @@ bool ExecuteReplayFixture(
 					        || std::numeric_limits<uint32_t>::max() - state.gold < pickedItemPrice);
 					if (malformedGold) {
 						rejectReason = "Malformed";
+					} else if (state.heldItemDefined
+					    && state.positionX == state.worldItemPositionX
+					    && state.positionY == state.worldItemPositionY) {
+						rejectReason = "NotAllowed";
 					} else {
-					if (state.heldItemDefined) {
-						if (state.positionX == state.worldItemPositionX
-						    && state.positionY == state.worldItemPositionY)
-							continue;
+						if (state.heldItemDefined) {
 						state.worldItems.push_back({
 						    AllocateReplayWorldItemEntityId(state),
 						    state.levelId,
@@ -7231,9 +7232,9 @@ bool ExecuteReplayFixture(
 						});
 						state.heldItemDefined = false;
 						state.heldItem = { };
-					}
-					state.worldItemState = pickedItemState;
-					if (isGold) {
+						}
+						state.worldItemState = pickedItemState;
+						if (isGold) {
 						if (HasReplayGoldTopology(state)) {
 							const uint32_t remainder = AddReplayGoldPartial(state, pickedItemPrice);
 							if (remainder != 0) {
@@ -7272,7 +7273,7 @@ bool ExecuteReplayFixture(
 						}
 						state.worldItemEntityId = 0;
 						accepted = true;
-					}
+						}
 					}
 				}
 			} else if (command.kind == "DropHeldItem") {

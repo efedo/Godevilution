@@ -1,0 +1,50 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/primary-held-item-pickup-rejection",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "primary-held-item-pickup-rejection-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 5,
+    "position_y": 5,
+    "level_id": 1,
+    "world_item_entity_id": 20,
+    "world_item_seed": 9009,
+    "world_item_price": 75
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "expected_status": "Accepted",
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 1 }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "expected_status": "Rejected",
+      "expected_reject_reason": "NotAllowed",
+      "kind": "PickupWorldItem",
+      "payload": { "item_entity_id": 20 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "4e24639c5d5fe3c03d0dd824cd88f6cdfc28531b15f399733b26651a6ba063d4" },
+    { "tick": 2, "state_sha256": "4e24639c5d5fe3c03d0dd824cd88f6cdfc28531b15f399733b26651a6ba063d4" }
+  ]
+}

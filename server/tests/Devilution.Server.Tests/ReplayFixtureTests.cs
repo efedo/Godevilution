@@ -1142,6 +1142,67 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayPrimaryHeldItemPickupOnOccupiedTileIsRejected()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-primary-held-item-pickup-rejection.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var worldItemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9920,
+            StatFlag = true,
+        };
+        var heldItem = new OwnedStoreItem(
+            0,
+            0,
+            9010,
+            25,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 1,
+                StableItemId = 9921,
+                StatFlag = true,
+            });
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingHeldItem: heldItem,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                fixture.InitialState.WorldItemEntityId,
+                fixture.InitialState.LevelId,
+                fixture.InitialState.PositionX,
+                fixture.InitialState.PositionY + 1,
+                fixture.InitialState.WorldItemSeed,
+                fixture.InitialState.WorldItemPrice,
+                worldItemState)],
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Equal(CommandStatus.Rejected, result.Results[1].Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, result.Results[1].RejectReason);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+        Assert.Equal(fixture.Checkpoints[1].StateSha256, result.Checkpoints[1].ActualStateSha256);
+        Assert.Equal(9010U, player.HeldItem?.ItemSeed);
+        Assert.Single(result.FinalSnapshot.WorldItems);
+    }
+
+    [Fact]
     public void GameplayStableItemDropFixtureUsesStableInventoryIdentity()
     {
         var result = ExecuteStableInventoryDropFixture("gameplay-stable-item-drop.json");
