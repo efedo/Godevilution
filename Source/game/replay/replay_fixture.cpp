@@ -4550,7 +4550,14 @@ void AdvanceReplayMonsterAttack(
 			    || (candidate.first == state.positionX && candidate.second == state.positionY)
 			    || (state.secondaryPlayerEntityId != 0
 			        && candidate.first == state.secondaryPlayerPositionX
-			        && candidate.second == state.secondaryPlayerPositionY)) {
+			        && candidate.second == state.secondaryPlayerPositionY)
+			    || (state.objectEntityId != 0
+			        && !state.objectActivated
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable
+			        && state.objectLevelId == state.combatTargetLevelId
+			        && candidate.first == state.objectPositionX
+			        && candidate.second == state.objectPositionY)) {
 				continue;
 			}
 			state.combatTargetMoving = true;
@@ -4599,7 +4606,14 @@ void AdvanceReplayMonsterAttack(
 			return (x == state.positionX && y == state.positionY)
 			    || (state.secondaryPlayerEntityId != 0
 			        && x == state.secondaryPlayerPositionX
-			        && y == state.secondaryPlayerPositionY);
+			        && y == state.secondaryPlayerPositionY)
+			    || (state.objectEntityId != 0
+			        && !state.objectActivated
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable
+			        && state.objectLevelId == state.combatTargetLevelId
+			        && x == state.objectPositionX
+			        && y == state.objectPositionY);
 		};
 		visited[cellIndex(state.combatTargetPositionX, state.combatTargetPositionY)] = 0;
 		queue.push({

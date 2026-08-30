@@ -154,6 +154,7 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-secondary-monster-death-drops.json
   replay/gameplay-multiplayer-secondary-monster-melee.json
   replay/gameplay-multiplayer-secondary-monster-pathing.json
+  replay/gameplay-multiplayer-secondary-monster-object-pathing.json
   replay/gameplay-multiplayer-secondary-portal.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json

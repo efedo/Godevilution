@@ -3405,6 +3405,53 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryMonsterPathingAgainstCSharpCheck
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMultiplayerSecondaryMonsterObjectPathingAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-monster-object-pathing.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.objectEntityId = fixture.initialState.objectEntityId;
+	state.objectId = fixture.initialState.objectId;
+	state.objectLevelId = fixture.initialState.levelId;
+	state.objectPositionX = fixture.initialState.objectPositionX;
+	state.objectPositionY = fixture.initialState.objectPositionY;
+	state.objectMissilePassable = fixture.initialState.objectMissilePassable;
+	state.objectBreakable = fixture.initialState.objectBreakable;
+	state.objectDestroyed = fixture.initialState.objectDestroyed;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_EQ(state.combatTargetPositionX, 3);
+	EXPECT_EQ(state.combatTargetPositionY, 3);
+	EXPECT_TRUE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetFuturePositionX, 2);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 2);
+	EXPECT_EQ(state.secondaryPlayerLife, 100);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMultiplayerMonsterArrowVolleyAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-monster-arrow-volley.json");
