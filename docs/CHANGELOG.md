@@ -47,6 +47,9 @@ All notable changes to this fork are documented below.
 - Extend Gargoyle avoidance replay parity through admitted RandomWalk. Native
   and managed runners now preserve the candidate coin draws, destination,
   direction, occupancy checks, and canonical checkpoint hash.
+- Honor active object occupancy in the Gargoyle RandomWalk replay boundary.
+  The shared fixture now proves the straight candidate is rejected before the
+  next deterministic destination is selected.
 - Guard the legacy native client loop against opt-in authoritative-runtime
   references when server-backed client support is disabled, restoring the
   default replay-test build.

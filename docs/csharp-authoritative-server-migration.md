@@ -186,7 +186,7 @@ special lock across autonomous ticks, and preserve secondary-player block
 timing on the multiplayer monster stream. Healthy non-adjacent Gargoyle ticks
 also preserve the avoidance action draw and idle counter across the replay
 boundary; admitted ticks additionally preserve the two RandomWalk coin draws,
-selected destination, direction, and occupancy state.
+selected destination, direction, and participant/object occupancy state.
 
 ## Content and gameplay modules
 

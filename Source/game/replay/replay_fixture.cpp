@@ -4653,7 +4653,14 @@ void AdvanceReplayMonsterAttack(
 			    || (candidateX == state.positionX && candidateY == state.positionY)
 			    || (state.secondaryPlayerEntityId != 0
 			        && candidateX == state.secondaryPlayerPositionX
-			        && candidateY == state.secondaryPlayerPositionY))
+			        && candidateY == state.secondaryPlayerPositionY)
+			    || (state.objectEntityId != 0
+			        && !state.objectActivated
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable
+			        && state.objectLevelId == state.combatTargetLevelId
+			        && candidateX == state.objectPositionX
+			        && candidateY == state.objectPositionY))
 				continue;
 			state.combatTargetMoving = true;
 			state.combatTargetFuturePositionX = candidateX;

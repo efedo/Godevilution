@@ -55,7 +55,8 @@ intelligence-scaled attack admission before hit/block resolution, including
 secondary-player block timing and multiplayer AI-stream advancement.
 The healthy non-adjacent avoidance fixtures also verify the native action draw,
 persisted avoidance counter when no walk is admitted, and the admitted
-RandomWalk candidate draws, destination, and occupancy state.
+RandomWalk candidate draws, destination, and participant/object occupancy
+state.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory

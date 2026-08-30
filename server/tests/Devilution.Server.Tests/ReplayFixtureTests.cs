@@ -2732,6 +2732,15 @@ public sealed class ReplayFixtureTests
             monsterItemSeed: initial.CombatTargetMonsterItemSeed,
             monsterAiSeed: initial.CombatTargetMonsterAiSeed,
             gargoyleSpecialActive: initial.CombatTargetGargoyleSpecialActive);
+        var @object = new AuthoritativeWorldObject(
+            initial.ObjectEntityId,
+            initial.ObjectId,
+            initial.LevelId,
+            initial.ObjectPositionX,
+            initial.ObjectPositionY,
+            missilePassable: initial.ObjectMissilePassable,
+            breakable: initial.ObjectBreakable,
+            destroyed: initial.ObjectDestroyed);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -2745,6 +2754,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingObjects: [@object],
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -2759,9 +2769,9 @@ public sealed class ReplayFixtureTests
         Assert.Equal(0, monster.PositionX);
         Assert.Equal(0, monster.PositionY);
         Assert.Equal(1, monster.FuturePositionX);
-        Assert.Equal(0, monster.FuturePositionY);
-        Assert.Equal(7, monster.Direction);
-        Assert.Equal(0, monster.AvoidanceMovementIdleTicks);
+        Assert.Equal(1, monster.FuturePositionY);
+        Assert.Equal(0, monster.Direction);
+        Assert.Equal(1, monster.AvoidanceMovementIdleTicks);
         Assert.Equal(1, monster.AvoidanceMovementMode);
         Assert.Equal(90781909U, monster.MonsterAiSeed);
         Assert.Equal(274169216U, result.FinalSnapshot.RandomState);

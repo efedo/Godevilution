@@ -17,9 +17,16 @@
     "experience": 0,
     "life": 100,
     "life_maximum": 100,
-    "position_x": 2,
-    "position_y": 0,
+    "position_x": 0,
+    "position_y": 2,
     "level_id": 1,
+    "object_entity_id": 20,
+    "object_id": 1,
+    "object_position_x": 0,
+    "object_position_y": 1,
+    "object_missile_passable": false,
+    "object_breakable": false,
+    "object_destroyed": false,
     "combat_target_entity_id": 9,
     "combat_target_level_id": 1,
     "combat_target_position_x": 0,
@@ -42,6 +49,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "7baeee028c25d3b99704fc7a0ac1b99ff91dd83fa7cfabaaf1cc8347f8fe1e48" }
+    { "tick": 1, "state_sha256": "ff5d34bf339d56d89ca4b49983b807d9f270c80b4a1ad7bf158302e3e49d66f7" }
   ]
 }

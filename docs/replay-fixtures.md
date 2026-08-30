@@ -203,7 +203,8 @@ MonsterMagic admission/hit/miss/block/nearest-participant/secondary-impact
 lanes, plus the wounded Gargoyle self-heal/special-lock boundary and adjacent
 Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
-occupancy. The dated full-suite
+occupancy, including an active object blocking the straight candidate. The
+dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -240,8 +241,8 @@ target selection against a closer secondary participant, plus bounded fallback
 pathing around an occupied participant or object tile. The native and C# runners
 also cover the wounded Gargoyle self-heal and retained special-lock boundary,
 plus its adjacent attack-band admission, healthy non-adjacent avoidance
-idle-band lifecycle, and an admitted RandomWalk destination with occupancy
-checks.
+idle-band lifecycle, and an admitted RandomWalk destination with participant
+and active-object occupancy checks.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and

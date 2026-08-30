@@ -2883,6 +2883,14 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceWalkAgainstCSharpCheckpoint)
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
+	state.objectEntityId = fixture.initialState.objectEntityId;
+	state.objectId = fixture.initialState.objectId;
+	state.objectLevelId = fixture.initialState.levelId;
+	state.objectPositionX = fixture.initialState.objectPositionX;
+	state.objectPositionY = fixture.initialState.objectPositionY;
+	state.objectMissilePassable = fixture.initialState.objectMissilePassable;
+	state.objectBreakable = fixture.initialState.objectBreakable;
+	state.objectDestroyed = fixture.initialState.objectDestroyed;
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
@@ -2892,9 +2900,9 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceWalkAgainstCSharpCheckpoint)
 	EXPECT_EQ(state.combatTargetPositionX, 0);
 	EXPECT_EQ(state.combatTargetPositionY, 0);
 	EXPECT_EQ(state.combatTargetFuturePositionX, 1);
-	EXPECT_EQ(state.combatTargetFuturePositionY, 0);
-	EXPECT_EQ(state.combatTargetDirection, 7);
-	EXPECT_EQ(state.combatTargetAvoidanceMovementIdleTicks, 0);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 1);
+	EXPECT_EQ(state.combatTargetDirection, 0);
+	EXPECT_EQ(state.combatTargetAvoidanceMovementIdleTicks, 1);
 	EXPECT_EQ(state.combatTargetAvoidanceMovementMode, 1);
 	EXPECT_EQ(state.combatTargetMonsterAiSeed, 90781909U);
 	EXPECT_EQ(state.randomState, 274169216U);
