@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/fire-wall-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "dab5e780f5533071d28b0ee015e3af11f7a6624d951e8d4cb3418b584513d996"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 2560,
+    "life_maximum": 2560,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 35,
+    "character_class": 2,
+    "character_level": 1,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "ability_spell_id": 6,
+    "spell_projectile_behavior": 22
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 6,
+        "target_x": 14,
+        "target_y": 10
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 8,
+      "server_receipt_sequence": 2,
+      "kind": "Move",
+      "payload": {
+        "direction_x": 1,
+        "direction_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "d27bd94f67a0f1bbb0017535dd173da233b44922e1e799b71216433334628cde" },
+    { "tick": 8, "state_sha256": "c5453216b8a8859680803c9ab38bf3d4d82ef57e464266d9bf1729f9d3c126ab" }
+  ]
+}

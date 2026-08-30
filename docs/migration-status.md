@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers player Fire Wall casts. Native and
+managed runners preserve the seven-tick wall controller, deterministic branch
+growth, scaled persistent segment state, and canonical checkpoints.
+
 The shared replay contract now covers seeded Succubus/Lazarus BloodStar
 close retreat and long-range admission. Native and managed runners consume
 the restored AI stream for retreat direction, RandomWalk fallback, and

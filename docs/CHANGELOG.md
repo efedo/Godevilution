@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Fire Wall replay coverage. Native and managed runners now preserve
+  the seven-tick controller, deterministic two-branch segment growth, scaled
+  segment damage/lifetime, and canonical projectile checkpoints.
+
 - Add shared Mega InfernoController replay coverage. Native and managed
   runners now preserve the three-step moving fire-stream controller, segment
   lifetime, and Mega recovery delay through canonical checkpoints.

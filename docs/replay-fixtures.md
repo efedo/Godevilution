@@ -60,6 +60,12 @@ first shot at the attack effect boundary and two spread shots with a two-tick
 activation delay. Captured Q6 and elemental channels are part of the snapshot
 hash, allowing replay and reconnect tests to observe travel, impact, and the
 complete volley.
+
+`gameplay-fire-wall-resolution.json` covers the player Fire Wall cast boundary
+and persistent wall geometry. The controller expires after seven simulation
+ticks while emitting deterministic center and two-branch segments; segment
+damage and lifetime retain the native character/spell-level scaling and are
+included in canonical projectile hashing.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with

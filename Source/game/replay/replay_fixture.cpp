@@ -44,6 +44,8 @@ constexpr int32_t BloodStarBehavior = 20;
 constexpr int32_t MonsterMagicBehavior = 50;
 constexpr int32_t InfernoControllerBehavior = 26;
 constexpr int32_t InfernoSegmentBehavior = 27;
+constexpr int32_t FireWallControllerBehavior = 22;
+constexpr int32_t FireWallSegmentBehavior = 23;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
@@ -3412,6 +3414,168 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+int32_t RotateReplayDirection(int32_t direction, int32_t offset)
+{
+	return (direction + offset + 8 * 4) % 8;
+}
+
+void CreateReplayFireWallController(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command,
+	int32_t spellLevel)
+{
+	const int32_t direction = GetDirection(
+		state.positionX,
+		state.positionY,
+		command.targetX,
+		command.targetY);
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		controller.entityId = std::max(controller.entityId, projectile.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 6;
+	controller.levelId = state.levelId;
+	controller.positionX = command.targetX;
+	controller.positionY = command.targetY;
+	controller.targetX = command.targetX;
+	controller.targetY = command.targetY;
+	controller.damageType = 1;
+	controller.remainingTicks = 7;
+	controller.behavior = FireWallControllerBehavior;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.originalDirection = direction;
+	controller.resistantDamageDivisor = 4;
+	controller.effectiveSpellLevel = spellLevel;
+	controller.wallLeftX = command.targetX;
+	controller.wallLeftY = command.targetY;
+	controller.wallRightX = command.targetX;
+	controller.wallRightY = command.targetY;
+	controller.wallLeftDirection = RotateReplayDirection(direction, -2);
+	controller.wallRightDirection = RotateReplayDirection(direction, 2);
+	state.projectiles.push_back(controller);
+}
+
+ReplayFixtureProjectileState CreateReplayFireWallSegment(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureProjectileState &controller,
+	int32_t positionX,
+	int32_t positionY,
+	int32_t wallHitDirection)
+{
+	ReplayFixtureProjectileState segment;
+	segment.entityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		segment.entityId = std::max(segment.entityId, projectile.entityId + 1U);
+	segment.sourceEntityId = controller.sourceEntityId;
+	segment.spellId = controller.spellId;
+	segment.levelId = controller.levelId;
+	segment.positionX = positionX;
+	segment.positionY = positionY;
+	segment.targetX = positionX;
+	segment.targetY = positionY;
+	segment.damage = (GenerateRnd(state, 10) + GenerateRnd(state, 10) + 2
+		+ static_cast<int32_t>(state.characterLevel))
+		* 8;
+	segment.damageType = 1;
+	segment.remainingTicks = static_cast<uint32_t>(
+		(10 + controller.effectiveSpellLevel * 10
+			+ static_cast<int32_t>(state.characterLevel))
+		* 16);
+	segment.behavior = FireWallSegmentBehavior;
+	segment.startX = positionX;
+	segment.startY = positionY;
+	segment.originalDirection = controller.originalDirection;
+	segment.resistantDamageDivisor = 4;
+	segment.effectiveSpellLevel = controller.effectiveSpellLevel;
+	segment.wallHitDirection = wallHitDirection;
+	return segment;
+}
+
+bool ReplayWallPositionIsValid(
+	const ReplayFixtureExecutionState &state,
+	int32_t positionX,
+	int32_t positionY)
+{
+	return positionX >= 0 && positionX < 40 && positionY >= 0 && positionY < 40
+		&& !(state.objectEntityId != 0
+			&& !state.objectDestroyed
+			&& !state.objectMissilePassable
+			&& state.objectLevelId == state.levelId
+			&& state.objectPositionX == positionX
+			&& state.objectPositionY == positionY);
+}
+
+void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size();) {
+		auto &projectile = state.projectiles[index];
+		if (projectile.behavior != FireWallSegmentBehavior) {
+			++index;
+			continue;
+		}
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.remainingTicks == 0 || !ReplayWallPositionIsValid(state, projectile.positionX, projectile.positionY))
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+		else
+			++index;
+	}
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &projectile = state.projectiles[index];
+		if (projectile.behavior != FireWallControllerBehavior)
+			continue;
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.remainingTicks == 0) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			return;
+		}
+		std::vector<ReplayFixtureProjectileState> created;
+		const auto place = [&](int32_t x, int32_t y, int32_t hitDirection) {
+			if (ReplayWallPositionIsValid(state, x, y))
+				created.push_back(CreateReplayFireWallSegment(state, projectile, x, y, hitDirection));
+		};
+		const auto grow = [&](int32_t &x, int32_t &y, int32_t direction, bool &stopped) {
+			const int32_t rightDirection = RotateReplayDirection(direction, 1);
+			const int32_t gapX = x + DirectionDisplacements[rightDirection].first - DirectionDisplacements[direction].first;
+			const int32_t gapY = y + DirectionDisplacements[rightDirection].second - DirectionDisplacements[direction].second;
+			if (ReplayWallPositionIsValid(state, gapX, gapY))
+				place(gapX, gapY, RotateReplayDirection(direction, -2));
+			if (!ReplayWallPositionIsValid(state, x, y)) {
+				stopped = true;
+				return;
+			}
+			place(x, y, -1);
+			x += DirectionDisplacements[direction].first;
+			y += DirectionDisplacements[direction].second;
+		};
+		if (projectile.wallLeftX == projectile.wallRightX
+			&& projectile.wallLeftY == projectile.wallRightY) {
+			place(projectile.wallLeftX, projectile.wallLeftY, -1);
+			projectile.wallLeftX += DirectionDisplacements[projectile.wallLeftDirection].first;
+			projectile.wallLeftY += DirectionDisplacements[projectile.wallLeftDirection].second;
+			projectile.wallRightX += DirectionDisplacements[projectile.wallRightDirection].first;
+			projectile.wallRightY += DirectionDisplacements[projectile.wallRightDirection].second;
+		} else {
+			if (!projectile.wallLeftStopped)
+				grow(projectile.wallLeftX, projectile.wallLeftY, projectile.wallLeftDirection, projectile.wallLeftStopped);
+			if (!projectile.wallRightStopped)
+				grow(projectile.wallRightX, projectile.wallRightY, projectile.wallRightDirection, projectile.wallRightStopped);
+		}
+		uint32_t nextEntityId = 0x80000000U;
+		for (const auto &existing : state.projectiles)
+			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
+	for (auto &spawned : created)
+		spawned.entityId = nextEntityId++;
+	for (auto &spawned : created)
+		--spawned.remainingTicks;
+	state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+		return;
+	}
+}
+
 /** Advances the compact SnakeCharge controller through travel and impact. */
 void AdvanceReplaySnakeChargesOneTick(
     ReplayFixtureExecutionState &state,
@@ -3697,6 +3861,29 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			CreateFireball(state, command, spellLevel);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 6
+	    && state.spellProjectileBehavior == FireWallControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			8,
+			28 - std::max(spellLevel - 1, 0) * 2)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			CreateReplayFireWallController(state, command, spellLevel);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -6796,6 +6983,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
 		AdvanceReplayInfernoOneTick(state);
+		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state, simulationTick);
