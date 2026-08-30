@@ -4430,6 +4430,44 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMegaInfernoNativeAiSeedMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-mega-inferno-native-ai-seed.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateMegaInfernoExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoController);
+        var segment = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoSegment);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(1U, controller.TargetEntityId);
+        Assert.Equal(255U, controller.RemainingTicks);
+        Assert.Equal(1, controller.PathIndex);
+        Assert.Equal(4, segment.Damage);
+        Assert.Equal(39U, segment.RemainingTicks);
+        Assert.Equal(15, monster.MegaDelayTicks);
+        Assert.NotEqual(0U, monster.MonsterAiSeed);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5902,6 +5940,8 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed,
             megaDelayTicks: initial.CombatTargetMegaDelayTicks);
         var missiles = new AuthoritativeMonsterMissileCatalog([
             new AuthoritativeMonsterMissileDefinition(

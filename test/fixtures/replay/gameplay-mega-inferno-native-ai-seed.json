@@ -1,0 +1,53 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/mega-inferno-native-ai-seed",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "mega-inferno-native-ai-seed-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 3,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Mega",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 2,
+    "combat_target_monster_item_seed": 11,
+    "combat_target_monster_ai_seed": 7
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "58beb9463d45c99c25739f25efeff6348f74a9c2cc09c14d83fb8d6667c590f8" }
+  ]
+}

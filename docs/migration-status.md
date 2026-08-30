@@ -12,6 +12,9 @@ the three-step moving fire-stream lifecycle. Native and managed runners
 preserve segment lifetime, target selection, and Mega recovery delay through
 the same canonical checkpoint.
 
+The Mega replay lane also covers seeded multiplayer execution, including
+native AI-stream advancement and stream-driven recovery delay.
+
 The shared replay contract now covers seeded GoatRanged close retreat and
 long-range arrow admission. Native and managed runners consume the restored
 AI stream for retreat direction, RandomWalk fallback, and post-shot delay,

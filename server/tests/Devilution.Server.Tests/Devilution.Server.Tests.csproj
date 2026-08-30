@@ -153,6 +153,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-native-ai-seed.json" Link="Fixtures/gameplay-blood-star-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-close-native-ai-seed.json" Link="Fixtures/gameplay-blood-star-close-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mega-inferno.json" Link="Fixtures/gameplay-mega-inferno.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-mega-inferno-native-ai-seed.json" Link="Fixtures/gameplay-mega-inferno-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow.json" Link="Fixtures/gameplay-multiplayer-monster-arrow.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow-volley.json" Link="Fixtures/gameplay-multiplayer-monster-arrow-volley.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-status-expiry.json" Link="Fixtures/gameplay-status-expiry.json" CopyToOutputDirectory="PreserveNewest" />

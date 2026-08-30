@@ -8247,17 +8247,18 @@ void AdmitReplayAutonomousMegaInferno(
 	if (state.combatTargetEntityId == 0
 	    || state.combatTargetNativeAi != "Mega"
 	    || state.combatTargetHitPointsQ6 <= 0
-	    || state.combatTargetAggroRange <= 0
-	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-		return projectile.sourceEntityId == state.combatTargetEntityId
-		    && (projectile.behavior == InfernoControllerBehavior
-		        || projectile.behavior == InfernoSegmentBehavior);
-	}))
+	    || state.combatTargetAggroRange <= 0)
 		return;
 	if (state.combatTargetMegaDelayTicks > 0) {
 		--state.combatTargetMegaDelayTicks;
 		return;
 	}
+	if (std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+		return projectile.sourceEntityId == state.combatTargetEntityId
+		    && (projectile.behavior == InfernoControllerBehavior
+		        || projectile.behavior == InfernoSegmentBehavior);
+	}))
+		return;
 
 	struct Candidate {
 		uint32_t entityId;
@@ -8299,9 +8300,13 @@ void AdmitReplayAutonomousMegaInferno(
 	const int attackBand = std::min(
 	    100,
 	    5 + 5 * (state.combatTargetIntelligence + (distance >= 3 ? 1 : 0)));
+	const auto resolveMegaDelay = [&]() {
+		return 5 + (usesNativeAiStream
+	        ? std::max(GenerateRnd(state, 20), 0)
+	        : static_cast<int>((attackSeed / 200U) % 20U));
+	};
 	if (actionRoll >= attackBand) {
-		state.combatTargetMegaDelayTicks = 5
-		    + static_cast<int32_t>((attackSeed / 200U) % 20U);
+		state.combatTargetMegaDelayTicks = resolveMegaDelay();
 		return;
 	}
 
@@ -8341,8 +8346,7 @@ void AdmitReplayAutonomousMegaInferno(
 	projectile.impactLifetime = 1;
 	projectile.resistantDamageDivisor = 1;
 	state.projectiles.push_back(std::move(projectile));
-	state.combatTargetMegaDelayTicks = 5
-	    + static_cast<int32_t>((attackSeed / 200U) % 20U);
+	state.combatTargetMegaDelayTicks = resolveMegaDelay();
 }
 
 /** Advances Mega's three-step Inferno controller and its persistent segments. */
