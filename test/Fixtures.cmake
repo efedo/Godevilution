@@ -87,6 +87,7 @@ set(devilutionx_fixtures
   replay/gameplay-gargoyle-healing.json
   replay/gameplay-gargoyle-attack.json
   replay/gameplay-gargoyle-avoidance-idle.json
+  replay/gameplay-gargoyle-avoidance-walk.json
   replay/gameplay-blood-star-autonomous.json
   replay/gameplay-blood-star-impact.json
   replay/gameplay-blood-star-multiplayer-target.json

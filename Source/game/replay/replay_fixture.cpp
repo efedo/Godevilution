@@ -4630,8 +4630,39 @@ void AdvanceReplayMonsterAttack(
 				++state.combatTargetAvoidanceMovementIdleTicks;
 			return;
 		}
-		// A later fixture will cover the admitted RandomWalk branch; preserve
-		// the stream boundary here without falling through to generic crawl.
+		const int direction = GetDirection(
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
+		    victim.positionX,
+		    victim.positionY);
+		const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
+		const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
+		const int candidates[] = {
+			direction,
+			(direction + firstTurn + 8) % 8,
+			(direction - firstTurn + 8) % 8,
+			(direction + secondTurn + 8) % 8,
+			(direction - secondTurn + 8) % 8,
+		};
+		for (const int candidateDirection : candidates) {
+			const auto displacement = DirectionDisplacements[candidateDirection];
+			const int candidateX = state.combatTargetPositionX + displacement.first;
+			const int candidateY = state.combatTargetPositionY + displacement.second;
+			if (candidateX < 0 || candidateX >= 40
+			    || candidateY < 0 || candidateY >= 40
+			    || (candidateX == state.positionX && candidateY == state.positionY)
+			    || (state.secondaryPlayerEntityId != 0
+			        && candidateX == state.secondaryPlayerPositionX
+			        && candidateY == state.secondaryPlayerPositionY))
+				continue;
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = candidateDirection;
+			state.combatTargetAvoidanceMovementMode = displacement.first;
+			state.combatTargetAvoidanceMovementIdleTicks = displacement.second;
+			return;
+		}
 		return;
 	}
 	if (distance > 1) {

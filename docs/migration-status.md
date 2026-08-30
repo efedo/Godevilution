@@ -53,8 +53,9 @@ safety distance, and preserve the lock across the next autonomous tick.
 The companion adjacent-attack fixture now verifies Gargoyle's native
 intelligence-scaled attack admission before hit/block resolution, including
 secondary-player block timing and multiplayer AI-stream advancement.
-The healthy non-adjacent avoidance-idle fixture also verifies the native action
-draw and persisted avoidance counter when no walk is admitted.
+The healthy non-adjacent avoidance fixtures also verify the native action draw,
+persisted avoidance counter when no walk is admitted, and the admitted
+RandomWalk candidate draws, destination, and occupancy state.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory

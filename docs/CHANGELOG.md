@@ -44,6 +44,9 @@ All notable changes to this fork are documented below.
 - Add Gargoyle avoidance-idle replay parity. Native and managed runners now
   consume the healthy non-adjacent action draw and preserve the authoritative
   avoidance counter when no movement is admitted.
+- Extend Gargoyle avoidance replay parity through admitted RandomWalk. Native
+  and managed runners now preserve the candidate coin draws, destination,
+  direction, occupancy checks, and canonical checkpoint hash.
 - Guard the legacy native client loop against opt-in authoritative-runtime
   references when server-backed client support is disabled, restoring the
   default replay-test build.

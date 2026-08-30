@@ -2712,6 +2712,65 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGargoyleAvoidanceWalkMatchesNativeAdmission()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-gargoyle-avoidance-walk.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed,
+            gargoyleSpecialActive: initial.CombatTargetGargoyleSpecialActive);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.True(monster.Moving);
+        Assert.Equal(0, monster.PositionX);
+        Assert.Equal(0, monster.PositionY);
+        Assert.Equal(1, monster.FuturePositionX);
+        Assert.Equal(0, monster.FuturePositionY);
+        Assert.Equal(7, monster.Direction);
+        Assert.Equal(0, monster.AvoidanceMovementIdleTicks);
+        Assert.Equal(1, monster.AvoidanceMovementMode);
+        Assert.Equal(90781909U, monster.MonsterAiSeed);
+        Assert.Equal(274169216U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterNativeAiSeedMatchesNativeImpactLifecycle()
     {
         var path = Path.Combine(
