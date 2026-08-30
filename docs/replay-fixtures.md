@@ -75,6 +75,10 @@ project as Lightning Wall visuals from their damage channel.
 `gameplay-ring-of-fire-resolution.json` covers the player Ring of Fire cast,
 including the native radius-three crawl, deterministic Fire Wall segment
 creation, persistent segment lifetime, and canonical projectile hashing.
+
+`gameplay-nova-radial-fan-resolution.json` covers the player Nova cast,
+including the one-tick controller, native 36-ball radial fan ordering,
+first-tick movement, and canonical projectile hashing.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
@@ -745,6 +749,8 @@ Notable shared fixtures include:
 - `gameplay-ring-of-fire-resolution.json` for native radius-three crawl,
   deterministic Fire Wall segment creation, persistent lifetime, and
   canonical projectile parity;
+- `gameplay-nova-radial-fan-resolution.json` for the one-tick controller,
+  native 36-ball radial ordering, first-tick movement, and canonical parity;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;

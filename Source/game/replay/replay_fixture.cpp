@@ -48,6 +48,8 @@ constexpr int32_t FireWallControllerBehavior = 22;
 constexpr int32_t FireWallSegmentBehavior = 23;
 constexpr int32_t LightningWallControllerBehavior = 47;
 constexpr int32_t RingOfFireControllerBehavior = 42;
+constexpr int32_t NovaControllerBehavior = 30;
+constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
@@ -3486,6 +3488,119 @@ void CreateReplayRingOfFireController(
 	state.projectiles.push_back(controller);
 }
 
+std::vector<std::pair<int32_t, int32_t>> CreateReplayRadialProjectileOffsets(
+	int32_t radius,
+	int32_t projectileCount)
+{
+	std::vector<std::pair<int32_t, int32_t>> offsets;
+	for (int32_t y = 0; y <= radius && static_cast<int32_t>(offsets.size()) < projectileCount; ++y) {
+		const std::pair<int32_t, int32_t> quarter { radius, y };
+		const std::pair<int32_t, int32_t> candidates[] = {
+			quarter,
+			{ -quarter.first, -quarter.second },
+			{ -quarter.first, quarter.second },
+			{ quarter.first, -quarter.second },
+		};
+		for (const auto offset : candidates) {
+			if (static_cast<int32_t>(offsets.size()) >= projectileCount)
+				break;
+			offsets.push_back(offset);
+		}
+	}
+	for (int32_t x = radius - 1; x >= 0 && static_cast<int32_t>(offsets.size()) < projectileCount; --x) {
+		const std::pair<int32_t, int32_t> quarter { x, radius };
+		const std::pair<int32_t, int32_t> candidates[] = {
+			quarter,
+			{ -quarter.first, -quarter.second },
+			{ -quarter.first, quarter.second },
+			{ quarter.first, -quarter.second },
+		};
+		for (const auto offset : candidates) {
+			if (static_cast<int32_t>(offsets.size()) >= projectileCount)
+				break;
+			offsets.push_back(offset);
+		}
+	}
+	return offsets;
+}
+
+ReplayFixtureProjectileState CreateReplayNovaController(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command,
+	int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		controller.entityId = std::max(controller.entityId, projectile.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 18;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = command.targetX;
+	controller.targetY = command.targetY;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	int32_t damage = 0;
+	for (int32_t iteration = 0; iteration < 5; ++iteration)
+		damage += GenerateRnd(state, 6);
+	damage += static_cast<int32_t>(state.characterLevel) + 5;
+	damage /= 2;
+	for (int32_t level = 0; level < spellLevel; ++level)
+		damage += damage / 8;
+	controller.damage = damage * 64;
+	controller.damageType = 2;
+	controller.remainingTicks = 1;
+	controller.behavior = NovaControllerBehavior;
+	controller.originalDirection = GetDirection(
+		state.positionX,
+		state.positionY,
+		command.targetX,
+		command.targetY);
+	controller.resistantDamageDivisor = 4;
+	controller.effectiveSpellLevel = spellLevel;
+	return controller;
+}
+
+ReplayFixtureProjectileState CreateReplayNovaBall(
+	const ReplayFixtureProjectileState &controller,
+	int32_t targetX,
+	int32_t targetY)
+{
+	ReplayFixtureProjectileState ball;
+	ball.sourceEntityId = controller.sourceEntityId;
+	ball.spellId = controller.spellId;
+	ball.levelId = controller.levelId;
+	ball.positionX = controller.positionX;
+	ball.positionY = controller.positionY;
+	ball.targetX = targetX;
+	ball.targetY = targetY;
+	ball.damage = controller.damage;
+	ball.damageType = 2;
+	ball.remainingTicks = 255;
+	ball.behavior = NovaBallBehavior;
+	ball.startX = controller.positionX;
+	ball.startY = controller.positionY;
+	ball.originalDirection = GetDirection(
+		controller.positionX,
+		controller.positionY,
+		targetX,
+		targetY);
+	const auto velocity = CalculateVelocity(
+		controller.positionX,
+		controller.positionY,
+		targetX,
+		targetY,
+		16);
+	ball.velocityX = velocity.first;
+	ball.velocityY = velocity.second;
+	ball.speed = 16;
+	ball.resistantDamageDivisor = 4;
+	ball.effectiveSpellLevel = controller.effectiveSpellLevel;
+	return ball;
+}
+
 ReplayFixtureProjectileState CreateReplayFireWallSegment(
 	ReplayFixtureExecutionState &state,
 	const ReplayFixtureProjectileState &controller,
@@ -3639,6 +3754,52 @@ void AdvanceReplayRingOfFireOneTick(ReplayFixtureExecutionState &state)
 		}
 		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
 		return;
+	}
+}
+
+void AdvanceReplayNovaOneTick(ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &controller = state.projectiles[index];
+		if (controller.behavior != NovaControllerBehavior)
+			continue;
+		if (controller.remainingTicks > 0)
+			--controller.remainingTicks;
+		const auto controllerState = controller;
+		const auto offsets = CreateReplayRadialProjectileOffsets(4, 36);
+		std::vector<ReplayFixtureProjectileState> created;
+		created.reserve(offsets.size());
+		for (const auto offset : offsets)
+			created.push_back(CreateReplayNovaBall(
+				controllerState,
+				controllerState.positionX + offset.first,
+				controllerState.positionY + offset.second));
+		uint32_t nextEntityId = 0x80000000U;
+		for (const auto &existing : state.projectiles)
+			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
+		for (auto &spawned : created)
+			spawned.entityId = nextEntityId++;
+		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+		state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+		return;
+	}
+}
+
+void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != NovaBallBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		MoveReplayNativeProjectile(projectile);
+		if (projectile.remainingTicks == 0)
+			iterator = state.projectiles.erase(iterator);
+		else
+			++iterator;
 	}
 }
 
@@ -4003,6 +4164,30 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			CreateReplayRingOfFireController(state, spellLevel);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 18
+	    && state.spellProjectileBehavior == NovaControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			35,
+			60 - std::max(spellLevel - 1, 0) * 3)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			const auto controller = CreateReplayNovaController(state, command, spellLevel);
+			state.projectiles.push_back(controller);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -7103,6 +7288,8 @@ void AdvanceReplayStateToTick(
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
 		AdvanceReplayInfernoOneTick(state);
 		AdvanceReplayRingOfFireOneTick(state);
+		AdvanceReplayNovaOneTick(state);
+		AdvanceReplayNovaBallsOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);

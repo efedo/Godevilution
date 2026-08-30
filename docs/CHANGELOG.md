@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Nova replay coverage. Native and managed runners now preserve
+  the one-tick controller, native 36-ball radial fan ordering, first-tick
+  movement, and canonical projectile checkpoints.
+
 - Add shared Ring of Fire replay coverage. Native and managed runners now
   preserve the deterministic radius-three crawl, persistent Fire Wall segment
   creation, and canonical projectile checkpoints.

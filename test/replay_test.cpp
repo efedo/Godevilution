@@ -2011,6 +2011,42 @@ TEST(ReplayFixture, ExecutesRingOfFireCrawlAndWallSegments)
 	}));
 }
 
+TEST(ReplayFixture, ExecutesNovaRadialFanControllerAndBalls)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-nova-radial-fan-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.abilitySpellId = fixture.initialState.abilitySpellId;
+	state.spellProjectileBehavior = 30;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 2U);
+	EXPECT_EQ(state.projectiles.size(), 36U);
+	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 31
+			&& projectile.damageType == 2
+			&& projectile.remainingTicks == 254
+			&& projectile.speed == 16;
+	}));
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritPvpAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-pvp.json");

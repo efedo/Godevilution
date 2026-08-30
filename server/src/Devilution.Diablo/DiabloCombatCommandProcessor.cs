@@ -3860,6 +3860,7 @@ public sealed class DiabloCombatCommandProcessor
             0,
             checked((uint)spell.NovaControllerLifetime)) {
             Behavior = AuthoritativeProjectileBehavior.NovaController,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
             OriginalDirection = (int)player.FacingDirection,
             EffectiveSpellLevel = effectiveSpellLevel,
         };
