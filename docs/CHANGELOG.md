@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
   cross-language lethal MonsterArrow fixture. Native and managed runners now
   agree on secondary death mode, Gold halving, deterministic world-drop seeds,
   facing-ordered equipment placement, and the resulting canonical hash.
+- Align generic autonomous monster melee with the managed participant model.
+  Native and C# runners now select the nearest live participant with stable
+  entity-ID tie breaking, including secondary-player damage and death state.
 
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind

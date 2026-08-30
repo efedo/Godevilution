@@ -182,7 +182,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 99 checked-in JSON fixtures and 131 registered
+the native replay gate contains 100 checked-in JSON fixtures and 132 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -226,7 +226,8 @@ impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
 impact against the secondary participant, plus a two-projectile participant
 volley whose managed counterpart also exercises both-participant save/restore
 continuation, and a lethal secondary MonsterArrow lane that verifies
-authoritative death, Gold, and equipment drops. The native and C# runners
+authoritative death, Gold, and equipment drops, plus generic monster melee
+target selection against a closer secondary participant. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -582,6 +583,9 @@ Notable shared fixtures include:
   MonsterArrow impact against a secondary participant, death-mode transition,
   Gold halving and world-drop RNG, facing-ordered equipment drops, and shared
   C++/C# participant hashing;
+- `gameplay-multiplayer-secondary-monster-melee.json` for nearest-participant
+  generic monster melee selection, secondary damage, and primary-state
+  preservation across the native and managed runners;
 - `gameplay-player-level-transition.json` for immediate portal destination and
   the one-tick NewLevel action barrier;
 - `gameplay-player-restart-town.json` for terminal-death admission,

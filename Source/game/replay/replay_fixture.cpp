@@ -4477,10 +4477,16 @@ void AdvanceReplayMonsterAttack(
 		state.combatTargetPositionY = state.combatTargetFuturePositionY;
 		state.combatTargetMoving = false;
 	}
-	if (state.life <= 0
-	    || state.combatMode == 10
-	    || state.combatMode == 11
-	    || state.levelId != state.combatTargetLevelId
+	const bool primaryAlive = state.life > 0
+	    && state.combatMode != 10
+	    && state.combatMode != 11
+	    && state.levelId == state.combatTargetLevelId;
+	const bool secondaryAlive = state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerCombatMode != 10
+	    && state.secondaryPlayerCombatMode != 11
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId;
+	if ((!primaryAlive && !secondaryAlive)
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetPetrified) {
@@ -4498,14 +4504,36 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetNativeAi == "Necromorb"
 	    || state.combatTargetNativeAi == "BoneDemon")
 		return;
-	const int distance = std::max(
-	    std::abs(state.positionX - state.combatTargetPositionX),
-	    std::abs(state.positionY - state.combatTargetPositionY));
+	struct Victim {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+		bool secondary;
+	};
+	std::vector<Victim> victims;
+	if (primaryAlive)
+		victims.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY, false });
+	if (secondaryAlive)
+		victims.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY, true });
+	const auto victimDistance = [&](const Victim &victim) {
+		return std::max(
+			std::abs(victim.positionX - state.combatTargetPositionX),
+			std::abs(victim.positionY - state.combatTargetPositionY));
+	};
+	std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
+		const int leftDistance = victimDistance(left);
+		const int rightDistance = victimDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Victim &victim = victims.front();
+	const int distance = victimDistance(victim);
 	if (distance > state.combatTargetAggroRange)
 		return;
 	if (distance > 1) {
-		const int32_t differenceX = state.positionX - state.combatTargetPositionX;
-		const int32_t differenceY = state.positionY - state.combatTargetPositionY;
+		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
+		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;
 		const int32_t deltaX = (differenceX > 0) - (differenceX < 0);
 		const int32_t deltaY = (differenceY > 0) - (differenceY < 0);
 		const std::pair<int32_t, int32_t> candidates[] = {
@@ -4518,7 +4546,7 @@ void AdvanceReplayMonsterAttack(
 			        && candidate.second == state.combatTargetPositionY)
 			    || candidate.first < 0 || candidate.first >= 40
 			    || candidate.second < 0 || candidate.second >= 40
-			    || (candidate.first == state.positionX && candidate.second == state.positionY)
+			    || (candidate.first == victim.positionX && candidate.second == victim.positionY)
 			    || (state.secondaryPlayerEntityId != 0
 			        && state.secondaryPlayerLife > 0
 			        && candidate.first == state.secondaryPlayerPositionX
@@ -4535,6 +4563,15 @@ void AdvanceReplayMonsterAttack(
 			    candidate.second);
 			break;
 		}
+		return;
+	}
+	if (victim.secondary) {
+		const int32_t damage = state.combatTargetAttackDamage == 0
+		    ? 0
+		    : std::max(1, state.combatTargetAttackDamage);
+		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damage);
+		if (state.secondaryPlayerLife == 0)
+			StartReplaySecondaryPlayerDeath(state, true);
 		return;
 	}
 	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
