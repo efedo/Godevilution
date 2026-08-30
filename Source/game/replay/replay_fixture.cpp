@@ -536,6 +536,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-intelligence-v1");
 			hasher.AppendInt32(state.combatTargetIntelligence);
 		}
+		if (state.combatTargetGargoyleSpecialActive) {
+			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
+			hasher.AppendBool(true);
+		}
 		if (state.combatTargetHorkDemonDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
 			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
@@ -4473,6 +4477,67 @@ void StartReplayPlayerDeath(
 	state.combatModeEndTick = endTick;
 }
 
+/** Advances the compact native Gargoyle wounded self-heal boundary. */
+bool AdvanceReplayAutonomousGargoyleHealing(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetNativeAi != "Gargoyle"
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetAggroRange <= 0)
+		return false;
+	struct Victim {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Victim> victims;
+	if (state.life > 0 && state.levelId == state.combatTargetLevelId)
+		victims.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId)
+		victims.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (victims.empty())
+		return false;
+	const auto distanceFromMonster = [&](const Victim &victim) {
+		return std::max(
+		    std::abs(victim.positionX - state.combatTargetPositionX),
+		    std::abs(victim.positionY - state.combatTargetPositionY));
+	};
+	std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
+		const int leftDistance = distanceFromMonster(left);
+		const int rightDistance = distanceFromMonster(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const int distance = distanceFromMonster(victims.front());
+	const int safeDistance = 2 + state.combatTargetIntelligence;
+	if (state.combatTargetGargoyleSpecialActive) {
+		if (distance < safeDistance)
+			state.combatTargetGargoyleSpecialActive = false;
+		return true;
+	}
+	if (state.combatTargetHitPointsQ6
+	    >= state.combatTargetMaxHitPointsQ6 * 50 / 100)
+		return true;
+	if (distance < safeDistance)
+		return true;
+	const int healRoll = std::max(GenerateRnd(state, 5), 0);
+	const int divisor = 16 * (healRoll + 4);
+	const int healingQ6 = (state.combatTargetMaxHitPoints / divisor) * 64;
+	state.combatTargetHitPointsQ6 = std::min(
+	    state.combatTargetMaxHitPointsQ6,
+	    state.combatTargetHitPointsQ6 + healingQ6);
+	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	state.combatTargetGargoyleSpecialActive =
+	    state.combatTargetHitPointsQ6 < state.combatTargetMaxHitPointsQ6;
+	(void)tick;
+	return true;
+}
+
 void AdvanceReplayMonsterAttack(
     ReplayFixtureExecutionState &state,
     const ReplayFixturePlayerActionTiming &timing,
@@ -4501,6 +4566,7 @@ void AdvanceReplayMonsterAttack(
 	// Autonomous ranged identities own their movement and projectile admission
 	// below; the generic compact monster branch must not pursue them into melee.
 	if (state.combatTargetNativeAi == "SkeletonRanged"
+	    || state.combatTargetNativeAi == "Gargoyle"
 	    || state.combatTargetNativeAi == "HorkDemon"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
@@ -5477,6 +5543,7 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		AdvanceReplayAutonomousGargoyleHealing(state, simulationTick);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
 		AdmitReplayAutonomousBloodStar(state);
 		AdmitReplayAutonomousMonsterMagic(state);
@@ -5846,6 +5913,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetMaxDamage);
 			if (key == "combat_target_intelligence")
 				return ParseSigned(fixture_.initialState.combatTargetIntelligence);
+			if (key == "combat_target_gargoyle_special_active")
+				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetHorkDemonDelayTicks);
 			if (key == "combat_target_fire_resistance")
@@ -6663,6 +6732,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetMinDamage != 0
 			|| target.combatTargetMaxDamage != 0
 			|| target.combatTargetIntelligence != 0
+			|| target.combatTargetGargoyleSpecialActive
 			|| target.combatTargetHorkDemonDelayTicks != 0
 			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
@@ -7025,6 +7095,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 		state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;

@@ -33,6 +33,10 @@ All notable changes to this fork are documented below.
 - Extend seeded secondary melee coverage through successful impact. Both
   runners now consume the native min/max damage draw and preserve the shared
   post-impact RNG state and participant hash.
+- Add the Gargoyle wounded self-healing replay boundary. Native and managed
+  runners now consume the same deterministic divisor draw, apply Q6 healing,
+  retain the native special lock, and preserve the canonical checkpoint across
+  the lock's following tick.
 - Guard the legacy native client loop against opt-in authoritative-runtime
   references when server-backed client support is disabled, restoring the
   default replay-test build.

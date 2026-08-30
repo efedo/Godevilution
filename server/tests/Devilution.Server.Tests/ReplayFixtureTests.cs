@@ -2485,6 +2485,61 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGargoyleHealingMatchesNativeSelfHealBoundary()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-gargoyle-healing.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed,
+            gargoyleSpecialActive: initial.CombatTargetGargoyleSpecialActive);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(21, monster.HitPoints);
+        Assert.Equal(1344, monster.HitPointsQ6);
+        Assert.True(monster.GargoyleSpecialActive);
+        Assert.Equal(45390955U, result.FinalSnapshot.RandomState);
+        Assert.Equal(2, result.Checkpoints.Count);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterNativeAiSeedMatchesNativeBlockLifecycle()
     {
         var path = Path.Combine(

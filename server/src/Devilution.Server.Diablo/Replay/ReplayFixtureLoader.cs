@@ -91,6 +91,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetMinDamage != 0
                     || initialTarget.CombatTargetMaxDamage != 0
                     || initialTarget.CombatTargetIntelligence != 0
+                    || initialTarget.CombatTargetGargoyleSpecialActive
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
@@ -346,6 +347,9 @@ public static class ReplayFixtureLoader
             CombatTargetMinDamage = GetOptionalInt(value, "combat_target_min_damage"),
             CombatTargetMaxDamage = GetOptionalInt(value, "combat_target_max_damage"),
             CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
+            CombatTargetGargoyleSpecialActive = GetOptionalBool(
+                value,
+                "combat_target_gargoyle_special_active"),
             CombatTargetHorkDemonDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_hork_demon_delay_ticks"),

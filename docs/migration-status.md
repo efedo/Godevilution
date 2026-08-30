@@ -46,6 +46,11 @@ consumption and post-impact RNG-state parity. The default native client build
 now keeps those opt-in runtime references behind the server-backed feature
 guard, allowing the replay target to build without that feature enabled.
 
+The shared replay gate now covers the wounded Gargoyle self-heal boundary.
+Both runners consume the same native divisor draw, apply the resulting Q6
+healing, retain the special lock while the player remains outside the native
+safety distance, and preserve the lock across the next autonomous tick.
+
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory
 source removal, adjacent world-item projection, and a shared canonical

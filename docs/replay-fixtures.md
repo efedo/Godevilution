@@ -188,7 +188,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 104 checked-in JSON fixtures and 136 registered
+the native replay gate contains 105 checked-in JSON fixtures and 137 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -200,7 +200,7 @@ Succubus BloodStar multiplayer target-selection lane, ArchLich, Psychorb,
 Necromorb, BoneDemon, and two-projectile multiplayer MonsterArrow participant
 volley coverage, and Lich-family
 MonsterMagic admission/hit/miss/block/nearest-participant/secondary-impact
-lanes. The dated full-suite
+lanes, plus the wounded Gargoyle self-heal and special-lock boundary. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -235,7 +235,8 @@ continuation, and a lethal secondary MonsterArrow lane that verifies
 authoritative death, Gold, and equipment drops, plus generic monster melee
 target selection against a closer secondary participant, plus bounded fallback
 pathing around an occupied participant or object tile. The native and C# runners
-are wired to preserve the same baseline resources,
+also cover the wounded Gargoyle self-heal and retained special-lock boundary.
+They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
 world items in their canonical projections. Spell fixtures now reject unowned

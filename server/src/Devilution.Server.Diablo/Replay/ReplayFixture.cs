@@ -248,6 +248,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetIntelligence { get; init; }
 
+    /** Optional native Gargoyle special lock retained after self-healing. */
+    public bool CombatTargetGargoyleSpecialActive { get; init; }
+
     /** Optional native HorkDemon decision-delay state. */
     public int CombatTargetHorkDemonDelayTicks { get; init; }
 

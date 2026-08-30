@@ -191,6 +191,7 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetMinDamage = 0;
 	int32_t combatTargetMaxDamage = 0;
 	int32_t combatTargetIntelligence = 0;
+	bool combatTargetGargoyleSpecialActive = false;
 	int32_t combatTargetHorkDemonDelayTicks = 0;
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
@@ -551,6 +552,7 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetMinDamage = 0;
 	int32_t combatTargetMaxDamage = 0;
 	int32_t combatTargetIntelligence = 0;
+	bool combatTargetGargoyleSpecialActive = false;
 	int32_t combatTargetHorkDemonDelayTicks = 0;
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
