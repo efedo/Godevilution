@@ -28,7 +28,7 @@
       "entity_id": 8,
       "life": 100,
       "life_maximum": 100,
-      "gold": 0,
+      "gold": 50,
       "position_x": 5,
       "position_y": 5,
       "level_id": 1,
@@ -50,6 +50,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "683eea3ef103fa15635f005ee1ed1c189b7e1a3d4fd447426c9386d6b0a06128" }
+    { "tick": 1, "state_sha256": "a5a6a7c0586d45ab2baf9ed0228f0e97cb164734036518f955ecdd396832b94b" }
   ]
 }

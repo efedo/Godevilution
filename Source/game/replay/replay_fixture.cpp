@@ -6814,6 +6814,8 @@ bool ExecuteReplayFixture(
 						    || state.worldItemState.identifiedValue != state.worldItemState.value
 						    || !state.worldItemState.statFlag
 						    || state.worldItemPrice != static_cast<uint32_t>(state.worldItemState.value)
+						    || state.secondaryPlayerGold > static_cast<uint32_t>(std::numeric_limits<int32_t>::max())
+						    || state.worldItemPrice > static_cast<uint32_t>(std::numeric_limits<int32_t>::max()) - state.secondaryPlayerGold
 						    || std::numeric_limits<uint32_t>::max() - state.secondaryPlayerGold < state.worldItemPrice) {
 							rejectReason = "Malformed";
 						} else {
@@ -7203,14 +7205,17 @@ bool ExecuteReplayFixture(
 					const uint32_t pickedItemPrice = state.worldItemPrice;
 					const bool isGold = pickedItemState.itemType == 11
 					    && pickedItemState.itemIndex == 0;
-					if (isGold
+					const bool malformedGold = isGold
 					    && (pickedItemState.value <= 0
 					        || pickedItemState.value > 5000
 					        || pickedItemState.identifiedValue != pickedItemState.value
 					        || !pickedItemState.statFlag
 					        || pickedItemPrice != static_cast<uint32_t>(pickedItemState.value)
-					        || std::numeric_limits<uint32_t>::max() - state.gold < pickedItemPrice))
-						continue;
+					        || static_cast<uint64_t>(state.gold) + pickedItemPrice > std::numeric_limits<int32_t>::max()
+					        || std::numeric_limits<uint32_t>::max() - state.gold < pickedItemPrice);
+					if (malformedGold) {
+						rejectReason = "Malformed";
+					} else {
 					if (state.heldItemDefined) {
 						if (state.positionX == state.worldItemPositionX
 						    && state.positionY == state.worldItemPositionY)
@@ -7267,6 +7272,7 @@ bool ExecuteReplayFixture(
 						}
 						state.worldItemEntityId = 0;
 						accepted = true;
+					}
 					}
 				}
 			} else if (command.kind == "DropHeldItem") {

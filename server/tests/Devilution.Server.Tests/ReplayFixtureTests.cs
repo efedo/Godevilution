@@ -1871,7 +1871,9 @@ public sealed class ReplayFixtureTests
         var player = Assert.Single(
             result.FinalSnapshot.Players,
             candidate => candidate.EntityId == secondary.EntityId);
-        Assert.Equal(fixture.InitialState.WorldItemPrice, player.Gold);
+        Assert.Equal(
+            secondary.Gold + fixture.InitialState.WorldItemPrice,
+            player.Gold);
         Assert.Empty(player.Inventory);
         Assert.Null(player.HeldItem);
         Assert.Empty(result.FinalSnapshot.WorldItems);
@@ -1929,6 +1931,60 @@ public sealed class ReplayFixtureTests
         Assert.Equal(CommandStatus.Rejected, Assert.Single(result.Results).Status);
         Assert.Equal(CommandRejectReason.Malformed, result.Results[0].RejectReason);
         Assert.Equal(0U, player.Gold);
+        Assert.Empty(player.Inventory);
+        Assert.Null(player.HeldItem);
+        Assert.Single(result.FinalSnapshot.WorldItems);
+    }
+
+    [Fact]
+    public void GameplayMultiplayerSecondaryGoldPickupRejectsWalletOverflow()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-gold-pickup-overflow.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 11,
+            ItemIndex = 0,
+            StableItemId = 9915,
+            Value = checked((int)fixture.InitialState.WorldItemPrice),
+            IdentifiedValue = checked((int)fixture.InitialState.WorldItemPrice),
+            StatFlag = true,
+        };
+        var secondary = fixture.InitialState.SecondaryPlayer!;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                fixture.InitialState.WorldItemEntityId,
+                fixture.InitialState.LevelId,
+                secondary.PositionX - 1,
+                secondary.PositionY,
+                fixture.InitialState.WorldItemSeed,
+                fixture.InitialState.WorldItemPrice,
+                itemState)],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = Assert.Single(
+            result.FinalSnapshot.Players,
+            candidate => candidate.EntityId == secondary.EntityId);
+        Assert.Equal(CommandStatus.Rejected, Assert.Single(result.Results).Status);
+        Assert.Equal(CommandRejectReason.Malformed, result.Results[0].RejectReason);
+        Assert.Equal(secondary.Gold, player.Gold);
         Assert.Empty(player.Inventory);
         Assert.Null(player.HeldItem);
         Assert.Single(result.FinalSnapshot.WorldItems);

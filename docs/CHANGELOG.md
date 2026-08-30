@@ -50,6 +50,16 @@ All notable changes to this fork are documented below.
   runners now reject an invalid Gold identity as `Malformed` while preserving
   the secondary wallet, cursor, and world item.
 
+- Extend secondary Gold pickup parity to accumulate into an existing wallet
+  balance, proving that the participant's starting Gold survives the pickup.
+
+- Add secondary Gold wallet-overflow parity coverage. A valid pile that would
+  exceed the signed protocol Gold range is rejected as `Malformed` by both
+  replay runners without mutating authoritative state.
+
+- Correct replay rejection bookkeeping for malformed primary Gold pickups so
+  the rejected transition is recorded and checked like secondary commands.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

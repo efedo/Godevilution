@@ -93,13 +93,21 @@ route `DropHeldItem` to adjacent authoritative world placement with matching
 entity identity and canonical participant hash.
 
 The secondary multiplayer replay lane now also covers Gold pickup. Native and
-managed runners credit an adjacent Gold pile directly to the secondary wallet,
-remove the world entity, and match the canonical participant hash without
-creating a presentation-only inventory stack.
+managed runners add an adjacent Gold pile directly to an existing secondary
+wallet, remove the world entity, and match the canonical participant hash
+without creating a presentation-only inventory stack.
 
 The same lane now rejects malformed secondary Gold identities as `Malformed`.
 Both runners preserve the wallet, cursor, and world item on rejection, keeping
 invalid content fail-closed across the protocol boundary.
+
+The lane also rejects a valid secondary Gold pickup that would exceed the
+signed protocol Gold range, preserving participant and world state in both
+runners.
+
+Replay rejection bookkeeping now records malformed primary Gold pickups as
+well, keeping accepted/rejected command timelines complete for both
+participants.
 
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or

@@ -2913,7 +2913,9 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryGoldPickupAgainstCSharpCheckpoin
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_EQ(state.secondaryPlayerGold, fixture.initialState.worldItemPrice);
+	EXPECT_EQ(
+	    state.secondaryPlayerGold,
+	    fixture.initialState.secondaryPlayer.gold + fixture.initialState.worldItemPrice);
 	EXPECT_TRUE(state.secondaryInventory.empty());
 	EXPECT_FALSE(state.secondaryHeldItemDefined);
 	EXPECT_EQ(state.worldItemEntityId, 0U);
@@ -2954,6 +2956,45 @@ TEST(ReplayFixture, RejectsMalformedMultiplayerSecondaryGoldPickup)
 	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_FALSE(result.transitions[0].accepted);
 	EXPECT_EQ(state.secondaryPlayerGold, 0U);
+	EXPECT_TRUE(state.secondaryInventory.empty());
+	EXPECT_FALSE(state.secondaryHeldItemDefined);
+	EXPECT_EQ(state.worldItemEntityId, fixture.initialState.worldItemEntityId);
+}
+
+TEST(ReplayFixture, RejectsMultiplayerSecondaryGoldPickupOnWalletOverflow)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-gold-pickup-overflow.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.worldItemEntityId = fixture.initialState.worldItemEntityId;
+	state.worldItemLevelId = fixture.initialState.levelId;
+	state.worldItemPositionX = fixture.initialState.secondaryPlayer.positionX - 1;
+	state.worldItemPositionY = fixture.initialState.secondaryPlayer.positionY;
+	state.worldItemSeed = fixture.initialState.worldItemSeed;
+	state.worldItemPrice = fixture.initialState.worldItemPrice;
+	state.worldItemState.itemType = 11;
+	state.worldItemState.itemIndex = 0;
+	state.worldItemState.stableItemId = 9915;
+	state.worldItemState.value = static_cast<int32_t>(fixture.initialState.worldItemPrice);
+	state.worldItemState.identifiedValue = state.worldItemState.value;
+	state.worldItemState.statFlag = true;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_FALSE(result.transitions[0].accepted);
+	EXPECT_EQ(state.secondaryPlayerGold, fixture.initialState.secondaryPlayer.gold);
 	EXPECT_TRUE(state.secondaryInventory.empty());
 	EXPECT_FALSE(state.secondaryHeldItemDefined);
 	EXPECT_EQ(state.worldItemEntityId, fixture.initialState.worldItemEntityId);

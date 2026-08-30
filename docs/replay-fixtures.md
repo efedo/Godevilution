@@ -121,9 +121,9 @@ all 40 secondary inventory cells and verifies that the accepted pickup moves to
 the secondary authoritative cursor, then drops that held item back to an
 adjacent tile while preserving the world-item identity.
 The `gameplay-multiplayer-secondary-gold-pickup.json` fixture routes an adjacent
-Gold pile through the secondary participant. Both runners credit the secondary
-wallet directly, remove the world item, and produce the same canonical
-participant hash without inventing an inventory Gold stack.
+Gold pile through a secondary participant with an existing wallet balance. Both
+runners add to that wallet directly, remove the world item, and produce the same
+canonical participant hash without inventing an inventory Gold stack.
 The companion `gameplay-multiplayer-secondary-gold-pickup-malformed.json`
 fixture corrupts the Gold identity and requires both runners to reject the
 secondary pickup as `Malformed` without changing the wallet, cursor, or world
@@ -176,7 +176,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 93 checked-in JSON fixtures and 120 registered
+the native replay gate contains 94 checked-in JSON fixtures and 122 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -315,6 +315,10 @@ managed participant projections must match at the checkpoint.
 `gameplay-multiplayer-secondary-gold-pickup-malformed.json` repeats the route
 with an invalid identified value. Both runners require `Malformed` rejection
 and preserve the secondary wallet, cursor, and world item.
+
+`gameplay-multiplayer-secondary-gold-pickup-overflow.json` starts the secondary
+wallet near the signed protocol limit and verifies that adding a valid pile is
+rejected as `Malformed` without mutating participant or world state.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied
@@ -521,6 +525,8 @@ Notable shared fixtures include:
   credit, world-pile removal, and participant checkpoint parity;
 - `gameplay-multiplayer-secondary-gold-pickup-malformed.json` for malformed
   Gold rejection and secondary state preservation;
+- `gameplay-multiplayer-secondary-gold-pickup-overflow.json` for wallet-overflow
+  rejection and secondary state preservation;
 - `gameplay-stable-item-drop-retry.json` for accepted-then-rejected stale
   stable-reference retry ordering and `InvalidTarget` rejection reason;
 - `gameplay-stable-belt-drop-invalid-target.json` for `NotAllowed` rejection

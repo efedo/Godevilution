@@ -841,6 +841,7 @@ public sealed class DiabloWorldCommandProcessor
                 || itemState.IdentifiedValue != itemState.Value
                 || item.Price != checked((uint)itemState.Value)
                 || !itemState.StatFlag
+                || (ulong)player.Gold + item.Price > int.MaxValue
                 || uint.MaxValue - player.Gold < item.Price) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
             }
