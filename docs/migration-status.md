@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+Multiplayer autonomous target-selection replay fixtures now hydrate secondary
+participants from the shared fixture on both runners, restoring canonical
+checkpoint parity for HorkDemon, Succubus, Lich, and SkeletonRanged lanes.
+
 The shared replay contract now covers Snake autonomous-AI delay admissions:
 native and managed runners carry Snake's distant-delay and failed
 adjacent-attack countdowns through the same canonical replay checkpoints.

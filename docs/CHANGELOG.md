@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore native/C# canonical checkpoint parity for multiplayer autonomous
+  target-selection fixtures by letting the native replay executor hydrate the
+  complete secondary participant state from the shared fixture.
+
 - Add shared Sneak conceal/reveal and Bat retreat replay fixtures. Native and
   managed runners now preserve stealth visibility transitions, retreat
   movement, countdown state, and canonical checkpoint parity.

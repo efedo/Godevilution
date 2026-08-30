@@ -4554,15 +4554,6 @@ TEST(ReplayFixture, ExecutesHorkDemonMultiplayerTargetSelectionAgainstCSharpChec
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
 	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
-	state.secondaryPlayer = fixture.initialState.secondaryPlayer.player;
-	state.secondaryPlayerEntityId = fixture.initialState.secondaryPlayer.entityId;
-	state.secondaryPlayerLife = fixture.initialState.secondaryPlayer.life;
-	state.secondaryPlayerLifeMaximum = fixture.initialState.secondaryPlayer.lifeMaximum;
-	state.secondaryPlayerPositionX = fixture.initialState.secondaryPlayer.positionX;
-	state.secondaryPlayerPositionY = fixture.initialState.secondaryPlayer.positionY;
-	state.secondaryPlayerLevelId = fixture.initialState.secondaryPlayer.levelId;
-	state.secondaryPlayerCharacterLevel = fixture.initialState.secondaryPlayer.characterLevel;
-
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
@@ -4999,15 +4990,6 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarMultiplayerTargetSelectionAgainstCS
 	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
-	state.secondaryPlayer = fixture.initialState.secondaryPlayer.player;
-	state.secondaryPlayerEntityId = fixture.initialState.secondaryPlayer.entityId;
-	state.secondaryPlayerLife = fixture.initialState.secondaryPlayer.life;
-	state.secondaryPlayerLifeMaximum = fixture.initialState.secondaryPlayer.lifeMaximum;
-	state.secondaryPlayerPositionX = fixture.initialState.secondaryPlayer.positionX;
-	state.secondaryPlayerPositionY = fixture.initialState.secondaryPlayer.positionY;
-	state.secondaryPlayerLevelId = fixture.initialState.secondaryPlayer.levelId;
-	state.secondaryPlayerCharacterLevel = fixture.initialState.secondaryPlayer.characterLevel;
-
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
@@ -5170,15 +5152,6 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicMultiplayerTargetSelectionAgainstCSh
 	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
-	state.secondaryPlayer = fixture.initialState.secondaryPlayer.player;
-	state.secondaryPlayerEntityId = fixture.initialState.secondaryPlayer.entityId;
-	state.secondaryPlayerLife = fixture.initialState.secondaryPlayer.life;
-	state.secondaryPlayerLifeMaximum = fixture.initialState.secondaryPlayer.lifeMaximum;
-	state.secondaryPlayerPositionX = fixture.initialState.secondaryPlayer.positionX;
-	state.secondaryPlayerPositionY = fixture.initialState.secondaryPlayer.positionY;
-	state.secondaryPlayerLevelId = fixture.initialState.secondaryPlayer.levelId;
-	state.secondaryPlayerCharacterLevel = fixture.initialState.secondaryPlayer.characterLevel;
-
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
@@ -5229,15 +5202,6 @@ TEST(ReplayFixture, ExecutesSkeletonRangedMonsterArrowMultiplayerTargetSelection
 	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
-	state.secondaryPlayer = fixture.initialState.secondaryPlayer.player;
-	state.secondaryPlayerEntityId = fixture.initialState.secondaryPlayer.entityId;
-	state.secondaryPlayerLife = fixture.initialState.secondaryPlayer.life;
-	state.secondaryPlayerLifeMaximum = fixture.initialState.secondaryPlayer.lifeMaximum;
-	state.secondaryPlayerPositionX = fixture.initialState.secondaryPlayer.positionX;
-	state.secondaryPlayerPositionY = fixture.initialState.secondaryPlayer.positionY;
-	state.secondaryPlayerLevelId = fixture.initialState.secondaryPlayer.levelId;
-	state.secondaryPlayerCharacterLevel = fixture.initialState.secondaryPlayer.characterLevel;
-
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
