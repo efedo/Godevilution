@@ -1707,6 +1707,62 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerSecondaryItemPickupWithExistingItemMatchesNativeParticipantHash()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-item-pickup-with-existing-item.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9911,
+            Value = checked((int)fixture.InitialState.WorldItemPrice),
+            IdentifiedValue = checked((int)fixture.InitialState.WorldItemPrice),
+            StatFlag = true,
+        };
+        var secondary = fixture.InitialState.SecondaryPlayer!;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                fixture.InitialState.WorldItemEntityId,
+                fixture.InitialState.LevelId,
+                secondary.PositionX - 1,
+                secondary.PositionY,
+                fixture.InitialState.WorldItemSeed,
+                fixture.InitialState.WorldItemPrice,
+                itemState)],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = Assert.Single(
+            result.FinalSnapshot.Players,
+            candidate => candidate.EntityId == secondary.EntityId);
+        Assert.Equal(2, player.Inventory.Count);
+        Assert.Equal(9003U, player.Inventory[0].ItemSeed);
+        Assert.Equal(fixture.InitialState.WorldItemSeed, player.Inventory[1].ItemSeed);
+        Assert.Equal(1U, player.Inventory[1].PurchasedAtTick);
+        Assert.Empty(result.FinalSnapshot.WorldItems);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryAttackMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

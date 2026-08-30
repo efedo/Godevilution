@@ -87,6 +87,11 @@ hook needed by those future set-piece replacements without fabricating geometry.
 The content schema is now `1.442.0`; the previous additive `1.441.0` schema
 remains accepted for pack compatibility.
 
+The deterministic replay gate now includes an occupied-inventory
+secondary-participant world-item pickup fixture. Native and managed runners
+preserve the existing item, choose the same first-fit destination cell, and
+match the resulting canonical participant hash.
+
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or
 item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,

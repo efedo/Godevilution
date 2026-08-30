@@ -26,6 +26,10 @@ All notable changes to this fork are documented below.
   fixture verifies authoritative item removal, inventory placement, and
   canonical checkpoint parity through the same protocol command.
 
+- Add occupied-inventory secondary-participant pickup coverage. A companion
+  fixture verifies that native and managed runners preserve an existing item
+  and choose the same first-fit cell for the picked world item.
+
 - Extend stable-reference replay coverage to belt and equipment sources with
   dedicated fixtures and native/managed tests. All three carried-item source
   locations now exercise the same explicit drop intent in parity fixtures.

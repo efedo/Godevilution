@@ -1,0 +1,63 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/multiplayer-secondary-item-pickup-with-existing-item",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "multiplayer-secondary-item-pickup-with-existing-item-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "world_item_entity_id": 12,
+    "world_item_seed": 9004,
+    "world_item_price": 25,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 5,
+      "position_y": 5,
+      "level_id": 1,
+      "character_level": 1,
+      "character_class": 0,
+      "inventory_item": {
+        "slot": 0,
+        "item_seed": 9003,
+        "stable_item_id": 9903,
+        "price": 10,
+        "item_type": 1,
+        "item_index": 1,
+        "stat_flag": true
+      }
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "expected_status": "Accepted",
+      "kind": "PickupWorldItem",
+      "payload": {
+        "item_entity_id": 12
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "74116e2ad0f79156a3fe77773d0b51cfe730d9cd7242aa6b111f9012f26a2ca7" }
+  ]
+}

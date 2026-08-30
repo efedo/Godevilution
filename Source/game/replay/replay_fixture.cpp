@@ -4194,6 +4194,17 @@ int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const
 	return FindReplayInventoryPlacement(state.inventoryGrid, item);
 }
 
+int FindReplayInventoryFirstFit(const std::vector<int32_t> &grid, const ReplayFixtureItemState &item)
+{
+	const uint32_t width = std::max(item.inventoryWidth, 1U);
+	const uint32_t height = std::max(item.inventoryHeight, 1U);
+	for (int cell = 0; static_cast<size_t>(cell) < grid.size(); ++cell) {
+		if (CanPlaceReplayInventoryItem(grid, cell, width, height))
+			return cell;
+	}
+	return -1;
+}
+
 void FillReplayInventoryGrid(
 	std::vector<int32_t> &grid,
 	int cell,
@@ -6739,15 +6750,9 @@ bool ExecuteReplayFixture(
 					const int distance = std::max(
 					    std::abs(state.secondaryPlayerPositionX - state.worldItemPositionX),
 					    std::abs(state.secondaryPlayerPositionY - state.worldItemPositionY));
-					const int targetCell = CanPlaceReplayInventoryItem(
+					const int targetCell = FindReplayInventoryFirstFit(
 					    state.secondaryInventoryGrid,
-					    0,
-					    state.worldItemState.inventoryWidth,
-					    state.worldItemState.inventoryHeight)
-					    ? 0
-					    : FindReplayInventoryPlacement(
-					          state.secondaryInventoryGrid,
-					          state.worldItemState);
+					    state.worldItemState);
 					if (command.worldItemEntityId == state.worldItemEntityId
 					    && state.worldItemSeed != 0
 					    && state.secondaryPlayerLevelId == state.worldItemLevelId
