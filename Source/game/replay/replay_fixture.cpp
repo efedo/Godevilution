@@ -540,6 +540,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetAvoidanceMovementTicks != -1
+		    || state.combatTargetAvoidanceMovementTurn != 0) {
+			hasher.AppendString("godevilution-monster-avoidance-movement-v1");
+			hasher.AppendInt32(state.combatTargetAvoidanceMovementTicks);
+			hasher.AppendInt32(state.combatTargetAvoidanceMovementTurn);
+		}
 		if (state.combatTargetAvoidanceMovementIdleTicks != -1
 		    || state.combatTargetAvoidanceMovementMode != 0) {
 			hasher.AppendString("godevilution-monster-avoidance-counter-v1");
@@ -4625,16 +4631,92 @@ void AdvanceReplayMonsterAttack(
 		const int movementChance = std::min(
 		    100,
 		    28 + 2 * state.combatTargetIntelligence);
-		if (actionRoll >= movementChance) {
-			if (state.combatTargetAvoidanceMovementIdleTicks < 1024)
-				++state.combatTargetAvoidanceMovementIdleTicks;
-			return;
-		}
 		const int direction = GetDirection(
 		    state.combatTargetPositionX,
 		    state.combatTargetPositionY,
 		    victim.positionX,
 		    victim.positionY);
+		const auto isCandidateAvailable = [&](int candidateDirection) {
+			const auto displacement = DirectionDisplacements[candidateDirection];
+			const int candidateX = state.combatTargetPositionX + displacement.first;
+			const int candidateY = state.combatTargetPositionY + displacement.second;
+			return candidateX >= 0 && candidateX < 40
+			    && candidateY >= 0 && candidateY < 40
+			    && !(candidateX == state.positionX && candidateY == state.positionY)
+			    && !(state.secondaryPlayerEntityId != 0
+			        && candidateX == state.secondaryPlayerPositionX
+			        && candidateY == state.secondaryPlayerPositionY)
+			    && !(state.objectEntityId != 0
+			        && !state.objectActivated
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable
+			        && state.objectLevelId == state.combatTargetLevelId
+			        && candidateX == state.objectPositionX
+			        && candidateY == state.objectPositionY);
+		};
+		const auto tryMove = [&](int candidateDirection) {
+			if (!isCandidateAvailable(candidateDirection))
+				return false;
+			const auto displacement = DirectionDisplacements[candidateDirection];
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = state.combatTargetPositionX + displacement.first;
+			state.combatTargetFuturePositionY = state.combatTargetPositionY + displacement.second;
+			state.combatTargetDirection = candidateDirection;
+			state.combatTargetAvoidanceMovementMode = displacement.first;
+			state.combatTargetAvoidanceMovementIdleTicks = displacement.second;
+			return true;
+		};
+		const bool startsMoveGoal = distance >= 4 && std::max(GenerateRnd(state, 4), 0) == 0;
+		if (state.combatTargetAvoidanceMovementTicks >= 0 || startsMoveGoal) {
+			if (state.combatTargetAvoidanceMovementTicks < 0) {
+				state.combatTargetAvoidanceMovementTicks = 0;
+				state.combatTargetAvoidanceMovementTurn = std::max(GenerateRnd(state, 2), 0);
+			}
+			const bool completes = state.combatTargetAvoidanceMovementTicks >= 2 * distance
+			    && isCandidateAvailable(direction);
+			if (state.combatTargetAvoidanceMovementTicks < 255)
+				++state.combatTargetAvoidanceMovementTicks;
+			if (completes) {
+				state.combatTargetAvoidanceMovementTicks = -1;
+				state.combatTargetAvoidanceMovementTurn = 0;
+			} else {
+				const int roundWalkChance = std::min(
+				    100,
+				    5 * (state.combatTargetIntelligence + 16));
+				if (actionRoll >= roundWalkChance)
+					return;
+				const int turn = state.combatTargetAvoidanceMovementTurn == 0 ? 1 : -1;
+				const int turn45 = (direction + turn + 8) % 8;
+				const int turn90 = (turn45 + turn + 8) % 8;
+				const int primaryCandidates[] = { turn90, turn45, direction };
+				for (const int candidateDirection : primaryCandidates) {
+					if (tryMove(candidateDirection))
+						return;
+				}
+				state.combatTargetAvoidanceMovementTurn =
+				    state.combatTargetAvoidanceMovementTurn == 0 ? 1 : 0;
+				const int fallbackDirection = (turn90 + 4) % 8;
+				const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
+				const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
+				const int fallbackCandidates[] = {
+				    fallbackDirection,
+				    (fallbackDirection + firstTurn + 8) % 8,
+				    (fallbackDirection - firstTurn + 8) % 8,
+				    (fallbackDirection + secondTurn + 8) % 8,
+				    (fallbackDirection - secondTurn + 8) % 8,
+				};
+				for (const int candidateDirection : fallbackCandidates) {
+					if (tryMove(candidateDirection))
+						return;
+				}
+				return;
+			}
+		}
+		if (actionRoll >= movementChance) {
+			if (state.combatTargetAvoidanceMovementIdleTicks < 1024)
+				++state.combatTargetAvoidanceMovementIdleTicks;
+			return;
+		}
 		const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
 		const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
 		const int candidates[] = {

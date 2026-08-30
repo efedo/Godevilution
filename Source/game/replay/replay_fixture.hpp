@@ -554,6 +554,8 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetIntelligence = 0;
 	bool combatTargetGargoyleSpecialActive = false;
 	bool combatTargetAutonomousActionHandled = false;
+	int32_t combatTargetAvoidanceMovementTicks = -1;
+	int32_t combatTargetAvoidanceMovementTurn = 0;
 	int32_t combatTargetAvoidanceMovementIdleTicks = -1;
 	int32_t combatTargetAvoidanceMovementMode = 0;
 	int32_t combatTargetHorkDemonDelayTicks = 0;

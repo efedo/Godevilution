@@ -1,0 +1,47 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/gargoyle-avoidance-move",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "gargoyle-avoidance-move-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 4,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 6,
+    "combat_target_native_ai": "Gargoyle",
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 16,
+    "combat_target_gargoyle_special_active": false
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "3c40cc47b923bd56d187937199c2f260f738b7224e81675539def2c419cc6a9f" }
+  ]
+}

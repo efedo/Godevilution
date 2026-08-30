@@ -188,7 +188,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 107 checked-in JSON fixtures and 140 registered
+the native replay gate contains 108 checked-in JSON fixtures and 141 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -203,8 +203,8 @@ MonsterMagic admission/hit/miss/block/nearest-participant/secondary-impact
 lanes, plus the wounded Gargoyle self-heal/special-lock boundary and adjacent
 Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
-occupancy, including an active object blocking the straight candidate. The
-dated full-suite
+occupancy, including an active object blocking the straight candidate, and the
+far-distance Move-goal/RoundWalk state boundary. The dated full-suite
 baseline below records the last complete run; on 2026-08-26 the native
 `replay_test` executable was rebuilt and the new multiplayer HorkDemon,
 SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
@@ -241,8 +241,9 @@ target selection against a closer secondary participant, plus bounded fallback
 pathing around an occupied participant or object tile. The native and C# runners
 also cover the wounded Gargoyle self-heal and retained special-lock boundary,
 plus its adjacent attack-band admission, healthy non-adjacent avoidance
-idle-band lifecycle, and an admitted RandomWalk destination with participant
-and active-object occupancy checks.
+idle-band lifecycle, an admitted RandomWalk destination with participant and
+active-object occupancy checks, and far-distance Move-goal admission with
+persisted goal ticks, turn state, and RoundWalk destination.
 They are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and

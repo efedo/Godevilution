@@ -56,7 +56,8 @@ secondary-player block timing and multiplayer AI-stream advancement.
 The healthy non-adjacent avoidance fixtures also verify the native action draw,
 persisted avoidance counter when no walk is admitted, and the admitted
 RandomWalk candidate draws, destination, and participant/object occupancy
-state.
+state. The far-distance Move-goal fixture also preserves its admission coin,
+turn initialization, persisted goal tick, and RoundWalk destination.
 
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory

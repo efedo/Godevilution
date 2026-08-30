@@ -50,6 +50,9 @@ All notable changes to this fork are documented below.
 - Honor active object occupancy in the Gargoyle RandomWalk replay boundary.
   The shared fixture now proves the straight candidate is rejected before the
   next deterministic destination is selected.
+- Add Gargoyle far-distance Move-goal replay parity. Native and managed runners
+  now preserve the admission coin, turn initialization, persisted goal tick,
+  RoundWalk destination, and canonical checkpoint hash.
 - Guard the legacy native client loop against opt-in authoritative-runtime
   references when server-backed client support is disabled, restoring the
   default replay-test build.
