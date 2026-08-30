@@ -20,6 +20,12 @@
 #include "engine/crawl.hpp"
 
 namespace devilution {
+
+void AdmitReplayAutonomousMegaInferno(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick);
+void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state);
+
 namespace {
 
 constexpr uint32_t FastAttackFlag = 1U << 18;
@@ -36,6 +42,8 @@ constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t BloodStarBehavior = 20;
 constexpr int32_t MonsterMagicBehavior = 50;
+constexpr int32_t InfernoControllerBehavior = 26;
+constexpr int32_t InfernoSegmentBehavior = 27;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
@@ -596,6 +604,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		if (state.combatTargetRangedDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-ranged-delay-v1");
 			hasher.AppendInt32(state.combatTargetRangedDelayTicks);
+		}
+		if (state.combatTargetMegaDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-mega-delay-v1");
+			hasher.AppendInt32(state.combatTargetMegaDelayTicks);
 		}
 	}
 
@@ -4694,6 +4706,10 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetPetrified) {
 		return;
 	}
+	// Mega owns its ranged Inferno admission below; do not let the generic
+	// melee projection pre-move the controller source before that branch.
+	if (state.combatTargetNativeAi == "Mega")
+		return;
 	// Compact the native Scavenger corpse-eating goal. The replay boundary
 	// carries authored corpse tiles so movement, healing, and selected-corpse
 	// state remain visible in the same canonical projection as managed state.
@@ -6772,12 +6788,14 @@ void AdvanceReplayStateToTick(
 			AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
 		AdmitReplayAutonomousBloodStar(state, simulationTick);
+		AdmitReplayAutonomousMegaInferno(state, simulationTick);
 		AdmitReplayAutonomousMonsterMagic(state);
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
+		AdvanceReplayInfernoOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state, simulationTick);
@@ -7193,6 +7211,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
 			if (key == "combat_target_ranged_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetRangedDelayTicks);
+			if (key == "combat_target_mega_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetMegaDelayTicks);
 			if (key == "combat_target_skeleton_ranged_movement_idle_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonRangedMovementIdleTicks);
 			if (key == "combat_target_skeleton_ranged_movement_mode")
@@ -8036,6 +8056,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetSkeletonMeleeDelayTicks != 0
 		    || target.combatTargetSnakeDelayTicks != 0
 		    || target.combatTargetRangedDelayTicks != 0
+		    || target.combatTargetMegaDelayTicks != 0
 		    || target.combatTargetSkeletonRangedMovementIdleTicks != -1
 		    || target.combatTargetSkeletonRangedMovementMode != 0
 		    || target.combatTargetSneakHidden
@@ -8071,6 +8092,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetSnakeDelayTicks > 1024
 		|| target.combatTargetRangedDelayTicks < 0
 		|| target.combatTargetRangedDelayTicks > 1024
+		|| target.combatTargetMegaDelayTicks < 0
+		|| target.combatTargetMegaDelayTicks > 1024
 		|| target.combatTargetSkeletonRangedMovementIdleTicks < -1
 		|| target.combatTargetSkeletonRangedMovementIdleTicks > 1024
 		|| target.combatTargetSkeletonRangedMovementMode < -1
@@ -8214,6 +8237,178 @@ std::string ComputeReplayFixtureStateHash(const ReplayFixtureExecutionState &sta
 	ReplayStateHasher hasher;
 	AppendCanonicalState(hasher, state);
 	return hasher.HexDigest();
+}
+
+/** Admits the compact Mega InfernoController native ranged branch. */
+void AdmitReplayAutonomousMegaInferno(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetNativeAi != "Mega"
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetAggroRange <= 0
+	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+		return projectile.sourceEntityId == state.combatTargetEntityId
+		    && (projectile.behavior == InfernoControllerBehavior
+		        || projectile.behavior == InfernoSegmentBehavior);
+	}))
+		return;
+	if (state.combatTargetMegaDelayTicks > 0) {
+		--state.combatTargetMegaDelayTicks;
+		return;
+	}
+
+	struct Candidate {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Candidate> candidates;
+	if (state.life > 0 && state.levelId == state.combatTargetLevelId)
+		candidates.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId)
+		candidates.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (candidates.empty())
+		return;
+	const auto candidateDistance = [&](const Candidate &candidate) {
+		return std::max(
+		    std::abs(candidate.positionX - state.combatTargetPositionX),
+		    std::abs(candidate.positionY - state.combatTargetPositionY));
+	};
+	std::sort(candidates.begin(), candidates.end(), [&](const auto &left, const auto &right) {
+		const int32_t leftDistance = candidateDistance(left);
+		const int32_t rightDistance = candidateDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Candidate &target = candidates.front();
+	const int distance = candidateDistance(target);
+	if (distance > state.combatTargetAggroRange || distance >= 5)
+		return;
+	const uint32_t attackSeed = static_cast<uint32_t>(tick)
+	    ^ state.combatTargetEntityId
+	    ^ target.entityId;
+	const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
+	const int actionRoll = usesNativeAiStream
+	    ? std::max(GenerateRnd(state, 100), 0)
+	    : static_cast<int>(attackSeed % 100U);
+	const int attackBand = std::min(
+	    100,
+	    5 + 5 * (state.combatTargetIntelligence + (distance >= 3 ? 1 : 0)));
+	if (actionRoll >= attackBand) {
+		state.combatTargetMegaDelayTicks = 5
+		    + static_cast<int32_t>((attackSeed / 200U) % 20U);
+		return;
+	}
+
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+	const auto velocity = CalculateVelocity(
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	    target.positionX,
+	    target.positionY,
+	    32);
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.combatTargetEntityId;
+	projectile.targetEntityId = target.entityId;
+	projectile.spellId = 21;
+	projectile.levelId = state.combatTargetLevelId;
+	projectile.positionX = state.combatTargetPositionX;
+	projectile.positionY = state.combatTargetPositionY;
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
+	projectile.targetX = target.positionX;
+	projectile.targetY = target.positionY;
+	projectile.damage = 4;
+	projectile.damageType = 1;
+	projectile.remainingTicks = 256;
+	projectile.behavior = InfernoControllerBehavior;
+	projectile.originalDirection = GetDirection(
+	    projectile.positionX,
+	    projectile.positionY,
+	    projectile.targetX,
+	    projectile.targetY);
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.speed = 32;
+	projectile.impactLifetime = 1;
+	projectile.resistantDamageDivisor = 1;
+	state.projectiles.push_back(std::move(projectile));
+	state.combatTargetMegaDelayTicks = 5
+	    + static_cast<int32_t>((attackSeed / 200U) % 20U);
+}
+
+/** Advances Mega's three-step Inferno controller and its persistent segments. */
+void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &projectile = state.projectiles[index];
+		if (projectile.behavior == InfernoSegmentBehavior) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks == 0) {
+				state.projectiles.erase(state.projectiles.begin() + index);
+				--index;
+			}
+			continue;
+		}
+		if (projectile.behavior != InfernoControllerBehavior)
+			continue;
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.remainingTicks == 0) {
+			state.projectiles.erase(state.projectiles.begin() + index);
+			--index;
+			continue;
+		}
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		if (visitedTiles.empty())
+			continue;
+		const auto &tile = visitedTiles.back();
+		projectile.positionX = tile.x;
+		projectile.positionY = tile.y;
+		projectile.traveledX = tile.traveledX;
+		projectile.traveledY = tile.traveledY;
+		if (projectile.positionX < 0 || projectile.positionX >= 40
+		    || projectile.positionY < 0 || projectile.positionY >= 40) {
+			state.projectiles.erase(state.projectiles.begin() + index);
+			--index;
+			continue;
+		}
+		ReplayFixtureProjectileState segment;
+		segment.entityId = projectile.entityId + 1U;
+		for (const auto &candidate : state.projectiles)
+			segment.entityId = std::max(segment.entityId, candidate.entityId + 1U);
+		segment.sourceEntityId = projectile.sourceEntityId;
+		segment.spellId = projectile.spellId;
+		segment.levelId = projectile.levelId;
+		segment.positionX = projectile.positionX;
+		segment.positionY = projectile.positionY;
+		segment.startX = segment.positionX;
+		segment.startY = segment.positionY;
+		segment.targetX = segment.positionX;
+		segment.targetY = segment.positionY;
+		segment.damage = projectile.damage;
+		segment.damageType = projectile.damageType;
+		segment.remainingTicks = 5 * static_cast<uint32_t>(std::max(1, projectile.damage))
+		    + 20 + static_cast<uint32_t>(projectile.pathIndex);
+		segment.behavior = InfernoSegmentBehavior;
+		segment.impactLifetime = 1;
+		segment.resistantDamageDivisor = projectile.resistantDamageDivisor;
+		state.projectiles.push_back(std::move(segment));
+		++state.projectiles[index].pathIndex;
+		if (state.projectiles[index].pathIndex >= 3) {
+			state.projectiles.erase(state.projectiles.begin() + index);
+			--index;
+		}
+	}
 }
 
 bool ExecuteReplayFixture(
@@ -8436,6 +8631,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
 		state.combatTargetRangedDelayTicks = fixture.initialState.combatTargetRangedDelayTicks;
+		state.combatTargetMegaDelayTicks = fixture.initialState.combatTargetMegaDelayTicks;
 		state.combatTargetSkeletonRangedMovementIdleTicks = fixture.initialState.combatTargetSkeletonRangedMovementIdleTicks;
 		state.combatTargetSkeletonRangedMovementMode = fixture.initialState.combatTargetSkeletonRangedMovementMode;
 		state.combatTargetSneakHidden = fixture.initialState.combatTargetSneakHidden;

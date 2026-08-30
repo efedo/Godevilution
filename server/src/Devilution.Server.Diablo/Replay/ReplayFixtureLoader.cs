@@ -97,6 +97,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
                     || initialTarget.CombatTargetSnakeDelayTicks != 0
                     || initialTarget.CombatTargetRangedDelayTicks != 0
+                    || initialTarget.CombatTargetMegaDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks != -1
                     || initialTarget.CombatTargetSkeletonRangedMovementMode != 0
                     || initialTarget.CombatTargetSneakHidden
@@ -130,6 +131,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetRangedDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetMegaDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks is < -1 or > 1024
             || initialTarget.CombatTargetSkeletonRangedMovementMode is < -1 or > 3
             || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > 1024
@@ -389,6 +391,9 @@ public static class ReplayFixtureLoader
             CombatTargetRangedDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_ranged_delay_ticks"),
+            CombatTargetMegaDelayTicks = GetOptionalInt(
+                value,
+                "combat_target_mega_delay_ticks"),
             CombatTargetSkeletonRangedMovementIdleTicks = GetOptionalInt(
                 value,
                 "combat_target_skeleton_ranged_movement_idle_ticks",

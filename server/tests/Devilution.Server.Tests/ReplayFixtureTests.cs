@@ -1193,11 +1193,11 @@ public sealed class ReplayFixtureTests
             executor,
             new AuthoritativeCommandServer(executor));
 
-        var player = Assert.Single(result.FinalSnapshot.Players);
         Assert.Equal(CommandStatus.Rejected, result.Results[1].Status);
         Assert.Equal(CommandRejectReason.NotAllowed, result.Results[1].RejectReason);
         Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
         Assert.Equal(fixture.Checkpoints[1].StateSha256, result.Checkpoints[1].ActualStateSha256);
+        var player = Assert.Single(result.FinalSnapshot.Players);
         Assert.Equal(9010U, player.HeldItem?.ItemSeed);
         Assert.Single(result.FinalSnapshot.WorldItems);
     }
@@ -4391,6 +4391,45 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMegaInfernoMatchesNativeControllerLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-mega-inferno.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateMegaInfernoExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoController);
+        var segment = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoSegment);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(9U, controller.SourceEntityId);
+        Assert.Equal(1U, controller.TargetEntityId);
+        Assert.Equal(21U, controller.SpellId);
+        Assert.Equal(255U, controller.RemainingTicks);
+        Assert.Equal(1, controller.PathIndex);
+        Assert.Equal(4, segment.Damage);
+        Assert.Equal(39U, segment.RemainingTicks);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(5, monster.MegaDelayTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -5840,6 +5879,82 @@ public sealed class ReplayFixtureTests
             startingCharacterLevel: initial.CharacterLevel,
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateMegaInfernoExecutor(ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            attackDamage: initial.CombatTargetAttackDamage,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            toHit: initial.CombatTargetToHit,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            megaDelayTicks: initial.CombatTargetMegaDelayTicks);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Mega",
+                "InfernoControl",
+                AuthoritativeProjectileBehavior.InfernoController,
+                SpellId: 21,
+                ProjectileSpeed: 32,
+                ProjectileLifetime: 256,
+                DamageType: AuthoritativeDamageType.Fire,
+                InfernoMaximumDistance: 5,
+                InfernoAdjacentChanceBase: 40,
+                InfernoAdjacentChanceIntelligenceScale: 10,
+                InfernoRangedFarDistance: 3,
+                InfernoRangedChanceBase: 5,
+                InfernoRangedChanceIntelligenceScale: 5,
+                InfernoRangedFarIntelligenceOffset: 1,
+                InfernoAdjacentChoiceModulo: 2,
+                ProjectileDamage: 4,
+                ProjectileImpactLifetime: 1,
+                MegaDelayRandomRange: 20),
+        ]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(21, 11, 0, 0, 0, 0) {
+                NativeSpellId = 20,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 32,
+                ProjectileLifetime = 256,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.InfernoController,
+                RandomDamageRange = 2,
+                DamageBonus = 24,
+                DamageScale = 12,
+                SecondaryProjectileLifetime = 20,
+                InfernoSegmentLifetimeStep = 1,
+                ProjectileImpactLifetime = 1,
+            },
+        ]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingSpells: spells,
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

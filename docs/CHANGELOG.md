@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Mega InfernoController replay coverage. Native and managed
+  runners now preserve the three-step moving fire-stream controller, segment
+  lifetime, and Mega recovery delay through canonical checkpoints.
+
 - Add seeded Succubus/Lazarus BloodStar replay coverage. Native and managed
   runners now consume the restored AI stream for close-range retreat RandomWalk
   draws and post-shot ranged-delay state, preserving canonical checkpoints.

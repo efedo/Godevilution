@@ -7,6 +7,11 @@ close retreat and long-range admission. Native and managed runners consume
 the restored AI stream for retreat direction, RandomWalk fallback, and
 post-shot delay, then agree on canonical checkpoints.
 
+The shared replay contract now covers Mega InfernoController admission and
+the three-step moving fire-stream lifecycle. Native and managed runners
+preserve segment lifetime, target selection, and Mega recovery delay through
+the same canonical checkpoint.
+
 The shared replay contract now covers seeded GoatRanged close retreat and
 long-range arrow admission. Native and managed runners consume the restored
 AI stream for retreat direction, RandomWalk fallback, and post-shot delay,

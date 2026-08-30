@@ -269,6 +269,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native AiRanged delay state. */
     public int CombatTargetRangedDelayTicks { get; init; }
 
+    /** Optional native Mega recovery delay state. */
+    public int CombatTargetMegaDelayTicks { get; init; }
+
     /** Optional native SkeletonBow movement counter and mode state. */
     public int CombatTargetSkeletonRangedMovementIdleTicks { get; init; } = -1;
 
