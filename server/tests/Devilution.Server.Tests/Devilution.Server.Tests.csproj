@@ -143,6 +143,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-multiplayer-target.json" Link="Fixtures/gameplay-monster-magic-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-secondary-block.json" Link="Fixtures/gameplay-monster-magic-secondary-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-multiplayer-target.json" Link="Fixtures/gameplay-monster-arrow-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-goat-ranged-multiplayer-target.json" Link="Fixtures/gameplay-monster-arrow-goat-ranged-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow.json" Link="Fixtures/gameplay-multiplayer-monster-arrow.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow-volley.json" Link="Fixtures/gameplay-multiplayer-monster-arrow-volley.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-status-expiry.json" Link="Fixtures/gameplay-status-expiry.json" CopyToOutputDirectory="PreserveNewest" />

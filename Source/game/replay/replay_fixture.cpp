@@ -4794,7 +4794,8 @@ void AdvanceReplayMonsterAttack(
 	}
 	// Autonomous ranged identities own their movement and projectile admission
 	// below; the generic compact monster branch must not pursue them into melee.
-	if (state.combatTargetNativeAi == "SkeletonRanged"
+	if (state.combatTargetNativeAi == "GoatRanged"
+	    || state.combatTargetNativeAi == "SkeletonRanged"
 	    || state.combatTargetNativeAi == "HorkDemon"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"

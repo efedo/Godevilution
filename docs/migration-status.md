@@ -2,6 +2,11 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers GoatRanged multiplayer target
+selection. Native and managed runners preserve nearest-participant ordering,
+MonsterArrow admission, and canonical checkpoint parity while keeping ranged
+monsters out of the generic melee-pursuit branch.
+
 Multiplayer autonomous target-selection replay fixtures now hydrate secondary
 participants from the shared fixture on both runners, restoring canonical
 checkpoint parity for HorkDemon, Succubus, Lich, and SkeletonRanged lanes.
