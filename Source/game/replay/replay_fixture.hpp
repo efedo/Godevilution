@@ -184,6 +184,8 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetAttackDamage = 0;
 	int32_t combatTargetAggroRange = 0;
 	std::string combatTargetNativeAi;
+	uint32_t combatTargetMonsterItemSeed = 0;
+	uint32_t combatTargetMonsterAiSeed = 0;
 	uint32_t combatTargetMonsterId = 0;
 	int32_t combatTargetToHit = 0;
 	int32_t combatTargetMinDamage = 0;
@@ -542,6 +544,8 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetAttackDamage = 0;
 	int32_t combatTargetAggroRange = 0;
 	std::string combatTargetNativeAi;
+	uint32_t combatTargetMonsterItemSeed = 0;
+	uint32_t combatTargetMonsterAiSeed = 0;
 	uint32_t combatTargetMonsterId = 0;
 	int32_t combatTargetToHit = 0;
 	int32_t combatTargetMinDamage = 0;

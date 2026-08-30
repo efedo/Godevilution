@@ -70,6 +70,11 @@ public static class ReplayFixtureLoader
                 "Replay fixture contains invalid object missile-collision state.");
         }
         var initialTarget = fixture.InitialState;
+        if ((initialTarget.CombatTargetMonsterItemSeed == 0)
+            != (initialTarget.CombatTargetMonsterAiSeed == 0)) {
+            throw new InvalidDataException(
+                "Replay fixture monster runtime seeds must be supplied together.");
+        }
         if ((initialTarget.CombatTargetEntityId == 0
                 && (initialTarget.CombatTargetPositionX != 0
                     || initialTarget.CombatTargetPositionY != 0
@@ -79,6 +84,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetAttackDamage != 0
                     || initialTarget.CombatTargetAggroRange != 0
                     || !string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
+                    || initialTarget.CombatTargetMonsterItemSeed != 0
+                    || initialTarget.CombatTargetMonsterAiSeed != 0
                     || initialTarget.CombatTargetMonsterId != 0
                     || initialTarget.CombatTargetToHit != 0
                     || initialTarget.CombatTargetMinDamage != 0
@@ -332,6 +339,8 @@ public static class ReplayFixtureLoader
                 value,
                 "combat_target_monster_level"),
             CombatTargetNativeAi = OptionalString(value, "combat_target_native_ai") ?? string.Empty,
+            CombatTargetMonsterItemSeed = GetOptionalUInt(value, "combat_target_monster_item_seed"),
+            CombatTargetMonsterAiSeed = GetOptionalUInt(value, "combat_target_monster_ai_seed"),
             CombatTargetMonsterId = GetOptionalUInt(value, "combat_target_monster_id"),
             CombatTargetToHit = GetOptionalInt(value, "combat_target_to_hit"),
             CombatTargetMinDamage = GetOptionalInt(value, "combat_target_min_damage"),

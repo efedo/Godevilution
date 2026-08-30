@@ -232,6 +232,12 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native AI identity used by autonomous monster replay fixtures. */
     public string CombatTargetNativeAi { get; init; } = string.Empty;
 
+    /** Optional native multiplayer item seed paired with the monster AI seed. */
+    public uint CombatTargetMonsterItemSeed { get; init; }
+
+    /** Optional native multiplayer AI stream seed for the autonomous monster. */
+    public uint CombatTargetMonsterAiSeed { get; init; }
+
     public uint CombatTargetMonsterId { get; init; }
 
     public int CombatTargetToHit { get; init; }

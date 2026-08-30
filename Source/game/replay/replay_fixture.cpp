@@ -492,6 +492,11 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-direction-v1");
 			hasher.AppendInt32(state.combatTargetDirection);
 		}
+		if (state.combatTargetMonsterAiSeed != 0) {
+			hasher.AppendString("godevilution-monster-runtime-seeds-v1");
+			hasher.AppendUint32(state.combatTargetMonsterItemSeed);
+			hasher.AppendUint32(state.combatTargetMonsterAiSeed);
+		}
 		if (state.combatTargetStoneCurseImmune) {
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
@@ -4657,6 +4662,37 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
+	if (state.combatTargetMonsterAiSeed != 0 && state.combatTargetToHit > 0) {
+		const int32_t targetLevel = victim.secondary
+		    ? static_cast<int32_t>(state.secondaryPlayerCharacterLevel)
+		    : static_cast<int32_t>(state.characterLevel);
+		const int32_t hitChance = std::clamp(
+		    std::max(
+		        15,
+		        state.combatTargetToHit
+		            + 2 * (state.combatTargetMonsterLevel - targetLevel)
+		            + 30),
+		    0,
+		    100);
+		if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
+			return;
+		const bool canBlock = victim.secondary
+		    && state.secondaryPlayerBlockCapable
+		    && (state.secondaryPlayerCombatMode == 0
+		        || state.secondaryPlayerCombatMode == 4);
+		const int32_t blockChance = std::clamp(
+		    (victim.secondary ? state.secondaryPlayerDexterity : 0)
+		        + 2 * targetLevel
+		        - 2 * state.combatTargetMonsterLevel,
+		    0,
+		    100);
+		const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
+		if (canBlock && blockRoll < blockChance) {
+			state.secondaryPlayerCombatMode = 6;
+			state.secondaryPlayerCombatModeEndTick = tick + 4;
+			return;
+		}
+	}
 	if (victim.secondary) {
 		const int32_t damage = state.combatTargetAttackDamage == 0
 		    ? 0
@@ -5402,6 +5438,10 @@ void AdvanceReplayStateToTick(
 {
 	for (uint64_t simulationTick = state.lastAppliedTick + 1; simulationTick <= tick; ++simulationTick) {
 		AdvanceReplayPlayerAction(state, simulationTick);
+		if (state.multiplayer && state.combatTargetMonsterAiSeed != 0) {
+			state.randomState = state.combatTargetMonsterAiSeed;
+			state.combatTargetMonsterAiSeed = AdvanceRandomItemSeed(state);
+		}
 		AdvanceReplayMonsterAttack(
 		    state,
 		    fixture.playerActionTiming,
@@ -5775,6 +5815,10 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetAggroRange);
 			if (key == "combat_target_native_ai")
 				return ParseString(fixture_.initialState.combatTargetNativeAi);
+			if (key == "combat_target_monster_item_seed")
+				return ParseUnsigned(fixture_.initialState.combatTargetMonsterItemSeed);
+			if (key == "combat_target_monster_ai_seed")
+				return ParseUnsigned(fixture_.initialState.combatTargetMonsterAiSeed);
 			if (key == "combat_target_monster_id")
 				return ParseUnsigned(fixture_.initialState.combatTargetMonsterId);
 			if (key == "combat_target_to_hit")
@@ -6574,6 +6618,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		return false;
 	}
 	auto &target = fixture.initialState;
+	if ((target.combatTargetMonsterItemSeed == 0) != (target.combatTargetMonsterAiSeed == 0)) {
+		error = "Replay fixture monster runtime seeds must be supplied together.";
+		return false;
+	}
 	if (target.combatTargetMaxHitPoints == 0 && target.combatTargetHitPoints > 0)
 		target.combatTargetMaxHitPoints = target.combatTargetHitPoints;
 	if (!target.combatTargetMoving
@@ -6590,8 +6638,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	            || target.combatTargetArmorClass != 0
 			|| target.combatTargetAttackDamage != 0
 			|| target.combatTargetAggroRange != 0
-			|| !target.combatTargetNativeAi.empty()
-			|| target.combatTargetMonsterId != 0
+		    || !target.combatTargetNativeAi.empty()
+		    || target.combatTargetMonsterItemSeed != 0
+		    || target.combatTargetMonsterAiSeed != 0
+		    || target.combatTargetMonsterId != 0
 			|| target.combatTargetToHit != 0
 			|| target.combatTargetMinDamage != 0
 			|| target.combatTargetMaxDamage != 0
@@ -6951,6 +7001,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
 		state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 		state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+		state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
+		state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 		state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 		state.combatTargetToHit = fixture.initialState.combatTargetToHit;
 		state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;

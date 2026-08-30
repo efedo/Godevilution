@@ -36,6 +36,12 @@ primary remains untouched. The same native crawl now has the managed bounded
 breadth-first fallback, preserving participant and active-object occupancy when
 direct approach tiles are blocked.
 
+Replay fixtures now carry paired native monster item/AI runtime seeds. The
+multiplayer AI stream advances once per authoritative multiplayer tick, and
+generic secondary melee consumes that stream for hit and block rolls. The
+cross-language native-AI-seed fixture verifies the resulting block mode,
+timing, seed advancement, and canonical checkpoint hash.
+
 Multiplayer replay coverage now also routes an explicit stable-reference drop
 from a secondary participant. The new fixture validates secondary inventory
 source removal, adjacent world-item projection, and a shared canonical

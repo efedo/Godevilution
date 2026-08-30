@@ -83,6 +83,12 @@ petrification. It may also declare armor class, attack damage, and aggro range
 for autonomous combat. Both runners reject inconsistent occupancy or negative
 combat data, complete and begin movement on the same tick boundaries, and apply
 the native rule that only a petrified walker is hittable at its future tile.
+Native monster runtime seeds may be supplied as the paired
+`combat_target_monster_item_seed` and `combat_target_monster_ai_seed` fields.
+The multiplayer AI seed advances from the monster-owned stream at each
+authoritative tick; generic melee then uses that stream for hit and block rolls.
+The secondary-player native-AI-seed fixture verifies seed advancement, block
+mode timing, and the canonical hash in both runners.
 `initial_state.secondary_player` may declare a second stable participant for
 multiplayer collision fixtures, including identity, entity ID, Q6 life,
 position, level, and character level. The runners initialize it before the
@@ -182,7 +188,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 102 checked-in JSON fixtures and 134 registered
+the native replay gate contains 103 checked-in JSON fixtures and 135 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -591,6 +597,9 @@ Notable shared fixtures include:
   movement around a dead primary participant and alternate first-step parity;
 - `gameplay-multiplayer-secondary-monster-object-pathing.json` for preserving
   active world-object occupancy while selecting the same fallback first step;
+- `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
+  native monster runtime-seed advancement, secondary hit/block stream
+  consumption, block timing, and cross-language canonical hashing;
 - `gameplay-player-level-transition.json` for immediate portal destination and
   the one-tick NewLevel action barrier;
 - `gameplay-player-restart-town.json` for terminal-death admission,

@@ -26,6 +26,10 @@ All notable changes to this fork are documented below.
   Native replay now preserves both participants and active blocking objects as
   occupancy blockers and selects the same alternate first step when direct
   approach tiles are blocked.
+- Carry paired native monster runtime seeds through replay fixtures. The
+  multiplayer AI seed now advances on the authoritative tick boundary, and
+  generic secondary-player melee matches native hit/block stream consumption,
+  block timing, and canonical state hashing.
 
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind
