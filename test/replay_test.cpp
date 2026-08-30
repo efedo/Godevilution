@@ -2582,6 +2582,57 @@ TEST(ReplayFixture, RejectsPrimaryHeldItemPickupOnOccupiedTile)
 	EXPECT_EQ(state.worldItemEntityId, fixture.initialState.worldItemEntityId);
 }
 
+TEST(ReplayFixture, ExecutesPrimaryHeldItemPickupReplacement)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-primary-held-item-pickup-replacement.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.inventoryGrid.assign(40, -1);
+	state.worldItemEntityId = fixture.initialState.worldItemEntityId;
+	state.worldItemLevelId = fixture.initialState.levelId;
+	state.worldItemPositionX = fixture.initialState.positionX;
+	state.worldItemPositionY = fixture.initialState.positionY + 1;
+	state.worldItemSeed = fixture.initialState.worldItemSeed;
+	state.worldItemPrice = fixture.initialState.worldItemPrice;
+	state.worldItemState.itemType = 1;
+	state.worldItemState.itemIndex = 1;
+	state.worldItemState.stableItemId = 9920;
+	state.worldItemState.statFlag = true;
+	state.heldItemDefined = true;
+	state.heldItem.itemSeed = 9010;
+	state.heldItem.price = 25;
+	state.heldItem.state.itemType = 1;
+	state.heldItem.state.itemIndex = 1;
+	state.heldItem.state.stableItemId = 9921;
+	state.heldItem.state.statFlag = true;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
+	EXPECT_FALSE(state.heldItemDefined);
+	EXPECT_TRUE(state.inventory.size() == 1U);
+	EXPECT_EQ(state.inventory[0].itemSeed, fixture.initialState.worldItemSeed);
+	EXPECT_EQ(state.inventory[0].state.stableItemId, 9920U);
+	ASSERT_EQ(state.worldItems.size(), 1U);
+	EXPECT_EQ(state.worldItems[0].entityId, 0x40000000U);
+	EXPECT_EQ(state.worldItems[0].itemSeed, 9010U);
+	EXPECT_EQ(state.worldItems[0].state.stableItemId, 9921U);
+	EXPECT_EQ(state.worldItems[0].positionX, fixture.initialState.positionX);
+	EXPECT_EQ(state.worldItems[0].positionY, fixture.initialState.positionY);
+}
+
 TEST(ReplayFixture, ExecutesObjectQuestTransitions)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-object-quest.json");

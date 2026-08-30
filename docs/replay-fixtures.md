@@ -176,7 +176,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 95 checked-in JSON fixtures and 124 registered
+the native replay gate contains 96 checked-in JSON fixtures and 126 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -323,6 +323,10 @@ rejected as `Malformed` without mutating participant or world state.
 `gameplay-primary-held-item-pickup-rejection.json` starts with a cursor item and
 a world item on the same tile. Both runners reject the pickup as `NotAllowed`,
 record the rejected transition, and preserve both item states.
+
+`gameplay-primary-held-item-pickup-replacement.json` starts with a cursor item
+and an adjacent world item. Both runners drop the cursor item at the pickup
+origin, place the world item in inventory, and preserve the same checkpoint.
 
 `gameplay-player-level-transition.json` uses a portal on tick 1. Both runners
 apply level 2 and its destination immediately, expose an already-applied
@@ -533,6 +537,8 @@ Notable shared fixtures include:
   rejection and secondary state preservation;
 - `gameplay-primary-held-item-pickup-rejection.json` for occupied-tile cursor
   rejection and transition bookkeeping;
+- `gameplay-primary-held-item-pickup-replacement.json` for atomic cursor
+  replacement, origin drop, and inventory placement;
 - `gameplay-stable-item-drop-retry.json` for accepted-then-rejected stale
   stable-reference retry ordering and `InvalidTarget` rejection reason;
 - `gameplay-stable-belt-drop-invalid-target.json` for `NotAllowed` rejection

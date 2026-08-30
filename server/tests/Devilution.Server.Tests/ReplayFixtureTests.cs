@@ -1203,6 +1203,75 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayPrimaryHeldItemPickupReplacesCursorAtPickupOrigin()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-primary-held-item-pickup-replacement.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var worldItemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9920,
+            StatFlag = true,
+        };
+        var heldItem = new OwnedStoreItem(
+            0,
+            0,
+            9010,
+            25,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemIndex = 1,
+                StableItemId = 9921,
+                StatFlag = true,
+            });
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingHeldItem: heldItem,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                fixture.InitialState.WorldItemEntityId,
+                fixture.InitialState.LevelId,
+                fixture.InitialState.PositionX,
+                fixture.InitialState.PositionY + 1,
+                fixture.InitialState.WorldItemSeed,
+                fixture.InitialState.WorldItemPrice,
+                worldItemState)],
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var worldItem = Assert.Single(result.FinalSnapshot.WorldItems);
+        var inventoryItem = Assert.Single(player.Inventory);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Null(player.HeldItem);
+        Assert.Equal(fixture.InitialState.WorldItemSeed, inventoryItem.ItemSeed);
+        Assert.Equal(9920U, inventoryItem.State.StableItemId);
+        Assert.Equal(1U, inventoryItem.PurchasedAtTick);
+        Assert.Equal(0x40000000U, worldItem.EntityId);
+        Assert.Equal(9010U, worldItem.ItemSeed);
+        Assert.Equal(9921U, worldItem.State.StableItemId);
+        Assert.Equal(fixture.InitialState.PositionX, worldItem.PositionX);
+        Assert.Equal(fixture.InitialState.PositionY, worldItem.PositionY);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
     public void GameplayStableItemDropFixtureUsesStableInventoryIdentity()
     {
         var result = ExecuteStableInventoryDropFixture("gameplay-stable-item-drop.json");

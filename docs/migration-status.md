@@ -113,6 +113,10 @@ Primary cursor pickup now has an explicit occupied-tile rejection lane. Native
 and managed runners record `NotAllowed` consistently and preserve both the held
 cursor item and the world item.
 
+The complementary accepted cursor-replacement lane now also has a shared
+checkpoint. Both runners drop the held item at the pickup origin and place the
+adjacent world item in inventory with matching entity and identity state.
+
 Hellfire Lachdanan's opening and Golden Elixir hand-in now use paired authored
 unique-monster dialogue stages. The server selects the item-present or
 item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,

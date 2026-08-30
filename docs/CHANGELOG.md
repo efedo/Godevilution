@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Add cross-language coverage for a primary cursor pickup attempted on the
   player's occupied tile. Native and managed runners now record the
   `NotAllowed` rejection while preserving the held and world items.
+- Add cross-language coverage for accepted primary cursor replacement pickup.
+  Both runners now verify atomic origin drop, inventory placement, and the
+  shared checkpoint hash.
 
 - Keep authoritative store presentation out of the legacy Lua event bus. The
   native `StoreOpened` callback remains available in compatibility mode behind
