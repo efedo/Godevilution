@@ -1938,6 +1938,45 @@ TEST(ReplayFixture, ExecutesFireWallControllerAndSegmentLifecycle)
 	}));
 }
 
+TEST(ReplayFixture, ExecutesLightningWallControllerAndSegmentLifecycle)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-lightning-wall-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.abilitySpellId = fixture.initialState.abilitySpellId;
+	state.spellProjectileBehavior = 47;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 8U);
+	EXPECT_FALSE(state.projectiles.empty());
+	EXPECT_EQ(
+		std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+			return projectile.behavior == 47;
+		}),
+		0);
+	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 23 && projectile.damageType == 2;
+	}));
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritPvpAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-pvp.json");

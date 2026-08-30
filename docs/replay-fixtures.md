@@ -66,6 +66,11 @@ and persistent wall geometry. The controller expires after seven simulation
 ticks while emitting deterministic center and two-branch segments; segment
 damage and lifetime retain the native character/spell-level scaling and are
 included in canonical projectile hashing.
+
+`gameplay-lightning-wall-resolution.json` covers the same controller geometry
+for Lightning Wall, including its distinct lightning damage scale and long
+persistent-segment lifetime. Segments retain the shared behavior identity but
+project as Lightning Wall visuals from their damage channel.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
@@ -728,6 +733,11 @@ Notable shared fixtures include:
   complete participant state, Q6 damage, and projectile-lifetime parity;
 - `gameplay-fireball-hellfire-block.json` for Hellfire shield-block retention,
   variant RNG, impact splash, and projectile-lifetime parity;
+- `gameplay-fire-wall-resolution.json` for seven-tick controller expiry,
+  deterministic two-branch growth, scaled persistent segment state, and
+  canonical projectile parity;
+- `gameplay-lightning-wall-resolution.json` for shared wall geometry with
+  lightning-specific damage, duration, presentation, and canonical parity;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;

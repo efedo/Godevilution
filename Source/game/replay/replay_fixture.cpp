@@ -46,6 +46,7 @@ constexpr int32_t InfernoControllerBehavior = 26;
 constexpr int32_t InfernoSegmentBehavior = 27;
 constexpr int32_t FireWallControllerBehavior = 22;
 constexpr int32_t FireWallSegmentBehavior = 23;
+constexpr int32_t LightningWallControllerBehavior = 47;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
@@ -3422,7 +3423,9 @@ int32_t RotateReplayDirection(int32_t direction, int32_t offset)
 void CreateReplayFireWallController(
 	ReplayFixtureExecutionState &state,
 	const ReplayFixtureCommand &command,
-	int32_t spellLevel)
+	int32_t spellLevel,
+	uint32_t spellId,
+	int32_t behavior)
 {
 	const int32_t direction = GetDirection(
 		state.positionX,
@@ -3434,15 +3437,15 @@ void CreateReplayFireWallController(
 	for (const auto &projectile : state.projectiles)
 		controller.entityId = std::max(controller.entityId, projectile.entityId + 1U);
 	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
-	controller.spellId = 6;
+	controller.spellId = spellId;
 	controller.levelId = state.levelId;
 	controller.positionX = command.targetX;
 	controller.positionY = command.targetY;
 	controller.targetX = command.targetX;
 	controller.targetY = command.targetY;
-	controller.damageType = 1;
+	controller.damageType = behavior == LightningWallControllerBehavior ? 2 : 1;
 	controller.remainingTicks = 7;
-	controller.behavior = FireWallControllerBehavior;
+	controller.behavior = behavior;
 	controller.startX = state.positionX;
 	controller.startY = state.positionY;
 	controller.originalDirection = direction;
@@ -3462,7 +3465,8 @@ ReplayFixtureProjectileState CreateReplayFireWallSegment(
 	const ReplayFixtureProjectileState &controller,
 	int32_t positionX,
 	int32_t positionY,
-	int32_t wallHitDirection)
+	int32_t wallHitDirection,
+	bool lightningWall)
 {
 	ReplayFixtureProjectileState segment;
 	segment.entityId = 0x80000000U;
@@ -3477,12 +3481,14 @@ ReplayFixtureProjectileState CreateReplayFireWallSegment(
 	segment.targetY = positionY;
 	segment.damage = (GenerateRnd(state, 10) + GenerateRnd(state, 10) + 2
 		+ static_cast<int32_t>(state.characterLevel))
-		* 8;
-	segment.damageType = 1;
+		* (lightningWall ? 16 : 8);
+	segment.damageType = lightningWall ? 2 : 1;
 	segment.remainingTicks = static_cast<uint32_t>(
-		(10 + controller.effectiveSpellLevel * 10
-			+ static_cast<int32_t>(state.characterLevel))
-		* 16);
+		(lightningWall
+			? 255 + controller.effectiveSpellLevel * 255
+			: 10 + controller.effectiveSpellLevel * 10
+				+ static_cast<int32_t>(state.characterLevel))
+		* (lightningWall ? 1 : 16));
 	segment.behavior = FireWallSegmentBehavior;
 	segment.startX = positionX;
 	segment.startY = positionY;
@@ -3524,7 +3530,8 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state)
 	}
 	for (size_t index = 0; index < state.projectiles.size(); ++index) {
 		auto &projectile = state.projectiles[index];
-		if (projectile.behavior != FireWallControllerBehavior)
+		if (projectile.behavior != FireWallControllerBehavior
+			&& projectile.behavior != LightningWallControllerBehavior)
 			continue;
 		if (projectile.remainingTicks > 0)
 			--projectile.remainingTicks;
@@ -3533,9 +3540,10 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state)
 			return;
 		}
 		std::vector<ReplayFixtureProjectileState> created;
+		const bool lightningWall = projectile.behavior == LightningWallControllerBehavior;
 		const auto place = [&](int32_t x, int32_t y, int32_t hitDirection) {
 			if (ReplayWallPositionIsValid(state, x, y))
-				created.push_back(CreateReplayFireWallSegment(state, projectile, x, y, hitDirection));
+				created.push_back(CreateReplayFireWallSegment(state, projectile, x, y, hitDirection, lightningWall));
 		};
 		const auto grow = [&](int32_t &x, int32_t &y, int32_t direction, bool &stopped) {
 			const int32_t rightDirection = RotateReplayDirection(direction, 1);
@@ -3883,7 +3891,40 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
-			CreateReplayFireWallController(state, command, spellLevel);
+			CreateReplayFireWallController(
+				state,
+				command,
+				spellLevel,
+				6,
+				FireWallControllerBehavior);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 50
+	    && state.spellProjectileBehavior == LightningWallControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			18,
+			35 - std::max(spellLevel - 1, 0) * 3)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			CreateReplayFireWallController(
+				state,
+				command,
+				spellLevel,
+				50,
+				LightningWallControllerBehavior);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}

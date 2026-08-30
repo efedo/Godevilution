@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend shared wall replay coverage to Lightning Wall. Native and managed
+  runners now preserve the shared controller geometry with lightning-specific
+  segment damage, duration, presentation identity, and canonical checkpoints.
+
 - Add shared Fire Wall replay coverage. Native and managed runners now preserve
   the seven-tick controller, deterministic two-branch segment growth, scaled
   segment damage/lifetime, and canonical projectile checkpoints.

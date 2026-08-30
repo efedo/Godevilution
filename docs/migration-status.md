@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers player Lightning Wall casts. Native and
+managed runners reuse the Fire Wall geometry controller while preserving the
+native lightning damage, duration, and presentation identity.
+
 The shared replay contract now covers player Fire Wall casts. Native and
 managed runners preserve the seven-tick wall controller, deterministic branch
 growth, scaled persistent segment state, and canonical checkpoints.
