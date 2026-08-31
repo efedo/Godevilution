@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   active/cooldown timing, duplicate-cast suppression, and the bounded Q6
   self-damage applied when the Rage controller expires.
 
+- Add shared Inferno replay coverage. Native and managed runners now preserve
+  the moving controller, deterministic three-segment emission, and persistent
+  segment lifetimes.
+
 - Add shared Elemental replay coverage. Native and managed runners now
   preserve the retargeting projectile lifecycle, deterministic fire burst
   timing, and canonical projectile checkpoints.

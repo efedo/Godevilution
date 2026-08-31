@@ -1078,6 +1078,77 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void InfernoFixtureMatchesNativeControllerAndPersistentSegments()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-inferno-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(21, 11, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 32,
+                ProjectileLifetime = 256,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.InfernoController,
+                RandomDamageRange = 2,
+                DamageBonus = 24,
+                DamageScale = 12,
+                SecondaryProjectileLifetime = 20,
+                ResistantDamageDivisor = 1,
+                ProjectileImpactLifetime = 1,
+                ManaAdjustment = 1,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 6,
+                ManaCostScale = 64,
+                StaffLevel = 2,
+                InfernoSegmentLifetimeStep = 1,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingWorld: world,
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6UL, result.FinalSnapshot.Tick);
+        var projectiles = result.FinalSnapshot.Projectiles;
+        Assert.Equal(3, projectiles.Count);
+        Assert.DoesNotContain(
+            projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.InfernoController);
+        Assert.All(
+            projectiles,
+            projectile => {
+                Assert.Equal((int)AuthoritativeProjectileBehavior.InfernoSegment, projectile.Behavior);
+                Assert.True(projectile.Damage > 0);
+            });
+        Assert.Equal([15U, 18U, 20U], projectiles.Select(projectile => projectile.RemainingTicks));
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

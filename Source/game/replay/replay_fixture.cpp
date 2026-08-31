@@ -25,6 +25,7 @@ void AdmitReplayAutonomousMegaInferno(
     ReplayFixtureExecutionState &state,
     uint64_t tick);
 void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state);
+void AdvanceReplayPlayerInfernoOneTick(ReplayFixtureExecutionState &state);
 
 namespace {
 
@@ -1085,6 +1086,21 @@ int32_t GetReplayFireballManaCost(
 		wholeCost -= wholeCost / 4;
 	}
 	return std::max(wholeCost, 10) * 64;
+}
+
+int32_t GetReplayInfernoManaCost(
+	const ReplayFixtureExecutionState &state,
+	int32_t spellLevel)
+{
+	int32_t wholeCost = std::max(11 - std::max(spellLevel - 1, 0), 0);
+	if (state.hellfire && state.characterClassId == 2) {
+		wholeCost /= 2;
+	} else if (state.characterClassId == 1
+	    || state.characterClassId == 3
+	    || state.characterClassId == 4) {
+		wholeCost -= wholeCost / 4;
+	}
+	return std::max(wholeCost, 6) * 64;
 }
 
 int32_t GetReplayBoneSpiritManaCost(
@@ -3764,6 +3780,53 @@ ReplayFixtureProjectileState CreateReplayElemental(
 	return projectile;
 }
 
+ReplayFixtureProjectileState CreateReplayInfernoController(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command,
+	int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		controller.entityId = std::max(controller.entityId, existing.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 21;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = command.targetX;
+	controller.targetY = command.targetY;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.originalDirection = GetDirection(
+		state.positionX,
+		state.positionY,
+		command.targetX,
+		command.targetY);
+	int32_t velocityTargetX = command.targetX;
+	int32_t velocityTargetY = command.targetY;
+	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+		velocityTargetX += DirectionDisplacements[controller.originalDirection].first;
+		velocityTargetY += DirectionDisplacements[controller.originalDirection].second;
+	}
+	const auto velocity = CalculateVelocity(
+		state.positionX,
+		state.positionY,
+		velocityTargetX,
+		velocityTargetY,
+		32);
+	controller.velocityX = velocity.first;
+	controller.velocityY = velocity.second;
+	controller.speed = 32;
+	controller.damageType = 1;
+	controller.remainingTicks = 256;
+	controller.behavior = InfernoControllerBehavior;
+	controller.impactLifetime = 1;
+	controller.resistantDamageDivisor = 1;
+	controller.effectiveSpellLevel = spellLevel;
+	return controller;
+}
+
 ReplayFixtureProjectileState CreateReplayGuardianController(
     const ReplayFixtureExecutionState &state,
     const ReplayFixtureCommand &command,
@@ -5099,6 +5162,26 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 				return projectile.behavior == RageControllerBehavior;
 			})) {
 			state.projectiles.push_back(CreateReplayRageController(state, spellLevel));
+		}
+		return true;
+	}
+	if (command.spellId == 21
+	    && state.spellProjectileBehavior == InfernoControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = GetReplayInfernoManaCost(state, spellLevel);
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.projectiles.push_back(CreateReplayInfernoController(state, command, spellLevel));
+			if (!isAbility)
+				state.mana -= manaCost;
 		}
 		return true;
 	}
@@ -8239,6 +8322,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
+		AdvanceReplayPlayerInfernoOneTick(state);
 		AdvanceReplayInfernoOneTick(state);
 		AdvanceReplayRingOfFireOneTick(state);
 		AdvanceReplayFlameWaveOneTick(state);
@@ -9803,12 +9887,86 @@ void AdmitReplayAutonomousMegaInferno(
 	state.combatTargetMegaDelayTicks = resolveMegaDelay();
 }
 
+/** Advances the player Inferno controller and its three persistent segments. */
+void AdvanceReplayPlayerInfernoOneTick(ReplayFixtureExecutionState &state)
+{
+	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &projectile = state.projectiles[index];
+		if (projectile.behavior == InfernoSegmentBehavior
+		    && projectile.sourceEntityId == playerEntityId) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks == 0) {
+				state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+				--index;
+			}
+			continue;
+		}
+		if (projectile.behavior != InfernoControllerBehavior
+		    || projectile.sourceEntityId != playerEntityId)
+			continue;
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.remainingTicks == 0) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			--index;
+			continue;
+		}
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		if (visitedTiles.empty())
+			continue;
+		const auto &tile = visitedTiles.back();
+		projectile.positionX = tile.x;
+		projectile.positionY = tile.y;
+		projectile.traveledX = tile.traveledX;
+		projectile.traveledY = tile.traveledY;
+		if (projectile.positionX < 0 || projectile.positionX >= 40
+		    || projectile.positionY < 0 || projectile.positionY >= 40
+		    || !ReplayWallPositionIsValid(state, projectile.positionX, projectile.positionY)) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			--index;
+			continue;
+		}
+		ReplayFixtureProjectileState segment;
+		segment.entityId = projectile.entityId + 1U;
+		for (const auto &candidate : state.projectiles)
+			segment.entityId = std::max(segment.entityId, candidate.entityId + 1U);
+		segment.sourceEntityId = projectile.sourceEntityId;
+		segment.spellId = projectile.spellId;
+		segment.levelId = projectile.levelId;
+		segment.positionX = projectile.positionX;
+		segment.positionY = projectile.positionY;
+		segment.startX = segment.positionX;
+		segment.startY = segment.positionY;
+		segment.targetX = segment.positionX;
+		segment.targetY = segment.positionY;
+		const int32_t characterLevelDamage = GenerateRnd(
+			state,
+			std::max(1, static_cast<int32_t>(state.characterLevel)));
+		const int32_t randomDamage = GenerateRnd(state, 2);
+		segment.damage = (characterLevelDamage + randomDamage) * 12 + 24;
+		segment.damageType = projectile.damageType;
+		segment.remainingTicks = 20 + static_cast<uint32_t>(projectile.pathIndex);
+		segment.behavior = InfernoSegmentBehavior;
+		segment.impactLifetime = 1;
+		segment.resistantDamageDivisor = projectile.resistantDamageDivisor;
+		state.projectiles.push_back(std::move(segment));
+		++state.projectiles[index].pathIndex;
+		if (state.projectiles[index].pathIndex >= 3) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			--index;
+		}
+	}
+}
+
 /** Advances Mega's three-step Inferno controller and its persistent segments. */
 void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state)
 {
 	for (size_t index = 0; index < state.projectiles.size(); ++index) {
 		auto &projectile = state.projectiles[index];
-		if (projectile.behavior == InfernoSegmentBehavior) {
+		if (projectile.behavior == InfernoSegmentBehavior
+		    && projectile.sourceEntityId != (state.entityId == 0 ? 1U : state.entityId)) {
 			if (projectile.remainingTicks > 0)
 				--projectile.remainingTicks;
 			if (projectile.remainingTicks == 0) {
@@ -9817,7 +9975,8 @@ void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state)
 			}
 			continue;
 		}
-		if (projectile.behavior != InfernoControllerBehavior)
+		if (projectile.behavior != InfernoControllerBehavior
+		    || projectile.sourceEntityId == (state.entityId == 0 ? 1U : state.entityId))
 			continue;
 		if (projectile.remainingTicks > 0)
 			--projectile.remainingTicks;

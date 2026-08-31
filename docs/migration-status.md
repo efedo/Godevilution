@@ -14,6 +14,10 @@ The shared replay contract now covers the Hellfire Rage controller. Native
 and managed runners preserve active/cooldown timing, duplicate-cast
 suppression, and the bounded Q6 self-damage on expiry.
 
+The shared replay contract now covers player Inferno casts. Native and managed
+runners preserve the moving controller, deterministic three-segment emission,
+and persistent segment lifetimes.
+
 The shared replay contract now covers player Elemental casts. Native and
 managed runners preserve the retargeting projectile lifecycle, fire-burst
 timing, and canonical checkpoints.
