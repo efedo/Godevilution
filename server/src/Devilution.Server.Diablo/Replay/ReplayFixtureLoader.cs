@@ -65,9 +65,14 @@ public static class ReplayFixtureLoader
             || (fixture.InitialState.ObjectEntityId == 0
                 && (fixture.InitialState.ObjectMissilePassable
                     || fixture.InitialState.ObjectBreakable
-                    || fixture.InitialState.ObjectDestroyed))) {
+                    || fixture.InitialState.ObjectDestroyed
+                    || fixture.InitialState.ObjectEffectKind != 0
+                    || fixture.InitialState.ObjectEffectAmount != 0))
+            || fixture.InitialState.ObjectEffectKind is < (int)AuthoritativeObjectEffectKind.None
+                or > (int)AuthoritativeObjectEffectKind.Experience
+            || fixture.InitialState.ObjectEffectAmount < 0) {
             throw new InvalidDataException(
-                "Replay fixture contains invalid object missile-collision state.");
+                "Replay fixture contains invalid object state.");
         }
         if (fixture.InitialState.WarpId == 0
             && (fixture.InitialState.WarpSourceLevelId != 0
@@ -355,6 +360,8 @@ public static class ReplayFixtureLoader
             ObjectId = value.TryGetProperty("object_id", out var objectId) ? objectId.GetUInt32() : 0,
             ObjectPositionX = value.TryGetProperty("object_position_x", out var objectPositionX) ? objectPositionX.GetInt32() : 0,
             ObjectPositionY = value.TryGetProperty("object_position_y", out var objectPositionY) ? objectPositionY.GetInt32() : 0,
+            ObjectEffectKind = GetOptionalInt(value, "object_effect_kind"),
+            ObjectEffectAmount = GetOptionalInt(value, "object_effect_amount"),
             ObjectMissilePassable = GetOptionalBool(value, "object_missile_passable"),
             ObjectBreakable = GetOptionalBool(value, "object_breakable"),
             ObjectDestroyed = GetOptionalBool(value, "object_destroyed"),

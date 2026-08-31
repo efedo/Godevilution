@@ -24,6 +24,8 @@
     "object_id": 1,
     "object_position_x": 1,
     "object_position_y": 0,
+    "object_effect_kind": 3,
+    "object_effect_amount": 25,
     "memorized_spells": [
       { "spell_id": 33, "level": 2 }
     ]
@@ -43,6 +45,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "ea23a0d2f96268df5e0e41d5b2ef4f608eb5b0724ea2632469209daf7ff20ef5" }
+    { "tick": 1, "state_sha256": "222878f3bf3ea74cd312019f5f96c155901b7b2a0fd419c897de628cc25d0d50" }
   ]
 }

@@ -2916,6 +2916,8 @@ TEST(ReplayFixture, ExecutesTelekinesisObjectAgainstCSharpCheckpoint)
 	state.objectLevelId = fixture.initialState.levelId;
 	state.objectPositionX = fixture.initialState.objectPositionX;
 	state.objectPositionY = fixture.initialState.objectPositionY;
+	state.objectEffectKind = fixture.initialState.objectEffectKind;
+	state.objectEffectAmount = fixture.initialState.objectEffectAmount;
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
@@ -2924,6 +2926,7 @@ TEST(ReplayFixture, ExecutesTelekinesisObjectAgainstCSharpCheckpoint)
 	EXPECT_EQ(state.lastAppliedTick, 1U);
 	EXPECT_EQ(state.mana, 1168);
 	EXPECT_TRUE(state.objectActivated);
+	EXPECT_EQ(state.experience, 25U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 

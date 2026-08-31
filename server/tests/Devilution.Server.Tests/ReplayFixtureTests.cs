@@ -3391,7 +3391,9 @@ public sealed class ReplayFixtureTests
                 initial.ObjectId,
                 initial.LevelId,
                 initial.ObjectPositionX,
-                initial.ObjectPositionY)],
+                initial.ObjectPositionY,
+                effectKind: (AuthoritativeObjectEffectKind)initial.ObjectEffectKind,
+                effectAmount: initial.ObjectEffectAmount)],
             startingSpells: new AuthoritativeSpellCatalog([spell]),
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
@@ -3405,6 +3407,7 @@ public sealed class ReplayFixtureTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.True(Assert.Single(result.FinalSnapshot.Objects).Activated);
+        Assert.Equal(25U, Assert.Single(result.FinalSnapshot.Players).Experience);
         Assert.Equal(1168, Assert.Single(result.FinalSnapshot.Players).Mana);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),

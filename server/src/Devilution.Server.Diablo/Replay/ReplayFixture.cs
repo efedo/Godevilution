@@ -213,6 +213,11 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int ObjectPositionY { get; init; }
 
+    /** Optional authored object effect carried by replay initial state. */
+    public int ObjectEffectKind { get; init; }
+
+    public int ObjectEffectAmount { get; init; }
+
     public bool ObjectMissilePassable { get; init; }
 
     public bool ObjectBreakable { get; init; }

@@ -186,6 +186,8 @@ struct ReplayFixtureInitialState {
 	uint32_t objectId = 0;
 	int32_t objectPositionX = 0;
 	int32_t objectPositionY = 0;
+	int32_t objectEffectKind = 0;
+	int32_t objectEffectAmount = 0;
 	bool objectMissilePassable = false;
 	bool objectBreakable = false;
 	bool objectDestroyed = false;

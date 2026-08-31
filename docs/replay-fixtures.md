@@ -117,9 +117,9 @@ inventory first-fit placement, purchased-tick state, mana consumption, and the
 canonical item hash across native and managed runners.
 
 `gameplay-telekinesis-object.json` covers a memorized cast against an authored
-world object, preserving exact target coordinates, object activation, mana
-consumption, and canonical object state hashing across native and managed
-runners.
+world object, preserving exact target coordinates, object activation, an
+authored experience effect, mana consumption, and canonical player/object state
+hashing across native and managed runners.
 
 `gameplay-telekinesis-monster-knockback.json` covers a memorized cast against a
 living combat target, preserving exact target coordinates, one-cell knockback,

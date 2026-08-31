@@ -5083,6 +5083,24 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			state.objectActivated = true;
+			switch (state.objectEffectKind) {
+			case 1:
+				state.life = std::min(
+				    state.lifeMaximum,
+				    state.life + std::max(0, state.objectEffectAmount));
+				break;
+			case 2:
+				state.life = std::max(
+				    0,
+				    state.life - std::max(0, state.objectEffectAmount));
+				break;
+			case 3:
+				state.experience += static_cast<uint32_t>(
+				    std::max(0, state.objectEffectAmount));
+				break;
+			default:
+				break;
+			}
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -9374,6 +9392,10 @@ private:
 				return ParseSigned(fixture_.initialState.objectPositionX);
 			if (key == "object_position_y")
 				return ParseSigned(fixture_.initialState.objectPositionY);
+			if (key == "object_effect_kind")
+				return ParseSigned(fixture_.initialState.objectEffectKind);
+			if (key == "object_effect_amount")
+				return ParseSigned(fixture_.initialState.objectEffectAmount);
 			if (key == "object_missile_passable")
 				return ParseBool(fixture_.initialState.objectMissilePassable);
 			if (key == "object_breakable")
@@ -10230,8 +10252,13 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	    || (fixture.initialState.objectEntityId == 0
 	        && (fixture.initialState.objectMissilePassable
 	            || fixture.initialState.objectBreakable
-	            || fixture.initialState.objectDestroyed))) {
-		error = "Replay fixture contains invalid object missile-collision state.";
+	            || fixture.initialState.objectDestroyed
+	            || fixture.initialState.objectEffectKind != 0
+	            || fixture.initialState.objectEffectAmount != 0))
+	    || fixture.initialState.objectEffectKind < 0
+	    || fixture.initialState.objectEffectKind > 3
+	    || fixture.initialState.objectEffectAmount < 0) {
+		error = "Replay fixture contains invalid object state.";
 		return false;
 	}
 	if ((fixture.initialState.goldStackSeed == 0 && fixture.initialState.goldStackCell != 0)
@@ -10995,6 +11022,18 @@ bool ExecuteReplayFixture(
 			});
 			*emptyCell = static_cast<int32_t>(inventoryIndex);
 		}
+	}
+	if (state.objectEntityId == 0 && fixture.initialState.objectEntityId != 0) {
+		state.objectEntityId = fixture.initialState.objectEntityId;
+		state.objectId = fixture.initialState.objectId;
+		state.objectLevelId = fixture.initialState.levelId;
+		state.objectPositionX = fixture.initialState.objectPositionX;
+		state.objectPositionY = fixture.initialState.objectPositionY;
+		state.objectEffectKind = fixture.initialState.objectEffectKind;
+		state.objectEffectAmount = fixture.initialState.objectEffectAmount;
+		state.objectMissilePassable = fixture.initialState.objectMissilePassable;
+		state.objectBreakable = fixture.initialState.objectBreakable;
+		state.objectDestroyed = fixture.initialState.objectDestroyed;
 	}
 	if (state.combatTargetEntityId == 0 && fixture.initialState.combatTargetEntityId != 0) {
 		state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
