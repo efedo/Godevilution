@@ -488,7 +488,7 @@ while malformed paired metadata fails closed at the transport boundaries.
 
 The multiplayer death-suppression replay checkpoint now matches the canonical
 snapshot hash produced after the accumulated additive snapshot fields; the
-complete replay fixture class validates all 78 cases, including a secondary
+complete replay fixture class validates all 79 cases, including a secondary
 participant portal transition and visited-level projection.
 
 The engine-neutral entity pool now initializes sparse free-lists before any

@@ -54,6 +54,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-moving-occupancy.json" Link="Fixtures/gameplay-charged-bolt-moving-occupancy.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-firebolt-resolution.json" Link="Fixtures/gameplay-firebolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-holy-bolt-resolution.json" Link="Fixtures/gameplay-holy-bolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-holy-bolt-living-target.json" Link="Fixtures/gameplay-holy-bolt-living-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fireball-resolution.json" Link="Fixtures/gameplay-fireball-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-lightning-resolution.json" Link="Fixtures/gameplay-lightning-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-wall-resolution.json" Link="Fixtures/gameplay-fire-wall-resolution.json" CopyToOutputDirectory="PreserveNewest" />
