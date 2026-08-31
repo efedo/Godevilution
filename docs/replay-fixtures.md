@@ -269,7 +269,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 152 checked-in JSON fixtures and 170 registered
+the native replay gate contains 153 checked-in JSON fixtures and 171 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -669,6 +669,11 @@ bounded Firebolt dispatch lane. Tick 0 proves deterministic dispatch RNG,
 nested Firebolt projectile creation, one-time mana consumption, and canonical
 projectile-state parity between the native and managed runners.
 
+`gameplay-town-portal-resolution.json` uses a learned Town Portal spell from a
+dungeon level. Tick 0 proves dynamic portal endpoints, ownership, bidirectional
+lifetime state, exact mana consumption, and canonical portal-state parity
+between the native and managed runners.
+
 `gameplay-stone-curse-resolution.json` uses learned Stone Curse level 3 and a
 walking monster whose future tile is reached through the native radius crawl.
 Ticks 0, 1, 2, 144, 145, and 146 prove a source-preserving no-target fizzle,
@@ -877,6 +882,9 @@ Notable shared fixtures include:
 - `gameplay-jester-firebolt-resolution.json` for deterministic dispatch RNG,
   nested Firebolt projectile creation, one-time mana consumption, and canonical
   projectile state hashing;
+- `gameplay-town-portal-resolution.json` for dynamic portal endpoints,
+  ownership, bidirectional lifetime state, mana consumption, and canonical
+  portal state hashing;
 - `gameplay-pvp-ear-death.json` for requested and persisted character names,
   lethal Charged Bolt PvP damage, equipment retention, native ear identity and
   cursor presentation, zero-extra-RNG placement, and complete C++/C# dynamic

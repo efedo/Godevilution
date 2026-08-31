@@ -1,0 +1,45 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/town-portal-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "town-portal-resolution-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "mana": 4000,
+    "mana_maximum": 4000,
+    "life": 1000,
+    "life_maximum": 1000,
+    "position_x": 2,
+    "position_y": 2,
+    "character_level": 2,
+    "level_id": 1,
+    "memorized_spells": [{ "spell_id": 39, "level": 2 }],
+    "spell_projectile_behavior": 7
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 0,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "expected_status": "Accepted",
+      "payload": {
+        "spell_id": 39,
+        "target_x": 4,
+        "target_y": 2
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 0, "state_sha256": "62325681ecdc77938f0d2062080dc11255de76c527b89a2fafcaf1197764777b" }
+  ]
+}

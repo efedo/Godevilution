@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Town Portal replay coverage. Native and managed runners now
+  preserve dynamic portal endpoints, ownership, bidirectional lifetime state,
+  mana consumption, and canonical portal hashing.
+
 - Add shared Jester replay coverage. Native and managed runners now preserve
   deterministic dispatch RNG, nested Firebolt projectile creation, one-time
   mana consumption, and canonical projectile state hashing.

@@ -2,6 +2,10 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers player Town Portal casts. Native and
+managed runners preserve dynamic portal endpoints, ownership, bidirectional
+lifetime state, mana consumption, and canonical portal hashing.
+
 The shared replay contract now covers the Jester dispatch lane. Native and
 managed runners preserve deterministic dispatch RNG, nested Firebolt projectile
 creation, one-time mana consumption, and canonical projectile state hashing.

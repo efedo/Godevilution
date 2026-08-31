@@ -3225,6 +3225,68 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void TownPortalFixtureMatchesNativeDynamicPortalState()
+    {
+        var fixture = LoadReplayFixture("gameplay-town-portal-resolution.json");
+        var initial = fixture.InitialState;
+        var spell = new AuthoritativeSpellDefinition(39, 35, 0, 0, 0, 0) {
+            NativeSpellId = 7,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.TownPortal,
+            ManaAdjustment = 3,
+            MinimumManaCost = 18,
+            ManaCostScale = 64,
+            StaffLevel = 3,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 80, 80));
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 80, 80));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingWorld: world,
+            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var portal = Assert.Single(result.FinalSnapshot.Portals);
+        Assert.Equal(1952, player.Mana);
+        Assert.Equal(0x20000000U, portal.PortalId);
+        Assert.Equal(initial.LevelId, portal.SourceLevelId);
+        Assert.Equal(4, portal.SourcePositionX);
+        Assert.Equal(2, portal.SourcePositionY);
+        Assert.Equal(0U, portal.DestinationLevelId);
+        Assert.Equal(57, portal.DestinationPositionX);
+        Assert.Equal(40, portal.DestinationPositionY);
+        Assert.Equal(100U, portal.RemainingTicks);
+        Assert.Equal(1U, portal.OwnerEntityId);
+        Assert.True(portal.Bidirectional);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

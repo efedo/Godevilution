@@ -889,6 +889,24 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		}
 	}
 
+	if (state.portalId != 0
+	    && (state.portalRemainingTicks != 0
+	        || state.portalOwnerEntityId != 0
+	        || state.portalBidirectional)) {
+		hasher.AppendString("godevilution-portals-v1");
+		hasher.AppendUint64(1);
+		hasher.AppendUint32(state.portalId);
+		hasher.AppendUint32(state.portalSourceLevelId);
+		hasher.AppendInt32(state.portalSourceX);
+		hasher.AppendInt32(state.portalSourceY);
+		hasher.AppendUint32(state.portalDestinationLevelId);
+		hasher.AppendInt32(state.portalDestinationX);
+		hasher.AppendInt32(state.portalDestinationY);
+		hasher.AppendUint32(state.portalRemainingTicks);
+		hasher.AppendUint32(state.portalOwnerEntityId);
+		hasher.AppendBool(state.portalBidirectional);
+	}
+
 	hasher.AppendBool(state.activeStoreId != 0);
 	if (state.activeStoreId != 0) {
 		hasher.AppendUint32(state.activeStoreId);
@@ -5187,6 +5205,39 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			if (GenerateRnd(state, 10) > 1)
 				return false;
 			CreateFirebolt(state, command, spellLevel);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 39
+	    && state.spellProjectileBehavior == 7
+	    && (isAbility || isMemorized)
+	    && state.levelId != 0
+	    && command.targetX >= 0
+	    && command.targetX < 80
+	    && command.targetY >= 0
+	    && command.targetY < 80) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+		    18,
+		    35 - std::max(spellLevel - 1, 0) * 3)
+		    * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.portalId = 0x20000000U;
+			state.portalSourceLevelId = state.levelId;
+			state.portalSourceX = command.targetX;
+			state.portalSourceY = command.targetY;
+			state.portalDestinationLevelId = 0;
+			state.portalDestinationX = 57;
+			state.portalDestinationY = 40;
+			state.portalRemainingTicks = 100;
+			state.portalOwnerEntityId = state.entityId;
+			state.portalBidirectional = true;
 			if (!isAbility)
 				state.mana -= manaCost;
 		}

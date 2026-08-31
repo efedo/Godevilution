@@ -668,9 +668,15 @@ struct ReplayFixtureExecutionState {
 	int32_t spellStatusMagnitude = 0;
 	uint64_t lastAppliedTick = 0;
 	uint32_t portalId = 0;
+	uint32_t portalSourceLevelId = 0;
+	int32_t portalSourceX = 0;
+	int32_t portalSourceY = 0;
 	uint32_t portalDestinationLevelId = 0;
 	int32_t portalDestinationX = 0;
 	int32_t portalDestinationY = 0;
+	uint32_t portalRemainingTicks = 0;
+	uint32_t portalOwnerEntityId = 0;
+	bool portalBidirectional = false;
 };
 
 struct ReplayFixtureTransitionResult {
