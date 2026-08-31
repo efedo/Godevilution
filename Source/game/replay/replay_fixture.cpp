@@ -5064,6 +5064,68 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		}
 		return true;
 	}
+	if (command.spellId == 33
+	    && state.spellProjectileBehavior == TelekinesisBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetEntityId == state.objectEntityId
+	    && state.objectEntityId != 0
+	    && state.objectId != 0
+	    && !state.objectActivated
+	    && !state.objectDestroyed
+	    && state.levelId == state.objectLevelId
+	    && command.targetX == state.objectPositionX
+	    && command.targetY == state.objectPositionY) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(8, 15 - std::max(spellLevel - 1, 0) * 2) * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.objectActivated = true;
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 33
+	    && state.spellProjectileBehavior == TelekinesisBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetEntityId == state.combatTargetEntityId
+	    && state.combatTargetEntityId != 0
+	    && state.combatTargetHitPointsQ6 > 0
+	    && state.levelId == state.combatTargetLevelId
+	    && command.targetX == state.combatTargetPositionX
+	    && command.targetY == state.combatTargetPositionY) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(8, 15 - std::max(spellLevel - 1, 0) * 2) * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		const int32_t directionX = std::clamp(
+		    state.combatTargetPositionX - state.positionX,
+		    -1,
+		    1);
+		const int32_t directionY = std::clamp(
+		    state.combatTargetPositionY - state.positionY,
+		    -1,
+		    1);
+		const int32_t destinationX = state.combatTargetPositionX + directionX;
+		const int32_t destinationY = state.combatTargetPositionY + directionY;
+		if (destinationX < 0 || destinationX >= 40 || destinationY < 0 || destinationY >= 40)
+			return false;
+		if (applyEffects) {
+			state.combatTargetPositionX = destinationX;
+			state.combatTargetPositionY = destinationY;
+			state.combatTargetFuturePositionX = destinationX;
+			state.combatTargetFuturePositionY = destinationY;
+			state.combatTargetMoving = false;
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
 	if (command.spellId == 11
 	    && state.spellProjectileBehavior == 12
 	    && (isAbility || isMemorized)

@@ -116,6 +116,16 @@ targets a server-owned world item, preserving exact target coordinates,
 inventory first-fit placement, purchased-tick state, mana consumption, and the
 canonical item hash across native and managed runners.
 
+`gameplay-telekinesis-object.json` covers a memorized cast against an authored
+world object, preserving exact target coordinates, object activation, mana
+consumption, and canonical object state hashing across native and managed
+runners.
+
+`gameplay-telekinesis-monster-knockback.json` covers a memorized cast against a
+living combat target, preserving exact target coordinates, one-cell knockback,
+movement state, mana consumption, and canonical monster state hashing across
+native and managed runners.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.

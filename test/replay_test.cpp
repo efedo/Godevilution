@@ -2890,6 +2890,77 @@ TEST(ReplayFixture, ExecutesTelekinesisWorldItemAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesTelekinesisObjectAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-telekinesis-object.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 44;
+	state.objectEntityId = fixture.initialState.objectEntityId;
+	state.objectId = fixture.initialState.objectId;
+	state.objectLevelId = fixture.initialState.levelId;
+	state.objectPositionX = fixture.initialState.objectPositionX;
+	state.objectPositionY = fixture.initialState.objectPositionY;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.mana, 1168);
+	EXPECT_TRUE(state.objectActivated);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesTelekinesisMonsterKnockbackAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-telekinesis-monster-knockback.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 44;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.mana, 1168);
+	EXPECT_EQ(std::pair(state.combatTargetPositionX, state.combatTargetPositionY), std::pair(2, 0));
+	EXPECT_FALSE(state.combatTargetMoving);
+	EXPECT_EQ(std::pair(state.combatTargetFuturePositionX, state.combatTargetFuturePositionY), std::pair(2, 0));
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesCounselorRetreatAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-counselor-retreat.json");

@@ -3356,6 +3356,122 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void TelekinesisObjectFixtureMatchesNativeActivationAndManaCost()
+    {
+        var fixture = LoadReplayFixture("gameplay-telekinesis-object.json");
+        var initial = fixture.InitialState;
+        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+            NativeSpellId = 33,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.Life,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingWorld: world,
+            startingObjects: [new AuthoritativeWorldObject(
+                initial.ObjectEntityId,
+                initial.ObjectId,
+                initial.LevelId,
+                initial.ObjectPositionX,
+                initial.ObjectPositionY)],
+            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.True(Assert.Single(result.FinalSnapshot.Objects).Activated);
+        Assert.Equal(1168, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void TelekinesisMonsterFixtureMatchesNativeKnockbackAndManaCost()
+    {
+        var fixture = LoadReplayFixture("gameplay-telekinesis-monster-knockback.json");
+        var initial = fixture.InitialState;
+        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+            NativeSpellId = 33,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+        };
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            futurePositionX: initial.CombatTargetFuturePositionX,
+            futurePositionY: initial.CombatTargetFuturePositionY);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.Life,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal((2, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(1168, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void CounselorDelayFixtureMatchesNativeState()
     {
         var fixture = LoadReplayFixture("gameplay-counselor-delay.json");

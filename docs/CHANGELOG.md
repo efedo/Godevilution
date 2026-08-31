@@ -5,8 +5,9 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Add shared Telekinesis replay coverage. Native and managed runners now
-  preserve server-owned world-item pickup, inventory placement, memorized-spell
-  admission, mana consumption, and canonical item hashing.
+  preserve server-owned world-item pickup, object activation, monster knockback,
+  target validation, memorized-spell admission, mana consumption, and canonical
+  state hashing.
 
 - Add shared Counselor AI replay coverage. Native and managed runners now
   preserve server-owned adjacent decision delay, wounded retreat movement, and
