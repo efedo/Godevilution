@@ -1470,6 +1470,82 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void BerserkFixtureMatchesNativeDamageMutationAndRecastRejection()
+    {
+        var fixture = LoadReplayFixture("gameplay-berserk-resolution.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            minDamageSpecial: initial.CombatTargetMinDamageSpecial,
+            maxDamageSpecial: initial.CombatTargetMaxDamageSpecial,
+            magicResistance: initial.CombatTargetMagicResistance);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(48, 40, 0, 0, 0, 0) {
+                NativeSpellId = 44,
+                Range = 5,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Berserk,
+                ManaCostScale = 64,
+                BerserkSearchRadius = 5,
+                BerserkDamagePercentBase = 120,
+                BerserkDamagePercentRandomRange = 10,
+                BerserkSpellLevelBonus = 1,
+            },
+        ]);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(
+            [CommandStatus.Accepted, CommandStatus.Rejected],
+            result.Results.Select(command => command.Status));
+        Assert.Equal(
+            [CommandRejectReason.InvalidTarget],
+            result.Results.Where(command => command.Status == CommandStatus.Rejected)
+                .Select(command => command.RejectReason));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.True(monster.IsBerserked);
+        Assert.Equal(14, monster.MinDamage);
+        Assert.Equal(26, monster.MaxDamage);
+        Assert.Equal(39, monster.MinDamageSpecial);
+        Assert.Equal(52, monster.MaxDamageSpecial);
+        Assert.Equal(26, monster.AttackDamage);
+        Assert.Equal(2440, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

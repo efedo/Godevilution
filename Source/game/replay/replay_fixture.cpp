@@ -68,6 +68,7 @@ constexpr int32_t MagiBehavior = 38;
 constexpr int32_t ReflectBehavior = 39;
 constexpr int32_t EtherealizeBehavior = 49;
 constexpr int32_t EtherealizeStatusBehavior = 3;
+constexpr int32_t BerserkBehavior = 44;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
@@ -558,17 +559,30 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		        && state.combatTargetAttackDamage != 0
 		    ? state.combatTargetAttackDamage
 		    : state.combatTargetMaxDamage;
-		if (targetMinDamage != state.combatTargetAttackDamage
-		    || targetMaxDamage != state.combatTargetAttackDamage) {
+		const int32_t targetMinDamageSpecial = state.combatTargetMinDamageSpecial == 0
+		        && state.combatTargetMaxDamageSpecial == 0
+		        && state.combatTargetAttackDamage != 0
+		    ? state.combatTargetAttackDamage
+		    : state.combatTargetMinDamageSpecial;
+		const int32_t targetMaxDamageSpecial = state.combatTargetMinDamageSpecial == 0
+		        && state.combatTargetMaxDamageSpecial == 0
+		        && state.combatTargetAttackDamage != 0
+		    ? state.combatTargetAttackDamage
+		    : state.combatTargetMaxDamageSpecial;
+		if (state.combatTargetBerserked
+		    || targetMinDamage != state.combatTargetAttackDamage
+		    || targetMaxDamage != state.combatTargetAttackDamage
+		    || targetMinDamageSpecial != state.combatTargetAttackDamage
+		    || targetMaxDamageSpecial != state.combatTargetAttackDamage) {
 			hasher.AppendString("godevilution-monster-berserk-v1");
 			hasher.AppendBool(false);
 			hasher.AppendBool(false);
 			hasher.AppendBool(false);
 			hasher.AppendInt32(targetMinDamage);
 			hasher.AppendInt32(targetMaxDamage);
-			hasher.AppendInt32(targetMinDamage);
-			hasher.AppendInt32(targetMaxDamage);
-			hasher.AppendBool(false);
+			hasher.AppendInt32(targetMinDamageSpecial);
+			hasher.AppendInt32(targetMaxDamageSpecial);
+			hasher.AppendBool(state.combatTargetBerserked);
 		}
 		if (state.combatTargetToHit != 0 || state.combatTargetToHitSpecial != 0) {
 			hasher.AppendString("godevilution-monster-accuracy-v1");
@@ -1511,6 +1525,19 @@ int32_t GetReplayPhasingManaCost(
 		wholeCost -= wholeCost / 4;
 	}
 	return std::max(wholeCost, 4) * 64;
+}
+
+int32_t GetReplayBerserkManaCost(const ReplayFixtureExecutionState &state)
+{
+	int32_t wholeCost = 40;
+	if (state.hellfire && state.characterClassId == 2) {
+		wholeCost /= 2;
+	} else if (state.characterClassId == 1
+	    || state.characterClassId == 3
+	    || state.characterClassId == 4) {
+		wholeCost -= wholeCost / 4;
+	}
+	return std::max(wholeCost, 0) * 64;
 }
 
 int32_t GetReplayResurrectionManaCost()
@@ -4990,6 +5017,47 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			state.statusEffects.push_back({ 53, std::numeric_limits<uint32_t>::max(), 0, EtherealizeStatusBehavior });
 			if (!isAbility)
 				state.mana -= 100 * 64;
+		}
+		return true;
+	}
+	if (command.spellId == 48
+	    && state.spellProjectileBehavior == BerserkBehavior
+	    && (isAbility || isMemorized)) {
+		const bool explicitTarget = command.targetEntityId != 0;
+		const bool targetMatches = explicitTarget
+		    ? command.targetEntityId == state.combatTargetEntityId
+		    : command.targetX == state.combatTargetPositionX
+		        && command.targetY == state.combatTargetPositionY;
+		const int distance = std::max(
+		    std::abs(state.positionX - state.combatTargetPositionX),
+		    std::abs(state.positionY - state.combatTargetPositionY));
+		if (!targetMatches
+		    || state.combatTargetHitPointsQ6 <= 0
+		    || state.combatTargetBerserked
+		    || state.combatTargetPetrified
+		    || distance > 5)
+			return false;
+		if (!isAbility && state.mana < GetReplayBerserkManaCost(state))
+			return false;
+		if (state.combatTargetMagicResistance >= 100
+		    || (state.combatTargetMagicResistance > 0
+	        && GenerateRnd(state, 2) != 0))
+			return true;
+		if (applyEffects) {
+			const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			    state,
+			    isMemorized ? &*memorizedSpell : nullptr);
+			auto scaleDamage = [&](const int32_t damage) {
+				return (120 + GenerateRnd(state, 10)) * damage / 100 + spellLevel;
+			};
+			state.combatTargetMinDamage = scaleDamage(state.combatTargetMinDamage);
+			state.combatTargetMaxDamage = scaleDamage(state.combatTargetMaxDamage);
+			state.combatTargetMinDamageSpecial = scaleDamage(state.combatTargetMinDamageSpecial);
+			state.combatTargetMaxDamageSpecial = scaleDamage(state.combatTargetMaxDamageSpecial);
+			state.combatTargetAttackDamage = state.combatTargetMaxDamage;
+			state.combatTargetBerserked = true;
+			if (!isAbility)
+				state.mana -= GetReplayBerserkManaCost(state);
 		}
 		return true;
 	}
@@ -8933,6 +9001,12 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetMinDamage);
 			if (key == "combat_target_max_damage")
 				return ParseSigned(fixture_.initialState.combatTargetMaxDamage);
+			if (key == "combat_target_min_damage_special")
+				return ParseSigned(fixture_.initialState.combatTargetMinDamageSpecial);
+			if (key == "combat_target_max_damage_special")
+				return ParseSigned(fixture_.initialState.combatTargetMaxDamageSpecial);
+			if (key == "combat_target_berserked")
+				return ParseBool(fixture_.initialState.combatTargetBerserked);
 			if (key == "combat_target_intelligence")
 				return ParseSigned(fixture_.initialState.combatTargetIntelligence);
 			if (key == "combat_target_gargoyle_special_active")
@@ -10510,6 +10584,13 @@ bool ExecuteReplayFixture(
 		state.combatTargetToHitSpecial = fixture.initialState.combatTargetToHitSpecial;
 		state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 		state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+		state.combatTargetMinDamageSpecial = fixture.initialState.combatTargetMinDamageSpecial == 0
+		    ? state.combatTargetMinDamage
+		    : fixture.initialState.combatTargetMinDamageSpecial;
+		state.combatTargetMaxDamageSpecial = fixture.initialState.combatTargetMaxDamageSpecial == 0
+		    ? state.combatTargetMaxDamage
+		    : fixture.initialState.combatTargetMaxDamageSpecial;
+		state.combatTargetBerserked = fixture.initialState.combatTargetBerserked;
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;

@@ -252,6 +252,10 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetMaxDamage { get; init; }
 
+    public int CombatTargetMinDamageSpecial { get; init; }
+
+    public int CombatTargetMaxDamageSpecial { get; init; }
+
     public int CombatTargetIntelligence { get; init; }
 
     /** Optional native Gargoyle special lock retained after self-healing. */

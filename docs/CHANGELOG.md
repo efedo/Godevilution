@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Berserk replay coverage. Native and managed runners now preserve
+  eligible-target admission, native four-channel damage scaling, and recast
+  rejection with canonical monster state hashing.
+
 - Add shared Etherealize replay coverage. Native and managed runners now
   preserve permanent status hashing and monster-damage immunity across ticks.
 

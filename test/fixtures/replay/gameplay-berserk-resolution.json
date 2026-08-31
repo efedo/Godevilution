@@ -1,0 +1,70 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/berserk-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "berserk-resolution-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1000,
+    "life_maximum": 1000,
+    "mana": 5000,
+    "mana_maximum": 5000,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "character_level": 4,
+    "memorized_spells": [{ "spell_id": 48, "level": 2 }],
+    "spell_projectile_behavior": 44,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 12,
+    "combat_target_position_y": 10,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_min_damage": 10,
+    "combat_target_max_damage": 20,
+    "combat_target_min_damage_special": 30,
+    "combat_target_max_damage_special": 40
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "expected_status": "Accepted",
+      "payload": {
+        "spell_id": 48,
+        "target_entity_id": 9,
+        "target_x": 12,
+        "target_y": 10
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "kind": "Cast",
+      "expected_status": "Rejected",
+      "payload": {
+        "spell_id": 48,
+        "target_entity_id": 9,
+        "target_x": 12,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "025986911d1df6a024a31aef6ab63faaedd78d095d9b862932015b68b3b146e6" },
+    { "tick": 2, "state_sha256": "025986911d1df6a024a31aef6ab63faaedd78d095d9b862932015b68b3b146e6" }
+  ]
+}

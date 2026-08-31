@@ -2,6 +2,10 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers player Berserk casts. Native and managed
+runners preserve eligible-target admission, native four-channel damage scaling,
+recast rejection, and canonical berserked-monster state across ticks.
+
 The shared replay contract now covers player Etherealize casts. Native and
 managed runners preserve the permanent status, canonical status hashing, and
 monster-damage immunity across authoritative ticks.

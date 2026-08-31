@@ -269,7 +269,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 148 checked-in JSON fixtures and 166 registered
+the native replay gate contains 149 checked-in JSON fixtures and 167 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -647,6 +647,12 @@ adjacent monster. Ticks 0 and 1 prove immediate permanent status admission,
 typed status hashing, and blocked autonomous monster damage while the status
 remains active. Both runners validate both checkpoints.
 
+`gameplay-berserk-resolution.json` uses a learned Berserk spell against an
+eligible monster with four independent damage channels. Ticks 1 and 2 prove
+native damage scaling, attack-damage replacement, canonical berserked-monster
+hashing, and rejection of a duplicate cast. Both runners validate both
+checkpoints.
+
 `gameplay-stone-curse-resolution.json` uses learned Stone Curse level 3 and a
 walking monster whose future tile is reached through the native radius crawl.
 Ticks 0, 1, 2, 144, 145, and 146 prove a source-preserving no-target fizzle,
@@ -847,6 +853,8 @@ Notable shared fixtures include:
   monster damage, reduced incoming damage, and gameplay RNG parity;
 - `gameplay-etherealize-resolution.json` for permanent status admission,
   typed status hashing, and autonomous monster-damage immunity;
+- `gameplay-berserk-resolution.json` for eligible-target admission, four-channel
+  damage scaling, recast rejection, and canonical monster state hashing;
 - `gameplay-pvp-ear-death.json` for requested and persisted character names,
   lethal Charged Bolt PvP damage, equipment retention, native ear identity and
   cursor presentation, zero-extra-RNG placement, and complete C++/C# dynamic

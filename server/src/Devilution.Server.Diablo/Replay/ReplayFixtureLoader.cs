@@ -91,6 +91,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetToHitSpecial != 0
                     || initialTarget.CombatTargetMinDamage != 0
                     || initialTarget.CombatTargetMaxDamage != 0
+                    || initialTarget.CombatTargetMinDamageSpecial != 0
+                    || initialTarget.CombatTargetMaxDamageSpecial != 0
                     || initialTarget.CombatTargetIntelligence != 0
                     || initialTarget.CombatTargetGargoyleSpecialActive
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
@@ -126,6 +128,8 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetToHitSpecial is < 0 or > 255
             || initialTarget.CombatTargetMinDamage < 0
             || initialTarget.CombatTargetMaxDamage < initialTarget.CombatTargetMinDamage
+            || initialTarget.CombatTargetMinDamageSpecial < 0
+            || initialTarget.CombatTargetMaxDamageSpecial < initialTarget.CombatTargetMinDamageSpecial
             || initialTarget.CombatTargetIntelligence is < 0 or > 255
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
@@ -375,6 +379,8 @@ public static class ReplayFixtureLoader
             CombatTargetToHitSpecial = GetOptionalInt(value, "combat_target_to_hit_special"),
             CombatTargetMinDamage = GetOptionalInt(value, "combat_target_min_damage"),
             CombatTargetMaxDamage = GetOptionalInt(value, "combat_target_max_damage"),
+            CombatTargetMinDamageSpecial = GetOptionalInt(value, "combat_target_min_damage_special"),
+            CombatTargetMaxDamageSpecial = GetOptionalInt(value, "combat_target_max_damage_special"),
             CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
             CombatTargetGargoyleSpecialActive = GetOptionalBool(
                 value,
