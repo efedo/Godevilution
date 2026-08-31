@@ -837,6 +837,69 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ElementalFixtureMatchesNativeRetargetingProjectileLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-elemental-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(31, 40, 0, 0, 0, 0) {
+                Range = 1,
+                AreaRadius = 1,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Elemental,
+                RandomDamageRange = 10,
+                MagicDamageDivisor = 2,
+                DamageAmount = 4,
+                RandomDamageIterationsBonus = 2,
+                SpellEffectScaleDivisor = 8,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 14,
+                ElementalRetargetLifetime = 255,
+                ElementalCharacterLevelDamageMultiplier = 2,
+            },
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingManaMaximum: fixture.InitialState.ManaMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingWorld: world,
+            startingSpells: spells,
+            startingCharacterClassId: checked((uint)fixture.InitialState.CharacterClass),
+            startingAbilitySpellId: fixture.InitialState.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.Elemental, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeDamageType.Fire, projectile.DamageType);
+        Assert.Equal(255U, projectile.RemainingTicks);
+        Assert.Equal(16, projectile.Speed);
+        Assert.Equal(14, projectile.ImpactLifetime);
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

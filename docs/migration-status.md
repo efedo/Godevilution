@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers player Elemental casts. Native and
+managed runners preserve the retargeting projectile lifecycle, fire-burst
+timing, and canonical checkpoints.
+
 The shared replay contract now covers player Immolation casts. Native and
 managed runners preserve the one-tick controller, deterministic radial fan
 ordering, Fireball movement, and canonical checkpoints.

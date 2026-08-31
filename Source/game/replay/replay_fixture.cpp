@@ -54,6 +54,7 @@ constexpr int32_t ChainLightningBoltBehavior = 29;
 constexpr int32_t ChainLightningMaximumRadius = 18;
 constexpr int32_t RingOfFireControllerBehavior = 42;
 constexpr int32_t ImmolationControllerBehavior = 43;
+constexpr int32_t ElementalBehavior = 35;
 constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t HorkSpawnBehavior = 57;
@@ -3694,6 +3695,63 @@ ReplayFixtureProjectileState CreateReplayImmolationBall(
 	return ball;
 }
 
+ReplayFixtureProjectileState CreateReplayElemental(
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
+{
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		projectile.entityId = std::max(projectile.entityId, existing.entityId + 1U);
+	projectile.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	projectile.spellId = command.spellId;
+	projectile.levelId = state.levelId;
+	projectile.positionX = state.positionX;
+	projectile.positionY = state.positionY;
+	projectile.targetX = command.targetX;
+	projectile.targetY = command.targetY;
+	projectile.areaRadius = 1;
+	projectile.startX = state.positionX;
+	projectile.startY = state.positionY;
+	int32_t damage = 0;
+	for (int32_t iteration = 0; iteration < 2; ++iteration)
+		damage += GenerateRnd(state, 10);
+	damage = 2 * (static_cast<int32_t>(state.characterLevel) + damage) + 4;
+	for (int32_t level = 0; level < spellLevel; ++level)
+		damage += damage / 8;
+	projectile.damage = damage / 2;
+	projectile.damageType = 1;
+	projectile.remainingTicks = 256;
+	projectile.behavior = ElementalBehavior;
+	projectile.impactLifetime = 14;
+	projectile.resistantDamageDivisor = 4;
+	projectile.effectiveSpellLevel = spellLevel;
+	projectile.originalDirection = GetDirection(
+		state.positionX,
+		state.positionY,
+		command.targetX,
+		command.targetY);
+	int32_t velocityTargetX = command.targetX;
+	int32_t velocityTargetY = command.targetY;
+	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+		velocityTargetX += DirectionDisplacements[projectile.originalDirection].first;
+		velocityTargetY += DirectionDisplacements[projectile.originalDirection].second;
+	}
+	const auto velocity = CalculateVelocity(
+		state.positionX,
+		state.positionY,
+		velocityTargetX,
+		velocityTargetY,
+		16);
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.speed = 16;
+	projectile.elementalOriginX = velocityTargetX;
+	projectile.elementalOriginY = velocityTargetY;
+	return projectile;
+}
+
 ReplayFixtureProjectileState CreateReplayChainLightningController(
 	ReplayFixtureExecutionState &state,
 	const ReplayFixtureCommand &command,
@@ -4161,6 +4219,174 @@ void AdvanceReplayImmolationOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+/** Advances the native Elemental projectile through retargeting and burst impact. */
+void AdvanceReplayElementalOneTick(
+    ReplayFixtureExecutionState &state)
+{
+	constexpr std::pair<int32_t, int32_t> BurstOffsets[] = {
+		{ 0, 0 },
+		{ -1, 1 },
+		{ 1, -1 },
+		{ 1, 1 },
+		{ 1, 0 },
+		{ 0, 1 },
+		{ -1, -1 },
+		{ -1, 0 },
+		{ 0, -1 },
+	};
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != ElementalBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.remainingTicks > 0)
+			--projectile.remainingTicks;
+		if (projectile.phase == 1) {
+			const int32_t startX = projectile.pathIndex == 1
+			    ? projectile.elementalOriginX
+			    : projectile.startX;
+			const int32_t startY = projectile.pathIndex == 1
+			    ? projectile.elementalOriginY
+			    : projectile.startY;
+			for (const auto offset : BurstOffsets) {
+				const int32_t targetX = projectile.positionX + offset.first;
+				const int32_t targetY = projectile.positionY + offset.second;
+				if (targetX < 0 || targetX >= 40 || targetY < 0 || targetY >= 40
+				    || state.combatTargetEntityId == 0
+				    || state.combatTargetHitPointsQ6 <= 0
+				    || state.combatTargetLevelId != projectile.levelId
+				    || state.combatTargetPositionX != targetX
+				    || state.combatTargetPositionY != targetY
+				    || state.combatTargetFireResistance >= 100)
+					continue;
+				const int32_t hitChance = std::clamp(
+					state.attributes[3]
+					    + GetReplayBaseMagicToHit(state.characterClassId)
+					    - state.combatTargetMonsterLevel * 2,
+					5,
+					95);
+				if (!state.combatTargetPetrified
+				    && std::max(GenerateRnd(state, 100), 0) >= hitChance)
+					continue;
+				static_cast<void>(GenerateRnd(state, 1));
+				int32_t damageQ6 = projectile.damage;
+				if (state.combatTargetFireResistance > 0)
+					damageQ6 /= projectile.resistantDamageDivisor;
+				state.combatTargetHitPointsQ6 = std::max(
+					0,
+					state.combatTargetHitPointsQ6 - damageQ6);
+				state.combatTargetHitPoints = ToWholeCeilingQ6(
+					state.combatTargetHitPointsQ6);
+				if (state.combatTargetHitPointsQ6 == 0)
+					DefeatReplayCombatTarget(state);
+			}
+			if (projectile.remainingTicks == 0)
+				iterator = state.projectiles.erase(iterator);
+			else
+				++iterator;
+			continue;
+		}
+
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		bool impacted = false;
+		const auto resolveCollision = [&](int32_t x, int32_t y) {
+			if (state.combatTargetEntityId == 0
+			    || state.combatTargetHitPointsQ6 <= 0
+			    || state.combatTargetLevelId != projectile.levelId
+			    || state.combatTargetPositionX != x
+			    || state.combatTargetPositionY != y
+			    || state.combatTargetFireResistance >= 100)
+				return false;
+			const int32_t hitChance = std::clamp(
+				state.attributes[3]
+				    + GetReplayBaseMagicToHit(state.characterClassId)
+				    - state.combatTargetMonsterLevel * 2,
+				5,
+				95);
+			if (!state.combatTargetPetrified
+			    && std::max(GenerateRnd(state, 100), 0) >= hitChance)
+				return false;
+			static_cast<void>(GenerateRnd(state, 1));
+			int32_t damageQ6 = projectile.damage * 64;
+			if (state.combatTargetFireResistance > 0)
+				damageQ6 /= projectile.resistantDamageDivisor;
+			state.combatTargetHitPointsQ6 = std::max(
+				0,
+				state.combatTargetHitPointsQ6 - damageQ6);
+			state.combatTargetHitPoints = ToWholeCeilingQ6(
+				state.combatTargetHitPointsQ6);
+			if (state.combatTargetHitPointsQ6 == 0)
+			DefeatReplayCombatTarget(state);
+			return true;
+		};
+		if (visitedTiles.empty()) {
+			impacted = resolveCollision(projectile.positionX, projectile.positionY);
+		} else {
+			for (const auto &tile : visitedTiles) {
+				projectile.positionX = tile.x;
+				projectile.positionY = tile.y;
+				projectile.traveledX = tile.traveledX;
+				projectile.traveledY = tile.traveledY;
+				if (resolveCollision(tile.x, tile.y)) {
+					impacted = true;
+					break;
+				}
+			}
+		}
+		if (impacted) {
+			EnterReplayProjectileImpact(projectile);
+			++iterator;
+			continue;
+		}
+		if (projectile.pathIndex == 0
+		    && projectile.positionX == projectile.targetX
+		    && projectile.positionY == projectile.targetY) {
+			projectile.pathIndex = 1;
+			projectile.remainingTicks = 255;
+			int32_t targetX = projectile.positionX;
+			int32_t targetY = projectile.positionY;
+			if (state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && state.combatTargetLevelId == projectile.levelId
+			    && std::max(
+				       std::abs(state.combatTargetPositionX - projectile.positionX),
+				       std::abs(state.combatTargetPositionY - projectile.positionY)) <= 19) {
+				targetX = state.combatTargetPositionX;
+				targetY = state.combatTargetPositionY;
+			} else {
+				targetX += DirectionDisplacements[state.facingDirection % 8].first;
+				targetY += DirectionDisplacements[state.facingDirection % 8].second;
+			}
+			const int32_t direction = GetDirection(
+				projectile.positionX,
+				projectile.positionY,
+				targetX,
+				targetY);
+			if (targetX == projectile.positionX && targetY == projectile.positionY) {
+				targetX += DirectionDisplacements[direction].first;
+				targetY += DirectionDisplacements[direction].second;
+			}
+			const auto velocity = CalculateVelocity(
+				projectile.positionX,
+				projectile.positionY,
+				targetX,
+				targetY,
+				projectile.speed);
+			projectile.targetX = targetX;
+			projectile.targetY = targetY;
+			projectile.originalDirection = direction;
+			projectile.velocityX = velocity.first;
+			projectile.velocityY = velocity.second;
+			projectile.traveledX = 0;
+			projectile.traveledY = 0;
+		}
+		if (projectile.remainingTicks == 0)
+			EnterReplayProjectileImpact(projectile);
+		++iterator;
+	}
+}
+
 void AdvanceReplayChainLightningOneTick(ReplayFixtureExecutionState &state)
 {
 	for (size_t index = 0; index < state.projectiles.size(); ++index) {
@@ -4614,6 +4840,29 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			state.projectiles.push_back(CreateReplayImmolationController(state, command, spellLevel));
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 31
+	    && state.spellProjectileBehavior == ElementalBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			20,
+			40 - std::max(spellLevel - 1, 0) * 2)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.projectiles.push_back(CreateReplayElemental(state, command, spellLevel));
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -7763,6 +8012,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayNovaBallsOneTick(state);
 		AdvanceReplayChainLightningOneTick(state);
 		AdvanceReplayImmolationOneTick(state);
+		AdvanceReplayElementalOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);

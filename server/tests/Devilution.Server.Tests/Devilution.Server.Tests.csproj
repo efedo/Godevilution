@@ -62,6 +62,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-flame-wave-resolution.json" Link="Fixtures/gameplay-flame-wave-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-chain-lightning-resolution.json" Link="Fixtures/gameplay-chain-lightning-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-immolation-radial-fan-resolution.json" Link="Fixtures/gameplay-immolation-radial-fan-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-elemental-resolution.json" Link="Fixtures/gameplay-elemental-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-flash-resolution.json" Link="Fixtures/gameplay-flash-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-healing-resolution.json" Link="Fixtures/gameplay-healing-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mana-shield-resolution.json" Link="Fixtures/gameplay-mana-shield-resolution.json" CopyToOutputDirectory="PreserveNewest" />

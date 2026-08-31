@@ -80,6 +80,10 @@ creation, persistent segment lifetime, and canonical projectile hashing.
 including the one-tick controller, native 36-ball radial fan ordering,
 first-tick movement, and canonical projectile hashing.
 
+`gameplay-elemental-resolution.json` covers the player Elemental cast,
+including the initial fire projectile, native retargeting lifecycle, and
+canonical projectile hashing.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
@@ -763,6 +767,8 @@ Notable shared fixtures include:
   canonical projectile parity;
 - `gameplay-nova-radial-fan-resolution.json` for the one-tick controller,
   native 36-ball radial ordering, first-tick movement, and canonical parity;
+- `gameplay-elemental-resolution.json` for the initial fire projectile,
+  native retargeting lifecycle, and canonical parity;
 - `gameplay-flame-wave-resolution.json` for the one-tick controller,
   deterministic center/branch geometry, per-segment damage, same-tick movement,
   and canonical parity;

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Elemental replay coverage. Native and managed runners now
+  preserve the retargeting projectile lifecycle, deterministic fire burst
+  timing, and canonical projectile checkpoints.
+
 - Add shared Immolation replay coverage. Native and managed runners now
   preserve the one-tick controller, deterministic radial fan ordering,
   Fireball movement, and canonical projectile checkpoints.
