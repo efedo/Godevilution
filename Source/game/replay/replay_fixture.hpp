@@ -584,6 +584,10 @@ struct ReplayFixtureExecutionState {
 	uint32_t combatTargetMonsterItemSeed = 0;
 	uint32_t combatTargetMonsterAiSeed = 0;
 	uint32_t combatTargetMonsterId = 0;
+	bool combatTargetPlayerMinion = false;
+	uint32_t combatTargetOwnerPlayerId = 0;
+	int32_t combatTargetDeathAnimationTicks = 0;
+	int32_t combatTargetDeathTicksRemaining = 0;
 	int32_t combatTargetToHit = 0;
 	int32_t combatTargetToHitSpecial = 0;
 	int32_t combatTargetMinDamage = 0;

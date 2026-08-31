@@ -3065,6 +3065,87 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GolemFixtureMatchesNativeSummonState()
+    {
+        var fixture = LoadReplayFixture("gameplay-golem-resolution.json");
+        var initial = fixture.InitialState;
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(52, 100, 0, 0, 0, 0) {
+                NativeSpellId = 21,
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileLifetime = 1,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Golem,
+                ManaAdjustment = 6,
+                MinimumManaCost = 60,
+                ManaCostScale = 64,
+                StaffLevel = 9,
+                GolemDeathAnimationTicks = 12,
+                GolemHitPointsLevelBaseQ6 = 320,
+                GolemHitPointsLevelMultiplier = 2,
+                GolemHitPointsManaDivisor = 3,
+                GolemDamageLevelMultiplier = 4,
+                GolemMinimumDamageLevelOffset = 1,
+                GolemMaximumDamageLevelOffset = 3,
+                GolemArmorClass = 25,
+            },
+        ]);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var golem = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(initial.Mana - 94 * 64, player.Mana);
+        Assert.Equal(0x80000000U, golem.EntityId);
+        Assert.Equal(initial.LevelId, golem.LevelId);
+        Assert.Equal(12, golem.PositionX);
+        Assert.Equal(10, golem.PositionY);
+        Assert.Equal(13354, golem.HitPoints);
+        Assert.Equal(13354, golem.MaxHitPoints);
+        Assert.Equal(854612, golem.HitPointsQ6);
+        Assert.Equal(854612, golem.MaxHitPointsQ6);
+        Assert.Equal(25, golem.ArmorClass);
+        Assert.Equal(4, golem.MonsterLevel);
+        Assert.Equal(20, golem.AttackDamage);
+        Assert.Equal(12, golem.MinDamage);
+        Assert.Equal(20, golem.MaxDamage);
+        Assert.Equal(12, golem.MinDamageSpecial);
+        Assert.Equal(20, golem.MaxDamageSpecial);
+        Assert.Equal(1443805422U, golem.MonsterItemSeed);
+        Assert.Equal(1058065735U, golem.MonsterAiSeed);
+        Assert.True(golem.IsPlayerMinion);
+        Assert.Equal(1U, golem.OwnerPlayerId);
+        Assert.Equal(12, golem.DeathAnimationTicks);
+        Assert.Equal(0, golem.DeathTicksRemaining);
+        Assert.Equal("Golem", golem.NativeAi);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

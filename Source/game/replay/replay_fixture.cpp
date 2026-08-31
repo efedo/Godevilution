@@ -497,7 +497,7 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 	if (state.combatTargetEntityId != 0) {
 		hasher.AppendUint64(1);
 		hasher.AppendUint32(state.combatTargetEntityId);
-		hasher.AppendUint32(0);
+		hasher.AppendUint32(state.combatTargetMonsterId);
 		hasher.AppendUint32(state.combatTargetLevelId);
 		hasher.AppendInt32(state.combatTargetPositionX);
 		hasher.AppendInt32(state.combatTargetPositionY);
@@ -549,6 +549,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetPlayerMinion) {
+			hasher.AppendString("godevilution-monster-player-minion-v1");
+			hasher.AppendBool(true);
+			hasher.AppendString("godevilution-monster-owner-v1");
+			hasher.AppendUint32(state.combatTargetOwnerPlayerId);
+		}
 		const int32_t targetMinDamage = state.combatTargetMinDamage == 0
 		        && state.combatTargetMaxDamage == 0
 		        && state.combatTargetAttackDamage != 0
@@ -583,6 +589,11 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendInt32(targetMinDamageSpecial);
 			hasher.AppendInt32(targetMaxDamageSpecial);
 			hasher.AppendBool(state.combatTargetBerserked);
+		}
+		if (state.combatTargetDeathAnimationTicks != 0 || state.combatTargetDeathTicksRemaining != 0) {
+			hasher.AppendString("godevilution-monster-death-animation-v1");
+			hasher.AppendInt32(state.combatTargetDeathAnimationTicks);
+			hasher.AppendInt32(state.combatTargetDeathTicksRemaining);
 		}
 		if (state.combatTargetToHit != 0 || state.combatTargetToHitSpecial != 0) {
 			hasher.AppendString("godevilution-monster-accuracy-v1");
@@ -5109,6 +5120,51 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		}
 		return true;
 	}
+	if (command.spellId == 52
+	    && state.spellProjectileBehavior == 21
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(60, 100 - std::max(spellLevel - 1, 0) * 6) * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			// InitializeSpawnedMonster performs one bounded native health draw,
+			// then preserves the two spawn seeds used by the Golem AI.
+			static_cast<void>(GenerateRnd(state, 1));
+			state.combatTargetMonsterItemSeed = AdvanceRandomItemSeed(state);
+			state.combatTargetMonsterAiSeed = AdvanceRandomItemSeed(state);
+			state.combatTargetEntityId = 0x80000000U;
+			state.combatTargetMonsterId = 0;
+			state.combatTargetLevelId = state.levelId;
+			state.combatTargetPositionX = command.targetX;
+			state.combatTargetPositionY = command.targetY;
+			state.combatTargetArmorClass = 25;
+			state.combatTargetMonsterLevel = static_cast<int32_t>(state.characterLevel);
+			state.combatTargetAttackDamage = 20;
+			state.combatTargetMinDamage = 12;
+			state.combatTargetMaxDamage = 20;
+			state.combatTargetMinDamageSpecial = 12;
+			state.combatTargetMaxDamageSpecial = 20;
+			state.combatTargetHitPointsQ6 = 2 * (320 * spellLevel + (state.manaMaximum * 64) / 3);
+			state.combatTargetMaxHitPointsQ6 = state.combatTargetHitPointsQ6;
+			state.combatTargetHitPoints = (state.combatTargetHitPointsQ6 + 63) / 64;
+			state.combatTargetMaxHitPoints = state.combatTargetHitPoints;
+			state.combatTargetPlayerMinion = true;
+			state.combatTargetOwnerPlayerId = state.entityId;
+			state.combatTargetDeathAnimationTicks = 12;
+			state.combatTargetDeathTicksRemaining = 0;
+			state.combatTargetNativeAi = "Golem";
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
 	if (command.spellId == 41
 	    && state.spellProjectileBehavior == ManaBehavior
 	    && (isAbility || isMemorized)
@@ -9328,7 +9384,7 @@ private:
 			    })) {
 				return false;
 			}
-			if (spell.spellId == 0 || spell.spellId > 51 || spell.level == 0 || spell.level > 15)
+			if (spell.spellId == 0 || spell.spellId > 52 || spell.level == 0 || spell.level > 15)
 				return Fail("invalid memorized spell");
 			if (std::any_of(fixture_.initialState.memorizedSpells.begin(), fixture_.initialState.memorizedSpells.end(), [&](const auto &candidate) {
 				    return candidate.spellId == spell.spellId;

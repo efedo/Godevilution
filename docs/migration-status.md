@@ -2,6 +2,11 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers player Golem summons. Native and managed
+runners preserve server-owned minion identity and ownership, native summon
+stats and spawn seeds, death-animation timing, mana consumption, and canonical
+monster state hashing.
+
 The shared replay contract now covers player Berserk casts. Native and managed
 runners preserve eligible-target admission, native four-channel damage scaling,
 recast rejection, and canonical berserked-monster state across ticks.

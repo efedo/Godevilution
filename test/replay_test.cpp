@@ -2664,6 +2664,57 @@ TEST(ReplayFixture, ExecutesWarpLevelTransitionAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesGolemSummonAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-golem-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 21;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 0U);
+	EXPECT_EQ(state.mana, 13984);
+	EXPECT_EQ(state.combatTargetEntityId, 0x80000000U);
+	EXPECT_EQ(state.combatTargetPositionX, 12);
+	EXPECT_EQ(state.combatTargetPositionY, 10);
+	EXPECT_EQ(state.combatTargetHitPoints, 13354);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 854612);
+	EXPECT_EQ(state.combatTargetMaxHitPointsQ6, 854612);
+	EXPECT_EQ(state.combatTargetArmorClass, 25);
+	EXPECT_EQ(state.combatTargetMonsterLevel, 4);
+	EXPECT_EQ(state.combatTargetAttackDamage, 20);
+	EXPECT_EQ(state.combatTargetMinDamage, 12);
+	EXPECT_EQ(state.combatTargetMaxDamage, 20);
+	EXPECT_EQ(state.combatTargetMinDamageSpecial, 12);
+	EXPECT_EQ(state.combatTargetMaxDamageSpecial, 20);
+	EXPECT_EQ(state.combatTargetMonsterItemSeed, 1443805422U);
+	EXPECT_EQ(state.combatTargetMonsterAiSeed, 1058065735U);
+	EXPECT_EQ(state.combatTargetPlayerMinion, true);
+	EXPECT_EQ(state.combatTargetOwnerPlayerId, 1U);
+	EXPECT_EQ(state.combatTargetDeathAnimationTicks, 12);
+	EXPECT_EQ(state.combatTargetDeathTicksRemaining, 0);
+	EXPECT_EQ(state.combatTargetNativeAi, "Golem");
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritHomingAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-homing.json");

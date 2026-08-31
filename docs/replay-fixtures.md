@@ -269,7 +269,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 150 checked-in JSON fixtures and 168 registered
+the native replay gate contains 151 checked-in JSON fixtures and 169 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -658,6 +658,12 @@ level trigger. Tick 1 proves deterministic destination selection, level
 transition, visited-level history, exact mana consumption, and canonical state
 parity between the native and managed runners.
 
+`gameplay-golem-resolution.json` uses a learned Golem spell at character level
+4. Tick 0 proves server-owned minion identity and ownership, native summon
+stats and spawn-seed progression, death-animation timing, exact mana
+consumption, and canonical monster-state parity between the native and managed
+runners.
+
 `gameplay-stone-curse-resolution.json` uses learned Stone Curse level 3 and a
 walking monster whose future tile is reached through the native radius crawl.
 Ticks 0, 1, 2, 144, 145, and 146 prove a source-preserving no-target fizzle,
@@ -860,6 +866,9 @@ Notable shared fixtures include:
   typed status hashing, and autonomous monster-damage immunity;
 - `gameplay-berserk-resolution.json` for eligible-target admission, four-channel
   damage scaling, recast rejection, and canonical monster state hashing;
+- `gameplay-golem-resolution.json` for server-owned minion identity and
+  ownership, native summon stats and spawn-seed progression, death-animation
+  timing, mana consumption, and canonical monster state hashing;
 - `gameplay-pvp-ear-death.json` for requested and persisted character names,
   lethal Charged Bolt PvP damage, equipment retention, native ear identity and
   cursor presentation, zero-extra-RNG placement, and complete C++/C# dynamic
