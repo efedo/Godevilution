@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-30
+Status date: 2026-08-31
 
 The shared replay contract now covers player Guardian casts. Native and
 managed runners preserve turret admission, the deterministic native firing
@@ -21,6 +21,10 @@ and persistent segment lifetimes.
 The shared replay contract now covers player Apocalypse casts. Native and
 managed runners preserve row-major target scanning, physical boom emission,
 target impact, and boom lifetime.
+
+The shared replay contract now covers player Magi and Mana casts. Native and
+managed runners preserve full-mana restoration and seeded, class-scaled mana
+restoration.
 
 The shared replay contract now covers player Elemental casts. Native and
 managed runners preserve the retargeting projectile lifecycle, fire-burst

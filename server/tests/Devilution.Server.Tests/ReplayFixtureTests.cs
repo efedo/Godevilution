@@ -1222,6 +1222,104 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void MagiFixtureMatchesNativeFullManaRestoration()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-magi-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(40, 255, 0, 0, 0, 0) {
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
+                StaffLevel = -1,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(initial.ManaMaximum, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
+    public void ManaFixtureMatchesNativeSeededClassScaledRestoration()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-mana-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(41, 255, 0, 0, 0, 0) {
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Mana,
+                ManaRandomRange = 10,
+                ManaCharacterLevelRandomRange = 4,
+                ManaSpellLevelRandomRange = 6,
+                StaffLevel = -1,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var repositoryRoot = FindRepositoryRoot();
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(repositoryRoot, "server", "content", "base", "classes.tsv")));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(3208, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(
@@ -7334,5 +7432,16 @@ public sealed class ReplayFixtureTests
           "checkpoints": {{checkpoints}}{{finalState}}
         }
         """;
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null) {
+            if (File.Exists(Path.Combine(directory.FullName, "server", "content", "base", "classes.tsv")))
+                return directory.FullName;
+            directory = directory.Parent;
+        }
+        throw new DirectoryNotFoundException("Could not locate the Godevilution repository root.");
     }
 }

@@ -63,6 +63,8 @@ constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t ApocalypseControllerBehavior = 32;
 constexpr int32_t ApocalypseBoomBehavior = 33;
+constexpr int32_t ManaBehavior = 37;
+constexpr int32_t MagiBehavior = 38;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
@@ -3472,6 +3474,24 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+int32_t GenerateReplayMana(
+    ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
+{
+	int32_t mana = GenerateRnd(state, 10) + 1;
+	for (uint32_t level = 0; level < state.characterLevel; ++level)
+		mana += GenerateRnd(state, 4) + 1;
+	for (int32_t level = 0; level < spellLevel; ++level)
+		mana += GenerateRnd(state, 6) + 1;
+	mana *= 64;
+	if (state.characterClassId == 2) {
+		mana *= 2;
+	} else if (state.characterClassId == 1 || state.characterClassId == 4) {
+		mana += mana / 2;
+	}
+	return mana;
+}
+
 int32_t RotateReplayDirection(int32_t direction, int32_t offset)
 {
 	return (direction + offset + 8 * 4) % 8;
@@ -4928,6 +4948,27 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			if (!isAbility)
 				state.mana -= ManaCostQ6;
 		}
+		return true;
+	}
+	if (command.spellId == 40
+	    && state.spellProjectileBehavior == MagiBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		if (applyEffects)
+			state.mana = state.manaMaximum;
+		return true;
+	}
+	if (command.spellId == 41
+	    && state.spellProjectileBehavior == ManaBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		if (applyEffects)
+			state.mana = std::min(
+			    state.manaMaximum,
+			    state.mana + GenerateReplayMana(state, spellLevel));
 		return true;
 	}
 	if (command.spellId == 8

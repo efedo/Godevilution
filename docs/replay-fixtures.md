@@ -104,6 +104,13 @@ segment lifetimes.
 including row-major target scanning, physical boom emission, target impact,
 and boom lifetime.
 
+`gameplay-magi-resolution.json` covers the player Magi cast, including the
+native full-mana restoration boundary.
+
+`gameplay-mana-resolution.json` covers the player Mana cast, including seeded
+character-level and memorized-spell-level restoration rolls and the native
+class multiplier.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
@@ -261,8 +268,8 @@ the first drop remains authoritative.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
- spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 143 checked-in JSON fixtures and 161 registered
+ spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
+the native replay gate contains 145 checked-in JSON fixtures and 163 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
