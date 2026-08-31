@@ -2715,6 +2715,50 @@ TEST(ReplayFixture, ExecutesGolemSummonAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesJesterFireboltDispatchAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-jester-firebolt-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 39;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 0U);
+	EXPECT_EQ(state.mana, 912);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	const auto &projectile = state.projectiles[0];
+	EXPECT_EQ(projectile.spellId, 1U);
+	EXPECT_EQ(projectile.behavior, 2);
+	EXPECT_EQ(projectile.positionX, 0);
+	EXPECT_EQ(projectile.positionY, 0);
+	EXPECT_EQ(projectile.targetX, 4);
+	EXPECT_EQ(projectile.targetY, 0);
+	EXPECT_EQ(projectile.damage, 13);
+	EXPECT_EQ(projectile.remainingTicks, 256U);
+	EXPECT_EQ(state.randomState, 22695478U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritHomingAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-homing.json");

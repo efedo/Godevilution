@@ -5165,6 +5165,33 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		}
 		return true;
 	}
+	if (command.spellId == 47
+	    && state.spellProjectileBehavior == 39
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+		    15,
+		    20 - std::max(spellLevel - 1, 0) * 3)
+		    * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			// This compact lane covers the native Jester dispatch outcome whose
+			// explicit ten-entry table resolves to Firebolt.
+			if (GenerateRnd(state, 10) > 1)
+				return false;
+			CreateFirebolt(state, command, spellLevel);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
 	if (command.spellId == 41
 	    && state.spellProjectileBehavior == ManaBehavior
 	    && (isAbility || isMemorized)

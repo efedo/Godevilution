@@ -3146,6 +3146,85 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void JesterFireboltFixtureMatchesNativeDispatchState()
+    {
+        var fixture = LoadReplayFixture("gameplay-jester-firebolt-resolution.json");
+        var initial = fixture.InitialState;
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(47, 20, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Jester,
+                JesterSpellIds = Enumerable.Repeat(1U, 10).ToArray(),
+                ManaAdjustment = 3,
+                MinimumManaCost = 15,
+                ManaCostScale = 64,
+                StaffLevel = 10,
+            },
+            new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 26,
+                ProjectileLifetime = 256,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Firebolt,
+                ManaAdjustment = 1,
+                ManaAdjustmentDivisor = 2,
+                MinimumManaCost = 3,
+                ManaCostScale = 64,
+                RandomDamageRange = 10,
+                MagicDamageDivisor = 8,
+                SpellLevelDamage = 1,
+                DamageBonus = 1,
+                ResistantDamageDivisor = 4,
+            },
+        ]);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal(912, player.Mana);
+        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.Firebolt, (int)projectile.Behavior);
+        Assert.Equal(0, (int)projectile.PositionX);
+        Assert.Equal(0, (int)projectile.PositionY);
+        Assert.Equal(4, (int)projectile.TargetX);
+        Assert.Equal(0, (int)projectile.TargetY);
+        Assert.Equal(13, (int)projectile.Damage);
+        Assert.Equal(256U, (uint)projectile.RemainingTicks);
+        Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

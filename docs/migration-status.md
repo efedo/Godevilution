@@ -2,6 +2,10 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers the Jester dispatch lane. Native and
+managed runners preserve deterministic dispatch RNG, nested Firebolt projectile
+creation, one-time mana consumption, and canonical projectile state hashing.
+
 The shared replay contract now covers player Golem summons. Native and managed
 runners preserve server-owned minion identity and ownership, native summon
 stats and spawn seeds, death-animation timing, mana consumption, and canonical

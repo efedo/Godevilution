@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Jester replay coverage. Native and managed runners now preserve
+  deterministic dispatch RNG, nested Firebolt projectile creation, one-time
+  mana consumption, and canonical projectile state hashing.
+
 - Add shared Golem replay coverage. Native and managed runners now preserve
   server-owned minion identity, owner, native summon stats and seeds, death
   animation timing, mana consumption, and canonical monster state hashing.
