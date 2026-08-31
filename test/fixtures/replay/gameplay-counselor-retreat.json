@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/counselor-retreat",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "counselor-retreat-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 80,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 5,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Counselor",
+    "combat_target_intelligence": 0,
+    "combat_target_counselor_retreat_ticks": 4
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 3,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "7bfe4094029626d26cdb0adb1a677d9de9025b14303640cdc551e202f752ca7d" },
+    { "tick": 2, "state_sha256": "c8fac2a1b1c0204c1afb74779cf4f96f50ef45b03c6b175a6a49761fe15bd7c4" },
+    { "tick": 3, "state_sha256": "45bd73ab58aaa831a7169c1cf312421afd74f2b64b04bdba2dd3ee84d45bc4f7" }
+  ]
+}

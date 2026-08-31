@@ -2,6 +2,11 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers the native Counselor AI delay and
+retreat lanes. Native and managed runners preserve server-owned adjacent
+decision delay, wounded retreat movement, retreat countdown state, and
+canonical monster hashing.
+
 The shared replay contract now covers player Town Portal casts. Native and
 managed runners preserve dynamic portal endpoints, ownership, bidirectional
 lifetime state, mana consumption, and canonical portal hashing.

@@ -664,6 +664,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-snake-delay-v1");
 			hasher.AppendInt32(state.combatTargetSnakeDelayTicks);
 		}
+		if (state.combatTargetCounselorDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-counselor-delay-v1");
+			hasher.AppendInt32(state.combatTargetCounselorDelayTicks);
+		}
 		if (state.combatTargetRangedDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-ranged-delay-v1");
 			hasher.AppendInt32(state.combatTargetRangedDelayTicks);
@@ -671,6 +675,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		if (state.combatTargetMegaDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-mega-delay-v1");
 			hasher.AppendInt32(state.combatTargetMegaDelayTicks);
+		}
+		if (state.combatTargetCounselorRetreatTicks != 0) {
+			hasher.AppendString("godevilution-monster-counselor-retreat-v1");
+			hasher.AppendInt32(state.combatTargetCounselorRetreatTicks);
 		}
 	}
 
@@ -6653,6 +6661,96 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetPetrified) {
 		return;
 	}
+	// Compact the native Counselor controller's server-owned adjacent delay
+	// and wounded retreat lanes. The ranged missile branch remains outside this
+	// replay projection, but these stateful decisions are shared by both
+	// authoritative runners and must suppress generic melee fallback.
+	if (state.combatTargetNativeAi == "Counselor") {
+		if (state.combatTargetCounselorDelayTicks > 0) {
+			--state.combatTargetCounselorDelayTicks;
+			return;
+		}
+		static_cast<void>(GenerateRnd(state, 100));
+		const bool counselorPrimary = primaryAlive;
+		const uint32_t victimEntityId = counselorPrimary
+		    ? (state.entityId == 0 ? 1U : state.entityId)
+		    : state.secondaryPlayerEntityId;
+		const int32_t victimX = counselorPrimary
+		    ? state.positionX
+		    : state.secondaryPlayerPositionX;
+		const int32_t victimY = counselorPrimary
+		    ? state.positionY
+		    : state.secondaryPlayerPositionY;
+		const int distance = std::max(
+		    std::abs(victimX - state.combatTargetPositionX),
+		    std::abs(victimY - state.combatTargetPositionY));
+		if (state.combatTargetCounselorRetreatTicks != 0) {
+			const int towardDirection = GetDirection(
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY,
+			    victimX,
+			    victimY);
+			const int awayDirection = (towardDirection + 4) % 8;
+			const uint32_t retreatSeed = static_cast<uint32_t>(tick)
+			    ^ state.combatTargetEntityId
+			    ^ victimEntityId;
+			const int firstTurn = (retreatSeed / 100U) % 2U == 0 ? 1 : -1;
+			const int secondTurn = (retreatSeed / 200U) % 2U == 0 ? 2 : -2;
+			const int candidateDirections[] = {
+				awayDirection,
+				(awayDirection + firstTurn + 8) % 8,
+				(awayDirection - firstTurn + 8) % 8,
+				(awayDirection + secondTurn + 8) % 8,
+				(awayDirection - secondTurn + 8) % 8,
+			};
+			for (const int candidateDirection : candidateDirections) {
+				const auto displacement = DirectionDisplacements[candidateDirection];
+				const int candidateX = state.combatTargetPositionX + displacement.first;
+				const int candidateY = state.combatTargetPositionY + displacement.second;
+				if (candidateX < 0 || candidateX >= 40
+				    || candidateY < 0 || candidateY >= 40
+				    || (candidateX == state.positionX && candidateY == state.positionY)
+				    || (state.secondaryPlayerEntityId != 0
+				        && candidateX == state.secondaryPlayerPositionX
+				        && candidateY == state.secondaryPlayerPositionY)
+				    || (state.objectEntityId != 0
+				        && !state.objectActivated
+				        && !state.objectDestroyed
+				        && !state.objectMissilePassable
+				        && state.objectLevelId == state.combatTargetLevelId
+				        && candidateX == state.objectPositionX
+				        && candidateY == state.objectPositionY))
+					continue;
+				state.combatTargetMoving = true;
+				state.combatTargetFuturePositionX = candidateX;
+				state.combatTargetFuturePositionY = candidateY;
+				state.combatTargetDirection = candidateDirection;
+				break;
+			}
+			--state.combatTargetCounselorRetreatTicks;
+			return;
+		}
+		if (distance <= 1) {
+			if (state.combatTargetHitPoints * 2 < state.combatTargetMaxHitPoints) {
+				state.combatTargetCounselorRetreatTicks = 4;
+				return;
+			}
+			const uint32_t adjacentAttackSeed = static_cast<uint32_t>(tick)
+			    ^ state.combatTargetEntityId
+			    ^ victimEntityId;
+			const int adjacentAttackChance = std::min(
+			    100,
+			    20 + 2 * state.combatTargetIntelligence);
+			if (static_cast<int>(adjacentAttackSeed % 100U) >= adjacentAttackChance) {
+				state.combatTargetCounselorDelayTicks = std::max(
+				    0,
+				    10 - 2 * state.combatTargetIntelligence
+				        + static_cast<int>((adjacentAttackSeed / 200U) % 10U));
+			}
+			return;
+		}
+		return;
+	}
 	// Mega owns its ranged Inferno admission below; do not let the generic
 	// melee projection pre-move the controller source before that branch.
 	if (state.combatTargetNativeAi == "Mega")
@@ -9213,6 +9311,10 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
 			if (key == "combat_target_snake_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
+			if (key == "combat_target_counselor_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetCounselorDelayTicks);
+			if (key == "combat_target_counselor_retreat_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetCounselorRetreatTicks);
 			if (key == "combat_target_ranged_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetRangedDelayTicks);
 			if (key == "combat_target_mega_delay_ticks")
@@ -10059,6 +10161,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetHorkDemonDelayTicks != 0
 		    || target.combatTargetSkeletonMeleeDelayTicks != 0
 		    || target.combatTargetSnakeDelayTicks != 0
+		    || target.combatTargetCounselorDelayTicks != 0
+		    || target.combatTargetCounselorRetreatTicks != 0
 		    || target.combatTargetRangedDelayTicks != 0
 		    || target.combatTargetMegaDelayTicks != 0
 		    || target.combatTargetSkeletonRangedMovementIdleTicks != -1
@@ -10094,6 +10198,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
 		|| target.combatTargetSnakeDelayTicks < 0
 		|| target.combatTargetSnakeDelayTicks > 1024
+		|| target.combatTargetCounselorDelayTicks < 0
+		|| target.combatTargetCounselorDelayTicks > 1024
+		|| target.combatTargetCounselorRetreatTicks < 0
+		|| target.combatTargetCounselorRetreatTicks > 64
 		|| target.combatTargetRangedDelayTicks < 0
 		|| target.combatTargetRangedDelayTicks > 1024
 		|| target.combatTargetMegaDelayTicks < 0
@@ -10799,6 +10907,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
+		state.combatTargetCounselorDelayTicks = fixture.initialState.combatTargetCounselorDelayTicks;
+		state.combatTargetCounselorRetreatTicks = fixture.initialState.combatTargetCounselorRetreatTicks;
 		state.combatTargetRangedDelayTicks = fixture.initialState.combatTargetRangedDelayTicks;
 		state.combatTargetMegaDelayTicks = fixture.initialState.combatTargetMegaDelayTicks;
 		state.combatTargetSkeletonRangedMovementIdleTicks = fixture.initialState.combatTargetSkeletonRangedMovementIdleTicks;

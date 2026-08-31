@@ -285,6 +285,12 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native Snake decision-delay state. */
     public int CombatTargetSnakeDelayTicks { get; init; }
 
+    /** Optional native Counselor decision-delay state. */
+    public int CombatTargetCounselorDelayTicks { get; init; }
+
+    /** Optional native Counselor retreat-attempt countdown. */
+    public int CombatTargetCounselorRetreatTicks { get; init; }
+
     /** Optional native AiRanged delay state. */
     public int CombatTargetRangedDelayTicks { get; init; }
 

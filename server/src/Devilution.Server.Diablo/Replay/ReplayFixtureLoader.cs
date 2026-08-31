@@ -108,6 +108,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
                     || initialTarget.CombatTargetSnakeDelayTicks != 0
+                    || initialTarget.CombatTargetCounselorDelayTicks != 0
+                    || initialTarget.CombatTargetCounselorRetreatTicks != 0
                     || initialTarget.CombatTargetRangedDelayTicks != 0
                     || initialTarget.CombatTargetMegaDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks != -1
@@ -144,6 +146,8 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetCounselorDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetCounselorRetreatTicks is < 0 or > 64
             || initialTarget.CombatTargetRangedDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetMegaDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks is < -1 or > 1024
@@ -411,6 +415,12 @@ public static class ReplayFixtureLoader
             CombatTargetSnakeDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_snake_delay_ticks"),
+            CombatTargetCounselorDelayTicks = GetOptionalInt(
+                value,
+                "combat_target_counselor_delay_ticks"),
+            CombatTargetCounselorRetreatTicks = GetOptionalInt(
+                value,
+                "combat_target_counselor_retreat_ticks"),
             CombatTargetRangedDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_ranged_delay_ticks"),

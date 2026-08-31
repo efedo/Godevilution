@@ -3287,6 +3287,49 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void CounselorDelayFixtureMatchesNativeState()
+    {
+        var fixture = LoadReplayFixture("gameplay-counselor-delay.json");
+        var executor = CreateCounselorExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(8, monster.CounselorDelayTicks);
+        Assert.Equal(0, monster.CounselorRetreatTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void CounselorRetreatFixtureMatchesNativeMovementAndCountdown()
+    {
+        var fixture = LoadReplayFixture("gameplay-counselor-retreat.json");
+        var executor = CreateCounselorExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal((3, 0), (monster.PositionX, monster.PositionY));
+        Assert.True(monster.Moving);
+        Assert.Equal((4, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(1, monster.CounselorRetreatTicks);
+        Assert.Equal(0, monster.CounselorDelayTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(
@@ -7258,6 +7301,42 @@ public sealed class ReplayFixtureTests
         Assert.Equal(
             "Replay fixture equipment contains invalid or duplicate item state.",
             exception.Message);
+    }
+
+    private static StoreSimulationExecutor CreateCounselorExecutor(ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            attackDamage: initial.CombatTargetAttackDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            counselorDelayTicks: initial.CombatTargetCounselorDelayTicks,
+            counselorRetreatTicks: initial.CombatTargetCounselorRetreatTicks);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
     }
 
     private static StoreSimulationExecutor CreateMonsterMagicExecutor(ReplayFixture fixture)

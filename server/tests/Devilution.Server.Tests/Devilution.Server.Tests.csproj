@@ -77,6 +77,8 @@
     <None Include="../../../test/fixtures/replay/gameplay-golem-resolution.json" Link="Fixtures/gameplay-golem-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-jester-firebolt-resolution.json" Link="Fixtures/gameplay-jester-firebolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-town-portal-resolution.json" Link="Fixtures/gameplay-town-portal-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-counselor-delay.json" Link="Fixtures/gameplay-counselor-delay.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-counselor-retreat.json" Link="Fixtures/gameplay-counselor-retreat.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-flash-resolution.json" Link="Fixtures/gameplay-flash-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-healing-resolution.json" Link="Fixtures/gameplay-healing-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mana-shield-resolution.json" Link="Fixtures/gameplay-mana-shield-resolution.json" CopyToOutputDirectory="PreserveNewest" />

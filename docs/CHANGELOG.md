@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Counselor AI replay coverage. Native and managed runners now
+  preserve server-owned adjacent decision delay, wounded retreat movement, and
+  retreat countdown state with canonical checkpoint parity.
+
 - Add shared Town Portal replay coverage. Native and managed runners now
   preserve dynamic portal endpoints, ownership, bidirectional lifetime state,
   mana consumption, and canonical portal hashing.
