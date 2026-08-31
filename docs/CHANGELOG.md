@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Immolation replay coverage. Native and managed runners now
+  preserve the one-tick controller, deterministic radial fan ordering,
+  Fireball movement, and canonical projectile checkpoints.
+
 - Add shared Chain Lightning replay coverage. Native and managed runners now
   preserve the one-tick controller, deterministic native crawl fan-out,
   Lightning bolt movement, impact segments, and canonical checkpoints.

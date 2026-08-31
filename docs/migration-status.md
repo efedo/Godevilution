@@ -2,6 +2,10 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers player Immolation casts. Native and
+managed runners preserve the one-tick controller, deterministic radial fan
+ordering, Fireball movement, and canonical checkpoints.
+
 The shared replay contract now covers player Chain Lightning casts. Native and
 managed runners preserve the one-tick controller, deterministic native crawl
 fan-out, Lightning bolt movement, impact segments, and canonical checkpoints.

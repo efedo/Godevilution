@@ -53,6 +53,7 @@ constexpr int32_t ChainLightningControllerBehavior = 28;
 constexpr int32_t ChainLightningBoltBehavior = 29;
 constexpr int32_t ChainLightningMaximumRadius = 18;
 constexpr int32_t RingOfFireControllerBehavior = 42;
+constexpr int32_t ImmolationControllerBehavior = 43;
 constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t HorkSpawnBehavior = 57;
@@ -3600,6 +3601,99 @@ ReplayFixtureProjectileState CreateReplayNovaController(
 	return controller;
 }
 
+ReplayFixtureProjectileState CreateReplayImmolationController(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command,
+	int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		controller.entityId = std::max(controller.entityId, projectile.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 45;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = command.targetX;
+	controller.targetY = command.targetY;
+	int32_t damage = 0;
+	for (int32_t iteration = 0; iteration < 5; ++iteration)
+		damage += GenerateRnd(state, 6);
+	damage += static_cast<int32_t>(state.characterLevel) + 5;
+	damage /= 2;
+	for (int32_t level = 0; level < spellLevel; ++level)
+		damage += damage / 8;
+	controller.damage = damage * 64;
+	controller.damageType = 1;
+	controller.remainingTicks = 1;
+	controller.behavior = ImmolationControllerBehavior;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.originalDirection = GetDirection(
+		state.positionX,
+		state.positionY,
+		command.targetX,
+		command.targetY);
+	int32_t velocityTargetX = command.targetX;
+	int32_t velocityTargetY = command.targetY;
+	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+		velocityTargetX += DirectionDisplacements[controller.originalDirection].first;
+		velocityTargetY += DirectionDisplacements[controller.originalDirection].second;
+	}
+	const int32_t speed = 16 + std::min(spellLevel, 34);
+	const auto velocity = CalculateVelocity(
+		state.positionX,
+		state.positionY,
+		velocityTargetX,
+		velocityTargetY,
+		speed);
+	controller.velocityX = velocity.first;
+	controller.velocityY = velocity.second;
+	controller.speed = speed;
+	controller.effectiveSpellLevel = spellLevel;
+	return controller;
+}
+
+ReplayFixtureProjectileState CreateReplayImmolationBall(
+	const ReplayFixtureProjectileState &controller,
+	int32_t targetX,
+	int32_t targetY)
+{
+	ReplayFixtureProjectileState ball;
+	ball.sourceEntityId = controller.sourceEntityId;
+	ball.spellId = controller.spellId;
+	ball.levelId = controller.levelId;
+	ball.positionX = controller.positionX;
+	ball.positionY = controller.positionY;
+	ball.targetX = targetX;
+	ball.targetY = targetY;
+	ball.damage = controller.damage;
+	ball.damageType = 1;
+	ball.remainingTicks = 256;
+	ball.behavior = 16;
+	ball.startX = controller.positionX;
+	ball.startY = controller.positionY;
+	ball.originalDirection = GetDirection(
+		controller.positionX,
+		controller.positionY,
+		targetX,
+		targetY);
+	const auto velocity = CalculateVelocity(
+		controller.positionX,
+		controller.positionY,
+		targetX,
+		targetY,
+		16);
+	ball.velocityX = velocity.first;
+	ball.velocityY = velocity.second;
+	ball.speed = 16;
+	ball.impactLifetime = 1;
+	ball.resistantDamageDivisor = 4;
+	ball.effectiveSpellLevel = controller.effectiveSpellLevel;
+	return ball;
+}
+
 ReplayFixtureProjectileState CreateReplayChainLightningController(
 	ReplayFixtureExecutionState &state,
 	const ReplayFixtureCommand &command,
@@ -4039,6 +4133,34 @@ void AdvanceReplayFlameWaveOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+void AdvanceReplayImmolationOneTick(ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &controller = state.projectiles[index];
+		if (controller.behavior != ImmolationControllerBehavior)
+			continue;
+		if (controller.remainingTicks > 0)
+			--controller.remainingTicks;
+		const auto controllerState = controller;
+		const auto offsets = CreateReplayRadialProjectileOffsets(4, 36);
+		std::vector<ReplayFixtureProjectileState> created;
+		created.reserve(offsets.size());
+		for (const auto offset : offsets)
+			created.push_back(CreateReplayImmolationBall(
+				controllerState,
+				controllerState.positionX + offset.first,
+				controllerState.positionY + offset.second));
+		uint32_t nextEntityId = 0x80000000U;
+		for (const auto &existing : state.projectiles)
+			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
+		for (auto &spawned : created)
+			spawned.entityId = nextEntityId++;
+		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+		state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+		return;
+	}
+}
+
 void AdvanceReplayChainLightningOneTick(ReplayFixtureExecutionState &state)
 {
 	for (size_t index = 0; index < state.projectiles.size(); ++index) {
@@ -4469,6 +4591,29 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			CreateReplayChainLightningController(state, command, spellLevel);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 45
+	    && state.spellProjectileBehavior == ImmolationControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(
+			35,
+			60 - std::max(spellLevel - 1, 0) * 3)
+			* 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.projectiles.push_back(CreateReplayImmolationController(state, command, spellLevel));
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -7617,6 +7762,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayNovaOneTick(state);
 		AdvanceReplayNovaBallsOneTick(state);
 		AdvanceReplayChainLightningOneTick(state);
+		AdvanceReplayImmolationOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);

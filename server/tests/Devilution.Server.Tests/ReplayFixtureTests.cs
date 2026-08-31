@@ -766,6 +766,77 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ImmolationRadialFanFixtureMatchesNativeControllerAndFireballs()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-immolation-radial-fan-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(45, 1, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.ImmolationController,
+                RandomDamageRange = 6,
+                MagicDamageDivisor = 2,
+                DamageBonus = 5,
+                CharacterLevelDamageDivisor = 1,
+                RandomDamageIterationsBonus = 5,
+                SpellEffectScaleDivisor = 8,
+                DamageScale = 64,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 1,
+                ProjectileSpeedSpellLevelStep = 1,
+                ProjectileSpeedMaximumBonus = 34,
+                ImmolationControllerLifetime = 1,
+                ImmolationSearchRadius = 4,
+                ImmolationProjectileCount = 36,
+            },
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingManaMaximum: fixture.InitialState.ManaMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingWorld: world,
+            startingSpells: spells,
+            startingCharacterClassId: checked((uint)fixture.InitialState.CharacterClass),
+            startingAbilitySpellId: fixture.InitialState.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(36, result.FinalSnapshot.Projectiles.Count);
+        Assert.All(
+            result.FinalSnapshot.Projectiles,
+            projectile => {
+                Assert.Equal((int)AuthoritativeProjectileBehavior.Fireball, projectile.Behavior);
+                Assert.Equal((int)AuthoritativeDamageType.Fire, projectile.DamageType);
+                Assert.Equal(255U, projectile.RemainingTicks);
+                Assert.Equal(16, projectile.Speed);
+                Assert.Equal(1, projectile.ImpactLifetime);
+            });
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

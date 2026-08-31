@@ -87,6 +87,10 @@ per-segment damage, same-tick movement, and canonical projectile hashing.
 `gameplay-chain-lightning-resolution.json` covers the player Chain Lightning
 cast, including the one-tick controller, deterministic native crawl fan-out,
 Lightning bolt movement, impact segments, and canonical projectile hashing.
+
+`gameplay-immolation-radial-fan-resolution.json` covers the player Immolation
+cast, including the one-tick controller, deterministic radial fan ordering,
+Fireball movement, and canonical projectile hashing.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
@@ -765,6 +769,8 @@ Notable shared fixtures include:
 - `gameplay-chain-lightning-resolution.json` for the one-tick controller,
   deterministic native crawl fan-out, Lightning bolt movement, impact segments,
   and canonical parity;
+- `gameplay-immolation-radial-fan-resolution.json` for the one-tick controller,
+  deterministic radial fan ordering, Fireball movement, and canonical parity;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;
