@@ -1,0 +1,49 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/telekinesis-insufficient-mana",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "a4f2d11cb54e18c5df07eae670a7ab9ab739f5efbd83dc84fcefe956315e97"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 800,
+    "mana_maximum": 2000,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "world_item_entity_id": 20,
+    "world_item_seed": 42,
+    "world_item_price": 75,
+    "memorized_spells": [
+      { "spell_id": 33, "level": 2 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "expected_status": "Rejected",
+      "expected_reject_reason": "InsufficientResources",
+      "payload": {
+        "spell_id": 33,
+        "target_entity_id": 20,
+        "target_x": 1,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "4bea583734b1e1ff291f86fb7127c3c8503180481554c7745364d658a1cfaef6" }
+  ]
+}

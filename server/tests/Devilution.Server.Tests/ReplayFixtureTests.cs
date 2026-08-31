@@ -3475,6 +3475,205 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void TelekinesisInvalidTargetFixturePreservesWorldItemAndMana()
+    {
+        var fixture = LoadReplayFixture("gameplay-telekinesis-invalid-target.json");
+        var initial = fixture.InitialState;
+        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+            NativeSpellId = 33,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9916,
+            StatFlag = true,
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.Life,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingWorld: world,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                initial.WorldItemEntityId,
+                initial.LevelId,
+                initial.PositionX + 1,
+                initial.PositionY,
+                initial.WorldItemSeed,
+                initial.WorldItemPrice,
+                itemState)],
+            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var command = Assert.Single(result.Results);
+        Assert.Equal(CommandStatus.Rejected, command.Status);
+        Assert.Equal(CommandRejectReason.InvalidTarget, command.RejectReason);
+        Assert.Equal(initial.Mana, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void TelekinesisInsufficientManaFixturePreservesWorldItemAndMana()
+    {
+        var fixture = LoadReplayFixture("gameplay-telekinesis-insufficient-mana.json");
+        var initial = fixture.InitialState;
+        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+            NativeSpellId = 33,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9916,
+            StatFlag = true,
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.Life,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingWorld: world,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                initial.WorldItemEntityId,
+                initial.LevelId,
+                initial.PositionX + 1,
+                initial.PositionY,
+                initial.WorldItemSeed,
+                initial.WorldItemPrice,
+                itemState)],
+            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var command = Assert.Single(result.Results);
+        Assert.Equal(CommandStatus.Rejected, command.Status);
+        Assert.Equal(CommandRejectReason.InsufficientResources, command.RejectReason);
+        Assert.Equal(initial.Mana, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void TelekinesisUnmemorizedFixtureRejectsWithoutChangingWorldState()
+    {
+        var fixture = LoadReplayFixture("gameplay-telekinesis-unmemorized.json");
+        var initial = fixture.InitialState;
+        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+            NativeSpellId = 33,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var itemState = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemIndex = 1,
+            StableItemId = 9916,
+            StatFlag = true,
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.Life,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingWorld: world,
+            startingWorldItems: [new AuthoritativeWorldItem(
+                initial.WorldItemEntityId,
+                initial.LevelId,
+                initial.PositionX + 1,
+                initial.PositionY,
+                initial.WorldItemSeed,
+                initial.WorldItemPrice,
+                itemState)],
+            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var command = Assert.Single(result.Results);
+        Assert.Equal(CommandStatus.Rejected, command.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, command.RejectReason);
+        Assert.Equal(initial.Mana, Assert.Single(result.FinalSnapshot.Players).Mana);
+        Assert.Empty(result.FinalSnapshot.Players.Single().Inventory);
+        Assert.Single(result.FinalSnapshot.WorldItems);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void CounselorDelayFixtureMatchesNativeState()
     {
         var fixture = LoadReplayFixture("gameplay-counselor-delay.json");

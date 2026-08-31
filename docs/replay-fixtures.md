@@ -126,6 +126,13 @@ living combat target, preserving exact target coordinates, one-cell knockback,
 movement state, mana consumption, and canonical monster state hashing across
 native and managed runners.
 
+The rejection fixtures cover the inverse boundaries: `gameplay-telekinesis-
+invalid-target.json` rejects an entity whose coordinates do not match,
+`gameplay-telekinesis-insufficient-mana.json` rejects before consuming mana,
+and `gameplay-telekinesis-unmemorized.json` rejects spell-source admission.
+Each case verifies that the world item, player resources, and canonical hash
+remain unchanged in both runners.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.

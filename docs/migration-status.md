@@ -6,7 +6,9 @@ The shared replay contract now covers player Telekinesis world-item pickup,
 object activation, and monster knockback. Native and managed runners preserve
 target validation, inventory placement, authored object mutation, one-cell
 knockback, authored object experience effects, memorized-spell admission, mana
-consumption, and canonical state hashing.
+consumption, and canonical state hashing. Rejection fixtures also preserve the
+world item and player resources for invalid targets, insufficient mana, and
+unmemorized spell sources.
 
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent

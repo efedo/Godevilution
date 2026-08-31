@@ -7,7 +7,9 @@ All notable changes to this fork are documented below.
 - Add shared Telekinesis replay coverage. Native and managed runners now
   preserve server-owned world-item pickup, object activation, monster knockback,
   authored object experience effects, target validation, memorized-spell
-  admission, mana consumption, and canonical state hashing.
+  admission, mana consumption, and canonical state hashing. Rejection fixtures
+  cover invalid coordinates, insufficient mana, and unmemorized spell sources
+  while proving failed casts preserve world state and resources.
 
 - Add shared Counselor AI replay coverage. Native and managed runners now
   preserve server-owned adjacent decision delay, wounded retreat movement, and

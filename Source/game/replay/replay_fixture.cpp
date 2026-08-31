@@ -10815,6 +10815,54 @@ void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+std::string GetReplayCastRejectReason(
+	const ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command)
+{
+	const bool isAbility = state.abilitySpellId == command.spellId;
+	const bool isMemorized = std::any_of(
+		state.memorizedSpells.begin(),
+		state.memorizedSpells.end(),
+		[&](const auto &spell) { return spell.spellId == command.spellId && spell.level > 0; });
+	if (!isAbility && !isMemorized)
+		return "NotAllowed";
+	if (command.spellId != 33 || state.spellProjectileBehavior != TelekinesisBehavior)
+		return "InvalidTarget";
+	const bool targetMatches = (command.targetEntityId == state.worldItemEntityId
+	        && state.worldItemEntityId != 0
+	        && state.worldItemSeed != 0
+	        && state.levelId == state.worldItemLevelId
+	        && command.targetX == state.worldItemPositionX
+	        && command.targetY == state.worldItemPositionY)
+	    || (command.targetEntityId == state.objectEntityId
+	        && state.objectEntityId != 0
+	        && state.objectId != 0
+	        && !state.objectActivated
+	        && !state.objectDestroyed
+	        && state.levelId == state.objectLevelId
+	        && command.targetX == state.objectPositionX
+	        && command.targetY == state.objectPositionY)
+	    || (command.targetEntityId == state.combatTargetEntityId
+	        && state.combatTargetEntityId != 0
+	        && state.combatTargetHitPointsQ6 > 0
+	        && state.levelId == state.combatTargetLevelId
+	        && command.targetX == state.combatTargetPositionX
+	        && command.targetY == state.combatTargetPositionY);
+	if (!targetMatches)
+		return "InvalidTarget";
+	if (!isAbility) {
+		const auto memorizedSpell = std::find_if(
+			state.memorizedSpells.begin(),
+			state.memorizedSpells.end(),
+			[&](const auto &spell) { return spell.spellId == command.spellId && spell.level > 0; });
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(state, &*memorizedSpell);
+		const int32_t manaCost = std::max(8, 15 - std::max(spellLevel - 1, 0) * 2) * 64;
+		if (state.mana < manaCost)
+			return "InsufficientResources";
+	}
+	return "InvalidTarget";
+}
+
 bool ExecuteReplayFixture(
     const ReplayFixture &fixture,
     ReplayFixtureExecutionState &state,
@@ -11609,6 +11657,10 @@ bool ExecuteReplayFixture(
 				} else {
 					accepted = ApplyReplayCast(state, command);
 				}
+				if (!accepted
+				    && command.spellId == 33
+				    && state.spellProjectileBehavior == TelekinesisBehavior)
+					rejectReason = GetReplayCastRejectReason(state, command);
 			} else if (command.kind == "UsePortal") {
 				if (command.portalId == state.portalId) {
 					if (!fixture.playerActionTiming.defined
