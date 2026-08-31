@@ -1149,6 +1149,79 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ApocalypseFixtureMatchesNativeRowMajorScanAndBoomLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-apocalypse-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(25, 150, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 15,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.ApocalypseController,
+                RandomDamageRange = 6,
+                RandomDamageIterationsCharacterLevelDivisor = 1,
+                ResistantDamageDivisor = 1,
+                ProjectileImpactLifetime = 1,
+                ManaAdjustment = 6,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 90,
+                ManaCostScale = 64,
+                StaffLevel = 15,
+                ApocalypseControllerLifetime = 255,
+                ApocalypseSearchRadius = 8,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            petrified: initial.CombatTargetPetrified);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingSpells: spells,
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(3UL, result.FinalSnapshot.Tick);
+        var boom = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.Equal(4, boom.PositionX);
+        Assert.Equal(2, boom.PositionY);
+        Assert.Equal(13U, boom.RemainingTicks);
+        Assert.True(boom.ApocalypseHit);
+        Assert.True(
+            Assert.Single(result.FinalSnapshot.Monsters).HitPoints
+                < initial.CombatTargetHitPoints);
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

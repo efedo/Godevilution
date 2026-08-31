@@ -26,6 +26,7 @@ void AdmitReplayAutonomousMegaInferno(
     uint64_t tick);
 void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state);
 void AdvanceReplayPlayerInfernoOneTick(ReplayFixtureExecutionState &state);
+void AdvanceReplayPlayerApocalypseOneTick(ReplayFixtureExecutionState &state);
 
 namespace {
 
@@ -60,6 +61,8 @@ constexpr int32_t GuardianControllerBehavior = 36;
 constexpr int32_t RageControllerBehavior = 34;
 constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
+constexpr int32_t ApocalypseControllerBehavior = 32;
+constexpr int32_t ApocalypseBoomBehavior = 33;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
@@ -1101,6 +1104,21 @@ int32_t GetReplayInfernoManaCost(
 		wholeCost -= wholeCost / 4;
 	}
 	return std::max(wholeCost, 6) * 64;
+}
+
+int32_t GetReplayApocalypseManaCost(
+	const ReplayFixtureExecutionState &state,
+	int32_t spellLevel)
+{
+	int32_t wholeCost = std::max(150 - std::max(spellLevel - 1, 0) * 6, 0);
+	if (state.hellfire && state.characterClassId == 2) {
+		wholeCost /= 2;
+	} else if (state.characterClassId == 1
+	    || state.characterClassId == 3
+	    || state.characterClassId == 4) {
+		wholeCost -= wholeCost / 4;
+	}
+	return std::max(wholeCost, 90) * 64;
 }
 
 int32_t GetReplayBoneSpiritManaCost(
@@ -3827,6 +3845,65 @@ ReplayFixtureProjectileState CreateReplayInfernoController(
 	return controller;
 }
 
+ReplayFixtureProjectileState CreateReplayApocalypseController(
+	ReplayFixtureExecutionState &state,
+	int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		controller.entityId = std::max(controller.entityId, existing.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 25;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = state.positionX;
+	controller.targetY = state.positionY;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.damage = 0;
+	for (uint32_t iteration = 0; iteration < state.characterLevel; ++iteration)
+		controller.damage += GenerateRnd(state, 6);
+	controller.damage += static_cast<int32_t>(state.characterLevel);
+	controller.damageType = 3;
+	controller.remainingTicks = 255;
+	controller.behavior = ApocalypseControllerBehavior;
+	controller.impactLifetime = 1;
+	controller.resistantDamageDivisor = 1;
+	controller.effectiveSpellLevel = spellLevel;
+	controller.apocalypseScanX = std::max(state.positionX - 8, 1);
+	controller.apocalypseScanY = std::max(state.positionY - 8, 1);
+	return controller;
+}
+
+ReplayFixtureProjectileState CreateReplayApocalypseBoom(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureProjectileState &controller,
+	int32_t positionX,
+	int32_t positionY)
+{
+	ReplayFixtureProjectileState boom;
+	boom.entityId = controller.entityId + 1U;
+	for (const auto &existing : state.projectiles)
+		boom.entityId = std::max(boom.entityId, existing.entityId + 1U);
+	boom.sourceEntityId = controller.sourceEntityId;
+	boom.spellId = controller.spellId;
+	boom.levelId = controller.levelId;
+	boom.positionX = positionX;
+	boom.positionY = positionY;
+	boom.targetX = positionX;
+	boom.targetY = positionY;
+	boom.damage = controller.damage;
+	boom.damageType = 0;
+	boom.remainingTicks = 15;
+	boom.behavior = ApocalypseBoomBehavior;
+	boom.impactLifetime = 1;
+	boom.resistantDamageDivisor = controller.resistantDamageDivisor;
+	boom.effectiveSpellLevel = controller.effectiveSpellLevel;
+	return boom;
+}
+
 ReplayFixtureProjectileState CreateReplayGuardianController(
     const ReplayFixtureExecutionState &state,
     const ReplayFixtureCommand &command,
@@ -5180,6 +5257,23 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			state.projectiles.push_back(CreateReplayInfernoController(state, command, spellLevel));
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 25
+	    && state.spellProjectileBehavior == ApocalypseControllerBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = GetReplayApocalypseManaCost(state, spellLevel);
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.projectiles.push_back(CreateReplayApocalypseController(state, spellLevel));
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -8322,6 +8416,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
+		AdvanceReplayPlayerApocalypseOneTick(state);
 		AdvanceReplayPlayerInfernoOneTick(state);
 		AdvanceReplayInfernoOneTick(state);
 		AdvanceReplayRingOfFireOneTick(state);
@@ -9885,6 +9980,73 @@ void AdmitReplayAutonomousMegaInferno(
 	projectile.resistantDamageDivisor = 1;
 	state.projectiles.push_back(std::move(projectile));
 	state.combatTargetMegaDelayTicks = resolveMegaDelay();
+}
+
+/** Advances the player Apocalypse scan controller and its physical boom. */
+void AdvanceReplayPlayerApocalypseOneTick(ReplayFixtureExecutionState &state)
+{
+	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &projectile = state.projectiles[index];
+		if (projectile.behavior == ApocalypseBoomBehavior
+		    && projectile.sourceEntityId == playerEntityId) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (!projectile.apocalypseHit
+			    && state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && state.combatTargetLevelId == projectile.levelId
+			    && state.combatTargetPositionX == projectile.positionX
+			    && state.combatTargetPositionY == projectile.positionY) {
+				const int32_t damageQ6 = std::max(0, projectile.damage) * 64;
+				state.combatTargetHitPointsQ6 = std::max(
+					0,
+					state.combatTargetHitPointsQ6 - damageQ6);
+				state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+				projectile.apocalypseHit = true;
+			}
+			if (projectile.remainingTicks == 0) {
+				state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+				--index;
+			}
+			continue;
+		}
+		if (projectile.behavior != ApocalypseControllerBehavior
+		    || projectile.sourceEntityId != playerEntityId)
+			continue;
+		const int32_t minimumX = std::max(projectile.startX - 8, 1);
+		const int32_t maximumX = projectile.startX + 8;
+		const int32_t maximumY = projectile.startY + 8;
+		const int32_t scanY = std::max(projectile.apocalypseScanY, 1);
+		const int32_t scanX = std::max(projectile.apocalypseScanX, minimumX);
+		bool emitted = false;
+		for (int32_t y = scanY; y < maximumY && !emitted; ++y) {
+			const int32_t firstX = y == scanY ? scanX : minimumX;
+			for (int32_t x = firstX; x < maximumX; ++x) {
+				projectile.apocalypseScanX = x + 1;
+				projectile.apocalypseScanY = y;
+				if (!ReplayWallPositionIsValid(state, x, y))
+					continue;
+				if (state.combatTargetEntityId == 0
+				    || state.combatTargetHitPointsQ6 <= 0
+				    || state.combatTargetLevelId != projectile.levelId
+				    || state.combatTargetPositionX != x
+				    || state.combatTargetPositionY != y)
+					continue;
+				state.projectiles.push_back(CreateReplayApocalypseBoom(
+					state,
+					projectile,
+					x,
+					y));
+				emitted = true;
+				break;
+			}
+		}
+		if (!emitted) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			--index;
+		}
+	}
 }
 
 /** Advances the player Inferno controller and its three persistent segments. */

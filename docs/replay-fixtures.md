@@ -100,6 +100,10 @@ Q6 self-damage, and expiry removal.
 the moving controller, deterministic three-segment emission, and persistent
 segment lifetimes.
 
+`gameplay-apocalypse-resolution.json` covers the player Apocalypse cast,
+including row-major target scanning, physical boom emission, target impact,
+and boom lifetime.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
@@ -258,7 +262,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-30,
-the native replay gate contains 142 checked-in JSON fixtures and 160 registered
+the native replay gate contains 143 checked-in JSON fixtures and 161 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -792,6 +796,8 @@ Notable shared fixtures include:
   suppression, bounded Q6 expiry damage, and controller removal;
 - `gameplay-inferno-resolution.json` for moving-controller admission,
   deterministic three-segment emission, and persistent segment lifetimes;
+- `gameplay-apocalypse-resolution.json` for row-major target scanning,
+  physical boom emission, target impact, and boom lifetime;
 - `gameplay-flame-wave-resolution.json` for the one-tick controller,
   deterministic center/branch geometry, per-segment damage, same-tick movement,
   and canonical parity;

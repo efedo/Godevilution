@@ -20,6 +20,10 @@ All notable changes to this fork are documented below.
   the moving controller, deterministic three-segment emission, and persistent
   segment lifetimes.
 
+- Add shared Apocalypse replay coverage. Native and managed runners now
+  preserve row-major target scanning, physical boom emission, target impact,
+  and boom lifetime.
+
 - Add shared Elemental replay coverage. Native and managed runners now
   preserve the retargeting projectile lifecycle, deterministic fire burst
   timing, and canonical projectile checkpoints.

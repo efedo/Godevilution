@@ -1,0 +1,55 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/apocalypse-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "dab5e780f5533071d28b0ee015e3af11f7a6624d951e8d4cb3418b584513d996"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 2560,
+    "life_maximum": 2560,
+    "mana": 20000,
+    "mana_maximum": 20000,
+    "magic": 35,
+    "character_class": 2,
+    "character_level": 1,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "ability_spell_id": 25,
+    "spell_projectile_behavior": 32,
+    "combat_target_entity_id": 10,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 4,
+    "combat_target_position_y": 2,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_monster_level": 1,
+    "combat_target_petrified": true
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 25,
+        "target_x": 10,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "timeline-apocalypse-controller" },
+    { "tick": 2, "state_sha256": "timeline-apocalypse-boom" },
+    { "tick": 3, "state_sha256": "timeline-apocalypse-expiry" }
+  ]
+}

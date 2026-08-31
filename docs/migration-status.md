@@ -18,6 +18,10 @@ The shared replay contract now covers player Inferno casts. Native and managed
 runners preserve the moving controller, deterministic three-segment emission,
 and persistent segment lifetimes.
 
+The shared replay contract now covers player Apocalypse casts. Native and
+managed runners preserve row-major target scanning, physical boom emission,
+target impact, and boom lifetime.
+
 The shared replay contract now covers player Elemental casts. Native and
 managed runners preserve the retargeting projectile lifecycle, fire-burst
 timing, and canonical checkpoints.
