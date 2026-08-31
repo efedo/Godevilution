@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Chain Lightning replay coverage. Native and managed runners now
+  preserve the one-tick controller, deterministic native crawl fan-out,
+  Lightning bolt movement, impact segments, and canonical checkpoints.
+
 - Add shared Flame Wave replay coverage. Native and managed runners now preserve
   the one-tick controller, deterministic center/branch geometry, per-segment
   damage, same-tick movement, and canonical projectile checkpoints.

@@ -684,6 +684,88 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ChainLightningFixtureMatchesNativeFanOutAndImpactResolution()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-chain-lightning-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(16, 30, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Lightning,
+                ProjectileSpeed = 32,
+                ProjectileLifetime = 256,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.ChainLightningController,
+                RandomDamageRange = 2,
+                DamageBonus = 2,
+                CharacterLevelRandomDamageDivisor = 1,
+                DamageScale = 64,
+                SecondaryProjectileLifetime = 6,
+                SecondaryProjectileLifetimeSpellLevelDivisor = 2,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 1,
+                ManaAdjustment = 1,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 18,
+                ManaCostScale = 64,
+                ChainLightningSearchRadiusBonus = 3,
+                ChainLightningControllerLifetime = 1,
+            },
+        ]);
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.LevelId,
+            lightningResistance: fixture.InitialState.CombatTargetLightningResistance,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel,
+            petrified: fixture.InitialState.CombatTargetPetrified);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingManaMaximum: fixture.InitialState.ManaMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingWorld: world,
+            startingCombatTargets: [target],
+            startingSpells: spells,
+            startingCharacterClassId: checked((uint)fixture.InitialState.CharacterClass),
+            startingAbilitySpellId: fixture.InitialState.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningBolt));
+        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.LightningSegment));
+        Assert.All(
+            result.FinalSnapshot.Projectiles.Where(projectile =>
+                projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningBolt),
+            projectile => {
+                Assert.Equal(254U, projectile.RemainingTicks);
+                Assert.Equal(32, projectile.Speed);
+            });
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

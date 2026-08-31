@@ -83,6 +83,10 @@ first-tick movement, and canonical projectile hashing.
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
+
+`gameplay-chain-lightning-resolution.json` covers the player Chain Lightning
+cast, including the one-tick controller, deterministic native crawl fan-out,
+Lightning bolt movement, impact segments, and canonical projectile hashing.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
@@ -757,6 +761,9 @@ Notable shared fixtures include:
   native 36-ball radial ordering, first-tick movement, and canonical parity;
 - `gameplay-flame-wave-resolution.json` for the one-tick controller,
   deterministic center/branch geometry, per-segment damage, same-tick movement,
+  and canonical parity;
+- `gameplay-chain-lightning-resolution.json` for the one-tick controller,
+  deterministic native crawl fan-out, Lightning bolt movement, impact segments,
   and canonical parity;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
