@@ -10,6 +10,9 @@ consumption, and canonical state hashing. Rejection fixtures also preserve the
 world item and player resources for invalid targets, insufficient mana, and
 unmemorized spell sources.
 
+The six replay fixtures now load Telekinesis from the validated base `spells.tsv`
+catalog instead of a synthetic test-only spell definition.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

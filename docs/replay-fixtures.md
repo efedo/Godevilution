@@ -135,6 +135,9 @@ and `gameplay-telekinesis-unmemorized.json` rejects spell-source admission.
 Each case verifies that the world item, player resources, and canonical hash
 remain unchanged in both runners.
 
+The managed Telekinesis runner loads the validated base `spells.tsv` catalog and
+checks the active `devilution.base` content-manifest identity.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.

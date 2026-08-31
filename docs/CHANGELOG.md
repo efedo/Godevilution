@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move all six Telekinesis replay fixtures to the validated base `spells.tsv`
+  catalog and active content-manifest identity, preserving native pickup,
+  object, knockback, and rejection checkpoints in the managed runner.
+
 - Rebind all checked-in base-content replay fixtures to the active content
   manifest and move Fire Wall replay coverage to the validated `spells.tsv`
   catalog, keeping native and managed controller checkpoints aligned.

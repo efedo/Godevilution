@@ -3272,18 +3272,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-telekinesis-world-item.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
-            NativeSpellId = 33,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
-            ManaAdjustment = 2,
-            ManaAdjustmentDivisor = 1,
-            MinimumManaCost = 8,
-            ManaCostScale = 64,
-            StaffLevel = 2,
-        };
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
         var itemState = AuthoritativeItemState.Empty with {
@@ -3315,7 +3304,7 @@ public sealed class ReplayFixtureTests
                 initial.WorldItemSeed,
                 initial.WorldItemPrice,
                 itemState)],
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
                 .ToArray(),
@@ -3341,18 +3330,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-telekinesis-object.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
-            NativeSpellId = 33,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
-            ManaAdjustment = 2,
-            ManaAdjustmentDivisor = 1,
-            MinimumManaCost = 8,
-            ManaCostScale = 64,
-            StaffLevel = 2,
-        };
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -3375,7 +3353,7 @@ public sealed class ReplayFixtureTests
                 initial.ObjectPositionY,
                 effectKind: (AuthoritativeObjectEffectKind)initial.ObjectEffectKind,
                 effectAmount: initial.ObjectEffectAmount)],
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
                 .ToArray(),
@@ -3400,18 +3378,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-telekinesis-monster-knockback.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
-            NativeSpellId = 33,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
-            ManaAdjustment = 2,
-            ManaAdjustmentDivisor = 1,
-            MinimumManaCost = 8,
-            ManaCostScale = 64,
-            StaffLevel = 2,
-        };
+        var spells = LoadBaseSpells(fixture);
         var target = new AuthoritativeCombatTarget(
             initial.CombatTargetEntityId,
             initial.CombatTargetPositionX,
@@ -3434,7 +3401,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
                 .ToArray(),
@@ -3460,18 +3427,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-telekinesis-invalid-target.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
-            NativeSpellId = 33,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
-            ManaAdjustment = 2,
-            ManaAdjustmentDivisor = 1,
-            MinimumManaCost = 8,
-            ManaCostScale = 64,
-            StaffLevel = 2,
-        };
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
         var itemState = AuthoritativeItemState.Empty with {
@@ -3501,7 +3457,7 @@ public sealed class ReplayFixtureTests
                 initial.WorldItemSeed,
                 initial.WorldItemPrice,
                 itemState)],
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
                 .ToArray(),
@@ -3527,18 +3483,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-telekinesis-insufficient-mana.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
-            NativeSpellId = 33,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
-            ManaAdjustment = 2,
-            ManaAdjustmentDivisor = 1,
-            MinimumManaCost = 8,
-            ManaCostScale = 64,
-            StaffLevel = 2,
-        };
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
         var itemState = AuthoritativeItemState.Empty with {
@@ -3568,7 +3513,7 @@ public sealed class ReplayFixtureTests
                 initial.WorldItemSeed,
                 initial.WorldItemPrice,
                 itemState)],
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
                 .ToArray(),
@@ -3594,18 +3539,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-telekinesis-unmemorized.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
-            NativeSpellId = 33,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
-            ManaAdjustment = 2,
-            ManaAdjustmentDivisor = 1,
-            MinimumManaCost = 8,
-            ManaCostScale = 64,
-            StaffLevel = 2,
-        };
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
         var itemState = AuthoritativeItemState.Empty with {
@@ -3635,7 +3569,7 @@ public sealed class ReplayFixtureTests
                 initial.WorldItemSeed,
                 initial.WorldItemPrice,
                 itemState)],
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingRandomSeed: checked((uint)fixture.RngSeed));
 
         var result = ReplayFixtureExecutor.Execute(
@@ -8393,6 +8327,15 @@ public sealed class ReplayFixtureTests
           "checkpoints": {{checkpoints}}{{finalState}}
         }
         """;
+    }
+
+    private static AuthoritativeSpellCatalog LoadBaseSpells(ReplayFixture fixture)
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        return AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
     }
 
     private static void AssertUsesBaseContentManifest(
