@@ -673,6 +673,71 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void HolyBoltUsesBaseContentAndMatchesNativeResolutionTimeline()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-holy-bolt-resolution.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                maxHitPoints: initial.CombatTargetMaxHitPoints,
+                monsterLevel: initial.CombatTargetMonsterLevel,
+                undead: initial.CombatTargetUndead)],
+            startingSpells: spells,
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingPlayerClasses: classes);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(9U, monster.EntityId);
+        Assert.Equal(4, monster.HitPoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void FireboltUsesBaseContentAndMatchesNativeResolutionTimeline()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(

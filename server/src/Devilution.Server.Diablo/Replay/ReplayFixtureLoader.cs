@@ -399,6 +399,9 @@ public static class ReplayFixtureLoader
             CombatTargetMonsterLevel = GetOptionalInt(
                 value,
                 "combat_target_monster_level"),
+            CombatTargetUndead = GetOptionalBool(
+                value,
+                "combat_target_undead"),
             CombatTargetNativeAi = OptionalString(value, "combat_target_native_ai") ?? string.Empty,
             CombatTargetMonsterItemSeed = GetOptionalUInt(value, "combat_target_monster_item_seed"),
             CombatTargetMonsterAiSeed = GetOptionalUInt(value, "combat_target_monster_ai_seed"),

@@ -554,6 +554,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetUndead) {
+			hasher.AppendString("godevilution-monster-undead-v1");
+			hasher.AppendBool(true);
+		}
 		if (state.combatTargetPlayerMinion) {
 			hasher.AppendString("godevilution-monster-player-minion-v1");
 			hasher.AppendBool(true);
@@ -1139,6 +1143,20 @@ int32_t GetReplayFireboltManaCost(
 	return std::max(wholeCost, 3) * 64;
 }
 
+int32_t GetReplayHolyBoltManaCost(
+    const ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
+{
+	int32_t wholeCost = std::max(7 - std::max(spellLevel - 1, 0), 0);
+	if (state.hellfire && state.characterClassId == 2) {
+		wholeCost /= 2;
+	} else if (state.characterClassId == 1
+	    || state.characterClassId == 3
+	    || state.characterClassId == 4) {
+		wholeCost -= wholeCost / 4;
+	}
+	return std::max(wholeCost, 4) * 64;
+}
 int32_t GetReplayFireballManaCost(
     const ReplayFixtureExecutionState &state,
     int32_t spellLevel)
@@ -1277,6 +1295,58 @@ void CreateFirebolt(
 	state.projectiles.push_back(projectile);
 }
 
+void CreateHolyBolt(
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
+{
+	const int32_t direction = GetDirection(
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
+	int32_t velocityTargetX = command.targetX;
+	int32_t velocityTargetY = command.targetY;
+	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+		velocityTargetX += DirectionDisplacements[direction].first;
+		velocityTargetY += DirectionDisplacements[direction].second;
+	}
+	const int32_t speed = 16 + std::min(spellLevel * 2, 47);
+	const auto velocity = CalculateVelocity(
+	    state.positionX,
+	    state.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    speed);
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	projectile.spellId = 5;
+	projectile.levelId = state.levelId;
+	projectile.positionX = state.positionX;
+	projectile.positionY = state.positionY;
+	projectile.targetX = command.targetX;
+	projectile.targetY = command.targetY;
+	projectile.damage = GenerateRnd(state, 10)
+	    + state.characterLevel
+	    + 9;
+	projectile.damageType = 0;
+	projectile.remainingTicks = 256;
+	projectile.behavior = 19;
+	projectile.startX = state.positionX;
+	projectile.startY = state.positionY;
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.originalDirection = direction;
+	projectile.speed = speed;
+	projectile.impactLifetime = 1;
+	projectile.resistantDamageDivisor = 1;
+	state.projectiles.push_back(projectile);
+}
 void CreateFireball(
     ReplayFixtureExecutionState &state,
     const ReplayFixtureCommand &command,
@@ -2080,11 +2150,12 @@ int32_t GetReplayBaseMagicToHit(uint32_t characterClassId)
 	return 50;
 }
 
-void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
+void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
-		if (projectile.behavior != 2) {
+		const bool holyBolt = projectile.behavior == 19;
+		if (projectile.behavior != 2 && projectile.behavior != 19) {
 			++iterator;
 			continue;
 		}
@@ -2117,7 +2188,9 @@ void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			            && state.combatTargetFuturePositionX == x
 			            && state.combatTargetFuturePositionY == y));
 			bool hitTarget = false;
-			if (targetAtTile && state.combatTargetFireResistance < 100) {
+			if (targetAtTile
+			    && (!holyBolt || state.combatTargetUndead)
+			    && (holyBolt || state.combatTargetFireResistance < 100)) {
 				const int32_t hitChance = std::clamp(
 				    state.attributes[3]
 				        + GetReplayBaseMagicToHit(state.characterClassId)
@@ -2127,8 +2200,9 @@ void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 				if (state.combatTargetPetrified || hitRoll < hitChance) {
 					int32_t damageQ6 = projectile.damage * 64;
+					if (!holyBolt)
 					static_cast<void>(GenerateRnd(state, 1));
-					if (state.combatTargetFireResistance > 0)
+					if (!holyBolt && state.combatTargetFireResistance > 0)
 						damageQ6 /= projectile.resistantDamageDivisor;
 					state.combatTargetHitPointsQ6 = std::max(
 					    0,
@@ -2146,7 +2220,7 @@ void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			    && state.secondaryPlayerLevelId == projectile.levelId
 			    && state.secondaryPlayerPositionX == x
 			    && state.secondaryPlayerPositionY == y;
-			if (playerAtTile) {
+			if (!holyBolt && playerAtTile) {
 				const int32_t hitChance = std::clamp(
 				    state.attributes[3]
 				        + GetReplayBaseMagicToHit(state.characterClassId)
@@ -5483,6 +5557,26 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 				state.mana -= manaCost;
 			if (isConsumable)
 				state.belt.erase(beltConsumable);
+		}
+		return true;
+	}
+	if (command.spellId == 5
+	    && state.spellProjectileBehavior == 19
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = GetReplayHolyBoltManaCost(state, spellLevel);
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			CreateHolyBolt(state, command, spellLevel);
+			if (!isAbility)
+				state.mana -= manaCost;
 		}
 		return true;
 	}
@@ -9015,7 +9109,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
-		AdvanceFireboltsOneTick(state, simulationTick);
+		AdvanceMagicBoltsOneTick(state, simulationTick);
 		AdvanceFireballsOneTick(state, simulationTick);
 		AdvanceBoneSpiritsOneTick(state, simulationTick);
 		AdvanceLightningOneTick(state, simulationTick);
@@ -9490,6 +9584,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetMagicResistance);
 			if (key == "combat_target_monster_level")
 				return ParseSigned(fixture_.initialState.combatTargetMonsterLevel);
+			if (key == "combat_target_undead")
+				return ParseBool(fixture_.initialState.combatTargetUndead);
 			if (key == "combat_target_moving")
 				return ParseBool(fixture_.initialState.combatTargetMoving);
 			if (key == "combat_target_future_position_x")
@@ -11131,6 +11227,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;
 		state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+		state.combatTargetUndead = fixture.initialState.combatTargetUndead;
 		state.combatTargetMoving = fixture.initialState.combatTargetMoving;
 		state.combatTargetFuturePositionX = fixture.initialState.combatTargetFuturePositionX;
 		state.combatTargetFuturePositionY = fixture.initialState.combatTargetFuturePositionY;

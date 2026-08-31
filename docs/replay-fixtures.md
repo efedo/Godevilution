@@ -535,6 +535,8 @@ fire-resistance damage, exact `400/64` monster health, and impact rollback.
 Tick 3 proves deterministic impact expiry. The native parser and managed loader
 also reject fire resistance outside the authoritative `-100..100` range.
 
+`gameplay-holy-bolt-resolution.json` uses the base Holy Bolt row against an authored undead target. The fixture proves the level-scaled projectile speed, physical damage roll, undead-only collision, class-adjusted Q6 mana, and impact expiry; the native and managed runners share the undead capability in their compact target state and canonical hash.
+
 `gameplay-firebolt-pvp.json` uses the same level-3 Firebolt against a second
 participant. The fixture proves class-adjusted Q6 mana, native player magic-hit
 RNG, half-Q6 player damage, hit animation timing, projectile impact, and

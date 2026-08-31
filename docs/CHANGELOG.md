@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Holy Bolt replay coverage. Native and managed runners now preserve
+  undead-only collision, level-scaled projectile speed, physical damage, mana
+  consumption, impact expiry, and canonical state hashing.
+
 - Add shared Telekinesis replay coverage. Native and managed runners now
   preserve server-owned world-item pickup, object activation, monster knockback,
   authored object experience effects, target validation, memorized-spell
