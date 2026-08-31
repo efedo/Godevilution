@@ -84,6 +84,13 @@ first-tick movement, and canonical projectile hashing.
 including the initial fire projectile, native retargeting lifecycle, and
 canonical projectile hashing.
 
+`gameplay-guardian-resolution.json` covers the player Guardian cast, including
+the one-tick turret admission, native 48-position firing arc, Firebolt
+creation, controller GuardianState transition, and projectile lifetime. Its
+timeline checkpoints intentionally omit snapshot hashes until the compact
+native monster projection and full managed monster snapshot share the same
+canonical shape.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
@@ -769,6 +776,9 @@ Notable shared fixtures include:
   native 36-ball radial ordering, first-tick movement, and canonical parity;
 - `gameplay-elemental-resolution.json` for the initial fire projectile,
   native retargeting lifecycle, and canonical parity;
+- `gameplay-guardian-resolution.json` for turret admission, deterministic
+  native firing-arc selection, Firebolt creation, controller state, and
+  projectile lifetime;
 - `gameplay-flame-wave-resolution.json` for the one-tick controller,
   deterministic center/branch geometry, per-segment damage, same-tick movement,
   and canonical parity;

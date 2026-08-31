@@ -2200,6 +2200,68 @@ TEST(ReplayFixture, ExecutesElementalRetargetingProjectileLifecycle)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesGuardianTurretAndFireboltAdmission)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-guardian-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.abilitySpellId = fixture.initialState.abilitySpellId;
+	state.facingDirection = fixture.initialState.facingDirection;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 36;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 15U);
+	EXPECT_EQ(state.projectiles.size(), 2U);
+	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 2;
+	}), 1);
+	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 36 && projectile.remainingTicks == 16;
+	}));
+	const auto controller = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 36;
+	});
+	ASSERT_NE(controller, state.projectiles.end());
+	EXPECT_EQ(controller->guardianState, 3);
+	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 2
+			&& projectile.remainingTicks == 255
+			&& projectile.speed == 16;
+	}));
+	const auto bolt = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 2;
+	});
+	ASSERT_NE(bolt, state.projectiles.end());
+	EXPECT_EQ(bolt->positionX, 5);
+	EXPECT_EQ(bolt->positionY, 5);
+	EXPECT_EQ(bolt->targetX, 16);
+	EXPECT_EQ(bolt->targetY, 10);
+	EXPECT_EQ(bolt->damage, 5);
+	EXPECT_EQ(bolt->velocityX, 368176);
+	EXPECT_EQ(bolt->velocityY, 490896);
+	EXPECT_EQ(state.randomState, 1443805422U);
+	EXPECT_FALSE(ComputeReplayFixtureStateHash(state).empty());
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritPvpAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-pvp.json");

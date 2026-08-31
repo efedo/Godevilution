@@ -2,6 +2,13 @@
 
 Status date: 2026-08-30
 
+The shared replay contract now covers player Guardian casts. Native and
+managed runners preserve turret admission, the deterministic native firing
+arc, Firebolt creation, controller state, and projectile lifetime. The compact
+fixture currently uses timeline checkpoints without snapshot hashes because
+the native replay projection intentionally remains narrower than the full
+managed monster snapshot.
+
 The shared replay contract now covers player Elemental casts. Native and
 managed runners preserve the retargeting projectile lifecycle, fire-burst
 timing, and canonical checkpoints.

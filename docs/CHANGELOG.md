@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Guardian replay coverage. Native and managed runners now
+  preserve the one-tick turret admission, deterministic 48-position firing
+  arc, Firebolt creation, controller state, and projectile lifetime.
+
 - Add shared Elemental replay coverage. Native and managed runners now
   preserve the retargeting projectile lifecycle, deterministic fire burst
   timing, and canonical projectile checkpoints.

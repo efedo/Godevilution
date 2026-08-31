@@ -900,6 +900,90 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GuardianFixtureMatchesNativeTurretAndFireboltAdmission()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-guardian-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0) {
+                Range = 15,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.GuardianController,
+                RandomDamageRange = 10,
+                MagicDamageDivisor = 8,
+                SpellLevelDamage = 1,
+                DamageBonus = 1,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 1,
+                GuardianDurationTickScale = 16,
+                GuardianMinimumDuration = 30,
+                GuardianMaximumDuration = 30,
+                GuardianCharacterLevelDurationDivisor = 2,
+                GuardianSpawnSearchRadius = 5,
+                GuardianTargetSearchRadius = 6,
+                GuardianFireInterval = 16,
+                GuardianProjectileSpeedLevelStep = 2,
+                GuardianProjectileSpeedMaximumBonus = 47,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            fireResistance: initial.CombatTargetFireResistance,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            petrified: initial.CombatTargetPetrified);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingManaMaximum: fixture.InitialState.ManaMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingSpells: spells,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingCombatTargets: [target],
+            startingCharacterClassId: checked((uint)fixture.InitialState.CharacterClass),
+            startingAbilitySpellId: fixture.InitialState.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(15UL, result.FinalSnapshot.Tick);
+        var projectiles = result.FinalSnapshot.Projectiles;
+        Assert.Contains(
+            projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.GuardianController);
+        var bolt = Assert.Single(
+            projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Firebolt);
+        Assert.Equal(16, bolt.Speed);
+        Assert.Equal(255U, bolt.RemainingTicks);
+        Assert.Equal(1, bolt.ImpactLifetime);
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

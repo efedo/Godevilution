@@ -55,10 +55,21 @@ constexpr int32_t ChainLightningMaximumRadius = 18;
 constexpr int32_t RingOfFireControllerBehavior = 42;
 constexpr int32_t ImmolationControllerBehavior = 43;
 constexpr int32_t ElementalBehavior = 35;
+constexpr int32_t GuardianControllerBehavior = 36;
 constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
+constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
+	{ 6, 0 }, { 5, 0 }, { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 },
+	{ 6, 1 }, { 5, 1 }, { 4, 1 }, { 3, 1 }, { 6, 2 }, { 2, 1 },
+	{ 5, 2 }, { 6, 3 }, { 4, 2 }, { 5, 3 }, { 3, 2 }, { 1, 1 },
+	{ 6, 4 }, { 6, 5 }, { 5, 4 }, { 4, 3 }, { 2, 2 }, { 5, 5 },
+	{ 4, 4 }, { 3, 3 }, { 6, 6 }, { 5, 6 }, { 4, 5 }, { 3, 4 },
+	{ 2, 3 }, { 4, 6 }, { 3, 5 }, { 2, 4 }, { 1, 2 }, { 3, 6 },
+	{ 2, 5 }, { 1, 3 }, { 0, 1 }, { 2, 6 }, { 1, 4 }, { 1, 5 },
+	{ 1, 6 }, { 0, 2 }, { 0, 3 }, { 0, 6 }, { 0, 5 }, { 0, 4 },
+};
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -3752,6 +3763,82 @@ ReplayFixtureProjectileState CreateReplayElemental(
 	return projectile;
 }
 
+ReplayFixtureProjectileState CreateReplayGuardianController(
+    const ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		controller.entityId = std::max(controller.entityId, existing.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = command.spellId;
+	controller.levelId = state.levelId;
+	controller.positionX = command.targetX;
+	controller.positionY = command.targetY;
+	controller.targetX = command.targetX;
+	controller.targetY = command.targetY;
+	controller.damageType = 1;
+	controller.remainingTicks = 30;
+	controller.behavior = GuardianControllerBehavior;
+	controller.originalDirection = state.facingDirection % 8;
+	controller.effectiveSpellLevel = spellLevel;
+	return controller;
+}
+
+ReplayFixtureProjectileState CreateReplayGuardianBolt(
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &controller,
+    int32_t targetX,
+    int32_t targetY)
+{
+	ReplayFixtureProjectileState bolt;
+	bolt.entityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		bolt.entityId = std::max(bolt.entityId, existing.entityId + 1U);
+	bolt.sourceEntityId = controller.sourceEntityId;
+	bolt.spellId = controller.spellId;
+	bolt.levelId = controller.levelId;
+	bolt.positionX = state.positionX;
+	bolt.positionY = state.positionY;
+	bolt.targetX = targetX;
+	bolt.targetY = targetY;
+	bolt.damage = GenerateRnd(state, 10)
+		+ state.attributes[3] / 8
+		+ controller.effectiveSpellLevel
+		+ 1;
+	bolt.damageType = 1;
+	bolt.remainingTicks = 256;
+	bolt.behavior = 2;
+	bolt.startX = state.positionX;
+	bolt.startY = state.positionY;
+	bolt.originalDirection = GetDirection(
+		state.positionX,
+		state.positionY,
+		targetX,
+		targetY);
+	int32_t velocityTargetX = targetX;
+	int32_t velocityTargetY = targetY;
+	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+		velocityTargetX += DirectionDisplacements[bolt.originalDirection].first;
+		velocityTargetY += DirectionDisplacements[bolt.originalDirection].second;
+	}
+	const auto velocity = CalculateVelocity(
+		state.positionX,
+		state.positionY,
+		velocityTargetX,
+		velocityTargetY,
+		16);
+	bolt.velocityX = velocity.first;
+	bolt.velocityY = velocity.second;
+	bolt.speed = 16;
+	bolt.impactLifetime = 1;
+	bolt.resistantDamageDivisor = 4;
+	bolt.effectiveSpellLevel = controller.effectiveSpellLevel;
+	return bolt;
+}
+
 ReplayFixtureProjectileState CreateReplayChainLightningController(
 	ReplayFixtureExecutionState &state,
 	const ReplayFixtureCommand &command,
@@ -4387,6 +4474,60 @@ void AdvanceReplayElementalOneTick(
 	}
 }
 
+/** Advances the Guardian controller and its deterministic Firebolt admission arc. */
+void AdvanceReplayGuardianOneTick(
+    ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &controller = state.projectiles[index];
+		if (controller.behavior != GuardianControllerBehavior)
+			continue;
+		if (controller.remainingTicks > 0)
+			--controller.remainingTicks;
+		if (controller.guardianState > 0)
+			--controller.guardianState;
+		if (controller.remainingTicks == 0) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			return;
+		}
+		if (controller.remainingTicks % 16 != 0)
+			return;
+		for (const auto offset : GuardianArc) {
+			const std::pair<int32_t, int32_t> candidates[] = {
+				{ offset.first, offset.second },
+				{ offset.second, offset.first },
+				{ offset.second, -offset.first },
+				{ offset.first, -offset.second },
+			};
+			for (const auto candidate : candidates) {
+				const int32_t targetX = controller.positionX + candidate.first;
+				const int32_t targetY = controller.positionY + candidate.second;
+				if (state.combatTargetEntityId == 0
+				    || state.combatTargetHitPointsQ6 <= 0
+				    || state.combatTargetLevelId != controller.levelId
+				    || state.combatTargetPositionX != targetX
+				    || state.combatTargetPositionY != targetY
+				    || std::max(
+					       std::abs(targetX - controller.positionX),
+					       std::abs(targetY - controller.positionY)) > 6)
+					continue;
+				// Native GuardianTryFireAt checks line of sight and consumes one
+				// discarded damage roll before AddFirebolt's payload roll.
+				static_cast<void>(GenerateRnd(state, 10));
+				const auto controllerState = controller;
+				controller.guardianState = 3;
+				state.projectiles.push_back(CreateReplayGuardianBolt(
+					state,
+					controllerState,
+					targetX,
+					targetY));
+				return;
+			}
+		}
+		return;
+	}
+}
+
 void AdvanceReplayChainLightningOneTick(ReplayFixtureExecutionState &state)
 {
 	for (size_t index = 0; index < state.projectiles.size(); ++index) {
@@ -4863,6 +5004,29 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (applyEffects) {
 			state.projectiles.push_back(CreateReplayElemental(state, command, spellLevel));
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 7
+	    && state.spellProjectileBehavior == GuardianControllerBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = 50 * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			state.projectiles.push_back(CreateReplayGuardianController(
+				state,
+				command,
+				spellLevel));
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -8013,6 +8177,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayChainLightningOneTick(state);
 		AdvanceReplayImmolationOneTick(state);
 		AdvanceReplayElementalOneTick(state);
+		AdvanceReplayGuardianOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
