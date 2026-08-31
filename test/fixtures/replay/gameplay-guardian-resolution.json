@@ -48,7 +48,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "" },
-    { "tick": 15, "state_sha256": "" }
+    { "tick": 1, "state_sha256": "timeline-guardian-turret" },
+    { "tick": 15, "state_sha256": "timeline-guardian-bolt" }
   ]
 }

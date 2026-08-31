@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Formalize projection-only replay checkpoint markers. Timeline checkpoints
+  may now omit a canonical hash while both runners still advance and verify
+  the covered lifecycle boundary.
+
 - Add shared Guardian replay coverage. Native and managed runners now
   preserve the one-tick turret admission, deterministic 48-position firing
   arc, Firebolt creation, controller state, and projectile lifetime.

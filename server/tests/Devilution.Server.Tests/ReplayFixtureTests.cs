@@ -11,6 +11,47 @@ namespace Devilution.Server.Tests;
 public sealed class ReplayFixtureTests
 {
     [Fact]
+    public void ProjectionOnlyCheckpointMarkerLoadsWithoutHashValidation()
+    {
+        const string json = """
+            {
+              "format_version": 1,
+              "fixture_id": "gameplay/projection-only",
+              "protocol_schema_version": "0.1.0",
+              "tick_rate_hz": 20,
+              "rng_seed": 1,
+              "initial_state": {
+                "player": "A",
+                "gold": 0,
+                "experience": 0,
+                "life": 1,
+                "mana": 1
+              },
+              "commands": [{
+                "client_sequence": 1,
+                "target_tick": 1,
+                "server_receipt_sequence": 1,
+                "kind": "Move",
+                "payload": {
+                  "direction_x": 0,
+                  "direction_y": 0
+                }
+              }],
+              "checkpoints": [{
+                "tick": 1,
+                "state_sha256": "timeline-only"
+              }]
+            }
+            """;
+
+        var fixture = ReplayFixtureLoader.Load(json);
+
+        var checkpoint = Assert.Single(fixture.Checkpoints);
+        Assert.Equal(1UL, checkpoint.Tick);
+        Assert.Equal("timeline-only", checkpoint.StateSha256);
+    }
+
+    [Fact]
     public void BasicBuyFixtureLoadsAndSortsByAuthoritativeOrder()
     {
         var fixture = LoadFixture();

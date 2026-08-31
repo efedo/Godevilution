@@ -5,7 +5,8 @@ engine and C# authoritative server. They are UTF-8 JSON test artifacts, not the
 runtime Protobuf transport.
 
 A fixture records its format and protocol versions, content identity, tick rate,
-RNG seed, initial state, authoritative command order, checkpoint hashes, and an
+RNG seed, initial state, authoritative command order, checkpoint hashes or
+projection-only markers, and an
 optional final hash. Commands are ordered by `(target_tick,
 server_receipt_sequence)` and retain client sequences so retry and deduplication
 behavior can be characterized. An optional command-level `player` routes a
