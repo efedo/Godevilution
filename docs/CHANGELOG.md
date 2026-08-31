@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Rebind all checked-in base-content replay fixtures to the active content
+  manifest and move Fire Wall replay coverage to the validated `spells.tsv`
+  catalog, keeping native and managed controller checkpoints aligned.
+
 - Add shared Holy Bolt replay coverage. Native and managed runners now preserve
   undead-only collision, level-scaled projectile speed, physical damage, mana
   consumption, impact expiry, and canonical state hashing.

@@ -3666,7 +3666,7 @@ scaled hit points), not only the client's difficulty label.
   allocators skip occupied portal/corpse/player IDs, while identity-neutral
   version-1 saves preserve their zero player ID until import.
 
-- All 37 checked-in replay fixtures now bind the active
+- All 38 checked-in replay fixtures now bind the active
   content-manifest identities; the full 326-test server assembly passes again.
 
 - Host shutdown now disposes the active authoritative adapter as well as

@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
@@ -369,37 +370,14 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
-    public void FireWallResolutionFixtureMatchesNativeControllerAndSegmentLifecycle()
+    public void FireWallResolutionFixtureMatchesValidatedBaseContentAndNativeLifecycle()
     {
-        var path = Path.Combine(
-            AppContext.BaseDirectory,
-            "Fixtures",
-            "gameplay-fire-wall-resolution.json");
-        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(6, 28, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileLifetime = 1,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.FireWallController,
-                ManaAdjustment = 2,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 8,
-                ManaCostScale = 64,
-                RandomDamageRange = 10,
-                RandomDamageIterationsBonus = 2,
-                DamageBonus = 2,
-                DamageScale = 8,
-                ResistantDamageDivisor = 4,
-                WallControlLifetime = 7,
-                WallSegmentBaseDuration = 10,
-                WallSegmentSpellLevelDurationStep = 10,
-                WallSegmentCharacterLevelDurationStep = 1,
-                WallSegmentDurationScale = 16,
-                WallCharacterLevelDamageMultiplier = 1,
-            },
-        ]);
+        var fixture = LoadReplayFixture("gameplay-fire-wall-resolution.json");
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -442,6 +420,9 @@ public sealed class ReplayFixtureTests
         Assert.Contains(
             result.FinalSnapshot.Projectiles,
             projectile => projectile.PositionX == 14 && projectile.PositionY == 10);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
     [Fact]
@@ -8412,6 +8393,21 @@ public sealed class ReplayFixtureTests
           "checkpoints": {{checkpoints}}{{finalState}}
         }
         """;
+    }
+
+    private static void AssertUsesBaseContentManifest(
+        ReplayFixture fixture,
+        string contentRoot)
+    {
+        var identity = Assert.IsType<ReplayContentManifest>(fixture.ContentManifest);
+        var manifest = new ContentManifest(
+            identity.Id,
+            identity.Version,
+            [ContentPackLoader.LoadDirectory(
+                identity.Id,
+                identity.Version,
+                contentRoot)]);
+        Assert.Equal(manifest.Sha256, identity.Sha256);
     }
 
     private static string FindRepositoryRoot()

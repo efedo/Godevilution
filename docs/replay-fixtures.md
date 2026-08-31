@@ -66,7 +66,9 @@ complete volley.
 and persistent wall geometry. The controller expires after seven simulation
 ticks while emitting deterministic center and two-branch segments; segment
 damage and lifetime retain the native character/spell-level scaling and are
-included in canonical projectile hashing.
+included in canonical projectile hashing. The managed runner loads the
+validated base `spells.tsv` catalog and checks the active content-manifest hash
+used by the native runner.
 
 `gameplay-lightning-wall-resolution.json` covers the same controller geometry
 for Lightning Wall, including its distinct lightning damage scale and long
@@ -862,8 +864,8 @@ Notable shared fixtures include:
 - `gameplay-fireball-hellfire-block.json` for Hellfire shield-block retention,
   variant RNG, impact splash, and projectile-lifetime parity;
 - `gameplay-fire-wall-resolution.json` for seven-tick controller expiry,
-  deterministic two-branch growth, scaled persistent segment state, and
-  canonical projectile parity;
+  deterministic two-branch growth, scaled persistent segment state, validated
+  base-content spell loading, and canonical projectile parity;
 - `gameplay-lightning-wall-resolution.json` for shared wall geometry with
   lightning-specific damage, duration, presentation, and canonical parity;
 - `gameplay-ring-of-fire-resolution.json` for native radius-three crawl,
