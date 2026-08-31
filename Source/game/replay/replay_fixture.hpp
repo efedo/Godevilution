@@ -166,6 +166,13 @@ struct ReplayFixtureInitialState {
 	int32_t positionX = 0;
 	int32_t positionY = 0;
 	uint32_t levelId = 0;
+	uint32_t warpId = 0;
+	uint32_t warpSourceLevelId = 0;
+	int32_t warpTriggerX = 0;
+	int32_t warpTriggerY = 0;
+	uint32_t warpTargetLevelId = 0;
+	int32_t warpTargetX = 0;
+	int32_t warpTargetY = 0;
 	uint32_t facingDirection = 0;
 	bool suppressMultiplayerDeathDrops = false;
 	uint32_t goldStackSeed = 0;
@@ -498,6 +505,13 @@ struct ReplayFixtureExecutionState {
 	uint32_t characterLevel = 1;
 	uint32_t levelId = 0;
 	std::vector<uint32_t> visitedLevelIds;
+	uint32_t warpId = 0;
+	uint32_t warpSourceLevelId = 0;
+	int32_t warpTriggerX = 0;
+	int32_t warpTriggerY = 0;
+	uint32_t warpTargetLevelId = 0;
+	int32_t warpTargetX = 0;
+	int32_t warpTargetY = 0;
 	uint32_t facingDirection = 0;
 	bool multiplayer = false;
 	bool suppressMultiplayerDeathDrops = false;

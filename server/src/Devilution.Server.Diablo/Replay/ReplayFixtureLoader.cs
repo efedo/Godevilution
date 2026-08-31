@@ -69,6 +69,16 @@ public static class ReplayFixtureLoader
             throw new InvalidDataException(
                 "Replay fixture contains invalid object missile-collision state.");
         }
+        if (fixture.InitialState.WarpId == 0
+            && (fixture.InitialState.WarpSourceLevelId != 0
+                || fixture.InitialState.WarpTriggerX != 0
+                || fixture.InitialState.WarpTriggerY != 0
+                || fixture.InitialState.WarpTargetLevelId != 0
+                || fixture.InitialState.WarpTargetX != 0
+                || fixture.InitialState.WarpTargetY != 0)) {
+            throw new InvalidDataException(
+                "Replay fixture Warp state requires a nonzero warp identity.");
+        }
         var initialTarget = fixture.InitialState;
         if ((initialTarget.CombatTargetMonsterItemSeed == 0)
             != (initialTarget.CombatTargetMonsterAiSeed == 0)) {
@@ -313,6 +323,13 @@ public static class ReplayFixtureLoader
             PositionX = value.TryGetProperty("position_x", out var positionX) ? positionX.GetInt32() : 0,
             PositionY = value.TryGetProperty("position_y", out var positionY) ? positionY.GetInt32() : 0,
             LevelId = value.TryGetProperty("level_id", out var levelId) ? levelId.GetUInt32() : 0,
+            WarpId = GetOptionalUInt(value, "warp_id"),
+            WarpSourceLevelId = GetOptionalUInt(value, "warp_source_level_id"),
+            WarpTriggerX = GetOptionalInt(value, "warp_trigger_x"),
+            WarpTriggerY = GetOptionalInt(value, "warp_trigger_y"),
+            WarpTargetLevelId = GetOptionalUInt(value, "warp_target_level_id"),
+            WarpTargetX = GetOptionalInt(value, "warp_target_x"),
+            WarpTargetY = GetOptionalInt(value, "warp_target_y"),
             FacingDirection = (DiabloPlayerDirection)GetOptionalUInt(
                 value,
                 "facing_direction"),

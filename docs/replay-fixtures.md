@@ -269,7 +269,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 149 checked-in JSON fixtures and 167 registered
+the native replay gate contains 150 checked-in JSON fixtures and 168 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -652,6 +652,11 @@ eligible monster with four independent damage channels. Ticks 1 and 2 prove
 native damage scaling, attack-damage replacement, canonical berserked-monster
 hashing, and rejection of a duplicate cast. Both runners validate both
 checkpoints.
+
+`gameplay-warp-resolution.json` uses a learned Warp spell against a normalized
+level trigger. Tick 1 proves deterministic destination selection, level
+transition, visited-level history, exact mana consumption, and canonical state
+parity between the native and managed runners.
 
 `gameplay-stone-curse-resolution.json` uses learned Stone Curse level 3 and a
 walking monster whose future tile is reached through the native radius crawl.

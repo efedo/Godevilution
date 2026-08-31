@@ -2999,6 +2999,72 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void WarpFixtureMatchesNativeLevelTransitionAndVisitedState()
+    {
+        var fixture = LoadReplayFixture("gameplay-warp-resolution.json");
+        var initial = fixture.InitialState;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 5, 5));
+        world.AddLevel(new AuthoritativeLevel(initial.WarpTargetLevelId, 5, 5));
+        world.AddWarpTarget(new AuthoritativeWarpTarget(
+            initial.WarpId,
+            initial.WarpSourceLevelId,
+            initial.WarpTriggerX,
+            initial.WarpTriggerY,
+            initial.WarpTargetLevelId,
+            initial.WarpTargetX,
+            initial.WarpTargetY));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(49, 35, 0, 0, 0, 0) {
+                NativeSpellId = 42,
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 2,
+                ProjectileCount = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Warp,
+                ManaAdjustment = 3,
+                MinimumManaCost = 18,
+                ManaCostScale = 64,
+                WarpSearchRadius = 5,
+            },
+        ]);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingWorld: world,
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Equal(initial.WarpTargetLevelId, player.LevelId);
+        Assert.Equal((initial.WarpTargetX, initial.WarpTargetY), (player.PositionX, player.PositionY));
+        Assert.Equal(initial.Mana - 35 * 64, player.Mana);
+        Assert.Equal(
+            [initial.LevelId, initial.WarpTargetLevelId],
+            player.VisitedLevelIds);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

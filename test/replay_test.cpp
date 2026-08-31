@@ -2627,6 +2627,43 @@ TEST(ReplayFixture, ExecutesBoneSpiritPvpAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesWarpLevelTransitionAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-warp-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.visitedLevelIds.push_back(fixture.initialState.levelId);
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 42;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.levelId, 2U);
+	EXPECT_EQ(state.positionX, 2);
+	EXPECT_EQ(state.positionY, 2);
+	EXPECT_EQ(state.mana, 2760);
+	ASSERT_EQ(state.visitedLevelIds.size(), 2U);
+	EXPECT_EQ(state.visitedLevelIds[0], 1U);
+	EXPECT_EQ(state.visitedLevelIds[1], 2U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritHomingAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-homing.json");

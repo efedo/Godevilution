@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Warp replay coverage. Native and managed runners now preserve
+  normalized level-trigger resolution, deterministic destination selection,
+  level-visit history, mana consumption, and canonical level-transition state.
+
 - Add shared Berserk replay coverage. Native and managed runners now preserve
   eligible-target admission, native four-channel damage scaling, and recast
   rejection with canonical monster state hashing.

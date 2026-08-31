@@ -167,6 +167,21 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public uint LevelId { get; init; }
 
+    /** Optional normalized Warp trigger and destination used by replay fixtures. */
+    public uint WarpId { get; init; }
+
+    public uint WarpSourceLevelId { get; init; }
+
+    public int WarpTriggerX { get; init; }
+
+    public int WarpTriggerY { get; init; }
+
+    public uint WarpTargetLevelId { get; init; }
+
+    public int WarpTargetX { get; init; }
+
+    public int WarpTargetY { get; init; }
+
     public DiabloPlayerDirection FacingDirection { get; init; } = DiabloPlayerDirection.South;
 
     /** Fixture-side projection of validated level content. */

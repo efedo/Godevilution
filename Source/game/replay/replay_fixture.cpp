@@ -5061,6 +5061,54 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		}
 		return true;
 	}
+	if (command.spellId == 49
+	    && state.spellProjectileBehavior == 42
+	    && (isAbility || isMemorized)
+	    && state.warpId != 0
+	    && state.levelId != 0
+	    && state.levelId == state.warpSourceLevelId
+	    && state.warpTargetLevelId != 0) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = GetReplayTeleportManaCost(state, spellLevel);
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		const auto destination = Crawl(0, 5, [&](Displacement displacement) -> std::optional<std::pair<int32_t, int32_t>> {
+			const int32_t candidateX = state.warpTargetX + displacement.deltaX;
+			const int32_t candidateY = state.warpTargetY + displacement.deltaY;
+			if (candidateX < 0 || candidateX >= 40 || candidateY < 0 || candidateY >= 40)
+				return {};
+			if (state.warpTargetLevelId == state.warpSourceLevelId
+			    && candidateX == state.warpTriggerX
+			    && candidateY == state.warpTriggerY)
+				return {};
+			if (state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLevelId == state.warpTargetLevelId
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerPositionX == candidateX
+			    && state.secondaryPlayerPositionY == candidateY)
+				return {};
+			return std::pair<int32_t, int32_t> { candidateX, candidateY };
+		});
+		if (!destination)
+			return false;
+		if (applyEffects) {
+			state.levelId = state.warpTargetLevelId;
+			if (std::find(state.visitedLevelIds.begin(), state.visitedLevelIds.end(), state.levelId) == state.visitedLevelIds.end())
+				state.visitedLevelIds.push_back(state.levelId);
+			state.positionX = destination->first;
+			state.positionY = destination->second;
+			state.manaShieldActive = false;
+			state.statusEffects.erase(std::remove_if(state.statusEffects.begin(), state.statusEffects.end(), [](const auto &effect) {
+				return effect.behavior == 1 || effect.behavior == 2;
+			}),
+			    state.statusEffects.end());
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
 	if (command.spellId == 41
 	    && state.spellProjectileBehavior == ManaBehavior
 	    && (isAbility || isMemorized)
@@ -8935,6 +8983,20 @@ private:
 				fixture_.initialState.levelId = levelId;
 				return true;
 			}
+			if (key == "warp_id")
+				return ParseUnsigned(fixture_.initialState.warpId);
+			if (key == "warp_source_level_id")
+				return ParseUnsigned(fixture_.initialState.warpSourceLevelId);
+			if (key == "warp_trigger_x")
+				return ParseSigned(fixture_.initialState.warpTriggerX);
+			if (key == "warp_trigger_y")
+				return ParseSigned(fixture_.initialState.warpTriggerY);
+			if (key == "warp_target_level_id")
+				return ParseUnsigned(fixture_.initialState.warpTargetLevelId);
+			if (key == "warp_target_x")
+				return ParseSigned(fixture_.initialState.warpTargetX);
+			if (key == "warp_target_y")
+				return ParseSigned(fixture_.initialState.warpTargetY);
 			if (key == "facing_direction")
 				return ParseUnsigned(fixture_.initialState.facingDirection);
 			if (key == "suppress_multiplayer_death_drops")
@@ -10385,6 +10447,13 @@ bool ExecuteReplayFixture(
 	state.suppressMultiplayerDeathDrops = fixture.initialState.suppressMultiplayerDeathDrops;
 	state.facingDirection = fixture.initialState.facingDirection;
 	state.characterName = fixture.initialState.characterName;
+	state.warpId = fixture.initialState.warpId;
+	state.warpSourceLevelId = fixture.initialState.warpSourceLevelId;
+	state.warpTriggerX = fixture.initialState.warpTriggerX;
+	state.warpTriggerY = fixture.initialState.warpTriggerY;
+	state.warpTargetLevelId = fixture.initialState.warpTargetLevelId;
+	state.warpTargetX = fixture.initialState.warpTargetX;
+	state.warpTargetY = fixture.initialState.warpTargetY;
 	state.manaShieldActive = fixture.initialState.manaShieldActive;
 	if (fixture.initialState.reflectCharges > std::numeric_limits<uint16_t>::max()) {
 		error = "Replay fixture Reflect charges must fit the native uint16 range.";
@@ -11473,7 +11542,7 @@ bool ExecuteReplayFixture(
 				    state.positionY,
 				    state.combatTargetPositionX,
 				    state.combatTargetPositionY));
-			} else if (accepted && command.kind == "Cast") {
+			} else if (accepted && command.kind == "Cast" && state.spellProjectileBehavior != 42) {
 				int32_t targetX = command.targetX;
 				int32_t targetY = command.targetY;
 				if (state.spellProjectileBehavior == 5
