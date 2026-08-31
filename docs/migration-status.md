@@ -2,6 +2,10 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers player Telekinesis world-item pickup.
+Native and managed runners preserve target validation, inventory placement,
+memorized-spell admission, mana consumption, and canonical item hashing.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

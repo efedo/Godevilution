@@ -111,6 +111,11 @@ native full-mana restoration boundary.
 character-level and memorized-spell-level restoration rolls and the native
 class multiplier.
 
+`gameplay-telekinesis-world-item.json` covers a memorized Telekinesis cast that
+targets a server-owned world item, preserving exact target coordinates,
+inventory first-fit placement, purchased-tick state, mana consumption, and the
+canonical item hash across native and managed runners.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.

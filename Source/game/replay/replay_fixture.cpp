@@ -64,6 +64,7 @@ constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t ApocalypseControllerBehavior = 32;
 constexpr int32_t ApocalypseBoomBehavior = 33;
 constexpr int32_t ManaBehavior = 37;
+constexpr int32_t TelekinesisBehavior = 44;
 constexpr int32_t MagiBehavior = 38;
 constexpr int32_t ReflectBehavior = 39;
 constexpr int32_t EtherealizeBehavior = 49;
@@ -91,6 +92,10 @@ constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, -1 },
 	{ 1, 0 },
 };
+
+bool CanPlaceReplayInventoryItem(const std::vector<int32_t> &grid, int cell, uint32_t width, uint32_t height);
+int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const ReplayFixtureItemState &item);
+void FillReplayInventoryGrid(ReplayFixtureExecutionState &state, int cell, size_t itemIndex, const ReplayFixtureItemState &item);
 
 std::optional<std::pair<int32_t, int32_t>> FindReplaySecondaryDeathDropPosition(
 	const ReplayFixtureExecutionState &state,
@@ -5007,6 +5012,58 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		    && item.state.spellId == static_cast<int32_t>(command.spellId);
 	});
 	const bool isConsumable = !isAbility && !isMemorized && beltConsumable != state.belt.end();
+	if (command.spellId == 33
+	    && state.spellProjectileBehavior == TelekinesisBehavior
+	    && (isAbility || isMemorized)
+	    && command.targetEntityId == state.worldItemEntityId
+	    && state.worldItemEntityId != 0
+	    && state.worldItemSeed != 0
+	    && state.levelId == state.worldItemLevelId
+	    && command.targetX == state.worldItemPositionX
+	    && command.targetY == state.worldItemPositionY) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = std::max(8, 15 - std::max(spellLevel - 1, 0) * 2) * 64;
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			const ReplayFixtureItemState pickedItemState = state.worldItemState;
+			const int targetCell = CanPlaceReplayInventoryItem(
+			    state.inventoryGrid,
+			    0,
+			    pickedItemState.inventoryWidth,
+			    pickedItemState.inventoryHeight)
+			    ? 0
+			    : FindReplayInventoryPlacement(state, pickedItemState);
+			if (targetCell >= 0 && state.inventory.size() < 40) {
+				const size_t inventoryIndex = state.inventory.size();
+				state.inventory.push_back({
+				    0,
+				    0,
+				    state.worldItemSeed,
+				    state.worldItemPrice,
+				    command.order.targetTick,
+				    pickedItemState,
+				});
+				FillReplayInventoryGrid(state, targetCell, inventoryIndex, pickedItemState);
+			} else {
+				state.heldItemDefined = true;
+				state.heldItem = {
+				    0,
+				    0,
+				    state.worldItemSeed,
+				    state.worldItemPrice,
+				    command.order.targetTick,
+				    pickedItemState,
+				};
+			}
+			state.worldItemEntityId = 0;
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
 	if (command.spellId == 11
 	    && state.spellProjectileBehavior == 12
 	    && (isAbility || isMemorized)

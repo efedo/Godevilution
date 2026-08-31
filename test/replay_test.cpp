@@ -2842,6 +2842,54 @@ TEST(ReplayFixture, ExecutesCounselorDelayAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesTelekinesisWorldItemAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-telekinesis-world-item.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 44;
+	state.inventoryGrid.assign(40, -1);
+	state.worldItemEntityId = fixture.initialState.worldItemEntityId;
+	state.worldItemLevelId = fixture.initialState.levelId;
+	state.worldItemPositionX = fixture.initialState.positionX + 1;
+	state.worldItemPositionY = fixture.initialState.positionY;
+	state.worldItemSeed = fixture.initialState.worldItemSeed;
+	state.worldItemPrice = fixture.initialState.worldItemPrice;
+	state.worldItemState.itemType = 1;
+	state.worldItemState.itemIndex = 1;
+	state.worldItemState.stableItemId = 9916;
+	state.worldItemState.value = static_cast<int32_t>(fixture.initialState.worldItemPrice);
+	state.worldItemState.identifiedValue = state.worldItemState.value;
+	state.worldItemState.statFlag = true;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.mana, 1168);
+	EXPECT_EQ(state.worldItemEntityId, 0U);
+	ASSERT_EQ(state.inventory.size(), 1U);
+	EXPECT_EQ(state.inventory[0].itemSeed, fixture.initialState.worldItemSeed);
+	EXPECT_EQ(state.inventory[0].purchasedAtTick, 1U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesCounselorRetreatAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-counselor-retreat.json");
