@@ -2505,6 +2505,47 @@ TEST(ReplayFixture, ExecutesReflectRetaliationAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesEtherealizeStatusAndDamageImmunityAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-etherealize-resolution.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.abilitySpellId = fixture.initialState.abilitySpellId;
+	state.spellProjectileBehavior = 49;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	ASSERT_EQ(state.statusEffects.size(), 1U);
+	EXPECT_EQ(state.statusEffects.front().effectId, 53U);
+	EXPECT_EQ(state.statusEffects.front().remainingTicks, std::numeric_limits<uint32_t>::max());
+	EXPECT_EQ(state.life, fixture.initialState.life);
+	EXPECT_EQ(state.combatTargetHitPoints, fixture.initialState.combatTargetHitPoints);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesBoneSpiritPvpAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-pvp.json");

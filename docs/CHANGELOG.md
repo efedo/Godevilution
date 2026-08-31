@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Etherealize replay coverage. Native and managed runners now
+  preserve permanent status hashing and monster-damage immunity across ticks.
+
 - Add shared Reflect replay coverage. Native and managed runners now preserve
   level-scaled charge creation, canonical charge state, charge consumption,
   reflected monster damage, and the aligned gameplay RNG stream.

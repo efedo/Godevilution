@@ -66,6 +66,8 @@ constexpr int32_t ApocalypseBoomBehavior = 33;
 constexpr int32_t ManaBehavior = 37;
 constexpr int32_t MagiBehavior = 38;
 constexpr int32_t ReflectBehavior = 39;
+constexpr int32_t EtherealizeBehavior = 49;
+constexpr int32_t EtherealizeStatusBehavior = 3;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
@@ -4975,6 +4977,22 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		}
 		return true;
 	}
+	if (command.spellId == 53
+	    && state.spellProjectileBehavior == EtherealizeBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		if (applyEffects) {
+			state.statusEffects.erase(std::remove_if(
+			    state.statusEffects.begin(),
+			    state.statusEffects.end(),
+			    [](const auto &effect) { return effect.effectId == 53; }),
+			    state.statusEffects.end());
+			state.statusEffects.push_back({ 53, std::numeric_limits<uint32_t>::max(), 0, EtherealizeStatusBehavior });
+			if (!isAbility)
+				state.mana -= 100 * 64;
+		}
+		return true;
+	}
 	if (command.spellId == 41
 	    && state.spellProjectileBehavior == ManaBehavior
 	    && (isAbility || isMemorized)
@@ -7576,6 +7594,12 @@ void AdvanceReplayMonsterAttack(
 	    });
 	if (protectedByFlash)
 		return;
+	const bool protectedByEtherealize = std::any_of(
+		state.statusEffects.begin(),
+		state.statusEffects.end(),
+		[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
+	if (protectedByEtherealize)
+		return;
 	const int32_t damage = state.combatTargetAttackDamage == 0
 	    ? 0
 	    : std::max(1, state.combatTargetAttackDamage);
@@ -8472,7 +8496,7 @@ void AdvanceReplayStateToTick(
 			state.secondaryPlayerCombatModeEndTick = 0;
 		}
 		for (auto &effect : state.statusEffects) {
-			if (effect.remainingTicks > 0)
+			if (effect.remainingTicks > 0 && effect.behavior != EtherealizeStatusBehavior)
 				--effect.remainingTicks;
 		}
 		state.statusEffects.erase(std::remove_if(state.statusEffects.begin(), state.statusEffects.end(), [](const auto &effect) {

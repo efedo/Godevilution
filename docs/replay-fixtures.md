@@ -269,7 +269,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 147 checked-in JSON fixtures and 165 registered
+the native replay gate contains 148 checked-in JSON fixtures and 166 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -642,6 +642,11 @@ adjacent monster. Tick 1 proves charge consumption, the native 20-30 percent
 retaliation roll, reflected monster damage, reduced incoming damage, and shared
 gameplay RNG state.
 
+`gameplay-etherealize-resolution.json` uses the Etherealize ability against an
+adjacent monster. Ticks 0 and 1 prove immediate permanent status admission,
+typed status hashing, and blocked autonomous monster damage while the status
+remains active. Both runners validate both checkpoints.
+
 `gameplay-stone-curse-resolution.json` uses learned Stone Curse level 3 and a
 walking monster whose future tile is reached through the native radius crawl.
 Ticks 0, 1, 2, 144, 145, and 146 prove a source-preserving no-target fizzle,
@@ -840,6 +845,8 @@ Notable shared fixtures include:
   Reflect charge creation and canonical state hashing;
 - `gameplay-reflect-retaliation.json` for charge consumption, native reflected
   monster damage, reduced incoming damage, and gameplay RNG parity;
+- `gameplay-etherealize-resolution.json` for permanent status admission,
+  typed status hashing, and autonomous monster-damage immunity;
 - `gameplay-pvp-ear-death.json` for requested and persisted character names,
   lethal Charged Bolt PvP damage, equipment retention, native ear identity and
   cursor presentation, zero-extra-RNG placement, and complete C++/C# dynamic

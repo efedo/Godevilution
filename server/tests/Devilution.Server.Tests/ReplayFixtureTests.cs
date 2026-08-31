@@ -1413,6 +1413,63 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void EtherealizeFixtureMatchesNativePermanentStatusAndDamageImmunity()
+    {
+        var fixture = LoadReplayFixture("gameplay-etherealize-resolution.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            aggroRange: initial.CombatTargetAggroRange);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(53, 100, 0, 53, uint.MaxValue, 0) {
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Etherealize,
+                StaffLevel = -1,
+            },
+        ]);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingSpells: spells,
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var status = Assert.Single(player.StatusEffects);
+        Assert.Equal(53U, status.EffectId);
+        Assert.Equal(uint.MaxValue, status.RemainingTicks);
+        Assert.Equal((int)AuthoritativeStatusEffectBehavior.Etherealize, (int)status.Behavior);
+        Assert.Equal(initial.Life, player.Life);
+        Assert.Equal(initial.CombatTargetHitPoints, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

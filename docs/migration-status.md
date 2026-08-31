@@ -2,6 +2,10 @@
 
 Status date: 2026-08-31
 
+The shared replay contract now covers player Etherealize casts. Native and
+managed runners preserve the permanent status, canonical status hashing, and
+monster-damage immunity across authoritative ticks.
+
 The shared replay contract now covers player Reflect casts and retaliation.
 Native and managed runners preserve level-scaled charges, canonical Reflect
 state, charge consumption, reflected monster damage, and gameplay RNG parity.
