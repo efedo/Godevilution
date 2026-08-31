@@ -65,6 +65,7 @@ constexpr int32_t ApocalypseControllerBehavior = 32;
 constexpr int32_t ApocalypseBoomBehavior = 33;
 constexpr int32_t ManaBehavior = 37;
 constexpr int32_t MagiBehavior = 38;
+constexpr int32_t ReflectBehavior = 39;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
@@ -371,6 +372,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 	if (state.manaShieldActive) {
 		hasher.AppendString("godevilution-player-mana-shield-v1");
 		hasher.AppendBool(true);
+	}
+	if (state.reflectCharges != 0) {
+		hasher.AppendString("godevilution-player-reflect-v1");
+		hasher.AppendUint32(state.reflectCharges);
 	}
 	std::vector<ReplayFixtureMemorizedSpell> memorizedSpells = state.memorizedSpells;
 	std::sort(memorizedSpells.begin(), memorizedSpells.end(), [](const auto &left, const auto &right) {
@@ -4958,6 +4963,18 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			state.mana = state.manaMaximum;
 		return true;
 	}
+	if (command.spellId == 43
+	    && state.spellProjectileBehavior == ReflectBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		if (applyEffects) {
+			const uint64_t spellLevel = isMemorized ? memorizedSpell->level : 2;
+			const uint64_t chargeIncrement = spellLevel * state.characterLevel;
+			if (chargeIncrement <= std::numeric_limits<uint16_t>::max() - state.reflectCharges)
+				state.reflectCharges += static_cast<uint32_t>(chargeIncrement);
+		}
+		return true;
+	}
 	if (command.spellId == 41
 	    && state.spellProjectileBehavior == ManaBehavior
 	    && (isAbility || isMemorized)
@@ -7563,6 +7580,23 @@ void AdvanceReplayMonsterAttack(
 	    ? 0
 	    : std::max(1, state.combatTargetAttackDamage);
 	int32_t lifeDamage = damage;
+	int32_t reflectedDamage = 0;
+	if (damage > 0 && state.reflectCharges > 0) {
+		--state.reflectCharges;
+		reflectedDamage = damage * (GenerateRnd(state, 11) + 20) / 100;
+		if (reflectedDamage > 0) {
+			state.combatTargetHitPointsQ6 = std::max(
+			    0,
+			    state.combatTargetHitPointsQ6 - reflectedDamage * 64);
+			state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+			if (state.combatTargetHitPointsQ6 == 0)
+				DefeatReplayCombatTarget(state);
+		}
+		// Keep the replay stream aligned with the authoritative monster-hit
+		// boundary, which advances once after resolving the Reflect percentage.
+		AdvanceRandom(state);
+		lifeDamage = std::max(0, damage - reflectedDamage);
+	}
 	const bool hasNoManaItem = std::any_of(
 	    state.equipment.begin(),
 	    state.equipment.end(),
@@ -8778,6 +8812,8 @@ private:
 				return ParseString(fixture_.initialState.characterName);
 			if (key == "mana_shield_active")
 				return ParseBool(fixture_.initialState.manaShieldActive);
+			if (key == "reflect_charges")
+				return ParseUnsigned(fixture_.initialState.reflectCharges);
 			if (key == "gold")
 				return ParseUnsigned(fixture_.initialState.gold);
 			if (key == "experience")
@@ -10252,6 +10288,11 @@ bool ExecuteReplayFixture(
 	state.facingDirection = fixture.initialState.facingDirection;
 	state.characterName = fixture.initialState.characterName;
 	state.manaShieldActive = fixture.initialState.manaShieldActive;
+	if (fixture.initialState.reflectCharges > std::numeric_limits<uint16_t>::max()) {
+		error = "Replay fixture Reflect charges must fit the native uint16 range.";
+		return false;
+	}
+	state.reflectCharges = fixture.initialState.reflectCharges;
 	if (state.equipment.empty() && !fixture.initialState.equipment.empty()) {
 		for (const auto &source : fixture.initialState.equipment) {
 			ReplayFixtureItemState item;

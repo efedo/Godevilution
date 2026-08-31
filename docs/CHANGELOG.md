@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add shared Reflect replay coverage. Native and managed runners now preserve
+  level-scaled charge creation, canonical charge state, charge consumption,
+  reflected monster damage, and the aligned gameplay RNG stream.
+
 - Formalize projection-only replay checkpoint markers. Timeline checkpoints
   may now omit a canonical hash while both runners still advance and verify
   the covered lifecycle boundary.

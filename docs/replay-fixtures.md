@@ -269,7 +269,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 145 checked-in JSON fixtures and 163 registered
+the native replay gate contains 147 checked-in JSON fixtures and 165 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -633,6 +633,15 @@ active-cast fizzle with no second charge, native Q6 damage reduction, mana
 depletion, reverse reduction of the unpaid remainder, life damage, and shield
 cleanup. Both runners validate all six checkpoints.
 
+`gameplay-reflect-resolution.json` uses the external Reflect ability at
+character level 3. Tick 1 proves the native default spell level, level-scaled
+charge creation, and canonical Reflect-state hashing in both runners.
+
+`gameplay-reflect-retaliation.json` starts with one Reflect charge and an
+adjacent monster. Tick 1 proves charge consumption, the native 20-30 percent
+retaliation roll, reflected monster damage, reduced incoming damage, and shared
+gameplay RNG state.
+
 `gameplay-stone-curse-resolution.json` uses learned Stone Curse level 3 and a
 walking monster whose future tile is reached through the native radius crawl.
 Ticks 0, 1, 2, 144, 145, and 146 prove a source-preserving no-target fizzle,
@@ -827,6 +836,10 @@ Notable shared fixtures include:
   lifetime;
 - `gameplay-mana-shield-resolution.json` for source consumption, active-cast
   fizzle, native Q6 mana absorption, depletion reversal, and state-hash parity;
+- `gameplay-reflect-resolution.json` for default-level, character-level-scaled
+  Reflect charge creation and canonical state hashing;
+- `gameplay-reflect-retaliation.json` for charge consumption, native reflected
+  monster damage, reduced incoming damage, and gameplay RNG parity;
 - `gameplay-pvp-ear-death.json` for requested and persisted character names,
   lethal Charged Bolt PvP damage, equipment retention, native ear identity and
   cursor presentation, zero-extra-RNG placement, and complete C++/C# dynamic

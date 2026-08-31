@@ -1320,6 +1320,99 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ReflectFixtureMatchesNativeLevelScaledChargeCreation()
+    {
+        var fixture = LoadReplayFixture("gameplay-reflect-resolution.json");
+        var initial = fixture.InitialState;
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(43, 35, 0, 0, 0, 0) {
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
+                StaffLevel = -1,
+            },
+        ]);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6U, Assert.Single(result.FinalSnapshot.Players).ReflectCharges);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
+    public void ReflectRetaliationFixtureMatchesNativeChargeConsumptionAndDamage()
+    {
+        var fixture = LoadReplayFixture("gameplay-reflect-retaliation.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            aggroRange: initial.CombatTargetAggroRange);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(43, 35, 0, 0, 0, 0) {
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileLifetime = 1,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
+                ReflectDamagePercentMinimum = 20,
+                ReflectDamagePercentMaximum = 30,
+                StaffLevel = -1,
+            },
+        ]);
+        var stores = new StoreCatalog();
+        stores.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            stores,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingReflectCharges: initial.ReflectCharges,
+            startingCombatTargets: [target],
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Equal(12, player.Life);
+        Assert.Equal(0U, player.ReflectCharges);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(18, monster.HitPoints);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(

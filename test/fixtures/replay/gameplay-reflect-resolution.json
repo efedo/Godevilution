@@ -1,0 +1,42 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/reflect-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "dab5e780f5533071d28b0ee015e3af11f7a6624d951e8d4cb3418b584513d996"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 2000,
+    "life_maximum": 2000,
+    "mana": 1000,
+    "mana_maximum": 6000,
+    "character_level": 3,
+    "ability_spell_id": 43,
+    "spell_projectile_behavior": 39
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 43,
+        "target_entity_id": 0,
+        "target_x": 0,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "8e268da956dbf9aa7257363437645808972d22057287771f8c4bda9cf0678b60" }
+  ]
+}

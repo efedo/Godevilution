@@ -1,0 +1,44 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/reflect-retaliation",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "reflect-retaliation-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20,
+    "life_maximum": 20,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "reflect_charges": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 3,
+    "combat_target_attack_damage": 10
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "16d5eca3020227d7711f6b9b5f6b405ec74ac5ce72c0f355fb7481e250af5b52" }
+  ]
+}
