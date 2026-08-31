@@ -92,6 +92,10 @@ timeline checkpoints intentionally omit snapshot hashes until the compact
 native monster projection and full managed monster snapshot share the same
 canonical shape.
 
+`gameplay-rage-resolution.json` covers the Hellfire Rage cast, including the
+active controller, duplicate-cast suppression, cooldown transition, bounded
+Q6 self-damage, and expiry removal.
+
 `gameplay-flame-wave-resolution.json` covers the player Flame Wave cast,
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
@@ -780,6 +784,8 @@ Notable shared fixtures include:
 - `gameplay-guardian-resolution.json` for turret admission, deterministic
   native firing-arc selection, Firebolt creation, controller state, and
   projectile lifetime;
+- `gameplay-rage-resolution.json` for active/cooldown timing, duplicate-cast
+  suppression, bounded Q6 expiry damage, and controller removal;
 - `gameplay-flame-wave-resolution.json` for the one-tick controller,
   deterministic center/branch geometry, per-segment damage, same-tick movement,
   and canonical parity;

@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/rage-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "dab5e780f5533071d28b0ee015e3af11f7a6624d951e8d4cb3418b584513d996"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "mana": 20000,
+    "mana_maximum": 20000,
+    "character_class": 5,
+    "character_level": 1,
+    "position_x": 5,
+    "position_y": 5,
+    "level_id": 1,
+    "ability_spell_id": 22,
+    "spell_projectile_behavior": 34
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 22,
+        "target_x": 5,
+        "target_y": 5
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 22,
+        "target_x": 5,
+        "target_y": 5
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "timeline-rage-active" },
+    { "tick": 2, "state_sha256": "timeline-rage-duplicate-cast" },
+    { "tick": 248, "state_sha256": "timeline-rage-cooldown" },
+    { "tick": 494, "state_sha256": "timeline-rage-expiry-ready" },
+    { "tick": 495, "state_sha256": "timeline-rage-expired" }
+  ]
+}

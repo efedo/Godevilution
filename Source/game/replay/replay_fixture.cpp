@@ -56,6 +56,7 @@ constexpr int32_t RingOfFireControllerBehavior = 42;
 constexpr int32_t ImmolationControllerBehavior = 43;
 constexpr int32_t ElementalBehavior = 35;
 constexpr int32_t GuardianControllerBehavior = 36;
+constexpr int32_t RageControllerBehavior = 34;
 constexpr int32_t NovaControllerBehavior = 30;
 constexpr int32_t NovaBallBehavior = 31;
 constexpr int32_t HorkSpawnBehavior = 57;
@@ -3787,6 +3788,31 @@ ReplayFixtureProjectileState CreateReplayGuardianController(
 	return controller;
 }
 
+ReplayFixtureProjectileState CreateReplayRageController(
+    const ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
+{
+	ReplayFixtureProjectileState controller;
+	controller.entityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		controller.entityId = std::max(controller.entityId, existing.entityId + 1U);
+	controller.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	controller.spellId = 22;
+	controller.levelId = state.levelId;
+	controller.positionX = state.positionX;
+	controller.positionY = state.positionY;
+	controller.targetX = state.positionX;
+	controller.targetY = state.positionY;
+	controller.damage = static_cast<int32_t>(state.characterLevel) * 6;
+	controller.damageType = 0;
+	controller.remainingTicks = 245 + state.characterLevel * 2;
+	controller.behavior = RageControllerBehavior;
+	controller.startX = state.positionX;
+	controller.startY = state.positionY;
+	controller.effectiveSpellLevel = spellLevel;
+	return controller;
+}
+
 ReplayFixtureProjectileState CreateReplayGuardianBolt(
     ReplayFixtureExecutionState &state,
     const ReplayFixtureProjectileState &controller,
@@ -4528,6 +4554,34 @@ void AdvanceReplayGuardianOneTick(
 	}
 }
 
+/** Advances Rage's native active/cooldown controller and expiry self-damage. */
+void AdvanceReplayRageOneTick(ReplayFixtureExecutionState &state)
+{
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		auto &controller = state.projectiles[index];
+		if (controller.behavior != RageControllerBehavior)
+			continue;
+		if (controller.sourceEntityId != state.entityId
+		    || controller.levelId != state.levelId
+		    || state.life <= 0) {
+			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+			return;
+		}
+		if (controller.remainingTicks > 0)
+			--controller.remainingTicks;
+		if (controller.remainingTicks != 0)
+			return;
+		if (controller.phase == 0) {
+			controller.phase = 1;
+			controller.remainingTicks = 245 + state.characterLevel * 2;
+			return;
+		}
+		state.life = std::max(1, state.life - controller.damage);
+		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+		return;
+	}
+}
+
 void AdvanceReplayChainLightningOneTick(ReplayFixtureExecutionState &state)
 {
 	for (size_t index = 0; index < state.projectiles.size(); ++index) {
@@ -5029,6 +5083,22 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 				spellLevel));
 			if (!isAbility)
 				state.mana -= manaCost;
+		}
+		return true;
+	}
+	if (command.spellId == 22
+	    && state.spellProjectileBehavior == RageControllerBehavior
+	    && (isAbility || isMemorized)
+	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+			state,
+			isMemorized ? &*memorizedSpell : nullptr);
+		if (applyEffects
+		    && state.life > static_cast<int32_t>(state.characterLevel) * 64
+		    && !std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+				return projectile.behavior == RageControllerBehavior;
+			})) {
+			state.projectiles.push_back(CreateReplayRageController(state, spellLevel));
 		}
 		return true;
 	}
@@ -8178,6 +8248,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayImmolationOneTick(state);
 		AdvanceReplayElementalOneTick(state);
 		AdvanceReplayGuardianOneTick(state);
+		AdvanceReplayRageOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);

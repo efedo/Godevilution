@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   preserve the one-tick turret admission, deterministic 48-position firing
   arc, Firebolt creation, controller state, and projectile lifetime.
 
+- Add shared Rage replay coverage. Native and managed runners now preserve
+  active/cooldown timing, duplicate-cast suppression, and the bounded Q6
+  self-damage applied when the Rage controller expires.
+
 - Add shared Elemental replay coverage. Native and managed runners now
   preserve the retargeting projectile lifecycle, deterministic fire burst
   timing, and canonical projectile checkpoints.

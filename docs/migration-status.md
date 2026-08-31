@@ -10,6 +10,10 @@ the native replay projection intentionally remains narrower than the full
 managed monster snapshot; the replay contract now accepts those projection-
 only checkpoints explicitly in both runners.
 
+The shared replay contract now covers the Hellfire Rage controller. Native
+and managed runners preserve active/cooldown timing, duplicate-cast
+suppression, and the bounded Q6 self-damage on expiry.
+
 The shared replay contract now covers player Elemental casts. Native and
 managed runners preserve the retargeting projectile lifecycle, fire-burst
 timing, and canonical checkpoints.

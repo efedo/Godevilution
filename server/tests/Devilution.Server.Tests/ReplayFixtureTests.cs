@@ -1025,6 +1025,59 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void RageFixtureMatchesNativeActiveCooldownAndExpiryDamage()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-rage-resolution.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(22, 15, 0, 0, 0, 0) {
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Physical,
+                ProjectileLifetime = 245,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.RageController,
+                ResistantDamageDivisor = 1,
+                ProjectileImpactLifetime = 1,
+                MinimumManaCost = 1,
+                ManaCostScale = 64,
+                StaffLevel = -1,
+                RageControllerLifetime = 245,
+                RageCharacterLevelLifetimeScale = 2,
+                RageSelfDamageCharacterLevel = 6,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Accepted, CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(495UL, result.FinalSnapshot.Tick);
+        Assert.Equal(6394, Assert.Single(result.FinalSnapshot.Players).Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+    }
+
+    [Fact]
     public void ChargedBoltPvpFixtureDamagesTheSecondAuthoritativeParticipant()
     {
         var path = Path.Combine(
