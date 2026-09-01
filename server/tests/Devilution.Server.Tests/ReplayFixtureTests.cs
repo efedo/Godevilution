@@ -433,30 +433,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-lightning-wall-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(50, 35, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileLifetime = 1,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.LightningWallController,
-                ManaAdjustment = 3,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 18,
-                ManaCostScale = 64,
-                RandomDamageRange = 10,
-                RandomDamageIterationsBonus = 2,
-                DamageBonus = 2,
-                DamageScale = 16,
-                ResistantDamageDivisor = 4,
-                WallControlLifetime = 7,
-                WallSegmentBaseDuration = 255,
-                WallSegmentSpellLevelDurationStep = 255,
-                WallSegmentCharacterLevelDurationStep = 0,
-                WallSegmentDurationScale = 1,
-                WallCharacterLevelDamageMultiplier = 1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -506,30 +483,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-ring-of-fire-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(44, 28, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileLifetime = 1,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.RingOfFireController,
-                ManaAdjustment = 2,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 8,
-                ManaCostScale = 64,
-                RandomDamageRange = 10,
-                RandomDamageIterationsBonus = 2,
-                DamageBonus = 2,
-                DamageScale = 8,
-                ResistantDamageDivisor = 4,
-                RingOfFireSearchRadius = 3,
-                WallSegmentBaseDuration = 10,
-                WallSegmentSpellLevelDurationStep = 10,
-                WallSegmentCharacterLevelDurationStep = 1,
-                WallSegmentDurationScale = 16,
-                WallCharacterLevelDamageMultiplier = 1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -576,31 +530,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-nova-radial-fan-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(18, 60, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 255,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.NovaController,
-                RandomDamageRange = 6,
-                MagicDamageDivisor = 2,
-                DamageBonus = 5,
-                RandomDamageIterationsBonus = 5,
-                CharacterLevelDamageDivisor = 1,
-                SpellEffectScaleDivisor = 8,
-                DamageScale = 64,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 1,
-                ManaAdjustment = 3,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 35,
-                ManaCostScale = 64,
-                NovaControllerLifetime = 1,
-                NovaSearchRadius = 4,
-                NovaProjectileCount = 36,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -646,28 +576,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-flame-wave-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(15, 35, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.FlameWaveController,
-                RandomDamageRange = 10,
-                DamageBonus = 1,
-                SecondaryProjectileLifetime = 255,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 1,
-                ManaAdjustment = 3,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 20,
-                ManaCostScale = 64,
-                FlameWaveControllerLifetime = 1,
-                FlameWaveBranchBase = 2,
-                FlameWaveBranchSpellLevelDivisor = 2,
-                FlameWaveCharacterLevelDamageBonus = 1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(

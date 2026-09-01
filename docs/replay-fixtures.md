@@ -83,6 +83,10 @@ creation, persistent segment lifetime, and canonical projectile hashing.
 including the one-tick controller, native 36-ball radial fan ordering,
 first-tick movement, and canonical projectile hashing.
 
+The Lightning Wall, Ring of Fire, Nova, and Flame Wave runners load the
+validated base `spells.tsv` catalog and check the active `devilution.base`
+manifest identity.
+
 `gameplay-elemental-resolution.json` covers the player Elemental cast,
 including the initial fire projectile, native retargeting lifecycle, and
 canonical projectile hashing.
