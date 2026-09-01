@@ -597,6 +597,8 @@ near a level-1 Bone Spirit path. The fixture proves native nearest-monster
 retargeting, current-life-third damage with monster resistance, monster
 regeneration, and the retained seven-tick impact phase. Both runners validate
 the same spawn and post-hit checkpoints.
+The Firebolt, Fireball, and Bone Spirit PvP runners load the validated base `spells.tsv` rows and check the active `devilution.base` content-manifest
+identity.
 
 `gameplay-multiplayer-secondary-attack.json` routes a melee attack from the
 secondary participant to an adjacent monster. The fixture proves participant

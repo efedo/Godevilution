@@ -4,6 +4,7 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move the Firebolt, Fireball, and Bone Spirit PvP replay fixtures to the validated base `spells.tsv` catalog and active content-manifest identity, preserving native player-hit, current-life, resistance, and checkpoint parity.
 - Move the Chain Lightning, Immolation, Elemental, and Guardian replay
   fixtures to the validated base `spells.tsv` catalog and active content-manifest
   identity, preserving native controller, retargeting, and turret checkpoints.

@@ -16,6 +16,9 @@ catalog instead of a synthetic test-only spell definition.
 The Magi, Mana, Reflect, Etherealize, and Berserk fixtures now load their
 spell behavior from the validated base `spells.tsv` catalog instead of synthetic
 test-only rows.
+The Firebolt, Fireball, and Bone Spirit PvP fixtures now load their
+spell behavior from the validated base `spells.tsv` catalog instead of synthetic
+test-only rows.
 
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
