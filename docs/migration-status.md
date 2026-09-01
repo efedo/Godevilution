@@ -111,6 +111,10 @@ validated charge, movement, delay, and healing tuning from the shared
 `rhino-charge` and `scavenger-corpse` packs instead of relying on compatibility
 fallbacks. Their replay states also carry explicit stable monster IDs.
 
+The Sneak conceal/reveal fixtures now load their validated stealth distance and
+retreat tuning from the shared `sneak` pack instead of relying on compatibility
+fallbacks. Both replay states carry an explicit stable monster ID.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

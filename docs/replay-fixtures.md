@@ -223,6 +223,8 @@ native AI tuning from the hash-checked `bat-retreat`, `fat-movement`, and
 The Rhino charge and both Scavenger corpse-healing fixtures load their native
 charge, movement, delay, and healing tuples from the hash-checked
 `rhino-charge` and `scavenger-corpse` content packs.
+The Sneak conceal/reveal fixtures load their complete stealth distance and
+retreat tuple from the hash-checked `sneak` content pack.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -1016,7 +1018,7 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
-current Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes, multi-actor
+current Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes, multi-actor
 target selection beyond the current projectile lanes, mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup

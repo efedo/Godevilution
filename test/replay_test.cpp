@@ -4512,6 +4512,7 @@ TEST(ReplayFixture, ExecutesSneakConcealmentAgainstCSharpCheckpoint)
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
 	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
 	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
@@ -4547,6 +4548,7 @@ TEST(ReplayFixture, ExecutesSneakRevealAgainstCSharpCheckpoint)
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
 	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
 	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;

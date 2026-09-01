@@ -4527,7 +4527,7 @@ public sealed class ReplayFixtureTests
     public void GameplaySneakConcealmentMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-sneak-conceal.json");
-        var executor = CreateStealthReplayExecutor(fixture);
+        var executor = CreateStealthReplayExecutor(fixture, "sneak");
         var result = ReplayFixtureExecutor.Execute(
             fixture,
             executor,
@@ -4546,7 +4546,7 @@ public sealed class ReplayFixtureTests
     public void GameplaySneakRevealMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-sneak-reveal.json");
-        var executor = CreateStealthReplayExecutor(fixture);
+        var executor = CreateStealthReplayExecutor(fixture, "sneak");
         var result = ReplayFixtureExecutor.Execute(
             fixture,
             executor,

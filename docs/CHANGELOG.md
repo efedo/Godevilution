@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   into validated content packs, including native charge, movement, delay, and
   healing tuning.
 
+- Extract the Sneak conceal/reveal replay fixtures into a validated content pack,
+  including native stealth distance and retreat tuning.
+
 - Extract the SkeletonMelee movement-delay and failed-adjacent-attack replay
   fixtures into the validated `test/content/replay/skeleton-melee` pack,
   including native chance bands and delay formulas.

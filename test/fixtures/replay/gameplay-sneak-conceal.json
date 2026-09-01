@@ -2,7 +2,7 @@
   "format_version": 1,
   "fixture_id": "gameplay/sneak-conceal",
   "protocol_schema_version": "0.1.0",
-  "content_manifest": { "id": "test-content", "version": "1", "sha256": "sneak-conceal-content" },
+  "content_manifest": { "id": "replay.sneak", "version": "0.1.0", "sha256": "bf2926fa0db688a7db7dfd3a8ecdc75c0d6fbdd6d5bdd08d92b207c49dc3e8d9" },
   "tick_rate_hz": 20,
   "rng_seed": 9,
   "game_variant": "Diablo",
@@ -23,6 +23,7 @@
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
     "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 113,
     "combat_target_native_ai": "Sneak",
     "combat_target_intelligence": 0
   },
@@ -30,6 +31,6 @@
     { "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "ee924e7ac8fb1fa0f92d5fd61c68134bb73df6df16a1391e6a919b6cc2516abc" }
+    { "tick": 1, "state_sha256": "cec691ac6309028e1eb376adc6f785ac563a7ca4485948f802b5033150fe027f" }
   ]
 }
