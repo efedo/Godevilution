@@ -85,6 +85,11 @@ Counselor type and AI timing bands from the shared
 `test/content/replay/counselor` pack instead of relying on compatibility
 fallbacks.
 
+The GoatMelee movement and adjacent-attack fixtures now load their validated
+native AiAvoidance and wounded-special tuning from the shared
+`test/content/replay/goat-melee` pack instead of relying on compatibility
+fallbacks.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

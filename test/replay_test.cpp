@@ -4092,6 +4092,7 @@ TEST(ReplayFixture, ExecutesGoatMeleeAttackAgainstCSharpCheckpoint)
 	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
@@ -4784,6 +4785,7 @@ TEST(ReplayFixture, ExecutesGoatMeleeMovementAgainstCSharpCheckpoints)
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;

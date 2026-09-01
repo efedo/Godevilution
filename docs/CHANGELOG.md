@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the GoatMelee movement and adjacent-attack replay fixtures into the
+  validated `test/content/replay/goat-melee` pack, including native
+  AiAvoidance and wounded-special tuning.
+
 - Extract the Counselor delay and retreat replay fixtures into the validated
   `test/content/replay/counselor` pack and activate their external monster
   type/timing metadata through the compatibility executor.

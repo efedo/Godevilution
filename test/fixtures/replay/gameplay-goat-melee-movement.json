@@ -2,7 +2,7 @@
   "format_version": 1,
   "fixture_id": "gameplay/goat-melee-movement",
   "protocol_schema_version": "0.1.0",
-  "content_manifest": { "id": "test-content", "version": "1", "sha256": "goat-melee-movement-content" },
+  "content_manifest": { "id": "replay.goat-melee", "version": "0.1.0", "sha256": "8cec36a938913b1e1908ec4513c2b9412e90fc5d889be8a048eaca53ddd45051" },
   "tick_rate_hz": 20,
   "rng_seed": 9,
   "game_variant": "Diablo",
@@ -23,6 +23,7 @@
     "combat_target_hit_points": 40,
     "combat_target_max_hit_points": 40,
     "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 106,
     "combat_target_native_ai": "GoatMelee"
   },
   "commands": [
@@ -30,7 +31,7 @@
     { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "0ad376b28489290aa8bd7b880a9dfd87a4248bfeb9ee6051686bed2698220038" },
-    { "tick": 2, "state_sha256": "3cba8bc7a955bed29fe26a2fcd1bcd8c2c212617d9db90a589048ebe5d34cfb4" }
+    { "tick": 1, "state_sha256": "134fb7ef48955472bcfbecce47a7072acd4d2181885d64bc7c29ebfa7244f141" },
+    { "tick": 2, "state_sha256": "13b51971e05adffd3933294b10af8ee121eb3982b48cffc4bbae83a8c5c37762" }
   ]
 }

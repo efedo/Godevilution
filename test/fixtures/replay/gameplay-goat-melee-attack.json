@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/goat-melee-attack",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "goat-melee-attack-content"
+    "id": "replay.goat-melee",
+    "version": "0.1.0",
+    "sha256": "8cec36a938913b1e1908ec4513c2b9412e90fc5d889be8a048eaca53ddd45051"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
@@ -40,6 +40,7 @@
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
     "combat_target_aggro_range": 3,
+    "combat_target_monster_id": 106,
     "combat_target_attack_damage": 3,
     "combat_target_to_hit": 255,
     "combat_target_min_damage": 3,
@@ -59,6 +60,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "5dbcd0a7a904809439246a2489f2cb27ef4ad95edb82828f1a3ae6af880b0e10" }
+    { "tick": 1, "state_sha256": "c6445f7a53abfc5054666f6bcf4f54c704a747ec56e659b711f8b6a241710da6" }
   ]
 }
