@@ -4886,16 +4886,7 @@ public sealed class ReplayFixtureTests
             toHit: fixture.InitialState.CombatTargetToHit,
             nativeAi: fixture.InitialState.CombatTargetNativeAi,
             intelligence: fixture.InitialState.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                fixture.InitialState.CombatTargetNativeAi,
-                "Arrow",
-                AuthoritativeProjectileBehavior.MonsterArrow,
-                ProjectileSpeed: 1,
-                ProjectileLifetime: 4,
-                ProjectileImpactLifetime: 1,
-                ProjectileDamage: 4),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-arrow-admission");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -7027,16 +7018,7 @@ public sealed class ReplayFixtureTests
             rangedDelayTicks: initial.CombatTargetRangedDelayTicks,
             skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
             skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "Arrow",
-                AuthoritativeProjectileBehavior.MonsterArrow,
-                ProjectileSpeed: 1,
-                ProjectileLifetime: 7,
-                ProjectileImpactLifetime: 1,
-                ProjectileDamage: 4),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-arrow");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(

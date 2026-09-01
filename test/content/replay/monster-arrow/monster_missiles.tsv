@@ -1,0 +1,3 @@
+native_ai	missile_id	projectile_behavior	spell_id	projectile_speed	projectile_lifetime	projectile_impact_lifetime	projectile_damage
+GoatRanged	Arrow	MonsterArrow	0	1	7	1	4
+SkeletonRanged	Arrow	MonsterArrow	0	1	7	1	4

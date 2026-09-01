@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the nine Monster Arrow replay fixtures’ GoatRanged and
+  SkeletonRanged mappings into validated shared and admission content packs,
+  preserving native/C# projectile parity and manifest validation.
+
 - Extract the nine Monster Magic replay fixtures’ Lich-family and orb
   `OrangeFlare` mappings into the validated `test/content/replay/monster-magic`
   pack, preserving native/C# projectile parity and manifest validation.

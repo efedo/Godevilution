@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/monster-arrow-skeleton-ranged",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "monster-arrow-skeleton-ranged-content"
+    "id": "replay.monster-arrow-admission",
+    "version": "0.1.0",
+    "sha256": "aa1cfde21aaa9f3f681c47e7d31ba98f7165e91c1761ab0f1e5fc6a715e0814c"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

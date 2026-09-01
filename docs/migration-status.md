@@ -52,6 +52,12 @@ The nine Monster Magic replay fixtures now share the validated
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
+The nine Monster Arrow replay fixtures now load validated GoatRanged and
+SkeletonRanged mappings from the shared `test/content/replay/monster-arrow`
+pack and the admission-specific `test/content/replay/monster-arrow-admission`
+pack. Both native and managed runners validate their manifest hashes before
+loading the projectile catalog.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

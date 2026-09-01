@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/monster-arrow-goat-ranged-native-ai-seed",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "monster-arrow-goat-ranged-native-ai-seed-content"
+    "id": "replay.monster-arrow",
+    "version": "0.1.0",
+    "sha256": "d71ac5f6c765110053cf4e4dbbee95828b2184ae22ee8a055378dd6d01ef0270"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,
