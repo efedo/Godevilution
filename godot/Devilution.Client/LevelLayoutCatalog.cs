@@ -40,12 +40,15 @@ public sealed class LevelLayoutCatalog
             var cells = definition.BlockedCells
                 .Where(cell => cell >= 0 && cell < definition.Width * definition.Height)
                 .ToHashSet();
+            var missileBlocked = AuthoritativeLevelGeometryCellResolver
+                .GetMissileOnlyCells(definition);
             authoritativeLayouts[definition.LevelId] = new LevelLayout(
                 definition.LevelId,
                 $"Level {definition.LevelId}",
                 definition.Width,
                 definition.Height,
                 cells,
+                missileBlocked,
                 definition.NativeTransparency.ToArray());
             warpTriggers[definition.LevelId] = definition.WarpTriggers.ToArray();
         }
@@ -78,6 +81,7 @@ public sealed class LevelLayoutCatalog
                 definition.Width,
                 definition.Height,
                 cells,
+                new HashSet<int>(),
                 []);
         }
 
@@ -105,12 +109,18 @@ public sealed record LevelLayout(
     int Width,
     int Height,
     IReadOnlySet<int> Blocked,
+    IReadOnlySet<int> MissileBlocked,
     IReadOnlyList<uint> NativeTransparency)
 {
-    public static LevelLayout Empty { get; } = new(0, "Fallback", 32, 20, new HashSet<int>(), []);
+    public static LevelLayout Empty { get; } = new(0, "Fallback", 32, 20, new HashSet<int>(), new HashSet<int>(), []);
 
     public bool IsBlocked(int x, int y)
     {
         return x < 0 || y < 0 || x >= Width || y >= Height || Blocked.Contains(y * Width + x);
+    }
+
+    public bool IsMissileBlocked(int x, int y)
+    {
+        return x >= 0 && y >= 0 && x < Width && y < Height && MissileBlocked.Contains(y * Width + x);
     }
 }

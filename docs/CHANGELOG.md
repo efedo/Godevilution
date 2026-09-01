@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve server-authored missile-only level collision in the Godot layout
+  projection and render it as a distinct occlusion cue; walk-blocked cells
+  remain visually and semantically separate.
+
 - Teach the Godot presentation client to consume server-authored object
   lifecycle frames. Activated authored books now render an open-book cue when
   the server keeps their native object visible; older snapshots retain the

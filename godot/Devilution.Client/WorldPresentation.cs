@@ -302,6 +302,23 @@ public partial class WorldPresentation : Node2D
             var y = cell / currentLevel.Width;
             DrawRect(new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize), new Color("202033"));
         }
+        foreach (var cell in currentLevel.MissileBlocked) {
+            var x = cell % currentLevel.Width;
+            var y = cell / currentLevel.Width;
+            var rectangle = new Rect2(
+                OriginX + x * TileSize,
+                OriginY + y * TileSize,
+                TileSize,
+                TileSize);
+            var color = new Color("6a3d58", 0.45f);
+            DrawRect(rectangle, color, true);
+            DrawLine(rectangle.Position + new Vector2(6, 6), rectangle.End - new Vector2(6, 6), color, 2);
+            DrawLine(
+                new Vector2(rectangle.End.X - 6, rectangle.Position.Y + 6),
+                new Vector2(rectangle.Position.X + 6, rectangle.End.Y - 6),
+                color,
+                2);
+        }
         foreach (var trigger in levels.GetWarpTriggers(currentLevel.Id))
             DrawWarpTrigger(trigger);
     }

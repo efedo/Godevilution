@@ -2,6 +2,10 @@
 
 Status date: 2026-09-01
 
+The Godot geometry projection now preserves server-authored missile-only
+collision cells separately from walk-blocked cells and renders a deterministic
+presentation cue for that occlusion layer.
+
 The shared replay contract now covers player Telekinesis world-item pickup,
 object activation, and monster knockback. Native and managed runners preserve
 target validation, inventory placement, authored object mutation, one-cell

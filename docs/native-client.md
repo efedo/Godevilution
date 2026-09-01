@@ -381,6 +381,8 @@ explicit migration seams, not server-authority claims:
   available.
   The Godot client now consumes that frame metadata and renders an additive
   open-book cue without introducing native object-ID logic into the client.
+  It also preserves server-authored missile-only collision cells in the
+  authoritative layout and renders them as presentation-only occlusion cues.
   The two fixed Chamber of Bone completion books now clone authored templates:
   the server completes the quest, grants Guardian, and owns the exact
   player-origin target offset. The Vile Betrayer's two fixed book
