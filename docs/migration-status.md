@@ -36,6 +36,12 @@ pack, and the status-expiry fixture now loads its row from the validated
 `test/content/replay/status-expiry` pack; both manifests are hash-checked before
 catalog activation.
 
+The two Mega Inferno replay fixtures now share the validated
+`test/content/replay/mega-inferno` pack, which externalizes both the Inferno
+controller spell row and its native `Mega`/`InfernoControl` missile mapping.
+The managed runner validates the composite pack hash before loading either
+catalog.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

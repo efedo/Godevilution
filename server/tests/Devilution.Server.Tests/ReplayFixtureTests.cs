@@ -7270,42 +7270,19 @@ public sealed class ReplayFixtureTests
             monsterItemSeed: initial.CombatTargetMonsterItemSeed,
             monsterAiSeed: initial.CombatTargetMonsterAiSeed,
             megaDelayTicks: initial.CombatTargetMegaDelayTicks);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                "Mega",
-                "InfernoControl",
-                AuthoritativeProjectileBehavior.InfernoController,
-                SpellId: 21,
-                ProjectileSpeed: 32,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Fire,
-                InfernoMaximumDistance: 5,
-                InfernoAdjacentChanceBase: 40,
-                InfernoAdjacentChanceIntelligenceScale: 10,
-                InfernoRangedFarDistance: 3,
-                InfernoRangedChanceBase: 5,
-                InfernoRangedChanceIntelligenceScale: 5,
-                InfernoRangedFarIntelligenceOffset: 1,
-                InfernoAdjacentChoiceModulo: 2,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                MegaDelayRandomRange: 20),
-        ]);
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(21, 11, 0, 0, 0, 0) {
-                NativeSpellId = 20,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 32,
-                ProjectileLifetime = 256,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.InfernoController,
-                RandomDamageRange = 2,
-                DamageBonus = 24,
-                DamageScale = 12,
-                SecondaryProjectileLifetime = 20,
-                InfernoSegmentLifetimeStep = 1,
-                ProjectileImpactLifetime = 1,
-            },
-        ]);
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "test",
+            "content",
+            "replay",
+            "mega-inferno");
+        LoadReplayContentPack(fixture, "mega-inferno");
+        var missiles = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "monster_missiles.tsv")));
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -7769,7 +7746,7 @@ public sealed class ReplayFixtureTests
         """;
     }
 
-    private static AuthoritativeSpellCatalog LoadReplaySpells(
+    private static ContentPack LoadReplayContentPack(
         ReplayFixture fixture,
         string packDirectory)
     {
@@ -7785,6 +7762,20 @@ public sealed class ReplayFixtureTests
         Assert.Equal(pack.Version, identity.Version);
         var manifest = new ContentManifest(identity.Id, identity.Version, [pack]);
         Assert.Equal(manifest.Sha256, identity.Sha256);
+        return pack;
+    }
+
+    private static AuthoritativeSpellCatalog LoadReplaySpells(
+        ReplayFixture fixture,
+        string packDirectory)
+    {
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "test",
+            "content",
+            "replay",
+            packDirectory);
+        LoadReplayContentPack(fixture, packDirectory);
         return AuthoritativeSpellCatalog.LoadTsv(
             "spells.tsv",
             File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));

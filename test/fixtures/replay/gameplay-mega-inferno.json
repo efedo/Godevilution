@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/mega-inferno",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "mega-inferno-content"
+    "id": "replay.mega-inferno",
+    "version": "0.1.0",
+    "sha256": "f063f54bd326d0b051a3653fdb7b7636f6c9b5191c01355a217ee96248527fe8"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

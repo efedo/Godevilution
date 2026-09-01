@@ -182,7 +182,8 @@ block resolution, and Lich-family MonsterMagic admission, hit, miss,
 nearest-participant selection, and secondary-participant impact resolution;
 the Mega InfernoController moving fire-stream controller, segment lifetime,
 and recovery-delay lifecycle, including seeded multiplayer AI-stream
-advancement.
+advancement. Both Mega fixtures load their spell and native missile rows from
+the hash-checked `test/content/replay/mega-inferno` content pack.
 broader monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,

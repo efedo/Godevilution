@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the shared Mega Inferno replay spell and native missile rows into the
+  validated `test/content/replay/mega-inferno` pack, preserving both native
+  controller lifecycles and managed manifest validation.
+
 - Extract the Hellfire Charged Bolt and status-expiry replay rows into validated external replay packs, preserving native/C# checkpoint parity.
 
 - Extract the Bone Spirit homing and Hellfire Firebolt/Fireball fixtures into the validated `test/content/replay/projectile-variants` pack; align the native homing lifetime assertion with the shared replay checkpoint.

@@ -1,0 +1,2 @@
+spell_id	mana_cost	healing_amount	status_effect_id	status_duration	status_magnitude	native_spell_id	damage_type	projectile_speed	projectile_lifetime	projectile_behavior	random_damage_range	damage_bonus	damage_scale	secondary_projectile_lifetime	inferno_segment_lifetime_step	projectile_impact_lifetime
+21	11	0	0	0	0	20	Fire	32	256	InfernoController	2	24	12	20	1	1
