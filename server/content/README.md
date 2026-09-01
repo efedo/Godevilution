@@ -640,6 +640,10 @@ and Mega families with their validated AI and DUN mappings.
 Native identities 89–111 extend this coverage through the late Snake/Skeleton,
 Succubus, and Counselor families, including the monster-specific identities
 required by the existing Counselor missile mappings.
+Native identities 112–137 extend the catalog through the late Hellboar,
+Psychorb, HorkDemon, Necromorb, Torchant, FireBat, Lich, BoneDemon, ArchLich,
+and Na-Krul families; native identity 133 remains stable-ID-only because the
+source DUN table does not declare a conversion row for it.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default

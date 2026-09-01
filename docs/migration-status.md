@@ -56,6 +56,12 @@ late Snake and Skeleton families, Succubus variants, and the Counselor family
 through Advocate and Arch-Litch Malignus. Their stable IDs, AI selectors, and
 native DUN mappings are available to production generation.
 
+The next Hellfire block now covers native identities 112–137, from Hellboar and
+Psychorb through HorkDemon, Necromorb, Torchant, FireBat, Lich, BoneDemon,
+ArchLich, and Na-Krul. Their stable IDs and available native DUN mappings are
+available to production generation; native identity 133 has no source DUN
+conversion row and remains stable-ID-only.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

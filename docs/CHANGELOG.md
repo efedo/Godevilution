@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with native identities 112–137, covering the
+  late Hellboar, Psychorb, HorkDemon, Necromorb, Torchant, FireBat, Lich,
+  BoneDemon, ArchLich, and Na-Krul families with their stable IDs and available
+  DUN mappings.
+
 - Expand the base content pack with native identities 89–111: Snake and
   Skeleton late-game families, Succubus variants, and Counselor through
   Arch-Litch Malignus, including their stable IDs and DUN mappings.
