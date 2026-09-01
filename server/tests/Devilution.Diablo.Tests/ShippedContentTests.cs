@@ -26,9 +26,26 @@ public sealed class ShippedContentTests
         var nativeDunMonsters = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
             nativeDunMonsterTable.SourcePath,
             nativeDunMonsterTable.ToCanonicalTsv());
-        Assert.Equal(4, nativeDunMonsters.Definitions.Count);
+        Assert.Equal(11, nativeDunMonsters.Definitions.Count);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(2, out var ghoulNativeId));
+        Assert.Equal(1U, ghoulNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(8, out var darkOneNativeId));
+        Assert.Equal(7U, darkOneNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(155, out var butcherNativeId));
         Assert.Equal(51U, butcherNativeId);
+        var monsterTypeTable = pack.Tables.Single(
+            table => table.SourcePath == "monster_types.tsv");
+        var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            monsterTypeTable.SourcePath,
+            monsterTypeTable.ToCanonicalTsv());
+        Assert.Equal(11, monsterTypes.Definitions.Count);
+        Assert.Equal(
+            ["Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One"],
+            monsterTypes.Definitions
+                .Where(definition => definition.MonsterId is >= 3 and <= 9)
+                .Select(definition => definition.Name));
+        Assert.Equal("Fallen", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 4).NativeAi);
         var placementTable = pack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
         var placement = Assert.Single(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
@@ -2791,14 +2808,15 @@ public sealed class ShippedContentTests
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest("base", "1", [pack])),
             randomSeed: 0x1234,
-            monsterSpawns: new DiabloMonsterSpawnConfiguration(1));
+            monsterSpawns: new DiabloMonsterSpawnConfiguration(2));
 
         var target = Assert.Single(
             activation.Simulation.WorldState.CombatTargets.Values,
-            candidate => candidate.MonsterId == 1);
+            candidate => candidate.MonsterId == 1 && candidate.Drop is not null);
         Assert.NotNull(target.Drop);
         Assert.Equal(
-            AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId,
+            AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId
+                + (target.EntityId - AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId),
             target.Drop!.EntityId);
         Assert.NotEqual(0U, target.Drop.ItemSeed);
         Assert.Equal(1, target.Drop.State.ItemIndex);

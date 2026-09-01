@@ -20,6 +20,12 @@ recovery without stale-state lockout. Transient events and movement prediction
 are cleared while the command-result ledger remains available until replacement
 acknowledgements arrive.
 
+The base content pack now includes the canonical early undead and Fallen
+families (Ghoul through Dark One) with validated native AI metadata and DUN
+monster mappings. Server-owned level generation can select those stable
+identities without test-only overlays; the generic compatibility monster and
+authored Skeleton King, Butcher, and Snotspill encounters remain unchanged.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

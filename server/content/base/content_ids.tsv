@@ -1,4 +1,11 @@
 kind	symbol	numeric_id
+monster	ghoul_native_1	3
+monster	rotting_carcass_native_2	4
+monster	black_death_native_3	5
+monster	fallen_one_native_4	6
+monster	carver_native_5	7
+monster	devil_kin_native_6	8
+monster	dark_one_native_7	9
 unique	the_ember_blade	1001
 unique	the_ward_shield	1002
 unique	empyrean_band	1004

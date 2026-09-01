@@ -620,6 +620,9 @@ encounter placement remain separate migrations. Its server-owned spawn planner c
 turn those candidates and validated level-density metadata into bounded,
 walkable, seed-stable placements. Diablo content activation exposes that
 planner to the server adapter without bypassing the validated content boundary.
+The base pack now carries the canonical early undead and Fallen identities
+(Ghoul through Dark One) and their native DUN mappings; remaining ordinary
+monster families continue to be added incrementally.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default

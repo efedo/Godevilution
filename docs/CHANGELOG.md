@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with the canonical Ghoul, Rotting Carcass,
+  Black Death, Fallen One, Carver, Devil Kin, and Dark One identities. Their
+  validated native AI metadata and DUN monster mappings are now available to
+  production server level generation; the generic fallback and authored
+  encounter identities remain compatible.
+
 - Treat the first snapshot received after a reconnect as a new server epoch.
   The Godot protocol model now accepts a lower server tick after process or
   session recovery while clearing transient events and prediction; the
