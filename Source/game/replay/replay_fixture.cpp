@@ -7120,13 +7120,22 @@ void AdvanceReplayMonsterAttack(
 		});
 		const Victim &victim = victims.front();
 		const int distance = victimDistance(victim);
-		if (distance < 4) {
+		const int retreatMinimumDistance = state.combatTargetRangedRetreatMinimumDistance > 0
+		    ? state.combatTargetRangedRetreatMinimumDistance
+		    : 4;
+		const int retreatChanceBase = state.combatTargetRangedRetreatChanceBase > 0
+		    ? state.combatTargetRangedRetreatChanceBase
+		    : 70;
+		const int retreatChanceIntelligenceScale = state.combatTargetRangedRetreatChanceIntelligenceScale > 0
+		    ? state.combatTargetRangedRetreatChanceIntelligenceScale
+		    : 10;
+		if (distance < retreatMinimumDistance) {
 			const uint32_t attackSeed = static_cast<uint32_t>(tick)
 			    ^ state.combatTargetEntityId
 			    ^ victim.entityId;
 			const int retreatChance = std::min(
 				100,
-				70 + 10 * state.combatTargetIntelligence);
+				retreatChanceBase + retreatChanceIntelligenceScale * state.combatTargetIntelligence);
 			const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
 			const int retreatRoll = usesNativeAiStream
 			    ? std::max(GenerateRnd(state, 100), 0)
@@ -9548,6 +9557,12 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetCounselorRetreatTicks);
 			if (key == "combat_target_ranged_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetRangedDelayTicks);
+			if (key == "combat_target_ranged_retreat_minimum_distance")
+				return ParseSigned(fixture_.initialState.combatTargetRangedRetreatMinimumDistance);
+			if (key == "combat_target_ranged_retreat_chance_base")
+				return ParseSigned(fixture_.initialState.combatTargetRangedRetreatChanceBase);
+			if (key == "combat_target_ranged_retreat_chance_intelligence_scale")
+				return ParseSigned(fixture_.initialState.combatTargetRangedRetreatChanceIntelligenceScale);
 			if (key == "combat_target_mega_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetMegaDelayTicks);
 			if (key == "combat_target_skeleton_ranged_movement_idle_ticks")
@@ -10402,6 +10417,9 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetCounselorDelayTicks != 0
 		    || target.combatTargetCounselorRetreatTicks != 0
 		    || target.combatTargetRangedDelayTicks != 0
+		    || target.combatTargetRangedRetreatMinimumDistance != 0
+		    || target.combatTargetRangedRetreatChanceBase != 0
+		    || target.combatTargetRangedRetreatChanceIntelligenceScale != 0
 		    || target.combatTargetMegaDelayTicks != 0
 		    || target.combatTargetSkeletonRangedMovementIdleTicks != -1
 		    || target.combatTargetSkeletonRangedMovementMode != 0
@@ -10442,6 +10460,18 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetCounselorRetreatTicks > 64
 		|| target.combatTargetRangedDelayTicks < 0
 		|| target.combatTargetRangedDelayTicks > 1024
+		|| target.combatTargetRangedRetreatMinimumDistance < 0
+		|| target.combatTargetRangedRetreatMinimumDistance > 64
+		|| target.combatTargetRangedRetreatChanceBase < 0
+		|| target.combatTargetRangedRetreatChanceBase > 100
+		|| target.combatTargetRangedRetreatChanceIntelligenceScale < 0
+		|| target.combatTargetRangedRetreatChanceIntelligenceScale > 100
+		|| (target.combatTargetRangedRetreatMinimumDistance != 0
+		    || target.combatTargetRangedRetreatChanceBase != 0
+		    || target.combatTargetRangedRetreatChanceIntelligenceScale != 0)
+		    && (target.combatTargetRangedRetreatMinimumDistance <= 0
+		        || target.combatTargetRangedRetreatChanceBase <= 0
+		        || target.combatTargetRangedRetreatChanceIntelligenceScale <= 0)
 		|| target.combatTargetMegaDelayTicks < 0
 		|| target.combatTargetMegaDelayTicks > 1024
 		|| target.combatTargetSkeletonRangedMovementIdleTicks < -1
@@ -11208,6 +11238,9 @@ bool ExecuteReplayFixture(
 		state.combatTargetCounselorDelayTicks = fixture.initialState.combatTargetCounselorDelayTicks;
 		state.combatTargetCounselorRetreatTicks = fixture.initialState.combatTargetCounselorRetreatTicks;
 		state.combatTargetRangedDelayTicks = fixture.initialState.combatTargetRangedDelayTicks;
+		state.combatTargetRangedRetreatMinimumDistance = fixture.initialState.combatTargetRangedRetreatMinimumDistance;
+		state.combatTargetRangedRetreatChanceBase = fixture.initialState.combatTargetRangedRetreatChanceBase;
+		state.combatTargetRangedRetreatChanceIntelligenceScale = fixture.initialState.combatTargetRangedRetreatChanceIntelligenceScale;
 		state.combatTargetMegaDelayTicks = fixture.initialState.combatTargetMegaDelayTicks;
 		state.combatTargetSkeletonRangedMovementIdleTicks = fixture.initialState.combatTargetSkeletonRangedMovementIdleTicks;
 		state.combatTargetSkeletonRangedMovementMode = fixture.initialState.combatTargetSkeletonRangedMovementMode;

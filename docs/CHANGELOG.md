@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the autonomous GoatRanged Arrow replay fixture into the validated
+  `monster-arrow-autonomous` pack and carry its compact native retreat tuning
+  through the replay contract so native and managed admission remain identical.
+
 - Extract the nine Hork Spawn and three Snake Charge replay fixtures into
   validated external missile packs, preserving native/C# admission, delay,
   travel, impact, blocking, and summon-controller parity.

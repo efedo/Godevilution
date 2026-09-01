@@ -219,6 +219,10 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetCounselorDelayTicks = 0;
 	int32_t combatTargetCounselorRetreatTicks = 0;
 	int32_t combatTargetRangedDelayTicks = 0;
+	// Optional compact AiRanged retreat tuning mirrored by replay content.
+	int32_t combatTargetRangedRetreatMinimumDistance = 0;
+	int32_t combatTargetRangedRetreatChanceBase = 0;
+	int32_t combatTargetRangedRetreatChanceIntelligenceScale = 0;
 	int32_t combatTargetMegaDelayTicks = 0;
 	int32_t combatTargetSkeletonRangedMovementIdleTicks = -1;
 	int32_t combatTargetSkeletonRangedMovementMode = 0;
@@ -613,6 +617,9 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetCounselorDelayTicks = 0;
 	int32_t combatTargetCounselorRetreatTicks = 0;
 	int32_t combatTargetRangedDelayTicks = 0;
+	int32_t combatTargetRangedRetreatMinimumDistance = 0;
+	int32_t combatTargetRangedRetreatChanceBase = 0;
+	int32_t combatTargetRangedRetreatChanceIntelligenceScale = 0;
 	int32_t combatTargetMegaDelayTicks = 0;
 	int32_t combatTargetSkeletonRangedMovementIdleTicks = -1;
 	int32_t combatTargetSkeletonRangedMovementMode = 0;

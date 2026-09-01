@@ -434,6 +434,15 @@ public static class ReplayFixtureLoader
             CombatTargetRangedDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_ranged_delay_ticks"),
+            CombatTargetRangedRetreatMinimumDistance = GetOptionalInt(
+                value,
+                "combat_target_ranged_retreat_minimum_distance"),
+            CombatTargetRangedRetreatChanceBase = GetOptionalInt(
+                value,
+                "combat_target_ranged_retreat_chance_base"),
+            CombatTargetRangedRetreatChanceIntelligenceScale = GetOptionalInt(
+                value,
+                "combat_target_ranged_retreat_chance_intelligence_scale"),
             CombatTargetMegaDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_mega_delay_ticks"),

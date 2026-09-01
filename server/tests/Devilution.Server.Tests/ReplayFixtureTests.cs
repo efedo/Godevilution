@@ -4815,19 +4815,7 @@ public sealed class ReplayFixtureTests
             toHit: fixture.InitialState.CombatTargetToHit,
             nativeAi: fixture.InitialState.CombatTargetNativeAi,
             intelligence: fixture.InitialState.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                fixture.InitialState.CombatTargetNativeAi,
-                "Arrow",
-                AuthoritativeProjectileBehavior.MonsterArrow,
-                ProjectileSpeed: 1,
-                ProjectileLifetime: 2,
-                ProjectileImpactLifetime: 1,
-                ProjectileDamage: 4,
-                RangedRetreatMinimumDistance: 1,
-                RangedRetreatChanceBase: 1,
-                RangedRetreatChanceIntelligenceScale: 1),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-arrow-autonomous");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(

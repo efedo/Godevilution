@@ -1,0 +1,2 @@
+native_ai	missile_id	projectile_behavior	projectile_speed	projectile_lifetime	projectile_impact_lifetime	projectile_damage	ranged_retreat_minimum_distance	ranged_retreat_chance_base	ranged_retreat_chance_intelligence_scale
+GoatRanged	Arrow	MonsterArrow	1	2	1	4	1	1	1

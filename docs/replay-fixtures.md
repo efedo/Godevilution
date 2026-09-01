@@ -197,6 +197,9 @@ hash-checked `monster-hork-spawn` content pack. Snake delay fixtures load the
 default `SnakeCharge` mapping from `monster-snake-delay`, while the charge
 lifecycle fixture loads its explicitly tuned mapping from
 `monster-snake-charge`.
+The autonomous GoatRanged fixture loads its explicit Arrow mapping from the
+hash-checked `monster-arrow-autonomous` pack; its compact native projection
+preserves the pack’s retreat thresholds and native defaults when omitted.
 broader monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,

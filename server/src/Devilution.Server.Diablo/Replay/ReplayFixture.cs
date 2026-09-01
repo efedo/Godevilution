@@ -302,6 +302,13 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native AiRanged delay state. */
     public int CombatTargetRangedDelayTicks { get; init; }
 
+    /** Optional compact native AiRanged retreat tuning mirrored by replay content. */
+    public int CombatTargetRangedRetreatMinimumDistance { get; init; }
+
+    public int CombatTargetRangedRetreatChanceBase { get; init; }
+
+    public int CombatTargetRangedRetreatChanceIntelligenceScale { get; init; }
+
     /** Optional native Mega recovery delay state. */
     public int CombatTargetMegaDelayTicks { get; init; }
 

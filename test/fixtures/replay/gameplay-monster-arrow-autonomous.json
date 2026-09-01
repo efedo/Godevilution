@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/monster-arrow-autonomous",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "monster-arrow-autonomous-content"
+    "id": "replay.monster-arrow-autonomous",
+    "version": "0.1.0",
+    "sha256": "dc2d0312272a840cc3531b9b859c6d4e2775b87ddb51a2026d2a86ec92935d1c"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,
@@ -34,6 +34,9 @@
     "combat_target_min_damage": 4,
     "combat_target_max_damage": 4,
     "combat_target_intelligence": 0,
+    "combat_target_ranged_retreat_minimum_distance": 1,
+    "combat_target_ranged_retreat_chance_base": 1,
+    "combat_target_ranged_retreat_chance_intelligence_scale": 1,
     "secondary_player": {
       "player": "B",
       "entity_id": 8,

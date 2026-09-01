@@ -5670,6 +5670,9 @@ TEST(ReplayFixture, ExecutesAutonomousMonsterArrowAgainstCSharpCheckpoints)
 	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
 	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+	state.combatTargetRangedRetreatMinimumDistance = fixture.initialState.combatTargetRangedRetreatMinimumDistance;
+	state.combatTargetRangedRetreatChanceBase = fixture.initialState.combatTargetRangedRetreatChanceBase;
+	state.combatTargetRangedRetreatChanceIntelligenceScale = fixture.initialState.combatTargetRangedRetreatChanceIntelligenceScale;
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;

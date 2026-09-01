@@ -64,6 +64,11 @@ Snake Charge lifecycle fixture likewise load separate validated
 `monster-snake-delay` and `monster-snake-charge` packs, preserving the native
 default and explicitly tuned charge configurations.
 
+The autonomous GoatRanged Arrow fixture now loads the validated
+`test/content/replay/monster-arrow-autonomous` pack. Its compact native replay
+projection accepts the same explicit retreat thresholds as managed content,
+while omitted thresholds retain the native 4/70/10 defaults.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and
