@@ -1409,22 +1409,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-bone-spirit-homing.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(38, 24, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 256,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.BoneSpirit,
-                ManaAdjustment = 1,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 12,
-                ManaCostScale = 64,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 7,
-                SelfDamage = 6,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "projectile-variants");
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
             initial.CombatTargetEntityId,
@@ -1484,29 +1469,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-fireball-hellfire-block.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(12, 16, 0, 0, 0, 0) {
-                Range = 112,
-                AreaRadius = 1,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 256,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Fireball,
-                ManaAdjustment = 1,
-                MinimumManaCost = 10,
-                ManaCostScale = 64,
-                RandomDamageRange = 10,
-                DamageBonus = 4,
-                DamageScale = 2,
-                RandomDamageIterationsBonus = 2,
-                CharacterLevelDamageDivisor = 1,
-                SpellEffectScaleDivisor = 8,
-                ProjectileSpeedSpellLevelStep = 2,
-                ProjectileSpeedMaximumBonus = 34,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 14,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "projectile-variants");
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
@@ -1626,25 +1589,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-firebolt-hellfire-block.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 26,
-                ProjectileLifetime = 256,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Firebolt,
-                ManaAdjustment = 1,
-                ManaAdjustmentDivisor = 2,
-                ManaCostScale = 64,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 1,
-                RandomDamageRange = 10,
-                MagicDamageDivisor = 8,
-                SpellLevelDamage = 1,
-                DamageBonus = 1,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "projectile-variants");
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),

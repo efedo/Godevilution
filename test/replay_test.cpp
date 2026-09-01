@@ -3215,7 +3215,7 @@ TEST(ReplayFixture, ExecutesBoneSpiritHomingAgainstCSharpCheckpoints)
 	EXPECT_EQ(state.lastAppliedTick, 10U);
 	ASSERT_EQ(state.projectiles.size(), 1U);
 	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 9U);
-	EXPECT_EQ(state.projectiles[0].remainingTicks, 5U);
+	EXPECT_EQ(state.projectiles[0].remainingTicks, 6U);
 	EXPECT_EQ(state.projectiles[0].behavior, 21);
 	EXPECT_EQ(state.projectiles[0].phase, 1);
 	EXPECT_EQ(state.projectiles[0].resistantDamageDivisor, 4);

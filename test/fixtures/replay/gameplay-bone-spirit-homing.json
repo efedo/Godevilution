@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/bone-spirit-homing",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "bone-spirit-homing-content"
+    "id": "replay.projectile-variants",
+    "version": "0.1.0",
+    "sha256": "9a04534c33948e1159b788fd21eb6a7f445c3fdbacb29d9904772ae1849ac458"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
