@@ -1,0 +1,2 @@
+spell_id	mana_cost	healing_amount	status_effect_id	status_duration	status_magnitude	range	damage_type	projectile_speed	projectile_lifetime	projectile_count	projectile_count_level_divisor	projectile_behavior	random_magic_damage_divisor	resistant_damage_divisor	projectile_impact_lifetime
+30	6	0	0	0	0	4	Lightning	8	256	4	2	ChargedBolt	4	4	8

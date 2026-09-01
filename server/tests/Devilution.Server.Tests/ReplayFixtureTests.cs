@@ -239,20 +239,7 @@ public sealed class ReplayFixtureTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-charged-bolt.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
-                Range = 4,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 8,
-                ProjectileLifetime = 256,
-                ProjectileCount = 4,
-                ProjectileCountLevelDivisor = 2,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
-                RandomMagicDamageDivisor = 4,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 8,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             fixture.InitialState.Gold,
@@ -298,20 +285,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-charged-bolt-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
-                Range = 4,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 8,
-                ProjectileLifetime = 256,
-                ProjectileCount = 4,
-                ProjectileCountLevelDivisor = 2,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
-                RandomMagicDamageDivisor = 4,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 8,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
         var target = new AuthoritativeCombatTarget(
             fixture.InitialState.CombatTargetEntityId,
             fixture.InitialState.CombatTargetPositionX,
@@ -1243,20 +1217,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-charged-bolt-pvp.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
-                Range = 4,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 8,
-                ProjectileLifetime = 256,
-                ProjectileCount = 4,
-                ProjectileCountLevelDivisor = 2,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
-                RandomMagicDamageDivisor = 4,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 8,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
@@ -1750,20 +1711,7 @@ public sealed class ReplayFixtureTests
             petrified: initial.CombatTargetPetrified,
             stoneCurseImmune: initial.CombatTargetStoneCurseImmune,
             demon: initial.CombatTargetDemon);
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
-                Range = 4,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 8,
-                ProjectileLifetime = 256,
-                ProjectileCount = 4,
-                ProjectileCountLevelDivisor = 2,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
-                RandomMagicDamageDivisor = 4,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 8,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -1828,20 +1776,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-charged-bolt-object-collision.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
-                Range = 4,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 8,
-                ProjectileLifetime = 256,
-                ProjectileCount = 4,
-                ProjectileCountLevelDivisor = 2,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
-                RandomMagicDamageDivisor = 4,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 8,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
         var initial = fixture.InitialState;
         var @object = new AuthoritativeWorldObject(
             initial.ObjectEntityId,
@@ -7910,6 +7845,26 @@ public sealed class ReplayFixtureTests
         """;
     }
 
+    private static AuthoritativeSpellCatalog LoadReplaySpells(
+        ReplayFixture fixture,
+        string packDirectory)
+    {
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "test",
+            "content",
+            "replay",
+            packDirectory);
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var identity = Assert.IsType<ReplayContentManifest>(fixture.ContentManifest);
+        Assert.Equal(pack.Id, identity.Id);
+        Assert.Equal(pack.Version, identity.Version);
+        var manifest = new ContentManifest(identity.Id, identity.Version, [pack]);
+        Assert.Equal(manifest.Sha256, identity.Sha256);
+        return AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
+    }
     private static AuthoritativeSpellCatalog LoadBaseSpells(ReplayFixture fixture)
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

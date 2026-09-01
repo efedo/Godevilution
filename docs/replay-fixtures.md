@@ -550,6 +550,10 @@ and Hellfire rotation-selection draws in order, enter Block immediately so
 later bolts cannot block again, and reach the same RNG-backed checkpoints. A
 seeded live Godot/server test proves the host seed reaches a charged-item cast.
 
+The five standard Charged Bolt fixtures share the validated `test/content/replay/charged-bolt`
+pack and canonical manifest identity; Hellfire Charged Bolt remains a separate
+variant overlay.
+
 `gameplay-firebolt-resolution.json` uses the activated base Firebolt row, a
 level-3 Sorcerer with Magic 35, and seed `0x12345678`. Tick 1 proves native
 class-adjusted Q6 mana, randomized damage, speed-26 16.16 velocity, and the

@@ -23,6 +23,9 @@ test-only rows.
 
 The Rage, Inferno, and Apocalypse fixtures now load their spell behavior from
 the validated base `spells.tsv` catalog instead of synthetic test-only rows.
+The five standard Charged Bolt fixtures now load their spell behavior from the
+`test/content/replay/charged-bolt` validated pack; the managed runner validates
+the pack manifest hash before constructing the authoritative catalog.
 
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent

@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/charged-bolt-object-collision",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "charged-bolt-content"
+    "id": "replay.charged-bolt",
+    "version": "0.1.0",
+    "sha256": "14fb9d7ce27a1475d616aa1b66cb2cdc9b498dda2562281cf4e9587c7966385f"
   },
   "tick_rate_hz": 20,
   "rng_seed": 305419896,
