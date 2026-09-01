@@ -26,11 +26,15 @@ public sealed class ShippedContentTests
         var nativeDunMonsters = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
             nativeDunMonsterTable.SourcePath,
             nativeDunMonsterTable.ToCanonicalTsv());
-        Assert.Equal(11, nativeDunMonsters.Definitions.Count);
+        Assert.Equal(18, nativeDunMonsters.Definitions.Count);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(2, out var ghoulNativeId));
         Assert.Equal(1U, ghoulNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(8, out var darkOneNativeId));
         Assert.Equal(7U, darkOneNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(9, out var skeletonNativeId));
+        Assert.Equal(8U, skeletonNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(17, out var scavengerNativeId));
+        Assert.Equal(16U, scavengerNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(155, out var butcherNativeId));
         Assert.Equal(51U, butcherNativeId);
         var monsterTypeTable = pack.Tables.Single(
@@ -38,14 +42,21 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             monsterTypeTable.SourcePath,
             monsterTypeTable.ToCanonicalTsv());
-        Assert.Equal(11, monsterTypes.Definitions.Count);
+        Assert.Equal(19, monsterTypes.Definitions.Count);
         Assert.Equal(
-            ["Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One"],
+            [
+                "Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One",
+                "Skeleton", "Corpse Axe", "Burning Dead", "Horror", "Fallen One", "Devil Kin", "Dark One", "Scavenger",
+            ],
             monsterTypes.Definitions
-                .Where(definition => definition.MonsterId is >= 3 and <= 9)
+                .Where(definition => definition.MonsterId is >= 3 and <= 18)
                 .Select(definition => definition.Name));
         Assert.Equal("Fallen", monsterTypes.Definitions.Single(
             definition => definition.NativeMonsterId == 4).NativeAi);
+        Assert.Equal("SkeletonMelee", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 8).NativeAi);
+        Assert.Equal("Scavenger", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 16).NativeAi);
         var placementTable = pack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
         var placement = Assert.Single(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
@@ -2805,9 +2816,11 @@ public sealed class ShippedContentTests
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        // Keep the generated level-1 sample on the canonical base monster as
+        // the validated ordinary-family candidate pool grows.
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest("base", "1", [pack])),
-            randomSeed: 0x1234,
+            randomSeed: 5,
             monsterSpawns: new DiabloMonsterSpawnConfiguration(2));
 
         var target = Assert.Single(

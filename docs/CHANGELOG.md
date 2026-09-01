@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with canonical Skeleton, Corpse Axe, Burning
+  Dead, Horror, Fallen, Devil Kin, Dark One, and Scavenger identities. Their
+  validated native AI metadata and DUN mappings are now available to
+  production server generation.
+
 - Expand the base content pack with the canonical Ghoul, Rotting Carcass,
   Black Death, Fallen One, Carver, Devil Kin, and Dark One identities. Their
   validated native AI metadata and DUN monster mappings are now available to

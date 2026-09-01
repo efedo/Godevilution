@@ -26,6 +26,11 @@ monster mappings. Server-owned level generation can select those stable
 identities without test-only overlays; the generic compatibility monster and
 authored Skeleton King, Butcher, and Snotspill encounters remain unchanged.
 
+The base pack now also carries canonical Skeleton-family and Scavenger rows
+(Skeleton through Scavenger), including their native AI metadata and DUN
+monster mappings. These identities are available to production generation;
+remaining ordinary families continue to be added incrementally.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.
