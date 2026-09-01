@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/counselor-delay",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "counselor-delay-content"
+    "id": "replay.counselor",
+    "version": "0.1.0",
+    "sha256": "584de70b4d7bb0ee1f752722f21c6930eaffdfc7dabed08f271f98638d116a7b"
   },
   "tick_rate_hz": 20,
   "rng_seed": 305419896,
@@ -30,6 +30,7 @@
     "combat_target_attack_damage": 4,
     "combat_target_aggro_range": 10,
     "combat_target_monster_level": 1,
+    "combat_target_monster_id": 105,
     "combat_target_native_ai": "Counselor",
     "combat_target_intelligence": 0
   },
@@ -43,8 +44,8 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "b38cf82331a27cb941b27c9839f730fa7187a3a5a2d201bcd67022eac6dc86f1" },
-    { "tick": 2, "state_sha256": "3835f5ae4fa1561b97321e6a8f5e072e98964278ecc18c4020097ba4a9983474" },
-    { "tick": 3, "state_sha256": "9c47a7121434813923bad6e1bbaf22bb5ea2149beedf340c7449d11c1f1a819c" }
+    { "tick": 1, "state_sha256": "03841db68388c0ccf1108733c2272c2ce3f1ef4d92e7fdb03d93f75a8777cade" },
+    { "tick": 2, "state_sha256": "a9150adbe69d2678c281756e1e1d177c7110f1cd4a2b977067f00dbf0c95a90d" },
+    { "tick": 3, "state_sha256": "f704f840fe17584974d43cfd220a5859016beda6a2825247391337244295917a" }
   ]
 }

@@ -80,6 +80,11 @@ The basic healing spell fixture now loads spell ID 1 from the validated
 `test/content/replay/spell-cast` pack instead of the simulation’s synthetic
 fallback catalog.
 
+The Counselor delay and retreat fixtures now load their validated native
+Counselor type and AI timing bands from the shared
+`test/content/replay/counselor` pack instead of relying on compatibility
+fallbacks.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

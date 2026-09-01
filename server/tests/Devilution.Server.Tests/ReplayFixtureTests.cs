@@ -6924,6 +6924,7 @@ public sealed class ReplayFixtureTests
             intelligence: initial.CombatTargetIntelligence,
             counselorDelayTicks: initial.CombatTargetCounselorDelayTicks,
             counselorRetreatTicks: initial.CombatTargetCounselorRetreatTicks);
+        var monsterTypes = LoadReplayMonsterTypes(fixture, "counselor");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -6938,6 +6939,7 @@ public sealed class ReplayFixtureTests
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
             startingCombatTargets: [target],
+            startingMonsterTypes: monsterTypes,
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

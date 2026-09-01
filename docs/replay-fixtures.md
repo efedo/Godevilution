@@ -206,6 +206,8 @@ lifecycle fixture loads its explicitly tuned mapping from
 The autonomous GoatRanged fixture loads its explicit Arrow mapping from the
 hash-checked `monster-arrow-autonomous` pack; its compact native projection
 preserves the pack’s retreat thresholds and native defaults when omitted.
+The two Counselor fixtures load their native Counselor type and timing bands
+from the hash-checked `test/content/replay/counselor` content pack.
 broader monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,

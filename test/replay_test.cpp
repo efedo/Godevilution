@@ -2937,6 +2937,7 @@ TEST(ReplayFixture, ExecutesCounselorDelayAgainstCSharpCheckpoints)
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 
 	ReplayFixtureExecutionResult result;
@@ -3158,6 +3159,7 @@ TEST(ReplayFixture, ExecutesCounselorRetreatAgainstCSharpCheckpoints)
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 	state.combatTargetCounselorRetreatTicks = fixture.initialState.combatTargetCounselorRetreatTicks;
 

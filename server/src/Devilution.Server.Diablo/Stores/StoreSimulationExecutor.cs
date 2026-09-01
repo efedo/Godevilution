@@ -109,6 +109,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint startingReflectCharges = 0,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null,
+        AuthoritativeMonsterTypeCatalog? startingMonsterTypes = null,
         AuthoritativePlayerClassDefinition? startingPlayerClass = null,
         AuthoritativeItemQuestEffectCatalog? startingItemQuestEffects = null,
         uint startingStatPoints = 0,
@@ -151,6 +152,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 GameMode = gameMode,
                 Difficulty = difficulty,
                 MonsterMissiles = startingMonsterMissiles,
+                MonsterTypes = startingMonsterTypes,
                 MonsterSpawnPlanner = startingMonsterSpawnPlanner,
             });
         var compatibilityTemplate = new DiabloPlayerTemplate(

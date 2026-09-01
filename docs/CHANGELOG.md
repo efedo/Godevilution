@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the Counselor delay and retreat replay fixtures into the validated
+  `test/content/replay/counselor` pack and activate their external monster
+  type/timing metadata through the compatibility executor.
+
 - Extract the basic healing spell replay fixture into the validated
   `test/content/replay/spell-cast` pack and bind the managed runner to its
   external spell row.
