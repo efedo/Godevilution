@@ -194,8 +194,8 @@ The nine Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `monster-arrow-admission` content packs.
 The nine Hork Spawn fixtures load their `HorkDemon` mapping from the
 hash-checked `monster-hork-spawn` content pack, including its summoned monster
-type row. Snake delay fixtures load the default `SnakeCharge` mapping from
-`monster-snake-delay`, while the charge
+type row and level-generation rule. Snake delay fixtures load the default
+`SnakeCharge` mapping from `monster-snake-delay`, while the charge
 lifecycle fixture loads its explicitly tuned mapping from
 `monster-snake-charge`.
 The autonomous GoatRanged fixture loads its explicit Arrow mapping from the

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move the Hork Spawn replay planner’s level-generation rule into the
+  validated `monster-hork-spawn` pack, completing externalization of its
+  missile, summoned-monster, and encounter-generation metadata.
+
 - Move the Hork Spawn summoned-monster type row into the validated
   `monster-hork-spawn` pack, so the replay helper no longer constructs spawn
   metadata inline.

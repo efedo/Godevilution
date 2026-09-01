@@ -68,6 +68,9 @@ The Hork Spawn pack now also supplies the summoned monster’s validated
 `monster_types.tsv` row; the managed spawn planner consumes that external
 metadata instead of an inline test definition.
 
+Its `level_generation.tsv` rule is externalized as well, so the Hork replay
+planner no longer constructs encounter-generation metadata inline.
+
 The autonomous GoatRanged Arrow fixture now loads the validated
 `test/content/replay/monster-arrow-autonomous` pack. Its compact native replay
 projection accepts the same explicit retreat thresholds as managed content,

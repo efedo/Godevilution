@@ -7145,12 +7145,11 @@ public sealed class ReplayFixtureTests
         var spawnWorld = new AuthoritativeWorld();
         spawnWorld.AddLevel(new AuthoritativeLevel(1, 40, 40));
         var spawnTypes = LoadReplayMonsterTypes(fixture, "monster-hork-spawn");
+        var levelGeneration = LoadReplayLevelGeneration(fixture, "monster-hork-spawn");
         var spawnPlanner = new AuthoritativeMonsterSpawnPlanner(
             spawnWorld,
             spawnTypes,
-            new AuthoritativeLevelGenerationCatalog([
-                new AuthoritativeLevelGenerationRule(0, 100, 100, 100, 0),
-            ]));
+            levelGeneration);
         var startingProjectiles = fixture.InitialProjectiles
             .Select(source => new AuthoritativeProjectile(
                 source.EntityId,
@@ -7585,6 +7584,22 @@ public sealed class ReplayFixtureTests
         return AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             File.ReadAllText(Path.Combine(contentRoot, "monster_types.tsv")));
+    }
+
+    private static AuthoritativeLevelGenerationCatalog LoadReplayLevelGeneration(
+        ReplayFixture fixture,
+        string packDirectory)
+    {
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "test",
+            "content",
+            "replay",
+            packDirectory);
+        LoadReplayContentPack(fixture, packDirectory);
+        return AuthoritativeLevelGenerationCatalog.LoadTsv(
+            "level_generation.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "level_generation.tsv")));
     }
 
     private static AuthoritativeSpellCatalog LoadBaseSpells(ReplayFixture fixture)
