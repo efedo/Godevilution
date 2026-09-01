@@ -297,3 +297,15 @@ set_level	SL_VILEBETRAYER	5
 set_level	SL_ARENA_CHURCH	6
 set_level	SL_ARENA_HELL	7
 set_level	SL_ARENA_CIRCLE_OF_LIFE	8
+monster	carver_native_13	15
+monster	plague_eater_native_17	19
+monster	shadow_beast_native_18	20
+monster	bone_gasher_native_19	21
+monster	skeleton_native_20	22
+monster	corpse_bow_native_21	23
+monster	burning_dead_native_22	24
+monster	horror_native_23	25
+monster	skeleton_captain_native_24	26
+monster	corpse_captain_native_25	27
+monster	burning_dead_captain_native_26	28
+monster	horror_captain_native_27	29

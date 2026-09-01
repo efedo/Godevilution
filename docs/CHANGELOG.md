@@ -4,10 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Expand the base content pack with canonical Skeleton, Corpse Axe, Burning
-  Dead, Horror, Fallen, Devil Kin, Dark One, and Scavenger identities. Their
-  validated native AI metadata and DUN mappings are now available to
-  production server generation.
+- Expand the base content pack with the next validated early-undead progression:
+  Carver, Plague Eater, Shadow Beast, Bone Gasher, Skeleton, Corpse Bow, Burning
+  Dead, Horror, and the Skeleton Captain variants. Their native AI metadata and
+  DUN mappings are now available to production server generation; native Carver
+  remains stable-ID-only because raw DUN identity 14 is authored Snotspill.
 
 - Expand the base content pack with the canonical Ghoul, Rotting Carcass,
   Black Death, Fallen One, Carver, Devil Kin, and Dark One identities. Their

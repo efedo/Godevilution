@@ -31,6 +31,11 @@ The base pack now also carries canonical Skeleton-family and Scavenger rows
 monster mappings. These identities are available to production generation;
 remaining ordinary families continue to be added incrementally.
 
+The next early-undead progression is now available as well: Carver, Plague
+Eater, Shadow Beast, Bone Gasher, the ranged Skeleton family, and the Skeleton
+Captain variants. Native Carver is retained as a stable identity without a DUN
+mapping because raw identity 14 is reserved by the authored Snotspill encounter.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

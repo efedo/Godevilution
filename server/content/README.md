@@ -624,7 +624,9 @@ The base pack now carries the canonical early undead and Fallen identities
 (Ghoul through Dark One) and their native DUN mappings; remaining ordinary
 monster families continue to be added incrementally. It also carries the
 canonical Skeleton-family and Scavenger rows (Skeleton through Scavenger) with
-the same validated native AI and DUN identity boundary.
+the same validated native AI and DUN identity boundary, followed by the
+validated Plague Eater through Skeleton Captain progression. Native Carver is
+stable-ID-only because its raw DUN identity is occupied by authored Snotspill.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default
