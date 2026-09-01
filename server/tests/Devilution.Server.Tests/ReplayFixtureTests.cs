@@ -1210,15 +1210,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-magi-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(40, 255, 0, 0, 0, 0) {
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
-                StaffLevel = -1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
@@ -1255,18 +1247,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-mana-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(41, 255, 0, 0, 0, 0) {
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Mana,
-                ManaRandomRange = 10,
-                ManaCharacterLevelRandomRange = 4,
-                ManaSpellLevelRandomRange = 6,
-                StaffLevel = -1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var initial = fixture.InitialState;
         var repositoryRoot = FindRepositoryRoot();
         var classes = AuthoritativePlayerClassCatalog.LoadTsv(
@@ -1305,15 +1286,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-reflect-resolution.json");
         var initial = fixture.InitialState;
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(43, 35, 0, 0, 0, 0) {
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
-                StaffLevel = -1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -1351,17 +1324,7 @@ public sealed class ReplayFixtureTests
             levelId: initial.CombatTargetLevelId,
             attackDamage: initial.CombatTargetAttackDamage,
             aggroRange: initial.CombatTargetAggroRange);
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(43, 35, 0, 0, 0, 0) {
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
-                ReflectDamagePercentMinimum = 20,
-                ReflectDamagePercentMaximum = 30,
-                StaffLevel = -1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var stores = new StoreCatalog();
         stores.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -1407,15 +1370,7 @@ public sealed class ReplayFixtureTests
             levelId: initial.CombatTargetLevelId,
             attackDamage: initial.CombatTargetAttackDamage,
             aggroRange: initial.CombatTargetAggroRange);
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(53, 100, 0, 53, uint.MaxValue, 0) {
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Etherealize,
-                StaffLevel = -1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -1468,20 +1423,7 @@ public sealed class ReplayFixtureTests
             minDamageSpecial: initial.CombatTargetMinDamageSpecial,
             maxDamageSpecial: initial.CombatTargetMaxDamageSpecial,
             magicResistance: initial.CombatTargetMagicResistance);
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(48, 40, 0, 0, 0, 0) {
-                NativeSpellId = 44,
-                Range = 5,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Berserk,
-                ManaCostScale = 64,
-                BerserkSearchRadius = 5,
-                BerserkDamagePercentBase = 120,
-                BerserkDamagePercentRandomRange = 10,
-                BerserkSpellLevelBonus = 1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,

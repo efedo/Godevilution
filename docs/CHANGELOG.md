@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move the Magi, Mana, Reflect, Etherealize, and Berserk replay fixtures
+  to the validated base `spells.tsv` catalog and active content-manifest
+  identity, preserving restoration, retaliation, status, and mutation parity.
+
 - Move the Warp, Golem, Jester, and Town Portal replay fixtures to the
   validated base `spells.tsv` catalog and active content-manifest identity,
   preserving native transition, summon, dispatch, and portal checkpoints.

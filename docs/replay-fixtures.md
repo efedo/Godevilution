@@ -113,6 +113,10 @@ native full-mana restoration boundary.
 character-level and memorized-spell-level restoration rolls and the native
 class multiplier.
 
+The Magi, Mana, Reflect, Etherealize, and Berserk runners likewise load the
+validated base `spells.tsv` catalog and check the active `devilution.base`
+manifest identity.
+
 The Warp, Golem, Jester, and Town Portal runners also load the validated base
 `spells.tsv` catalog and check the active `devilution.base` manifest identity.
 
