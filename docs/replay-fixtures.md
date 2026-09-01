@@ -187,6 +187,8 @@ the hash-checked `test/content/replay/mega-inferno` content pack.
 The seven Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
+The nine Monster Magic fixtures likewise load their `OrangeFlare` mappings
+from the hash-checked `test/content/replay/monster-magic` content pack.
 broader monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,

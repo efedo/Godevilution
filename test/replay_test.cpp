@@ -7320,6 +7320,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoi
 
 	ReplayFixtureExecutionState state;
 	state.multiplayer = true;
+	state.entityId = 1;
 	state.life = fixture.initialState.life;
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.positionX = fixture.initialState.positionX;
@@ -7356,6 +7357,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoi
 	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
 	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
 	state.secondaryPlayerCombatModeEndTick = fixture.initialState.secondaryPlayer.combatModeEndTick;
+	state.secondaryInventoryGrid.assign(40, -1);
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
@@ -7388,6 +7390,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryBlockAgainstCSharpCheckpoin
 
 	ReplayFixtureExecutionState state;
 	state.multiplayer = true;
+	state.entityId = 1;
 	state.life = fixture.initialState.life;
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.positionX = fixture.initialState.positionX;
@@ -7420,6 +7423,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryBlockAgainstCSharpCheckpoin
 	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
 	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
 	state.secondaryPlayerCombatModeEndTick = fixture.initialState.secondaryPlayer.combatModeEndTick;
+	state.secondaryInventoryGrid.assign(40, -1);
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;

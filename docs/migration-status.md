@@ -47,6 +47,11 @@ The seven Blood Star replay fixtures now share the validated
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
+The nine Monster Magic replay fixtures now share the validated
+`test/content/replay/monster-magic` pack, which externalizes the `OrangeFlare`
+mapping for Lich-family and orb native AIs. The managed runner validates the
+pack hash before loading the native-AI projectile catalog.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

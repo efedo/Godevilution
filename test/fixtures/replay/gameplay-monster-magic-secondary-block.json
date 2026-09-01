@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/monster-magic-secondary-block",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "monster-magic-secondary-block-content"
+    "id": "replay.monster-magic",
+    "version": "0.1.0",
+    "sha256": "b6787fdcf7701f3e4fe77f79a87e1b84024f86da2330d1559f6b7335a104ba4b"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

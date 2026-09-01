@@ -1,0 +1,6 @@
+native_ai	missile_id	projectile_behavior	spell_id	projectile_speed	projectile_lifetime	damage_type	ranged_retreat_minimum_distance	ranged_retreat_chance_base	ranged_retreat_chance_intelligence_scale	projectile_damage	projectile_impact_lifetime	ranged_delay_random_range
+Lich	OrangeFlare	MonsterMagic	1	16	256	Magic	4	70	10	4	1	20
+BoneDemon	OrangeFlare	MonsterMagic	1	16	256	Magic	4	70	10	4	1	20
+ArchLich	OrangeFlare	MonsterMagic	1	16	256	Magic	4	70	10	4	1	20
+Psychorb	OrangeFlare	MonsterMagic	1	16	256	Magic	4	70	10	4	1	20
+Necromorb	OrangeFlare	MonsterMagic	1	16	256	Magic	4	70	10	4	1	20

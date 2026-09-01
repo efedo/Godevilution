@@ -6159,22 +6159,7 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "OrangeFlare",
-                AuthoritativeProjectileBehavior.MonsterMagic,
-                SpellId: 1,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-magic");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -6237,22 +6222,7 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "OrangeFlare",
-                AuthoritativeProjectileBehavior.MonsterMagic,
-                SpellId: 1,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-magic");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -6315,22 +6285,7 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "OrangeFlare",
-                AuthoritativeProjectileBehavior.MonsterMagic,
-                SpellId: 1,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-magic");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -7028,22 +6983,7 @@ public sealed class ReplayFixtureTests
             rangedDelayTicks: initial.CombatTargetRangedDelayTicks,
             skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
             skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "OrangeFlare",
-                AuthoritativeProjectileBehavior.MonsterMagic,
-                SpellId: 1,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-magic");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(

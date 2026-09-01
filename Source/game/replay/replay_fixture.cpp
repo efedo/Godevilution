@@ -574,16 +574,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		        && state.combatTargetAttackDamage != 0
 		    ? state.combatTargetAttackDamage
 		    : state.combatTargetMaxDamage;
-		const int32_t targetMinDamageSpecial = state.combatTargetMinDamageSpecial == 0
-		        && state.combatTargetMaxDamageSpecial == 0
-		        && state.combatTargetAttackDamage != 0
-		    ? state.combatTargetAttackDamage
-		    : state.combatTargetMinDamageSpecial;
-		const int32_t targetMaxDamageSpecial = state.combatTargetMinDamageSpecial == 0
-		        && state.combatTargetMaxDamageSpecial == 0
-		        && state.combatTargetAttackDamage != 0
-		    ? state.combatTargetAttackDamage
-		    : state.combatTargetMaxDamageSpecial;
+		const int32_t targetMinDamageSpecial = state.combatTargetMinDamageSpecial != 0
+		    ? state.combatTargetMinDamageSpecial
+		    : targetMinDamage;
+		const int32_t targetMaxDamageSpecial = state.combatTargetMaxDamageSpecial != 0
+		    ? state.combatTargetMaxDamageSpecial
+		    : targetMaxDamage;
 		if (state.combatTargetBerserked
 		    || targetMinDamage != state.combatTargetAttackDamage
 		    || targetMaxDamage != state.combatTargetAttackDamage
