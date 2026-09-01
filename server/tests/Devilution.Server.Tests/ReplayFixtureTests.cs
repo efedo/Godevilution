@@ -2995,20 +2995,7 @@ public sealed class ReplayFixtureTests
             initial.WarpTargetLevelId,
             initial.WarpTargetX,
             initial.WarpTargetY));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(49, 35, 0, 0, 0, 0) {
-                NativeSpellId = 42,
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 2,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Warp,
-                ManaAdjustment = 3,
-                MinimumManaCost = 18,
-                ManaCostScale = 64,
-                WarpSearchRadius = 5,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -3050,28 +3037,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-golem-resolution.json");
         var initial = fixture.InitialState;
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(52, 100, 0, 0, 0, 0) {
-                NativeSpellId = 21,
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileLifetime = 1,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Golem,
-                ManaAdjustment = 6,
-                MinimumManaCost = 60,
-                ManaCostScale = 64,
-                StaffLevel = 9,
-                GolemDeathAnimationTicks = 12,
-                GolemHitPointsLevelBaseQ6 = 320,
-                GolemHitPointsLevelMultiplier = 2,
-                GolemHitPointsManaDivisor = 3,
-                GolemDamageLevelMultiplier = 4,
-                GolemMinimumDamageLevelOffset = 1,
-                GolemMaximumDamageLevelOffset = 3,
-                GolemArmorClass = 25,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -3131,36 +3097,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-jester-firebolt-resolution.json");
         var initial = fixture.InitialState;
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(47, 20, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 1,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Jester,
-                JesterSpellIds = Enumerable.Repeat(1U, 10).ToArray(),
-                ManaAdjustment = 3,
-                MinimumManaCost = 15,
-                ManaCostScale = 64,
-                StaffLevel = 10,
-            },
-            new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 26,
-                ProjectileLifetime = 256,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Firebolt,
-                ManaAdjustment = 1,
-                ManaAdjustmentDivisor = 2,
-                MinimumManaCost = 3,
-                ManaCostScale = 64,
-                RandomDamageRange = 10,
-                MagicDamageDivisor = 8,
-                SpellLevelDamage = 1,
-                DamageBonus = 1,
-                ResistantDamageDivisor = 4,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -3210,17 +3147,7 @@ public sealed class ReplayFixtureTests
     {
         var fixture = LoadReplayFixture("gameplay-town-portal-resolution.json");
         var initial = fixture.InitialState;
-        var spell = new AuthoritativeSpellDefinition(39, 35, 0, 0, 0, 0) {
-            NativeSpellId = 7,
-            Range = 112,
-            DamageType = AuthoritativeDamageType.Magic,
-            ProjectileLifetime = 1,
-            ProjectileBehavior = AuthoritativeProjectileBehavior.TownPortal,
-            ManaAdjustment = 3,
-            MinimumManaCost = 18,
-            ManaCostScale = 64,
-            StaffLevel = 3,
-        };
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(0, 80, 80));
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 80, 80));
@@ -3237,7 +3164,7 @@ public sealed class ReplayFixtureTests
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
             startingWorld: world,
-            startingSpells: new AuthoritativeSpellCatalog([spell]),
+            startingSpells: spells,
             startingMemorizedSpells: initial.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
                 .ToArray(),

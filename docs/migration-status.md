@@ -40,6 +40,9 @@ managed runners preserve normalized trigger resolution, deterministic
 destination selection, visited-level history, mana consumption, and canonical
 level-transition state.
 
+The Warp, Golem, Jester, and Town Portal fixtures now load their spell behavior
+from the validated base `spells.tsv` catalog instead of synthetic test-only rows.
+
 The shared replay contract now covers player Etherealize casts. Native and
 managed runners preserve the permanent status, canonical status hashing, and
 monster-damage immunity across authoritative ticks.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move the Warp, Golem, Jester, and Town Portal replay fixtures to the
+  validated base `spells.tsv` catalog and active content-manifest identity,
+  preserving native transition, summon, dispatch, and portal checkpoints.
+
 - Move all six Telekinesis replay fixtures to the validated base `spells.tsv`
   catalog and active content-manifest identity, preserving native pickup,
   object, knockback, and rejection checkpoints in the managed runner.

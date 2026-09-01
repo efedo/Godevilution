@@ -113,6 +113,9 @@ native full-mana restoration boundary.
 character-level and memorized-spell-level restoration rolls and the native
 class multiplier.
 
+The Warp, Golem, Jester, and Town Portal runners also load the validated base
+`spells.tsv` catalog and check the active `devilution.base` manifest identity.
+
 `gameplay-telekinesis-world-item.json` covers a memorized Telekinesis cast that
 targets a server-owned world item, preserving exact target coordinates,
 inventory first-fit placement, purchased-tick state, mana consumption, and the
