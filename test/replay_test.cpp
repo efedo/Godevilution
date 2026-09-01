@@ -4002,6 +4002,7 @@ TEST(ReplayFixture, ExecutesGargoyleHealingAgainstCSharpCheckpoints)
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
@@ -4047,6 +4048,7 @@ TEST(ReplayFixture, ExecutesGargoyleAttackAgainstCSharpCheckpoint)
 	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
@@ -4132,6 +4134,7 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceIdleAgainstCSharpCheckpoint)
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
@@ -4171,6 +4174,7 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceWalkAgainstCSharpCheckpoint)
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
@@ -4223,6 +4227,7 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceMoveAgainstCSharpCheckpoint)
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
 	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
 	state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;

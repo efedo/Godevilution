@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/gargoyle-avoidance-walk",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "gargoyle-avoidance-walk-content"
+    "id": "replay.gargoyle",
+    "version": "0.1.0",
+    "sha256": "977c0302848c2bac69984bb9953ee61036594aaa8aafb597fb1d6239759af034"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
@@ -33,6 +33,7 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 107,
     "combat_target_aggro_range": 4,
     "combat_target_native_ai": "Gargoyle",
     "combat_target_monster_item_seed": 2654435769,
@@ -49,6 +50,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "ff5d34bf339d56d89ca4b49983b807d9f270c80b4a1ad7bf158302e3e49d66f7" }
+    { "tick": 1, "state_sha256": "f53a842681169c128019dbab44b72716176da746e80564e627dda90e14efbfae" }
   ]
 }

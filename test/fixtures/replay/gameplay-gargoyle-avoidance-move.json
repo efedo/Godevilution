@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/gargoyle-avoidance-move",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "gargoyle-avoidance-move-content"
+    "id": "replay.gargoyle",
+    "version": "0.1.0",
+    "sha256": "977c0302848c2bac69984bb9953ee61036594aaa8aafb597fb1d6239759af034"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
@@ -26,6 +26,7 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 107,
     "combat_target_aggro_range": 6,
     "combat_target_native_ai": "Gargoyle",
     "combat_target_monster_item_seed": 2654435769,
@@ -42,7 +43,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "3c40cc47b923bd56d187937199c2f260f738b7224e81675539def2c419cc6a9f" },
-    { "tick": 2, "state_sha256": "c13c36d96793cd947fed0ea7f94b9267973cd0bf1cd3240f05628a18f68ffc81" }
+    { "tick": 1, "state_sha256": "7a336024ac3e7975b6432882db8ca8a728348716c127b72b1994ace1fed12e4a" },
+    { "tick": 2, "state_sha256": "27a6c3fb6a74a4198d786db12cd455075d1c7ebc30a4ef7a60c22f9c21ffa114" }
   ]
 }

@@ -210,7 +210,10 @@ The two Counselor fixtures load their native Counselor type and timing bands
 from the hash-checked `test/content/replay/counselor` content pack.
 The two GoatMelee fixtures load their native AiAvoidance and adjacent-attack
 tuning from the hash-checked `test/content/replay/goat-melee` content pack.
-broader monster-AI branches and multi-actor selection remain future replay work.
+The five Gargoyle fixtures load native safety, healing, avoidance, and
+adjacent-attack tuning from the hash-checked `test/content/replay/gargoyle`
+content pack. Broader monster-AI branches and multi-actor selection remain
+future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.

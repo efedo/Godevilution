@@ -3801,6 +3801,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
@@ -3820,6 +3821,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "gargoyle"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -3857,6 +3859,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             attackDamage: initial.CombatTargetAttackDamage,
             aggroRange: initial.CombatTargetAggroRange,
             toHit: initial.CombatTargetToHit,
@@ -3880,6 +3883,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "gargoyle"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -3982,6 +3986,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             monsterItemSeed: initial.CombatTargetMonsterItemSeed,
@@ -4000,6 +4005,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "gargoyle"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -4092,6 +4098,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             monsterItemSeed: initial.CombatTargetMonsterItemSeed,
@@ -4119,6 +4126,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "gargoyle"),
             startingObjects: [@object],
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
@@ -4161,6 +4169,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             monsterItemSeed: initial.CombatTargetMonsterItemSeed,
@@ -4179,6 +4188,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "gargoyle"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -4225,6 +4235,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,

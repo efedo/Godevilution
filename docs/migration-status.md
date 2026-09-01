@@ -90,6 +90,11 @@ native AiAvoidance and wounded-special tuning from the shared
 `test/content/replay/goat-melee` pack instead of relying on compatibility
 fallbacks.
 
+The five Gargoyle healing, movement, avoidance, and adjacent-attack fixtures
+now load their validated native safety, healing, and AiAvoidance tuning from
+the shared `test/content/replay/gargoyle` pack instead of relying on
+compatibility fallbacks.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

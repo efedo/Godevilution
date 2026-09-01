@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/gargoyle-healing",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "gargoyle-healing-content"
+    "id": "replay.gargoyle",
+    "version": "0.1.0",
+    "sha256": "977c0302848c2bac69984bb9953ee61036594aaa8aafb597fb1d6239759af034"
   },
   "tick_rate_hz": 20,
   "rng_seed": 2,
@@ -26,6 +26,7 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 100,
+    "combat_target_monster_id": 107,
     "combat_target_aggro_range": 8,
     "combat_target_native_ai": "Gargoyle",
     "combat_target_monster_item_seed": 286331153,
@@ -43,7 +44,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "a6fd1e721ef102b7107ec8cde8472254ddce0787b58e774e66558e51ba0dcd12" },
-    { "tick": 2, "state_sha256": "a6fd1e721ef102b7107ec8cde8472254ddce0787b58e774e66558e51ba0dcd12" }
+    { "tick": 1, "state_sha256": "f8439349b6f004bc6118a31cb04e6e4adfae50899e00c586f55d5e09ebe7d8ff" },
+    { "tick": 2, "state_sha256": "f8439349b6f004bc6118a31cb04e6e4adfae50899e00c586f55d5e09ebe7d8ff" }
   ]
 }

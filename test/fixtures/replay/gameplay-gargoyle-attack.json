@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/gargoyle-attack",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "gargoyle-attack-content"
+    "id": "replay.gargoyle",
+    "version": "0.1.0",
+    "sha256": "977c0302848c2bac69984bb9953ee61036594aaa8aafb597fb1d6239759af034"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
@@ -39,6 +39,7 @@
     "combat_target_position_y": 1,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 107,
     "combat_target_aggro_range": 3,
     "combat_target_attack_damage": 3,
     "combat_target_to_hit": 255,
@@ -60,6 +61,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "6ea4e28e0c7e86d25ba2902043749a661deb021c0c97a8df4a789652245fba19" }
+    { "tick": 1, "state_sha256": "844799e2f794dde5d1983c081e17b4c746de0e06fddc32e2b73aab379e27bb41" }
   ]
 }

@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/gargoyle-avoidance-idle",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "gargoyle-avoidance-idle-content"
+    "id": "replay.gargoyle",
+    "version": "0.1.0",
+    "sha256": "977c0302848c2bac69984bb9953ee61036594aaa8aafb597fb1d6239759af034"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
@@ -26,6 +26,7 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 107,
     "combat_target_aggro_range": 4,
     "combat_target_native_ai": "Gargoyle",
     "combat_target_monster_item_seed": 2654435769,
@@ -42,6 +43,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "59706428d4aa301be7a4fda4830c4d615a5fd2b440f2850018276b8c0ba47c49" }
+    { "tick": 1, "state_sha256": "c50c7aa6b418d3c690c9ddb7b57a41e098bb0ba1480633b75098542528cb20cf" }
   ]
 }
