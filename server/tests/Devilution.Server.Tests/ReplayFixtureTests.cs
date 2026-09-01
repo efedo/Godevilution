@@ -4403,6 +4403,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             attackDamage: initial.CombatTargetAttackDamage,
             aggroRange: initial.CombatTargetAggroRange,
             monsterLevel: initial.CombatTargetMonsterLevel,
@@ -4425,6 +4426,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "rhino-charge"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -7334,6 +7336,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
@@ -7354,6 +7357,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "scavenger-corpse"),
             startingCorpses: initial.Corpses
                 .Select(corpse => new AuthoritativeCorpse(
                     corpse.EntityId,

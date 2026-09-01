@@ -2,7 +2,7 @@
   "format_version": 1,
   "fixture_id": "gameplay/scavenger-corpse",
   "protocol_schema_version": "0.1.0",
-  "content_manifest": { "id": "test-content", "version": "1", "sha256": "scavenger-corpse-content" },
+  "content_manifest": { "id": "replay.scavenger-corpse", "version": "0.1.0", "sha256": "e628a3581dee397f60dcfa4974b2d94ba1486166cf943832c6352dd582731229" },
   "tick_rate_hz": 20,
   "rng_seed": 9,
   "game_variant": "Diablo",
@@ -23,6 +23,7 @@
     "combat_target_hit_points": 15,
     "combat_target_max_hit_points": 40,
     "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 112,
     "combat_target_native_ai": "Scavenger",
     "corpses": [
       { "entity_id": 30, "level_id": 1, "position_x": 5, "position_y": 10 }
@@ -33,7 +34,7 @@
     { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "2c7c63dbd4470c6687f8450e4412a6001cff380855a686e01ce4ae4b883b5e98" },
-    { "tick": 2, "state_sha256": "51907cda25161186c9486e7667065ff86df4cd7b9eeb592f5ca9ffac82f75810" }
+    { "tick": 1, "state_sha256": "ee88d4d8b4e489809c360f48dccfd950ee0ea0379ebad7e8ebdf7361aef9aedd" },
+    { "tick": 2, "state_sha256": "8c6208f1aafb47daa6e21d769295eebd4b14e113d6eaefb77bb0269e0bf3bb42" }
   ]
 }

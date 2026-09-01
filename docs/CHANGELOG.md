@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   validated content packs, including their native AI chance, movement, and
   retreat tuning.
 
+- Extract the Rhino charge and Diablo/Hellfire Scavenger corpse replay fixtures
+  into validated content packs, including native charge, movement, delay, and
+  healing tuning.
+
 - Extract the SkeletonMelee movement-delay and failed-adjacent-attack replay
   fixtures into the validated `test/content/replay/skeleton-melee` pack,
   including native chance bands and delay formulas.

@@ -106,6 +106,11 @@ validated native AI tuning from the shared `bat-retreat`, `fat-movement`, and
 replay state now carries explicit stable monster IDs so content lookup is
 server-authoritative and deterministic.
 
+The Rhino charge and Diablo/Hellfire Scavenger corpse fixtures now load their
+validated charge, movement, delay, and healing tuning from the shared
+`rhino-charge` and `scavenger-corpse` packs instead of relying on compatibility
+fallbacks. Their replay states also carry explicit stable monster IDs.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

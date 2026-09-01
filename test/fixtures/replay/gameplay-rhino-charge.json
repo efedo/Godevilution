@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/rhino-charge",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "rhino-charge-content"
+    "id": "replay.rhino-charge",
+    "version": "0.1.0",
+    "sha256": "81005b5b6e68ead6921fc747e3390c143d10abac952ff442bc2a362067873f9a"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,
@@ -26,6 +26,7 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 111,
     "combat_target_attack_damage": 3,
     "combat_target_aggro_range": 5,
     "combat_target_monster_level": 10,
@@ -46,6 +47,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "112bbb82da3ac0c606f183d2efa8016cfb7ccd09ce1e71199add14283faaebe6" }
+    { "tick": 1, "state_sha256": "fa53c6d7fb1eb44394e978af9e534aff5a1f7a8a342b7f982af31a5ce7995b9f" }
   ]
 }

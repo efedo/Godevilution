@@ -4348,6 +4348,7 @@ TEST(ReplayFixture, ExecutesRhinoChargeAgainstCSharpCheckpoints)
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
 	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
 	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
@@ -4621,6 +4622,7 @@ TEST(ReplayFixture, ExecutesScavengerCorpseLifecycleAgainstCSharpCheckpoints)
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
 	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
 	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
@@ -4665,6 +4667,7 @@ TEST(ReplayFixture, ExecutesScavengerHellfireCorpseLifecycleAgainstCSharpCheckpo
 	state.levelId = fixture.initialState.levelId;
 	state.hellfire = fixture.gameVariant == "Hellfire";
 	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
 	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
