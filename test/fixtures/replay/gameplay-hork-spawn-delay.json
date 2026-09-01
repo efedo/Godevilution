@@ -5,7 +5,7 @@
   "content_manifest": {
     "id": "replay.monster-hork-spawn",
     "version": "0.1.0",
-    "sha256": "099b8d0f41f155a5df05197da68b2034b327b510199abf0cdd0c7422ba643f1c"
+    "sha256": "f41047e1d4531f170f3a534a1954e63cf157a12f12c9bfb47fba6b52f2c589e6"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

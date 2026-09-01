@@ -64,6 +64,10 @@ Snake Charge lifecycle fixture likewise load separate validated
 `monster-snake-delay` and `monster-snake-charge` packs, preserving the native
 default and explicitly tuned charge configurations.
 
+The Hork Spawn pack now also supplies the summoned monster’s validated
+`monster_types.tsv` row; the managed spawn planner consumes that external
+metadata instead of an inline test definition.
+
 The autonomous GoatRanged Arrow fixture now loads the validated
 `test/content/replay/monster-arrow-autonomous` pack. Its compact native replay
 projection accepts the same explicit retreat thresholds as managed content,

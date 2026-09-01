@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move the Hork Spawn summoned-monster type row into the validated
+  `monster-hork-spawn` pack, so the replay helper no longer constructs spawn
+  metadata inline.
+
 - Extract the autonomous GoatRanged Arrow replay fixture into the validated
   `monster-arrow-autonomous` pack and carry its compact native retreat tuning
   through the replay contract so native and managed admission remain identical.

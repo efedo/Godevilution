@@ -7144,28 +7144,7 @@ public sealed class ReplayFixtureTests
         var missiles = LoadReplayMonsterMissiles(fixture, "monster-hork-spawn");
         var spawnWorld = new AuthoritativeWorld();
         spawnWorld.AddLevel(new AuthoritativeLevel(1, 40, 40));
-        var spawnTypes = new AuthoritativeMonsterTypeCatalog([
-            new AuthoritativeMonsterTypeDefinition(
-                117,
-                117,
-                "Hork Spawn",
-                0,
-                100,
-                1,
-                1,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                false,
-                false,
-                false) {
-                NativeAi = "HorkDemon",
-                AggroRange = 6,
-            },
-        ]);
+        var spawnTypes = LoadReplayMonsterTypes(fixture, "monster-hork-spawn");
         var spawnPlanner = new AuthoritativeMonsterSpawnPlanner(
             spawnWorld,
             spawnTypes,
@@ -7590,6 +7569,22 @@ public sealed class ReplayFixtureTests
         return AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
             File.ReadAllText(Path.Combine(contentRoot, "monster_missiles.tsv")));
+    }
+
+    private static AuthoritativeMonsterTypeCatalog LoadReplayMonsterTypes(
+        ReplayFixture fixture,
+        string packDirectory)
+    {
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "test",
+            "content",
+            "replay",
+            packDirectory);
+        LoadReplayContentPack(fixture, packDirectory);
+        return AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "monster_types.tsv")));
     }
 
     private static AuthoritativeSpellCatalog LoadBaseSpells(ReplayFixture fixture)
