@@ -379,6 +379,8 @@ explicit migration seams, not server-authority claims:
   native-DUN placement, book-specific rewards, and map resynchronization remain
   deferred until the corresponding generated geometry and licensed assets are
   available.
+  The Godot client now consumes that frame metadata and renders an additive
+  open-book cue without introducing native object-ID logic into the client.
   The two fixed Chamber of Bone completion books now clone authored templates:
   the server completes the quest, grants Guardian, and owns the exact
   player-origin target offset. The Vile Betrayer's two fixed book

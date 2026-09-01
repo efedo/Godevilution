@@ -36,4 +36,27 @@ public sealed class ObjectPresentationStyleTests
 
         Assert.Equal(expected, ObjectPresentationStyle.Resolve(state));
     }
+
+    [Theory]
+    [InlineData(false, true, 1u, 1u, ObjectPresentationFrame.Default)]
+    [InlineData(true, false, 1u, 1u, ObjectPresentationFrame.Default)]
+    [InlineData(true, true, 0u, 0u, ObjectPresentationFrame.Default)]
+    [InlineData(true, true, 0u, 1u, ObjectPresentationFrame.Default)]
+    [InlineData(true, true, 1u, 1u, ObjectPresentationFrame.Activated)]
+    public void ResolvesAuthoredObjectLifecycleFrames(
+        bool activated,
+        bool keepVisible,
+        uint animationFrame,
+        uint activatedAnimationFrame,
+        ObjectPresentationFrame expected)
+    {
+        var state = new ObjectSnapshot {
+            Activated = activated,
+            KeepVisibleAfterActivation = keepVisible,
+            AnimationFrame = animationFrame,
+            ActivatedAnimationFrame = activatedAnimationFrame,
+        };
+
+        Assert.Equal(expected, ObjectPresentationStyle.ResolveFrame(state));
+    }
 }

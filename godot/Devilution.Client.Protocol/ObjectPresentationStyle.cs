@@ -13,6 +13,13 @@ public enum ObjectPresentationKind
     Trap,
 }
 
+/** Native-compatible lifecycle frame selected for an authored object. */
+public enum ObjectPresentationFrame
+{
+    Default,
+    Activated,
+}
+
 /** Maps additive object presentation metadata with compatibility fallbacks. */
 public static class ObjectPresentationStyle
 {
@@ -26,6 +33,21 @@ public static class ObjectPresentationStyle
             ProtocolObjectPresentationKind.Trap => ObjectPresentationKind.Trap,
             _ => ResolveLegacy(state),
         };
+    }
+
+    /**
+     * Resolves the server-authored lifecycle frame without inferring state from
+     * the object ID. Older snapshots retain the default frame behavior.
+     */
+    public static ObjectPresentationFrame ResolveFrame(ObjectSnapshot state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        return state.Activated
+            && state.KeepVisibleAfterActivation
+            && state.ActivatedAnimationFrame > 0
+            && state.AnimationFrame == state.ActivatedAnimationFrame
+            ? ObjectPresentationFrame.Activated
+            : ObjectPresentationFrame.Default;
     }
 
     private static ObjectPresentationKind ResolveLegacy(ObjectSnapshot state)

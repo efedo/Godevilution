@@ -497,6 +497,7 @@ public partial class WorldPresentation : Node2D
     private void DrawObject(ObjectSnapshot @object)
     {
         var kind = ObjectPresentationStyle.Resolve(@object);
+        var frame = ObjectPresentationStyle.ResolveFrame(@object);
         var color = kind switch {
             ObjectPresentationKind.Shrine => new Color("7d8cff"),
             ObjectPresentationKind.Quest => new Color("e5bd52"),
@@ -506,12 +507,25 @@ public partial class WorldPresentation : Node2D
         };
         var center = PositionFor(@object.EntityId, @object.PositionX, @object.PositionY);
         DrawTextureOrRect("object", center, new Vector2(22, 22), color, true);
+        if (frame == ObjectPresentationFrame.Activated)
+            DrawActivatedObjectFrame(center, color);
         if (@object.TrapArmed) {
             var trapColor = new Color("f05d5e");
             DrawArc(center, 15, 0, Mathf.Tau, 20, trapColor, 3);
             DrawLine(center + new Vector2(-6, -6), center + new Vector2(6, 6), trapColor, 2);
             DrawLine(center + new Vector2(6, -6), center + new Vector2(-6, 6), trapColor, 2);
         }
+    }
+
+    /** Draws a presentation-only open-book cue for an authored activated frame. */
+    private void DrawActivatedObjectFrame(Vector2 center, Color color)
+    {
+        var pageColor = new Color("fff0a8");
+        DrawLine(center + new Vector2(-8, -5), center + new Vector2(-1, -2), pageColor, 2);
+        DrawLine(center + new Vector2(-8, 2), center + new Vector2(-1, 5), pageColor, 2);
+        DrawLine(center + new Vector2(8, -5), center + new Vector2(1, -2), pageColor, 2);
+        DrawLine(center + new Vector2(8, 2), center + new Vector2(1, 5), pageColor, 2);
+        DrawLine(center + new Vector2(0, -5), center + new Vector2(0, 6), color, 2);
     }
 
     private void DrawCorpse(CorpseSnapshot corpse)

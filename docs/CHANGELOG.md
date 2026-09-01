@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Teach the Godot presentation client to consume server-authored object
+  lifecycle frames. Activated authored books now render an open-book cue when
+  the server keeps their native object visible; older snapshots retain the
+  existing generic placeholder behavior.
+
 - Externalize the native activated-book presentation lifecycle for the Halls of
   the Blind, Gateway of Blood, and Warlord steel-tome templates. The base pack
   now keeps each one visible and selects its native open-book frame after the
