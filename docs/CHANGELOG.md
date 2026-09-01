@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with the validated native 28–45 families:
+  Invisible Lord, Sneak, Goat, and Bat variants through Night Clan. Their
+  stable identities, native AI metadata, and available DUN mappings are now
+  available to production server generation; raw DUN identity 31 remains
+  reserved by the authored Banner fragment.
+
 - Expand the base content pack with the next validated early-undead progression:
   Carver, Plague Eater, Shadow Beast, Bone Gasher, Skeleton, Corpse Bow, Burning
   Dead, Horror, and the Skeleton Captain variants. Their native AI metadata and

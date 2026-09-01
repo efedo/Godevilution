@@ -36,6 +36,11 @@ Eater, Shadow Beast, Bone Gasher, the ranged Skeleton family, and the Skeleton
 Captain variants. Native Carver is retained as a stable identity without a DUN
 mapping because raw identity 14 is reserved by the authored Snotspill encounter.
 
+The base pack now also carries native monster identities 28–45, covering the
+Invisible Lord/Sneak, Goat, and Bat families through Night Clan. Their validated
+AI selectors and available native DUN mappings are available to production
+generation; raw DUN identity 31 remains reserved by the authored Banner fragment.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

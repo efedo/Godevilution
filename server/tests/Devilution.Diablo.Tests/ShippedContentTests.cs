@@ -26,7 +26,7 @@ public sealed class ShippedContentTests
         var nativeDunMonsters = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
             nativeDunMonsterTable.SourcePath,
             nativeDunMonsterTable.ToCanonicalTsv());
-        Assert.Equal(29, nativeDunMonsters.Definitions.Count);
+        Assert.Equal(46, nativeDunMonsters.Definitions.Count);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(2, out var ghoulNativeId));
         Assert.Equal(1U, ghoulNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(8, out var darkOneNativeId));
@@ -39,6 +39,13 @@ public sealed class ShippedContentTests
         Assert.Equal(17U, plagueEaterNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(28, out var horrorCaptainNativeId));
         Assert.Equal(27U, horrorCaptainNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(29, out var invisibleLordNativeId));
+        Assert.Equal(29U, invisibleLordNativeId);
+        Assert.False(nativeDunMonsters.TryGetNativeMonsterId(31, out _));
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(156, out var familiarNativeId));
+        Assert.Equal(28U, familiarNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(157, out var satyrLordNativeId));
+        Assert.Equal(33U, satyrLordNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(155, out var butcherNativeId));
         Assert.Equal(51U, butcherNativeId);
         var monsterTypeTable = pack.Tables.Single(
@@ -46,16 +53,19 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             monsterTypeTable.SourcePath,
             monsterTypeTable.ToCanonicalTsv());
-        Assert.Equal(31, monsterTypes.Definitions.Count);
+        Assert.Equal(49, monsterTypes.Definitions.Count);
         Assert.Equal(
             [
                 "Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One",
                 "Skeleton", "Corpse Axe", "Burning Dead", "Horror", "Fallen One", "Carver", "Devil Kin", "Dark One", "Scavenger",
                 "Plague Eater", "Shadow Beast", "Bone Gasher", "Skeleton", "Corpse Bow", "Burning Dead", "Horror",
                 "Skeleton Captain", "Corpse Captain", "Burning Dead Captain", "Horror Captain",
+                "Invisible Lord", "Hidden", "Stalker", "Unseen", "Illusion Weaver", "Satyr Lord",
+                "Flesh Clan", "Stone Clan", "Fire Clan", "Night Clan", "Fiend", "Blink", "Gloom", "Familiar",
+                "Flesh Clan", "Stone Clan", "Fire Clan", "Night Clan",
             ],
             monsterTypes.Definitions
-                .Where(definition => definition.MonsterId is >= 3 and <= 29)
+                .Where(definition => definition.MonsterId is >= 3 and <= 47)
                 .Select(definition => definition.Name));
         Assert.Equal("Fallen", monsterTypes.Definitions.Single(
             definition => definition.NativeMonsterId == 4).NativeAi);
@@ -66,6 +76,12 @@ public sealed class ShippedContentTests
         Assert.Equal("Carver", monsterTypes.Definitions.Single(
             definition => definition.MonsterId == 15).Name);
         Assert.False(monsterTypes.TryGetNative(13, out _));
+        Assert.Equal("Sneak", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 29).NativeAi);
+        Assert.Equal("GoatMelee", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 34).NativeAi);
+        Assert.Equal("GoatRanged", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 42).NativeAi);
         var placementTable = pack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
         var placement = Assert.Single(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(

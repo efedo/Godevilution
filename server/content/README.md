@@ -627,6 +627,10 @@ canonical Skeleton-family and Scavenger rows (Skeleton through Scavenger) with
 the same validated native AI and DUN identity boundary, followed by the
 validated Plague Eater through Skeleton Captain progression. Native Carver is
 stable-ID-only because its raw DUN identity is occupied by authored Snotspill.
+The pack now continues through native identities 28–45, covering Invisible
+Lord/Sneak, Goat, and Bat families through Night Clan with their validated DUN
+mapping boundary. Raw DUN identity 31 remains reserved by the authored Banner
+fragment and is intentionally not mapped to the level-6 Unseen identity.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default
