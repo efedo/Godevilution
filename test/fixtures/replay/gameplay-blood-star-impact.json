@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/blood-star-impact",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "blood-star-impact-content"
+    "id": "replay.blood-star",
+    "version": "0.1.0",
+    "sha256": "49c7a884bd11ab5525c8eb3358b20248c8124ff5273e00c981faf2317d24fc17"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

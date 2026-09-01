@@ -5260,22 +5260,7 @@ public sealed class ReplayFixtureTests
             toHit: fixture.InitialState.CombatTargetToHit,
             nativeAi: fixture.InitialState.CombatTargetNativeAi,
             intelligence: fixture.InitialState.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                fixture.InitialState.CombatTargetNativeAi,
-                "BloodStar",
-                AuthoritativeProjectileBehavior.BloodStar,
-                SpellId: 36,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "blood-star");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -5339,22 +5324,7 @@ public sealed class ReplayFixtureTests
             toHit: fixture.InitialState.CombatTargetToHit,
             nativeAi: fixture.InitialState.CombatTargetNativeAi,
             intelligence: fixture.InitialState.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                fixture.InitialState.CombatTargetNativeAi,
-                "BloodStar",
-                AuthoritativeProjectileBehavior.BloodStar,
-                SpellId: 36,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "blood-star");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -5419,22 +5389,7 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "BloodStar",
-                AuthoritativeProjectileBehavior.BloodStar,
-                SpellId: 36,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "blood-star");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -5496,22 +5451,7 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "BloodStar",
-                AuthoritativeProjectileBehavior.BloodStar,
-                SpellId: 36,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "blood-star");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -5572,22 +5512,7 @@ public sealed class ReplayFixtureTests
             toHit: initial.CombatTargetToHit,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "BloodStar",
-                AuthoritativeProjectileBehavior.BloodStar,
-                SpellId: 36,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "blood-star");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -7213,22 +7138,7 @@ public sealed class ReplayFixtureTests
             monsterItemSeed: initial.CombatTargetMonsterItemSeed,
             monsterAiSeed: initial.CombatTargetMonsterAiSeed,
             rangedDelayTicks: initial.CombatTargetRangedDelayTicks);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "BloodStar",
-                AuthoritativeProjectileBehavior.BloodStar,
-                SpellId: 36,
-                ProjectileSpeed: 16,
-                ProjectileLifetime: 256,
-                DamageType: AuthoritativeDamageType.Magic,
-                RangedRetreatMinimumDistance: 4,
-                RangedRetreatChanceBase: 70,
-                RangedRetreatChanceIntelligenceScale: 10,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 1,
-                RangedDelayRandomRange: 20),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "blood-star");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -7780,6 +7690,23 @@ public sealed class ReplayFixtureTests
             "spells.tsv",
             File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
     }
+
+    private static AuthoritativeMonsterMissileCatalog LoadReplayMonsterMissiles(
+        ReplayFixture fixture,
+        string packDirectory)
+    {
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "test",
+            "content",
+            "replay",
+            packDirectory);
+        LoadReplayContentPack(fixture, packDirectory);
+        return AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "monster_missiles.tsv")));
+    }
+
     private static AuthoritativeSpellCatalog LoadBaseSpells(ReplayFixture fixture)
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
