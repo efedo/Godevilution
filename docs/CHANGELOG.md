@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with the validated native 68–88 Storm, FireMan,
+  Gargoyle, and Mega families, including stable identities, AI metadata, and
+  native DUN mappings.
+
 - Expand the base content pack with the validated midgame Acid, Fat,
   SkeletonMelee, Magma, and Rhino families (native IDs 46–49 and 52–67),
   including stable identities, AI metadata, and native DUN mappings.

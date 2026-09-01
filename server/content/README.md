@@ -635,6 +635,8 @@ The midgame Acid, Fat, SkeletonMelee, Magma, and Rhino families (native IDs
 46–49 and 52–67) are also now available through stable identities and validated
 DUN mappings; native IDs 50 and 51 continue to use the authored Skeleton King
 and Butcher rows.
+The pack also carries native identities 68–88 across Storm, FireMan, Gargoyle,
+and Mega families with their validated AI and DUN mappings.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default

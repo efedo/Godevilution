@@ -46,6 +46,11 @@ and Rhino families (native IDs 46–49 and 52–67). Their stable identities,
 validated AI selectors, and native DUN mappings are available to production
 generation while the authored Skeleton King and Butcher identities remain intact.
 
+The next production family block now covers native identities 68–88: Storm and
+FireMan variants, Devil Kin Brute, Gargoyle variants, and Mega-family elites.
+Their validated AI selectors and native DUN mappings are available to production
+generation.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.
