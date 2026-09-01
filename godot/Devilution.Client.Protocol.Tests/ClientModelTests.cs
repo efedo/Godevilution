@@ -3092,6 +3092,55 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void ReconnectAcceptsLowerTickSnapshotAsNewServerEpoch()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 10,
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 2, PositionY = 3 },
+            },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+            Tick = 10,
+            Events = {
+                new GameEvent { Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 10 } },
+            },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Acknowledgement: new CommandAck {
+            Results = {
+                new CommandResult { ClientSequence = 4, Status = CommandStatus.Accepted },
+            },
+        }));
+        model.TrackPredictedMove(1, 1, 0);
+
+        model.ResetTransientPresentation();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 1,
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 9, PositionY = 8 },
+            },
+        }));
+
+        Assert.Equal(1UL, model.CurrentTick);
+        Assert.Equal((9, 8), (model.Snapshot!.Players[0].PositionX, model.Snapshot.Players[0].PositionY));
+        Assert.Empty(model.RecentEvents);
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
+        Assert.Equal(4UL, model.LastCommandResult!.ClientSequence);
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 0,
+            Players = {
+                new PlayerSnapshot { EntityId = 7, PositionX = 1, PositionY = 1 },
+            },
+        }));
+
+        Assert.Equal(1UL, model.CurrentTick);
+        Assert.Equal((9, 8), (model.Snapshot.Players[0].PositionX, model.Snapshot.Players[0].PositionY));
+    }
+
+    [Fact]
     public void IgnoresStaleSnapshotsWhileApplyingTheirAcknowledgements()
     {
         var model = new AuthoritativeClientModel();

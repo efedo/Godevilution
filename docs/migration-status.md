@@ -13,6 +13,13 @@ create presentation state.
 The Godot HUD now renders exact projected status durations (or permanent state)
 on a dedicated line; it never advances or expires those values locally.
 
+The Godot protocol model now marks reconnect as a server-epoch boundary. After
+`ResetTransientPresentation()`, the next validated snapshot is admitted even
+when its tick is lower than the retained snapshot, allowing process-restart
+recovery without stale-state lockout. Transient events and movement prediction
+are cleared while the command-result ledger remains available until replacement
+acknowledgements arrive.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

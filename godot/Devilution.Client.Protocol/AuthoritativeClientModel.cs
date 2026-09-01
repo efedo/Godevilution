@@ -41,6 +41,7 @@ public sealed class AuthoritativeClientModel
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
     private ulong recentEventsEndSequence;
+    private bool acceptNextSnapshotAsNewEpoch;
 
     public Snapshot? Snapshot { get; private set; }
 
@@ -106,7 +107,8 @@ public sealed class AuthoritativeClientModel
     {
         if (message.Snapshot is { } incomingSnapshot
             && Snapshot is { } currentSnapshot
-            && incomingSnapshot.Tick < currentSnapshot.Tick)
+            && incomingSnapshot.Tick < currentSnapshot.Tick
+            && !acceptNextSnapshotAsNewEpoch)
             message = message with { Snapshot = null };
         if (message.Snapshot is not null) {
             if (message.Snapshot.Players.Count == 0)
@@ -219,6 +221,7 @@ public sealed class AuthoritativeClientModel
             // Keep an owned copy so callers cannot mutate validated state
             // through a reused transport buffer after admission.
             Snapshot = message.Snapshot.Clone();
+            acceptNextSnapshotAsNewEpoch = false;
             LastError = null;
             RebuildPredictedPosition();
         }
@@ -278,6 +281,7 @@ public sealed class AuthoritativeClientModel
     public void ResetTransientPresentation()
     {
         recentEvents.Clear();
+        acceptNextSnapshotAsNewEpoch = true;
         ResetPrediction();
     }
 

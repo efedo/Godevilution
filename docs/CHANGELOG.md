@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Treat the first snapshot received after a reconnect as a new server epoch.
+  The Godot protocol model now accepts a lower server tick after process or
+  session recovery while clearing transient events and prediction; the
+  authoritative snapshot and command-result ledger remain available until the
+  replacement snapshot arrives.
+
 - Consolidate authoritative player-status presentation in the Godot client.
   HUD and world rendering now consume one typed projection for Mana Shield,
   Reflect charges, and timed status families.

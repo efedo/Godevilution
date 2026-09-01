@@ -17,6 +17,13 @@ collision cell against the latest projected portal route and submits
 missile. The legacy `CMD_WARP` command remains available only outside a
 connected server-backed session.
 
+The Godot protocol model treats reconnect as an explicit server-epoch boundary.
+`ResetTransientPresentation()` clears queued presentation events and movement
+prediction, then admits the next authoritative snapshot even when its tick is
+lower than the retained snapshot (for example after a host process restart).
+The model keeps the last server command result until a newer acknowledgement
+arrives so reconnect feedback is not lost.
+
 The native authoritative world projection retains the sorted, validated server
 projectile snapshots alongside monsters, items, and objects. The presentation
 bridge now materializes the first supported families (Charged Bolt, Firebolt,
