@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the SkeletonMelee movement-delay and failed-adjacent-attack replay
+  fixtures into the validated `test/content/replay/skeleton-melee` pack,
+  including native chance bands and delay formulas.
+
 - Extract the Gargoyle healing, movement, avoidance, and adjacent-attack replay
   fixtures into the validated `test/content/replay/gargoyle` pack, including
   native safety, healing, and AiAvoidance tuning.

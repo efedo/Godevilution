@@ -4253,6 +4253,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "skeleton-melee"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 
@@ -4346,6 +4347,7 @@ public sealed class ReplayFixtureTests
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             attackDamage: initial.CombatTargetAttackDamage,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
@@ -4363,6 +4365,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "skeleton-melee"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
 

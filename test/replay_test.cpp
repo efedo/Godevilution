@@ -4274,6 +4274,7 @@ TEST(ReplayFixture, ExecutesSkeletonMeleeDelayAgainstCSharpCheckpoints)
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
 	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
@@ -4312,6 +4313,7 @@ TEST(ReplayFixture, ExecutesSkeletonMeleeAttackDelayAgainstCSharpCheckpoints)
 	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
 	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;

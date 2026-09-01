@@ -95,6 +95,11 @@ now load their validated native safety, healing, and AiAvoidance tuning from
 the shared `test/content/replay/gargoyle` pack instead of relying on
 compatibility fallbacks.
 
+The two SkeletonMelee delay fixtures now load their validated native chance
+bands and movement/attack delay formulas from the shared
+`test/content/replay/skeleton-melee` pack instead of relying on compatibility
+fallbacks.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

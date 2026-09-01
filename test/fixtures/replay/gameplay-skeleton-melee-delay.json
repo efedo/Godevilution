@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/skeleton-melee-delay",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "skeleton-melee-delay-content"
+    "id": "replay.skeleton-melee",
+    "version": "0.1.0",
+    "sha256": "fd30d4364254f1b31f55e328ea3534a6bffa58b3b0a23be12332e1e91b6d79f1"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,
@@ -26,6 +26,7 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 8,
     "combat_target_aggro_range": 4,
     "combat_target_native_ai": "SkeletonMelee",
     "combat_target_intelligence": 0
@@ -40,7 +41,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "5cff3ab4fb52e3efe2cae9b74e0e189c1a956c80357817cddc723053882ac24b" },
-    { "tick": 2, "state_sha256": "7f43e1ca3d9ac65add7d203838766f7385749aa6e0c8bdde4f551455dfa0da0d" }
+    { "tick": 1, "state_sha256": "3cfef7a833ea4e76f8a8f17168e3b805c767bd0c48ff75432e29916abbe26e6c" },
+    { "tick": 2, "state_sha256": "bb6769450dea3b40cf82456e668c000af85e12b7b0f2dc446b4e7f87958f1713" }
   ]
 }
