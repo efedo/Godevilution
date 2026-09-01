@@ -167,6 +167,11 @@ Lightning bolt movement, impact segments, and canonical projectile hashing.
 `gameplay-immolation-radial-fan-resolution.json` covers the player Immolation
 cast, including the one-tick controller, deterministic radial fan ordering,
 Fireball movement, and canonical projectile hashing.
+
+`gameplay-spell-cast.json` covers the basic self-healing cast. The managed
+runner loads its mana and healing values from the hash-checked
+`test/content/replay/spell-cast` content pack; native execution continues to
+validate the same replay contract and checkpoint.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with

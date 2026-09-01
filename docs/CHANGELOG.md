@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the basic healing spell replay fixture into the validated
+  `test/content/replay/spell-cast` pack and bind the managed runner to its
+  external spell row.
+
 - Move the Hork Spawn replay planner’s level-generation rule into the
   validated `monster-hork-spawn` pack, completing externalization of its
   missile, summoned-monster, and encounter-generation metadata.

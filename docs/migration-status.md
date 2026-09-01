@@ -76,6 +76,10 @@ The autonomous GoatRanged Arrow fixture now loads the validated
 projection accepts the same explicit retreat thresholds as managed content,
 while omitted thresholds retain the native 4/70/10 defaults.
 
+The basic healing spell fixture now loads spell ID 1 from the validated
+`test/content/replay/spell-cast` pack instead of the simulation’s synthetic
+fallback catalog.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

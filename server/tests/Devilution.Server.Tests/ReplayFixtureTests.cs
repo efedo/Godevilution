@@ -213,6 +213,7 @@ public sealed class ReplayFixtureTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-spell-cast.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = LoadReplaySpells(fixture, "spell-cast");
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             fixture.InitialState.Gold,
@@ -221,6 +222,7 @@ public sealed class ReplayFixtureTests
             fixture.InitialState.Mana,
             startingManaMaximum: fixture.InitialState.ManaMaximum,
             startingLifeMaximum: 40,
+            startingSpells: spells,
             startingAbilitySpellId: fixture.InitialState.AbilitySpellId,
             startingMemorizedSpells: fixture.InitialState.MemorizedSpells
                 .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))

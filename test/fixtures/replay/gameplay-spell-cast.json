@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/spell-cast",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "spell-cast-fixture"
+    "id": "replay.spell-cast",
+    "version": "0.1.0",
+    "sha256": "0da16359516ccc4532193cdf4849982aab9080ac33b95ea1886e734107cbbe9d"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
