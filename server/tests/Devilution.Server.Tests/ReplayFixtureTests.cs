@@ -622,29 +622,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-chain-lightning-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(16, 30, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 32,
-                ProjectileLifetime = 256,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChainLightningController,
-                RandomDamageRange = 2,
-                DamageBonus = 2,
-                CharacterLevelRandomDamageDivisor = 1,
-                DamageScale = 64,
-                SecondaryProjectileLifetime = 6,
-                SecondaryProjectileLifetimeSpellLevelDivisor = 2,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 1,
-                ManaAdjustment = 1,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 18,
-                ManaCostScale = 64,
-                ChainLightningSearchRadiusBonus = 3,
-                ChainLightningControllerLifetime = 1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var target = new AuthoritativeCombatTarget(
             fixture.InitialState.CombatTargetEntityId,
             fixture.InitialState.CombatTargetPositionX,
@@ -704,30 +682,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-immolation-radial-fan-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(45, 1, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 256,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ImmolationController,
-                RandomDamageRange = 6,
-                MagicDamageDivisor = 2,
-                DamageBonus = 5,
-                CharacterLevelDamageDivisor = 1,
-                RandomDamageIterationsBonus = 5,
-                SpellEffectScaleDivisor = 8,
-                DamageScale = 64,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 1,
-                ProjectileSpeedSpellLevelStep = 1,
-                ProjectileSpeedMaximumBonus = 34,
-                ImmolationControllerLifetime = 1,
-                ImmolationSearchRadius = 4,
-                ImmolationProjectileCount = 36,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -775,26 +730,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-elemental-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(31, 40, 0, 0, 0, 0) {
-                Range = 1,
-                AreaRadius = 1,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 256,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.Elemental,
-                RandomDamageRange = 10,
-                MagicDamageDivisor = 2,
-                DamageAmount = 4,
-                RandomDamageIterationsBonus = 2,
-                SpellEffectScaleDivisor = 8,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 14,
-                ElementalRetargetLifetime = 255,
-                ElementalCharacterLevelDamageMultiplier = 2,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(fixture.InitialState.LevelId, 40, 40));
         var executor = new StoreSimulationExecutor(
@@ -838,31 +774,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-guardian-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0) {
-                Range = 15,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 16,
-                ProjectileLifetime = 256,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.GuardianController,
-                RandomDamageRange = 10,
-                MagicDamageDivisor = 8,
-                SpellLevelDamage = 1,
-                DamageBonus = 1,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 1,
-                GuardianDurationTickScale = 16,
-                GuardianMinimumDuration = 30,
-                GuardianMaximumDuration = 30,
-                GuardianCharacterLevelDurationDivisor = 2,
-                GuardianSpawnSearchRadius = 5,
-                GuardianTargetSearchRadius = 6,
-                GuardianFireInterval = 16,
-                GuardianProjectileSpeedLevelStep = 2,
-                GuardianProjectileSpeedMaximumBonus = 47,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
             initial.CombatTargetEntityId,

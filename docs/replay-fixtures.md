@@ -87,6 +87,10 @@ The Lightning Wall, Ring of Fire, Nova, and Flame Wave runners load the
 validated base `spells.tsv` catalog and check the active `devilution.base`
 manifest identity.
 
+The Chain Lightning, Immolation, Elemental, and Guardian runners likewise load
+the validated base `spells.tsv` catalog and check the active `devilution.base`
+manifest identity.
+
 `gameplay-elemental-resolution.json` covers the player Elemental cast,
 including the initial fire projectile, native retargeting lifecycle, and
 canonical projectile hashing.

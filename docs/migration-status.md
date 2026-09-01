@@ -111,6 +111,10 @@ The Lightning Wall, Ring of Fire, Nova, and Flame Wave fixtures now load their
 spell behavior from the validated base `spells.tsv` catalog instead of synthetic
 test-only rows.
 
+The Chain Lightning, Immolation, Elemental, and Guardian fixtures now load
+their spell behavior from the validated base `spells.tsv` catalog instead of
+synthetic test-only rows.
+
 The shared replay contract now covers player Fire Wall casts. Native and
 managed runners preserve the seven-tick wall controller, deterministic branch
 growth, scaled persistent segment state, and canonical checkpoints.
