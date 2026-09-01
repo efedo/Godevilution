@@ -385,6 +385,10 @@ explicit migration seams, not server-authority claims:
   authoritative layout and renders them as presentation-only occlusion cues.
   The Godot HUD and world renderer share the same typed status projection for
   server-owned Mana Shield, Reflect charges, and timed player effects.
+  Search-driven item highlighting also consumes that projection and ignores
+  expired status entries.
+  The Godot HUD exposes the projected status durations and permanent-state
+  marker as presentation data only.
   The two fixed Chamber of Bone completion books now clone authored templates:
   the server completes the quest, grants Guardian, and owns the exact
   player-origin target offset. The Vile Betrayer's two fixed book

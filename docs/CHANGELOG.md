@@ -8,6 +8,13 @@ All notable changes to this fork are documented below.
   HUD and world rendering now consume one typed projection for Mana Shield,
   Reflect charges, and timed status families.
 
+- Complete typed status consumption in the Godot client. Search highlighting,
+  player overlays, and HUD summaries now reuse one active-status projection;
+  zero-duration effects are ignored at the presentation boundary.
+
+- Expose exact server-owned status durations and permanent status state in a
+  dedicated Godot HUD line without adding client-side expiry logic.
+
 - Preserve server-authored missile-only level collision in the Godot layout
   projection and render it as a distinct occlusion cue; walk-blocked cells
   remain visually and semantically separate.

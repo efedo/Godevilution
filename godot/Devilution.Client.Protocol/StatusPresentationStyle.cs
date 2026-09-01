@@ -20,6 +20,14 @@ public sealed record StatusPresentationBadge(
     uint RemainingTicks = 0,
     uint Charges = 0);
 
+/** Reusable presentation projection for one authoritative player snapshot. */
+public sealed record PlayerStatusPresentation(
+    IReadOnlyList<StatusPresentationBadge> Badges)
+{
+    public bool Contains(StatusPresentationKind kind)
+        => Badges.Any(badge => badge.Kind == kind);
+}
+
 /** Maps authoritative status identities to client-only visual families. */
 public static class StatusPresentationStyle
 {
@@ -36,6 +44,12 @@ public static class StatusPresentationStyle
     /** Resolves all displayable player statuses in a stable presentation order. */
     public static IReadOnlyList<StatusPresentationBadge> Resolve(PlayerSnapshot player)
     {
+        return ResolvePlayer(player).Badges;
+    }
+
+    /** Resolves one reusable status projection for all player renderers. */
+    public static PlayerStatusPresentation ResolvePlayer(PlayerSnapshot player)
+    {
         ArgumentNullException.ThrowIfNull(player);
         var badges = new List<StatusPresentationBadge>();
         if (player.ManaShieldActive)
@@ -48,7 +62,8 @@ public static class StatusPresentationStyle
                 Kind = Resolve(effect.Behavior),
                 effect.RemainingTicks,
             })
-            .Where(effect => effect.Kind != StatusPresentationKind.None)
+            .Where(effect => effect.Kind != StatusPresentationKind.None
+                && effect.RemainingTicks > 0)
             .GroupBy(effect => effect.Kind)
             .Select(group => new StatusPresentationBadge(
                 group.Key,
@@ -56,7 +71,7 @@ public static class StatusPresentationStyle
                 group.Max(effect => effect.RemainingTicks)))
             .OrderBy(badge => badge.Kind);
         badges.AddRange(timed);
-        return badges;
+        return new PlayerStatusPresentation(badges);
     }
 
     /** Formats a stable compact status summary for the HUD. */
@@ -65,10 +80,36 @@ public static class StatusPresentationStyle
         ArgumentNullException.ThrowIfNull(badges);
         return string.Join(
             "   ",
-            badges.Select(badge => badge.Kind == StatusPresentationKind.Reflect
-                ? $"{badge.Label} x{badge.Charges}"
-                : badge.Label));
+            badges.Select(FormatBadge));
     }
+
+    /** Formats statuses with exact server-owned durations for diagnostic HUDs. */
+    public static string FormatDetailed(IReadOnlyList<StatusPresentationBadge> badges)
+    {
+        ArgumentNullException.ThrowIfNull(badges);
+        if (badges.Count == 0)
+            return "none";
+        return string.Join(
+            "   ",
+            badges.Select(badge => {
+                var label = FormatBadge(badge);
+                if (!IsTimed(badge.Kind))
+                    return label;
+                return badge.RemainingTicks == uint.MaxValue
+                    ? $"{label} (permanent)"
+                    : $"{label} ({badge.RemainingTicks} ticks)";
+            }));
+    }
+
+    private static string FormatBadge(StatusPresentationBadge badge)
+        => badge.Kind == StatusPresentationKind.Reflect
+            ? $"{badge.Label} x{badge.Charges}"
+            : badge.Label;
+
+    private static bool IsTimed(StatusPresentationKind kind)
+        => kind is StatusPresentationKind.Infravision
+            or StatusPresentationKind.Search
+            or StatusPresentationKind.Etherealize;
 
     private static string FormatLabel(StatusPresentationKind kind)
     {

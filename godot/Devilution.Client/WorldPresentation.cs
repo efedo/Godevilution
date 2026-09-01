@@ -245,8 +245,8 @@ public partial class WorldPresentation : Node2D
         var localLightRadius = localPlayer.LightRadius is >= 2 and <= 15
             ? localPlayer.LightRadius
             : 10;
-        var searchActive = localPlayer.StatusEffects.Any(effect =>
-            effect.Behavior == StatusEffectBehavior.Search);
+        var localStatusPresentation = StatusPresentationStyle.ResolvePlayer(localPlayer);
+        var searchActive = localStatusPresentation.Contains(StatusPresentationKind.Search);
         DrawTargetPreview();
         foreach (var player in snapshot.Players.Where(player => AuthoritativeLevelVisibility.IsVisible(player.LevelId, currentLevel))) {
             var isLocal = player.EntityId == localPlayer.EntityId;
@@ -361,8 +361,8 @@ public partial class WorldPresentation : Node2D
         var center = predicted is { } position
             ? ToScreen(position.X, position.Y)
             : PositionFor(player.EntityId, player.PositionX, player.PositionY);
-        var statusBadges = StatusPresentationStyle.Resolve(player);
-        var statusKinds = statusBadges
+        var statusPresentation = StatusPresentationStyle.ResolvePlayer(player);
+        var statusKinds = statusPresentation.Badges
             .Select(badge => badge.Kind)
             .ToHashSet();
         var etherealized = statusKinds.Contains(StatusPresentationKind.Etherealize);

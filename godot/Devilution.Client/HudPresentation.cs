@@ -11,6 +11,7 @@ public partial class HudPresentation : CanvasLayer
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
     private readonly Label state = new();
+    private readonly Label statusEffects = new();
     private readonly Label attributes = new();
     private readonly Label clock = new();
     private readonly Label inventory = new();
@@ -128,6 +129,7 @@ public partial class HudPresentation : CanvasLayer
         statusPanel.AddChild(statusBox);
         statusBox.AddChild(status);
         statusBox.AddChild(state);
+        statusBox.AddChild(statusEffects);
         AddChild(statusPanel);
 
         clock.HorizontalAlignment = HorizontalAlignment.Right;
@@ -331,6 +333,7 @@ public partial class HudPresentation : CanvasLayer
         highContrastToggle.Toggled += _ => ApplyAccessibility();
 
         status.Text = "Starting...";
+        statusEffects.Text = "Statuses: waiting for authoritative snapshot";
         commandFeedback.Text = "Commands are sent to the authoritative server.";
         attributes.Text = "Attributes\nWaiting for authoritative snapshot";
         inventory.Text = "Inventory\nWaiting for authoritative snapshot";
@@ -420,12 +423,15 @@ public partial class HudPresentation : CanvasLayer
             selectedEquipmentSlot = null;
         currentPlayer = player;
         selectedItemReference = ResolveSelectedItemReference(player);
-        var statusSummary = player is null
-            ? string.Empty
-            : StatusPresentationStyle.Format(StatusPresentationStyle.Resolve(player));
+        var statusPresentation = player is null
+            ? null
+            : StatusPresentationStyle.ResolvePlayer(player);
+        statusEffects.Text = statusPresentation is null
+            ? "Statuses: waiting for authoritative snapshot"
+            : $"Statuses: {StatusPresentationStyle.FormatDetailed(statusPresentation.Badges)}";
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
-            : $"Tick {model.CurrentTick}   Difficulty {AuthoritativeDifficultyPresentation.Format(model.Snapshot?.Difficulty ?? GameDifficulty.Normal)}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(string.IsNullOrEmpty(statusSummary) ? string.Empty : $"   {statusSummary}")}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
+            : $"Tick {model.CurrentTick}   Difficulty {AuthoritativeDifficultyPresentation.Format(model.Snapshot?.Difficulty ?? GameDifficulty.Normal)}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
         attributes.Text = FormatAttributes(player);
 
         var victoryEvent = model.RecentEvents.LastOrDefault(
@@ -1023,7 +1029,7 @@ public partial class HudPresentation : CanvasLayer
     {
         var color = highContrastToggle.ButtonPressed ? Colors.White : new Color("d5d5e5");
         var muted = highContrastToggle.ButtonPressed ? Colors.White : new Color("b2b2c5");
-        foreach (var control in new Control[] { status, state, victory, inventory, store, dialog, commandFeedback, diagnostics }) {
+        foreach (var control in new Control[] { status, state, statusEffects, victory, inventory, store, dialog, commandFeedback, diagnostics }) {
             control.Modulate = control == diagnostics ? muted : color;
             control.AddThemeFontSizeOverride("font_size", highContrastToggle.ButtonPressed ? 18 : 14);
         }

@@ -6,6 +6,13 @@ Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.
 
+All Godot status consumers now use the reusable active-status projection,
+including Search-driven world-item highlighting; zero-duration effects cannot
+create presentation state.
+
+The Godot HUD now renders exact projected status durations (or permanent state)
+on a dedicated line; it never advances or expires those values locally.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.
