@@ -17,6 +17,8 @@ public sealed class BaseContentReplayTests
             AppContext.BaseDirectory,
             "Fixtures",
             "gameplay-elemental-equipment.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
@@ -62,6 +64,8 @@ public sealed class BaseContentReplayTests
             AppContext.BaseDirectory,
             "Fixtures",
             "gameplay-elemental-arrows.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),

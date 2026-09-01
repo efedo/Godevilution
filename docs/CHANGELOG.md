@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
 - Extract the Sneak conceal/reveal replay fixtures into a validated content pack,
   including native stealth distance and retreat tuning.
 
+- Canonicalize the elemental equipment and ranged-arrow replay fixtures to the
+  validated `devilution.base` content manifest and enforce that identity in the
+  managed replay tests.
+
 - Extract the SkeletonMelee movement-delay and failed-adjacent-attack replay
   fixtures into the validated `test/content/replay/skeleton-melee` pack,
   including native chance bands and delay formulas.

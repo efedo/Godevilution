@@ -212,8 +212,7 @@ The two GoatMelee fixtures load their native AiAvoidance and adjacent-attack
 tuning from the hash-checked `test/content/replay/goat-melee` content pack.
 The five Gargoyle fixtures load native safety, healing, avoidance, and
 adjacent-attack tuning from the hash-checked `test/content/replay/gargoyle`
-content pack. Broader monster-AI branches and multi-actor selection remain
-future replay work.
+content pack. Broader multi-actor selection remains future replay work.
 The two SkeletonMelee delay fixtures load native chance bands and delay
 formulas from the hash-checked `test/content/replay/skeleton-melee` content
 pack.
@@ -225,6 +224,8 @@ charge, movement, delay, and healing tuples from the hash-checked
 `rhino-charge` and `scavenger-corpse` content packs.
 The Sneak conceal/reveal fixtures load their complete stealth distance and
 retreat tuple from the hash-checked `sneak` content pack.
+The elemental equipment and ranged-arrow fixtures validate the canonical
+`devilution.base` content manifest before replaying their equipment channels.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
