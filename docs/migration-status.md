@@ -422,6 +422,8 @@ placement and map mutations remain deferred until the licensed geometry is
 available. Quest-transition objects can now also apply an authored follow-up
 mutation or encounter after the transition succeeds, providing the server-side
 hook needed by those future set-piece replacements without fabricating geometry.
+The base pack also carries presentation metadata for all three templates: the
+objects remain visible after activation and select the native open-book frame.
 The content schema is now `1.442.0`; the previous additive `1.441.0` schema
 remains accepted for pack compatibility.
 

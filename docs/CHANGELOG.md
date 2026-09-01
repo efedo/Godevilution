@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the native activated-book presentation lifecycle for the Halls of
+  the Blind, Gateway of Blood, and Warlord steel-tome templates. The base pack
+  now keeps each one visible and selects its native open-book frame after the
+  server-owned quest transition; set-piece placement, rewards, and map
+  resynchronization remain explicitly deferred until their licensed geometry
+  is available.
+
 - Extract the Bat retreat, Fat movement, and Zombie action replay fixtures into
   validated content packs, including their native AI chance, movement, and
   retreat tuning.

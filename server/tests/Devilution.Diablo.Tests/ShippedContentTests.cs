@@ -84,6 +84,20 @@ public sealed class ShippedContentTests
                 templates[88].QuestTransitionRequiredVariable1));
         Assert.Equal(256, templates[88].DialogueMessageId);
 
+        var presentationTable = pack.Tables.Single(
+            table => table.SourcePath == "object_presentations.tsv");
+        var presentations = AuthoritativeWorldObjectPresentationCatalog.LoadTsv(
+            presentationTable.SourcePath,
+            presentationTable.ToCanonicalTsv());
+        Assert.Equal(
+            [2020U, 2021U, 2022U],
+            presentations.Definitions.Select(definition => definition.EntityId).ToArray());
+        Assert.All(presentations.Definitions, definition => {
+            Assert.False(definition.HideWhenActivated);
+            Assert.Equal(0, definition.AnimationFrame);
+            Assert.Equal(1, definition.ActivatedAnimationFrame);
+        });
+
         var dialogueMessages = AuthoritativeDialogueMessageCatalog.LoadTsv(
             "dialogue_messages.tsv",
             pack.Tables.Single(table => table.SourcePath == "dialogue_messages.tsv").ToCanonicalTsv());

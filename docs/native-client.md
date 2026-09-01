@@ -374,6 +374,8 @@ explicit migration seams, not server-authority claims:
   The base pack now carries template-only behavior rows for the native Halls of
   the Blind book, Gateway of Blood book, and Warlord steel tome. These rows
   author their native object identities and initial quest-variable transition;
+  presentation metadata also keeps each activated book visible and selects its
+  native open-book frame;
   native-DUN placement, book-specific rewards, and map resynchronization remain
   deferred until the corresponding generated geometry and licensed assets are
   available.
