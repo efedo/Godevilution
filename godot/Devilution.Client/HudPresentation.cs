@@ -420,9 +420,12 @@ public partial class HudPresentation : CanvasLayer
             selectedEquipmentSlot = null;
         currentPlayer = player;
         selectedItemReference = ResolveSelectedItemReference(player);
+        var statusSummary = player is null
+            ? string.Empty
+            : StatusPresentationStyle.Format(StatusPresentationStyle.Resolve(player));
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
-            : $"Tick {model.CurrentTick}   Difficulty {AuthoritativeDifficultyPresentation.Format(model.Snapshot?.Difficulty ?? GameDifficulty.Normal)}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.ReflectCharges > 0 ? $"   Reflect {player.ReflectCharges}" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize) ? "   Etherealize" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
+            : $"Tick {model.CurrentTick}   Difficulty {AuthoritativeDifficultyPresentation.Format(model.Snapshot?.Difficulty ?? GameDifficulty.Normal)}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(string.IsNullOrEmpty(statusSummary) ? string.Empty : $"   {statusSummary}")}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
         attributes.Text = FormatAttributes(player);
 
         var victoryEvent = model.RecentEvents.LastOrDefault(

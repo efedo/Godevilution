@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Consolidate authoritative player-status presentation in the Godot client.
+  HUD and world rendering now consume one typed projection for Mana Shield,
+  Reflect charges, and timed status families.
+
 - Preserve server-authored missile-only level collision in the Godot layout
   projection and render it as a distinct occlusion cue; walk-blocked cells
   remain visually and semantically separate.

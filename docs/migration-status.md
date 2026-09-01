@@ -2,6 +2,10 @@
 
 Status date: 2026-09-01
 
+Godot HUD and world rendering now share a typed projection of authoritative
+player statuses, including Mana Shield, Reflect charges, and timed status
+families, while preserving server-owned durations and values.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

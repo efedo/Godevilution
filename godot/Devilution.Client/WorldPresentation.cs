@@ -361,8 +361,9 @@ public partial class WorldPresentation : Node2D
         var center = predicted is { } position
             ? ToScreen(position.X, position.Y)
             : PositionFor(player.EntityId, player.PositionX, player.PositionY);
-        var statusKinds = player.StatusEffects
-            .Select(effect => StatusPresentationStyle.Resolve(effect.Behavior))
+        var statusBadges = StatusPresentationStyle.Resolve(player);
+        var statusKinds = statusBadges
+            .Select(badge => badge.Kind)
             .ToHashSet();
         var etherealized = statusKinds.Contains(StatusPresentationKind.Etherealize);
         var color = new Color(
