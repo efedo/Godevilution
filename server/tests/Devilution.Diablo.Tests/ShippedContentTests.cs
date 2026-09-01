@@ -26,7 +26,7 @@ public sealed class ShippedContentTests
         var nativeDunMonsters = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
             nativeDunMonsterTable.SourcePath,
             nativeDunMonsterTable.ToCanonicalTsv());
-        Assert.Equal(87, nativeDunMonsters.Definitions.Count);
+        Assert.Equal(108, nativeDunMonsters.Definitions.Count);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(2, out var ghoulNativeId));
         Assert.Equal(1U, ghoulNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(8, out var darkOneNativeId));
@@ -56,6 +56,14 @@ public sealed class ShippedContentTests
         Assert.Equal(88U, balrogNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(127, out var devilKinBruteNativeId));
         Assert.Equal(80U, devilKinBruteNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(94, out var caveViperNativeId));
+        Assert.Equal(89U, caveViperNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(112, out var cabalistNativeId));
+        Assert.Equal(107U, cabalistNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(113, out var advocateNativeId));
+        Assert.Equal(108U, advocateNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(128, out var archLitchNativeId));
+        Assert.Equal(111U, archLitchNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(155, out var butcherNativeId));
         Assert.Equal(51U, butcherNativeId);
         var monsterTypeTable = pack.Tables.Single(
@@ -63,7 +71,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             monsterTypeTable.SourcePath,
             monsterTypeTable.ToCanonicalTsv());
-        Assert.Equal(90, monsterTypes.Definitions.Count);
+        Assert.Equal(111, monsterTypes.Definitions.Count);
         Assert.Equal(
             [
                 "Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One",
@@ -99,6 +107,22 @@ public sealed class ShippedContentTests
             monsterTypes.Definitions
                 .Where(definition => definition.MonsterId is >= 70 and <= 90)
                 .Select(definition => definition.Name));
+        Assert.Equal(
+            [
+                "Cave Viper", "Fire Drake", "Gold Viper", "Azure Drake",
+                "Black Knight", "Doom Guard", "Steel Lord", "Blood Knight",
+                "The Shredded", "Hollow One", "Pain Master", "Reality Weaver",
+                "Succubus", "Snow Witch", "Hell Spawn", "Soul Burner",
+                "Counselor", "Magistrate", "Cabalist",
+            ],
+            monsterTypes.Definitions
+                .Where(definition => definition.MonsterId is >= 91 and <= 109)
+                .Select(definition => definition.Name));
+        Assert.Equal(
+            ["Advocate", "The Arch-Litch Malignus"],
+            monsterTypes.Definitions
+                .Where(definition => definition.MonsterId is 110 or 113)
+                .Select(definition => definition.Name));
         Assert.Equal("Fallen", monsterTypes.Definitions.Single(
             definition => definition.NativeMonsterId == 4).NativeAi);
         Assert.Equal("SkeletonMelee", monsterTypes.Definitions.Single(
@@ -132,6 +156,18 @@ public sealed class ShippedContentTests
             definition => definition.NativeMonsterId == 81).NativeAi);
         Assert.Equal("Mega", monsterTypes.Definitions.Single(
             definition => definition.NativeMonsterId == 85).NativeAi);
+        Assert.Equal("Snake", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 89).NativeAi);
+        Assert.Equal("SkeletonMelee", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 93).NativeAi);
+        Assert.Equal("Succubus", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 101).NativeAi);
+        Assert.Equal("Counselor", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 105).NativeAi);
+        Assert.Equal("Counselor", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 108).NativeAi);
+        Assert.Equal("Counselor", monsterTypes.Definitions.Single(
+            definition => definition.NativeMonsterId == 111).NativeAi);
         var placementTable = pack.Tables.Single(
             table => table.SourcePath == "unique_monster_placements.tsv");
         var placement = Assert.Single(AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(

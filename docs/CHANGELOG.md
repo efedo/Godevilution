@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with native identities 89–111: Snake and
+  Skeleton late-game families, Succubus variants, and Counselor through
+  Arch-Litch Malignus, including their stable IDs and DUN mappings.
+
 - Expand the base content pack with the validated native 68–88 Storm, FireMan,
   Gargoyle, and Mega families, including stable identities, AI metadata, and
   native DUN mappings.

@@ -51,6 +51,11 @@ FireMan variants, Devil Kin Brute, Gargoyle variants, and Mega-family elites.
 Their validated AI selectors and native DUN mappings are available to production
 generation.
 
+The base pack now continues through native identities 89–111, covering the
+late Snake and Skeleton families, Succubus variants, and the Counselor family
+through Advocate and Arch-Litch Malignus. Their stable IDs, AI selectors, and
+native DUN mappings are available to production generation.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.
