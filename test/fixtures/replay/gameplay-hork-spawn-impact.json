@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/hork-spawn-impact",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "hork-spawn-impact-content"
+    "id": "replay.monster-hork-spawn",
+    "version": "0.1.0",
+    "sha256": "099b8d0f41f155a5df05197da68b2034b327b510199abf0cdd0c7422ba643f1c"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

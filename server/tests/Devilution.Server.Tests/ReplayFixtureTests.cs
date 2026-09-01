@@ -7153,17 +7153,7 @@ public sealed class ReplayFixtureTests
             nativeAi: fixture.InitialState.CombatTargetNativeAi,
             intelligence: fixture.InitialState.CombatTargetIntelligence,
             horkDemonDelayTicks: fixture.InitialState.CombatTargetHorkDemonDelayTicks);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                fixture.InitialState.CombatTargetNativeAi,
-                "HorkSpawn",
-                AuthoritativeProjectileBehavior.HorkSpawn,
-                SpawnMonsterId: 117,
-                ProjectileSpeed: 8,
-                ProjectileLifetime: 9,
-                ProjectileImpactLifetime: 1,
-                DamageType: AuthoritativeDamageType.Physical),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-hork-spawn");
         var spawnWorld = new AuthoritativeWorld();
         spawnWorld.AddLevel(new AuthoritativeLevel(1, 40, 40));
         var spawnTypes = new AuthoritativeMonsterTypeCatalog([
@@ -7290,12 +7280,7 @@ public sealed class ReplayFixtureTests
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
             snakeDelayTicks: initial.CombatTargetSnakeDelayTicks);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "Rhino",
-                AuthoritativeProjectileBehavior.SnakeCharge),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-snake-delay");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -7506,17 +7491,7 @@ public sealed class ReplayFixtureTests
             monsterLevel: initial.CombatTargetMonsterLevel,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
-        var missiles = new AuthoritativeMonsterMissileCatalog([
-            new AuthoritativeMonsterMissileDefinition(
-                initial.CombatTargetNativeAi,
-                "Rhino",
-                AuthoritativeProjectileBehavior.SnakeCharge,
-                SpellId: 37,
-                ProjectileSpeed: 18,
-                ProjectileLifetime: 4,
-                ProjectileDamage: 4,
-                ProjectileImpactLifetime: 2),
-        ]);
+        var missiles = LoadReplayMonsterMissiles(fixture, "monster-snake-charge");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(

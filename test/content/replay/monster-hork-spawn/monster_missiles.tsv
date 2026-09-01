@@ -1,0 +1,2 @@
+native_ai	missile_id	projectile_behavior	spawn_monster_id	damage_type	projectile_speed	projectile_lifetime	projectile_impact_lifetime
+HorkDemon	HorkSpawn	HorkSpawn	117	Physical	8	9	1

@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/snake-adjacent-delay",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "test-content",
-    "version": "1",
-    "sha256": "snake-adjacent-delay-content"
+    "id": "replay.monster-snake-delay",
+    "version": "0.1.0",
+    "sha256": "87231d8f49a7a10d9f8627a4b9fea6751bbb0940464466a6980c16e0b6f12e25"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,

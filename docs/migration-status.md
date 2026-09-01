@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-31
+Status date: 2026-09-01
 
 The shared replay contract now covers player Telekinesis world-item pickup,
 object activation, and monster knockback. Native and managed runners preserve
@@ -57,6 +57,12 @@ SkeletonRanged mappings from the shared `test/content/replay/monster-arrow`
 pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before
 loading the projectile catalog.
+
+The nine Hork Spawn fixtures now load their validated `HorkDemon` mapping from
+`test/content/replay/monster-hork-spawn`. The two Snake delay fixtures and the
+Snake Charge lifecycle fixture likewise load separate validated
+`monster-snake-delay` and `monster-snake-charge` packs, preserving the native
+default and explicitly tuned charge configurations.
 
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent

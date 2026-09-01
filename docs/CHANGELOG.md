@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the nine Hork Spawn and three Snake Charge replay fixtures into
+  validated external missile packs, preserving native/C# admission, delay,
+  travel, impact, blocking, and summon-controller parity.
+
 - Extract the nine Monster Arrow replay fixtures’ GoatRanged and
   SkeletonRanged mappings into validated shared and admission content packs,
   preserving native/C# projectile parity and manifest validation.

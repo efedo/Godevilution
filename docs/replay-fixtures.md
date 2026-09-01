@@ -192,6 +192,11 @@ from the hash-checked `test/content/replay/monster-magic` content pack.
 The nine Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
+The nine Hork Spawn fixtures load their `HorkDemon` mapping from the
+hash-checked `monster-hork-spawn` content pack. Snake delay fixtures load the
+default `SnakeCharge` mapping from `monster-snake-delay`, while the charge
+lifecycle fixture loads its explicitly tuned mapping from
+`monster-snake-charge`.
 broader monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
