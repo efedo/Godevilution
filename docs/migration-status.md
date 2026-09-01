@@ -100,6 +100,12 @@ bands and movement/attack delay formulas from the shared
 `test/content/replay/skeleton-melee` pack instead of relying on compatibility
 fallbacks.
 
+The Bat retreat, Fat movement, and Zombie action fixtures now load their
+validated native AI tuning from the shared `bat-retreat`, `fat-movement`, and
+`zombie-action` packs instead of relying on compatibility fallbacks. Their
+replay state now carries explicit stable monster IDs so content lookup is
+server-authoritative and deterministic.
+
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent
 decision delay, wounded retreat movement, retreat countdown state, and

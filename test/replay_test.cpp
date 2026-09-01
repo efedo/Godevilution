@@ -4588,6 +4588,7 @@ TEST(ReplayFixture, ExecutesBatRetreatAgainstCSharpCheckpoints)
 	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
 	state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;
 	state.combatTargetBatRetreatDirection = fixture.initialState.combatTargetBatRetreatDirection;
@@ -4714,6 +4715,7 @@ TEST(ReplayFixture, ExecutesZombieActionAgainstCSharpCheckpoints)
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
@@ -4749,6 +4751,7 @@ TEST(ReplayFixture, ExecutesFatMovementAgainstCSharpCheckpoints)
 	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
 	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
 	state.combatTargetFatMovementIdleTicks = fixture.initialState.combatTargetFatMovementIdleTicks;
 	state.combatTargetFatMovementMode = fixture.initialState.combatTargetFatMovementMode;

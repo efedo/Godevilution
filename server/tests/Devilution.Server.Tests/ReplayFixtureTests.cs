@@ -4563,7 +4563,7 @@ public sealed class ReplayFixtureTests
     public void GameplayBatRetreatMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-bat-retreat.json");
-        var executor = CreateStealthReplayExecutor(fixture);
+        var executor = CreateStealthReplayExecutor(fixture, "bat-retreat");
         var result = ReplayFixtureExecutor.Execute(
             fixture,
             executor,
@@ -7286,7 +7286,8 @@ public sealed class ReplayFixtureTests
     }
 
     private static StoreSimulationExecutor CreateStealthReplayExecutor(
-        ReplayFixture fixture)
+        ReplayFixture fixture,
+        string? monsterPack = null)
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -7296,6 +7297,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
@@ -7316,6 +7318,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: monsterPack is null ? null : LoadReplayMonsterTypes(fixture, monsterPack),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }
@@ -7378,6 +7381,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
@@ -7394,6 +7398,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "zombie-action"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }
@@ -7409,6 +7414,7 @@ public sealed class ReplayFixtureTests
             initial.CombatTargetHitPoints,
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
@@ -7427,6 +7433,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "fat-movement"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

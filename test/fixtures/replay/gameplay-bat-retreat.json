@@ -2,7 +2,7 @@
   "format_version": 1,
   "fixture_id": "gameplay/bat-retreat",
   "protocol_schema_version": "0.1.0",
-  "content_manifest": { "id": "test-content", "version": "1", "sha256": "bat-retreat-content" },
+  "content_manifest": { "id": "replay.bat-retreat", "version": "0.1.0", "sha256": "b62f23e6a1745049d87e03c0817a7dab99744fc5fec903643a3ae27c513fd377" },
   "tick_rate_hz": 20,
   "rng_seed": 9,
   "game_variant": "Diablo",
@@ -23,6 +23,7 @@
     "combat_target_hit_points": 20,
     "combat_target_max_hit_points": 20,
     "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 108,
     "combat_target_native_ai": "Bat",
     "combat_target_bat_retreat_ticks": 2,
     "combat_target_bat_retreat_direction": 0
@@ -32,7 +33,7 @@
     { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "f421c91922929451cdd24f87437ef40efeb45e1b75aaa63a4cf68b04623e0d4a" },
-    { "tick": 2, "state_sha256": "bd24e42f92d85543423679f3f1a9e510b6b6ff7ec9a01ed2045a25c6ab7f8c9c" }
+    { "tick": 1, "state_sha256": "7304c06058bafbc828157c90cbf06521cb209747bb16e2ad695ee1f2e4c6b065" },
+    { "tick": 2, "state_sha256": "08ff2ddf8ee3ea7e7c2e02a553f2ee85705957a73fd749b2431da1fbf1074999" }
   ]
 }

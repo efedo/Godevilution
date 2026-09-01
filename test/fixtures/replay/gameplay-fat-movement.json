@@ -2,7 +2,7 @@
   "format_version": 1,
   "fixture_id": "gameplay/fat-movement",
   "protocol_schema_version": "0.1.0",
-  "content_manifest": { "id": "test-content", "version": "1", "sha256": "fat-movement-content" },
+  "content_manifest": { "id": "replay.fat-movement", "version": "0.1.0", "sha256": "78d5b1d5172c91964e297255543aa12ea9d4b74fece62c62f291fc2863598582" },
   "tick_rate_hz": 20,
   "rng_seed": 9,
   "game_variant": "Diablo",
@@ -23,6 +23,7 @@
     "combat_target_hit_points": 40,
     "combat_target_max_hit_points": 40,
     "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 109,
     "combat_target_native_ai": "Fat"
   },
   "commands": [
@@ -30,7 +31,7 @@
     { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "c644576191e9c405f7df777c3bb0096a834fceb94a9ad022dfab6a477b395003" },
-    { "tick": 2, "state_sha256": "35c6713674943050f6a804b4f323ad353327b907633efa5214422992e74304f2" }
+    { "tick": 1, "state_sha256": "0dd05fc30398ee15ed408d6d6c7b529932c946799fb4688fd5babd8a9abf091b" },
+    { "tick": 2, "state_sha256": "98718152c3dee44314b9b35a673872be1dc22b7843f5d4dac3793af5fb24906d" }
   ]
 }

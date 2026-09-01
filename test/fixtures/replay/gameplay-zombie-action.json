@@ -2,7 +2,7 @@
   "format_version": 1,
   "fixture_id": "gameplay/zombie-action",
   "protocol_schema_version": "0.1.0",
-  "content_manifest": { "id": "test-content", "version": "1", "sha256": "zombie-action-content" },
+  "content_manifest": { "id": "replay.zombie-action", "version": "0.1.0", "sha256": "d37b66ddff9a13b593922e77be80eb68481bbcbdb8d65f3f42194d84fadd844a" },
   "tick_rate_hz": 20,
   "rng_seed": 9,
   "game_variant": "Diablo",
@@ -23,6 +23,7 @@
     "combat_target_hit_points": 40,
     "combat_target_max_hit_points": 40,
     "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 110,
     "combat_target_native_ai": "Zombie"
   },
   "commands": [
@@ -30,7 +31,7 @@
     { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "36bee356e368720b89659de1b01526a9fdc79a0136fa4185010fd7f9b187c20b" },
-    { "tick": 2, "state_sha256": "0e5756392da42396e33168f55dd85ebda17ebda4bb5d18554fce6533f8adbe8f" }
+    { "tick": 1, "state_sha256": "838076b46ae00c8ae1a71f81d1da62dba507883d2ca922d9ba4d141823a4b6aa" },
+    { "tick": 2, "state_sha256": "ae26c12c3d3a8b49ab2371ee47a6bb9210cb4cbed255edbb105ed7db2aefad02" }
   ]
 }
