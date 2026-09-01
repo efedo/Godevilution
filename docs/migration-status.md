@@ -41,6 +41,11 @@ Invisible Lord/Sneak, Goat, and Bat families through Night Clan. Their validated
 AI selectors and available native DUN mappings are available to production
 generation; raw DUN identity 31 remains reserved by the authored Banner fragment.
 
+The base pack now continues with the midgame Acid, Fat, SkeletonMelee, Magma,
+and Rhino families (native IDs 46–49 and 52–67). Their stable identities,
+validated AI selectors, and native DUN mappings are available to production
+generation while the authored Skeleton King and Butcher identities remain intact.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

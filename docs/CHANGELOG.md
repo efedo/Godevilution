@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expand the base content pack with the validated midgame Acid, Fat,
+  SkeletonMelee, Magma, and Rhino families (native IDs 46–49 and 52–67),
+  including stable identities, AI metadata, and native DUN mappings.
+
 - Expand the base content pack with the validated native 28–45 families:
   Invisible Lord, Sneak, Goat, and Bat variants through Night Clan. Their
   stable identities, native AI metadata, and available DUN mappings are now
