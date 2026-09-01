@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/status-expiry",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "base",
-    "version": "1",
-    "sha256": "status-fixture"
+    "id": "replay.status-expiry",
+    "version": "0.1.0",
+    "sha256": "27b3deb0c14d69f4cc370fc1e1c4c017cb3ceb3f7c6aaeb4251f595a78256c1a"
   },
   "tick_rate_hz": 20,
   "rng_seed": 305419896,

@@ -551,8 +551,11 @@ later bolts cannot block again, and reach the same RNG-backed checkpoints. A
 seeded live Godot/server test proves the host seed reaches a charged-item cast.
 
 The five standard Charged Bolt fixtures share the validated `test/content/replay/charged-bolt`
-pack and canonical manifest identity; Hellfire Charged Bolt remains a separate
-variant overlay.
+pack and canonical manifest identity; Hellfire rules remain a separate variant
+overlay.
+Hellfire Charged Bolt now uses the same validated `test/content/replay/charged-bolt`
+pack. The status-expiry fixture uses the validated `test/content/replay/status-expiry`
+pack for its spell row and canonical manifest identity.
 
 Bone Spirit homing and the Hellfire Firebolt/Fireball block fixtures share the validated
 `test/content/replay/projectile-variants` pack and canonical manifest identity.

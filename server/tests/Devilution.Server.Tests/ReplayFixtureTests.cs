@@ -1522,20 +1522,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-charged-bolt-hellfire-block.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
-                Range = 4,
-                DamageType = AuthoritativeDamageType.Lightning,
-                ProjectileSpeed = 8,
-                ProjectileLifetime = 256,
-                ProjectileCount = 4,
-                ProjectileCountLevelDivisor = 2,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
-                RandomMagicDamageDivisor = 4,
-                ResistantDamageDivisor = 4,
-                ProjectileImpactLifetime = 8,
-            },
-        ]);
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
@@ -6736,15 +6723,7 @@ public sealed class ReplayFixtureTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-status-expiry.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(
-                2,
-                3,
-                0,
-                fixture.InitialState.StatusEffectId,
-                fixture.InitialState.StatusDuration,
-                fixture.InitialState.StatusMagnitude),
-        ]);
+        var spells = LoadReplaySpells(fixture, "status-expiry");
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             fixture.InitialState.Gold,

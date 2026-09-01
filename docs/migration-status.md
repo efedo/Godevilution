@@ -31,6 +31,10 @@ the pack manifest hash before constructing the authoritative catalog.
 The Bone Spirit homing and Hellfire Firebolt/Fireball fixtures now load their
 spell behavior from the validated `test/content/replay/projectile-variants` pack; the
 managed runner validates its canonical manifest hash.
+Hellfire Charged Bolt now reuses the validated `test/content/replay/charged-bolt`
+pack, and the status-expiry fixture now loads its row from the validated
+`test/content/replay/status-expiry` pack; both manifests are hash-checked before
+catalog activation.
 
 The shared replay contract now covers the native Counselor AI delay and
 retreat lanes. Native and managed runners preserve server-owned adjacent

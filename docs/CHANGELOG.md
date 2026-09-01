@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extract the Hellfire Charged Bolt and status-expiry replay rows into validated external replay packs, preserving native/C# checkpoint parity.
+
 - Extract the Bone Spirit homing and Hellfire Firebolt/Fireball fixtures into the validated `test/content/replay/projectile-variants` pack; align the native homing lifetime assertion with the shared replay checkpoint.
 
 - Extract the five standard Charged Bolt replay fixtures into the validated `test/content/replay/charged-bolt` pack and bind their manifests to its canonical identity.
