@@ -4,7 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Bind the Rage, Inferno, and Apocalypse replay runners to the validated base `spells.tsv` catalog, preserving native controller, segment, target-scan, and checkpoint parity.
+
 - Move the Firebolt, Fireball, and Bone Spirit PvP replay fixtures to the validated base `spells.tsv` catalog and active content-manifest identity, preserving native player-hit, current-life, resistance, and checkpoint parity.
+
 - Move the Chain Lightning, Immolation, Elemental, and Guardian replay
   fixtures to the validated base `spells.tsv` catalog and active content-manifest
   identity, preserving native controller, retargeting, and turret checkpoints.

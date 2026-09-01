@@ -114,6 +114,9 @@ segment lifetimes.
 including row-major target scanning, physical boom emission, target impact,
 and boom lifetime.
 
+The Rage, Inferno, and Apocalypse runners load the validated base `spells.tsv`
+rows and check the active `devilution.base` content-manifest identity.
+
 `gameplay-magi-resolution.json` covers the player Magi cast, including the
 native full-mana restoration boundary.
 

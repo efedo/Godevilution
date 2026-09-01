@@ -834,22 +834,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-rage-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(22, 15, 0, 0, 0, 0) {
-                Range = 1,
-                DamageType = AuthoritativeDamageType.Physical,
-                ProjectileLifetime = 245,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.RageController,
-                ResistantDamageDivisor = 1,
-                ProjectileImpactLifetime = 1,
-                MinimumManaCost = 1,
-                ManaCostScale = 64,
-                StaffLevel = -1,
-                RageControllerLifetime = 245,
-                RageCharacterLevelLifetimeScale = 2,
-                RageSelfDamageCharacterLevel = 6,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var initial = fixture.InitialState;
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
@@ -887,28 +872,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-inferno-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(21, 11, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Fire,
-                ProjectileSpeed = 32,
-                ProjectileLifetime = 256,
-                ProjectileCount = 1,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.InfernoController,
-                RandomDamageRange = 2,
-                DamageBonus = 24,
-                DamageScale = 12,
-                SecondaryProjectileLifetime = 20,
-                ResistantDamageDivisor = 1,
-                ProjectileImpactLifetime = 1,
-                ManaAdjustment = 1,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 6,
-                ManaCostScale = 64,
-                StaffLevel = 2,
-                InfernoSegmentLifetimeStep = 1,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var initial = fixture.InitialState;
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
@@ -958,25 +922,7 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-apocalypse-resolution.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
-        var spells = new AuthoritativeSpellCatalog([
-            new AuthoritativeSpellDefinition(25, 150, 0, 0, 0, 0) {
-                Range = 112,
-                DamageType = AuthoritativeDamageType.Magic,
-                ProjectileLifetime = 15,
-                ProjectileBehavior = AuthoritativeProjectileBehavior.ApocalypseController,
-                RandomDamageRange = 6,
-                RandomDamageIterationsCharacterLevelDivisor = 1,
-                ResistantDamageDivisor = 1,
-                ProjectileImpactLifetime = 1,
-                ManaAdjustment = 6,
-                ManaAdjustmentDivisor = 1,
-                MinimumManaCost = 90,
-                ManaCostScale = 64,
-                StaffLevel = 15,
-                ApocalypseControllerLifetime = 255,
-                ApocalypseSearchRadius = 8,
-            },
-        ]);
+        var spells = LoadBaseSpells(fixture);
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
             initial.CombatTargetEntityId,
