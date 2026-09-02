@@ -1033,10 +1033,10 @@ public sealed partial class DiabloSimulation
                 return portal;
             })
             .ToArray();
-        if (savedPortals.Length > 4096
+        if (savedPortals.Length > AuthoritativePortalRules.NativeMaximumPortalCount
             || savedPortals.Select(portal => portal.PortalId).Distinct().Count() != savedPortals.Length) {
             throw new InvalidDataException(
-                "The authoritative save contains invalid portal identity.");
+                "The authoritative save contains invalid or excessive portal state.");
         }
 
         var restoredCorpses = snapshot.Corpses.Select(corpse => {

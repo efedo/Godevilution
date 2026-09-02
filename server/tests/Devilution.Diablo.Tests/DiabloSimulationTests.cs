@@ -179,6 +179,27 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRejectsMoreThanNativePortalCapacity()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 1) with {
+            Portals = Enumerable.Range(1, AuthoritativePortalRules.NativeMaximumPortalCount + 1)
+                .Select(id => new DiabloPortalState((uint)id, 0, id, 0, 1, id, 1))
+                .ToArray(),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), snapshot));
+        Assert.Contains("invalid or excessive portal state", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SnapshotRoundTripPreservesSetLevelRewardOriginMetadata()
     {
         var world = new AuthoritativeWorld();

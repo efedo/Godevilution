@@ -88,8 +88,12 @@ public static class AuthoritativePortalCatalog
     {
         ArgumentNullException.ThrowIfNull(portals);
         ArgumentNullException.ThrowIfNull(world);
+        var values = portals.ToArray();
+        if (values.Length > AuthoritativePortalRules.NativeMaximumPortalCount)
+            throw new InvalidDataException(
+                $"Portal catalog contains more than {AuthoritativePortalRules.NativeMaximumPortalCount} routes, exceeding the native portal capacity.");
         var portalIds = new HashSet<uint>();
-        foreach (var portal in portals) {
+        foreach (var portal in values) {
             if (portal.PortalId == 0 || !portalIds.Add(portal.PortalId))
                 throw new InvalidDataException(
                     $"Portal catalog contains duplicate or zero ID {portal.PortalId}.");
@@ -148,6 +152,7 @@ public static class AuthoritativePortalCatalog
                 StableSymbol = AuthoritativePortalIdentity.ReadSymbol(row),
             }).ToArray();
         if (portals.Any(portal => portal.PortalId == 0)
+            || portals.Length > AuthoritativePortalRules.NativeMaximumPortalCount
             || portals.Select(portal => portal.PortalId).Distinct().Count() != portals.Length)
             throw new InvalidDataException($"Portal table '{sourcePath}' contains duplicate or zero IDs.");
         return portals;

@@ -457,6 +457,33 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RuntimeWorldStateRejectsOversizedInitialPortalCollection()
+    {
+        var portals = Enumerable.Range(1, AuthoritativePortalRules.NativeMaximumPortalCount + 1)
+            .Select(id => new AuthoritativePortal((uint)id, 0, id, 0, 1, id, 1))
+            .ToArray();
+
+        var exception = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            portals: portals));
+        Assert.Contains("too many portal entries", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StaticPortalCatalogRejectsOversizedRouteSet()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var portals = Enumerable.Range(1, AuthoritativePortalRules.NativeMaximumPortalCount + 1)
+            .Select(id => new AuthoritativePortal((uint)id, 0, id, 0, 1, id, 1))
+            .ToArray();
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePortalCatalog.ValidateWorld(portals, world));
+        Assert.Contains("native portal capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RuntimeWorldStateRejectsOversizedInitialCollections()
     {
         var corpses = Enumerable.Range(1, DiabloWorldState.MaximumWorldStateEntries + 1)

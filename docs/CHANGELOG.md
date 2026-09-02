@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforced the native four-route portal pool in authoritative world-state
+  construction, static catalog loading, Town Portal creation, and save restore;
+  runtime state can no longer grow beyond the projection boundary.
 - Enforced DevilutionX's `MAXPORTAL` limit across authoritative server
   projection, host validation, Godot admission, and native client projection;
   snapshots with more than four portal routes now fail closed.

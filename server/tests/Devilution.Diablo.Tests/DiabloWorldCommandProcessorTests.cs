@@ -614,6 +614,31 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void TownPortalRejectsWhenNativePortalPoolIsFull()
+    {
+        var portals = Enumerable.Range(1, AuthoritativePortalRules.NativeMaximumPortalCount)
+            .Select(id => new AuthoritativePortal((uint)id, 0, id, 0, 1, id, 1))
+            .ToArray();
+        var world = new DiabloWorldState(portals: portals);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 2, positionY: 2, levelId: 1, entityId: 5);
+
+        var result = processor.ExecuteTownPortal(
+            player,
+            4,
+            4,
+            1,
+            [player],
+            searchRadius: 2,
+            lifetime: 7);
+
+        AssertRejected(result, DiabloRuleFailure.NotAllowed);
+        Assert.Equal(
+            AuthoritativePortalRules.NativeMaximumPortalCount,
+            world.Portals.Count);
+    }
+
+    [Fact]
     public void TownPortalUsesTheExternalTownLevelIdentity()
     {
         var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);

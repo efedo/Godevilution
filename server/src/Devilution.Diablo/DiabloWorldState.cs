@@ -40,7 +40,10 @@ public sealed class DiabloWorldState
         bool allowMissingNativeDunLayers = false)
     {
         ValidateEntryCount(combatTargets, "combat target");
-        ValidateEntryCount(portals, "portal");
+        ValidateEntryCount(
+            portals,
+            "portal",
+            AuthoritativePortalRules.NativeMaximumPortalCount);
         ValidateEntryCount(worldItems, "world item");
         ValidateEntryCount(objects, "object");
         ValidateEntryCount(projectiles, "projectile");
@@ -118,9 +121,12 @@ public sealed class DiabloWorldState
             WorldMutations?.ValidateWorld(World, Objects.Values, CombatTargets.Values);
         RebuildProjectedGeometry();
 
-        static void ValidateEntryCount<T>(IReadOnlyList<T>? entries, string category)
+        static void ValidateEntryCount<T>(
+            IReadOnlyList<T>? entries,
+            string category,
+            int maximum = MaximumWorldStateEntries)
         {
-            if (entries is not null && entries.Count > MaximumWorldStateEntries)
+            if (entries is not null && entries.Count > maximum)
                 throw new InvalidDataException(
                     $"Initial world state contains too many {category} entries.");
         }
@@ -788,6 +794,9 @@ public sealed class DiabloWorldState
                     $"Entity {entry.Value.EntityId} is registered more than once.");
         }
         var portalIds = new HashSet<uint>();
+        if (Portals.Count > AuthoritativePortalRules.NativeMaximumPortalCount)
+            throw new InvalidDataException(
+                $"Initial world state contains more than {AuthoritativePortalRules.NativeMaximumPortalCount} portals.");
         foreach (var entry in Portals) {
             ValidatePortalState(entry.Value, entry.Key);
             if (!portalIds.Add(entry.Value.PortalId))

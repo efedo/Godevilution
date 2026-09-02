@@ -302,6 +302,8 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!portalPosition.HasValue)
             return DiabloWorldIntentResult.Accepted;
+        if (world.Portals.Count >= AuthoritativePortalRules.NativeMaximumPortalCount)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
         var portalId = AllocatePortalId();
         world.Portals.Add(

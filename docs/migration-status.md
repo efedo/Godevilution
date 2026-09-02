@@ -2709,6 +2709,9 @@ scaled hit points), not only the client's difficulty label.
   coordinates and inconsistent owned-portal lifetime or owner state.
 - Native, server, and Godot authoritative boundaries now enforce the native
   `MAXPORTAL` array capacity, so no side can admit more than four routes.
+- The authoritative world and save paths now enforce the same capacity before
+  projection, and Town Portal creation fails closed when all native slots are
+  occupied.
 - Native authoritative quest-state validation now rejects duplicate or missing
   quest identities, impossible progress, unavailable progress, and invalid
   native quest metadata before interaction gates consume the snapshot.
