@@ -672,6 +672,9 @@ internal static class DiabloProtocolMapper
     private static void ValidateProjectedPortalStates(
         IReadOnlyList<DiabloPortalState> portals)
     {
+        if (portals.Count > AuthoritativePortalRules.NativeMaximumPortalCount)
+            throw new InvalidDataException(
+                $"Authoritative portal state exceeds the native {AuthoritativePortalRules.NativeMaximumPortalCount}-portal capacity.");
         var portalIds = new HashSet<uint>();
         foreach (var portal in portals) {
             if (portal.PortalId == 0

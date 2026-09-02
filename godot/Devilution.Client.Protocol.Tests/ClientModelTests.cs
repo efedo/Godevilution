@@ -417,6 +417,25 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void EnforcesNativePortalPoolCapacity()
+    {
+        var model = new AuthoritativeClientModel();
+        var atCapacity = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        };
+        for (var index = 1; index <= 4; index++)
+            atCapacity.Portals.Add(new PortalSnapshot { PortalId = (uint)index });
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: atCapacity));
+        Assert.Equal(4, model.Snapshot!.Portals.Count);
+
+        var overCapacity = atCapacity.Clone();
+        overCapacity.Portals.Add(new PortalSnapshot { PortalId = 5 });
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: overCapacity)));
+    }
+
+    [Fact]
     public void RejectsEntitiesOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

@@ -812,6 +812,22 @@ TEST(ServerBackedPlayerSnapshot, EnforcesNativeWorldItemPoolCapacityPerLevel)
 	EXPECT_NE(rejected.error().find("MAXITEMS"), std::string::npos);
 }
 
+TEST(ServerBackedPlayerSnapshot, EnforcesNativePortalPoolCapacity)
+{
+	protocol::Snapshot snapshot;
+	for (uint32_t index = 1; index <= MAXPORTAL; ++index)
+		snapshot.add_portals()->set_portal_id(index);
+
+	auto projected = ProjectPortalSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), static_cast<size_t>(MAXPORTAL));
+
+	snapshot.add_portals()->set_portal_id(MAXPORTAL + 1);
+	auto rejected = ProjectPortalSnapshots(snapshot);
+	ASSERT_FALSE(rejected.has_value());
+	EXPECT_NE(rejected.error().find("MAXPORTAL"), std::string::npos);
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsZeroSeedPvpEarDynamicPresentation)
 {
 	protocol::Snapshot snapshot;

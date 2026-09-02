@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforced DevilutionX's `MAXPORTAL` limit across authoritative server
+  projection, host validation, Godot admission, and native client projection;
+  snapshots with more than four portal routes now fail closed.
 - Fail closed on ambiguous native monster summon selectors instead of falling
   through to a potentially unrelated numeric stable-ID row; older selectors
   still use the compatibility fallback when no native mapping exists.

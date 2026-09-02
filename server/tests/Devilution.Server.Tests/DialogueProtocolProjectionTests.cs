@@ -1105,6 +1105,34 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void EnforcesNativePortalPoolCapacity()
+    {
+        var player = new StorePlayerSnapshot(
+            0, null, [], 0, 64, 0, 0, PlayerAttributesState.Zero, [], [], []) {
+            EntityId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1, player, [], [], [], [], [], null) with {
+            Portals = Enumerable.Range(1, AuthoritativePortalRules.NativeMaximumPortalCount)
+                .Select(index => new DiabloPortalState(
+                    (uint)index, 1, index, 1, 2, index, 2))
+                .ToArray(),
+        };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        Assert.Equal(AuthoritativePortalRules.NativeMaximumPortalCount, projected.Portals.Count);
+
+        var overCapacity = source with {
+            Portals = source.Portals
+                .Append(new DiabloPortalState(99, 1, 1, 1, 2, 1, 2))
+                .ToArray(),
+        };
+        var exception = Assert.Throws<InvalidDataException>(
+            () => DiabloProtocolMapper.ToProtocolSnapshot(overCapacity));
+        Assert.Contains("4-portal capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsObjectsOutsideProjectedPositionBounds()
     {
         var player = new StorePlayerSnapshot(

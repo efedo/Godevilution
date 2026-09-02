@@ -8,6 +8,7 @@ namespace Devilution.Server.Protocol;
 public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
+    private const int NativeMaximumPortalCount = 4;
     private const int MaximumWorldMutationCount = 4096;
 
     public static void Validate(Snapshot snapshot)
@@ -72,6 +73,9 @@ public static class AuthoritativeSnapshotValidator
         }
 
         var portalIds = new HashSet<uint>();
+        if (snapshot.Portals.Count > NativeMaximumPortalCount)
+            throw new InvalidDataException(
+                $"The authoritative snapshot contains more than {NativeMaximumPortalCount} portals, exceeding the native portal capacity.");
         foreach (var portal in snapshot.Portals) {
             if (portal.PortalId == 0
                 || !portalIds.Add(portal.PortalId)

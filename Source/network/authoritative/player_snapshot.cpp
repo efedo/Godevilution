@@ -15,6 +15,7 @@
 #include "game/items/items.hpp"
 #include "game/players/players.hpp"
 #include "game/objects/objects.hpp"
+#include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
@@ -770,6 +771,8 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 
 tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSnapshots(const protocol::Snapshot &snapshot)
 {
+	if (snapshot.portals_size() > MAXPORTAL)
+		return tl::make_unexpected("Server-backed snapshot contains more than MAXPORTAL portals.");
 	std::vector<ProjectedPortalSnapshot> projected;
 	projected.reserve(snapshot.portals_size());
 	for (const auto &source : snapshot.portals()) {

@@ -15,6 +15,7 @@ public sealed class AuthoritativeClientModel
     private const uint NativeMaximumObjectId = 108;
     private const int NativeMaximumObjectCount = 127;
     private const int NativeMaximumItemCount = 127;
+    private const int NativeMaximumPortalCount = 4;
     private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
@@ -185,6 +186,7 @@ public sealed class AuthoritativeClientModel
             ValidateQuests(message.Snapshot);
             ValidateWorldItemPoolCapacity(message.Snapshot);
             ValidateObjectPoolCapacity(message.Snapshot);
+            ValidatePortalPoolCapacity(message.Snapshot);
             var questIds = message.Snapshot.Quests
                 .Select(quest => quest.QuestId)
                 .ToHashSet();
@@ -929,6 +931,14 @@ public sealed class AuthoritativeClientModel
                     $"The authoritative snapshot contains more than {NativeMaximumItemCount} "
                     + $"world items on level {group.Key}, exceeding the native item capacity.");
         }
+    }
+
+    private static void ValidatePortalPoolCapacity(Snapshot snapshot)
+    {
+        if (snapshot.Portals.Count > NativeMaximumPortalCount)
+            throw new InvalidDataException(
+                $"The authoritative snapshot contains more than {NativeMaximumPortalCount} "
+                + "portals, exceeding the native portal capacity.");
     }
 
     private static void ValidateQuests(Snapshot snapshot)

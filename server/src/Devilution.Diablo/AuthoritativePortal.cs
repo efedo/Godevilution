@@ -27,6 +27,9 @@ public static class AuthoritativePortalRules
 
     public const int TownPortalSlotCount = 4;
 
+    /** Native portal-array capacity (MAXPORTAL). */
+    public const int NativeMaximumPortalCount = 4;
+
     public const int TownPortalSlotSpacing = 2;
 
     public static int GetTownPositionX(

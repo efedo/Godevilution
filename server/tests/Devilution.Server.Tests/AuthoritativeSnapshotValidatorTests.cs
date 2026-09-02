@@ -50,6 +50,17 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsSnapshotsBeyondNativePortalCapacity()
+    {
+        var snapshot = new Snapshot();
+        for (var index = 1; index <= 5; index++)
+            snapshot.Portals.Add(new PortalSnapshot { PortalId = (uint)index });
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsOmittedAndPrintablePlayerNames()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
