@@ -75,6 +75,15 @@ The Golem spell now carries its content-owned summon monster identity and
 activation validates that reference against `monster_types.tsv`; older spell
 rows without the field continue to use the native compatibility fallback.
 
+Legacy special-identity admission fallback now lives in the spawn-policy
+catalog, leaving the planner itself free of embedded Golem/Diablo identity
+knowledge while preserving older-pack behavior.
+
+The monster-type catalog now provides unambiguous native-AI lookup for legacy
+compatibility paths. The Golem summon uses that lookup instead of hard-coding
+native monster ID 109; packs with duplicate native-AI labels fail closed rather
+than selecting an arbitrary identity.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

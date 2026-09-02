@@ -48,6 +48,23 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalog
         => !roles.TryGetValue(monsterId, out var role)
             || role == AuthoritativeMonsterSpawnRole.Ordinary;
 
+    /** Applies explicit policy first, then preserves the legacy pack fallback. */
+    public bool IsOrdinary(AuthoritativeMonsterTypeDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return roles.TryGetValue(definition.MonsterId, out var role)
+            ? role == AuthoritativeMonsterSpawnRole.Ordinary
+            : IsLegacyOrdinary(definition);
+    }
+
+    /** Compatibility admission used when older packs omit the policy table. */
+    public static bool IsLegacyOrdinary(AuthoritativeMonsterTypeDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return !definition.Diablo
+            && !string.Equals(definition.NativeAi, "Golem", StringComparison.Ordinal);
+    }
+
     /** Ensures every policy row addresses an active monster type. */
     public void ValidateMonsterTypes(AuthoritativeMonsterTypeCatalog monsterTypes)
     {

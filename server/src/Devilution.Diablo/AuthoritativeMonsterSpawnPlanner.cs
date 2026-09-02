@@ -478,9 +478,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
 
     private bool IsOrdinarySpawnCandidate(
         AuthoritativeMonsterTypeDefinition definition)
-        => spawnPolicies?.IsOrdinary(definition.MonsterId)
-            ?? (!definition.Diablo
-                && !string.Equals(definition.NativeAi, "Golem", StringComparison.Ordinal));
+        => spawnPolicies?.IsOrdinary(definition)
+            ?? AuthoritativeMonsterSpawnPolicyCatalog.IsLegacyOrdinary(definition);
 
     private AuthoritativeCombatTarget CreateCombatTarget(
         AuthoritativeMonsterSpawn spawn,

@@ -21,6 +21,18 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalogTests
     }
 
     [Fact]
+    public void AppliesLegacySpecialIdentityFallbackWhenPolicyIsOmitted()
+    {
+        var catalog = new AuthoritativeMonsterSpawnPolicyCatalog([]);
+        var legacyGolem = CreateType(2) with { NativeAi = "Golem" };
+        var legacyBoss = CreateType(3) with { Diablo = true };
+
+        Assert.False(catalog.IsOrdinary(legacyGolem));
+        Assert.False(catalog.IsOrdinary(legacyBoss));
+        Assert.True(catalog.IsOrdinary(CreateType(4)));
+    }
+
+    [Fact]
     public void LoadsSymbolicRolesAndRejectsUnknownRoles()
     {
         var catalog = AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(

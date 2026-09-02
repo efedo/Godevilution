@@ -4748,7 +4748,7 @@ public sealed class DiabloCombatCommandProcessor
             ? monsterTypes?.TryGet(spell.GolemMonsterId, out var configuredGolemType) == true
                 ? configuredGolemType
                 : null
-            : monsterTypes?.TryGetNative(109, out var legacyGolemType) == true
+            : monsterTypes?.TryGetNativeAi("Golem", out var legacyGolemType) == true
                 ? legacyGolemType
                 : null;
         var spawnRandom = new DeterministicLegacyRandom(random.State);

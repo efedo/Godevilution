@@ -1997,6 +1997,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Golem death-animation tuning requires Golem projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Golem
+                && definition.GolemMonsterId != 0) {
+                throw new InvalidDataException(
+                    "Golem summon identity requires Golem projectile behavior.");
+            }
             if (definition.StatusEffectId != 0 && definition.StatusDuration == 0)
                 throw new InvalidDataException("Status-bearing spells require a positive status duration.");
             if (!spells.TryAdd(definition.SpellId, definition))

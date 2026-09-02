@@ -496,6 +496,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitions;
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitionsByNativeId;
     private readonly HashSet<uint> ambiguousNativeIds;
+    private readonly Dictionary<string, AuthoritativeMonsterTypeDefinition> definitionsByNativeAi;
+    private readonly HashSet<string> ambiguousNativeAis;
 
     public AuthoritativeMonsterTypeCatalog(
         IEnumerable<AuthoritativeMonsterTypeDefinition> definitions)
@@ -504,6 +506,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
         this.definitions = new Dictionary<uint, AuthoritativeMonsterTypeDefinition>();
         definitionsByNativeId = new Dictionary<uint, AuthoritativeMonsterTypeDefinition>();
         ambiguousNativeIds = new HashSet<uint>();
+        definitionsByNativeAi = new Dictionary<string, AuthoritativeMonsterTypeDefinition>(StringComparer.Ordinal);
+        ambiguousNativeAis = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions) {
             if (definition.MonsterId == 0
                 || string.IsNullOrWhiteSpace(definition.Name)
@@ -880,6 +884,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 definitionsByNativeId.Remove(definition.NativeMonsterId);
                 ambiguousNativeIds.Add(definition.NativeMonsterId);
             }
+            if (!definitionsByNativeAi.TryAdd(definition.NativeAi, definition)) {
+                definitionsByNativeAi.Remove(definition.NativeAi);
+                ambiguousNativeAis.Add(definition.NativeAi);
+            }
         }
         if (this.definitions.Count == 0)
             throw new InvalidDataException("The monster type catalog cannot be empty.");
@@ -915,6 +923,17 @@ public sealed class AuthoritativeMonsterTypeCatalog
             return false;
         }
         return definitionsByNativeId.TryGetValue(nativeMonsterId, out definition!);
+    }
+
+    /** Resolves an unambiguous native MonsterAI identity without exposing numeric IDs to callers. */
+    public bool TryGetNativeAi(string nativeAi, out AuthoritativeMonsterTypeDefinition definition)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nativeAi);
+        if (ambiguousNativeAis.Contains(nativeAi)) {
+            definition = null!;
+            return false;
+        }
+        return definitionsByNativeAi.TryGetValue(nativeAi, out definition!);
     }
 
     public static AuthoritativeMonsterTypeCatalog LoadTsv(

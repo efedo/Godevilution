@@ -4,6 +4,14 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Keep legacy Golem/Diablo procedural-admission compatibility in the validated
+  spawn-policy catalog rather than in the planner, so the planner remains
+  content-driven while older packs continue to load.
+
+- Resolve legacy summon identities through the validated native-AI catalog,
+  avoiding numeric monster IDs in combat code while rejecting ambiguous
+  content-pack mappings.
+
 - Externalize the Golem summon target through the optional `golem_monster_id`
   spell field and validate it against active monster types, while retaining the
   native compatibility fallback for older packs.

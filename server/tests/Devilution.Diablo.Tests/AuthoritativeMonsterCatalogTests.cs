@@ -1380,6 +1380,34 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void ResolvesUnambiguousNativeAiIdentity()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Golem", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, false, false) {
+                NativeAi = "Golem",
+            },
+        ]);
+
+        Assert.True(catalog.TryGetNativeAi("Golem", out var golem));
+        Assert.Equal(2U, golem.MonsterId);
+        Assert.False(catalog.TryGetNativeAi("Zombie", out _));
+    }
+
+    [Fact]
+    public void DoesNotResolveAmbiguousNativeAiIdentities()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie A", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false),
+            new AuthoritativeMonsterTypeDefinition(
+                3, 1, "Zombie B", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false),
+        ]);
+
+        Assert.False(catalog.TryGetNativeAi("Zombie", out _));
+    }
+
+    [Fact]
     public void LoadsNativeMonsterTypeResistances()
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
