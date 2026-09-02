@@ -10,6 +10,12 @@ public sealed record AuthoritativeLevelGenerationRule(
     int MultiplayerMonsterMultiplierPercent,
     int TrapPercent)
 {
+    /** Native ordinary-spawn capacity; older rows retain the 190-slot limit. */
+    public const int DefaultOrdinaryMonsterCapacity = 190;
+
+    /** Content-owned ordinary encounter ceiling before runtime reservations. */
+    public int OrdinaryMonsterCapacity { get; init; } = DefaultOrdinaryMonsterCapacity;
+
     public bool AppliesTo(uint levelId)
         => levelId <= int.MaxValue
             && levelId >= MinimumLevel
@@ -35,6 +41,7 @@ public sealed class AuthoritativeLevelGenerationCatalog
                 || definition.MonsterDensityDivisor <= 0
                 || definition.MultiplayerMonsterMultiplierPercent < 0
                 || definition.TrapPercent is < 0 or > 100
+                || definition.OrdinaryMonsterCapacity is < 1 or > 200
                 || (index > 0
                     && definition.MinimumLevel <= ordered[index - 1].MaximumLevel)) {
                 throw new InvalidDataException(
@@ -96,6 +103,10 @@ public sealed class AuthoritativeLevelGenerationCatalog
                 row.RequiredInt32("maximum_level"),
                 row.RequiredInt32("monster_density_divisor"),
                 row.RequiredInt32("multiplayer_monster_multiplier_percent"),
-                row.RequiredInt32("trap_percent"))));
+                row.RequiredInt32("trap_percent")) {
+                OrdinaryMonsterCapacity = row.OptionalInt32(
+                    "ordinary_monster_capacity",
+                    AuthoritativeLevelGenerationRule.DefaultOrdinaryMonsterCapacity),
+            }));
     }
 }

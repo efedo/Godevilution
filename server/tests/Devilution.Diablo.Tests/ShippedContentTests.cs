@@ -3575,6 +3575,7 @@ public sealed class ShippedContentTests
         Assert.True(activation.Simulation.WorldState.World!.IsWalkable(24, 39, 39));
         Assert.Equal(5, activation.LevelGeneration!.Definitions.Count);
         Assert.Equal(25, activation.LevelGeneration.GetRequired(24).TrapPercent);
+        Assert.Equal(190, activation.LevelGeneration.GetRequired(24).OrdinaryMonsterCapacity);
         Assert.NotNull(activation.MonsterSpawnPlanner);
         var plannedSpawns = activation.MonsterSpawnPlanner.Plan(
             24,

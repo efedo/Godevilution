@@ -41,7 +41,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
      * Native ordinary-level scatter leaves ten of the 200 monster slots
      * available for quest and runtime summons.
      */
-    public const int NativeOrdinaryLevelMonsterCapacity = 190;
+    public const int NativeOrdinaryLevelMonsterCapacity =
+        AuthoritativeLevelGenerationRule.DefaultOrdinaryMonsterCapacity;
 
     /** Reserved world-item range for drops attached to generated monsters. */
     public const uint FirstGeneratedDropEntityId = 0x40000000;
@@ -111,7 +112,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             multiplayer);
         var spawnCount = Math.Min(
             Math.Min(maximumMonsters, requestedCount),
-            NativeOrdinaryLevelMonsterCapacity);
+            levelGeneration.GetRequired(levelId).OrdinaryMonsterCapacity);
         if (spawnCount == 0)
             return [];
 

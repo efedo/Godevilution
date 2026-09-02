@@ -20,6 +20,17 @@ public sealed class AuthoritativeLevelGenerationCatalogTests
     }
 
     [Fact]
+    public void LoadsOptionalOrdinaryMonsterCapacity()
+    {
+        var catalog = AuthoritativeLevelGenerationCatalog.LoadTsv(
+            "level_generation.tsv",
+            "minimum_level\tmaximum_level\tmonster_density_divisor\tmultiplayer_monster_multiplier_percent\ttrap_percent\tordinary_monster_capacity\n"
+                + "1\t1\t30\t150\t10\t17\n");
+
+        Assert.Equal(17, catalog.GetRequired(1).OrdinaryMonsterCapacity);
+    }
+
+    [Fact]
     public void RejectsOverlappingOrInvalidRanges()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeLevelGenerationCatalog([
@@ -28,6 +39,16 @@ public sealed class AuthoritativeLevelGenerationCatalogTests
         ]));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeLevelGenerationCatalog([
             new AuthoritativeLevelGenerationRule(0, 1, 0, 150, 10),
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(0, 1, 30, 150, 10) {
+                OrdinaryMonsterCapacity = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(0, 1, 30, 150, 10) {
+                OrdinaryMonsterCapacity = 201,
+            },
         ]));
     }
 

@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   avoiding numeric monster IDs in combat code while rejecting ambiguous
   content-pack mappings.
 
+- Move the ordinary procedural-monster ceiling into validated
+  `level_generation.tsv` metadata. Custom packs may select a bounded capacity;
+  rows that omit it retain the native 190-slot compatibility default.
+
 - Externalize the Golem summon target through the optional `golem_monster_id`
   spell field and validate it against active monster types, while retaining the
   native compatibility fallback for older packs.

@@ -84,6 +84,11 @@ compatibility paths. The Golem summon uses that lookup instead of hard-coding
 native monster ID 109; packs with duplicate native-AI labels fail closed rather
 than selecting an arbitrary identity.
 
+The ordinary procedural-monster ceiling is now content-owned through the
+optional `ordinary_monster_capacity` level-generation field. Values are bounded
+to the native 200-slot range, while omitted fields preserve the legacy 190-slot
+ordinary limit and keep older packs loadable.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.
