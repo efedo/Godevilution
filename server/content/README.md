@@ -650,9 +650,10 @@ Psychorb, HorkDemon, Necromorb, Torchant, FireBat, Lich, BoneDemon, ArchLich,
 and Na-Krul families; native identity 133 remains stable-ID-only because the
 source DUN table does not declare a conversion row for it.
 The optional `monster_spawn_policies.tsv` table now owns procedural admission
-roles. The base pack marks Golem as `Summon` and The Dark Lord as `Boss`, so
-ordinary scattering no longer depends on monster names or flags in the
-planner; omitted identities remain ordinary for compatibility with older packs.
+roles. The base pack marks Skeleton King, The Butcher, and Snotspill as
+`Quest`, Golem as `Summon`, and The Dark Lord as `Boss`, so ordinary scattering
+no longer depends on monster names or flags in the planner; omitted identities
+remain ordinary for compatibility with older packs.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default

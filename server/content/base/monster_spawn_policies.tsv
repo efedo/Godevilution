@@ -1,3 +1,6 @@
 monster_id	monster_symbol	spawn_role
+52	skeleton_king_native_50	Quest
+53	the_butcher_native_51	Quest
+140	snotspill	Quest
 111	golem_native_109	Summon
 112	the_dark_lord_native_110	Boss
