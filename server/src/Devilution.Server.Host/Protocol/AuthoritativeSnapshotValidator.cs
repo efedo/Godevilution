@@ -19,6 +19,8 @@ public static class AuthoritativeSnapshotValidator
     private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
     private const int MaximumNativeMonsterToHit = 255;
     private const int MaximumNativeMonsterDirection = 7;
+    private const int MaximumNativeObjectId = 108;
+    private const int MaximumObjectEffectKind = 9;
     private const int MaximumProjectileDamageType = 4;
     private const int MaximumProjectileBehavior = 59;
     private const int MaximumProjectilePhase = 1;
@@ -54,6 +56,7 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerCoreState(snapshot);
         ValidatePlayerItemProjections(snapshot);
         ValidateQuests(snapshot);
+        ValidateObjects(snapshot);
         ValidateQuestTownerInteractions(snapshot);
         ValidateLevelGeometry(snapshot);
         ValidateSetLevelObjectOrigins(snapshot);
@@ -586,6 +589,88 @@ public static class AuthoritativeSnapshotValidator
                     && interaction.Variable2 is < 0 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
+            }
+        }
+    }
+
+    private static void ValidateObjects(Snapshot snapshot)
+    {
+        var questIds = snapshot.Quests
+            .Select(quest => quest.QuestId)
+            .ToHashSet();
+        foreach (var @object in snapshot.Objects) {
+            var transitionKind = @object.QuestTransitionKind;
+            var rewardKind = @object.RewardKind;
+            var followUpKind = @object.QuestSequenceFollowUpKind;
+            var effectKind = @object.EffectKind;
+            var transitionSetsVariable = transitionKind is 3 or 4 or 5 or 6 or 7 or 8;
+            var transitionValid = transitionKind == 0
+                || @object.QuestId != 0
+                    && (transitionSetsVariable
+                        ? @object.QuestTransitionAmount > 0
+                        : @object.QuestTransitionAmount == 0);
+            var rewardValid = rewardKind == 0
+                ? @object.RewardId == 0
+                    && @object.RewardItemLevel == 0
+                    && @object.RewardOffsetX == 0
+                    && @object.RewardOffsetY == 0
+                    && @object.RewardOriginKind == 0
+                    && @object.RewardSetLevelId == 0
+                : @object.RewardId != 0;
+            var producesProjectile = effectKind is 8 or 9
+                || followUpKind == 2;
+            var followUpValid = followUpKind switch {
+                0 => @object.QuestSequenceFollowUpAmount == 0
+                    && @object.QuestSequenceFollowUpOffsetX == 0
+                    && @object.QuestSequenceFollowUpOffsetY == 0,
+                1 => (effectKind == 4 || transitionKind != 0)
+                    && @object.QuestSequenceFollowUpAmount != 0
+                    && @object.QuestSequenceFollowUpOffsetX == 0
+                    && @object.QuestSequenceFollowUpOffsetY == 0,
+                2 => (effectKind == 4 || effectKind == 6 || transitionKind != 0)
+                    && @object.QuestSequenceFollowUpAmount != 0,
+                3 => (effectKind == 4 || transitionKind != 0)
+                    && @object.QuestSequenceFollowUpAmount != 0,
+                _ => false,
+            };
+
+            if (@object.ObjectId == 0
+                || @object.EffectAmount < 0
+                || effectKind < 0
+                || effectKind > MaximumObjectEffectKind
+                || !Enum.IsDefined(@object.PresentationKind)
+                || @object.QuestId != 0 && !questIds.Contains(@object.QuestId)
+                || transitionKind is < 0 or > 8
+                || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
+                || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue
+                || @object.QuestTransitionRequiredVariable2 is < -1 or > byte.MaxValue
+                || !transitionValid
+                || rewardKind is < 0 or > 2
+                || @object.RewardItemLevel is < 0 or > byte.MaxValue
+                || @object.RewardOffsetX is < -16 or > 16
+                || @object.RewardOffsetY is < -16 or > 16
+                || @object.RewardOriginKind is < 0 or > 1
+                || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
+                || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > 8
+                || !rewardValid
+                || @object.ProjectileTargetOffsetX is < -32 or > 32
+                || @object.ProjectileTargetOffsetY is < -32 or > 32
+                || !producesProjectile
+                    && (@object.ProjectileTargetOffsetX != 0
+                        || @object.ProjectileTargetOffsetY != 0)
+                || followUpKind is < 0 or > 3
+                || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
+                || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
+                || !followUpValid
+                || @object.ProjectileSourceKind is < 0 or > 1
+                || !producesProjectile && @object.ProjectileSourceKind != 0
+                || @object.NativeObjectId > MaximumNativeObjectId
+                || @object.AnimationFrame > byte.MaxValue
+                || @object.ActivatedAnimationFrame > byte.MaxValue
+                || @object.Breakable && @object.MissilePassable
+                || @object.Destroyed && !@object.Breakable) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid object effect metadata.");
             }
         }
     }

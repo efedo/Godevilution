@@ -35,6 +35,10 @@ Generic host admission now also rejects malformed monster vitality, combat
 ranges, occupancy, movement timing, Fallen animation/rally state, and
 pack-leader relationships before transmission.
 
+Generic host admission now also rejects malformed authored object effect,
+quest-transition, reward, projectile, presentation, and breakage metadata
+before transmission.
+
 Generic host admission now also rejects malformed world-item prices, native
 identity metadata, and item-state ranges before transmission.
 

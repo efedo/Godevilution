@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Converged generic host admission with native and Godot authored object
+  effect, quest-transition, reward, projectile, presentation, and breakage
+  validation.
 - Converged generic host admission with native and Godot monster occupancy,
   movement timing, and Fallen animation/rally validation.
 - Converged generic host admission with native and Godot player resource,

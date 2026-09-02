@@ -29,7 +29,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
                     State = new ItemStateSnapshot(),
                 },
             },
-            Objects = { new ObjectSnapshot { EntityId = 4 } },
+            Objects = { new ObjectSnapshot { EntityId = 4, ObjectId = 1 } },
             Projectiles = {
                 new ProjectileSnapshot {
                     EntityId = 5,
@@ -495,6 +495,107 @@ public sealed class AuthoritativeSnapshotValidatorTests
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
+    public void AcceptsValidObjectEffectProjection()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 7,
+                    RequiredProgress = 1,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 1,
+                    ObjectId = 1,
+                    PresentationKind = ObjectPresentationKind.Quest,
+                    QuestId = 7,
+                    EffectKind = 4,
+                    QuestTransitionKind = 1,
+                    QuestSequenceFollowUpKind = 1,
+                    QuestSequenceFollowUpAmount = 1,
+                },
+                new ObjectSnapshot {
+                    EntityId = 2,
+                    ObjectId = 2,
+                    EffectKind = 8,
+                    ProjectileTargetOffsetX = 2,
+                    ProjectileSourceKind = 1,
+                    NativeObjectId = 108,
+                    AnimationFrame = byte.MaxValue,
+                    ActivatedAnimationFrame = byte.MaxValue,
+                },
+                new ObjectSnapshot {
+                    EntityId = 3,
+                    ObjectId = 3,
+                    Breakable = true,
+                    Destroyed = true,
+                    PresentationKind = ObjectPresentationKind.Breakable,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMalformedObjectEffectMetadata()
+    {
+        var invalidObjects = new[] {
+            new ObjectSnapshot { EntityId = 1 },
+            new ObjectSnapshot { EntityId = 1, ObjectId = 1, EffectAmount = -1 },
+            new ObjectSnapshot { EntityId = 1, ObjectId = 1, EffectKind = 10 },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                PresentationKind = (ObjectPresentationKind)99,
+            },
+            new ObjectSnapshot { EntityId = 1, ObjectId = 1, QuestId = 7 },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                QuestTransitionKind = 3,
+                QuestTransitionAmount = 0,
+            },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                RewardKind = 1,
+                RewardId = 0,
+            },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                ProjectileTargetOffsetX = 1,
+            },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                QuestSequenceFollowUpKind = 1,
+                QuestSequenceFollowUpAmount = 1,
+            },
+            new ObjectSnapshot { EntityId = 1, ObjectId = 1, NativeObjectId = 109 },
+            new ObjectSnapshot { EntityId = 1, ObjectId = 1, AnimationFrame = 256 },
+            new ObjectSnapshot { EntityId = 1, ObjectId = 1, ActivatedAnimationFrame = 256 },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                Breakable = true,
+                MissilePassable = true,
+            },
+            new ObjectSnapshot {
+                EntityId = 1,
+                ObjectId = 1,
+                Destroyed = true,
+            },
+        };
+
+        foreach (var @object in invalidObjects)
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(new Snapshot {
+                    Objects = { @object },
+                }));
     }
 
     [Fact]
@@ -975,6 +1076,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
         for (var index = 1; index <= 128; index++)
             objectSnapshot.Objects.Add(new ObjectSnapshot {
                 EntityId = (uint)index,
+                ObjectId = (uint)index,
                 LevelId = 1,
             });
 
