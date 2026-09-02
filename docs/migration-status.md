@@ -54,6 +54,11 @@ Authored unique placements and their generated pack members now resolve stable
 monster IDs through the validated catalog before invoking native-ID summon
 logic. This preserves content identity when stable and native IDs differ.
 
+Authored quest-object monster follow-ups and Hork Spawn payloads now use the
+same stable-ID boundary. Their content rows identify the stable monster first;
+the server resolves the corresponding native selector only at summon creation,
+so stable/native ID differences cannot silently summon the wrong monster.
+
 Generic host admission now also rejects malformed world-item prices, native
 identity metadata, and item-state ranges before transmission.
 
@@ -6212,8 +6217,9 @@ atural_resistance_per_level_percent` and
   `monster_missiles.tsv`; checked-in ranged rows now supply their authoritative
   spell identity, while legacy overlays retain the prior inference fallback.
 - Schema 1.92 externalizes the Hork Spawn `spawn_monster_id` through
-  `monster_missiles.tsv`; the Hellfire row supplies native monster ID 117, and
-  current activation rejects Hork Spawn mappings that omit the projection.
+  `monster_missiles.tsv`; the Hellfire row supplies stable monster ID 119
+  (native selector 117), and current activation rejects Hork Spawn mappings
+  that omit the projection.
 - Schema 1.93 externalizes mapped missile `projectile_speed` and
   `projectile_lifetime`; migrated ranged rows now supply their authoritative
   movement/lifetime tuning, including Hork Spawn's native speed-8, nine-tick

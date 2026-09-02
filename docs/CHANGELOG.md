@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   monster IDs through validated content before calling native-ID summon logic;
   stable IDs that differ from native IDs now materialize consistently in the
   server and Godot live protocol paths.
+- Corrected authored quest-object monster follow-ups and Hork Spawn payloads to
+  resolve stable monster IDs before native summon creation; fixed shipped Hork
+  Spawn content that previously pointed at Arachnon’s stable identity.
 - Externalized native AiAvoidance RoundWalk chance base and intelligence scale
   into validated monster content. Shipped GoatMelee and Gargoyle rows retain
   the native `16`/`5` tuning, while older packs use the compatibility fallback.

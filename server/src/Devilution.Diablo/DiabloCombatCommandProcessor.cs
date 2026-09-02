@@ -11886,7 +11886,7 @@ public sealed class DiabloCombatCommandProcessor
         if (projectile.SpellId == 0)
             return;
 
-        var summon = monsterSpawnPlanner.CreateNativeMonsterSummon(
+        var summon = monsterSpawnPlanner.CreateStableMonsterSummon(
             projectile.LevelId,
             projectile.SpellId,
             unchecked(

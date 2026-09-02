@@ -52,6 +52,8 @@ by existing monsters or authored world objects, and deterministic seeds before
 activation;
 placement and pack `monster_id` values are stable content IDs and are resolved
 through the validated catalog before native summon construction;
+quest-object `SpawnNativeMonster` follow-ups and Hork Spawn
+`spawn_monster_id` values use the same stable-ID contract;
 the checked-in table now carries the initial Snotspill Banner encounter at its
 Hell anchor, gated by the authored Ogden's Sign quest availability; later
 quest-state mutations remain native until their coordinates and effects are
@@ -2255,7 +2257,7 @@ Schema 1.386 adds `native_dun_fragments.tsv`. Fragment rows compose validated
 native `.dun` mega-tile, transparency, and object-layer data into ordinary
 runtime levels at an even d-piece origin relative to an authored anchor. The
 Hellfire pack places `uberroom.dun` around the Na-Krul encounter anchor.
-Its amount (or `quest_sequence_follow_up_monster_symbol`) resolves a native
+Its amount (or `quest_sequence_follow_up_monster_symbol`) resolves a stable
 monster identity through the active content pack, and the planner assigns a
 deterministic server entity ID, difficulty scaling, and any matching generated
 unique identity. `unique_monsters.tsv` may additionally author spawn health,
@@ -3224,7 +3226,8 @@ and server-owned save boundary. Schema 1.91 adds the optional `spell_id` to
 `monster_missiles.tsv`, moving mapped monster projectile spell identities into
 validated content while preserving legacy inference for older overlays. Schema
 1.92 adds the optional `spawn_monster_id` to `monster_missiles.tsv`; Hork Spawn
-now selects its summoned native monster from the Hellfire row. Current
+now selects its summoned stable monster identity from the Hellfire row and
+resolves the native selector only when materializing the summon. Current
 activation requires Hork Spawn mappings to provide that projection, so stale
 rows without it are rejected instead of falling back to a processor-native ID.
 Schema 1.93 adds optional

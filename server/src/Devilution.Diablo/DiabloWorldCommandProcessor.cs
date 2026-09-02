@@ -1495,7 +1495,7 @@ public sealed class DiabloWorldCommandProcessor
         if (monsterSpawnPlanner is null
             || monsterTypes is null
             || @object.QuestSequenceFollowUpAmount == 0
-            || !monsterTypes.TryResolveNativeMonsterSelector(
+            || !monsterTypes.TryGet(
                 @object.QuestSequenceFollowUpAmount,
                 out _)) {
             return false;
@@ -1519,12 +1519,12 @@ public sealed class DiabloWorldCommandProcessor
     {
         if (!CanSpawnNativeMonster(@object, participants))
             throw new InvalidDataException(
-                $"Object {@object.EntityId} cannot materialize native monster {@object.QuestSequenceFollowUpAmount}.");
+                $"Object {@object.EntityId} cannot materialize monster {@object.QuestSequenceFollowUpAmount}.");
 
         var targetX = checked(@object.PositionX + @object.QuestSequenceFollowUpOffsetX);
         var targetY = checked(@object.PositionY + @object.QuestSequenceFollowUpOffsetY);
         var entityId = AllocateGeneratedMonsterEntityId();
-        var target = monsterSpawnPlanner!.CreateNativeMonsterSummon(
+        var target = monsterSpawnPlanner!.CreateStableMonsterSummon(
             @object.LevelId,
             @object.QuestSequenceFollowUpAmount,
             random.NextUInt32(),
@@ -1535,7 +1535,7 @@ public sealed class DiabloWorldCommandProcessor
             ignoreDungeonLevelRange: true);
         if (target is null)
             throw new InvalidDataException(
-                $"Object {@object.EntityId} references native monster {@object.QuestSequenceFollowUpAmount} that is unavailable on level {@object.LevelId}.");
+                $"Object {@object.EntityId} references monster {@object.QuestSequenceFollowUpAmount} that is unavailable on level {@object.LevelId}.");
         DiabloDifficultyMonsterScaling.ApplyInitialHealth(
             target,
             difficulty,

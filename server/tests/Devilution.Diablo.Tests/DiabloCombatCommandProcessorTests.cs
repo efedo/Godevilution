@@ -3929,7 +3929,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "Zombie",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117,
+                    SpawnMonsterId: 119,
                     ProjectileSpeed: 8,
                     ProjectileLifetime: 9,
                     ProjectileImpactLifetime: 6),
@@ -3946,7 +3946,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(processor.AdvanceTick(1, [player]));
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.HorkSpawn, projectile.Behavior);
-        Assert.Equal(117U, projectile.SpellId);
+        Assert.Equal(119U, projectile.SpellId);
         Assert.Equal((8, 8U), (projectile.Speed, projectile.RemainingTicks));
         Assert.Equal(6, projectile.ImpactLifetime);
         Assert.Equal(0, projectile.OriginalDirection);
@@ -4293,7 +4293,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117,
+                    SpawnMonsterId: 119,
                     ProjectileSpeed: 8,
                     ProjectileLifetime: 9),
             ]),
@@ -4333,7 +4333,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117,
+                    SpawnMonsterId: 119,
                     ProjectileSpeed: 8,
                     ProjectileLifetime: 9),
             ]));
@@ -4404,7 +4404,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117,
+                    SpawnMonsterId: 119,
                     ProjectileSpeed: 8,
                     ProjectileLifetime: 9),
             ]),
@@ -4445,7 +4445,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117),
+                    SpawnMonsterId: 119),
             ]));
         var player = CreatePlayer(
             positionX: 7,
@@ -4480,7 +4480,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117)]));
+                    SpawnMonsterId: 119)]));
         var player = CreatePlayer(
             positionX: 7,
             positionY: 0,
@@ -4523,7 +4523,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117),
+                    SpawnMonsterId: 119),
             ]));
         var expected = new DiabloRandom(aiSeed);
         var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
@@ -4570,7 +4570,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117),
+                    SpawnMonsterId: 119),
             ]));
         var expected = new DiabloRandom(aiSeed);
         var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
@@ -4617,7 +4617,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117),
+                    SpawnMonsterId: 119),
             ]));
         var expected = new DiabloRandom(aiSeed);
         var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
@@ -7926,7 +7926,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117),
+                    SpawnMonsterId: 119),
             ]));
         var player = CreatePlayer(
             entityId: 7,

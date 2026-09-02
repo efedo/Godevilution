@@ -731,7 +731,7 @@ public static class AuthoritativeWorldObjectCatalog
         }
     }
 
-    /** Validates native monster identities used by authored encounter follow-ups. */
+    /** Validates stable monster identities used by authored encounter follow-ups. */
     public static void ValidateMonsterRequirements(
         IEnumerable<AuthoritativeWorldObject> objects,
         AuthoritativeMonsterTypeCatalog monsterTypes)
@@ -742,9 +742,9 @@ public static class AuthoritativeWorldObjectCatalog
                      @object.QuestSequenceFollowUpKind
                          == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster)) {
             var monsterId = @object.QuestSequenceFollowUpAmount;
-            if (!monsterTypes.TryResolveNativeMonsterSelector(monsterId, out _)) {
+            if (!monsterTypes.TryGet(monsterId, out _)) {
                 throw new InvalidDataException(
-                    $"Object {@object.EntityId} references unknown native monster {monsterId}.");
+                    $"Object {@object.EntityId} references unknown monster {monsterId}.");
             }
         }
     }

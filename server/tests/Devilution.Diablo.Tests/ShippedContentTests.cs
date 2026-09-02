@@ -4158,7 +4158,7 @@ public sealed class ShippedContentTests
         Assert.Equal(("HorkSpawn", AuthoritativeProjectileBehavior.HorkSpawn), (
             horkDemonMissile!.MissileId,
             horkDemonMissile!.ProjectileBehavior));
-        Assert.Equal(117U, horkDemonMissile.SpawnMonsterId);
+        Assert.Equal(119U, horkDemonMissile.SpawnMonsterId);
         Assert.Equal(8, horkDemonMissile.ProjectileSpeed);
         Assert.Equal(9, horkDemonMissile.ProjectileLifetime);
         Assert.Equal(1, horkDemonMissile.ProjectileImpactLifetime);

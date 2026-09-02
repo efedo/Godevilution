@@ -257,7 +257,7 @@ public sealed class DiabloWorldCommandProcessorTests
             effectKind: AuthoritativeObjectEffectKind.QuestSequence,
             effectAmount: 3,
             questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
-            questSequenceFollowUpAmount: 137,
+            questSequenceFollowUpAmount: 139,
             questSequenceFollowUpOffsetX: 1,
             questSequenceFollowUpOffsetY: 0,
             questSequenceFollowUpWorldMutationId: 7);
@@ -313,7 +313,7 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
-    public void QuestSequenceRejectsAnAmbiguousNativeMonsterSelectorBeforeMutation()
+    public void QuestSequenceRejectsAnUnknownStableMonsterReferenceBeforeMutation()
     {
         var geometry = new AuthoritativeWorld();
         geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
@@ -340,7 +340,7 @@ public sealed class DiabloWorldCommandProcessorTests
             effectKind: AuthoritativeObjectEffectKind.QuestSequence,
             effectAmount: 1,
             questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
-            questSequenceFollowUpAmount: 7);
+            questSequenceFollowUpAmount: 99);
         var world = new DiabloWorldState(geometry, objects: [@object], quests: [quest]);
         var processor = new DiabloWorldCommandProcessor(
             world,
