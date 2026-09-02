@@ -2,6 +2,12 @@
 
 Status date: 2026-09-02
 
+Authoritative monster snapshots now enforce DevilutionX's 200-entry active
+monster pool per level at runtime, save, server, host, Godot, and native
+projection boundaries. Projectiles remain dynamically allocated in the native
+runtime; their 125-entry save payload bound is a persistence-format limit, not
+an active projectile pool contract.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.

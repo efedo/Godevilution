@@ -1133,6 +1133,42 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void EnforcesNativeMonsterPoolCapacityPerLevel()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = Enumerable.Range(0, AuthoritativeLevel.NativeMaximumMonsterCount)
+                    .Select(index => new DiabloMonsterState(
+                        (uint)(100 + index),
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0))
+                    .ToArray(),
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        Assert.Equal(AuthoritativeLevel.NativeMaximumMonsterCount, projected.Monsters.Count);
+
+        var overCapacity = source with {
+            Monsters = source.Monsters
+                .Append(source.Monsters[^1] with { EntityId = 999 })
+                .ToArray(),
+        };
+        var exception = Assert.Throws<InvalidDataException>(
+            () => DiabloProtocolMapper.ToProtocolSnapshot(overCapacity));
+        Assert.Contains("native monster capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsObjectsOutsideProjectedPositionBounds()
     {
         var player = new StorePlayerSnapshot(

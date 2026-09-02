@@ -13,6 +13,7 @@
 #include "devilution.pb.h"
 #include "game/levels/dungeon_common_defs.hpp"
 #include "game/items/items.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/players/players.hpp"
 #include "game/objects/objects.hpp"
 #include "game/portals/portal.hpp"
@@ -482,6 +483,11 @@ tl::expected<std::vector<ProjectedPlayerSnapshot>, std::string> ProjectPlayerSna
 
 tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterSnapshots(const protocol::Snapshot &snapshot)
 {
+	std::unordered_map<uint32_t, size_t> monsterCountsByLevel;
+	for (const auto &source : snapshot.monsters()) {
+		if (++monsterCountsByLevel[source.level_id()] > MaxMonsters)
+			return tl::make_unexpected("Server-backed snapshot contains too many monsters on one level.");
+	}
 	std::vector<ProjectedMonsterSnapshot> projected;
 	projected.reserve(snapshot.monsters_size());
 	for (const auto &source : snapshot.monsters()) {

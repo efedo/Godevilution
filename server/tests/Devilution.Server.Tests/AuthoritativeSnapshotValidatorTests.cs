@@ -61,6 +61,20 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsSnapshotsBeyondNativeMonsterCapacityPerLevel()
+    {
+        var snapshot = new Snapshot();
+        for (var index = 1; index <= 201; index++)
+            snapshot.Monsters.Add(new MonsterSnapshot {
+                EntityId = (uint)index,
+                LevelId = 1,
+            });
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsOmittedAndPrintablePlayerNames()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

@@ -8,6 +8,7 @@ namespace Devilution.Server.Protocol;
 public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
+    private const int NativeMaximumMonsterCount = 200;
     private const int NativeMaximumPortalCount = 4;
     private const int MaximumWorldMutationCount = 4096;
 
@@ -19,6 +20,7 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerNativeRanges(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
+        ValidateMonsterPoolCapacity(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
 
@@ -104,6 +106,16 @@ public static class AuthoritativeSnapshotValidator
             ValidateEntityId(projectile.EntityId, entityIds);
         foreach (var corpse in snapshot.Corpses)
             ValidateEntityId(corpse.EntityId, entityIds);
+    }
+
+    private static void ValidateMonsterPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var group in snapshot.Monsters.GroupBy(monster => monster.LevelId)) {
+            if (group.Count() > NativeMaximumMonsterCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumMonsterCount} "
+                    + $"monsters on level {group.Key}, exceeding the native monster capacity.");
+        }
     }
 
     private static void ValidateMonsterMovementTiming(Snapshot snapshot)

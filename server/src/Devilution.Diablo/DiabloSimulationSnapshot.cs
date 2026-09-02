@@ -1011,6 +1011,12 @@ public sealed partial class DiabloSimulation
             throw new InvalidDataException(
                 "The authoritative save contains invalid world entity identity.");
         }
+        foreach (var group in snapshot.Monsters.GroupBy(monster => monster.LevelId)) {
+            if (group.Count() > AuthoritativeLevel.NativeMaximumMonsterCount)
+                throw new InvalidDataException(
+                    $"The authoritative save contains more than {AuthoritativeLevel.NativeMaximumMonsterCount} "
+                    + $"monsters on level {group.Key}, exceeding the native monster capacity.");
+        }
 
         var savedPortals = snapshot.Portals
             .Select(portal => {

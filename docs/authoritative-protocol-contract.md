@@ -348,7 +348,8 @@ clients depend on it. A non-empty value is a 64-character ASCII hexadecimal
 SHA-256 digest; the generic TCP host, Godot presentation boundary, and native
 compatibility boundary reject malformed values while still accepting an omitted
 value from legacy snapshots. Entity IDs are non-zero and unique across players,
-monsters, world items, objects, projectiles, and corpses. Digest computation and
+monsters, world items, objects, projectiles, and corpses. Monster snapshots are
+limited to DevilutionX's 200-entry active monster pool per level. Digest computation and
 content verification remain server-owned. Snapshot difficulty must be a defined
 protocol value; portal IDs and active world-mutation IDs are non-zero and unique,
 and portal owner/lifetime fields must agree with bidirectional state. Player

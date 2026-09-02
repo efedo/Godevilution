@@ -91,6 +91,7 @@ public sealed class DiabloWorldState
             RegisterEntityId(target.EntityId);
             CombatTargets.Add(target.EntityId, target);
         }
+        ValidateNativeMonsterPoolCapacity(CombatTargets.Values);
         foreach (var portal in portals ?? []) {
             ValidatePortalState(portal);
             if (!Portals.TryAdd(portal.PortalId, portal))
@@ -730,6 +731,7 @@ public sealed class DiabloWorldState
         }
 
         var entityIds = new HashSet<uint>();
+        ValidateNativeMonsterPoolCapacity(CombatTargets.Values);
         foreach (var entry in CombatTargets) {
             ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "monster");
             var target = entry.Value;
@@ -833,6 +835,17 @@ public sealed class DiabloWorldState
                     && !@object.Destroyed
                     && !@object.ActivateOnOccupancy)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY)));
+    }
+
+    private static void ValidateNativeMonsterPoolCapacity(
+        IEnumerable<AuthoritativeCombatTarget> targets)
+    {
+        foreach (var group in targets.GroupBy(target => target.LevelId)) {
+            if (group.Count() > AuthoritativeLevel.NativeMaximumMonsterCount)
+                throw new InvalidDataException(
+                    $"Initial world state contains more than {AuthoritativeLevel.NativeMaximumMonsterCount} "
+                    + $"monsters on level {group.Key}, exceeding the native monster capacity.");
+        }
     }
 
     private static void ValidatePortalState(

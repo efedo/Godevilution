@@ -75,6 +75,7 @@ internal static class DiabloProtocolMapper
         ValidateProjectedPlayerPositions(projectedParticipants, projectedLevels);
         ValidateProjectedMonsterPositions(source.Monsters, projectedLevels);
         ValidateProjectedMonsterStates(source.Monsters);
+        ValidateProjectedMonsterPoolCapacity(source.Monsters);
         ValidateProjectedCorpsePositions(source.Corpses, projectedLevels);
         ValidateProjectedPortalPositions(source.Portals, projectedLevels);
 
@@ -1083,6 +1084,17 @@ internal static class DiabloProtocolMapper
                 throw new InvalidDataException(
                     "Authoritative monster state contains an invalid pack leader.");
             }
+        }
+    }
+
+    private static void ValidateProjectedMonsterPoolCapacity(
+        IReadOnlyList<DiabloMonsterState> monsters)
+    {
+        foreach (var group in monsters.GroupBy(monster => monster.LevelId)) {
+            if (group.Count() > AuthoritativeLevel.NativeMaximumMonsterCount)
+                throw new InvalidDataException(
+                    $"Authoritative monster state contains more than {AuthoritativeLevel.NativeMaximumMonsterCount} "
+                    + $"monsters on level {group.Key}, exceeding the native monster capacity.");
         }
     }
 

@@ -475,6 +475,24 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RuntimeWorldStateRejectsNativeMonsterPoolOverflowPerLevel()
+    {
+        var monsters = Enumerable.Range(1, AuthoritativeLevel.NativeMaximumMonsterCount + 1)
+            .Select(entityId => new AuthoritativeCombatTarget(
+                (uint)entityId,
+                1,
+                0,
+                1) {
+                LevelId = 1,
+            })
+            .ToArray();
+
+        var exception = Assert.Throws<InvalidDataException>(() => new DiabloWorldState(
+            combatTargets: monsters));
+        Assert.Contains("native monster capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void StaticPortalCatalogRejectsOversizedRouteSet()
     {
         var world = new AuthoritativeWorld();

@@ -15,6 +15,7 @@ public sealed class AuthoritativeClientModel
     private const uint NativeMaximumObjectId = 108;
     private const int NativeMaximumObjectCount = 127;
     private const int NativeMaximumItemCount = 127;
+    private const int NativeMaximumMonsterCount = 200;
     private const int NativeMaximumPortalCount = 4;
     private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumDunPieceId = 1378;
@@ -186,6 +187,7 @@ public sealed class AuthoritativeClientModel
             ValidateQuests(message.Snapshot);
             ValidateWorldItemPoolCapacity(message.Snapshot);
             ValidateObjectPoolCapacity(message.Snapshot);
+            ValidateMonsterPoolCapacity(message.Snapshot);
             ValidatePortalPoolCapacity(message.Snapshot);
             var questIds = message.Snapshot.Quests
                 .Select(quest => quest.QuestId)
@@ -939,6 +941,16 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 $"The authoritative snapshot contains more than {NativeMaximumPortalCount} "
                 + "portals, exceeding the native portal capacity.");
+    }
+
+    private static void ValidateMonsterPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var group in snapshot.Monsters.GroupBy(monster => monster.LevelId)) {
+            if (group.Count() > NativeMaximumMonsterCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumMonsterCount} "
+                    + $"monsters on level {group.Key}, exceeding the native monster capacity.");
+        }
     }
 
     private static void ValidateQuests(Snapshot snapshot)

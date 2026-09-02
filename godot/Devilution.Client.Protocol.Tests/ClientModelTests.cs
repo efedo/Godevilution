@@ -436,6 +436,31 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void EnforcesNativeMonsterPoolCapacityPerLevel()
+    {
+        var model = new AuthoritativeClientModel();
+        var atCapacity = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+        };
+        for (var index = 0; index < 200; index++)
+            atCapacity.Monsters.Add(new MonsterSnapshot {
+                EntityId = (uint)(100 + index),
+                LevelId = 1,
+            });
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: atCapacity));
+        Assert.Equal(200, model.Snapshot!.Monsters.Count);
+
+        var overCapacity = atCapacity.Clone();
+        overCapacity.Monsters.Add(new MonsterSnapshot {
+            EntityId = 1000,
+            LevelId = 1,
+        });
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: overCapacity)));
+    }
+
+    [Fact]
     public void RejectsEntitiesOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

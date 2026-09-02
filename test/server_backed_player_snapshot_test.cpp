@@ -679,6 +679,18 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_EQ((*projected)[2].activeForTicks, 5);
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsNativeMonsterPoolOverflowPerLevel)
+{
+	protocol::Snapshot snapshot;
+	for (uint32_t entityId = 1; entityId <= MaxMonsters + 1; ++entityId) {
+		auto *monster = snapshot.add_monsters();
+		monster->set_entity_id(entityId);
+		monster->set_level_id(1);
+	}
+
+	EXPECT_FALSE(ProjectMonsterSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsAuthoritativeMonsterPackRelation)
 {
 	protocol::Snapshot snapshot;
