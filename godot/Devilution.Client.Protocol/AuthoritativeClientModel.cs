@@ -14,6 +14,7 @@ public sealed class AuthoritativeClientModel
     // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = 108;
     private const uint NativeMaximumDunObjectLayerId = 146;
+    private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
 
     private const int MaxPredictedMoves = 16;
@@ -1099,7 +1100,7 @@ public sealed class AuthoritativeClientModel
                 || level.NativeTransparency.Any(value => value > byte.MaxValue)
                 || level.NativeObjectLayer.Any(value => value > NativeMaximumDunObjectLayerId)
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
-                || level.NativePieceLayer.Any(value => value > ushort.MaxValue)
+                || level.NativePieceLayer.Any(value => value > NativeMaximumDunPieceId)
                 || level.NativeMegaTileLayer.Count != 0
                     && (coarseWidth > NativeMaximumMegaWidth
                         || coarseHeight > NativeMaximumMegaHeight)) {

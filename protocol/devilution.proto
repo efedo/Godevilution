@@ -481,7 +481,7 @@ message LevelGeometrySnapshot {
 	repeated uint32 native_object_layer = 8;
 	// Native mega-tile IDs after authoritative content composition.
 	repeated uint32 native_mega_tile_layer = 9;
-	// Native d-piece IDs after authoritative world mutations.
+	// Native d-piece IDs after authoritative world mutations (0 through MAXTILES-1, currently 1378).
 	repeated uint32 native_piece_layer = 10;
 	// Derived native vision blockers, including DUN BlockLight pieces.
 	repeated int32 native_vision_blocked_cells = 11;

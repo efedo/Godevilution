@@ -110,6 +110,8 @@ unrepresentable piece identities. Authored transparency and mega-tile mutation
 values now enforce their native byte widths too; signed transparency values are
 carried as their low-byte wire representation for parity with the native DUN
 loader.
+The Godot protocol model now enforces the same `MAXTILES` d-piece bound on
+authoritative `native_piece_layer` snapshots.
 
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded

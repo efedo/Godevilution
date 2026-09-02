@@ -187,6 +187,22 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: outOfRangeCell)));
 
+        var maximumNativeGeometry = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 1,
+                    Height = 1,
+                    NativeTransparency = { 255 },
+                    NativeObjectLayer = { 146 },
+                    NativeMegaTileLayer = { 255 },
+                    NativePieceLayer = { 1378 },
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: maximumNativeGeometry));
+
         var invalidTransparency = new Snapshot {
             Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
             LevelGeometry = {
@@ -230,6 +246,16 @@ public sealed class ClientModelTests
 
         invalidNativePresentation.LevelGeometry[0].NativeTransparency.Clear();
         invalidNativePresentation.LevelGeometry[0].NativeMegaTileLayer.Add(256);
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
+
+        invalidNativePresentation.LevelGeometry[0].NativeMegaTileLayer.Clear();
+        invalidNativePresentation.LevelGeometry[0].NativePieceLayer.Add(1379);
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
+
+        invalidNativePresentation.LevelGeometry[0].NativePieceLayer.Clear();
+        invalidNativePresentation.LevelGeometry[0].NativeObjectLayer.Add(147);
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
 
