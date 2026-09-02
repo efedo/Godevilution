@@ -9,6 +9,8 @@ namespace Devilution.Server.Protocol;
 /** Maps transport-neutral Diablo state and events to the versioned wire schema. */
 internal static class DiabloProtocolMapper
 {
+    private const int NativeMaximumPlayerCount = 4;
+
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
         IReadOnlyList<StorePlayerSnapshot>? participants = null,
@@ -72,6 +74,10 @@ internal static class DiabloProtocolMapper
                     .Where(player => player.EntityId != source.Player.EntityId)
                     .OrderBy(player => player.EntityId))
                 .ToArray();
+        if (projectedParticipants.Length > NativeMaximumPlayerCount)
+            throw new InvalidDataException(
+                $"Authoritative player state contains more than {NativeMaximumPlayerCount} "
+                + "players, exceeding the native player pool capacity.");
         ValidateProjectedPlayerPositions(projectedParticipants, projectedLevels);
         ValidateProjectedMonsterPositions(source.Monsters, projectedLevels);
         ValidateProjectedMonsterStates(source.Monsters);

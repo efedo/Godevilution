@@ -8,6 +8,7 @@ namespace Devilution.Server.Protocol;
 public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
+    private const int NativeMaximumPlayerCount = 4;
     private const int NativeMaximumMonsterCount = 200;
     private const int NativeMaximumObjectCount = 127;
     private const int NativeMaximumItemCount = 127;
@@ -19,6 +20,7 @@ public static class AuthoritativeSnapshotValidator
         ArgumentNullException.ThrowIfNull(snapshot);
         ValidateSessionMetadata(snapshot);
         ValidatePlayerNames(snapshot);
+        ValidatePlayerPoolCapacity(snapshot);
         ValidatePlayerNativeRanges(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
@@ -110,6 +112,14 @@ public static class AuthoritativeSnapshotValidator
             ValidateEntityId(projectile.EntityId, entityIds);
         foreach (var corpse in snapshot.Corpses)
             ValidateEntityId(corpse.EntityId, entityIds);
+    }
+
+    private static void ValidatePlayerPoolCapacity(Snapshot snapshot)
+    {
+        if (snapshot.Players.Count > NativeMaximumPlayerCount)
+            throw new InvalidDataException(
+                $"The authoritative snapshot contains more than {NativeMaximumPlayerCount} "
+                + "players, exceeding the native player pool capacity.");
     }
 
     private static void ValidateMonsterPoolCapacity(Snapshot snapshot)

@@ -12,6 +12,9 @@ The generic host now also rejects over-capacity native object and world-item
 groups per level, completing the transport-side pool checks already enforced by
 the server mapper and client projections.
 
+Authoritative participant snapshots now enforce the native four-player pool at
+the server mapper, generic host, Godot, and native projection boundaries.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.

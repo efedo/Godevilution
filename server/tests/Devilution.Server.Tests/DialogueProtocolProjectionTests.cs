@@ -23,6 +23,20 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsMorePlayersThanTheNativePool()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8));
+        var participants = Enumerable.Range(2, 4)
+            .Select(entityId => source.Player with { EntityId = (uint)entityId })
+            .ToArray();
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source, participants));
+        Assert.Contains("native player pool capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsPlayerLevelOutsideNativeRange()
     {
         var source = CreateOriginSnapshot(

@@ -599,6 +599,16 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsMorePlayersThanTheNativePool)
+{
+	protocol::Snapshot snapshot;
+	for (uint32_t entityId = 1; entityId <= MAX_PLRS + 1; ++entityId)
+		snapshot.add_players()->set_entity_id(entityId);
+
+	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 1).has_value());
+	EXPECT_FALSE(ProjectPlayerSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 {
 	protocol::Snapshot snapshot;

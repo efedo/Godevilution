@@ -13,6 +13,7 @@ public sealed class AuthoritativeClientModel
     // Object snapshots carry converted _object_id values; geometry carries raw
     // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = 108;
+    private const int NativeMaximumPlayerCount = 4;
     private const int NativeMaximumObjectCount = 127;
     private const int NativeMaximumItemCount = 127;
     private const int NativeMaximumMonsterCount = 200;
@@ -118,6 +119,10 @@ public sealed class AuthoritativeClientModel
         if (message.Snapshot is not null) {
             if (message.Snapshot.Players.Count == 0)
                 throw new InvalidDataException("The authoritative snapshot has no local player.");
+            if (message.Snapshot.Players.Count > NativeMaximumPlayerCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumPlayerCount} "
+                    + "players, exceeding the native player pool capacity.");
             ValidateSessionMetadata(message.Snapshot);
             var entityIds = new HashSet<uint>();
             foreach (var player in message.Snapshot.Players) {

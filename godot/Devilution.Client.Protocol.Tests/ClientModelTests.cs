@@ -461,6 +461,18 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsSnapshotsBeyondNativePlayerCapacity()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot();
+        for (var index = 1; index <= 5; index++)
+            snapshot.Players.Add(new PlayerSnapshot { EntityId = (uint)index });
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsEntitiesOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

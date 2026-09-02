@@ -120,6 +120,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 {
 	if (!IsValidSnapshotHash(snapshot.state_sha256()))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid state hash.");
+	if (snapshot.players_size() > MAX_PLRS)
+		return tl::make_unexpected("Server-backed snapshot contains too many players for the native player pool.");
 	const protocol::PlayerSnapshot *player = nullptr;
 	std::unordered_set<uint32_t> entityIds;
 	for (const auto &candidate : snapshot.players()) {
@@ -467,6 +469,8 @@ tl::expected<std::vector<ProjectedPlayerSnapshot>, std::string> ProjectPlayerSna
 {
 	if (snapshot.players_size() == 0)
 		return tl::make_unexpected("Server-backed snapshot contains no player entity.");
+	if (snapshot.players_size() > MAX_PLRS)
+		return tl::make_unexpected("Server-backed snapshot contains too many players for the native player pool.");
 	std::vector<ProjectedPlayerSnapshot> projected;
 	projected.reserve(snapshot.players_size());
 	for (const auto &source : snapshot.players()) {

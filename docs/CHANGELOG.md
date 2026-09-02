@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
 - Completed generic host pool validation for DevilutionX's `MAXOBJECTS` and
   `MAXITEMS` per-level limits, matching the server, Godot, and native snapshot
   boundaries.
+- Enforced DevilutionX's `MAX_PLRS` four-player pool across participant
+  projection, host admission, Godot admission, and native player projection.
 - Enforced the native four-route portal pool in authoritative world-state
   construction, static catalog loading, Town Portal creation, and save restore;
   runtime state can no longer grow beyond the projection boundary.
