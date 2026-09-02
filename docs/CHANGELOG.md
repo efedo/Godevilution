@@ -24,6 +24,8 @@ All notable changes to this fork are documented below.
   during content validation instead of allowing late materialization failures.
 - Bound native DUN monster materialization to DevilutionX's 200-monster pool per
   level, rejecting oversized external layers before unbounded state creation.
+- Bound native DUN object materialization to DevilutionX's 127-object pool per
+  level, rejecting oversized external layers before unbounded state creation.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

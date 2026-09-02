@@ -172,6 +172,10 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             .ToHashSet();
         var existingByEntityId = existingValues
             .ToDictionary(@object => @object.EntityId);
+        var existingObjectCountsByLevel = existingValues
+            .GroupBy(@object => @object.LevelId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        var materializedObjectCountsByLevel = new Dictionary<uint, int>();
         var templateByEntityId = templateValues
             .ToDictionary(@object => @object.EntityId);
         var levelsById = levels.ToDictionary(level => level.LevelId);
@@ -207,6 +211,15 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                     throw new InvalidDataException(
                         $"Native DUN object mapping collides with entity {entityId}.");
                 }
+                var existingLevelObjectCount = existingObjectCountsByLevel.GetValueOrDefault(levelId);
+                var materializedLevelObjectCount = materializedObjectCountsByLevel
+                    .GetValueOrDefault(levelId);
+                if (existingLevelObjectCount + materializedLevelObjectCount
+                    >= AuthoritativeLevel.NativeMaximumObjectCount) {
+                    throw new InvalidDataException(
+                        $"Native DUN object mapping for level {levelId} exceeds the native "
+                        + $"{AuthoritativeLevel.NativeMaximumObjectCount}-object capacity.");
+                }
                 if (definition.TemplateEntityId != 0) {
                     if (!templateByEntityId.TryGetValue(
                             definition.TemplateEntityId,
@@ -230,6 +243,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                         positionX,
                         positionY));
                 }
+                materializedObjectCountsByLevel[levelId] = materializedLevelObjectCount + 1;
             }
         }
         return objects;

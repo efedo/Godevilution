@@ -270,4 +270,58 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
 
         Assert.Contains("uses object 5, expected 4", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void EnforcesNativeObjectPoolCapacityPerLevel()
+    {
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(0, false, 9, 4, 0) {
+                TargetKind = AuthoritativeNativeDunObjectTargetKind.Level,
+                LevelId = 8,
+            },
+        ]);
+        static ushort[] ObjectLayer(int mappedCount)
+            => Enumerable.Range(0, AuthoritativeLevel.NativeMaximumWidth * 2)
+                .Select(cell => (ushort)(cell < mappedCount ? 9 : 0))
+                .ToArray();
+
+        var atCapacityWorld = new AuthoritativeWorld();
+        atCapacityWorld.AddLevel(new AuthoritativeLevel(
+            8,
+            AuthoritativeLevel.NativeMaximumWidth,
+            2,
+            nativeObjectLayer: ObjectLayer(AuthoritativeLevel.NativeMaximumObjectCount)));
+        var objects = catalog.LoadAvailableObjects(atCapacityWorld);
+        Assert.Equal(AuthoritativeLevel.NativeMaximumObjectCount, objects.Count);
+
+        var overCapacityWorld = new AuthoritativeWorld();
+        overCapacityWorld.AddLevel(new AuthoritativeLevel(
+            8,
+            AuthoritativeLevel.NativeMaximumWidth,
+            2,
+            nativeObjectLayer: ObjectLayer(AuthoritativeLevel.NativeMaximumObjectCount + 1)));
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.LoadAvailableObjects(overCapacityWorld));
+
+        Assert.Contains("127-object capacity", exception.Message, StringComparison.Ordinal);
+
+        var existingWorld = new AuthoritativeWorld();
+        existingWorld.AddLevel(new AuthoritativeLevel(
+            8,
+            AuthoritativeLevel.NativeMaximumWidth,
+            2,
+            nativeObjectLayer: ObjectLayer(1)));
+        var existingObjects = Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount)
+            .Select(index => new AuthoritativeWorldObject(
+                (uint)(5000 + index),
+                4,
+                8,
+                index % AuthoritativeLevel.NativeMaximumWidth,
+                index / AuthoritativeLevel.NativeMaximumWidth))
+            .ToArray();
+        var existingException = Assert.Throws<InvalidDataException>(() =>
+            catalog.LoadAvailableObjects(existingWorld, existingObjects));
+
+        Assert.Contains("127-object capacity", existingException.Message, StringComparison.Ordinal);
+    }
 }

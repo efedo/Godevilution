@@ -1873,6 +1873,9 @@ while d-piece presentation values remain independently validated as 16-bit
 identities. Unmapped native object-layer cells remain inert until an explicit
 authored mapping exists. Authored object-layer mutation rectangles now enforce
 the same raw-DUN bound during content activation.
+Native-DUN object materialization also enforces DevilutionX's `MAXOBJECTS` pool
+capacity of `127` active objects per level, counting existing authored objects
+before mapped cells are added.
 Warp-trigger projection now rejects missing source levels on the server and
 unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.
