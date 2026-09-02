@@ -50,6 +50,10 @@ shipped GoatMelee and Gargoyle rows carry the native `16` chance base and `5`
 intelligence scale; older or custom packs that omit the optional pair retain
 the native-compatible fallback.
 
+Authored unique placements and their generated pack members now resolve stable
+monster IDs through the validated catalog before invoking native-ID summon
+logic. This preserves content identity when stable and native IDs differ.
+
 Generic host admission now also rejects malformed world-item prices, native
 identity metadata, and item-state ranges before transmission.
 

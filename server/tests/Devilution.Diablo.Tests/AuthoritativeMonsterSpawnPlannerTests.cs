@@ -148,6 +148,35 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void StableSummonResolvesNativeIdentityBeforeCreatingTheTarget()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(10, 1, 1, 8, 10, 1, 1) with {
+                NativeMonsterId = 7,
+                NativeAi = "SkeletonMelee",
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var target = planner.CreateStableMonsterSummon(
+            levelId: 1,
+            monsterId: 10,
+            seed: 3,
+            positionX: 1,
+            positionY: 1,
+            entityId: 9);
+
+        Assert.NotNull(target);
+        Assert.Equal(10U, target!.MonsterId);
+        Assert.Equal(9U, target.EntityId);
+    }
+
+    [Fact]
     public void HalvesGeneratedMonsterHealthInSinglePlayer()
     {
         var world = new AuthoritativeWorld();

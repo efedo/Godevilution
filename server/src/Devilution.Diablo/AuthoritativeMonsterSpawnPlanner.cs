@@ -258,6 +258,37 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         return target;
     }
 
+    /** Creates one summon selected by its validated stable content identity. */
+    public AuthoritativeCombatTarget? CreateStableMonsterSummon(
+        uint levelId,
+        uint monsterId,
+        uint seed,
+        int positionX,
+        int positionY,
+        uint entityId,
+        bool multiplayer = false,
+        int direction = 0,
+        bool ignoreDungeonLevelRange = false,
+        bool applyUniqueSelector = true,
+        int? intelligenceOverride = null)
+    {
+        if (!monsterTypes.TryGet(monsterId, out var definition))
+            return null;
+        return CreateNativeMonsterSummon(
+            levelId,
+            definition.NativeMonsterId,
+            seed,
+            positionX,
+            positionY,
+            entityId,
+            multiplayer,
+            direction,
+            ignoreDungeonLevelRange,
+            stableMonsterId: monsterId,
+            applyUniqueSelector,
+            intelligenceOverride);
+    }
+
     /**
      * Creates the additional monsters placed by a native unique encounter.
      * Placement is deterministic, bounded, and uses the same authoritative
@@ -344,7 +375,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 if (memberEntityId == leader.EntityId)
                     throw new InvalidDataException(
                         $"Unique monster pack member {memberIndex + 1} reuses leader entity {leader.EntityId}.");
-                var member = CreateNativeMonsterSummon(
+                var member = CreateStableMonsterSummon(
                     leader.LevelId,
                     minionMonsterId,
                     random.AdvanceSeed(),

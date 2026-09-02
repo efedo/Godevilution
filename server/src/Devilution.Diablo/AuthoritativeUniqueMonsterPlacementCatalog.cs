@@ -172,7 +172,7 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
         var generatedEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
         var materialized = new List<AuthoritativeCombatTarget>();
         foreach (var placement in Definitions) {
-            var target = planner.CreateNativeMonsterSummon(
+            var target = planner.CreateStableMonsterSummon(
                 placement.LevelId,
                 placement.MonsterId,
                 placement.Seed,

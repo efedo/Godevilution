@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Corrected authored unique placement and pack materialization to resolve stable
+  monster IDs through validated content before calling native-ID summon logic;
+  stable IDs that differ from native IDs now materialize consistently in the
+  server and Godot live protocol paths.
 - Externalized native AiAvoidance RoundWalk chance base and intelligence scale
   into validated monster content. Shipped GoatMelee and Gargoyle rows retain
   the native `16`/`5` tuning, while older packs use the compatibility fallback.

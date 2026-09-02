@@ -50,6 +50,8 @@ encounter placement. Rows are validated against unique identities, monster
 types, level geometry, reserved warp/portal/object cells, entity IDs reserved
 by existing monsters or authored world objects, and deterministic seeds before
 activation;
+placement and pack `monster_id` values are stable content IDs and are resolved
+through the validated catalog before native summon construction;
 the checked-in table now carries the initial Snotspill Banner encounter at its
 Hell anchor, gated by the authored Ogden's Sign quest availability; later
 quest-state mutations remain native until their coordinates and effects are
