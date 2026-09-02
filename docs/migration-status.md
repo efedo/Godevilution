@@ -86,7 +86,7 @@ than selecting an arbitrary identity.
 
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded
-to the native 200-slot range, while omitted fields preserve the legacy 190-slot
+to the native 200-slot range, while omitted fields preserve the default 190-slot
 ordinary limit and keep older packs loadable.
 
 The Godot geometry projection now preserves server-authored missile-only
@@ -1504,10 +1504,13 @@ and tick metadata for shipped monster types. Procedural spawning consumes the
 same two stand-animation RNG draws that native `InitMonster` performs before
 rolling initial health and damage.
 
-Ordinary procedural monster population now preserves the native scatter
-capacity: generation is capped at 190 active monsters, leaving the native ten
-reserved slots available for quest and runtime summons. Caller-provided lower
-limits and the existing density/multiplayer rules remain unchanged.
+At this migration stage, ordinary procedural monster population preserved the
+native default scatter capacity: generation was capped at 190 active monsters,
+leaving the native ten reserved slots available for quest and runtime summons.
+The current `level_generation.tsv` contract keeps that value as the compatibility
+default while allowing validated packs to override it through
+`ordinary_monster_capacity`. Caller-provided lower limits and the existing
+density/multiplayer rules remain unchanged.
 
 Procedural monster placements now also carry the native pre-initialization
 0-to-7 placement direction through authoritative targets instead of defaulting

@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
 - Advance the Diablo content schema to `1.443.0` for the ordinary-spawn
   capacity field; `1.442.0` remains accepted as the previous additive schema.
 
+- Add a documentation/content identity regression guard so the active
+  Godevilution README, migration status, changelog, content guide, and shipped
+  manifests stay aligned on the project name and current schema.
+
 - Externalize the Golem summon target through the optional `golem_monster_id`
   spell field and validate it against active monster types, while retaining the
   native compatibility fallback for older packs.
