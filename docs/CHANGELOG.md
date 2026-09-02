@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Fail closed on ambiguous native monster summon selectors instead of falling
+  through to a potentially unrelated numeric stable-ID row; older selectors
+  still use the compatibility fallback when no native mapping exists.
+
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,
   keeping external monster content complete as overlays evolve.

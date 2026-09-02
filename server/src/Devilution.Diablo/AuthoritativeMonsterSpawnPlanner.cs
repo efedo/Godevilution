@@ -205,9 +205,14 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             if (!monsterTypes.TryGet(stableMonsterId.Value, out definition)
                 || definition.NativeMonsterId != nativeMonsterId)
                 return null;
-        } else if (!monsterTypes.TryGetNative(nativeMonsterId, out definition)
-            && !monsterTypes.TryGet(nativeMonsterId, out definition))
-            return null;
+        } else if (!monsterTypes.TryGetNative(nativeMonsterId, out definition)) {
+            // A composed variant may legitimately reuse a native ID for more
+            // than one stable row. Never reinterpret that ambiguous native
+            // selector as a numeric stable ID.
+            if (monsterTypes.IsNativeMonsterIdAmbiguous(nativeMonsterId)
+                || !monsterTypes.TryGet(nativeMonsterId, out definition))
+                return null;
+        }
         if (!ignoreDungeonLevelRange
             && (definition.MinimumDungeonLevel > (int)levelId
                 || definition.MaximumDungeonLevel < (int)levelId))

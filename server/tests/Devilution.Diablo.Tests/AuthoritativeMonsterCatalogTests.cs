@@ -1377,6 +1377,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         ]);
 
         Assert.False(catalog.TryGetNative(0, out _));
+        Assert.True(catalog.IsNativeMonsterIdAmbiguous(0));
     }
 
     [Fact]

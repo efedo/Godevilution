@@ -659,6 +659,9 @@ Native identities 112–137 extend the catalog through the late Hellboar,
 Psychorb, HorkDemon, Necromorb, Torchant, FireBat, Lich, BoneDemon, ArchLich,
 and Na-Krul families; native identity 133 remains stable-ID-only because the
 source DUN table does not declare a conversion row for it.
+Native monster summon selectors fail closed when a composed variant maps one
+native ID to multiple stable identities; numeric stable-ID fallback is retained
+only when no native mapping exists.
 The optional `monster_spawn_policies.tsv` table now owns procedural admission
 roles. Its optional `coverage_mode` column defaults to `Partial` for older or
 custom tables; `Complete` requires a role for every active monster type during

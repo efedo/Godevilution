@@ -124,6 +124,30 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void RejectsAmbiguousNativeSummonSelectorsInsteadOfUsingStableFallback()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 1, 1, 1, 1) with { NativeMonsterId = 7 },
+            CreateType(7, 1, 1, 1, 1, 1, 1) with { NativeMonsterId = 7 },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        Assert.True(types.IsNativeMonsterIdAmbiguous(7));
+        Assert.Null(planner.CreateNativeMonsterSummon(
+            levelId: 1,
+            nativeMonsterId: 7,
+            seed: 3,
+            positionX: 1,
+            positionY: 1,
+            entityId: 9));
+    }
+
+    [Fact]
     public void HalvesGeneratedMonsterHealthInSinglePlayer()
     {
         var world = new AuthoritativeWorld();

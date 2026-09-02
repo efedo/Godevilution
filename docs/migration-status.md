@@ -91,6 +91,11 @@ compatibility paths. The Golem summon uses that lookup instead of hard-coding
 native monster ID 109; packs with duplicate native-AI labels fail closed rather
 than selecting an arbitrary identity.
 
+Native monster summon selectors now also fail closed when a composed catalog
+maps one native monster ID to multiple stable identities. Numeric stable-ID
+fallback remains available only when the native selector is absent, preserving
+legacy compatibility without allowing variant overlap to select the wrong row.
+
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded
 to the native 200-slot range, while omitted fields preserve the default 190-slot

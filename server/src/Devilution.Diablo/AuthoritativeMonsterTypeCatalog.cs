@@ -925,6 +925,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
         return definitionsByNativeId.TryGetValue(nativeMonsterId, out definition!);
     }
 
+    /** Reports whether a native identity maps to more than one active stable row. */
+    public bool IsNativeMonsterIdAmbiguous(uint nativeMonsterId)
+        => ambiguousNativeIds.Contains(nativeMonsterId);
+
     /** Resolves an unambiguous native MonsterAI identity without exposing numeric IDs to callers. */
     public bool TryGetNativeAi(string nativeAi, out AuthoritativeMonsterTypeDefinition definition)
     {
