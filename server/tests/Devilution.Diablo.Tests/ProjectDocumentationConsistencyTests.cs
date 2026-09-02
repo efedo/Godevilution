@@ -22,6 +22,10 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains($"active content schema is now `{currentVersion}`", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("ordinary_monster_capacity", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("default 190-slot", migrationStatus, StringComparison.Ordinal);
+        Assert.Contains("Close the remaining native-parity combat and AI edge cases", migrationStatus, StringComparison.Ordinal);
+        Assert.Contains("Advance native-parity dungeon generation", migrationStatus, StringComparison.Ordinal);
+        Assert.Contains("Complete external content coverage for the remaining Hellfire", migrationStatus, StringComparison.Ordinal);
+        Assert.DoesNotContain("Expand authoritative combat and spell fidelity for the migrated Firebolt", migrationStatus, StringComparison.Ordinal);
 
         var changelog = Read(root, "docs", "CHANGELOG.md");
         Assert.Contains($"schema to `{currentVersion}`", changelog, StringComparison.Ordinal);

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh the migration-status priorities so they describe remaining combat/AI,
+  dungeon-generation, content-coverage, Godot, replay, operations, and Lua
+  work instead of listing already-migrated spell behaviors as future work.
+
 - Keep legacy Golem/Diablo procedural-admission compatibility in the validated
   spawn-policy catalog rather than in the planner, so the planner remains
   content-driven while older packs continue to load.

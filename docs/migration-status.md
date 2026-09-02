@@ -7456,23 +7456,22 @@ resistance, lifetime, collision, and deterministic projectile state.
 
 ## Near-term priorities
 
-1. Expand authoritative combat and spell fidelity for the migrated Firebolt,
-   Holy Bolt, Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain
-   Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball,
-   Lightning, Flash, Healing, Heal Other, Stone Curse, Infravision, Search,
-   Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town
-   Portal, Resurrection, Jester, Berserk, Warp, Lightning Wall, and Golem
-   behaviors, including remaining class modifiers, scaling, and targeting rules.
-2. Expand external content coverage, including remaining Hellfire encounter and
-   world behavior, native-parity procedural level generation, and item metadata
-   and authoritative gameplay definitions.
-3. Grow the Godot client from a protocol demonstration into a complete playable
+1. Close the remaining native-parity combat and AI edge cases, including class
+   modifiers, scaling, targeting, and timing that are not yet covered by replay
+   fixtures.
+2. Advance native-parity dungeon generation with authoritative geometry,
+   collision definitions, set-piece composition, and encounter/object placement;
+   unavailable licensed assets remain deferred rather than being fabricated.
+3. Complete external content coverage for the remaining Hellfire quest, world,
+   and environmental behavior, remaining spell definitions or edge behavior,
+   item metadata, and native object mappings.
+4. Grow the Godot client from a protocol demonstration into a complete playable
    presentation client using production assets.
-4. Add the missing replay, reconnect, multiplayer, and long-running soak cases.
-5. Add sustained operation pressure to host-controlled ruleset replacement and
+5. Add the missing replay, reconnect, multiplayer, and long-running soak cases.
+6. Add sustained operation pressure to host-controlled ruleset replacement and
    safe-retirement soaks; generalize adapter selection when a second adapter
    exists.
-6. Replace the remaining Lua capability destinations and remove Lua only after
+7. Replace the remaining Lua capability destinations and remove Lua only after
    every removal gate is satisfied.
 
 MonsterMagic projectiles now retain validated content missile identities through simulation snapshots, save/restore, and protocol projection. Native presentation maps the seven supported families exactly; unknown identities remain fail-closed.
