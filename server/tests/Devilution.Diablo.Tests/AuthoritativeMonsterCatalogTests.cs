@@ -93,6 +93,14 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void RejectsNativeMonsterTypeIdOutsideCompatibilityRange()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with { NativeMonsterId = 200 },
+        ]));
+    }
+
+    [Fact]
     public void RejectsOutOfRangeDeathAnimationTicks()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([

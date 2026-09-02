@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   still use the compatibility fallback when no native mapping exists.
 - Apply that ambiguity guard consistently to authored native-monster quest
   follow-ups during content validation and command admission.
+- Bound native monster-type and DUN mapping identities to DevilutionX's
+  200-entry monster table while retaining the separate raw DUN layer bound.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

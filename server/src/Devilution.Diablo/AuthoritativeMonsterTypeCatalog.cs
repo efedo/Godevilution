@@ -510,6 +510,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
         ambiguousNativeAis = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions) {
             if (definition.MonsterId == 0
+                || definition.NativeMonsterId > AuthoritativeLevel.NativeMaximumMonsterTypeId
                 || string.IsNullOrWhiteSpace(definition.Name)
                 || definition.MinimumDungeonLevel < 0
                 || definition.MaximumDungeonLevel < definition.MinimumDungeonLevel

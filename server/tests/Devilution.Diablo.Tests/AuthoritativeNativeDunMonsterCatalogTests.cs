@@ -33,6 +33,15 @@ public sealed class AuthoritativeNativeDunMonsterCatalogTests
     }
 
     [Fact]
+    public void RejectsNativeMonsterTypeIdOutsideCompatibilityRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeNativeDunMonsterCatalog([
+                new AuthoritativeNativeDunMonsterDefinition(1, 200, 1),
+            ]));
+    }
+
+    [Fact]
     public void RejectsDuplicateRawLayerIdentity()
     {
         Assert.Throws<InvalidDataException>(() =>

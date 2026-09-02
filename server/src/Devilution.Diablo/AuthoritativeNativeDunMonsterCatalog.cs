@@ -13,9 +13,10 @@ public sealed record AuthoritativeNativeDunMonsterDefinition(
     {
         if (NativeDunMonsterId == 0
             || NativeDunMonsterId > AuthoritativeLevel.NativeMaximumDunMonsterLayerId
+            || NativeMonsterId > AuthoritativeLevel.NativeMaximumMonsterTypeId
             || MonsterId == 0) {
             throw new InvalidDataException(
-                "Native DUN monster mappings contain an invalid raw layer identity.");
+                "Native DUN monster mappings contain an invalid raw or native identity.");
         }
         return this;
     }

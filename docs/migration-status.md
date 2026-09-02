@@ -99,6 +99,10 @@ The same resolver now guards authored `SpawnNativeMonster` follow-ups during
 content validation and command admission, so an ambiguous selector cannot
 advance quest state before failing at materialization.
 
+Native monster-table identities are now bounded to DevilutionX's 200-entry
+compatibility table (0–199) in both `monster_types.tsv` and native DUN mappings.
+Raw DUN conversion-layer identities retain their separate 1–157 bound.
+
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded
 to the native 200-slot range, while omitted fields preserve the default 190-slot

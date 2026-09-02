@@ -662,6 +662,9 @@ source DUN table does not declare a conversion row for it.
 Native monster summon selectors fail closed when a composed variant maps one
 native ID to multiple stable identities; numeric stable-ID fallback is retained
 only when no native mapping exists.
+Native monster-table identities are bounded to DevilutionX's 200-entry
+compatibility table (0–199); raw DUN conversion-layer identities retain their
+separate 1–157 bound.
 Authored `SpawnNativeMonster` quest follow-ups use the same resolver during
 activation and command admission, preventing an ambiguous selector from
 mutating quest state before spawn resolution.
