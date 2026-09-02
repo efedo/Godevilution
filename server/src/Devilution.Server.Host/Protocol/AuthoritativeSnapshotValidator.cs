@@ -61,7 +61,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateEntityPositions(snapshot);
         ValidatePlayerActions(snapshot);
         ValidateMonsters(snapshot);
-        ValidateMonsterMovementTiming(snapshot);
+        ValidateMonsterMovementState(snapshot);
         ValidateWorldItems(snapshot);
         ValidateProjectiles(snapshot);
         ValidateEntityIds(snapshot);
@@ -950,6 +950,9 @@ public static class AuthoritativeSnapshotValidator
                 || monster.LeaderRelation != 0 && monster.IsUnique
                 || monster.PackSize is < 0 or > byte.MaxValue
                 || monster.ActiveForTicks is < 0 or > byte.MaxValue
+                || monster.FallenStandAnimationFrame is < 0 or > 127
+                || monster.FallenStandAnimationTick is < 0 or > 127
+                || monster.FallenRallyTicks is < 0 or > 4096
                 || !monstersById.TryAdd(monster.EntityId, monster)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid monster state.");
@@ -1024,9 +1027,20 @@ public static class AuthoritativeSnapshotValidator
     private static bool IsAsciiLetter(char character)
         => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
 
-    private static void ValidateMonsterMovementTiming(Snapshot snapshot)
+    private static void ValidateMonsterMovementState(Snapshot snapshot)
     {
         foreach (var monster in snapshot.Monsters) {
+            var futureDeltaX = Math.Abs((long)monster.FuturePositionX - monster.PositionX);
+            var futureDeltaY = Math.Abs((long)monster.FuturePositionY - monster.PositionY);
+            if (monster.Moving
+                    && Math.Max(futureDeltaX, futureDeltaY) != 1
+                || !monster.Moving
+                    && (monster.FuturePositionX != 0 || monster.FuturePositionY != 0)
+                    && (monster.FuturePositionX != monster.PositionX
+                        || monster.FuturePositionY != monster.PositionY)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid monster occupancy state.");
+            }
             if ((!monster.Moving
                     && (monster.MovementStartedTick != 0
                         || monster.MovementEffectTick != 0))

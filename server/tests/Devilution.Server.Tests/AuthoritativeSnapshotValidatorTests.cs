@@ -436,6 +436,68 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsMalformedMonsterOccupancyAndFallenState()
+    {
+        var invalidMovingDestination = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    Moving = true,
+                    PositionX = 1,
+                    PositionY = 1,
+                    FuturePositionX = 3,
+                    FuturePositionY = 1,
+                },
+            },
+        };
+        var invalidStationaryDestination = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    FuturePositionX = 2,
+                    FuturePositionY = 1,
+                },
+            },
+        };
+        var invalidFallenAnimationFrame = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    FallenStandAnimationFrame = 128,
+                },
+            },
+        };
+        var invalidFallenAnimationTick = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    FallenStandAnimationTick = 128,
+                },
+            },
+        };
+        var invalidFallenRallyDuration = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    FallenRallyTicks = 4097,
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidMovingDestination,
+            invalidStationaryDestination,
+            invalidFallenAnimationFrame,
+            invalidFallenAnimationTick,
+            invalidFallenRallyDuration,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsValidProjectileProjection()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
@@ -1082,13 +1144,17 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
-    public void AcceptsMovementTimingOnlyForAnActiveMovingMonster()
+    public void AcceptsMovementTimingAndOccupancyForAnActiveMovingMonster()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
             Monsters = {
                 new MonsterSnapshot {
                     EntityId = 1,
                     Moving = true,
+                    PositionX = 1,
+                    PositionY = 1,
+                    FuturePositionX = 2,
+                    FuturePositionY = 1,
                     MovementStartedTick = 12,
                     MovementEffectTick = 13,
                 },
