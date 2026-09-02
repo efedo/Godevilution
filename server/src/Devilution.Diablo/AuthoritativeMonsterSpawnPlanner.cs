@@ -53,6 +53,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     private readonly AuthoritativeMonsterCatalog? monsterCatalog;
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
     private readonly AuthoritativeUniqueMonsterCatalog? uniqueMonsters;
+    private readonly AuthoritativeMonsterSpawnPolicyCatalog? spawnPolicies;
 
     public AuthoritativeMonsterSpawnPlanner(
         AuthoritativeWorld world,
@@ -61,7 +62,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         AuthoritativeItemCatalog? itemCatalog = null,
         AuthoritativeMonsterCatalog? monsterCatalog = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
-        AuthoritativeUniqueMonsterCatalog? uniqueMonsters = null)
+        AuthoritativeUniqueMonsterCatalog? uniqueMonsters = null,
+        AuthoritativeMonsterSpawnPolicyCatalog? spawnPolicies = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.monsterTypes = monsterTypes
@@ -72,6 +74,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         this.monsterCatalog = monsterCatalog;
         this.spellBooks = spellBooks;
         this.uniqueMonsters = uniqueMonsters;
+        this.spawnPolicies = spawnPolicies;
     }
 
     /** Plans bounded deterministic placements while avoiding reserved cells. */
@@ -89,8 +92,6 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         if (levelId > int.MaxValue)
             throw new InvalidDataException($"Monster spawn level {levelId} exceeds native level bounds.");
 
-        // Summoned Golems and authored Diablo encounters enter through their
-        // dedicated server-owned paths, never ordinary procedural scattering.
         var candidates = monsterTypes.GetAvailableForDungeonLevel((int)levelId)
             .Where(IsOrdinarySpawnCandidate)
             .ToArray();
@@ -475,10 +476,11 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                     && definition.SkeletonMeleeAttackChanceBase > 0
                     && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0));
 
-    private static bool IsOrdinarySpawnCandidate(
+    private bool IsOrdinarySpawnCandidate(
         AuthoritativeMonsterTypeDefinition definition)
-        => !definition.Diablo
-            && !string.Equals(definition.NativeAi, "Golem", StringComparison.Ordinal);
+        => spawnPolicies?.IsOrdinary(definition.MonsterId)
+            ?? (!definition.Diablo
+                && !string.Equals(definition.NativeAi, "Golem", StringComparison.Ordinal));
 
     private AuthoritativeCombatTarget CreateCombatTarget(
         AuthoritativeMonsterSpawn spawn,

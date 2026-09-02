@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize procedural monster admission roles in the validated
+  `monster_spawn_policies.tsv` table. The shipped base pack marks Golem as a
+  summon and The Dark Lord as a boss; older packs without the table retain the
+  ordinary-spawn compatibility fallback.
+
 - Complete the base monster identity catalog with the native Golem and The Dark
   Lord rows, stable IDs, and available DUN mappings; ordinary procedural
   generation now excludes summon and boss identities.

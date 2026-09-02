@@ -50,7 +50,8 @@ public sealed record DiabloContentActivation
         AuthoritativeUniqueMonsterPackCatalog? uniqueMonsterPacks = null,
         AuthoritativeExperienceCatalog? experience = null,
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
-        AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null)
+        AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
+        AuthoritativeMonsterSpawnPolicyCatalog? monsterSpawnPolicies = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -66,6 +67,7 @@ public sealed record DiabloContentActivation
         QuestPools = questPools;
         SetLevelNames = setLevelNames;
         MonsterSpawnPlanner = monsterSpawnPlanner;
+        MonsterSpawnPolicies = monsterSpawnPolicies;
         MonsterMissiles = monsterMissiles;
         AdriaStoreId = adriaStoreId;
         StorytellerStoreId = storytellerStoreId;
@@ -112,6 +114,9 @@ public sealed record DiabloContentActivation
 
     /** Server-owned level spawn planning from the activated content contract. */
     public AuthoritativeMonsterSpawnPlanner? MonsterSpawnPlanner { get; }
+
+    /** Validated content-owned procedural monster admission roles. */
+    public AuthoritativeMonsterSpawnPolicyCatalog? MonsterSpawnPolicies { get; }
 
     /** Validated native AI-to-missile mappings from the active content pack. */
     public AuthoritativeMonsterMissileCatalog? MonsterMissiles { get; }
@@ -634,6 +639,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 monsterTypesTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var monsterSpawnPolicies = content.TryGetTable(
+                "monster_spawn_policies.tsv",
+                out var monsterSpawnPoliciesTable)
+            ? AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
+                monsterSpawnPoliciesTable.SourcePath,
+                monsterSpawnPoliciesTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (monsterSpawnPolicies is not null) {
+            if (monsterTypes is null)
+                throw new InvalidDataException(
+                    "Monster spawn policies require monster_types.tsv.");
+            monsterSpawnPolicies.ValidateMonsterTypes(monsterTypes);
+        }
         var nativeDunMonsters = content.TryGetTable(
             "native_dun_monsters.tsv",
             out var nativeDunMonstersTable)
@@ -1149,7 +1168,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 itemCatalog,
                 monsters,
                 spellBooks,
-                uniqueMonsters)
+                uniqueMonsters,
+                monsterSpawnPolicies)
             : null;
         IReadOnlyList<AuthoritativeCombatTarget>? combatTargets = monsters?.Targets;
         if (monsterSpawns is not null) {
@@ -1329,7 +1349,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             uniqueMonsterPacks,
             experience,
             nativeMissiles,
-            nativeMissileSprites);
+            nativeMissileSprites,
+            monsterSpawnPolicies);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

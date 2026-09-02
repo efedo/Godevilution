@@ -64,9 +64,10 @@ conversion row and remains stable-ID-only.
 
 The base pack also declares the native Golem and The Dark Lord identities
 (stable IDs 111 and 112) with their available DUN mappings. Ordinary procedural
-generation excludes these special summon and boss definitions; Golem remains
-available through the server-owned summon path and The Dark Lord through
-authored boss content.
+generation excludes these special summon and boss definitions through the
+content-owned `monster_spawn_policies.tsv` table; Golem remains available
+through the server-owned summon path and The Dark Lord through authored boss
+content. Packs that omit the table retain the legacy identity fallback.
 
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic

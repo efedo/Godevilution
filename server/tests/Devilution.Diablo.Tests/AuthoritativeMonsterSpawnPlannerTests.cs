@@ -92,6 +92,38 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void ContentSpawnRoleOverridesLegacyIdentityFallback()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 5, 5));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 1, 1, 1, 1) with { Diablo = true },
+            CreateType(3, 1, 1, 1, 1, 1, 1),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var policies = new AuthoritativeMonsterSpawnPolicyCatalog([
+            new AuthoritativeMonsterSpawnPolicyDefinition(
+                2,
+                AuthoritativeMonsterSpawnRole.Ordinary),
+            new AuthoritativeMonsterSpawnPolicyDefinition(
+                3,
+                AuthoritativeMonsterSpawnRole.Quest),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            generation,
+            spawnPolicies: policies);
+
+        var spawns = planner.Plan(1, seed: 17, multiplayer: false, maximumMonsters: 8);
+
+        Assert.NotEmpty(spawns);
+        Assert.All(spawns, spawn => Assert.Equal(2U, spawn.Definition.MonsterId));
+    }
+
+    [Fact]
     public void HalvesGeneratedMonsterHealthInSinglePlayer()
     {
         var world = new AuthoritativeWorld();
