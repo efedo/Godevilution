@@ -245,6 +245,113 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidPlayerActionProjection()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    CombatMode = PlayerCombatMode.WalkNorthwards,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        DirectionX = 1,
+                        DirectionY = 0,
+                    },
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsInvalidPlayerActionTimingMovementAndCastSource()
+    {
+        var invalidTiming = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CombatMode = PlayerCombatMode.WalkNorthwards,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 2,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
+        var blockedMovement = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                    BlockedCells = { 12 },
+                },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    CombatMode = PlayerCombatMode.WalkNorthwards,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
+        var invalidCastSource = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CombatMode = PlayerCombatMode.Spell,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Cast,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        Cast = new CastRequested {
+                            SpellId = 1,
+                            Source = (CastSourceKind)99,
+                        },
+                    },
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidTiming,
+            blockedMovement,
+            invalidCastSource,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

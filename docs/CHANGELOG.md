@@ -21,6 +21,8 @@ All notable changes to this fork are documented below.
   dimensions, cell-layer, duplicate-level, and warp-target validation.
 - Converged generic host admission with native and Godot entity-position,
   set-level-origin, and procedural-level identity validation.
+- Converged generic host admission with native and Godot projected player-action
+  timing, movement, attack, cast, death, and transition validation.
 - Enforced the native four-route portal pool in authoritative world-state
   construction, static catalog loading, Town Portal creation, and save restore;
   runtime state can no longer grow beyond the projection boundary.

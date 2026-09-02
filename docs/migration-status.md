@@ -28,6 +28,9 @@ duplicate geometry identities, and invalid warp targets before transmission.
 Generic host admission now also rejects entity positions outside projected
 geometry and malformed set-level origins or procedural-level identity lists.
 
+Generic host admission now also rejects malformed projected player-action timing
+and semantic shapes, including blocked movement and invalid cast sources.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.

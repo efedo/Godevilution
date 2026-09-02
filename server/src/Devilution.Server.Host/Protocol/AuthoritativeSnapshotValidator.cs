@@ -41,6 +41,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateSetLevelObjectOrigins(snapshot);
         ValidateMaterializedProceduralLevels(snapshot);
         ValidateEntityPositions(snapshot);
+        ValidatePlayerActions(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
@@ -427,6 +428,110 @@ public static class AuthoritativeSnapshotValidator
                     portal.DestinationPositionY)))
             throw new InvalidDataException(
                 "The authoritative snapshot contains an entity outside projected level geometry.");
+    }
+
+    private static void ValidatePlayerActions(Snapshot snapshot)
+    {
+        foreach (var player in snapshot.Players) {
+            var action = player.CurrentAction;
+            if (action is null)
+                continue;
+            if (!Enum.IsDefined(action.Kind)
+                || action.Kind == PlayerActionKind.Unspecified
+                || action.EffectTick < action.StartedAtTick
+                || action.ReadyTick < action.EffectTick
+                || action.ReadyTick > action.EndTick
+                || action.EndTick != player.CombatModeEndTick) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid player action timing.");
+            }
+
+            var valid = action.Kind switch {
+                PlayerActionKind.Move =>
+                    player.CombatMode is PlayerCombatMode.WalkNorthwards
+                        or PlayerCombatMode.WalkSouthwards
+                        or PlayerCombatMode.WalkSideways
+                    && action.DirectionX is >= -1 and <= 1
+                    && action.DirectionY is >= -1 and <= 1
+                    && (action.DirectionX != 0 || action.DirectionY != 0)
+                    && action.TargetEntityId == 0
+                    && action.Cast is null
+                    && IsProjectedMoveWalkable(snapshot, player, action),
+                PlayerActionKind.Attack =>
+                    player.CombatMode is PlayerCombatMode.Attack
+                        or PlayerCombatMode.RangedAttack
+                    && action.DirectionX == 0
+                    && action.DirectionY == 0
+                    && action.TargetEntityId != 0
+                    && action.Cast is null,
+                PlayerActionKind.Cast =>
+                    player.CombatMode == PlayerCombatMode.Spell
+                    && action.DirectionX == 0
+                    && action.DirectionY == 0
+                    && action.Cast is not null
+                    && action.Cast.SpellId != 0
+                    && action.TargetEntityId == action.Cast.TargetEntityId
+                    && Enum.IsDefined(action.Cast.Source)
+                    && (action.Cast.SourceItem is null
+                        || Enum.IsDefined(action.Cast.SourceItem.Location)),
+                PlayerActionKind.Death =>
+                    player.CombatMode == PlayerCombatMode.Death
+                    && player.Life == 0
+                    && action.EffectApplied
+                    && action.EffectTick == action.StartedAtTick
+                    && action.ReadyTick == action.EndTick
+                    && action.DirectionX == 0
+                    && action.DirectionY == 0
+                    && action.Cast is null,
+                PlayerActionKind.LevelTransition =>
+                    player.CombatMode == PlayerCombatMode.NewLevel
+                    && player.Life > 0
+                    && action.EffectApplied
+                    && action.EffectTick == action.StartedAtTick
+                    && action.ReadyTick == action.EndTick
+                    && action.DirectionX == 0
+                    && action.DirectionY == 0
+                    && action.TargetEntityId != 0
+                    && action.Cast is null,
+                PlayerActionKind.RestartTown =>
+                    player.CombatMode == PlayerCombatMode.NewLevel
+                    && player.Life > 0
+                    && action.EffectApplied
+                    && action.EffectTick == action.StartedAtTick
+                    && action.ReadyTick == action.EndTick
+                    && action.DirectionX == 0
+                    && action.DirectionY == 0
+                    && action.TargetEntityId == 0
+                    && action.Cast is null,
+                _ => false,
+            };
+            if (!valid)
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid player action.");
+        }
+    }
+
+    private static bool IsProjectedMoveWalkable(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        PlayerActionSnapshot action)
+    {
+        var level = snapshot.LevelGeometry
+            .FirstOrDefault(candidate => candidate.LevelId == player.LevelId);
+        if (level is null || level.Width == 0 || level.Height == 0)
+            return true;
+
+        var targetX = (long)player.PositionX + action.DirectionX;
+        var targetY = (long)player.PositionY + action.DirectionY;
+        if (targetX < 0
+            || targetY < 0
+            || targetX >= level.Width
+            || targetY >= level.Height)
+            return false;
+
+        var targetCell = targetY * level.Width + targetX;
+        return targetCell <= int.MaxValue
+            && !level.BlockedCells.Contains((int)targetCell);
     }
 
     private static void ValidateMonsterMovementTiming(Snapshot snapshot)
