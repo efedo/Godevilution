@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
 - Enforced that native object-pool capacity while materializing set-level
   placements and native-DUN fragment template objects, including existing
   authored occupants on the target level.
+- Fixed native object presentation resynchronization so same-position
+  activation and destruction transitions clear stale tile occupancy while
+  retained-visible activated objects are rebound to their authoritative tile.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

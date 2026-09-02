@@ -1080,6 +1080,54 @@ TEST(ServerBackedPlayerSnapshot, RebindsPresentationMappingsAfterNativePoolReloa
 	ObjectPoolAdapter::ResetLegacyObjectPools();
 }
 
+TEST(ServerBackedPlayerSnapshot, ResynchronizesObjectTileOccupancyAcrossLifecycleStates)
+{
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	const int objectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_EQ(objectSlot, 0);
+	Objects[objectSlot] = {};
+	Objects[objectSlot]._otype = OBJ_BARREL;
+	Objects[objectSlot].position = { 20, 20 };
+	tileAt(20, 20).setObject(objectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+
+	ProjectedObjectSnapshot snapshot;
+	snapshot.entityId = 77;
+	snapshot.objectId = OBJ_BARREL;
+	snapshot.nativeObjectId = OBJ_BARREL;
+	snapshot.levelId = 1;
+	snapshot.positionX = 20;
+	snapshot.positionY = 20;
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(tileAt(20, 20).object(), objectSlot + 1);
+
+	snapshot.activated = true;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(tileAt(20, 20).object(), 0);
+	EXPECT_TRUE(Objects[objectSlot]._oDelFlag);
+
+	snapshot.keepVisibleAfterActivation = true;
+	snapshot.positionX = 21;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(tileAt(20, 20).object(), 0);
+	EXPECT_EQ(tileAt(21, 20).object(), objectSlot + 1);
+	EXPECT_FALSE(Objects[objectSlot]._oDelFlag);
+
+	snapshot.destroyed = true;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(tileAt(21, 20).object(), 0);
+	EXPECT_TRUE(Objects[objectSlot]._oDelFlag);
+
+	presentation.Clear();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
 {
 	protocol::Snapshot snapshot;

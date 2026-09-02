@@ -1919,6 +1919,10 @@ owned quest-variable gate generates the Banner item, so connected clients no
 longer depend on the native local sign-chest pickup. It also declares the
 native sign-chest presentation identity explicitly; native Banner map and
 object resynchronization remain compatibility seams.
+Native object presentation resynchronization now clears tile occupancy when an
+authoritative activation or destruction hides an object at its existing
+position, while preserving retained-visible activated objects on their new
+authoritative position.
 The Vile Betrayer center circle now materializes as an authored occupancy
 trigger. After both linked books activate, a player entering the circle applies
 the deferred center replacement, advances native `_qvar1` to 4, and receives the

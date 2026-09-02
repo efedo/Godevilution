@@ -748,13 +748,25 @@ void ApplyItemSnapshot(Item &item, const ProjectedWorldItemSnapshot &snapshot)
 void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSnapshot &snapshot)
 {
 	const Point position { snapshot.positionX, snapshot.positionY };
+	const bool shouldOccupyTile = (!snapshot.activated || snapshot.keepVisibleAfterActivation) && !snapshot.destroyed;
+	const auto clearOwnedTile = [objectSlot](const Point tilePosition) {
+		if (InDungeonBounds(tilePosition) && tileAt(tilePosition).object() == objectSlot + 1)
+			tileAt(tilePosition).setObject(0);
+	};
 	if (object.position != position) {
-		if (InDungeonBounds(object.position) && tileAt(object.position).object() == objectSlot + 1)
-			tileAt(object.position).setObject(0);
+		clearOwnedTile(object.position);
 		object.position = position;
 	}
-	if ((!snapshot.activated || snapshot.keepVisibleAfterActivation) && !snapshot.destroyed)
+	if (shouldOccupyTile)
 		tileAt(position).setObject(objectSlot + 1);
+	else {
+		// Activation and destruction can leave the object at the same position.
+		// Clear that tile explicitly so stale native occupancy cannot survive a
+		// server snapshot transition.
+		clearOwnedTile(position);
+		if (ObjectUnderCursor == &object)
+			ObjectUnderCursor = nullptr;
+	}
 	object._oDelFlag = snapshot.destroyed || snapshot.activated && !snapshot.keepVisibleAfterActivation;
 	object._oAnimFrame = snapshot.activated ? snapshot.activatedAnimationFrame : snapshot.animationFrame;
 	object._oTrapFlag = snapshot.trapArmed;
