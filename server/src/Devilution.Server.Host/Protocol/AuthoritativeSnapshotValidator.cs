@@ -15,6 +15,12 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeMaximumItemCount = 127;
     private const int NativeMaximumWarpTriggerCount = 7;
     private const int NativeMaximumPortalCount = 4;
+    private const int NativeMaximumWidth = 112;
+    private const int NativeMaximumHeight = 112;
+    private const int NativeMaximumMegaWidth = 40;
+    private const int NativeMaximumMegaHeight = 40;
+    private const uint NativeMaximumDunObjectLayerId = 146;
+    private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
     private const int MaximumQuestCount = 4096;
     private const int MaximumQuestTownerInteractionCount = 1024;
@@ -29,12 +35,12 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerNativeRanges(snapshot);
         ValidateQuests(snapshot);
         ValidateQuestTownerInteractions(snapshot);
+        ValidateLevelGeometry(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
         ValidateObjectPoolCapacity(snapshot);
         ValidateWorldItemPoolCapacity(snapshot);
-        ValidateWarpTriggerPoolCapacity(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
 
@@ -244,14 +250,93 @@ public static class AuthoritativeSnapshotValidator
         }
     }
 
-    private static void ValidateWarpTriggerPoolCapacity(Snapshot snapshot)
+    private static void ValidateLevelGeometry(Snapshot snapshot)
     {
+        var levels = new Dictionary<uint, LevelGeometrySnapshot>();
+        foreach (var level in snapshot.LevelGeometry) {
+            var coarseWidth = (level.Width + 1L) / 2;
+            var coarseHeight = (level.Height + 1L) / 2;
+            if (level.Width < 0
+                || level.Height < 0
+                || level.Width > NativeMaximumWidth
+                || level.Height > NativeMaximumHeight
+                || level.NativeTransparency.Any(value => value > byte.MaxValue)
+                || level.NativeObjectLayer.Any(value => value > NativeMaximumDunObjectLayerId)
+                || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
+                || level.NativePieceLayer.Any(value => value > NativeMaximumDunPieceId)
+                || level.NativeMegaTileLayer.Count != 0
+                    && (coarseWidth > NativeMaximumMegaWidth
+                        || coarseHeight > NativeMaximumMegaHeight))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid level geometry dimensions.");
+
+            if (level.Width > 0 && level.Height > 0) {
+                var cellCount = checked((long)level.Width * level.Height);
+                if (!AreValidCells(level.BlockedCells, cellCount)
+                    || !AreValidCells(level.MissileBlockedCells, cellCount)
+                    || !AreValidCells(level.NativeVisionBlockedCells, cellCount)
+                    || level.NativeTransparency.Count != 0
+                        && level.NativeTransparency.Count != cellCount
+                    || level.NativeObjectLayer.Count != 0
+                        && level.NativeObjectLayer.Count != cellCount
+                    || level.NativeMegaTileLayer.Count != 0
+                        && level.NativeMegaTileLayer.Count != coarseWidth * coarseHeight
+                    || level.NativePieceLayer.Count != 0
+                        && level.NativePieceLayer.Count != cellCount)
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains invalid level geometry cells.");
+            }
+
+            if (!levels.TryAdd(level.LevelId, level))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate level geometry.");
+        }
+
+        var questIds = snapshot.Quests
+            .Select(quest => quest.QuestId)
+            .ToHashSet();
+        var warpIds = new HashSet<uint>();
         foreach (var level in snapshot.LevelGeometry) {
             if (level.WarpTriggers.Count > NativeMaximumWarpTriggerCount)
                 throw new InvalidDataException(
                     $"The authoritative snapshot contains more than {NativeMaximumWarpTriggerCount} "
                     + $"warp triggers on level {level.LevelId}, exceeding the native trigger capacity.");
+
+            foreach (var warp in level.WarpTriggers) {
+                var hasTargetLevel = levels.TryGetValue(warp.TargetLevelId, out var targetLevel);
+                if (warp.WarpId == 0
+                    || !warpIds.Add(warp.WarpId)
+                    || warp.TriggerX < 0
+                    || warp.TriggerY < 0
+                    || level.Width > 0 && warp.TriggerX >= level.Width
+                    || level.Height > 0 && warp.TriggerY >= level.Height
+                    || !hasTargetLevel
+                    || warp.TargetX < 0
+                    || warp.TargetY < 0
+                    || targetLevel!.Width > 0 && warp.TargetX >= targetLevel.Width
+                    || targetLevel.Height > 0 && warp.TargetY >= targetLevel.Height
+                    || warp.RequiredQuestId != 0
+                        && !questIds.Contains(warp.RequiredQuestId)
+                    || warp.RequiredQuestId == 0 && warp.RequiredQuestCompleted
+                    || warp.RequiredQuestId == 0 && !warp.Available
+                    || warp.StableSymbol.Any(character => character is < (char)0x21 or > (char)0x7e))
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid warp trigger.");
+            }
         }
+    }
+
+    private static bool AreValidCells(IList<int> cells, long cellCount)
+    {
+        if (cells.Count > cellCount)
+            return false;
+
+        var uniqueCells = new HashSet<int>();
+        foreach (var cell in cells) {
+            if (cell < 0 || cell >= cellCount || !uniqueCells.Add(cell))
+                return false;
+        }
+        return true;
     }
 
     private static void ValidateMonsterMovementTiming(Snapshot snapshot)

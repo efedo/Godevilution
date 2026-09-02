@@ -22,6 +22,9 @@ Generic host admission now rejects malformed quest state and quest/towner
 interaction references before snapshots reach connected clients, matching the
 server, Godot, and native validation contracts.
 
+Generic host admission now also rejects malformed level dimensions, cell layers,
+duplicate geometry identities, and invalid warp targets before transmission.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.

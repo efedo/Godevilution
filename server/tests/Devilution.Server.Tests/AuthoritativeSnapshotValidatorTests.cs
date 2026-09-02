@@ -134,6 +134,63 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsMalformedLevelGeometryAndWarpTargets()
+    {
+        var oversized = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 113, Height = 10 },
+            },
+        };
+        var duplicateCell = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                    BlockedCells = { 4, 4 },
+                },
+            },
+        };
+        var invalidLayerValue = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 1,
+                    Height = 1,
+                    NativeObjectLayer = { 147 },
+                },
+            },
+        };
+        var unknownWarpTarget = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                    WarpTriggers = {
+                        new WarpTriggerSnapshot {
+                            WarpId = 1,
+                            TargetLevelId = 2,
+                            TargetX = 1,
+                            TargetY = 1,
+                            Available = true,
+                        },
+                    },
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            oversized,
+            duplicateCell,
+            invalidLayerValue,
+            unknownWarpTarget,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
