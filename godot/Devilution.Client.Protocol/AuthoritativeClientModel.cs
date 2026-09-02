@@ -1096,7 +1096,7 @@ public sealed class AuthoritativeClientModel
                 || level.Height < 0
                 || level.Width > NativeMaximumWidth
                 || level.Height > NativeMaximumHeight
-                || level.NativeTransparency.Any(value => value > sbyte.MaxValue)
+                || level.NativeTransparency.Any(value => value > byte.MaxValue)
                 || level.NativeObjectLayer.Any(value => value > NativeMaximumDunObjectLayerId)
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
                 || level.NativePieceLayer.Any(value => value > ushort.MaxValue)

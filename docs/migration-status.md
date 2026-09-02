@@ -107,7 +107,9 @@ Native `.til` d-piece references and `.sol`/TSV d-piece properties are now
 bounded to DevilutionX's `MAXTILES` range (0–1378), preventing external
 collision bundles, level projections, or authored mutations from carrying
 unrepresentable piece identities. Authored transparency and mega-tile mutation
-values now enforce the corresponding native signed-byte and byte ranges too.
+values now enforce their native byte widths too; signed transparency values are
+carried as their low-byte wire representation for parity with the native DUN
+loader.
 
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded

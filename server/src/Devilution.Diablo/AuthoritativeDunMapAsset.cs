@@ -56,7 +56,8 @@ public sealed class AuthoritativeDunMapAsset
     /** Native object IDs, stored at d-piece resolution. */
     public IReadOnlyList<ushort> ObjectLayer { get; }
 
-    /** Native transparency values, stored at d-piece resolution. */
+    /** Native transparency values, stored at d-piece resolution as the low-byte
+     * encoding of DevilutionX's signed int8_t transparency field. */
     public IReadOnlyList<ushort> TransparencyLayer { get; }
 
     public ushort GetObjectId(int positionX, int positionY)
@@ -96,7 +97,10 @@ public sealed class AuthoritativeDunMapAsset
         var reservedLayer = ReadLayer(bytes, dPieceOffset, dPieceCount);
         var monsterLayer = ReadLayer(bytes, dPieceOffset + dPieceCount, dPieceCount);
         var objectLayer = ReadLayer(bytes, dPieceOffset + dPieceCount * 2, dPieceCount);
-        var transparencyLayer = ReadLayer(bytes, dPieceOffset + dPieceCount * 3, dPieceCount);
+        var transparencyLayer = ReadTransparencyLayer(
+            bytes,
+            dPieceOffset + dPieceCount * 3,
+            dPieceCount);
         return new AuthoritativeDunMapAsset(
             sourcePath,
             megaWidth,
@@ -120,6 +124,24 @@ public sealed class AuthoritativeDunMapAsset
         var values = new ushort[count];
         for (var index = 0; index < count; index++)
             values[index] = ReadWord(bytes, checked(startWord + index));
+        return Array.AsReadOnly(values);
+    }
+
+    private static IReadOnlyList<ushort> ReadTransparencyLayer(
+        ReadOnlySpan<byte> bytes,
+        int startWord,
+        int count)
+    {
+        var values = new ushort[count];
+        for (var index = 0; index < count; index++) {
+            // The native loader casts each 16-bit DUN word to int8_t. Keep
+            // the equivalent unsigned wire byte so protocol and managed
+            // callers compare the same region identity regardless of whether
+            // the source word was sign-extended (for example 0xFFFF).
+            values[index] = (ushort)(ReadWord(
+                bytes,
+                checked(startWord + index)) & byte.MaxValue);
+        }
         return Array.AsReadOnly(values);
     }
 

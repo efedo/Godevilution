@@ -60,7 +60,7 @@ public sealed class AuthoritativeWorldMutationTransparencyRectangle
         : base(x, y, width, height)
     {
         Value = value;
-        if (value > sbyte.MaxValue)
+        if (value > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(value));
     }
 

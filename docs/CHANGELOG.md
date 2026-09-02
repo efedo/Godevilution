@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
   `piece_layer_rects` mutations.
 - Enforced native transparency and mega-tile value ranges on authored mutation
   assignments before publication.
+- Canonicalized native DUN transparency words to their low-byte signed-`int8_t`
+  representation across the server, protocol, and Godot validation paths.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

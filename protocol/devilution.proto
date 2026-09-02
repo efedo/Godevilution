@@ -472,7 +472,7 @@ message LevelGeometrySnapshot {
 	int32 height = 3;
 	repeated int32 blocked_cells = 4;
 	repeated int32 missile_blocked_cells = 5;
-	// Native d-piece transparency values, when supplied by set-level content.
+	// Native d-piece transparency signed-byte values encoded as their low wire byte.
 	repeated uint32 native_transparency = 6;
 	// Authored level triggers for presentation-only progression markers.
 	repeated WarpTriggerSnapshot warp_triggers = 7;

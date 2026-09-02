@@ -240,20 +240,23 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
-    public void RejectsTransparencyAndMegaTileValuesOutsideNativeRanges()
+    public void PreservesSignedTransparencyWireBytesAndRejectsValuesOutsideNativeRanges()
     {
+        var transparency = new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 1, 1, 255);
+        Assert.Equal((ushort)255, transparency.Value);
+
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeWorldMutationCatalog.LoadTsv(
                 "world_mutations.tsv",
                 "mutation_id\tlevel_id\ttransparency_rects\n"
-                    + "7\t1\t0,0,1,1,128\n"));
+                    + "7\t1\t0,0,1,1,256\n"));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeWorldMutationCatalog.LoadTsv(
                 "world_mutations.tsv",
                 "mutation_id\tlevel_id\tmega_tile_assignments\n"
                     + "7\t1\t0,0,256\n"));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 1, 1, 128));
+            new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 1, 1, 256));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new AuthoritativeWorldMutationMegaTileAssignment(0, 0, 256));
     }

@@ -201,6 +201,19 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidTransparency)));
 
+        var signedTransparencyWire = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 1,
+                    Height = 1,
+                    NativeTransparency = { 255 },
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: signedTransparencyWire));
+
         var invalidNativePresentation = new Snapshot {
             Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
             LevelGeometry = {
@@ -208,7 +221,7 @@ public sealed class ClientModelTests
                     LevelId = 1,
                     Width = 1,
                     Height = 1,
-                    NativeTransparency = { 128 },
+                    NativeTransparency = { 256 },
                 },
             },
         };

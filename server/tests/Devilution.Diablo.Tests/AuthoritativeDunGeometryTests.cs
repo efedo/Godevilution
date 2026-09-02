@@ -68,6 +68,31 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void MaterializerPreservesNativeSignedTransparencyWireBytes()
+    {
+        var asset = AuthoritativeDunMapAsset.Load(
+            "signed-transparency.dun",
+            CreateDun(1, 1, [7], transparencyLayer: [0xFFFF, 0xFF80, 0x0080, 0x0100]));
+        var pieces = new AuthoritativeDunPieceCatalog([
+            new(7, 10, 11, 12, 13),
+        ]);
+        var properties = new AuthoritativeDunTilePropertyCatalog([
+            new(10, AuthoritativeDunTileFlags.None),
+            new(11, AuthoritativeDunTileFlags.None),
+            new(12, AuthoritativeDunTileFlags.None),
+            new(13, AuthoritativeDunTileFlags.None),
+        ]);
+
+        var level = AuthoritativeDunGeometryMaterializer.Materialize(
+            101,
+            asset,
+            pieces,
+            properties);
+
+        Assert.Equal(new ushort[] { 255, 128, 128, 0 }, level.NativeTransparency);
+    }
+
+    [Fact]
     public void MaterializerPreservesNativeMonsterLayer()
     {
         var asset = AuthoritativeDunMapAsset.Load(

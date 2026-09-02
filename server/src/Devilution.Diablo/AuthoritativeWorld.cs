@@ -256,9 +256,9 @@ public sealed class AuthoritativeLevel
         if (transparency.Length != 0 && transparency.Length != width * height)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native transparency layer with an invalid length.");
-        if (transparency.Any(value => value > sbyte.MaxValue))
+        if (transparency.Any(value => value > byte.MaxValue))
             throw new InvalidDataException(
-                $"Level {levelId} contains a native transparency value outside the compatibility range.");
+                $"Level {levelId} contains a native transparency wire byte outside the compatibility range.");
         NativeTransparency = Array.AsReadOnly(transparency);
         var monsters = (nativeMonsterLayer ?? [])
             .ToArray();
@@ -348,7 +348,7 @@ public sealed class AuthoritativeLevel
     /** Stable row-major missile geometry for protocol and presentation projections. */
     public IReadOnlyList<int> MissileBlockedCells => missileBlockedCellList;
 
-    /** Native d-piece transparency values retained separately from collision. */
+    /** Native d-piece transparency values retained as signed-byte wire values. */
     public IReadOnlyList<ushort> NativeTransparency { get; }
 
     /** Raw native DUN monster-layer values retained for authoritative set-piece materialization. */
