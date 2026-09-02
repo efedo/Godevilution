@@ -3303,6 +3303,22 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_object_id(6007);
 	invalidFlags->set_native_object_id(static_cast<uint32_t>(OBJ_LAST) + 1);
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidNativePresentation).has_value());
+
+	protocol::Snapshot atCapacity;
+	for (int index = 0; index < MAXOBJECTS; ++index) {
+		auto *object = atCapacity.add_objects();
+		object->set_entity_id(static_cast<uint32_t>(index + 1));
+		object->set_object_id(1);
+		object->set_level_id(3);
+	}
+	EXPECT_TRUE(ProjectObjectSnapshots(atCapacity).has_value());
+
+	protocol::Snapshot overCapacity = atCapacity;
+	auto *overflow = overCapacity.add_objects();
+	overflow->set_entity_id(MAXOBJECTS + 1);
+	overflow->set_object_id(1);
+	overflow->set_level_id(3);
+	EXPECT_FALSE(ProjectObjectSnapshots(overCapacity).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)

@@ -504,6 +504,12 @@ internal static class DiabloProtocolMapper
         IReadOnlyList<DiabloObjectState> objects,
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
+        foreach (var group in objects.GroupBy(@object => @object.LevelId)) {
+            if (group.Count() > AuthoritativeLevel.NativeMaximumObjectCount)
+                throw new InvalidDataException(
+                    $"Authoritative object state for level {group.Key} exceeds the native "
+                    + $"{AuthoritativeLevel.NativeMaximumObjectCount}-object capacity.");
+        }
         foreach (var @object in objects) {
             ValidateProjectedEntityPosition(
                 @object.LevelId,

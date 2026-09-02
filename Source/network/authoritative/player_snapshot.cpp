@@ -13,6 +13,7 @@
 #include "devilution.pb.h"
 #include "game/levels/dungeon_common_defs.hpp"
 #include "game/players/players.hpp"
+#include "game/objects/objects.hpp"
 #include "game/quests/quests.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
@@ -614,11 +615,15 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 	projected.reserve(snapshot.objects_size());
 	std::unordered_set<uint32_t> questIds;
 	questIds.reserve(snapshot.quests_size());
+	std::unordered_map<uint32_t, int> objectCountsByLevel;
+	objectCountsByLevel.reserve(snapshot.objects_size());
 	for (const auto &quest : snapshot.quests())
 		questIds.insert(quest.quest_id());
 	for (const auto &source : snapshot.objects()) {
 		if (source.entity_id() == 0 || source.object_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains an object with an invalid entity or object ID.");
+		if (++objectCountsByLevel[source.level_id()] > MAXOBJECTS)
+			return tl::make_unexpected("Server-backed snapshot contains more than MAXOBJECTS objects on one level.");
 		if (source.native_object_id() > static_cast<uint32_t>(OBJ_LAST))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid native object presentation ID.");
 		if (source.animation_frame() > std::numeric_limits<uint8_t>::max()

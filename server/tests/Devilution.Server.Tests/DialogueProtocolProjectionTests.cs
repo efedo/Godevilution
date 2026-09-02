@@ -1095,6 +1095,42 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(
             validObject with { PositionY = 10 },
             [new AuthoritativeLevel(1, 10, 10)]);
+
+        var atCapacity = source with {
+            Objects = Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount)
+                .Select(index => new DiabloObjectState(
+                    (uint)(100 + index),
+                    4,
+                    1,
+                    index,
+                    0,
+                    false,
+                    0,
+                    AuthoritativeObjectEffectKind.None,
+                    0))
+                .ToArray(),
+        };
+        Assert.Equal(
+            AuthoritativeLevel.NativeMaximumObjectCount,
+            DiabloProtocolMapper.ToProtocolSnapshot(atCapacity).Objects.Count);
+
+        var overCapacity = atCapacity with {
+            Objects = atCapacity.Objects
+                .Append(new DiabloObjectState(
+                    1000,
+                    4,
+                    1,
+                    127,
+                    0,
+                    false,
+                    0,
+                    AuthoritativeObjectEffectKind.None,
+                    0))
+                .ToArray(),
+        };
+        var capacityException = Assert.Throws<InvalidDataException>(
+            () => DiabloProtocolMapper.ToProtocolSnapshot(overCapacity));
+        Assert.Contains("127-object capacity", capacityException.Message, StringComparison.Ordinal);
     }
 
     [Fact]

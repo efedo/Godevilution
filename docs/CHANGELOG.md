@@ -26,6 +26,8 @@ All notable changes to this fork are documented below.
   level, rejecting oversized external layers before unbounded state creation.
 - Bound native DUN object materialization to DevilutionX's 127-object pool per
   level, rejecting oversized external layers before unbounded state creation.
+- Enforced the same native object-pool capacity on server, Godot, and native
+  snapshot boundaries, rejecting more than 127 projected objects on one level.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

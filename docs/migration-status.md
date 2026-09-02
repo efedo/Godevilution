@@ -1876,6 +1876,10 @@ the same raw-DUN bound during content activation.
 Native-DUN object materialization also enforces DevilutionX's `MAXOBJECTS` pool
 capacity of `127` active objects per level, counting existing authored objects
 before mapped cells are added.
+The server protocol mapper, Godot client validator, and native snapshot bridge
+now enforce that same per-level object-pool boundary before presentation, so an
+oversized authoritative object collection fails closed instead of silently
+dropping objects when the native presentation pool is exhausted.
 Warp-trigger projection now rejects missing source levels on the server and
 unknown quest-gate identities in the server, native, and Godot validators, so
 all three protocol boundaries enforce the same authored-route references.

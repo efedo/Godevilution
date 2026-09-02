@@ -13,6 +13,7 @@ public sealed class AuthoritativeClientModel
     // Object snapshots carry converted _object_id values; geometry carries raw
     // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = 108;
+    private const int NativeMaximumObjectCount = 127;
     private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
@@ -181,6 +182,7 @@ public sealed class AuthoritativeClientModel
                 }
             }
             ValidateQuests(message.Snapshot);
+            ValidateObjectPoolCapacity(message.Snapshot);
             var questIds = message.Snapshot.Quests
                 .Select(quest => quest.QuestId)
                 .ToHashSet();
@@ -904,6 +906,16 @@ public sealed class AuthoritativeClientModel
             || @object.Destroyed && !@object.Breakable) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid object effect metadata.");
+        }
+    }
+
+    private static void ValidateObjectPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var group in snapshot.Objects.GroupBy(@object => @object.LevelId)) {
+            if (group.Count() > NativeMaximumObjectCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumObjectCount} "
+                    + $"objects on level {group.Key}, exceeding the native object capacity.");
         }
     }
 
