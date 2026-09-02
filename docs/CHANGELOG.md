@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added generic-host command-acknowledgement validation before TCP delivery,
+  matching the Godot client result-count, status, and reject-reason contract.
 - Converged generic host admission with native and Godot player combat-mode
   lifetime validation for Stand, Block, and GotHit states.
 - Converged generic host admission with native and Godot authored object

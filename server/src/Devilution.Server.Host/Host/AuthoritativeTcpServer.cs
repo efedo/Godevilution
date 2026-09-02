@@ -323,6 +323,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
                     currentTick = clock.CurrentTick;
                     var acknowledgement = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
+                    AuthoritativeCommandAckValidator.Validate(acknowledgement);
                     SaveSession(session);
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);

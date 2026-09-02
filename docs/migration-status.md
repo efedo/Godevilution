@@ -42,6 +42,9 @@ before transmission.
 Generic host admission now also rejects contradictory player combat-mode
 lifetimes, matching native and Godot snapshot admission.
 
+The generic TCP host now validates outgoing command acknowledgements for result
+count, status, and reject-reason consistency before transmission.
+
 Generic host admission now also rejects malformed world-item prices, native
 identity metadata, and item-state ranges before transmission.
 
