@@ -103,6 +103,10 @@ Native monster-table identities are now bounded to DevilutionX's 200-entry
 compatibility table (0–199) in both `monster_types.tsv` and native DUN mappings.
 Raw DUN conversion-layer identities retain their separate 1–157 bound.
 
+Native `.til` d-piece references and `.sol`/TSV d-piece properties are now
+bounded to DevilutionX's `MAXTILES` range (0–1378), preventing external
+collision bundles from carrying unrepresentable piece identities.
+
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded
 to the native 200-slot range, while omitted fields preserve the default 190-slot

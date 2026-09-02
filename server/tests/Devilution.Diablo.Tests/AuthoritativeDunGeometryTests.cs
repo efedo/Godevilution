@@ -175,6 +175,44 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void NativeDunCatalogsEnforceMaxTilesPieceRange()
+    {
+        var maximumPieceId = (uint)AuthoritativeDunTilePropertyCatalog.NativeTileCount - 1;
+        var pieces = new AuthoritativeDunPieceCatalog([
+            new(0, maximumPieceId, maximumPieceId, maximumPieceId, maximumPieceId),
+        ]);
+        var properties = new AuthoritativeDunTilePropertyCatalog([
+            new(maximumPieceId, AuthoritativeDunTileFlags.None),
+        ]);
+
+        Assert.Equal(maximumPieceId, pieces.Definitions[0].NorthWestPieceId);
+        Assert.Equal(maximumPieceId, properties.Definitions[0].PieceId);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeDunPieceCatalog([
+            new(0, (uint)AuthoritativeDunTilePropertyCatalog.NativeTileCount, 0, 0, 0),
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeDunTilePropertyCatalog([
+            new((uint)AuthoritativeDunTilePropertyCatalog.NativeTileCount, AuthoritativeDunTileFlags.None),
+        ]));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeDunPieceCatalog.LoadTsv(
+            "dun_pieces.tsv",
+            "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                + "0\t1379\t0\t0\t0\n"));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeDunTilePropertyCatalog.LoadTsv(
+            "dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_missile\n1379\tfalse\tfalse\n"));
+    }
+
+    [Fact]
+    public void TilLoaderRejectsPieceOutsideMaxTilesRange()
+    {
+        var bytes = new byte[sizeof(ushort) * 4];
+        WriteWord(bytes, 0, AuthoritativeDunTilePropertyCatalog.NativeTileCount);
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeDunPieceCatalog.LoadTil("out-of-range.til", bytes));
+    }
+
+    [Fact]
     public void SolLoaderPreservesNativeFlagsForEveryDunPiece()
     {
         var bytes = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];

@@ -26,12 +26,12 @@ public sealed record AuthoritativeDunPieceDefinition(
     public AuthoritativeDunPieceDefinition Validate()
     {
         if (MegaTileId > ushort.MaxValue
-            || NorthWestPieceId > ushort.MaxValue
-            || NorthEastPieceId > ushort.MaxValue
-            || SouthWestPieceId > ushort.MaxValue
-            || SouthEastPieceId > ushort.MaxValue) {
+            || NorthWestPieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount
+            || NorthEastPieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount
+            || SouthWestPieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount
+            || SouthEastPieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount) {
             throw new InvalidDataException(
-                $"Native mega-tile {MegaTileId} references a d-piece outside the 16-bit range.");
+                $"Native mega-tile {MegaTileId} references a d-piece outside the native range (0-{AuthoritativeDunTilePropertyCatalog.NativeTileCount - 1}).");
         }
         return this;
     }
@@ -115,7 +115,8 @@ public sealed record AuthoritativeDunTileProperty(
             | AuthoritativeDunTileFlags.TransparentLeft
             | AuthoritativeDunTileFlags.TransparentRight
             | AuthoritativeDunTileFlags.Trap;
-        if (PieceId > ushort.MaxValue || (Flags & ~supportedFlags) != 0)
+        if (PieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount
+            || (Flags & ~supportedFlags) != 0)
             throw new InvalidDataException($"Native d-piece {PieceId} has invalid tile properties.");
         return this;
     }

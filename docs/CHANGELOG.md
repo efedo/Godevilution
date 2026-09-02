@@ -11,6 +11,8 @@ All notable changes to this fork are documented below.
   follow-ups during content validation and command admission.
 - Bound native monster-type and DUN mapping identities to DevilutionX's
   200-entry monster table while retaining the separate raw DUN layer bound.
+- Bound external native `.til`/`.sol` d-piece identities to DevilutionX's
+  `MAXTILES` range (0–1378) before collision materialization.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

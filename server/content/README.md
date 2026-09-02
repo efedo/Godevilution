@@ -665,6 +665,9 @@ only when no native mapping exists.
 Native monster-table identities are bounded to DevilutionX's 200-entry
 compatibility table (0–199); raw DUN conversion-layer identities retain their
 separate 1–157 bound.
+Native `.til` d-piece references and `.sol`/TSV d-piece properties are bounded
+to DevilutionX's `MAXTILES` range (0–1378) before collision geometry is
+materialized.
 Authored `SpawnNativeMonster` quest follow-ups use the same resolver during
 activation and command admission, preventing an ambiguous selector from
 mutating quest state before spawn resolution.
