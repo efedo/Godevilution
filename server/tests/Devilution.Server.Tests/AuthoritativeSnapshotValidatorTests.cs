@@ -24,7 +24,14 @@ public sealed class AuthoritativeSnapshotValidatorTests
             Monsters = { new MonsterSnapshot { EntityId = 2 } },
             WorldItems = { new WorldItemSnapshot { EntityId = 3 } },
             Objects = { new ObjectSnapshot { EntityId = 4 } },
-            Projectiles = { new ProjectileSnapshot { EntityId = 5 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 5,
+                    SourceEntityId = 2,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                },
+            },
             Corpses = { new CorpseSnapshot { EntityId = 6 } },
         };
 
@@ -417,6 +424,81 @@ public sealed class AuthoritativeSnapshotValidatorTests
             invalidUniqueIdentity,
             invalidResistance,
             invalidPackLeader,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
+    public void AcceptsValidProjectileProjection()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    SpellId = 1,
+                    RemainingTicks = 3,
+                    Behavior = 2,
+                    Damage = 4,
+                    PresentationKind = ProjectilePresentationKind.Fire,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMalformedProjectileStateAndNativeMissileIdentity()
+    {
+        var missingSource = new Snapshot {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                },
+            },
+        };
+        var invalidDamageRange = new Snapshot {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                    DamageMinimum = 4,
+                    DamageMaximum = 3,
+                },
+            },
+        };
+        var invalidPresentation = new Snapshot {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    SpellId = 1,
+                    RemainingTicks = 1,
+                    PresentationKind = (ProjectilePresentationKind)99,
+                },
+            },
+        };
+        var invalidMissileIdentity = new Snapshot {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    RemainingTicks = 1,
+                    Behavior = 50,
+                    NativeMissileId = "invalid identity",
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            missingSource,
+            invalidDamageRange,
+            invalidPresentation,
+            invalidMissileIdentity,
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));

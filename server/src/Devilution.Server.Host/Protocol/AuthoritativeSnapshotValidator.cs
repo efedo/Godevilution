@@ -19,6 +19,9 @@ public static class AuthoritativeSnapshotValidator
     private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
     private const int MaximumNativeMonsterToHit = 255;
     private const int MaximumNativeMonsterDirection = 7;
+    private const int MaximumProjectileDamageType = 4;
+    private const int MaximumProjectileBehavior = 59;
+    private const int MaximumProjectilePhase = 1;
     private const int NativeMaximumWidth = 112;
     private const int NativeMaximumHeight = 112;
     private const int NativeMaximumMegaWidth = 40;
@@ -48,6 +51,7 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerActions(snapshot);
         ValidateMonsters(snapshot);
         ValidateMonsterMovementTiming(snapshot);
+        ValidateProjectiles(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
         ValidateObjectPoolCapacity(snapshot);
@@ -607,6 +611,63 @@ public static class AuthoritativeSnapshotValidator
             }
         }
     }
+
+    private static void ValidateProjectiles(Snapshot snapshot)
+    {
+        foreach (var projectile in snapshot.Projectiles) {
+            if (projectile.SourceEntityId == 0
+                || projectile.SpellId == 0 && projectile.Behavior is not (58 or 59)
+                || projectile.RemainingTicks == 0
+                || projectile.Damage < 0
+                || projectile.AreaRadius < 0
+                || projectile.DamageMinimum < 0
+                || projectile.DamageMaximum < projectile.DamageMinimum
+                || projectile.DamageQ6 < 0
+                || projectile.ElementalFireDamage < 0
+                || projectile.ElementalLightningDamage < 0
+                || projectile.PerilSelfDamageQ6 < 0
+                || projectile.EffectiveSpellLevel < 0
+                || projectile.DamageType is < 0 or > MaximumProjectileDamageType
+                || projectile.Behavior is < 0 or > MaximumProjectileBehavior
+                || projectile.Phase is < 0 or > MaximumProjectilePhase
+                || !Enum.IsDefined(projectile.PresentationKind)
+                || !Enum.IsDefined(projectile.NativeVisual)
+                || UsesDirectionalPresentation(projectile)
+                    && projectile.OriginalDirection is < 0 or > MaximumNativeMonsterDirection
+                || !IsValidNativeMissileIdentity(projectile))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid projectile state.");
+        }
+    }
+
+    private static bool UsesDirectionalPresentation(ProjectileSnapshot projectile)
+    {
+        if (projectile.NativeVisual != NativeProjectileVisual.Unspecified
+            || !string.IsNullOrEmpty(projectile.NativeMissileId))
+            return true;
+
+        return projectile.Behavior is
+            1 or 2 or 3 or 4 or 6 or 7 or 11 or 15 or 16 or 19 or 20 or 21
+            or 23 or 24 or 25 or 27 or 29 or 31 or 33 or 35 or 36 or 49
+            or 51 or 52 or 53 or 56 or 57 or 58 or 59;
+    }
+
+    private static bool IsValidNativeMissileIdentity(ProjectileSnapshot projectile)
+    {
+        if (string.IsNullOrEmpty(projectile.NativeMissileId))
+            return true;
+        if (projectile.Behavior != 50
+            || !IsAsciiLetter(projectile.NativeMissileId[0])
+                && projectile.NativeMissileId[0] != '_')
+            return false;
+        return projectile.NativeMissileId.Skip(1).All(character =>
+            IsAsciiLetter(character)
+                || character is >= '0' and <= '9'
+                || character is '_' or '-');
+    }
+
+    private static bool IsAsciiLetter(char character)
+        => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
 
     private static void ValidateMonsterMovementTiming(Snapshot snapshot)
     {
