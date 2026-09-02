@@ -197,6 +197,9 @@ public sealed class AuthoritativeLevel
     /** Highest native monster-table identity accepted by DevilutionX's 200-entry table. */
     public const int NativeMaximumMonsterTypeId = 199;
 
+    /** Native active-monster pool capacity for one authoritative level. */
+    public const int NativeMaximumMonsterCount = NativeMaximumMonsterTypeId + 1;
+
     /**
      * Highest raw object-layer index accepted by the native ObjTypeConv table.
      * This is distinct from NativeMaximumObjectId: DUN layers store conversion

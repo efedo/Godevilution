@@ -3181,7 +3181,8 @@ Schema 1.429 adds the validated `native_dun_monsters.tsv` table. Each raw
 native DUN monster-layer index maps to a native monster identity and stable
 `monster_id` selector from the active `monster_types.tsv` catalog; invalid or
 unmapped conversion entries remain inert until their spawn behavior is
-externalized.
+externalized. Materialization fails closed when mapped cells would exceed the
+native 200-monster pool for one level.
 
 Schema 1.431 adds the optional validated `object_presentations.tsv` sidecar,
 keyed by authored object entity ID, for additive activation visibility and

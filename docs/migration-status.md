@@ -1732,6 +1732,8 @@ world-mutation rebuilds. Content schema 1.429.0 now externalizes each valid
 authoritative simulation materializes mapped cells in native row-major order
 after geometry is available, while unsupported or unmapped entries remain
 inert.
+Mapped native DUN monster cells now also fail closed when one level would
+exceed DevilutionX's 200-monster active pool.
 
 Authored object reward placement now uses the complete authoritative participant
 set for occupancy validation and entity allocation. Multiplayer object rewards

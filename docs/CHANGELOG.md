@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
 - Mirrored the native `MAXTILES` d-piece bound in Godot snapshot validation.
 - Bound procedural level dimensions to the native 112x112 fine-grid contract
   during content validation instead of allowing late materialization failures.
+- Bound native DUN monster materialization to DevilutionX's 200-monster pool per
+  level, rejecting oversized external layers before unbounded state creation.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

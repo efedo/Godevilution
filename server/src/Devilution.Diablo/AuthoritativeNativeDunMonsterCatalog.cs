@@ -122,6 +122,8 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
             if (level.NativeMonsterLayer.Count != level.Width * level.Height)
                 throw new InvalidDataException(
                     $"Native DUN monster layer for level {level.LevelId} has an invalid length.");
+            var existingLevelMonsterCount = targets.Count(target => target.LevelId == level.LevelId);
+            var materializedLevelMonsterCount = 0;
             for (var cell = 0; cell < level.NativeMonsterLayer.Count; cell++) {
                 var nativeDunMonsterId = level.NativeMonsterLayer[cell];
                 if (nativeDunMonsterId == 0
@@ -140,6 +142,12 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                     || occupiedCells.Contains(cellKey))
                     throw new InvalidDataException(
                         $"Native DUN monster cell {cellKey} is not available for authoritative placement.");
+                if (existingLevelMonsterCount + materializedLevelMonsterCount
+                    >= AuthoritativeLevel.NativeMaximumMonsterCount) {
+                    throw new InvalidDataException(
+                        $"Native DUN monster materialization for level {level.LevelId} "
+                        + $"exceeds the native {AuthoritativeLevel.NativeMaximumMonsterCount}-monster capacity.");
+                }
                 var entityId = entityIds.Allocate(usedEntityIds.Contains);
                 var cellSeed = CreateCellSeed(seed, level.LevelId, cell, nativeDunMonsterId);
                 var target = planner.CreateNativeMonsterSummon(
@@ -158,6 +166,7 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                 materialized.Add(target);
                 usedEntityIds.Add(entityId);
                 existingByCell.Add(cellKey, target);
+                materializedLevelMonsterCount++;
             }
         }
         return materialized;

@@ -171,6 +171,34 @@ public sealed class AuthoritativeNativeDunMonsterCatalogTests
     }
 
     [Fact]
+    public void RejectsMappedCellsBeyondNativeMonsterPoolCapacity()
+    {
+        const int width = 15;
+        const int height = 14;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            1,
+            width,
+            height,
+            nativeMonsterLayer: Enumerable.Repeat<ushort>(1, width * height)));
+        var types = new AuthoritativeMonsterTypeCatalog([CreateType(1, 0)]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+            ]));
+        var catalog = new AuthoritativeNativeDunMonsterCatalog([
+            new AuthoritativeNativeDunMonsterDefinition(1, 0, 1),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.Materialize(world, planner));
+
+        Assert.Contains("200-monster capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SimulationMaterializesMappedNativeDunCells()
     {
         var world = new AuthoritativeWorld();
