@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.444.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.445.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -193,6 +193,14 @@ public sealed class ShippedContentTests
             definition => definition.NativeMonsterId == 72).NativeAi);
         Assert.Equal("Gargoyle", monsterTypes.Definitions.Single(
             definition => definition.NativeMonsterId == 81).NativeAi);
+        var avoidanceRoundWalkTuning = monsterTypes.Definitions
+            .Where(definition => definition.NativeAi is "GoatMelee" or "Gargoyle")
+            .Select(definition => (
+                definition.AiAvoidanceRoundWalkChanceBase,
+                definition.AiAvoidanceRoundWalkChanceIntelligenceScale))
+            .ToArray();
+        Assert.Equal(8, avoidanceRoundWalkTuning.Length);
+        Assert.All(avoidanceRoundWalkTuning, tuning => Assert.Equal((16, 5), tuning));
         Assert.Equal("Mega", monsterTypes.Definitions.Single(
             definition => definition.NativeMonsterId == 85).NativeAi);
         Assert.Equal("Snake", monsterTypes.Definitions.Single(
@@ -897,7 +905,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.443.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.444.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -3281,7 +3289,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.444.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.445.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

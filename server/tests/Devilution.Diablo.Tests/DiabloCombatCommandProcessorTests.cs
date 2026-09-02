@@ -16935,6 +16935,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 GoatMeleeMovementChanceIntelligenceScale = 1,
                 AiAvoidanceMovementMinimumDistance = 4,
                 AiAvoidanceMovementChanceModulo = 1,
+                AiAvoidanceRoundWalkChanceBase = 100,
+                AiAvoidanceRoundWalkChanceIntelligenceScale = 1,
             },
         ]);
         var monster = new AuthoritativeCombatTarget(

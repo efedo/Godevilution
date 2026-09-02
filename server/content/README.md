@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.444.0` schema in
+It declares its identity and `devilution.diablo@1.445.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.443.0` schema so existing manifest-based packs remain
+previous additive `1.444.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -482,6 +482,10 @@ The optional `ai_avoidance_movement_fresh_chance_bonus` column externalizes
 the shared fresh-mode RandomWalk bonus. Shipped GoatMelee and Gargoyle rows
 carry the native 50-point bonus; omitted values retain the compatibility
 fallback for older mappings.
+The optional `ai_avoidance_round_walk_chance_base` and
+`ai_avoidance_round_walk_chance_intelligence_scale` columns externalize the
+shared far-distance RoundWalk chance. Shipped GoatMelee and Gargoyle rows carry
+the native 16/5 formula; omitted values retain the native-compatible fallback.
 The optional `rhino_movement_goal_minimum_distance` and
 `rhino_movement_goal_chance_modulo` columns externalize the Rhino far-distance
 movement-goal gate. Legacy Rhino rows retain the native minimum-five/modulo-
@@ -3129,7 +3133,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.444.0"
+      "version": "1.445.0"
   },
   "dependencyConstraints": [
     {
@@ -3163,7 +3167,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.444.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.445.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

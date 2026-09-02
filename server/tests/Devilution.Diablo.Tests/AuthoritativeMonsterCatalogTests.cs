@@ -571,6 +571,19 @@ public sealed class AuthoritativeMonsterCatalogTests
                 AiAvoidanceMovementFreshChanceBonus = 50,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "GoatMelee",
+                AiAvoidanceRoundWalkChanceBase = 16,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                AiAvoidanceRoundWalkChanceBase = 16,
+                AiAvoidanceRoundWalkChanceIntelligenceScale = 5,
+            },
+        ]));
     }
 
     [Fact]
@@ -916,14 +929,16 @@ public sealed class AuthoritativeMonsterCatalogTests
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
-            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tai_avoidance_movement_minimum_distance\tai_avoidance_movement_chance_modulo\tai_avoidance_movement_fresh_chance_bonus\n"
-                + "2\t34\tFlesh Clan\t4\t6\t8\t30\t45\t15\t4\t10\t0\t0\t0\t0\t0\tGoatMelee\t4\t4\t50\n");
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tai_avoidance_movement_minimum_distance\tai_avoidance_movement_chance_modulo\tai_avoidance_movement_fresh_chance_bonus\tai_avoidance_round_walk_chance_base\tai_avoidance_round_walk_chance_intelligence_scale\n"
+                + "2\t34\tFlesh Clan\t4\t6\t8\t30\t45\t15\t4\t10\t0\t0\t0\t0\t0\tGoatMelee\t4\t4\t50\t16\t5\n");
 
         var goat = Assert.Single(catalog.Definitions);
-        Assert.Equal((4, 4, 50), (
+        Assert.Equal((4, 4, 50, 16, 5), (
             goat.AiAvoidanceMovementMinimumDistance,
             goat.AiAvoidanceMovementChanceModulo,
-            goat.AiAvoidanceMovementFreshChanceBonus));
+            goat.AiAvoidanceMovementFreshChanceBonus,
+            goat.AiAvoidanceRoundWalkChanceBase,
+            goat.AiAvoidanceRoundWalkChanceIntelligenceScale));
     }
 
     [Fact]

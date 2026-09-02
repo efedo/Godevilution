@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized native AiAvoidance RoundWalk chance base and intelligence scale
+  into validated monster content. Shipped GoatMelee and Gargoyle rows retain
+  the native `16`/`5` tuning, while older packs use the compatibility fallback.
+  Advance the Diablo content schema to `1.445.0`; `1.444.0` remains accepted
+  as the previous additive contract.
 - Added generic-host command-acknowledgement validation before TCP delivery,
   matching the Godot client result-count, status, and reject-reason contract.
 - Converged generic host admission with native and Godot player combat-mode

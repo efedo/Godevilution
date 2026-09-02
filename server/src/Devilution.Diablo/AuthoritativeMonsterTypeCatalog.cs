@@ -312,6 +312,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native AiAvoidance fresh-mode movement chance bonus. */
     public int AiAvoidanceMovementFreshChanceBonus { get; init; }
 
+    /** Native AiAvoidance RoundWalk chance base before intelligence scaling. */
+    public int AiAvoidanceRoundWalkChanceBase { get; init; }
+
+    /** Native AiAvoidance RoundWalk chance increase per intelligence point. */
+    public int AiAvoidanceRoundWalkChanceIntelligenceScale { get; init; }
+
     /** Native Gargoyle safety-boundary base before intelligence scaling. */
     public int GargoyleSafeDistanceBase { get; init; }
 
@@ -461,6 +467,8 @@ public sealed record AuthoritativeMonsterTypeDefinition(
             && GargoyleAttackChanceIntelligenceScale > 0
             || GargoyleMovementChanceBase > 0
             && GargoyleMovementChanceIntelligenceScale > 0
+            || AiAvoidanceRoundWalkChanceBase > 0
+            && AiAvoidanceRoundWalkChanceIntelligenceScale > 0
             || ScavengerHealingDurationTicks > 0
             && ScavengerCorpseSearchRadius > 0
             && ScavengerHellfireHealingDivisor > 0
@@ -667,6 +675,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.AiAvoidanceMovementMinimumDistance is < 0 or > 100
                 || definition.AiAvoidanceMovementChanceModulo is < 0 or > 100
                 || definition.AiAvoidanceMovementFreshChanceBonus is < 0 or > 100
+                || definition.AiAvoidanceRoundWalkChanceBase is < 0 or > 100
+                || definition.AiAvoidanceRoundWalkChanceIntelligenceScale is < 0 or > 100
                 || (definition.AiAvoidanceMovementMinimumDistance != 0
                     || definition.AiAvoidanceMovementChanceModulo != 0)
                     && (definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
@@ -674,6 +684,11 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.AiAvoidanceMovementChanceModulo <= 0)
                 || definition.AiAvoidanceMovementFreshChanceBonus != 0
                     && definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
+                || (definition.AiAvoidanceRoundWalkChanceBase != 0
+                    || definition.AiAvoidanceRoundWalkChanceIntelligenceScale != 0)
+                    && (definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
+                        || definition.AiAvoidanceRoundWalkChanceBase <= 0
+                        || definition.AiAvoidanceRoundWalkChanceIntelligenceScale <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -1120,6 +1135,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 AiAvoidanceMovementMinimumDistance = row.OptionalInt32("ai_avoidance_movement_minimum_distance"),
                 AiAvoidanceMovementChanceModulo = row.OptionalInt32("ai_avoidance_movement_chance_modulo"),
                 AiAvoidanceMovementFreshChanceBonus = row.OptionalInt32("ai_avoidance_movement_fresh_chance_bonus"),
+                AiAvoidanceRoundWalkChanceBase = row.OptionalInt32("ai_avoidance_round_walk_chance_base"),
+                AiAvoidanceRoundWalkChanceIntelligenceScale = row.OptionalInt32("ai_avoidance_round_walk_chance_intelligence_scale"),
             }));
     }
 

@@ -8203,7 +8203,17 @@ public sealed class DiabloCombatCommandProcessor
                     players)))
             return false;
 
-        var roundWalkChance = Math.Min(100, 5 * (monster.Intelligence + 16));
+        var roundWalkChanceBase = 16;
+        var roundWalkChanceIntelligenceScale = 5;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var roundWalkDefinition) == true
+            && roundWalkDefinition.AiAvoidanceRoundWalkChanceBase > 0
+            && roundWalkDefinition.AiAvoidanceRoundWalkChanceIntelligenceScale > 0) {
+            roundWalkChanceBase = roundWalkDefinition.AiAvoidanceRoundWalkChanceBase;
+            roundWalkChanceIntelligenceScale = roundWalkDefinition.AiAvoidanceRoundWalkChanceIntelligenceScale;
+        }
+        var roundWalkChance = Math.Min(
+            100,
+            roundWalkChanceIntelligenceScale * (monster.Intelligence + roundWalkChanceBase));
         if (actionRoll >= roundWalkChance)
             return true;
 
