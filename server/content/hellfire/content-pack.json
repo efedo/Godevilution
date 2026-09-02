@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.443.0"
+    "version": "1.444.0"
   },
   "dependencyConstraints": [
     {
@@ -72,6 +72,11 @@
     },
     {
       "table": "monster_types.tsv",
+      "keys": ["monster_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "monster_spawn_policies.tsv",
       "keys": ["monster_id"],
       "mode": "upsert"
     },

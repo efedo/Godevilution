@@ -1,140 +1,140 @@
-monster_id	monster_symbol	spawn_role
-52	skeleton_king_native_50	Quest
-53	the_butcher_native_51	Quest
-140	snotspill	Quest
-111	golem_native_109	Summon
-112	the_dark_lord_native_110	Boss
-1	base_monster	Ordinary
-3	ghoul_native_1	Ordinary
-4	rotting_carcass_native_2	Ordinary
-5	black_death_native_3	Ordinary
-6	fallen_one_native_4	Ordinary
-7	carver_native_5	Ordinary
-8	devil_kin_native_6	Ordinary
-9	dark_one_native_7	Ordinary
-10	skeleton_native_8	Ordinary
-11	corpse_axe_native_9	Ordinary
-12	burning_dead_native_10	Ordinary
-13	horror_native_11	Ordinary
-14	fallen_one_native_12	Ordinary
-15	carver_native_13	Ordinary
-16	devil_kin_native_14	Ordinary
-17	dark_one_native_15	Ordinary
-18	scavenger_native_16	Ordinary
-19	plague_eater_native_17	Ordinary
-20	shadow_beast_native_18	Ordinary
-21	bone_gasher_native_19	Ordinary
-22	skeleton_native_20	Ordinary
-23	corpse_bow_native_21	Ordinary
-24	burning_dead_native_22	Ordinary
-25	horror_native_23	Ordinary
-26	skeleton_captain_native_24	Ordinary
-27	corpse_captain_native_25	Ordinary
-28	burning_dead_captain_native_26	Ordinary
-29	horror_captain_native_27	Ordinary
-30	invisible_lord_native_28	Ordinary
-31	hidden_native_29	Ordinary
-32	stalker_native_30	Ordinary
-33	unseen_native_31	Ordinary
-34	illusion_weaver_native_32	Ordinary
-35	satyr_lord_native_33	Ordinary
-36	flesh_clan_native_34	Ordinary
-37	stone_clan_native_35	Ordinary
-38	fire_clan_native_36	Ordinary
-39	night_clan_native_37	Ordinary
-40	fiend_native_38	Ordinary
-41	blink_native_39	Ordinary
-42	gloom_native_40	Ordinary
-43	familiar_native_41	Ordinary
-44	flesh_clan_native_42	Ordinary
-45	stone_clan_native_43	Ordinary
-46	fire_clan_native_44	Ordinary
-47	night_clan_native_45	Ordinary
-48	acid_beast_native_46	Ordinary
-49	poison_spitter_native_47	Ordinary
-50	pit_beast_native_48	Ordinary
-51	lava_maw_native_49	Ordinary
-54	overlord_native_52	Ordinary
-55	mud_man_native_53	Ordinary
-56	toad_demon_native_54	Ordinary
-57	flayed_one_native_55	Ordinary
-58	wyrm_native_56	Ordinary
-59	cave_slug_native_57	Ordinary
-60	devil_wyrm_native_58	Ordinary
-61	devourer_native_59	Ordinary
-62	magma_demon_native_60	Ordinary
-63	blood_stone_native_61	Ordinary
-64	hell_stone_native_62	Ordinary
-65	lava_lord_native_63	Ordinary
-66	horned_demon_native_64	Ordinary
-67	mud_runner_native_65	Ordinary
-68	frost_charger_native_66	Ordinary
-69	obsidian_lord_native_67	Ordinary
-70	oldboned_native_68	Ordinary
-71	red_death_native_69	Ordinary
-72	litch_demon_native_70	Ordinary
-73	undead_balrog_native_71	Ordinary
-74	incinerator_native_72	Ordinary
-75	flame_lord_native_73	Ordinary
-76	doom_fire_native_74	Ordinary
-77	hell_burner_native_75	Ordinary
-78	red_storm_native_76	Ordinary
-79	storm_rider_native_77	Ordinary
-80	storm_lord_native_78	Ordinary
-81	maelstrom_native_79	Ordinary
-82	devil_kin_brute_native_80	Ordinary
-83	winged_demon_native_81	Ordinary
-84	gargoyle_native_82	Ordinary
-85	blood_claw_native_83	Ordinary
-86	death_wing_native_84	Ordinary
-87	slayer_native_85	Ordinary
-88	guardian_native_86	Ordinary
-89	vortex_lord_native_87	Ordinary
-90	balrog_native_88	Ordinary
-91	cave_viper_native_89	Ordinary
-92	fire_drake_native_90	Ordinary
-93	gold_viper_native_91	Ordinary
-94	azure_drake_native_92	Ordinary
-95	black_knight_native_93	Ordinary
-96	doom_guard_native_94	Ordinary
-97	steel_lord_native_95	Ordinary
-98	blood_knight_native_96	Ordinary
-99	the_shredded_native_97	Ordinary
-100	hollow_one_native_98	Ordinary
-101	pain_master_native_99	Ordinary
-102	reality_weaver_native_100	Ordinary
-103	succubus_native_101	Ordinary
-104	snow_witch_native_102	Ordinary
-105	hell_spawn_native_103	Ordinary
-106	soul_burner_native_104	Ordinary
-107	counselor_native_105	Ordinary
-108	magistrate_native_106	Ordinary
-109	cabalist_native_107	Ordinary
-110	advocate_native_108	Ordinary
-113	the_arch_litch_malignus_native_111	Ordinary
-114	hellboar_native_112	Ordinary
-115	stinger_native_113	Ordinary
-116	psychorb_native_114	Ordinary
-117	arachnon_native_115	Ordinary
-118	felltwin_native_116	Ordinary
-119	hork_spawn_native_117	Ordinary
-120	venomtail_native_118	Ordinary
-121	necromorb_native_119	Ordinary
-122	spider_lord_native_120	Ordinary
-123	lashworm_native_121	Ordinary
-124	torchant_native_122	Ordinary
-125	hork_demon_native_123	Ordinary
-126	hell_bug_native_124	Ordinary
-127	gravedigger_native_125	Ordinary
-128	tomb_rat_native_126	Ordinary
-129	firebat_native_127	Ordinary
-130	skullwing_native_128	Ordinary
-131	lich_native_129	Ordinary
-132	crypt_demon_native_130	Ordinary
-133	hellbat_native_131	Ordinary
-134	bone_demon_native_132	Ordinary
-135	arch_lich_native_133	Ordinary
-136	biclops_native_134	Ordinary
-137	flesh_thing_native_135	Ordinary
-138	reaper_native_136	Ordinary
-139	na_krul_native_137	Ordinary
+monster_id	monster_symbol	spawn_role	coverage_mode
+52	skeleton_king_native_50	Quest	Complete
+53	the_butcher_native_51	Quest	Complete
+140	snotspill	Quest	Complete
+111	golem_native_109	Summon	Complete
+112	the_dark_lord_native_110	Boss	Complete
+1	base_monster	Ordinary	Complete
+3	ghoul_native_1	Ordinary	Complete
+4	rotting_carcass_native_2	Ordinary	Complete
+5	black_death_native_3	Ordinary	Complete
+6	fallen_one_native_4	Ordinary	Complete
+7	carver_native_5	Ordinary	Complete
+8	devil_kin_native_6	Ordinary	Complete
+9	dark_one_native_7	Ordinary	Complete
+10	skeleton_native_8	Ordinary	Complete
+11	corpse_axe_native_9	Ordinary	Complete
+12	burning_dead_native_10	Ordinary	Complete
+13	horror_native_11	Ordinary	Complete
+14	fallen_one_native_12	Ordinary	Complete
+15	carver_native_13	Ordinary	Complete
+16	devil_kin_native_14	Ordinary	Complete
+17	dark_one_native_15	Ordinary	Complete
+18	scavenger_native_16	Ordinary	Complete
+19	plague_eater_native_17	Ordinary	Complete
+20	shadow_beast_native_18	Ordinary	Complete
+21	bone_gasher_native_19	Ordinary	Complete
+22	skeleton_native_20	Ordinary	Complete
+23	corpse_bow_native_21	Ordinary	Complete
+24	burning_dead_native_22	Ordinary	Complete
+25	horror_native_23	Ordinary	Complete
+26	skeleton_captain_native_24	Ordinary	Complete
+27	corpse_captain_native_25	Ordinary	Complete
+28	burning_dead_captain_native_26	Ordinary	Complete
+29	horror_captain_native_27	Ordinary	Complete
+30	invisible_lord_native_28	Ordinary	Complete
+31	hidden_native_29	Ordinary	Complete
+32	stalker_native_30	Ordinary	Complete
+33	unseen_native_31	Ordinary	Complete
+34	illusion_weaver_native_32	Ordinary	Complete
+35	satyr_lord_native_33	Ordinary	Complete
+36	flesh_clan_native_34	Ordinary	Complete
+37	stone_clan_native_35	Ordinary	Complete
+38	fire_clan_native_36	Ordinary	Complete
+39	night_clan_native_37	Ordinary	Complete
+40	fiend_native_38	Ordinary	Complete
+41	blink_native_39	Ordinary	Complete
+42	gloom_native_40	Ordinary	Complete
+43	familiar_native_41	Ordinary	Complete
+44	flesh_clan_native_42	Ordinary	Complete
+45	stone_clan_native_43	Ordinary	Complete
+46	fire_clan_native_44	Ordinary	Complete
+47	night_clan_native_45	Ordinary	Complete
+48	acid_beast_native_46	Ordinary	Complete
+49	poison_spitter_native_47	Ordinary	Complete
+50	pit_beast_native_48	Ordinary	Complete
+51	lava_maw_native_49	Ordinary	Complete
+54	overlord_native_52	Ordinary	Complete
+55	mud_man_native_53	Ordinary	Complete
+56	toad_demon_native_54	Ordinary	Complete
+57	flayed_one_native_55	Ordinary	Complete
+58	wyrm_native_56	Ordinary	Complete
+59	cave_slug_native_57	Ordinary	Complete
+60	devil_wyrm_native_58	Ordinary	Complete
+61	devourer_native_59	Ordinary	Complete
+62	magma_demon_native_60	Ordinary	Complete
+63	blood_stone_native_61	Ordinary	Complete
+64	hell_stone_native_62	Ordinary	Complete
+65	lava_lord_native_63	Ordinary	Complete
+66	horned_demon_native_64	Ordinary	Complete
+67	mud_runner_native_65	Ordinary	Complete
+68	frost_charger_native_66	Ordinary	Complete
+69	obsidian_lord_native_67	Ordinary	Complete
+70	oldboned_native_68	Ordinary	Complete
+71	red_death_native_69	Ordinary	Complete
+72	litch_demon_native_70	Ordinary	Complete
+73	undead_balrog_native_71	Ordinary	Complete
+74	incinerator_native_72	Ordinary	Complete
+75	flame_lord_native_73	Ordinary	Complete
+76	doom_fire_native_74	Ordinary	Complete
+77	hell_burner_native_75	Ordinary	Complete
+78	red_storm_native_76	Ordinary	Complete
+79	storm_rider_native_77	Ordinary	Complete
+80	storm_lord_native_78	Ordinary	Complete
+81	maelstrom_native_79	Ordinary	Complete
+82	devil_kin_brute_native_80	Ordinary	Complete
+83	winged_demon_native_81	Ordinary	Complete
+84	gargoyle_native_82	Ordinary	Complete
+85	blood_claw_native_83	Ordinary	Complete
+86	death_wing_native_84	Ordinary	Complete
+87	slayer_native_85	Ordinary	Complete
+88	guardian_native_86	Ordinary	Complete
+89	vortex_lord_native_87	Ordinary	Complete
+90	balrog_native_88	Ordinary	Complete
+91	cave_viper_native_89	Ordinary	Complete
+92	fire_drake_native_90	Ordinary	Complete
+93	gold_viper_native_91	Ordinary	Complete
+94	azure_drake_native_92	Ordinary	Complete
+95	black_knight_native_93	Ordinary	Complete
+96	doom_guard_native_94	Ordinary	Complete
+97	steel_lord_native_95	Ordinary	Complete
+98	blood_knight_native_96	Ordinary	Complete
+99	the_shredded_native_97	Ordinary	Complete
+100	hollow_one_native_98	Ordinary	Complete
+101	pain_master_native_99	Ordinary	Complete
+102	reality_weaver_native_100	Ordinary	Complete
+103	succubus_native_101	Ordinary	Complete
+104	snow_witch_native_102	Ordinary	Complete
+105	hell_spawn_native_103	Ordinary	Complete
+106	soul_burner_native_104	Ordinary	Complete
+107	counselor_native_105	Ordinary	Complete
+108	magistrate_native_106	Ordinary	Complete
+109	cabalist_native_107	Ordinary	Complete
+110	advocate_native_108	Ordinary	Complete
+113	the_arch_litch_malignus_native_111	Ordinary	Complete
+114	hellboar_native_112	Ordinary	Complete
+115	stinger_native_113	Ordinary	Complete
+116	psychorb_native_114	Ordinary	Complete
+117	arachnon_native_115	Ordinary	Complete
+118	felltwin_native_116	Ordinary	Complete
+119	hork_spawn_native_117	Ordinary	Complete
+120	venomtail_native_118	Ordinary	Complete
+121	necromorb_native_119	Ordinary	Complete
+122	spider_lord_native_120	Ordinary	Complete
+123	lashworm_native_121	Ordinary	Complete
+124	torchant_native_122	Ordinary	Complete
+125	hork_demon_native_123	Ordinary	Complete
+126	hell_bug_native_124	Ordinary	Complete
+127	gravedigger_native_125	Ordinary	Complete
+128	tomb_rat_native_126	Ordinary	Complete
+129	firebat_native_127	Ordinary	Complete
+130	skullwing_native_128	Ordinary	Complete
+131	lich_native_129	Ordinary	Complete
+132	crypt_demon_native_130	Ordinary	Complete
+133	hellbat_native_131	Ordinary	Complete
+134	bone_demon_native_132	Ordinary	Complete
+135	arch_lich_native_133	Ordinary	Complete
+136	biclops_native_134	Ordinary	Complete
+137	flesh_thing_native_135	Ordinary	Complete
+138	reaper_native_136	Ordinary	Complete
+139	na_krul_native_137	Ordinary	Complete

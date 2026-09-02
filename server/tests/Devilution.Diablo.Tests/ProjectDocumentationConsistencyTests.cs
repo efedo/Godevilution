@@ -22,6 +22,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains($"active content schema is now `{currentVersion}`", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("ordinary_monster_capacity", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("default 190-slot", migrationStatus, StringComparison.Ordinal);
+        Assert.Contains("coverage_mode=Complete", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("Close the remaining native-parity combat and AI edge cases", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("Advance native-parity dungeon generation", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("Complete external content coverage for the remaining Hellfire", migrationStatus, StringComparison.Ordinal);
@@ -34,6 +35,7 @@ public sealed class ProjectDocumentationConsistencyTests
         var contentReadme = Read(root, "server", "content", "README.md");
         Assert.Contains(currentSchema, contentReadme, StringComparison.Ordinal);
         Assert.Contains("Explicit `monster_id` selectors are cross-checked", contentReadme, StringComparison.Ordinal);
+        Assert.Contains("`Complete` requires a role for every active monster type", contentReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("DevilutionY", contentReadme, StringComparison.OrdinalIgnoreCase);
 
         foreach (var packName in new[] { "base", "hellfire" }) {

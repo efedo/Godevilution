@@ -11,6 +11,13 @@ public enum AuthoritativeMonsterSpawnRole
     Quest,
 }
 
+/** Coverage promise made by a monster spawn-policy table. */
+public enum AuthoritativeMonsterSpawnPolicyCoverageMode
+{
+    Partial,
+    Complete,
+}
+
 /** Content-owned admission policy for ordinary procedural monster spawning. */
 public sealed record AuthoritativeMonsterSpawnPolicyDefinition(
     uint MonsterId,
@@ -22,9 +29,13 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalog
     private readonly IReadOnlyDictionary<uint, AuthoritativeMonsterSpawnRole> roles;
 
     public AuthoritativeMonsterSpawnPolicyCatalog(
-        IEnumerable<AuthoritativeMonsterSpawnPolicyDefinition> definitions)
+        IEnumerable<AuthoritativeMonsterSpawnPolicyDefinition> definitions,
+        AuthoritativeMonsterSpawnPolicyCoverageMode coverageMode =
+            AuthoritativeMonsterSpawnPolicyCoverageMode.Partial)
     {
         ArgumentNullException.ThrowIfNull(definitions);
+        if (!Enum.IsDefined(coverageMode))
+            throw new ArgumentOutOfRangeException(nameof(coverageMode));
         var values = definitions.ToArray();
         if (values.Any(definition => definition.MonsterId == 0
                 || !Enum.IsDefined(definition.SpawnRole))
@@ -36,7 +47,14 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalog
         roles = values
             .OrderBy(definition => definition.MonsterId)
             .ToDictionary(definition => definition.MonsterId, definition => definition.SpawnRole);
+        CoverageMode = coverageMode;
     }
+
+    /** Declared table coverage; complete tables are checked during activation. */
+    public AuthoritativeMonsterSpawnPolicyCoverageMode CoverageMode { get; }
+
+    public bool RequiresCompleteCoverage
+        => CoverageMode == AuthoritativeMonsterSpawnPolicyCoverageMode.Complete;
 
     public IReadOnlyList<AuthoritativeMonsterSpawnPolicyDefinition> Definitions
         => roles
@@ -96,10 +114,39 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalog
         StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var coverageMode = ParseCoverageMode(table);
         return new AuthoritativeMonsterSpawnPolicyCatalog(table.Rows.Select(row =>
             new AuthoritativeMonsterSpawnPolicyDefinition(
                 AuthoritativeMonsterIdentity.Resolve(row, stableIds),
-                ParseRole(row.Required("spawn_role"), row.LineNumber))));
+                ParseRole(row.Required("spawn_role"), row.LineNumber))),
+            coverageMode);
+    }
+
+    private static AuthoritativeMonsterSpawnPolicyCoverageMode ParseCoverageMode(
+        TsvTable table)
+    {
+        var declared = table.Rows
+            .Select(row => row.TryGet("coverage_mode", out var value)
+                ? value.Trim()
+                : string.Empty)
+            .ToArray();
+        var values = declared
+            .Where(value => value.Length != 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (values.Length == 0)
+            return AuthoritativeMonsterSpawnPolicyCoverageMode.Partial;
+        if (values.Length != 1 || declared.Any(value => value.Length == 0))
+            throw new InvalidDataException(
+                $"Monster spawn policy table '{table.SourcePath}' has inconsistent coverage_mode declarations.");
+        if (Enum.TryParse<AuthoritativeMonsterSpawnPolicyCoverageMode>(
+                values[0],
+                ignoreCase: true,
+                out var mode)
+            && Enum.IsDefined(mode))
+            return mode;
+        throw new InvalidDataException(
+            $"Monster spawn policy table '{table.SourcePath}' has unknown coverage mode '{values[0]}'.");
     }
 
     private static AuthoritativeMonsterSpawnRole ParseRole(string value, int lineNumber)

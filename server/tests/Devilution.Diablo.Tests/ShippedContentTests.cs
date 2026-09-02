@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.443.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.444.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -87,6 +87,10 @@ public sealed class ShippedContentTests
         var spawnPolicies = AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
             spawnPolicyTable.SourcePath,
             spawnPolicyTable.ToCanonicalTsv());
+        Assert.True(spawnPolicies.RequiresCompleteCoverage);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPolicyCoverageMode.Complete,
+            spawnPolicies.CoverageMode);
         spawnPolicies.ValidateCompleteMonsterTypes(monsterTypes);
         Assert.Equal(
             AuthoritativeMonsterSpawnRole.Ordinary,
@@ -292,6 +296,40 @@ public sealed class ShippedContentTests
         Assert.Equal(
             "The armories of Hell are home to the Warlord of Blood. In his wake lay the mutilated bodies of thousands. Angels and men alike have been cut down to fulfill his endless sacrifices to the Dark ones who scream for one thing - blood.",
             dialogueMessages.TryGet(256, out var bloodwar) ? bloodwar.Text : null);
+    }
+
+    [Fact]
+    public void CompleteSpawnPolicyDeclarationRejectsAnIncompleteActivePack()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var source = basePack.Tables
+            .Single(table => table.SourcePath == "monster_spawn_policies.tsv")
+            .ToCanonicalTsv();
+        var incomplete = string.Join(
+                '\n',
+                source.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(line => !line.StartsWith("139\t", StringComparison.Ordinal)))
+            + "\n";
+        var tables = basePack.Tables
+            .Where(table => table.SourcePath != "monster_spawn_policies.tsv")
+            .Append(TsvTable.Parse("monster_spawn_policies.tsv", incomplete))
+            .ToArray();
+        var pack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            tables,
+            dependencies: [],
+            overlays: [],
+            schema: basePack.Schema,
+            assets: basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("incomplete-spawn-policy", "1", [pack]))));
+
+        Assert.Contains("Monster spawn policy is missing identities", exception.Message);
+        Assert.Contains("139", exception.Message);
     }
 
     [Fact]
@@ -859,7 +897,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.442.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.443.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -3243,7 +3281,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.443.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.444.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

@@ -651,7 +651,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (monsterTypes is null)
                 throw new InvalidDataException(
                     "Monster spawn policies require monster_types.tsv.");
-            monsterSpawnPolicies.ValidateMonsterTypes(monsterTypes);
+            if (monsterSpawnPolicies.RequiresCompleteCoverage)
+                monsterSpawnPolicies.ValidateCompleteMonsterTypes(monsterTypes);
+            else
+                monsterSpawnPolicies.ValidateMonsterTypes(monsterTypes);
         }
         var nativeDunMonsters = content.TryGetTable(
             "native_dun_monsters.tsv",

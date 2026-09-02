@@ -4,6 +4,14 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an explicit `coverage_mode` contract to `monster_spawn_policies.tsv`.
+  The shipped base table declares complete coverage and activation rejects
+  missing active monster identities; omitted declarations remain partial for
+  backward-compatible custom packs.
+
+- Advance the Diablo content schema to `1.444.0` for spawn-policy coverage
+  metadata; `1.443.0` remains accepted as the previous additive schema.
+
 - Refresh the migration-status priorities so they describe remaining combat/AI,
   dungeon-generation, content-coverage, Godot, replay, operations, and Lua
   work instead of listing already-migrated spell behaviors as future work.

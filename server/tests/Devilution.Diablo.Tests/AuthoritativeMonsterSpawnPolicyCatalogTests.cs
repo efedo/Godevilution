@@ -41,11 +41,46 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalogTests
                 + "111\tgolem_native_109\tSummon\n");
 
         Assert.False(catalog.IsOrdinary(111));
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPolicyCoverageMode.Partial,
+            catalog.CoverageMode);
+        Assert.False(catalog.RequiresCompleteCoverage);
         Assert.Equal(AuthoritativeMonsterSpawnRole.Summon, Assert.Single(catalog.Definitions).SpawnRole);
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
                 "monster_spawn_policies.tsv",
                 "monster_id\tspawn_role\n2\tencounter\n"));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesCompleteCoverageDeclaration()
+    {
+        var catalog = AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
+            "monster_spawn_policies.tsv",
+            "monster_id\tspawn_role\tcoverage_mode\n"
+                + "2\tOrdinary\tComplete\n"
+                + "3\tQuest\tcomplete\n");
+
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPolicyCoverageMode.Complete,
+            catalog.CoverageMode);
+        Assert.True(catalog.RequiresCompleteCoverage);
+    }
+
+    [Fact]
+    public void RejectsInconsistentCoverageDeclarations()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
+                "monster_spawn_policies.tsv",
+                "monster_id\tspawn_role\tcoverage_mode\n"
+                    + "2\tOrdinary\tComplete\n"
+                    + "3\tQuest\tPartial\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
+                "monster_spawn_policies.tsv",
+                "monster_id\tspawn_role\tcoverage_mode\n"
+                    + "2\tOrdinary\tUnknown\n"));
     }
 
     [Fact]
