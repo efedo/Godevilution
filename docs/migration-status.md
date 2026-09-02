@@ -8,6 +8,10 @@ projection boundaries. Projectiles remain dynamically allocated in the native
 runtime; their 125-entry save payload bound is a persistence-format limit, not
 an active projectile pool contract.
 
+The generic host now also rejects over-capacity native object and world-item
+groups per level, completing the transport-side pool checks already enforced by
+the server mapper and client projections.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.

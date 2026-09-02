@@ -75,6 +75,30 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsSnapshotsBeyondNativeObjectAndItemCapacityPerLevel()
+    {
+        var objectSnapshot = new Snapshot();
+        for (var index = 1; index <= 128; index++)
+            objectSnapshot.Objects.Add(new ObjectSnapshot {
+                EntityId = (uint)index,
+                LevelId = 1,
+            });
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(objectSnapshot));
+
+        var itemSnapshot = new Snapshot();
+        for (var index = 1; index <= 128; index++)
+            itemSnapshot.WorldItems.Add(new WorldItemSnapshot {
+                EntityId = (uint)index,
+                LevelId = 1,
+            });
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(itemSnapshot));
+    }
+
+    [Fact]
     public void AcceptsOmittedAndPrintablePlayerNames()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

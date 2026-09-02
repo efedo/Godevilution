@@ -9,6 +9,8 @@ public static class AuthoritativeSnapshotValidator
 {
     public const int Sha256HexLength = 64;
     private const int NativeMaximumMonsterCount = 200;
+    private const int NativeMaximumObjectCount = 127;
+    private const int NativeMaximumItemCount = 127;
     private const int NativeMaximumPortalCount = 4;
     private const int MaximumWorldMutationCount = 4096;
 
@@ -21,6 +23,8 @@ public static class AuthoritativeSnapshotValidator
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
+        ValidateObjectPoolCapacity(snapshot);
+        ValidateWorldItemPoolCapacity(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
 
@@ -115,6 +119,26 @@ public static class AuthoritativeSnapshotValidator
                 throw new InvalidDataException(
                     $"The authoritative snapshot contains more than {NativeMaximumMonsterCount} "
                     + $"monsters on level {group.Key}, exceeding the native monster capacity.");
+        }
+    }
+
+    private static void ValidateObjectPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var group in snapshot.Objects.GroupBy(@object => @object.LevelId)) {
+            if (group.Count() > NativeMaximumObjectCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumObjectCount} "
+                    + $"objects on level {group.Key}, exceeding the native object capacity.");
+        }
+    }
+
+    private static void ValidateWorldItemPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var group in snapshot.WorldItems.GroupBy(item => item.LevelId)) {
+            if (group.Count() > NativeMaximumItemCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumItemCount} "
+                    + $"world items on level {group.Key}, exceeding the native item capacity.");
         }
     }
 
