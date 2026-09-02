@@ -106,7 +106,8 @@ Raw DUN conversion-layer identities retain their separate 1–157 bound.
 Native `.til` d-piece references and `.sol`/TSV d-piece properties are now
 bounded to DevilutionX's `MAXTILES` range (0–1378), preventing external
 collision bundles, level projections, or authored mutations from carrying
-unrepresentable piece identities.
+unrepresentable piece identities. Authored transparency and mega-tile mutation
+values now enforce the corresponding native signed-byte and byte ranges too.
 
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded

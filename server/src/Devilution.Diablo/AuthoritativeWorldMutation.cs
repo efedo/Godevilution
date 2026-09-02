@@ -60,6 +60,8 @@ public sealed class AuthoritativeWorldMutationTransparencyRectangle
         : base(x, y, width, height)
     {
         Value = value;
+        if (value > sbyte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(value));
     }
 
     public ushort Value { get; }
@@ -137,6 +139,8 @@ public sealed class AuthoritativeWorldMutationMegaTileAssignment
         X = x;
         Y = y;
         TileId = tileId;
+        if (tileId > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(tileId));
     }
 
     public int X { get; }
@@ -1075,7 +1079,13 @@ public sealed class AuthoritativeWorldMutationCatalog
                     throw new InvalidDataException(
                         $"World mutation row {row.LineNumber} contains an invalid {column} assignment '{assignment}'.");
                 }
-                return new AuthoritativeWorldMutationMegaTileAssignment(x, y, tileId);
+                try {
+                    return new AuthoritativeWorldMutationMegaTileAssignment(x, y, tileId);
+                } catch (ArgumentOutOfRangeException exception) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} assignment '{assignment}'.",
+                        exception);
+                }
             })
             .ToArray();
     }

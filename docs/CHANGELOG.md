@@ -15,6 +15,8 @@ All notable changes to this fork are documented below.
   `MAXTILES` range (0–1378) before collision materialization.
 - Enforced the same native d-piece bound on projected level layers and authored
   `piece_layer_rects` mutations.
+- Enforced native transparency and mega-tile value ranges on authored mutation
+  assignments before publication.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

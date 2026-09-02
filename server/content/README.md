@@ -668,7 +668,8 @@ separate 1–157 bound.
 Native `.til` d-piece references and `.sol`/TSV d-piece properties are bounded
 to DevilutionX's `MAXTILES` range (0–1378) before collision geometry is
 materialized; projected level layers and `piece_layer_rects` enforce the same
-bound.
+bound. `transparency_rects` and `mega_tile_assignments` likewise enforce the
+native signed-byte and byte value ranges before publication.
 Authored `SpawnNativeMonster` quest follow-ups use the same resolver during
 activation and command admission, preventing an ambiguous selector from
 mutating quest state before spawn resolution.
