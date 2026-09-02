@@ -352,6 +352,77 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidMonsterStateAndPackLeaderProjection()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    Alive = true,
+                    HitPoints = 1,
+                    MaxHitPoints = 1,
+                },
+                new MonsterSnapshot {
+                    EntityId = 2,
+                    LevelId = 1,
+                    LeaderRelation = 1,
+                    LeaderEntityId = 1,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMalformedMonsterVitalityCombatAndPackState()
+    {
+        var impossibleHealth = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 1,
+                    MaxHitPoints = 1,
+                    Alive = false,
+                },
+            },
+        };
+        var invalidUniqueIdentity = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    UniqueIdentity = "unique-without-flag",
+                },
+            },
+        };
+        var invalidResistance = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    FireResistance = 101,
+                },
+            },
+        };
+        var invalidPackLeader = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    LeaderRelation = 1,
+                    LeaderEntityId = 99,
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            impossibleHealth,
+            invalidUniqueIdentity,
+            invalidResistance,
+            invalidPackLeader,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

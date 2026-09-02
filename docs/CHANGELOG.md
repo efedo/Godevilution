@@ -23,6 +23,8 @@ All notable changes to this fork are documented below.
   set-level-origin, and procedural-level identity validation.
 - Converged generic host admission with native and Godot projected player-action
   timing, movement, attack, cast, death, and transition validation.
+- Converged generic host admission with native and Godot monster vitality,
+  combat-range, movement, and pack-leader validation.
 - Enforced the native four-route portal pool in authoritative world-state
   construction, static catalog loading, Town Portal creation, and save restore;
   runtime state can no longer grow beyond the projection boundary.

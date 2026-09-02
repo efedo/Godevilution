@@ -15,6 +15,10 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeMaximumItemCount = 127;
     private const int NativeMaximumWarpTriggerCount = 7;
     private const int NativeMaximumPortalCount = 4;
+    private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
+    private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
+    private const int MaximumNativeMonsterToHit = 255;
+    private const int MaximumNativeMonsterDirection = 7;
     private const int NativeMaximumWidth = 112;
     private const int NativeMaximumHeight = 112;
     private const int NativeMaximumMegaWidth = 40;
@@ -42,6 +46,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateMaterializedProceduralLevels(snapshot);
         ValidateEntityPositions(snapshot);
         ValidatePlayerActions(snapshot);
+        ValidateMonsters(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
@@ -532,6 +537,75 @@ public static class AuthoritativeSnapshotValidator
         var targetCell = targetY * level.Width + targetX;
         return targetCell <= int.MaxValue
             && !level.BlockedCells.Contains((int)targetCell);
+    }
+
+    private static void ValidateMonsters(Snapshot snapshot)
+    {
+        var monstersById = new Dictionary<uint, MonsterSnapshot>();
+        foreach (var monster in snapshot.Monsters) {
+            var hitPointsQ6 = monster.HitPointsQ6 == 0 && monster.HitPoints != 0
+                ? (long)monster.HitPoints * 64
+                : monster.HitPointsQ6;
+            var maxHitPointsQ6 = monster.MaxHitPointsQ6 == 0 && monster.MaxHitPoints != 0
+                ? (long)monster.MaxHitPoints * 64
+                : monster.MaxHitPointsQ6;
+            if (monster.EntityId == 0
+                || monster.HitPoints < 0
+                || monster.MaxHitPoints < 0
+                || monster.MaxHitPoints > 0 && monster.HitPoints > monster.MaxHitPoints
+                || monster.HitPointsQ6 < 0
+                || monster.MaxHitPointsQ6 < 0
+                || maxHitPointsQ6 < hitPointsQ6
+                || hitPointsQ6 < 0
+                || monster.Alive != (hitPointsQ6 > 0)
+                || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
+                || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique
+                || monster.DialogueMessageId < 0
+                || monster.DialogueMessageId > short.MaxValue
+                || monster.DialogueMessageId != 0 && !monster.IsUnique
+                || monster.AttackDamage < 0
+                || monster.MinDamage < 0
+                || monster.MaxDamage < monster.MinDamage
+                || monster.MinDamageSpecial < 0
+                || monster.MaxDamageSpecial < monster.MinDamageSpecial
+                || monster.AggroRange < 0
+                || monster.MonsterLevel < 0
+                || monster.DeathAnimationTicks is < 0 or > MaximumNativeMonsterDeathAnimationTicks
+                || monster.DeathTicksRemaining < 0
+                || monster.DeathTicksRemaining > monster.DeathAnimationTicks
+                || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
+                || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
+                || monster.ToHit is < 0 or > MaximumNativeMonsterToHit
+                || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
+                || monster.Intelligence is < 0 or > byte.MaxValue
+                || monster.Direction is < 0 or > MaximumNativeMonsterDirection
+                || monster.FireResistance is < -100 or > 100
+                || monster.LightningResistance is < -100 or > 100
+                || monster.MagicResistance is < -100 or > 100
+                || monster.AcidResistance is < -100 or > 100
+                || !monster.IsPlayerMinion && monster.OwnerPlayerId != 0
+                || monster.LeaderRelation is < 0 or > 2
+                || (monster.LeaderRelation == 0
+                    ? monster.LeaderEntityId != 0
+                    : monster.LeaderEntityId == 0)
+                || monster.LeaderRelation != 0 && monster.IsUnique
+                || monster.PackSize is < 0 or > byte.MaxValue
+                || monster.ActiveForTicks is < 0 or > byte.MaxValue
+                || !monstersById.TryAdd(monster.EntityId, monster)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid monster state.");
+            }
+        }
+
+        foreach (var monster in snapshot.Monsters.Where(monster => monster.LeaderRelation != 0)) {
+            if (!monstersById.TryGetValue(monster.LeaderEntityId, out var leader)
+                || leader.EntityId == monster.EntityId
+                || !leader.Alive
+                || leader.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid monster pack leader.");
+            }
+        }
     }
 
     private static void ValidateMonsterMovementTiming(Snapshot snapshot)

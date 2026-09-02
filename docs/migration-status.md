@@ -31,6 +31,9 @@ geometry and malformed set-level origins or procedural-level identity lists.
 Generic host admission now also rejects malformed projected player-action timing
 and semantic shapes, including blocked movement and invalid cast sources.
 
+Generic host admission now also rejects malformed monster vitality, combat
+ranges, movement state, and pack-leader relationships before transmission.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.
