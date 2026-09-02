@@ -82,6 +82,21 @@ public sealed class ShippedContentTests
             monsterTypeTable.SourcePath,
             monsterTypeTable.ToCanonicalTsv());
         Assert.Equal(139, monsterTypes.Definitions.Count);
+        var spawnPolicyTable = pack.Tables.Single(
+            table => table.SourcePath == "monster_spawn_policies.tsv");
+        var spawnPolicies = AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
+            spawnPolicyTable.SourcePath,
+            spawnPolicyTable.ToCanonicalTsv());
+        spawnPolicies.ValidateCompleteMonsterTypes(monsterTypes);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnRole.Ordinary,
+            spawnPolicies.Definitions.Single(definition => definition.MonsterId == 1).SpawnRole);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnRole.Quest,
+            spawnPolicies.Definitions.Single(definition => definition.MonsterId == 52).SpawnRole);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnRole.Summon,
+            spawnPolicies.Definitions.Single(definition => definition.MonsterId == 111).SpawnRole);
         Assert.Equal(
             [
                 "Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One",

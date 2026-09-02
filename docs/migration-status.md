@@ -63,13 +63,12 @@ available to production generation; native identity 133 has no source DUN
 conversion row and remains stable-ID-only.
 
 The base pack also declares the native Golem and The Dark Lord identities
-(stable IDs 111 and 112) with their available DUN mappings. Ordinary procedural
-generation excludes these special summon and boss definitions through the
-content-owned `monster_spawn_policies.tsv` table; the same table keeps the
-authored Skeleton King, Butcher, and Snotspill encounters out of ordinary
-scattering. Golem remains available through the server-owned summon path and
-The Dark Lord through authored boss content. Packs that omit the table retain
-the legacy identity fallback.
+(stable IDs 111 and 112) with their available DUN mappings. Every shipped
+monster now has an explicit role in the content-owned
+`monster_spawn_policies.tsv` table: ordinary identities may scatter, while the
+authored Skeleton King, Butcher, and Snotspill encounters, Golem summon, and
+The Dark Lord boss remain excluded from ordinary generation. Packs that omit the
+table retain the legacy identity fallback.
 
 The Golem spell now carries its content-owned summon monster identity and
 activation validates that reference against `monster_types.tsv`; older spell

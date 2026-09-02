@@ -63,6 +63,32 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalogTests
         Assert.Throws<InvalidDataException>(() => catalog.ValidateMonsterTypes(types));
     }
 
+    [Fact]
+    public void ValidatesCompleteCoverageWhenAnActivePackRequiresExplicitRoles()
+    {
+        var catalog = new AuthoritativeMonsterSpawnPolicyCatalog([
+            new AuthoritativeMonsterSpawnPolicyDefinition(
+                2,
+                AuthoritativeMonsterSpawnRole.Ordinary),
+        ]);
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2),
+            CreateType(3),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() =>
+            catalog.ValidateCompleteMonsterTypes(types));
+        catalog = new AuthoritativeMonsterSpawnPolicyCatalog([
+            new AuthoritativeMonsterSpawnPolicyDefinition(
+                2,
+                AuthoritativeMonsterSpawnRole.Ordinary),
+            new AuthoritativeMonsterSpawnPolicyDefinition(
+                3,
+                AuthoritativeMonsterSpawnRole.Quest),
+        ]);
+        catalog.ValidateCompleteMonsterTypes(types);
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(uint monsterId)
         => new(
             monsterId,

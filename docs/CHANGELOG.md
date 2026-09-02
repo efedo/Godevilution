@@ -12,6 +12,11 @@ All notable changes to this fork are documented below.
   avoiding numeric monster IDs in combat code while rejecting ambiguous
   content-pack mappings.
 
+- Declare an explicit ordinary/summon/boss/quest spawn role for every shipped
+  monster in the base content pack, with completeness validation that keeps
+  ordinary procedural admission content-owned while preserving partial-pack
+  compatibility fallbacks.
+
 - Move the ordinary procedural-monster ceiling into validated
   `level_generation.tsv` metadata. Custom packs may select a bounded capacity;
   rows that omit it retain the native 190-slot compatibility default.

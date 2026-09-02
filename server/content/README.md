@@ -74,9 +74,13 @@ composition. The Diablo module consumes these assets through
 loader and native geometry interpretation in the game module.
 
 The base monster catalog includes the native Golem and The Dark Lord identities
-(stable IDs 111 and 112) and their available DUN mappings. The ordinary spawn
-planner excludes these special summon and boss rows; Golem is admitted through
-the server-owned summon path and The Dark Lord through authored encounters.
+(stable IDs 111 and 112) and their available DUN mappings. The
+`monster_spawn_policies.tsv` table declares an explicit ordinary, summon, boss,
+or quest role for every shipped monster identity. The ordinary spawn planner
+excludes the special summon, boss, and quest rows; Golem is admitted through the
+server-owned summon path and The Dark Lord through authored encounters. Older
+packs with a partial or omitted policy table retain the validated compatibility
+fallback.
 The Golem spell row also declares `golem_monster_id=111`, so active content
 selects and validates the summon identity instead of relying on a combat-code
 native ID; older spell rows retain the native 109 fallback.

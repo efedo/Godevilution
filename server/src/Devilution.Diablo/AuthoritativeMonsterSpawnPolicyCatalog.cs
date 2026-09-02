@@ -76,6 +76,20 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalog
         }
     }
 
+    /** Ensures the active pack declares a role for every shipped monster type. */
+    public void ValidateCompleteMonsterTypes(AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        ValidateMonsterTypes(monsterTypes);
+        var missing = monsterTypes.Definitions
+            .Where(definition => !roles.ContainsKey(definition.MonsterId))
+            .Select(definition => definition.MonsterId)
+            .ToArray();
+        if (missing.Length > 0)
+            throw new InvalidDataException(
+                $"Monster spawn policy is missing identities: {string.Join(", ", missing)}.");
+    }
+
     public static AuthoritativeMonsterSpawnPolicyCatalog LoadTsv(
         string sourcePath,
         string contents,
