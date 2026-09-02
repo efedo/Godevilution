@@ -19,9 +19,13 @@ public sealed record AuthoritativeProceduralLevelDefinition(
 
     public AuthoritativeProceduralLevelDefinition Validate()
     {
-        if (Width < 3 || Height < 3 || Width > 512 || Height > 512)
+        if (Width < 3
+            || Height < 3
+            || Width > AuthoritativeLevel.NativeMaximumWidth
+            || Height > AuthoritativeLevel.NativeMaximumHeight)
             throw new InvalidDataException(
-                $"Procedural level {LevelId} dimensions must be between 3 and 512.");
+                $"Procedural level {LevelId} dimensions must be between 3 and the native "
+                + $"maximum of {AuthoritativeLevel.NativeMaximumWidth}x{AuthoritativeLevel.NativeMaximumHeight}.");
         if (BlockedPercent is < 0 or > 80)
             throw new InvalidDataException(
                 $"Procedural level {LevelId} blocked percent must be between 0 and 80.");

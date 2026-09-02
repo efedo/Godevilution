@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
 - Canonicalized native DUN transparency words to their low-byte signed-`int8_t`
   representation across the server, protocol, and Godot validation paths.
 - Mirrored the native `MAXTILES` d-piece bound in Godot snapshot validation.
+- Bound procedural level dimensions to the native 112x112 fine-grid contract
+  during content validation instead of allowing late materialization failures.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

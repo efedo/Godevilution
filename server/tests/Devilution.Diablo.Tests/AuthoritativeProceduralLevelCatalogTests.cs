@@ -65,6 +65,16 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelDefinition(1, 2, 10, 0, 10).Validate());
         Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeProceduralLevelDefinition(1, 113, 10, 0, 10).Validate());
+        Assert.Equal(
+            AuthoritativeLevel.NativeMaximumWidth,
+            new AuthoritativeProceduralLevelDefinition(
+                1,
+                AuthoritativeLevel.NativeMaximumWidth,
+                AuthoritativeLevel.NativeMaximumHeight,
+                0,
+                10).Validate().Width);
+        Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelDefinition(1, 10, 10, 0, 81).Validate());
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelDefinition(

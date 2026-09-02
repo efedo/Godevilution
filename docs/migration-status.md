@@ -113,6 +113,10 @@ loader.
 The Godot protocol model now enforces the same `MAXTILES` d-piece bound on
 authoritative `native_piece_layer` snapshots.
 
+Procedural level definitions now enforce the native 112x112 fine-grid ceiling
+at content validation time, preventing rows that would only fail later during
+world materialization.
+
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded
 to the native 200-slot range, while omitted fields preserve the default 190-slot
