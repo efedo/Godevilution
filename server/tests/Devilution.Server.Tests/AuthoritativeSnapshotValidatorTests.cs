@@ -1246,6 +1246,51 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsPlayerCombatModesWithCompatibleLifetimes()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CombatMode = PlayerCombatMode.Stand,
+                },
+                new PlayerSnapshot {
+                    EntityId = 2,
+                    CombatMode = PlayerCombatMode.Block,
+                    CombatModeEndTick = 4,
+                },
+                new PlayerSnapshot {
+                    EntityId = 3,
+                    CombatMode = PlayerCombatMode.GotHit,
+                    CombatModeEndTick = 5,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsContradictoryPlayerCombatModeLifetimes()
+    {
+        foreach (var player in new[] {
+            new PlayerSnapshot {
+                EntityId = 1,
+                CombatMode = PlayerCombatMode.Stand,
+                CombatModeEndTick = 1,
+            },
+            new PlayerSnapshot {
+                EntityId = 1,
+                CombatMode = PlayerCombatMode.Block,
+            },
+            new PlayerSnapshot {
+                EntityId = 1,
+                CombatMode = PlayerCombatMode.GotHit,
+            },
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(new Snapshot { Players = { player } }));
+    }
+
+    [Fact]
     public void AcceptsMovementTimingAndOccupancyForAnActiveMovingMonster()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

@@ -39,6 +39,9 @@ Generic host admission now also rejects malformed authored object effect,
 quest-transition, reward, projectile, presentation, and breakage metadata
 before transmission.
 
+Generic host admission now also rejects contradictory player combat-mode
+lifetimes, matching native and Godot snapshot admission.
+
 Generic host admission now also rejects malformed world-item prices, native
 identity metadata, and item-state ranges before transmission.
 

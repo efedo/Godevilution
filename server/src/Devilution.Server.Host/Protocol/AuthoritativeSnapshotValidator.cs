@@ -94,6 +94,11 @@ public static class AuthoritativeSnapshotValidator
             if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
                 || !Enum.IsDefined(player.FacingDirection)
                 || !Enum.IsDefined(player.CombatMode)
+                || player.CombatMode == PlayerCombatMode.Stand
+                    && player.CombatModeEndTick != 0
+                || player.CombatMode is PlayerCombatMode.Block
+                    or PlayerCombatMode.GotHit
+                    && player.CombatModeEndTick == 0
                 || !Enum.IsDefined(player.AbilityKind)
                 || !Enum.IsDefined(player.AbilityTargetingKind)
                 || player.DiabloKillLevel > byte.MaxValue)

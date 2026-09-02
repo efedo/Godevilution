@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Converged generic host admission with native and Godot player combat-mode
+  lifetime validation for Stand, Block, and GotHit states.
 - Converged generic host admission with native and Godot authored object
   effect, quest-transition, reward, projectile, presentation, and breakage
   validation.
