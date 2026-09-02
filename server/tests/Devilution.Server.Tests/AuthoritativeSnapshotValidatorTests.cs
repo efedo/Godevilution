@@ -722,6 +722,148 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidPlayerResourcesAttributesSpellsStatusAndStash()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Life = 8,
+                    LifeMaximum = 10,
+                    Mana = 3,
+                    ManaMaximum = 5,
+                    BaseLifeMaximum = 10,
+                    BaseManaMaximum = 5,
+                    Gold = 100,
+                    StashGold = 200,
+                    StatPoints = 4,
+                    ReflectCharges = 2,
+                    LightRadius = 2,
+                    CharacterLevel = 50,
+                    DiabloKillLevel = byte.MaxValue,
+                    Attributes = new PlayerAttributesSnapshot {
+                        Strength = new AttributeSnapshot { Base = 10, Current = 12 },
+                        Magic = new AttributeSnapshot { Base = 8, Current = 9 },
+                        Dexterity = new AttributeSnapshot { Base = 7, Current = 8 },
+                        Vitality = new AttributeSnapshot { Base = 6, Current = 7 },
+                    },
+                    AbilitySpellId = 1,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot {
+                            SpellId = 1,
+                            Level = 2,
+                            TargetingKind = SpellTargetingKind.Player,
+                        },
+                    },
+                    StatusEffects = {
+                        new StatusEffectSnapshot {
+                            EffectId = 1,
+                            RemainingTicks = 3,
+                            Behavior = StatusEffectBehavior.Infravision,
+                        },
+                    },
+                    Stash = {
+                        new StashItemSnapshot {
+                            Page = 0,
+                            Cell = 0,
+                            Item = new ItemSnapshot {
+                                ItemSeed = 1,
+                                State = new ItemStateSnapshot(),
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMalformedPlayerCoreState()
+    {
+        var invalidResources = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Life = 11,
+                    LifeMaximum = 10,
+                    LightRadius = 1,
+                },
+            },
+        };
+        var incompleteAttributes = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Attributes = new PlayerAttributesSnapshot {
+                        Strength = new AttributeSnapshot { Base = 1, Current = 1 },
+                    },
+                },
+            },
+        };
+        var invalidSpells = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 16 },
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 1 },
+                    },
+                },
+            },
+        };
+        var invalidStatus = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    StatusEffects = {
+                        new StatusEffectSnapshot {
+                            EffectId = 1,
+                            RemainingTicks = 1,
+                            Behavior = StatusEffectBehavior.Search,
+                            Magnitude = 1,
+                        },
+                    },
+                },
+            },
+        };
+        var overlappingStash = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Stash = {
+                        new StashItemSnapshot {
+                            Page = 0,
+                            Cell = 0,
+                            Item = new ItemSnapshot {
+                                ItemSeed = 1,
+                                State = new ItemStateSnapshot { InventoryWidth = 2 },
+                            },
+                        },
+                        new StashItemSnapshot {
+                            Page = 0,
+                            Cell = 1,
+                            Item = new ItemSnapshot {
+                                ItemSeed = 2,
+                                State = new ItemStateSnapshot(),
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidResources,
+            incompleteAttributes,
+            invalidSpells,
+            invalidStatus,
+            overlappingStash,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

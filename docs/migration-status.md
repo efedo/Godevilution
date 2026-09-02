@@ -40,6 +40,10 @@ identity metadata, and item-state ranges before transmission.
 Generic host admission now also rejects malformed player inventory, equipment,
 belt, stash, held-item, and active-store projections before transmission.
 
+Generic host admission now also rejects malformed player resources, attributes,
+visited levels, memorized spells, status effects, and stash footprints before
+transmission.
+
 Generic host admission now also rejects malformed projectile source/lifetime,
 damage, behavior, presentation, direction, and native missile identity state.
 

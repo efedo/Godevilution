@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Converged generic host admission with native and Godot player resource,
+  attribute, visited-level, spell, status-effect, and stash validation.
 - Converged generic host admission with native and Godot player-item topology,
   identity, price, footprint, and active-store validation.
 - Converged generic host admission with native and Godot world-item price,

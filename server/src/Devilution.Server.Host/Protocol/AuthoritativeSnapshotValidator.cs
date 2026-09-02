@@ -29,11 +29,20 @@ public static class AuthoritativeSnapshotValidator
     private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
+    private const int NativeStashPageCount = 100;
+    private const int NativeStashCellCount = 100;
     private const int MaximumQuestCount = 4096;
     private const int MaximumQuestTownerInteractionCount = 1024;
     private const int MaximumSetLevelObjectOriginCount = 4096;
     private const int MaximumMaterializedProceduralLevelCount = 4096;
     private const int MaximumWorldMutationCount = 4096;
+    private const uint MaximumNativeSpellLevel = 15;
+    private const int MaximumMemorizedSpellCount = 51;
+    private const uint MaximumNativeCharacterLevel = 50;
+    private const uint MaximumNativeDiabloKillLevel = byte.MaxValue;
+    private const uint MaximumNativeReflectCharges = ushort.MaxValue;
+    private const int MinimumNativeLightRadius = 2;
+    private const int MaximumNativeLightRadius = 15;
 
     public static void Validate(Snapshot snapshot)
     {
@@ -42,6 +51,7 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerNames(snapshot);
         ValidatePlayerPoolCapacity(snapshot);
         ValidatePlayerNativeRanges(snapshot);
+        ValidatePlayerCoreState(snapshot);
         ValidatePlayerItemProjections(snapshot);
         ValidateQuests(snapshot);
         ValidateQuestTownerInteractions(snapshot);
@@ -79,12 +89,6 @@ public static class AuthoritativeSnapshotValidator
     {
         foreach (var player in snapshot.Players) {
             if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
-                || player.VisitedLevelIds.Count > 256
-                || player.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
-                || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count
-                || player.VisitedLevelIds.Count > 0
-                    && AuthoritativeLevelIdRules.IsRegularLevel(player.LevelId)
-                    && !player.VisitedLevelIds.Contains(player.LevelId)
                 || !Enum.IsDefined(player.FacingDirection)
                 || !Enum.IsDefined(player.CombatMode)
                 || !Enum.IsDefined(player.AbilityKind)
@@ -361,6 +365,177 @@ public static class AuthoritativeSnapshotValidator
                 || !NativeTextLimits.IsIdentityWithinLimit(quest.CompletionUniqueIdentity)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid quest state.");
+            }
+        }
+    }
+
+    private static void ValidatePlayerCoreState(Snapshot snapshot)
+    {
+        foreach (var player in snapshot.Players) {
+            ValidatePlayerResources(player);
+            ValidatePlayerAttributes(player);
+            ValidateVisitedLevels(player);
+            ValidatePlayerSpells(player);
+            ValidateStatusEffects(player);
+            ValidateStash(player);
+        }
+    }
+
+    private static void ValidatePlayerResources(PlayerSnapshot player)
+    {
+        if (player.Life < 0
+            || player.LifeMaximum < 0
+            || player.LifeMaximum > 0 && player.Life > player.LifeMaximum
+            || player.Mana < 0
+            || player.ManaMaximum < 0
+            || player.ManaMaximum > 0 && player.Mana > player.ManaMaximum
+            || player.BaseLifeMaximum < 0
+            || player.BaseManaMaximum < 0
+            || player.Gold > int.MaxValue
+            || player.StashGold > int.MaxValue
+            || player.StatPoints > int.MaxValue
+            || player.ReflectCharges > MaximumNativeReflectCharges
+            || player.LightRadius != 0
+                && (player.LightRadius is < MinimumNativeLightRadius or > MaximumNativeLightRadius)
+            || player.CharacterLevel > MaximumNativeCharacterLevel
+            || player.DiabloKillLevel > MaximumNativeDiabloKillLevel) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid player resources.");
+        }
+    }
+
+    private static void ValidatePlayerAttributes(PlayerSnapshot player)
+    {
+        var attributes = player.Attributes;
+        if (attributes is null)
+            return;
+
+        if (attributes.Strength is null
+            || attributes.Magic is null
+            || attributes.Dexterity is null
+            || attributes.Vitality is null
+            || attributes.Strength.Base < 0
+            || attributes.Strength.Current < 0
+            || attributes.Magic.Base < 0
+            || attributes.Magic.Current < 0
+            || attributes.Dexterity.Base < 0
+            || attributes.Dexterity.Current < 0
+            || attributes.Vitality.Base < 0
+            || attributes.Vitality.Current < 0) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid player attributes.");
+        }
+    }
+
+    private static void ValidateStatusEffects(PlayerSnapshot player)
+    {
+        if (player.StatusEffects.Count > 128)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many status effects.");
+
+        var effectIds = new HashSet<uint>();
+        foreach (var effect in player.StatusEffects) {
+            if (effect is null
+                || effect.EffectId == 0
+                || effect.RemainingTicks == 0
+                || !Enum.IsDefined(effect.Behavior)
+                || (effect.Behavior is StatusEffectBehavior.Infravision
+                        or StatusEffectBehavior.Search
+                        or StatusEffectBehavior.Etherealize)
+                    && effect.Magnitude != 0
+                || !effectIds.Add(effect.EffectId)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid status-effect state.");
+            }
+        }
+    }
+
+    private static void ValidateStash(PlayerSnapshot player)
+    {
+        if (player.StashOpen && player.ActiveStoreId != 0)
+            throw new InvalidDataException(
+                "The authoritative snapshot opens a stash and store simultaneously.");
+        if (player.Stash.Count > NativeStashPageCount * NativeStashCellCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many stash items.");
+
+        foreach (var item in player.Stash) {
+            if (item is null
+                || item.Page >= NativeStashPageCount
+                || item.Item is null) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid stash metadata.");
+            }
+        }
+
+        foreach (var page in player.Stash.Select(item => item.Page).Distinct()) {
+            var occupied = new bool[NativeStashCellCount];
+            foreach (var item in player.Stash.Where(item => item.Page == page)) {
+                var state = item.Item?.State
+                    ?? throw new InvalidDataException(
+                        "The authoritative snapshot contains a stash item without state.");
+                var widthValue = Math.Max(1U, state.InventoryWidth);
+                var heightValue = Math.Max(1U, state.InventoryHeight);
+                var column = item.Cell % 10;
+                var row = item.Cell / 10;
+                if (item.Cell >= NativeStashCellCount
+                    || widthValue > 10
+                    || heightValue > 10
+                    || column + widthValue > 10
+                    || row + heightValue > 10) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid stash footprint.");
+                }
+                var width = (int)widthValue;
+                var height = (int)heightValue;
+                var columnIndex = (int)column;
+                var rowIndex = (int)row;
+                for (var y = 0; y < height; y++) {
+                    for (var x = 0; x < width; x++) {
+                        var cell = (rowIndex + y) * 10 + columnIndex + x;
+                        if (occupied[cell])
+                            throw new InvalidDataException(
+                                "The authoritative snapshot contains overlapping stash items.");
+                        occupied[cell] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void ValidateVisitedLevels(PlayerSnapshot player)
+    {
+        if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
+            || player.VisitedLevelIds.Count > 256
+            || player.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
+            || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count
+            || player.VisitedLevelIds.Count > 0
+                && AuthoritativeLevelIdRules.IsRegularLevel(player.LevelId)
+                && !player.VisitedLevelIds.Contains(player.LevelId)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid visited-level state.");
+        }
+    }
+
+    private static void ValidatePlayerSpells(PlayerSnapshot player)
+    {
+        if (player.AbilitySpellId > byte.MaxValue
+            || player.MemorizedSpells.Count > MaximumMemorizedSpellCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains out-of-range player spell state.");
+
+        var spellIds = new HashSet<uint>();
+        foreach (var spell in player.MemorizedSpells) {
+            if (spell is null
+                || spell.SpellId == 0
+                || spell.SpellId > byte.MaxValue
+                || spell.Level == 0
+                || spell.Level > MaximumNativeSpellLevel
+                || !Enum.IsDefined(spell.TargetingKind)
+                || spell.DisplayName.Contains('\0')
+                || !spellIds.Add(spell.SpellId)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate memorized spells.");
             }
         }
     }
