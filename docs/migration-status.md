@@ -28,8 +28,9 @@ authored Skeleton King, Butcher, and Snotspill encounters remain unchanged.
 
 The base pack now also carries canonical Skeleton-family and Scavenger rows
 (Skeleton through Scavenger), including their native AI metadata and DUN
-monster mappings. These identities are available to production generation;
-remaining ordinary families continue to be added incrementally.
+monster mappings. Together with the later family blocks, the composed Hellfire
+catalog now covers every native monster identity from 0 through 137; the
+complete set is guarded by shipped-content regression coverage.
 
 The next early-undead progression is now available as well: Carver, Plague
 Eater, Shadow Beast, Bone Gasher, the ranged Skeleton family, and the Skeleton

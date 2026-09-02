@@ -635,8 +635,9 @@ turn those candidates and validated level-density metadata into bounded,
 walkable, seed-stable placements. Diablo content activation exposes that
 planner to the server adapter without bypassing the validated content boundary.
 The base pack now carries the canonical early undead and Fallen identities
-(Ghoul through Dark One) and their native DUN mappings; remaining ordinary
-monster families continue to be added incrementally. It also carries the
+(Ghoul through Dark One) and their native DUN mappings. Together with the
+later family blocks, the composed Hellfire catalog covers every native monster
+identity from 0 through 137. It also carries the
 canonical Skeleton-family and Scavenger rows (Skeleton through Scavenger) with
 the same validated native AI and DUN identity boundary, followed by the
 validated Plague Eater through Skeleton Captain progression. Native Carver is

@@ -6764,6 +6764,39 @@ public sealed class ShippedContentTests
         }
     }
 
+    [Fact]
+    public void ComposedHellfireMonsterCatalogCoversEveryNativeIdentity()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire-monster-coverage",
+            "1",
+            [basePack, hellfirePack]));
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
+
+        Assert.Equal(140, catalog.Definitions.Count);
+        Assert.Equal(
+            Enumerable.Range(1, 140).Select(value => (uint)value),
+            catalog.Definitions
+                .Select(definition => definition.MonsterId)
+                .OrderBy(value => value));
+        Assert.Equal(
+            Enumerable.Range(0, 138).Select(value => (uint)value),
+            catalog.Definitions
+                .Select(definition => definition.NativeMonsterId)
+                .Distinct()
+                .OrderBy(value => value));
+        Assert.Equal(
+            2,
+            catalog.Definitions.Count(definition => definition.NativeMonsterId == 0));
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

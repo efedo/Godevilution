@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Guard the shipped monster catalogs against identity gaps: the composed
+  Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,
+  keeping external monster content complete as overlays evolve.
+
 - Add an explicit `coverage_mode` contract to `monster_spawn_policies.tsv`.
   The shipped base table declares complete coverage and activation rejects
   missing active monster identities; omitted declarations remain partial for
