@@ -69,6 +69,28 @@ public sealed class AuthoritativeUniqueMonsterCatalog
     public IReadOnlyList<AuthoritativeUniqueMonsterDefinition> Definitions
         => definitions;
 
+    /**
+     * Validates explicit monster selectors against the active type catalog.
+     * Native-AI-only selectors remain deferred because their generated target
+     * may be supplied by a later level or set-piece materialization.
+     */
+    public void ValidateMonsterTypes(AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        foreach (var definition in Definitions.Where(definition => definition.MonsterId != 0)) {
+            if (!monsterTypes.TryGet(definition.MonsterId, out var monsterType))
+                throw new InvalidDataException(
+                    $"Unique monster {definition.Identity} references unknown monster {definition.MonsterId}.");
+            if (definition.NativeAi.Length != 0
+                && !string.Equals(
+                    definition.NativeAi,
+                    monsterType.NativeAi,
+                    StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    $"Unique monster {definition.Identity} does not match native AI '{definition.NativeAi}'.");
+        }
+    }
+
     public void ApplyTo(IReadOnlyList<AuthoritativeCombatTarget> targets)
     {
         ArgumentNullException.ThrowIfNull(targets);

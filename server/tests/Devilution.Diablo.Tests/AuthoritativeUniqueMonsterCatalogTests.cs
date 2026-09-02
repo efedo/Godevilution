@@ -39,6 +39,37 @@ public sealed class AuthoritativeUniqueMonsterCatalogTests
     }
 
     [Fact]
+    public void ValidatesExplicitMonsterSelectorsWithoutResolvingDeferredAiSelectors()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            CreateType(126) with { NativeAi = "SkeletonMelee" },
+        ]);
+        var catalog = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 126, "Defiler", "SkeletonMelee"),
+            new AuthoritativeUniqueMonsterDefinition(0, 0, "Gharbad", "Gharbad"),
+        ]);
+
+        catalog.ValidateMonsterTypes(monsterTypes);
+    }
+
+    [Fact]
+    public void RejectsUnknownOrMismatchedExplicitMonsterSelectors()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            CreateType(126) with { NativeAi = "SkeletonMelee" },
+        ]);
+        var unknown = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 999, "Unknown", "SkeletonMelee"),
+        ]);
+        Assert.Throws<InvalidDataException>(() => unknown.ValidateMonsterTypes(monsterTypes));
+
+        var mismatched = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(0, 126, "Wrong AI", "Gharbad"),
+        ]);
+        Assert.Throws<InvalidDataException>(() => mismatched.ValidateMonsterTypes(monsterTypes));
+    }
+
+    [Fact]
     public void RejectsIdentitiesThatExceedTheNativeUtf8ByteLimit()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new AuthoritativeCombatTarget(
@@ -186,4 +217,25 @@ public sealed class AuthoritativeUniqueMonsterCatalogTests
             target.MagicResistance,
             target.AcidResistance));
     }
+
+    private static AuthoritativeMonsterTypeDefinition CreateType(uint monsterId)
+        => new(
+            monsterId,
+            monsterId,
+            $"Monster {monsterId}",
+            1,
+            16,
+            1,
+            10,
+            10,
+            0,
+            1,
+            2,
+            1,
+            2,
+            false,
+            false,
+            false) {
+                NativeAi = "Zombie",
+            };
 }

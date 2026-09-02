@@ -33,6 +33,7 @@ public sealed class ProjectDocumentationConsistencyTests
 
         var contentReadme = Read(root, "server", "content", "README.md");
         Assert.Contains(currentSchema, contentReadme, StringComparison.Ordinal);
+        Assert.Contains("Explicit `monster_id` selectors are cross-checked", contentReadme, StringComparison.Ordinal);
         Assert.DoesNotContain("DevilutionY", contentReadme, StringComparison.OrdinalIgnoreCase);
 
         foreach (var packName in new[] { "base", "hellfire" }) {

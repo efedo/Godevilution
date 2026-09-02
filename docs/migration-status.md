@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-01
+Status date: 2026-09-02
 
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
@@ -73,6 +73,11 @@ table retain the legacy identity fallback.
 The Golem spell now carries its content-owned summon monster identity and
 activation validates that reference against `monster_types.tsv`; older spell
 rows without the field continue to use the native compatibility fallback.
+
+Explicit unique-monster selectors with a `monster_id` are now validated against
+the active `monster_types.tsv` catalog during activation. Native-AI-only
+selectors remain deferred so generated or later set-piece encounters can still
+materialize them without requiring a fabricated type row.
 
 Legacy special-identity admission fallback now lives in the spawn-policy
 catalog, leaving the planner itself free of embedded Golem/Diablo identity

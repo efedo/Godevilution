@@ -1171,6 +1171,42 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseActivationRejectsUnknownExplicitUniqueMonsterType()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var uniqueTable = basePack.Tables.Single(table => table.SourcePath == "unique_monsters.tsv");
+        var invalidUniqueRows = string.Join(
+            '\n',
+            uniqueTable.ToCanonicalTsv()
+                .Split('\n')
+                .Select(line => line.StartsWith("0\t0\t\tGharbad\t", StringComparison.Ordinal)
+                    ? line.Replace("0\t0\t\tGharbad\t", "0\t999\t\tGharbad\t", StringComparison.Ordinal)
+                    : line));
+        var modifiedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == uniqueTable.SourcePath
+                    ? TsvTable.Parse(uniqueTable.SourcePath, invalidUniqueRows)
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "invalid-unique-monster", "1", [modifiedPack]))));
+
+        Assert.Contains("Gharbad", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("unknown monster 999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BaseContentPackDeclaresGharbadDialogueStages()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

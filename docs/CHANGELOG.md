@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   dungeon-generation, content-coverage, Godot, replay, operations, and Lua
   work instead of listing already-migrated spell behaviors as future work.
 
+- Validate explicit unique-monster `monster_id` selectors against the active
+  monster-type catalog during content activation, while preserving deferred
+  native-AI-only selectors for generated and set-piece encounters.
+
 - Keep legacy Golem/Diablo procedural-admission compatibility in the validated
   spawn-policy catalog rather than in the planner, so the planner remains
   content-driven while older packs continue to load.

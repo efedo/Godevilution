@@ -714,6 +714,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (monsters is null)
                 throw new InvalidDataException(
                     "Unique monster identities require a monsters.tsv table.");
+            if (monsterTypes is not null)
+                uniqueMonsters.ValidateMonsterTypes(monsterTypes);
             uniqueMonsters.ApplyTo(monsters.Targets);
         }
         var uniqueMonsterPlacements = content.TryGetTable(
