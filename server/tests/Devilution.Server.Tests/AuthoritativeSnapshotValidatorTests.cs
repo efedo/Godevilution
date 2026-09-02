@@ -581,6 +581,147 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidPlayerInventoryStashHeldAndStoreItems()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    ActiveStoreId = 9,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 11,
+                            Price = 100,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                    Equipment = {
+                        new EquippedItemSnapshot {
+                            Slot = 0,
+                            ItemSeed = 12,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                    Belt = {
+                        new BeltItemSnapshot {
+                            Slot = 0,
+                            ItemSeed = 13,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                    Stash = {
+                        new StashItemSnapshot {
+                            Page = 0,
+                            Cell = 0,
+                            Item = new ItemSnapshot {
+                                ItemSeed = 14,
+                                Price = 200,
+                                State = new ItemStateSnapshot(),
+                            },
+                        },
+                    },
+                    HeldItem = new ItemSnapshot {
+                        ItemSeed = 15,
+                        Price = 300,
+                        State = new ItemStateSnapshot(),
+                    },
+                },
+            },
+            ActiveStore = new StoreSnapshot {
+                StoreId = 9,
+                Items = {
+                    new StoreItemSnapshot {
+                        StoreSlot = 0,
+                        ItemSeed = 16,
+                        Price = 400,
+                        State = new ItemStateSnapshot(),
+                    },
+                },
+            },
+        };
+
+        AuthoritativeSnapshotValidator.Validate(snapshot);
+    }
+
+    [Fact]
+    public void RejectsMalformedPlayerItemTopologyAndStoreState()
+    {
+        var invalidPrice = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 1,
+                            Price = uint.MaxValue,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                },
+            },
+        };
+        var duplicateSeed = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Inventory = {
+                        new ItemSnapshot { ItemSeed = 1, State = new ItemStateSnapshot() },
+                    },
+                    Equipment = {
+                        new EquippedItemSnapshot {
+                            Slot = 0,
+                            ItemSeed = 1,
+                            State = new ItemStateSnapshot(),
+                        },
+                    },
+                },
+            },
+        };
+        var invalidFootprint = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 1,
+                            State = new ItemStateSnapshot { InventoryWidth = 11 },
+                        },
+                    },
+                },
+            },
+        };
+        var invalidStore = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 1, ActiveStoreId = 9 },
+            },
+            ActiveStore = new StoreSnapshot {
+                StoreId = 9,
+                Items = {
+                    new StoreItemSnapshot {
+                        StoreSlot = 0,
+                        ItemSeed = 1,
+                        State = new ItemStateSnapshot(),
+                    },
+                    new StoreItemSnapshot {
+                        StoreSlot = 0,
+                        ItemSeed = 2,
+                        State = new ItemStateSnapshot(),
+                    },
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidPrice,
+            duplicateSeed,
+            invalidFootprint,
+            invalidStore,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

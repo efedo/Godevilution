@@ -42,6 +42,7 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerNames(snapshot);
         ValidatePlayerPoolCapacity(snapshot);
         ValidatePlayerNativeRanges(snapshot);
+        ValidatePlayerItemProjections(snapshot);
         ValidateQuests(snapshot);
         ValidateQuestTownerInteractions(snapshot);
         ValidateLevelGeometry(snapshot);
@@ -91,6 +92,184 @@ public static class AuthoritativeSnapshotValidator
                 || player.DiabloKillLevel > byte.MaxValue)
                 throw new InvalidDataException(
                     "The authoritative snapshot contains player state outside the native range.");
+        }
+    }
+
+    private static void ValidatePlayerItemProjections(Snapshot snapshot)
+    {
+        foreach (var player in snapshot.Players) {
+            ValidateInventoryTopology(player);
+            ValidatePlayerItemFootprints(player);
+            if (player.HeldItem is { } heldItem
+                && (!HasValidItemIdentity(heldItem.ItemSeed, heldItem.State)
+                    || heldItem.State.InventoryWidth > 10
+                    || heldItem.State.InventoryHeight > 4)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid held item.");
+            }
+        }
+
+        ValidateActiveStore(snapshot);
+    }
+
+    private static void ValidateInventoryTopology(PlayerSnapshot player)
+    {
+        if (player.Inventory.Count > 40
+            || player.Equipment.Count > 7
+            || player.Belt.Count > 8
+            || player.InventoryGrid.Count != 0 && player.InventoryGrid.Count != 40
+            || player.InventoryGrid.Any(cell => cell < -1 || cell >= player.Inventory.Count)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid inventory topology.");
+        }
+
+        var equipmentSlots = new HashSet<uint>();
+        foreach (var item in player.Equipment) {
+            if (item is null || item.Slot >= 7 || !equipmentSlots.Add(item.Slot)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate equipment slots.");
+            }
+        }
+
+        var beltSlots = new HashSet<uint>();
+        foreach (var item in player.Belt) {
+            if (item is null || item.Slot >= 8 || !beltSlots.Add(item.Slot)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid or duplicate belt slots.");
+            }
+        }
+
+        if (player.InventoryGrid.Count == 0)
+            return;
+
+        var expected = Enumerable.Repeat(-1, player.InventoryGrid.Count).ToArray();
+        for (var itemIndex = 0; itemIndex < player.Inventory.Count; itemIndex++) {
+            var anchor = player.InventoryGrid.IndexOf(itemIndex);
+            var state = player.Inventory[itemIndex]?.State;
+            var width = (int)Math.Clamp(state?.InventoryWidth ?? 1U, 1U, 10U);
+            var height = (int)Math.Clamp(state?.InventoryHeight ?? 1U, 1U, 4U);
+            if (anchor < 0
+                || !HasExactInventoryFootprint(
+                    expected,
+                    anchor,
+                    itemIndex,
+                    width,
+                    height)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid inventory footprint topology.");
+            }
+        }
+        if (!player.InventoryGrid.SequenceEqual(expected)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid inventory-grid projection.");
+        }
+    }
+
+    private static bool HasExactInventoryFootprint(
+        int[] expected,
+        int anchor,
+        int itemIndex,
+        int width,
+        int height)
+    {
+        var column = anchor % 10;
+        var row = anchor / 10;
+        if (column + width > 10 || row + height > 4)
+            return false;
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var cell = (row + y) * 10 + column + x;
+                if (expected[cell] >= 0)
+                    return false;
+                expected[cell] = itemIndex;
+            }
+        }
+        return true;
+    }
+
+    private static void ValidateActiveStore(Snapshot snapshot)
+    {
+        if (snapshot.Players.Count == 0) {
+            if (snapshot.ActiveStore is not null)
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an active store without a local player.");
+            return;
+        }
+
+        var player = snapshot.Players[0];
+        var store = snapshot.ActiveStore;
+        if ((store is null) != (player.ActiveStoreId == 0)
+            || store is not null
+                && (store.StoreId == 0 || store.StoreId != player.ActiveStoreId)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an inconsistent active store.");
+        }
+        if (store is null)
+            return;
+
+        var slots = new HashSet<uint>();
+        foreach (var item in store.Items) {
+            if (!slots.Add(item.StoreSlot)
+                || item.Price > int.MaxValue
+                || !HasValidItemIdentity(item.ItemSeed, item.State)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid active-store stock.");
+            }
+            ValidateItemState(item.State);
+        }
+    }
+
+    private static void ValidatePlayerItemFootprints(PlayerSnapshot player)
+    {
+        var itemSeeds = new HashSet<uint>();
+        foreach (var item in player.Inventory) {
+            ValidatePlayerItemPrice(item?.Price ?? 0);
+            ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
+        }
+        foreach (var item in player.Belt)
+            ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
+        foreach (var item in player.Equipment)
+            ValidatePlayerItem(item?.ItemSeed ?? 0, item?.State, itemSeeds);
+        foreach (var item in player.Stash)
+            if (item?.Item is { } stashItem) {
+                ValidatePlayerItemPrice(stashItem.Price);
+                ValidatePlayerItem(stashItem.ItemSeed, stashItem.State, itemSeeds);
+            }
+        if (player.HeldItem is { } heldItem) {
+            ValidatePlayerItemPrice(heldItem.Price);
+            ValidatePlayerItem(heldItem.ItemSeed, heldItem.State, itemSeeds);
+        }
+    }
+
+    private static void ValidatePlayerItemPrice(uint price)
+    {
+        if (price > int.MaxValue)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains a player-item price outside the native range.");
+    }
+
+    private static void ValidatePlayerItem(
+        uint itemSeed,
+        ItemStateSnapshot? state,
+        ISet<uint> itemSeeds)
+    {
+        if (itemSeed != 0 && !itemSeeds.Add(itemSeed))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains duplicate player item references.");
+        if (state is not null && !HasValidItemIdentity(itemSeed, state))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains a player item with an invalid identity.");
+        ValidateInventoryFootprint(state);
+        ValidateItemState(state);
+    }
+
+    private static void ValidateInventoryFootprint(ItemStateSnapshot? state)
+    {
+        if (state is null)
+            return;
+        if (state.InventoryWidth > 10 || state.InventoryHeight > 4) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an item footprint outside the native inventory grid.");
         }
     }
 

@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Converged generic host admission with native and Godot player-item topology,
+  identity, price, footprint, and active-store validation.
 - Converged generic host admission with native and Godot world-item price,
   identity, and item-state validation.
 - Enforced DevilutionX's `MaxMonsters` limit of 200 active monsters per level
