@@ -22,6 +22,40 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ResolvesSymbolicGolemMonsterIdentityThroughStableContentIds()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "golem", 52),
+            new StableContentId("monster", "golem_native_109", 111),
+        ]);
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            "spell_id\tspell_symbol\tmana_cost\trange\tdamage_type\tprojectile_behavior\tprojectile_lifetime\tprojectile_count\tstaff_level\tgolem_death_animation_ticks\tgolem_hit_points_level_base_q6\tgolem_hit_points_level_multiplier\tgolem_hit_points_mana_divisor\tgolem_damage_level_multiplier\tgolem_minimum_damage_level_offset\tgolem_maximum_damage_level_offset\tgolem_armor_class\tgolem_monster_id\tgolem_monster_symbol\n"
+                + "52\tgolem\t100\t112\tFire\tGolem\t1\t1\t9\t12\t320\t2\t3\t2\t4\t8\t25\t0\tgolem_native_109\n",
+            stableIds);
+
+        Assert.Equal(111U, Assert.Single(catalog.Definitions).GolemMonsterId);
+    }
+
+    [Fact]
+    public void RejectsMismatchedNumericAndSymbolicGolemMonsterIdentity()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "golem", 52),
+            new StableContentId("monster", "golem_native_109", 111),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(
+                "spells.tsv",
+                "spell_id\tspell_symbol\tmana_cost\trange\tdamage_type\tprojectile_behavior\tprojectile_lifetime\tprojectile_count\tstaff_level\tgolem_death_animation_ticks\tgolem_hit_points_level_base_q6\tgolem_hit_points_level_multiplier\tgolem_hit_points_mana_divisor\tgolem_damage_level_multiplier\tgolem_minimum_damage_level_offset\tgolem_maximum_damage_level_offset\tgolem_armor_class\tgolem_monster_id\tgolem_monster_symbol\n"
+                    + "52\tgolem\t100\t112\tFire\tGolem\t1\t1\t9\t12\t320\t2\t3\t2\t4\t8\t25\t109\tgolem_native_109\n",
+                stableIds));
+
+        Assert.Contains("maps monster 109 to symbol 'golem_native_109'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsOptionalSpellDisplayNameMetadata()
     {
         var catalog = AuthoritativeSpellCatalog.LoadTsv(

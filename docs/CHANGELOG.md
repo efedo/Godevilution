@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added the optional `golem_monster_symbol` spell-content field. The shipped
+  Golem row now names stable monster identity `golem_native_109` (stable ID
+  111, native selector 109), while numeric-only rows remain compatible. Advance
+  the Diablo content schema to `1.446.0`; `1.445.0` remains accepted as the
+  previous additive contract.
 - Corrected authored unique placement and pack materialization to resolve stable
   monster IDs through validated content before calling native-ID summon logic;
   stable IDs that differ from native IDs now materialize consistently in the

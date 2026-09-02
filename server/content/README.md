@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.445.0` schema in
+It declares its identity and `devilution.diablo@1.446.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.444.0` schema so existing manifest-based packs remain
+previous additive `1.445.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -87,9 +87,10 @@ excludes the special summon, boss, and quest rows; Golem is admitted through the
 server-owned summon path and The Dark Lord through authored encounters. Older
 packs with a partial or omitted policy table retain the validated compatibility
 fallback.
-The Golem spell row also declares `golem_monster_id=111`, so active content
-selects and validates the summon identity instead of relying on a combat-code
-native ID; older spell rows retain the native 109 fallback.
+The Golem spell row declares `golem_monster_id=111` together with the stable
+`golem_monster_symbol=golem_native_109`, so active content selects and validates
+the summon identity instead of relying on a combat-code native ID; older
+numeric-only spell rows retain the native 109 fallback.
 
 Boolean TSV fields accept only `0`, `1`, `false`, or `true` (case-insensitive);
 other numeric values are rejected during content activation.
@@ -3099,7 +3100,7 @@ clients.
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, single-player availability, and paired `world_item_anchor_position_x`/`world_item_anchor_position_y` coordinates for server-owned item-placement quest completion. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
-| `spells.tsv` | `spell_id` | Directly castable spell resources with optional validated `display_name`, stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, Resurrection initial-placement probes, Charged Bolt steering patterns, Fireball explosion offsets, Elemental burst offsets, Flash layer offsets, Guardian firing arcs, Golem summon formula terms, and optional `golem_monster_id` summon identity validated against the active monster catalog. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources with optional validated `display_name`, stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, Resurrection initial-placement probes, Charged Bolt steering patterns, Fireball explosion offsets, Elemental burst offsets, Flash layer offsets, Guardian firing arcs, Golem summon formula terms, and optional numeric `golem_monster_id` plus `golem_monster_symbol` summon identity validated against the active monster catalog. |
 | `native_spells.tsv` | `native_spell_id` | Complete native spell-name namespace retained for legacy `itemdat.tsv` compatibility. IDs are bounded to the native 0–51 range and symbols must be unique. |
 | `native_item_misc.tsv` | `native_misc_id` | Validated native miscellaneous-item symbols and compatibility IDs used by legacy `itemdat.tsv`; IDs and symbols must be unique and IDs remain in the native signed-byte range. |
 | `native_item_topology.tsv` | `kind`, `symbol` | Validated native item-type, item-class, and equipment-location symbols and IDs used by legacy `itemdat.tsv`; symbols are unique within each kind and IDs remain in the native signed-byte range. |
@@ -3137,7 +3138,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.445.0"
+      "version": "1.446.0"
   },
   "dependencyConstraints": [
     {
@@ -3171,7 +3172,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.445.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.446.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

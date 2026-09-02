@@ -2412,7 +2412,11 @@ public sealed class AuthoritativeSpellCatalog
             BerserkResistanceFrequency = row.OptionalInt32(
                 "berserk_resistance_frequency"),
             GolemDeathAnimationTicks = row.OptionalInt32("golem_death_animation_ticks"),
-            GolemMonsterId = row.OptionalUInt32("golem_monster_id"),
+            GolemMonsterId = AuthoritativeMonsterIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "golem_monster_id",
+                "golem_monster_symbol"),
             GolemHitPointsLevelBaseQ6 = row.OptionalInt32(
                 "golem_hit_points_level_base_q6", 320),
             GolemHitPointsLevelMultiplier = row.OptionalInt32(
