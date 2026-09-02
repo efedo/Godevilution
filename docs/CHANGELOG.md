@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Complete the base monster identity catalog with the native Golem and The Dark
+  Lord rows, stable IDs, and available DUN mappings; ordinary procedural
+  generation now excludes summon and boss identities.
+
 - Expand the base content pack with native identities 112–137, covering the
   late Hellboar, Psychorb, HorkDemon, Necromorb, Torchant, FireBat, Lich,
   BoneDemon, ArchLich, and Na-Krul families with their stable IDs and available

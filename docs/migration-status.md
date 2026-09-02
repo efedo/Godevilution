@@ -62,6 +62,12 @@ ArchLich, and Na-Krul. Their stable IDs and available native DUN mappings are
 available to production generation; native identity 133 has no source DUN
 conversion row and remains stable-ID-only.
 
+The base pack also declares the native Golem and The Dark Lord identities
+(stable IDs 111 and 112) with their available DUN mappings. Ordinary procedural
+generation excludes these special summon and boss definitions; Golem remains
+available through the server-owned summon path and The Dark Lord through
+authored boss content.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

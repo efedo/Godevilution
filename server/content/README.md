@@ -73,6 +73,11 @@ composition. The Diablo module consumes these assets through
 `AuthoritativeNativeDunGeometryLoader`, keeping filesystem access in the Data
 loader and native geometry interpretation in the game module.
 
+The base monster catalog includes the native Golem and The Dark Lord identities
+(stable IDs 111 and 112) and their available DUN mappings. The ordinary spawn
+planner excludes these special summon and boss rows; Golem is admitted through
+the server-owned summon path and The Dark Lord through authored encounters.
+
 Boolean TSV fields accept only `0`, `1`, `false`, or `true` (case-insensitive);
 other numeric values are rejected during content activation.
 

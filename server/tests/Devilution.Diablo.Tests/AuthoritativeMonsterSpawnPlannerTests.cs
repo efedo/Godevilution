@@ -67,6 +67,31 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void ExcludesSummonedAndBossIdentitiesFromOrdinarySpawns()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 5, 5));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 1, 1, 1, 1),
+            CreateType(109, 1, 1, 1, 1, 1, 1) with { NativeAi = "Golem" },
+            CreateType(110, 1, 1, 1, 1, 1, 1) with { Diablo = true },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var spawns = planner.Plan(1, seed: 17, multiplayer: false, maximumMonsters: 20);
+
+        Assert.NotEmpty(spawns);
+        Assert.All(spawns, spawn => {
+            Assert.Equal(2U, spawn.Definition.MonsterId);
+            Assert.NotEqual("Golem", spawn.Definition.NativeAi);
+            Assert.False(spawn.Definition.Diablo);
+        });
+    }
+
+    [Fact]
     public void HalvesGeneratedMonsterHealthInSinglePlayer()
     {
         var world = new AuthoritativeWorld();

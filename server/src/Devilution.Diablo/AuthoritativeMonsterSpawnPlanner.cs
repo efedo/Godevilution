@@ -89,8 +89,12 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         if (levelId > int.MaxValue)
             throw new InvalidDataException($"Monster spawn level {levelId} exceeds native level bounds.");
 
-        var candidates = monsterTypes.GetAvailableForDungeonLevel((int)levelId);
-        if (maximumMonsters == 0 || candidates.Count == 0)
+        // Summoned Golems and authored Diablo encounters enter through their
+        // dedicated server-owned paths, never ordinary procedural scattering.
+        var candidates = monsterTypes.GetAvailableForDungeonLevel((int)levelId)
+            .Where(IsOrdinarySpawnCandidate)
+            .ToArray();
+        if (maximumMonsters == 0 || candidates.Length == 0)
             return [];
 
         var reserved = (reservedPositions ?? []).ToHashSet();
@@ -112,7 +116,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
 
         var random = new DeterministicLegacyRandom(seed ^ levelId);
         DeterministicRandomOrdering.Shuffle(positions, random.Next);
-        var orderedCandidates = candidates.ToArray();
+        var orderedCandidates = candidates;
         DeterministicRandomOrdering.Shuffle(orderedCandidates, random.Next);
         var spawns = new AuthoritativeMonsterSpawn[spawnCount];
         for (var index = 0; index < spawnCount; index++) {
@@ -470,6 +474,11 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                     && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0
                     && definition.SkeletonMeleeAttackChanceBase > 0
                     && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0));
+
+    private static bool IsOrdinarySpawnCandidate(
+        AuthoritativeMonsterTypeDefinition definition)
+        => !definition.Diablo
+            && !string.Equals(definition.NativeAi, "Golem", StringComparison.Ordinal);
 
     private AuthoritativeCombatTarget CreateCombatTarget(
         AuthoritativeMonsterSpawn spawn,

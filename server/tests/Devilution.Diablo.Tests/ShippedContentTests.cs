@@ -26,7 +26,7 @@ public sealed class ShippedContentTests
         var nativeDunMonsters = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
             nativeDunMonsterTable.SourcePath,
             nativeDunMonsterTable.ToCanonicalTsv());
-        Assert.Equal(134, nativeDunMonsters.Definitions.Count);
+        Assert.Equal(136, nativeDunMonsters.Definitions.Count);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(2, out var ghoulNativeId));
         Assert.Equal(1U, ghoulNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(8, out var darkOneNativeId));
@@ -62,6 +62,10 @@ public sealed class ShippedContentTests
         Assert.Equal(107U, cabalistNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(113, out var advocateNativeId));
         Assert.Equal(108U, advocateNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(115, out var darkLordNativeId));
+        Assert.Equal(110U, darkLordNativeId);
+        Assert.True(nativeDunMonsters.TryGetNativeMonsterId(117, out var golemNativeId));
+        Assert.Equal(109U, golemNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(128, out var archLitchNativeId));
         Assert.Equal(111U, archLitchNativeId);
         Assert.True(nativeDunMonsters.TryGetNativeMonsterId(129, out var hellboarNativeId));
@@ -77,7 +81,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             monsterTypeTable.SourcePath,
             monsterTypeTable.ToCanonicalTsv());
-        Assert.Equal(137, monsterTypes.Definitions.Count);
+        Assert.Equal(139, monsterTypes.Definitions.Count);
         Assert.Equal(
             [
                 "Ghoul", "Rotting Carcass", "Black Death", "Fallen One", "Carver", "Devil Kin", "Dark One",
@@ -125,9 +129,9 @@ public sealed class ShippedContentTests
                 .Where(definition => definition.MonsterId is >= 91 and <= 109)
                 .Select(definition => definition.Name));
         Assert.Equal(
-            ["Advocate", "The Arch-Litch Malignus"],
+            ["Advocate", "Golem", "The Dark Lord", "The Arch-Litch Malignus"],
             monsterTypes.Definitions
-                .Where(definition => definition.MonsterId is 110 or 113)
+                .Where(definition => definition.MonsterId is >= 110 and <= 113)
                 .Select(definition => definition.Name));
         Assert.Equal(
             [
