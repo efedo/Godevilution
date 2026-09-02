@@ -415,6 +415,48 @@ public sealed class AuthoritativeSpellCatalogTests
             golem.GolemMinimumDamageLevelOffset,
             golem.GolemMaximumDamageLevelOffset,
             golem.GolemArmorClass));
+        Assert.Equal(111U, golem.GolemMonsterId);
+    }
+
+    [Fact]
+    public void GolemSummonIdentityMustResolveAgainstMonsterCatalog()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(52, 100, 0, 0, 0, 0) {
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Golem,
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileLifetime = 1,
+                ProjectileCount = 1,
+                StaffLevel = 9,
+                GolemDeathAnimationTicks = 12,
+                GolemMonsterId = 9,
+            },
+        ]);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2,
+                2,
+                "Configured Monster",
+                1,
+                16,
+                1,
+                1,
+                2,
+                1,
+                1,
+                2,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                    NativeAi = "Zombie",
+                },
+        ]);
+
+        Assert.Throws<InvalidDataException>(
+            () => spells.ValidateMonsterReferences(monsterTypes));
     }
 
     [Fact]

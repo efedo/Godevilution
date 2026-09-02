@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the Golem summon target through the optional `golem_monster_id`
+  spell field and validate it against active monster types, while retaining the
+  native compatibility fallback for older packs.
+
 - Externalize procedural monster admission roles in the validated
   `monster_spawn_policies.tsv` table. The shipped base pack marks Skeleton
   King, The Butcher, and Snotspill as quest encounters, Golem as a summon, and

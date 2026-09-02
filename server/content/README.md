@@ -77,6 +77,9 @@ The base monster catalog includes the native Golem and The Dark Lord identities
 (stable IDs 111 and 112) and their available DUN mappings. The ordinary spawn
 planner excludes these special summon and boss rows; Golem is admitted through
 the server-owned summon path and The Dark Lord through authored encounters.
+The Golem spell row also declares `golem_monster_id=111`, so active content
+selects and validates the summon identity instead of relying on a combat-code
+native ID; older spell rows retain the native 109 fallback.
 
 Boolean TSV fields accept only `0`, `1`, `false`, or `true` (case-insensitive);
 other numeric values are rejected during content activation.
@@ -3061,7 +3064,7 @@ clients.
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, single-player availability, and paired `world_item_anchor_position_x`/`world_item_anchor_position_y` coordinates for server-owned item-placement quest completion. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
-| `spells.tsv` | `spell_id` | Directly castable spell resources with optional validated `display_name`, stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, Resurrection initial-placement probes, Charged Bolt steering patterns, Fireball explosion offsets, Elemental burst offsets, Flash layer offsets, Guardian firing arcs, and Golem summon formula terms. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources with optional validated `display_name`, stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, Resurrection initial-placement probes, Charged Bolt steering patterns, Fireball explosion offsets, Elemental burst offsets, Flash layer offsets, Guardian firing arcs, Golem summon formula terms, and optional `golem_monster_id` summon identity validated against the active monster catalog. |
 | `native_spells.tsv` | `native_spell_id` | Complete native spell-name namespace retained for legacy `itemdat.tsv` compatibility. IDs are bounded to the native 0–51 range and symbols must be unique. |
 | `native_item_misc.tsv` | `native_misc_id` | Validated native miscellaneous-item symbols and compatibility IDs used by legacy `itemdat.tsv`; IDs and symbols must be unique and IDs remain in the native signed-byte range. |
 | `native_item_topology.tsv` | `kind`, `symbol` | Validated native item-type, item-class, and equipment-location symbols and IDs used by legacy `itemdat.tsv`; symbols are unique within each kind and IDs remain in the native signed-byte range. |

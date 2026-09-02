@@ -668,6 +668,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (stableIds is not null && monsterTypes is not null)
             stableIds.ValidateReferences("monster", monsterId => monsterTypes.TryGet(monsterId, out _));
+        if (spells is not null && monsterTypes is not null)
+            spells.ValidateMonsterReferences(monsterTypes);
         var monsterMissiles = content.TryGetTable(
             "monster_missiles.tsv",
             out var monsterMissilesTable)

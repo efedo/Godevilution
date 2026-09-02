@@ -4744,9 +4744,13 @@ public sealed class DiabloCombatCommandProcessor
         var maximumDamage = checked(
             spell.GolemDamageLevelMultiplier
                 * (effectiveSpellLevel + spell.GolemMaximumDamageLevelOffset));
-        var golemType = monsterTypes?.TryGetNative(109, out var validatedGolemType) == true
-            ? validatedGolemType
-            : null;
+        var golemType = spell.GolemMonsterId != 0
+            ? monsterTypes?.TryGet(spell.GolemMonsterId, out var configuredGolemType) == true
+                ? configuredGolemType
+                : null
+            : monsterTypes?.TryGetNative(109, out var legacyGolemType) == true
+                ? legacyGolemType
+                : null;
         var spawnRandom = new DeterministicLegacyRandom(random.State);
         // InitializeSpawnedMonster seeds the native Golem after its standing
         // animation and native health draws, even though InitGolem replaces
@@ -4777,7 +4781,7 @@ public sealed class DiabloCombatCommandProcessor
             monsterLevel: checked((int)player.CharacterLevel),
             playerMinion: true,
             ownerPlayerId: player.EntityId,
-            nativeAi: "Golem",
+            nativeAi: golemType?.NativeAi ?? "Golem",
             minDamage: minimumDamage,
             maxDamage: maximumDamage,
             minDamageSpecial: minimumDamage,

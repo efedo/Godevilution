@@ -71,6 +71,10 @@ scattering. Golem remains available through the server-owned summon path and
 The Dark Lord through authored boss content. Packs that omit the table retain
 the legacy identity fallback.
 
+The Golem spell now carries its content-owned summon monster identity and
+activation validates that reference against `monster_types.tsv`; older spell
+rows without the field continue to use the native compatibility fallback.
+
 The Godot geometry projection now preserves server-authored missile-only
 collision cells separately from walk-blocked cells and renders a deterministic
 presentation cue for that occlusion layer.

@@ -20467,6 +20467,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GolemCastUsesContentOwnedSummonMonsterIdentity()
+    {
+        var world = new DiabloWorldState();
+        var spell = CreateGolemSpell() with { GolemMonsterId = 2 };
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2,
+                2,
+                "Configured Golem",
+                1,
+                16,
+                1,
+                1,
+                2,
+                1,
+                1,
+                2,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                    NativeAi = "Zombie",
+                },
+        ]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterLevel: 2,
+            mana: 20000,
+            manaMaximum: 20000,
+            positionX: 10,
+            positionY: 10,
+            memorizedSpells: [new MemorizedSpellState(52, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(52, 0, 11, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var summon = Assert.Single(world.CombatTargets.Values);
+        Assert.Equal(2U, summon.MonsterId);
+        Assert.Equal("Zombie", summon.NativeAi);
+    }
+
+    [Fact]
     public void GolemDeathAnimationPersistsAndExpiresAtNativeDuration()
     {
         var golem = new AuthoritativeCombatTarget(

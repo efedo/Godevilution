@@ -509,6 +509,9 @@ public sealed record AuthoritativeSpellDefinition(
     public int GolemDeathAnimationTicks { get; init; }
 
     /** Native Golem summon health and damage formula terms. */
+    /** Stable monster identity used by the Golem summon, when supplied by content. */
+    public uint GolemMonsterId { get; init; }
+
     public int GolemHitPointsLevelBaseQ6 { get; init; } = 320;
 
     public int GolemHitPointsLevelMultiplier { get; init; } = 2;
@@ -2168,6 +2171,19 @@ public sealed class AuthoritativeSpellCatalog
         }
     }
 
+    /** Validates content-owned monster identities used by summon spell rows. */
+    public void ValidateMonsterReferences(AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        foreach (var definition in Definitions.Where(definition =>
+                     definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Golem
+                     && definition.GolemMonsterId != 0)) {
+            if (!monsterTypes.TryGet(definition.GolemMonsterId, out _))
+                throw new InvalidDataException(
+                    $"Golem spell {definition.SpellId} references unknown monster {definition.GolemMonsterId}.");
+        }
+    }
+
     /** Resolves a native source identity to its stable authoritative spell row. */
     public bool TryGetByNativeId(uint nativeSpellId, out AuthoritativeSpellDefinition definition)
         => nativeSpells.TryGetValue(nativeSpellId, out definition!);
@@ -2391,6 +2407,7 @@ public sealed class AuthoritativeSpellCatalog
             BerserkResistanceFrequency = row.OptionalInt32(
                 "berserk_resistance_frequency"),
             GolemDeathAnimationTicks = row.OptionalInt32("golem_death_animation_ticks"),
+            GolemMonsterId = row.OptionalUInt32("golem_monster_id"),
             GolemHitPointsLevelBaseQ6 = row.OptionalInt32(
                 "golem_hit_points_level_base_q6", 320),
             GolemHitPointsLevelMultiplier = row.OptionalInt32(
