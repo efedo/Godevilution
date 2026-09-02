@@ -14,6 +14,7 @@ public sealed class AuthoritativeClientModel
     // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = 108;
     private const int NativeMaximumObjectCount = 127;
+    private const int NativeMaximumItemCount = 127;
     private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
@@ -182,6 +183,7 @@ public sealed class AuthoritativeClientModel
                 }
             }
             ValidateQuests(message.Snapshot);
+            ValidateWorldItemPoolCapacity(message.Snapshot);
             ValidateObjectPoolCapacity(message.Snapshot);
             var questIds = message.Snapshot.Quests
                 .Select(quest => quest.QuestId)
@@ -916,6 +918,16 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException(
                     $"The authoritative snapshot contains more than {NativeMaximumObjectCount} "
                     + $"objects on level {group.Key}, exceeding the native object capacity.");
+        }
+    }
+
+    private static void ValidateWorldItemPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var group in snapshot.WorldItems.GroupBy(item => item.LevelId)) {
+            if (group.Count() > NativeMaximumItemCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumItemCount} "
+                    + $"world items on level {group.Key}, exceeding the native item capacity.");
         }
     }
 

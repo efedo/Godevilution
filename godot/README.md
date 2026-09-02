@@ -158,6 +158,8 @@ server projection before static presentation fallback is used.
 Object snapshots are validated against DevilutionX's native `MAXOBJECTS` pool:
 no level may project more than 127 objects, preserving the same fail-closed
 boundary as the server and native compatibility bridge.
+World-item snapshots apply the corresponding native `MAXITEMS` pool bound:
+no level may project more than 127 active world items before presentation.
 When a player-targeted Resurrection or Heal Other source is selected, clicking a
 same-level remote player sends that player's stable entity ID. The server uses
 the active external spell behavior to admit the cast, validate life state,

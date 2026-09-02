@@ -12,6 +12,7 @@
 
 #include "devilution.pb.h"
 #include "game/levels/dungeon_common_defs.hpp"
+#include "game/items/items.hpp"
 #include "game/players/players.hpp"
 #include "game/objects/objects.hpp"
 #include "game/quests/quests.hpp"
@@ -585,9 +586,13 @@ tl::expected<std::vector<ProjectedWorldItemSnapshot>, std::string> ProjectWorldI
 {
 	std::vector<ProjectedWorldItemSnapshot> projected;
 	projected.reserve(snapshot.world_items_size());
+	std::unordered_map<uint32_t, int> itemCountsByLevel;
+	itemCountsByLevel.reserve(snapshot.world_items_size());
 	for (const auto &source : snapshot.world_items()) {
 		if (source.entity_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains a world item with an invalid entity ID.");
+		if (++itemCountsByLevel[source.level_id()] > MAXITEMS)
+			return tl::make_unexpected("Server-backed snapshot contains more than MAXITEMS world items on one level.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate world item entity IDs.");
 		if (!HasValidItemIdentity(source.item_seed(), source.state()))

@@ -787,6 +787,31 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeWorldItems)
 	EXPECT_TRUE((*projected)[1].item._iStatFlag);
 }
 
+TEST(ServerBackedPlayerSnapshot, EnforcesNativeWorldItemPoolCapacityPerLevel)
+{
+	protocol::Snapshot snapshot;
+	for (int index = 0; index < MAXITEMS; ++index) {
+		auto *worldItem = snapshot.add_world_items();
+		worldItem->set_entity_id(static_cast<uint32_t>(100 + index));
+		worldItem->set_level_id(1);
+		worldItem->set_position_x(index);
+		worldItem->set_item_seed(static_cast<uint32_t>(index + 1));
+	}
+
+	auto projected = ProjectWorldItemSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), static_cast<size_t>(MAXITEMS));
+
+	auto *overflow = snapshot.add_world_items();
+	overflow->set_entity_id(1000);
+	overflow->set_level_id(1);
+	overflow->set_position_x(MAXITEMS);
+	overflow->set_item_seed(1000);
+	auto rejected = ProjectWorldItemSnapshots(snapshot);
+	ASSERT_FALSE(rejected.has_value());
+	EXPECT_NE(rejected.error().find("MAXITEMS"), std::string::npos);
+}
+
 TEST(ServerBackedPlayerSnapshot, ProjectsZeroSeedPvpEarDynamicPresentation)
 {
 	protocol::Snapshot snapshot;

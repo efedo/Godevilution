@@ -1045,6 +1045,66 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void EnforcesNativeWorldItemPoolCapacityPerLevel()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 0,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null);
+        var atCapacity = source with {
+            WorldItems = Enumerable.Range(0, AuthoritativeLevel.NativeMaximumItemCount)
+                .Select(index => new DiabloWorldItemState(
+                    (uint)(100 + index),
+                    1,
+                    index,
+                    0,
+                    (uint)(index + 1),
+                    0,
+                    AuthoritativeItemState.Empty))
+                .ToArray(),
+        };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(atCapacity);
+        Assert.Equal(AuthoritativeLevel.NativeMaximumItemCount, projected.WorldItems.Count);
+
+        var overCapacity = atCapacity with {
+            WorldItems = atCapacity.WorldItems
+                .Append(new DiabloWorldItemState(
+                    1000,
+                    1,
+                    AuthoritativeLevel.NativeMaximumItemCount,
+                    0,
+                    1000,
+                    0,
+                    AuthoritativeItemState.Empty))
+                .ToArray(),
+        };
+        var exception = Assert.Throws<InvalidDataException>(
+            () => DiabloProtocolMapper.ToProtocolSnapshot(overCapacity));
+        Assert.Contains("127-item capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsObjectsOutsideProjectedPositionBounds()
     {
         var player = new StorePlayerSnapshot(

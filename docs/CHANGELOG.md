@@ -34,6 +34,9 @@ All notable changes to this fork are documented below.
 - Fixed native object presentation resynchronization so same-position
   activation and destruction transitions clear stale tile occupancy while
   retained-visible activated objects are rebound to their authoritative tile.
+- Enforced DevilutionX's native `MAXITEMS` world-item pool across server,
+  Godot, and native snapshot boundaries, rejecting more than 127 active items
+  on one level before compatibility presentation.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

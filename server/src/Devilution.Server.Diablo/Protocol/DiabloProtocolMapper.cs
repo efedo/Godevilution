@@ -490,6 +490,12 @@ internal static class DiabloProtocolMapper
         IReadOnlyList<DiabloWorldItemState> worldItems,
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
+        foreach (var group in worldItems.GroupBy(item => item.LevelId)) {
+            if (group.Count() > AuthoritativeLevel.NativeMaximumItemCount)
+                throw new InvalidDataException(
+                    $"Authoritative world-item state for level {group.Key} exceeds the native "
+                    + $"{AuthoritativeLevel.NativeMaximumItemCount}-item capacity.");
+        }
         foreach (var item in worldItems) {
             ValidateProjectedEntityPosition(
                 item.LevelId,

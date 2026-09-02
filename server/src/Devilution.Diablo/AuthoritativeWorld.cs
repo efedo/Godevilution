@@ -203,6 +203,9 @@ public sealed class AuthoritativeLevel
     /** Native active-object pool capacity for one authoritative level (MAXOBJECTS). */
     public const int NativeMaximumObjectCount = 127;
 
+    /** Native active-world-item pool capacity for one authoritative level (MAXITEMS). */
+    public const int NativeMaximumItemCount = 127;
+
     /**
      * Highest raw object-layer index accepted by the native ObjTypeConv table.
      * This is distinct from NativeMaximumObjectId: DUN layers store conversion

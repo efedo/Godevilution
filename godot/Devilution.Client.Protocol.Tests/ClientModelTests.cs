@@ -385,6 +385,38 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void EnforcesNativeWorldItemPoolCapacityPerLevel()
+    {
+        var model = new AuthoritativeClientModel();
+        var atCapacity = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+        };
+        for (var index = 0; index < 127; index++) {
+            atCapacity.WorldItems.Add(new WorldItemSnapshot {
+                EntityId = (uint)(100 + index),
+                LevelId = 1,
+                PositionX = index,
+                ItemSeed = (uint)(index + 1),
+                State = new ItemStateSnapshot(),
+            });
+        }
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: atCapacity));
+        Assert.Equal(127, model.Snapshot!.WorldItems.Count);
+
+        var overCapacity = atCapacity.Clone();
+        overCapacity.WorldItems.Add(new WorldItemSnapshot {
+            EntityId = 1000,
+            LevelId = 1,
+            PositionX = 127,
+            ItemSeed = 1000,
+            State = new ItemStateSnapshot(),
+        });
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: overCapacity)));
+    }
+
+    [Fact]
     public void RejectsEntitiesOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

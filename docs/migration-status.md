@@ -1923,6 +1923,9 @@ Native object presentation resynchronization now clears tile occupancy when an
 authoritative activation or destruction hides an object at its existing
 position, while preserving retained-visible activated objects on their new
 authoritative position.
+World-item snapshots now enforce DevilutionX's native `MAXITEMS` capacity of
+127 active items per level across server, Godot, and native validation, closing
+the corresponding fixed-pool overflow seam before presentation.
 The Vile Betrayer center circle now materializes as an authored occupancy
 trigger. After both linked books activate, a player entering the circle applies
 the deferred center replacement, advances native `_qvar1` to 4, and receives the
