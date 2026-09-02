@@ -98,6 +98,8 @@ public sealed class AuthoritativeWorldMutationPieceRectangle
         : base(x, y, width, height)
     {
         PieceId = pieceId;
+        if (pieceId >= AuthoritativeDunTilePropertyCatalog.NativeTileCount)
+            throw new ArgumentOutOfRangeException(nameof(pieceId));
     }
 
     public ushort PieceId { get; }

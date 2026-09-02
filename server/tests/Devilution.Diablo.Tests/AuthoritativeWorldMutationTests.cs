@@ -228,6 +228,18 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void RejectsPieceLayerValuesOutsideMaxTilesRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tpiece_layer_rects\n"
+                    + "7\t1\t0,0,1,1,1379\n"));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new AuthoritativeWorldMutationPieceRectangle(0, 0, 1, 1, 1379));
+    }
+
+    [Fact]
     public void LoadsAndProjectsNativePieceLayerRectangles()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(

@@ -918,6 +918,23 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void RejectsNativeDPieceLayersAndPropertiesOutsideMaxTilesRange()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            nativePieceLayer: [1379, 0, 0, 0]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [1379] = AuthoritativeDunTileFlags.None,
+            }));
+    }
+
+    [Fact]
     public void NativeVisionLineOfSightUsesTheNativeRayTable()
     {
         var level = new AuthoritativeLevel(1, 16, 16, [1]);

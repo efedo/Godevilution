@@ -13,6 +13,8 @@ All notable changes to this fork are documented below.
   200-entry monster table while retaining the separate raw DUN layer bound.
 - Bound external native `.til`/`.sol` d-piece identities to DevilutionX's
   `MAXTILES` range (0–1378) before collision materialization.
+- Enforced the same native d-piece bound on projected level layers and authored
+  `piece_layer_rects` mutations.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

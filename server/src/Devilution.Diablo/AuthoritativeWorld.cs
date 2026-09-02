@@ -296,9 +296,15 @@ public sealed class AuthoritativeLevel
         if (pieces.Length != 0 && pieces.Length != width * height)
             throw new InvalidDataException(
                 $"Level {levelId} contains a native d-piece layer with an invalid length.");
+        if (pieces.Any(value => value >= AuthoritativeDunTilePropertyCatalog.NativeTileCount))
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native d-piece value outside the MAXTILES range.");
         NativePieceLayer = Array.AsReadOnly(pieces);
         var pieceProperties = (nativePieceProperties ?? new Dictionary<ushort, AuthoritativeDunTileFlags>())
             .ToDictionary(pair => pair.Key, pair => pair.Value);
+        if (pieceProperties.Keys.Any(value => value >= AuthoritativeDunTilePropertyCatalog.NativeTileCount))
+            throw new InvalidDataException(
+                $"Level {levelId} contains native d-piece properties outside the MAXTILES range.");
         NativePieceProperties = new ReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>(pieceProperties);
         var nativeVisionBlockedCells = this.blockedCells.ToHashSet();
         for (var cell = 0; cell < pieces.Length; cell++) {
