@@ -742,8 +742,7 @@ public static class AuthoritativeWorldObjectCatalog
                      @object.QuestSequenceFollowUpKind
                          == AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster)) {
             var monsterId = @object.QuestSequenceFollowUpAmount;
-            if (!monsterTypes.TryGet(monsterId, out _)
-                && !monsterTypes.TryGetNative(monsterId, out _)) {
+            if (!monsterTypes.TryResolveNativeMonsterSelector(monsterId, out _)) {
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unknown native monster {monsterId}.");
             }

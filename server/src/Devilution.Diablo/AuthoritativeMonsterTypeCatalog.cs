@@ -929,6 +929,25 @@ public sealed class AuthoritativeMonsterTypeCatalog
     public bool IsNativeMonsterIdAmbiguous(uint nativeMonsterId)
         => ambiguousNativeIds.Contains(nativeMonsterId);
 
+    /**
+     * Resolves a native monster selector while retaining the numeric stable-ID
+     * compatibility path used by older authored content. Ambiguous native IDs
+     * never fall through to a stable row because that would select an arbitrary
+     * identity from a composed catalog.
+     */
+    public bool TryResolveNativeMonsterSelector(
+        uint selector,
+        out AuthoritativeMonsterTypeDefinition definition)
+    {
+        if (TryGetNative(selector, out definition))
+            return true;
+        if (IsNativeMonsterIdAmbiguous(selector)) {
+            definition = null!;
+            return false;
+        }
+        return TryGet(selector, out definition!);
+    }
+
     /** Resolves an unambiguous native MonsterAI identity without exposing numeric IDs to callers. */
     public bool TryGetNativeAi(string nativeAi, out AuthoritativeMonsterTypeDefinition definition)
     {

@@ -662,6 +662,9 @@ source DUN table does not declare a conversion row for it.
 Native monster summon selectors fail closed when a composed variant maps one
 native ID to multiple stable identities; numeric stable-ID fallback is retained
 only when no native mapping exists.
+Authored `SpawnNativeMonster` quest follow-ups use the same resolver during
+activation and command admission, preventing an ambiguous selector from
+mutating quest state before spawn resolution.
 The optional `monster_spawn_policies.tsv` table now owns procedural admission
 roles. Its optional `coverage_mode` column defaults to `Partial` for older or
 custom tables; `Complete` requires a role for every active monster type during

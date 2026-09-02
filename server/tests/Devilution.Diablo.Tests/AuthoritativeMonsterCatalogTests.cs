@@ -1381,6 +1381,28 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void NativeSelectorResolutionRetainsStableFallbackOnlyWhenUnambiguous()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                7, 9, "Stable Fallback", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+            new AuthoritativeMonsterTypeDefinition(
+                8, 9, "Ambiguous Native", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+        ]);
+
+        Assert.False(catalog.TryResolveNativeMonsterSelector(9, out _));
+
+        var fallbackCatalog = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                7, 12, "Stable Fallback", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+        ]);
+
+        Assert.True(fallbackCatalog.TryResolveNativeMonsterSelector(7, out var fallback));
+        Assert.Equal(7U, fallback.MonsterId);
+        Assert.Equal(12U, fallback.NativeMonsterId);
+    }
+
+    [Fact]
     public void ResolvesUnambiguousNativeAiIdentity()
     {
         var catalog = new AuthoritativeMonsterTypeCatalog([

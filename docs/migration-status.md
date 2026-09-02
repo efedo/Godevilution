@@ -95,6 +95,9 @@ Native monster summon selectors now also fail closed when a composed catalog
 maps one native monster ID to multiple stable identities. Numeric stable-ID
 fallback remains available only when the native selector is absent, preserving
 legacy compatibility without allowing variant overlap to select the wrong row.
+The same resolver now guards authored `SpawnNativeMonster` follow-ups during
+content validation and command admission, so an ambiguous selector cannot
+advance quest state before failing at materialization.
 
 The ordinary procedural-monster ceiling is now content-owned through the
 optional `ordinary_monster_capacity` level-generation field. Values are bounded

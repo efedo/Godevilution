@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Fail closed on ambiguous native monster summon selectors instead of falling
   through to a potentially unrelated numeric stable-ID row; older selectors
   still use the compatibility fallback when no native mapping exists.
+- Apply that ambiguity guard consistently to authored native-monster quest
+  follow-ups during content validation and command admission.
 
 - Guard the shipped monster catalogs against identity gaps: the composed
   Hellfire variant now verifies stable monster IDs 1–140 and native IDs 0–137,

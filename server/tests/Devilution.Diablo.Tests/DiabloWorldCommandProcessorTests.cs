@@ -313,6 +313,54 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestSequenceRejectsAnAmbiguousNativeMonsterSelectorBeforeMutation()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 7, "Native Seven A", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+            new AuthoritativeMonsterTypeDefinition(
+                7, 7, "Native Seven B", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            geometry,
+            monsterTypes,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(1, 1, 100, 100, 0),
+            ]));
+        var quest = new AuthoritativeQuestState(42, 1, 1);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            1,
+            questId: 42,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 1,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
+            questSequenceFollowUpAmount: 7);
+        var world = new DiabloWorldState(geometry, objects: [@object], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            monsterSpawnPlanner: planner,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(levelId: 1, positionX: 1, positionY: 0, entityId: 1);
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(@object.EntityId),
+            1,
+            [player]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(0, quest.Variable1);
+        Assert.False(@object.Activated);
+        Assert.Empty(world.CombatTargets);
+    }
+
+    [Fact]
     public void NaKrulLeverCompletesQuestAfterTheAuthoredTomeSequence()
     {
         var geometry = AuthoritativeWorld.LoadTsv(

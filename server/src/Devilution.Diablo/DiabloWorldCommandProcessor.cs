@@ -1491,7 +1491,11 @@ public sealed class DiabloWorldCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (monsterSpawnPlanner is null
-            || @object.QuestSequenceFollowUpAmount == 0) {
+            || monsterTypes is null
+            || @object.QuestSequenceFollowUpAmount == 0
+            || !monsterTypes.TryResolveNativeMonsterSelector(
+                @object.QuestSequenceFollowUpAmount,
+                out _)) {
             return false;
         }
         var targetX = checked(@object.PositionX + @object.QuestSequenceFollowUpOffsetX);

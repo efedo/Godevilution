@@ -929,6 +929,34 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void MonsterFollowUpValidationRejectsAnAmbiguousNativeSelector()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 1,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster,
+            questSequenceFollowUpAmount: 7);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 7, "Native Seven A", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+            new AuthoritativeMonsterTypeDefinition(
+                7, 7, "Native Seven B", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, false, false, false),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.ValidateMonsterRequirements(
+                [@object],
+                monsterTypes));
+
+        Assert.Contains("unknown native monster 7", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MutationValidationRejectsAnUnknownSecondaryFollowUpMutation()
     {
         var @object = new AuthoritativeWorldObject(
