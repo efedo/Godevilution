@@ -191,6 +191,60 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsEntityPositionsAndAuxiliaryLevelStateOutsideNativeBounds()
+    {
+        var invalidPlayerPosition = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            Players = {
+                new PlayerSnapshot { EntityId = 1, LevelId = 1, PositionX = 10, PositionY = 1 },
+            },
+        };
+        var invalidMovingMonsterPosition = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    Moving = true,
+                    FuturePositionX = 10,
+                    FuturePositionY = 1,
+                },
+            },
+        };
+        var invalidOrigin = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            SetLevelObjectOrigins = {
+                new SetLevelObjectOriginSnapshot {
+                    SetLevelId = 1,
+                    LevelId = 1,
+                    PositionX = 10,
+                    PositionY = 1,
+                },
+            },
+        };
+        var duplicateMaterializedLevel = new Snapshot {
+            MaterializedProceduralLevelIds = { 7, 7 },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidPlayerPosition,
+            invalidMovingMonsterPosition,
+            invalidOrigin,
+            duplicateMaterializedLevel,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

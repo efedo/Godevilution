@@ -24,6 +24,8 @@ public static class AuthoritativeSnapshotValidator
     private const uint NativeMaximumQuestId = 23;
     private const int MaximumQuestCount = 4096;
     private const int MaximumQuestTownerInteractionCount = 1024;
+    private const int MaximumSetLevelObjectOriginCount = 4096;
+    private const int MaximumMaterializedProceduralLevelCount = 4096;
     private const int MaximumWorldMutationCount = 4096;
 
     public static void Validate(Snapshot snapshot)
@@ -36,6 +38,9 @@ public static class AuthoritativeSnapshotValidator
         ValidateQuests(snapshot);
         ValidateQuestTownerInteractions(snapshot);
         ValidateLevelGeometry(snapshot);
+        ValidateSetLevelObjectOrigins(snapshot);
+        ValidateMaterializedProceduralLevels(snapshot);
+        ValidateEntityPositions(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
@@ -337,6 +342,91 @@ public static class AuthoritativeSnapshotValidator
                 return false;
         }
         return true;
+    }
+
+    private static void ValidateSetLevelObjectOrigins(Snapshot snapshot)
+    {
+        if (snapshot.SetLevelObjectOrigins.Count > MaximumSetLevelObjectOriginCount
+            || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || snapshot.SetLevelObjectOrigins
+                .Select(origin => origin.SetLevelId)
+                .Distinct()
+                .Count() != snapshot.SetLevelObjectOrigins.Count)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid or duplicate set-level object origins.");
+        if (snapshot.LevelGeometry.Count == 0)
+            return;
+
+        var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        foreach (var origin in snapshot.SetLevelObjectOrigins) {
+            if (!levels.TryGetValue(origin.LevelId, out var level)
+                || origin.PositionX < 0
+                || origin.PositionY < 0
+                || origin.PositionX >= level.Width
+                || origin.PositionY >= level.Height)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains a set-level object origin outside level {origin.LevelId}.");
+        }
+    }
+
+    private static void ValidateMaterializedProceduralLevels(Snapshot snapshot)
+    {
+        if (snapshot.MaterializedProceduralLevelIds.Count > MaximumMaterializedProceduralLevelCount
+            || snapshot.MaterializedProceduralLevelIds
+                .Distinct()
+                .Count() != snapshot.MaterializedProceduralLevelIds.Count)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains duplicate materialized procedural levels.");
+    }
+
+    private static void ValidateEntityPositions(Snapshot snapshot)
+    {
+        var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        bool IsNativePosition(int x, int y)
+            => x is >= 0 and <= byte.MaxValue
+                && y is >= 0 and <= byte.MaxValue;
+
+        bool IsInBounds(uint levelId, int x, int y)
+        {
+            if (!IsNativePosition(x, y))
+                return false;
+            if (!levels.TryGetValue(levelId, out var level)
+                || level.Width == 0
+                || level.Height == 0)
+                return true;
+            return x < level.Width && y < level.Height;
+        }
+
+        bool IsValidMonster(MonsterSnapshot monster)
+            => IsInBounds(monster.LevelId, monster.PositionX, monster.PositionY)
+                && (!monster.Moving
+                    || IsInBounds(
+                        monster.LevelId,
+                        monster.FuturePositionX,
+                        monster.FuturePositionY));
+
+        if (snapshot.Players.Any(player =>
+                !IsInBounds(player.LevelId, player.PositionX, player.PositionY))
+            || snapshot.Monsters.Any(monster => !IsValidMonster(monster))
+            || snapshot.WorldItems.Any(item =>
+                !IsInBounds(item.LevelId, item.PositionX, item.PositionY))
+            || snapshot.Objects.Any(@object =>
+                !IsInBounds(@object.LevelId, @object.PositionX, @object.PositionY))
+            || snapshot.Projectiles.Any(projectile =>
+                !IsInBounds(projectile.LevelId, projectile.PositionX, projectile.PositionY))
+            || snapshot.Corpses.Any(corpse =>
+                !IsInBounds(corpse.LevelId, corpse.PositionX, corpse.PositionY))
+            || snapshot.Portals.Any(portal =>
+                !IsInBounds(
+                    portal.SourceLevelId,
+                    portal.SourcePositionX,
+                    portal.SourcePositionY)
+                || !IsInBounds(
+                    portal.DestinationLevelId,
+                    portal.DestinationPositionX,
+                    portal.DestinationPositionY)))
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an entity outside projected level geometry.");
     }
 
     private static void ValidateMonsterMovementTiming(Snapshot snapshot)
