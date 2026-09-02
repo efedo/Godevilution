@@ -144,6 +144,10 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
         ArgumentNullException.ThrowIfNull(fragments);
         var fragmentsById = fragments.Definitions.ToDictionary(definition => definition.FragmentId);
         var objectsById = objects.ToDictionary(@object => @object.EntityId);
+        var existingObjectCountsByLevel = objectsById.Values
+            .GroupBy(@object => @object.LevelId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        var generatedObjectCountsByLevel = new Dictionary<uint, int>();
         var templatesById = templates.ToDictionary(@object => @object.EntityId);
         var anchorPositions = objectsById.ToDictionary(
             pair => pair.Key,
@@ -228,11 +232,19 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
                 if (!templatesById.TryGetValue(placement.TemplateEntityId, out var template))
                     throw new InvalidDataException(
                         $"Native DUN fragment object placement {placement.PlacementId} references missing template {placement.TemplateEntityId}.");
+                var existingLevelObjectCount = existingObjectCountsByLevel.GetValueOrDefault(targetLevelId);
+                var generatedLevelObjectCount = generatedObjectCountsByLevel.GetValueOrDefault(targetLevelId);
+                if (existingLevelObjectCount + generatedLevelObjectCount
+                    >= AuthoritativeLevel.NativeMaximumObjectCount)
+                    throw new InvalidDataException(
+                        $"Native DUN fragment object placement {placement.PlacementId} for level {targetLevelId} "
+                        + $"exceeds the native {AuthoritativeLevel.NativeMaximumObjectCount}-object capacity.");
                 generatedObjects.Add(template.WithPlacement(
                     placement.EntityId,
                     targetLevelId,
                     positionX,
                     positionY));
+                generatedObjectCountsByLevel[targetLevelId] = generatedLevelObjectCount + 1;
             }
         }
 

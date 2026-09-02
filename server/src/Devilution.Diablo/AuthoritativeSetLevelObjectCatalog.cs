@@ -133,9 +133,14 @@ public sealed class AuthoritativeSetLevelObjectCatalog
         IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null)
     {
         ArgumentNullException.ThrowIfNull(world);
-        var usedEntityIds = (existingObjects ?? [])
+        var existingValues = (existingObjects ?? []).ToArray();
+        var usedEntityIds = existingValues
             .Select(@object => @object.EntityId)
             .ToHashSet();
+        var existingObjectCountsByLevel = existingValues
+            .GroupBy(@object => @object.LevelId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        var materializedObjectCountsByLevel = new Dictionary<uint, int>();
         var templateByEntityId = (templates ?? [])
             .ToDictionary(@object => @object.EntityId);
         var objects = new List<AuthoritativeWorldObject>();
@@ -152,6 +157,13 @@ public sealed class AuthoritativeSetLevelObjectCatalog
             if (!usedEntityIds.Add(entityId))
                 throw new InvalidDataException(
                     $"Set-level object placement {placement.PlacementId} collides with entity {entityId}.");
+            var existingLevelObjectCount = existingObjectCountsByLevel.GetValueOrDefault(levelId);
+            var materializedLevelObjectCount = materializedObjectCountsByLevel.GetValueOrDefault(levelId);
+            if (existingLevelObjectCount + materializedLevelObjectCount
+                >= AuthoritativeLevel.NativeMaximumObjectCount)
+                throw new InvalidDataException(
+                    $"Set-level object placement {placement.PlacementId} for level {levelId} exceeds the native "
+                    + $"{AuthoritativeLevel.NativeMaximumObjectCount}-object capacity.");
             if (placement.TemplateEntityId != 0) {
                 if (!templateByEntityId.TryGetValue(placement.TemplateEntityId, out var template))
                     throw new InvalidDataException(
@@ -172,6 +184,7 @@ public sealed class AuthoritativeSetLevelObjectCatalog
                     positionX,
                     positionY));
             }
+            materializedObjectCountsByLevel[levelId] = materializedLevelObjectCount + 1;
         }
         return objects;
     }

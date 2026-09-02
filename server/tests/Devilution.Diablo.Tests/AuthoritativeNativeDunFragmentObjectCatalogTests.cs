@@ -166,6 +166,62 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalogTests
     }
 
     [Fact]
+    public void EnforcesNativeObjectPoolCapacityForGeneratedObjectsPerLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var fragments = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                7,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorPositionX: 2,
+                AnchorPositionY: 2),
+        ]);
+        var template = new AuthoritativeWorldObject(100, 97, 0, 0, 0);
+
+        static AuthoritativeNativeDunFragmentObjectPlacement Placement(int index)
+            => new(
+                (uint)(index + 1),
+                7,
+                (uint)(index + 1000),
+                0,
+                0,
+                0) {
+                TemplateEntityId = 100,
+            };
+
+        var exactCatalog = new AuthoritativeNativeDunFragmentObjectCatalog(
+            Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount)
+                .Select(Placement));
+        Assert.Equal(
+            AuthoritativeLevel.NativeMaximumObjectCount,
+            exactCatalog.Materialize(world, [], [template], fragments).Count);
+
+        var overflowCatalog = new AuthoritativeNativeDunFragmentObjectCatalog(
+            Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount + 1)
+                .Select(Placement));
+        var overflow = Assert.Throws<InvalidDataException>(() =>
+            overflowCatalog.Materialize(world, [], [template], fragments));
+        Assert.Contains("127-object capacity", overflow.Message, StringComparison.Ordinal);
+
+        var existing = Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount)
+            .Select(index => new AuthoritativeWorldObject(
+                (uint)(9000 + index),
+                97,
+                24,
+                0,
+                0));
+        var existingOccupancy = Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeNativeDunFragmentObjectCatalog([Placement(0)])
+                .Materialize(world, existing, [template], fragments));
+        Assert.Contains("127-object capacity", existingOccupancy.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsPlacementsThatReferenceAnUnknownFragment()
     {
         var catalog = new AuthoritativeNativeDunFragmentObjectCatalog([

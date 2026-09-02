@@ -1876,6 +1876,9 @@ the same raw-DUN bound during content activation.
 Native-DUN object materialization also enforces DevilutionX's `MAXOBJECTS` pool
 capacity of `127` active objects per level, counting existing authored objects
 before mapped cells are added.
+Set-level placements and native-DUN fragment template clones apply that same
+per-level bound during materialization, including authored occupants already
+present on the target level.
 The server protocol mapper, Godot client validator, and native snapshot bridge
 now enforce that same per-level object-pool boundary before presentation, so an
 oversized authoritative object collection fails closed instead of silently

@@ -80,6 +80,55 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
     }
 
     [Fact]
+    public void EnforcesNativeObjectPoolCapacityPerLevel()
+    {
+        var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            levelId,
+            AuthoritativeLevel.NativeMaximumWidth,
+            2));
+
+        static AuthoritativeSetLevelObjectPlacement Placement(int index)
+            => new(
+                (uint)(1000 + index),
+                1,
+                2,
+                index % AuthoritativeLevel.NativeMaximumWidth,
+                index / AuthoritativeLevel.NativeMaximumWidth,
+                0,
+                0,
+                1,
+                1);
+
+        var exactCatalog = new AuthoritativeSetLevelObjectCatalog(
+            Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount)
+                .Select(Placement));
+        Assert.Equal(
+            AuthoritativeLevel.NativeMaximumObjectCount,
+            exactCatalog.LoadAvailableObjects(world).Count);
+
+        var overflowCatalog = new AuthoritativeSetLevelObjectCatalog(
+            Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount + 1)
+                .Select(Placement));
+        var overflow = Assert.Throws<InvalidDataException>(
+            () => overflowCatalog.LoadAvailableObjects(world));
+        Assert.Contains("127-object capacity", overflow.Message, StringComparison.Ordinal);
+
+        var existing = Enumerable.Range(0, AuthoritativeLevel.NativeMaximumObjectCount)
+            .Select(index => new AuthoritativeWorldObject(
+                (uint)(9000 + index),
+                2,
+                levelId,
+                0,
+                0));
+        var existingOccupancy = Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSetLevelObjectCatalog([Placement(0)])
+                .LoadAvailableObjects(world, existing));
+        Assert.Contains("127-object capacity", existingOccupancy.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MaterializesGeneratedSetPiecePlacementFromSuppliedOrigin()
     {
         var levelId = 17U;
