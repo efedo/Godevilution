@@ -22,7 +22,13 @@ public sealed class AuthoritativeSnapshotValidatorTests
         var snapshot = new Snapshot {
             Players = { new PlayerSnapshot { EntityId = 1 } },
             Monsters = { new MonsterSnapshot { EntityId = 2 } },
-            WorldItems = { new WorldItemSnapshot { EntityId = 3 } },
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 3,
+                    ItemSeed = 1,
+                    State = new ItemStateSnapshot(),
+                },
+            },
             Objects = { new ObjectSnapshot { EntityId = 4 } },
             Projectiles = {
                 new ProjectileSnapshot {
@@ -505,6 +511,76 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidWorldItemIdentityAndNativeState()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 1,
+                    ItemSeed = 17,
+                    Price = int.MaxValue,
+                    State = new ItemStateSnapshot {
+                        ItemType = 1,
+                        BaseName = "Sword",
+                        IdentifiedName = "Sword",
+                        NativeCursorGraphic = 1,
+                    },
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMalformedWorldItemPriceIdentityAndState()
+    {
+        var invalidPrice = new Snapshot {
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 1,
+                    ItemSeed = 1,
+                    Price = uint.MaxValue,
+                    State = new ItemStateSnapshot(),
+                },
+            },
+        };
+        var missingIdentity = new Snapshot {
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 1,
+                    State = new ItemStateSnapshot(),
+                },
+            },
+        };
+        var incompletePresentation = new Snapshot {
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 1,
+                    ItemSeed = 1,
+                    State = new ItemStateSnapshot { BaseName = "Sword" },
+                },
+            },
+        };
+        var invalidState = new Snapshot {
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 1,
+                    ItemSeed = 1,
+                    State = new ItemStateSnapshot { MaxDamage = -1 },
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidPrice,
+            missingIdentity,
+            incompletePresentation,
+            invalidState,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
@@ -565,6 +641,8 @@ public sealed class AuthoritativeSnapshotValidatorTests
             itemSnapshot.WorldItems.Add(new WorldItemSnapshot {
                 EntityId = (uint)index,
                 LevelId = 1,
+                ItemSeed = (uint)index,
+                State = new ItemStateSnapshot(),
             });
 
         Assert.Throws<InvalidDataException>(() =>

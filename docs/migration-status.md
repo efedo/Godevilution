@@ -34,6 +34,9 @@ and semantic shapes, including blocked movement and invalid cast sources.
 Generic host admission now also rejects malformed monster vitality, combat
 ranges, movement state, and pack-leader relationships before transmission.
 
+Generic host admission now also rejects malformed world-item prices, native
+identity metadata, and item-state ranges before transmission.
+
 Generic host admission now also rejects malformed projectile source/lifetime,
 damage, behavior, presentation, direction, and native missile identity state.
 

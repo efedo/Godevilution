@@ -51,6 +51,7 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerActions(snapshot);
         ValidateMonsters(snapshot);
         ValidateMonsterMovementTiming(snapshot);
+        ValidateWorldItems(snapshot);
         ValidateProjectiles(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
@@ -682,6 +683,113 @@ public static class AuthoritativeSnapshotValidator
                     "The authoritative snapshot contains invalid monster movement timing.");
             }
         }
+    }
+
+    private static void ValidateWorldItems(Snapshot snapshot)
+    {
+        foreach (var item in snapshot.WorldItems) {
+            if (item.Price > int.MaxValue) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an unrepresentable world-item price.");
+            }
+            ValidateItemState(item.State);
+            if (!HasValidItemIdentity(item.ItemSeed, item.State)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid world item.");
+            }
+        }
+    }
+
+    private static void ValidateItemState(ItemStateSnapshot? state)
+    {
+        if (state is null)
+            return;
+        if (state.Value < 0
+            || state.IdentifiedValue < 0
+            || state.MinDamage < 0
+            || state.MaxDamage < state.MinDamage
+            || state.ArmorClass < 0
+            || state.Charges < 0
+            || state.MaxCharges < state.Charges
+            || state.Durability < 0
+            || state.MaxDurability < state.Durability
+            || state.FireMinDamage < 0
+            || state.FireMaxDamage < state.FireMinDamage
+            || state.LightningMinDamage < 0
+            || state.LightningMaxDamage < state.LightningMinDamage
+            || !IsNativeItemStateRepresentable(state)
+            || !Enum.IsDefined(state.PresentationKind)
+            || !Enum.IsDefined(state.SpellSourceKind)
+            || !Enum.IsDefined(state.ItemActionKind)
+            || !Enum.IsDefined(state.SpellTargetingKind)
+            || state.SpellDisplayName.Contains('\0')) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains impossible item state ranges.");
+        }
+    }
+
+    private static bool IsNativeItemStateRepresentable(ItemStateSnapshot state)
+    {
+        return state.CreateInfo <= ushort.MaxValue
+            && state.ItemType is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.Magical is >= byte.MinValue and <= byte.MaxValue
+            && state.EquipLocation is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.ItemClass is >= byte.MinValue and <= byte.MaxValue
+            && state.MinDamage is >= byte.MinValue and <= byte.MaxValue
+            && state.MaxDamage is >= byte.MinValue and <= byte.MaxValue
+            && state.ArmorClass is >= short.MinValue and <= short.MaxValue
+            && state.MiscId is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.SpellId is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.ItemIndex is >= short.MinValue and <= short.MaxValue
+            && state.PlusDamage is >= short.MinValue and <= short.MaxValue
+            && state.PlusToHit is >= short.MinValue and <= short.MaxValue
+            && state.PlusArmorClass is >= short.MinValue and <= short.MaxValue
+            && state.PlusStrength is >= short.MinValue and <= short.MaxValue
+            && state.PlusMagic is >= short.MinValue and <= short.MaxValue
+            && state.PlusDexterity is >= short.MinValue and <= short.MaxValue
+            && state.PlusVitality is >= short.MinValue and <= short.MaxValue
+            && state.PlusFireResistance is >= short.MinValue and <= short.MaxValue
+            && state.PlusLightningResistance is >= short.MinValue and <= short.MaxValue
+            && state.PlusMagicResistance is >= short.MinValue and <= short.MaxValue
+            && state.PlusMana is >= short.MinValue and <= short.MaxValue
+            && state.PlusHitPoints is >= short.MinValue and <= short.MaxValue
+            && state.PlusDamageModifier is >= short.MinValue and <= short.MaxValue
+            && state.PlusGetHit is >= short.MinValue and <= short.MaxValue
+            && state.PlusLight is >= short.MinValue and <= short.MaxValue
+            && state.SpellLevelAdd is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.FireMinDamage is >= short.MinValue and <= short.MaxValue
+            && state.FireMaxDamage is >= short.MinValue and <= short.MaxValue
+            && state.LightningMinDamage is >= short.MinValue and <= short.MaxValue
+            && state.LightningMaxDamage is >= short.MinValue and <= short.MaxValue
+            && state.PlusEnemyArmorClass is >= short.MinValue and <= short.MaxValue
+            && state.PrefixPower is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.SuffixPower is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.MinimumStrength is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.MinimumMagic is >= byte.MinValue and <= byte.MaxValue
+            && state.MinimumDexterity is >= sbyte.MinValue and <= sbyte.MaxValue
+            && state.HellfireDamageArmorFlags is >= byte.MinValue and <= byte.MaxValue;
+    }
+
+    private static bool HasValidItemIdentity(
+        uint itemSeed,
+        ItemStateSnapshot? state)
+    {
+        if (state is null)
+            return false;
+        var hasPresentation = !string.IsNullOrEmpty(state.BaseName)
+            || !string.IsNullOrEmpty(state.IdentifiedName)
+            || state.HasNativeCursorGraphic;
+        if (!hasPresentation)
+            return itemSeed != 0;
+        var hasValidNames = !string.IsNullOrEmpty(state.BaseName)
+            && !string.IsNullOrEmpty(state.IdentifiedName)
+            && !state.BaseName.Contains('\0')
+            && !state.IdentifiedName.Contains('\0')
+            && System.Text.Encoding.UTF8.GetByteCount(state.BaseName) < 64
+            && System.Text.Encoding.UTF8.GetByteCount(state.IdentifiedName) < 64;
+        return hasValidNames
+            && state.HasNativeCursorGraphic
+            && state.NativeCursorGraphic is >= 0 and <= byte.MaxValue;
     }
 
     private static void ValidateEntityId(uint entityId, HashSet<uint> entityIds)

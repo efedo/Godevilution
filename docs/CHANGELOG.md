@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Converged generic host admission with native and Godot world-item price,
+  identity, and item-state validation.
 - Enforced DevilutionX's `MaxMonsters` limit of 200 active monsters per level
   across authoritative runtime validation, save restore, server and host
   protocol admission, Godot validation, and native snapshot projection.
