@@ -1,5 +1,6 @@
 using Devilution.Protocol.V1;
 using Devilution.Protocol;
+using Devilution.Domain.Protocol;
 using System.Collections.Generic;
 
 namespace Devilution.Server.Protocol;
@@ -14,6 +15,9 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeMaximumItemCount = 127;
     private const int NativeMaximumWarpTriggerCount = 7;
     private const int NativeMaximumPortalCount = 4;
+    private const uint NativeMaximumQuestId = 23;
+    private const int MaximumQuestCount = 4096;
+    private const int MaximumQuestTownerInteractionCount = 1024;
     private const int MaximumWorldMutationCount = 4096;
 
     public static void Validate(Snapshot snapshot)
@@ -23,6 +27,8 @@ public static class AuthoritativeSnapshotValidator
         ValidatePlayerNames(snapshot);
         ValidatePlayerPoolCapacity(snapshot);
         ValidatePlayerNativeRanges(snapshot);
+        ValidateQuests(snapshot);
+        ValidateQuestTownerInteractions(snapshot);
         ValidateMonsterMovementTiming(snapshot);
         ValidateEntityIds(snapshot);
         ValidateMonsterPoolCapacity(snapshot);
@@ -122,6 +128,90 @@ public static class AuthoritativeSnapshotValidator
             throw new InvalidDataException(
                 $"The authoritative snapshot contains more than {NativeMaximumPlayerCount} "
                 + "players, exceeding the native player pool capacity.");
+    }
+
+    private static void ValidateQuests(Snapshot snapshot)
+    {
+        if (snapshot.Quests.Count > MaximumQuestCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many quests.");
+
+        var questIds = new HashSet<uint>();
+        var nativeQuestIds = new HashSet<uint>();
+        foreach (var quest in snapshot.Quests) {
+            if (quest.QuestId == 0
+                || !questIds.Add(quest.QuestId)
+                || quest.HasNativeQuestId
+                    && (quest.NativeQuestId > NativeMaximumQuestId
+                        || !nativeQuestIds.Add(quest.NativeQuestId))
+                || quest.RequiredProgress == 0
+                || quest.Progress > quest.RequiredProgress
+                || quest.Unavailable && (quest.Completed || quest.Progress != 0)
+                || quest.Variable1 is < 0 or > byte.MaxValue
+                || quest.Variable2 is < 0 or > byte.MaxValue
+                || quest.MessageId is < 0 or > short.MaxValue
+                || quest.TurnInTownerId is < -1 or > byte.MaxValue
+                || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
+                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInVariable1 is < -1 or > byte.MaxValue
+                || !NativeTextLimits.IsIdentityWithinLimit(quest.CompletionUniqueIdentity)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid quest state.");
+            }
+        }
+    }
+
+    private static void ValidateQuestTownerInteractions(Snapshot snapshot)
+    {
+        if (snapshot.QuestTownerInteractions.Count > MaximumQuestTownerInteractionCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many quest/towner interactions.");
+
+        var questIds = snapshot.Quests
+            .Select(quest => quest.QuestId)
+            .ToHashSet();
+        var levels = new Dictionary<uint, LevelGeometrySnapshot>();
+        foreach (var level in snapshot.LevelGeometry) {
+            if (!levels.TryAdd(level.LevelId, level))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate level geometry.");
+        }
+
+        var interactionIds = new HashSet<uint>();
+        foreach (var interaction in snapshot.QuestTownerInteractions) {
+            if (interaction.InteractionId == 0
+                || !interactionIds.Add(interaction.InteractionId)
+                || interaction.QuestId == 0
+                || !questIds.Contains(interaction.QuestId)
+                || levels.Count > 0
+                    && (!levels.TryGetValue(interaction.LevelId, out var level)
+                        || level.Width > 0 && interaction.PositionX >= level.Width
+                        || level.Height > 0 && interaction.PositionY >= level.Height)
+                || interaction.TownerId is < 0 or > byte.MaxValue
+                || interaction.LevelId > ushort.MaxValue
+                || interaction.RequiredVisitedLevel1 > ushort.MaxValue
+                || interaction.RequiredVisitedLevel2 > ushort.MaxValue
+                || interaction.RequiredItemId > ushort.MaxValue
+                || interaction.PositionX < 0
+                || interaction.PositionY < 0
+                || interaction.Kind is < 0 or > 4
+                || !interaction.HasMessageId
+                || interaction.MessageId is <= 0 or > short.MaxValue
+                || interaction.HasRequiredVariable1
+                    && interaction.RequiredVariable1 is < 0 or > byte.MaxValue
+                || interaction.HasRequiredVariable2
+                    && interaction.RequiredVariable2 is < 0 or > byte.MaxValue
+                || interaction.HasVariable1
+                    && interaction.Variable1 is < 0 or > byte.MaxValue
+                || interaction.HasVariable2
+                    && interaction.Variable2 is < 0 or > byte.MaxValue) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid quest/towner interaction.");
+            }
+        }
     }
 
     private static void ValidateMonsterPoolCapacity(Snapshot snapshot)

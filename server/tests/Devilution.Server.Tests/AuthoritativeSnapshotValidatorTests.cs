@@ -58,6 +58,82 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidQuestAndQuestTownerInteractionProjection()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 1,
+                    RequiredProgress = 1,
+                    NativeQuestId = 1,
+                },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 1,
+                    QuestId = 1,
+                    LevelId = 1,
+                    PositionX = 2,
+                    PositionY = 3,
+                    MessageId = 1,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsInvalidQuestStateAndQuestTownerInteractions()
+    {
+        var invalidNativeQuest = new Snapshot {
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 1,
+                    RequiredProgress = 1,
+                    NativeQuestId = 24,
+                },
+            },
+        };
+        var invalidProgress = new Snapshot {
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 1,
+                    RequiredProgress = 1,
+                    Progress = 2,
+                },
+            },
+        };
+        var invalidInteraction = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 1, RequiredProgress = 1 },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 1,
+                    QuestId = 2,
+                    LevelId = 1,
+                    PositionX = 2,
+                    PositionY = 3,
+                    MessageId = 1,
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] {
+            invalidNativeQuest,
+            invalidProgress,
+            invalidInteraction,
+        })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

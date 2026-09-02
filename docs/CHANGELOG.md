@@ -15,6 +15,8 @@ All notable changes to this fork are documented below.
 - Enforced DevilutionX's `MAXTRIGGERS` seven-warp-trigger-per-level pool across
   server projection, host admission, Godot geometry admission, and native
   geometry projection.
+- Converged generic host admission with the server, Godot, and native quest
+  state and quest/towner interaction validation contracts.
 - Enforced the native four-route portal pool in authoritative world-state
   construction, static catalog loading, Town Portal creation, and save restore;
   runtime state can no longer grow beyond the projection boundary.

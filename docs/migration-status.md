@@ -18,6 +18,10 @@ the server mapper, generic host, Godot, and native projection boundaries.
 Projected level geometry now enforces the native seven warp-trigger slots per
 level across server, host, Godot, and native validation boundaries.
 
+Generic host admission now rejects malformed quest state and quest/towner
+interaction references before snapshots reach connected clients, matching the
+server, Godot, and native validation contracts.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.
