@@ -10,6 +10,7 @@ namespace Devilution.Server.Protocol;
 internal static class DiabloProtocolMapper
 {
     private const int NativeMaximumPlayerCount = 4;
+    private const int NativeMaximumWarpTriggerCount = 7;
 
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
@@ -701,6 +702,12 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels,
         IReadOnlyList<DiabloQuestState> quests)
     {
+        foreach (var group in warpTargets.GroupBy(warp => warp.SourceLevelId)) {
+            if (group.Count() > NativeMaximumWarpTriggerCount)
+                throw new InvalidDataException(
+                    $"Authoritative warp targets contain more than {NativeMaximumWarpTriggerCount} "
+                    + $"triggers on level {group.Key}, exceeding the native trigger capacity.");
+        }
         var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
         var warpIds = new HashSet<uint>();
         foreach (var warp in warpTargets) {

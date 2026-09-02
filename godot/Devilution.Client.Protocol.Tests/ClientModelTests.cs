@@ -119,6 +119,29 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMoreWarpTriggersThanTheNativePoolPerLevel()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+        };
+        for (var index = 1; index <= 8; index++)
+            snapshot.LevelGeometry[0].WarpTriggers.Add(new WarpTriggerSnapshot {
+                WarpId = (uint)index,
+                TargetLevelId = 1,
+                TargetX = 1,
+                TargetY = 1,
+                Available = true,
+            });
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsWarpTriggersWithUnknownOrOutOfBoundsDestinations()
     {
         var model = new AuthoritativeClientModel();

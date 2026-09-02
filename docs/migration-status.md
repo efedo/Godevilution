@@ -15,6 +15,9 @@ the server mapper and client projections.
 Authoritative participant snapshots now enforce the native four-player pool at
 the server mapper, generic host, Godot, and native projection boundaries.
 
+Projected level geometry now enforces the native seven warp-trigger slots per
+level across server, host, Godot, and native validation boundaries.
+
 Godot HUD and world rendering now share a typed projection of authoritative
 player statuses, including Mana Shield, Reflect charges, and timed status
 families, while preserving server-owned durations and values.

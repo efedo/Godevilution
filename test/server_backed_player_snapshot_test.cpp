@@ -10,6 +10,7 @@
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/levels/triggers.h"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
@@ -1516,6 +1517,22 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->set_width(MAXDUNX);
 	level->set_height(MAXDUNY);
 	EXPECT_TRUE(ValidateLevelGeometrySnapshots(validNativeTown).has_value());
+
+	protocol::Snapshot tooManyTriggers;
+	level = tooManyTriggers.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(10);
+	level->set_height(10);
+	for (uint32_t warpId = 1; warpId <= MAXTRIGGERS + 1; ++warpId) {
+		auto *warp = level->add_warp_triggers();
+		warp->set_warp_id(warpId);
+		warp->set_trigger_x(static_cast<int32_t>(warpId - 1));
+		warp->set_target_level_id(1);
+		warp->set_target_x(1);
+		warp->set_target_y(1);
+		warp->set_available(true);
+	}
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(tooManyTriggers).has_value());
 
 	protocol::Snapshot invalidPieceSize;
 	level = invalidPieceSize.add_level_geometry();

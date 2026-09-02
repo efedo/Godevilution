@@ -12,6 +12,7 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeMaximumMonsterCount = 200;
     private const int NativeMaximumObjectCount = 127;
     private const int NativeMaximumItemCount = 127;
+    private const int NativeMaximumWarpTriggerCount = 7;
     private const int NativeMaximumPortalCount = 4;
     private const int MaximumWorldMutationCount = 4096;
 
@@ -27,6 +28,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateMonsterPoolCapacity(snapshot);
         ValidateObjectPoolCapacity(snapshot);
         ValidateWorldItemPoolCapacity(snapshot);
+        ValidateWarpTriggerPoolCapacity(snapshot);
         if (snapshot.StateSha256.Length == 0 || IsSha256Hex(snapshot.StateSha256))
             return;
 
@@ -149,6 +151,16 @@ public static class AuthoritativeSnapshotValidator
                 throw new InvalidDataException(
                     $"The authoritative snapshot contains more than {NativeMaximumItemCount} "
                     + $"world items on level {group.Key}, exceeding the native item capacity.");
+        }
+    }
+
+    private static void ValidateWarpTriggerPoolCapacity(Snapshot snapshot)
+    {
+        foreach (var level in snapshot.LevelGeometry) {
+            if (level.WarpTriggers.Count > NativeMaximumWarpTriggerCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumWarpTriggerCount} "
+                    + $"warp triggers on level {level.LevelId}, exceeding the native trigger capacity.");
         }
     }
 

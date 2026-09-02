@@ -18,6 +18,7 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumItemCount = 127;
     private const int NativeMaximumMonsterCount = 200;
     private const int NativeMaximumPortalCount = 4;
+    private const int NativeMaximumWarpTriggerCount = 7;
     private const uint NativeMaximumDunObjectLayerId = 146;
     private const uint NativeMaximumDunPieceId = 1378;
     private const uint NativeMaximumQuestId = 23;
@@ -1142,6 +1143,10 @@ public sealed class AuthoritativeClientModel
     {
         var levels = new Dictionary<uint, LevelGeometrySnapshot>();
         foreach (var level in snapshot.LevelGeometry) {
+            if (level.WarpTriggers.Count > NativeMaximumWarpTriggerCount)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains more than {NativeMaximumWarpTriggerCount} "
+                    + $"warp triggers on level {level.LevelId}, exceeding the native trigger capacity.");
             var coarseWidth = (level.Width + 1L) / 2;
             var coarseHeight = (level.Height + 1L) / 2;
             if (level.Width < 0

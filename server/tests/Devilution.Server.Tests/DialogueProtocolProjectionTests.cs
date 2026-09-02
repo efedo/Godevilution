@@ -2166,6 +2166,33 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsMoreWarpTriggersThanTheNativePoolPerLevel()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8));
+        var warpTargets = Enumerable.Range(1, 8)
+            .Select(index => new AuthoritativeWarpTarget(
+                (uint)index,
+                0,
+                index - 1,
+                0,
+                1,
+                1,
+                1))
+            .ToArray();
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                source,
+                levelGeometry: [
+                    new AuthoritativeLevel(0, 10, 10),
+                    new AuthoritativeLevel(1, 10, 10),
+                ],
+                warpTargets: warpTargets));
+        Assert.Contains("native trigger capacity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void OmitsNativeQuestOrdinalWhenNoContentMappingExists()
     {
         var player = new StorePlayerSnapshot(

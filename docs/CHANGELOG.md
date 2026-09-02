@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   boundaries.
 - Enforced DevilutionX's `MAX_PLRS` four-player pool across participant
   projection, host admission, Godot admission, and native player projection.
+- Enforced DevilutionX's `MAXTRIGGERS` seven-warp-trigger-per-level pool across
+  server projection, host admission, Godot geometry admission, and native
+  geometry projection.
 - Enforced the native four-route portal pool in authoritative world-state
   construction, static catalog loading, Town Portal creation, and save restore;
   runtime state can no longer grow beyond the projection boundary.

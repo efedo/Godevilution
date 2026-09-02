@@ -12,6 +12,7 @@
 
 #include "devilution.pb.h"
 #include "game/levels/dungeon_common_defs.hpp"
+#include "game/levels/triggers.h"
 #include "game/items/items.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/players/players.hpp"
@@ -1065,6 +1066,8 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry dimensions.");
 		if (!levels.emplace(level.level_id(), &level).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
+		if (level.warp_triggers_size() > MAXTRIGGERS)
+			return tl::make_unexpected("Server-backed snapshot contains too many warp triggers on one level.");
 		if (level.width() == 0 || level.height() == 0)
 			continue;
 		const auto cellCount = static_cast<uint64_t>(level.width()) * static_cast<uint64_t>(level.height());

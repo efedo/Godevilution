@@ -43,6 +43,21 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsSnapshotsBeyondNativeWarpTriggerCapacityPerLevel()
+    {
+        var snapshot = new Snapshot {
+            LevelGeometry = { new LevelGeometrySnapshot { LevelId = 1 } },
+        };
+        for (var index = 1; index <= 8; index++)
+            snapshot.LevelGeometry[0].WarpTriggers.Add(new WarpTriggerSnapshot {
+                WarpId = (uint)index,
+            });
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void AcceptsDefinedDifficultyAndValidPortalState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
