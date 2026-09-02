@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
   `level_generation.tsv` metadata. Custom packs may select a bounded capacity;
   rows that omit it retain the native 190-slot compatibility default.
 
+- Advance the Diablo content schema to `1.443.0` for the ordinary-spawn
+  capacity field; `1.442.0` remains accepted as the previous additive schema.
+
 - Externalize the Golem summon target through the optional `golem_monster_id`
   spell field and validate it against active monster types, while retaining the
   native compatibility fallback for older packs.
@@ -552,7 +555,7 @@ All notable changes to this fork are documented below.
 - Move Snotspill's initial unique-monster conversation into the authored
   staged-dialogue catalog. The server and Godot live fixture now verify the
   event, quest-variable advance, and projected next-message identity under
-  schema `1.442.0`, while `1.441.0` remains accepted as the previous additive
+  schema `1.443.0`, while `1.442.0` remains accepted as the previous additive
   contract.
 
 - Complete the quest-transition object follow-up slice across the protocol
@@ -564,45 +567,45 @@ All notable changes to this fork are documented below.
 - Extend authored object follow-ups to quest-transition objects. Books, levers,
   and similar set-piece controls can now apply a validated server-owned map,
   projectile, or encounter follow-up after their quest transition succeeds;
-  schema `1.442.0` is current with `1.441.0` retained for additive
+  schema `1.443.0` is current with `1.442.0` retained for additive
   compatibility.
 
 - Externalize the Halls of the Blind, Gateway of Blood, and Warlord steel-tome
   activation dialogue through authored object metadata. The server now records
   each native quest message and emits it as a server-owned dialogue event;
   native-DUN placement and map mutations remain deferred until their licensed
-  geometry is available. schema `1.442.0` is current with `1.441.0` retained
+  geometry is available. schema `1.443.0` is current with `1.442.0` retained
   for additive compatibility.
 
 - Externalize Hellfire Lachdanan's opening and Golden Elixir hand-in through
   paired item-presence dialogue stages. The server now owns the Veil of Steel
   unique reward, placement validation, quest completion, and target defeat;
-  schema `1.442.0` is current with `1.441.0` retained for additive
+  schema `1.443.0` is current with `1.442.0` retained for additive
   compatibility.
 
 - Move Zhar's activation conversation and level-14 book reward into the
   authored unique-monster dialogue catalog. The new `NormalItem` stage keeps
-  reward placement and quest advancement server-owned; schema `1.442.0` is
-  current with `1.441.0` retained for additive compatibility.
+  reward placement and quest advancement server-owned; schema `1.443.0` is
+  current with `1.442.0` retained for additive compatibility.
 
 - Externalize the Lazarus storyteller opening through authored quest/towner
   stages. Single-player Staff of Lazarus activation and multiplayer unlogged
   dialogue now preserve the native message and progression marker under the
   server-owned path; those rows remain compatible through current schema
-  `1.442.0`, with `1.441.0` retained as the previous additive contract.
+  `1.443.0`, with `1.442.0` retained as the previous additive contract.
 
 - Extend authored quest/towner rewards to `Advance` stages and make item
   consumption atomic with reward placement validation. The base Black Mushroom
   healer hand-in now consumes the Brain, advances its native marker, and spawns
   the declared Spectral Elixir entirely through the server-owned path;
   those rows were introduced under schema `1.436.0` and remain compatible
-  through the current `1.442.0` content contract.
+  through the current `1.443.0` content contract.
 
 - Externalize the remaining shipped base quest/towner item stages for Magic
   Rock, Anvil of Fury, Ogden's Sign, and the Butcher. Their server-owned
   activation/completion rows preserve native gates, messages, item consumption,
   and authored rewards; those rows were introduced under schema `1.435.0` and
-  remain compatible through the current `1.442.0` content contract.
+  remain compatible through the current `1.443.0` content contract.
 
 - Add the additive `CompleteAfterQuest` interaction kind and completion-reward
   flag. Lazarus, Poisoned Water, and Farmer's Orchard completion conversations
