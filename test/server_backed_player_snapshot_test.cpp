@@ -1467,6 +1467,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->set_width(1);
 	level->set_height(1);
 	level->add_native_transparency(128);
+	EXPECT_TRUE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
+	level->clear_native_transparency();
+	level->add_native_transparency(256);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 	level->clear_native_transparency();
 	level->add_native_mega_tile_layer(256);
@@ -2039,6 +2042,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	geometry.height = 4;
 	geometry.nativeTransparency.assign(16, 0);
 	geometry.nativeTransparency[5] = 9;
+	geometry.nativeTransparency[6] = 128;
 	geometry.nativePieceLayer.assign(16, 42);
 	geometry.nativePieceLayer[5] = 77;
 	geometry.nativeMegaTileLayer = { 12, 13, 14, 15 };
@@ -2064,6 +2068,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_EQ(tileAt(1, 1).piece(), 77);
 	EXPECT_EQ(tileAt(1, 1).transVal(), 9);
+	EXPECT_EQ(tileAt(2, 1).transVal(), -128);
 	EXPECT_EQ(megaTileAt(0, 0).current(), 12);
 
 	ProjectedLevelGeometrySnapshot townGeometry;

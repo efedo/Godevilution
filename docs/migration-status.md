@@ -2712,6 +2712,8 @@ scaled hit points), not only the client's difficulty label.
 - The authoritative world and save paths now enforce the same capacity before
   projection, and Town Portal creation fails closed when all native slots are
   occupied.
+- Native transparency snapshots now accept the full low-byte wire range on all
+  three clients, while values above 255 fail closed before presentation.
 - Native authoritative quest-state validation now rejects duplicate or missing
   quest identities, impossible progress, unavailable progress, and invalid
   native quest metadata before interaction gates consume the snapshot.

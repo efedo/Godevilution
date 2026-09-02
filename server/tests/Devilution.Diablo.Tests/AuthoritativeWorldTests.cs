@@ -239,11 +239,17 @@ public sealed class AuthoritativeWorldTests
     [Fact]
     public void RejectsNativePresentationValuesOutsideCompatibilityRanges()
     {
+        var signedTransparency = new AuthoritativeLevel(
+            1,
+            1,
+            1,
+            nativeTransparency: [128]);
+        Assert.Equal((ushort)128, signedTransparency.NativeTransparency[0]);
         Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
             1,
             1,
             1,
-            nativeTransparency: [128]));
+            nativeTransparency: [256]));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
             1,
             1,

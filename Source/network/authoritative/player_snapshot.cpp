@@ -1040,8 +1040,8 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 		    || (!level.native_mega_tile_layer().empty()
 		        && ((static_cast<uint64_t>(level.width()) + 1) / 2 > DMAXX
 		            || (static_cast<uint64_t>(level.height()) + 1) / 2 > DMAXY))
-		    || !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
-				return value <= static_cast<uint32_t>(std::numeric_limits<int8_t>::max());
+			|| !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
+				return value <= std::numeric_limits<uint8_t>::max();
 			})
 		    || !std::all_of(level.native_object_layer().begin(), level.native_object_layer().end(), [](uint32_t value) {
 				return value <= static_cast<uint32_t>(DUN_OBJECT_ID_LAST);

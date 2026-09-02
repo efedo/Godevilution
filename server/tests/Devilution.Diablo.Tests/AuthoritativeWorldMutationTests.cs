@@ -244,6 +244,8 @@ public sealed class AuthoritativeWorldMutationTests
     {
         var transparency = new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 1, 1, 255);
         Assert.Equal((ushort)255, transparency.Value);
+        var signedTransparency = new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 1, 1, 128);
+        Assert.Equal((ushort)128, signedTransparency.Value);
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeWorldMutationCatalog.LoadTsv(

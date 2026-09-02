@@ -884,7 +884,7 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		return tl::make_unexpected("Authoritative level geometry layer dimensions do not match the projected level.");
 
 	if (std::any_of(geometry->nativeTransparency.begin(), geometry->nativeTransparency.end(), [](uint16_t value) {
-			return value > static_cast<uint16_t>(std::numeric_limits<int8_t>::max());
+			return value > std::numeric_limits<uint8_t>::max();
 		})
 	    || std::any_of(geometry->nativeMegaTileLayer.begin(), geometry->nativeMegaTileLayer.end(), [](uint16_t value) {
 			return value > std::numeric_limits<uint8_t>::max();

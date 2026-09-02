@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Enforced the native four-route portal pool in authoritative world-state
   construction, static catalog loading, Town Portal creation, and save restore;
   runtime state can no longer grow beyond the projection boundary.
+- Reconciled native signed-transparency wire-byte validation so values 0–255
+  are preserved consistently by the C# world, Godot, and native boundaries.
 - Enforced DevilutionX's `MAXPORTAL` limit across authoritative server
   projection, host validation, Godot admission, and native client projection;
   snapshots with more than four portal routes now fail closed.
