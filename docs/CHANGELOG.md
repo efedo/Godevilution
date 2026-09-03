@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Replay object-interaction fixtures now declare their authored quest link
+  explicitly, keeping object-quest timelines valid after inert-object command
+  admission was hardened.
+
 - Snapshot hydration and canonical state hashing now preserve authored object
   dialogue identities when an existing object is updated in place, keeping
   dialogue-only interactions available across replacement-session restores.

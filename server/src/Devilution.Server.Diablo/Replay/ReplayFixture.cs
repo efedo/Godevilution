@@ -209,6 +209,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public uint ObjectId { get; init; }
 
+    /** Optional authored quest link for replay object-interaction fixtures. */
+    public uint ObjectQuestId { get; init; }
+
     public int ObjectPositionX { get; init; }
 
     public int ObjectPositionY { get; init; }

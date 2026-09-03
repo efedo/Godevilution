@@ -66,6 +66,7 @@ public static class ReplayFixtureLoader
                 && (fixture.InitialState.ObjectMissilePassable
                     || fixture.InitialState.ObjectBreakable
                     || fixture.InitialState.ObjectDestroyed
+                    || fixture.InitialState.ObjectQuestId != 0
                     || fixture.InitialState.ObjectEffectKind != 0
                     || fixture.InitialState.ObjectEffectAmount != 0))
             || fixture.InitialState.ObjectEffectKind is < (int)AuthoritativeObjectEffectKind.None
@@ -358,6 +359,7 @@ public static class ReplayFixtureLoader
             WorldItemPrice = value.TryGetProperty("world_item_price", out var worldItemPrice) ? worldItemPrice.GetUInt32() : 0,
             ObjectEntityId = value.TryGetProperty("object_entity_id", out var objectEntityId) ? objectEntityId.GetUInt32() : 0,
             ObjectId = value.TryGetProperty("object_id", out var objectId) ? objectId.GetUInt32() : 0,
+            ObjectQuestId = GetOptionalUInt(value, "object_quest_id"),
             ObjectPositionX = value.TryGetProperty("object_position_x", out var objectPositionX) ? objectPositionX.GetInt32() : 0,
             ObjectPositionY = value.TryGetProperty("object_position_y", out var objectPositionY) ? objectPositionY.GetInt32() : 0,
             ObjectEffectKind = GetOptionalInt(value, "object_effect_kind"),

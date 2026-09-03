@@ -1594,7 +1594,8 @@ public sealed class BaseContentReplayTests
                 initial.ObjectId,
                 initial.LevelId,
                 initial.ObjectPositionX,
-                initial.ObjectPositionY)],
+                initial.ObjectPositionY,
+                questId: initial.ObjectQuestId)],
             startingSpells: spells,
             startingCombatRules: new AuthoritativeCombatRules(
                 10,

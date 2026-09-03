@@ -1718,6 +1718,7 @@ public sealed class ReplayFixtureTests
             initial.LevelId,
             initial.ObjectPositionX,
             initial.ObjectPositionY,
+            questId: initial.ObjectQuestId,
             missilePassable: initial.ObjectMissilePassable,
             breakable: initial.ObjectBreakable,
             destroyed: initial.ObjectDestroyed);
@@ -1816,7 +1817,8 @@ public sealed class ReplayFixtureTests
                 fixture.InitialState.ObjectId,
                 fixture.InitialState.LevelId,
                 fixture.InitialState.ObjectPositionX,
-                fixture.InitialState.ObjectPositionY)],
+                fixture.InitialState.ObjectPositionY,
+                questId: fixture.InitialState.ObjectQuestId)],
             startingPortals: [new AuthoritativePortal(5, 1, 0, 0, 2, 3, 4)],
             startingRandomSeed: checked((uint)fixture.RngSeed));
 
@@ -2312,7 +2314,8 @@ public sealed class ReplayFixtureTests
                 fixture.InitialState.ObjectId,
                 fixture.InitialState.LevelId,
                 fixture.InitialState.ObjectPositionX,
-                fixture.InitialState.ObjectPositionY)],
+                fixture.InitialState.ObjectPositionY,
+                questId: fixture.InitialState.ObjectQuestId)],
             startingQuests: [new AuthoritativeQuestState(
                 fixture.InitialState.QuestId,
                 fixture.InitialState.LevelId,
@@ -2801,6 +2804,7 @@ public sealed class ReplayFixtureTests
                 initial.LevelId,
                 initial.ObjectPositionX,
                 initial.ObjectPositionY,
+                questId: initial.ObjectQuestId,
                 effectKind: (AuthoritativeObjectEffectKind)initial.ObjectEffectKind,
                 effectAmount: initial.ObjectEffectAmount)],
             startingSpells: spells,
@@ -4110,6 +4114,7 @@ public sealed class ReplayFixtureTests
             initial.LevelId,
             initial.ObjectPositionX,
             initial.ObjectPositionY,
+            questId: initial.ObjectQuestId,
             missilePassable: initial.ObjectMissilePassable,
             breakable: initial.ObjectBreakable,
             destroyed: initial.ObjectDestroyed);
@@ -4772,6 +4777,7 @@ public sealed class ReplayFixtureTests
             fixture.InitialState.LevelId,
             fixture.InitialState.ObjectPositionX,
             fixture.InitialState.ObjectPositionY,
+            questId: fixture.InitialState.ObjectQuestId,
             missilePassable: fixture.InitialState.ObjectMissilePassable,
             breakable: fixture.InitialState.ObjectBreakable,
             destroyed: fixture.InitialState.ObjectDestroyed);
@@ -7215,6 +7221,7 @@ public sealed class ReplayFixtureTests
                 fixture.InitialState.LevelId,
                 fixture.InitialState.ObjectPositionX,
                 fixture.InitialState.ObjectPositionY,
+                questId: fixture.InitialState.ObjectQuestId,
                 missilePassable: fixture.InitialState.ObjectMissilePassable,
                 breakable: fixture.InitialState.ObjectBreakable,
                 destroyed: fixture.InitialState.ObjectDestroyed)];
