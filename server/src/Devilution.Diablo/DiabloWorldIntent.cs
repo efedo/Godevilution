@@ -32,6 +32,9 @@ public sealed record DiabloTalkToQuestIntent(uint QuestId, uint TargetEntityId) 
 /** Completes a content-defined quest turn-in at an adjacent native towner. */
 public sealed record DiabloTurnInQuestIntent(uint QuestId, uint TownerId) : DiabloWorldIntent;
 
+/** Requests the content-owned greeting for a general native townsperson. */
+public sealed record DiabloTalkToTownerIntent(int TownerId) : DiabloWorldIntent;
+
 public sealed record DiabloSetFriendlyModeIntent(bool FriendlyMode) : DiabloWorldIntent;
 
 /** Spends server-owned level-up points on one native primary attribute. */

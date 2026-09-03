@@ -110,6 +110,10 @@ Windows toolchain command.
   The server validates the active quest, level, towner adjacency, native
   conversation variable, and required item before consuming the item,
   completing the quest, and spawning any validated unique reward.
+- `TalkToTownerRequested` identifies a general native townsperson greeting.
+  The server validates the content-owned towner position, level, adjacency,
+  and empty cursor, then emits the native message identity as a dialogue event;
+  store menus remain client presentation after the event is accepted.
 - `MoveInventoryItemRequested.item` is an additive exact inventory reference.
   When present, the server rejects a stale slot before changing the inventory
   grid; an absent or zero-valued reference retains positional compatibility.

@@ -744,6 +744,17 @@ tl::expected<void, std::string> ServerBackedRuntime::TurnInQuest(uint32_t questI
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::TalkToTowner(uint32_t townerId, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->TalkToTowner(townerId, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 bool ServerBackedRuntime::HasActiveQuest(uint32_t questId) const noexcept
 {
 	return session_ != nullptr && session_->HasActiveQuest(questId);

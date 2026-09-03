@@ -151,6 +151,16 @@ TEST(ServerBackedVendorCommand, RejectsInvalidQuestDialogueIdentifiers)
 	EXPECT_FALSE(MakeTalkToQuestCommand(3021, 0, 1).has_value());
 }
 
+TEST(ServerBackedVendorCommand, BuildsTownerGreetingIntent)
+{
+	const auto command = MakeTalkToTownerCommand(7, 19);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_talk_to_towner_requested());
+	EXPECT_EQ(command->requested_tick(), 19U);
+	EXPECT_EQ(command->talk_to_towner_requested().towner_id(), 7U);
+	EXPECT_FALSE(MakeTalkToTownerCommand(UINT8_MAX + 1U, 19).has_value());
+}
+
 TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 {
 	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 6, .stableItemId = 702 };

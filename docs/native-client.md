@@ -428,10 +428,12 @@ explicit migration seams, not server-authority claims:
   the Banner opening transition and associated unique-monster state, plus the
   remaining book/lever set pieces. Procedural level/object parity must precede
   externalizing those remaining map mutations.
-- Towner methods without authored quest stages retain local dialogue/store
-  presentation. Store transactions remain server commands where a store
-  service is declared, but the surrounding legacy conversation is not yet a
-  generic content resource.
+- General vendor/service greetings now submit `TalkToTownerRequested`; the
+  server validates the content-owned position and emits the native message
+  identity before the client opens its presentation menu. Store transactions
+  remain server commands where a store service is declared. Greeting text
+  still resolves through the native text catalog until localized presentation
+  content is externalized.
 
 New authored rows must be accompanied by native parity tests and a protocol
 projection before these fallback branches are removed. The legacy path remains

@@ -45,6 +45,13 @@ matching conversation stage is pending. Older packs without a staged route
 continue to use their legacy dialogue-completion marker as a compatibility
 fallback.
 
+The optional `towner_greetings.tsv` table owns the general vendor/service
+greeting boundary. Each row supplies a native towner identity, town position,
+and message identity. The server validates adjacency and cursor state before
+emitting the greeting event; the native client then opens the corresponding
+presentation menu. Message text remains in the legacy/native text catalog until
+that presentation asset is migrated into a content pack.
+
 The optional `unique_monster_placements.tsv` table owns generated unique
 encounter placement. Rows are validated against unique identities, monster
 types, level geometry, reserved warp/portal/object cells, entity IDs reserved

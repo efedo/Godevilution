@@ -544,6 +544,16 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeTurnInQuestCo
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeTalkToTownerCommand(uint32_t townerId, uint64_t requestedTick)
+{
+	if (townerId > UINT8_MAX)
+		return tl::make_unexpected("Cannot talk to an invalid towner.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_talk_to_towner_requested()->set_towner_id(townerId);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeSetFriendlyModeCommand(bool friendlyMode, uint64_t requestedTick)
 {
 	protocol::v1::Command command;

@@ -51,7 +51,8 @@ public sealed record DiabloContentActivation
         AuthoritativeExperienceCatalog? experience = null,
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
         AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
-        AuthoritativeMonsterSpawnPolicyCatalog? monsterSpawnPolicies = null)
+        AuthoritativeMonsterSpawnPolicyCatalog? monsterSpawnPolicies = null,
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -89,6 +90,7 @@ public sealed record DiabloContentActivation
         Experience = experience;
         NativeMissiles = nativeMissiles;
         NativeMissileSprites = nativeMissileSprites;
+        TownerGreetings = townerGreetings;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -126,6 +128,8 @@ public sealed record DiabloContentActivation
 
     /** Validated native missile sprite dimensions and animation timing. */
     public AuthoritativeNativeMissileSpriteCatalog? NativeMissileSprites { get; }
+
+    public AuthoritativeTownerGreetingCatalog? TownerGreetings { get; }
 
     /** Service-only store identity supplied by the active world rules. */
     public uint AdriaStoreId { get; }
@@ -1012,6 +1016,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questDialogueStagesTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var townerGreetings = content.TryGetTable(
+            "towner_greetings.tsv",
+            out var townerGreetingsTable)
+            ? AuthoritativeTownerGreetingCatalog.LoadTsv(
+                townerGreetingsTable.SourcePath,
+                townerGreetingsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
         var dialogueMessages = content.TryGetTable(
             "dialogue_messages.tsv",
             out var dialogueMessagesTable)
@@ -1035,6 +1047,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "Quest-gated warps and objects require an active quest catalog.");
         }
+        if (world is not null && townerGreetings is not null)
+            townerGreetings.ValidateWorld(world);
         if (quests is not null) {
             AuthoritativeQuestCatalog.ValidateActivationTargets(quests);
             if (monsterTypes is not null)
@@ -1290,6 +1304,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             QuestTypes = questTypes,
             QuestTownerInteractions = questTownerInteractions,
             QuestDialogueStages = questDialogueStages,
+            TownerGreetings = townerGreetings,
             DialogueMessages = dialogueMessages,
             SetLevelObjects = setLevelObjects,
             ProceduralSetPieceOrigins = proceduralSetPieceOrigins,
@@ -1360,7 +1375,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             experience,
             nativeMissiles,
             nativeMissileSprites,
-            monsterSpawnPolicies);
+            monsterSpawnPolicies,
+            townerGreetings);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -142,6 +142,7 @@ message Command {
 		SplitGoldRequested split_gold_requested = 41;
 		SortInventoryRequested sort_inventory_requested = 42;
 		DropItemRequested drop_item_requested = 43;
+		TalkToTownerRequested talk_to_towner_requested = 44;
 	}
 }
 
@@ -347,6 +348,11 @@ message TalkToQuestRequested {
 message TurnInQuestRequested {
 	uint32 quest_id = 1;
 	uint32 towner_id = 2;
+}
+
+/** Requests the presentation-only greeting for a connected native towner. */
+message TalkToTownerRequested {
+	uint32 towner_id = 1;
 }
 
 enum GameDifficulty {

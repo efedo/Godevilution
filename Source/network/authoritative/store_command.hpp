@@ -102,6 +102,7 @@ struct ServerBackedCastSource {
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAdvanceQuestCommand(uint32_t questId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeTalkToQuestCommand(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeTurnInQuestCommand(uint32_t questId, uint32_t townerId, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeTalkToTownerCommand(uint32_t townerId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSetFriendlyModeCommand(bool friendlyMode, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAllocateAttributeCommand(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeRestartTownCommand(uint64_t requestedTick);

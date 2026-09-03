@@ -27,6 +27,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly DiabloGameVariant gameVariant;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeExperienceCatalog? experience;
+    private readonly AuthoritativeTownerGreetingCatalog? townerGreetings;
     private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator authoredProjectileEntityIds = new(0xC0000000);
@@ -54,7 +55,8 @@ public sealed class DiabloWorldCommandProcessor
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         DiabloGameVariant gameVariant = DiabloGameVariant.Diablo,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
-        AuthoritativeExperienceCatalog? experience = null)
+        AuthoritativeExperienceCatalog? experience = null,
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -77,6 +79,7 @@ public sealed class DiabloWorldCommandProcessor
         this.gameVariant = gameVariant;
         this.monsterTypes = monsterTypes;
         this.experience = experience;
+        this.townerGreetings = townerGreetings;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -154,6 +157,7 @@ public sealed class DiabloWorldCommandProcessor
                 turnIn.QuestId,
                 turnIn.TownerId,
                 players.ToArray()),
+            DiabloTalkToTownerIntent talk => TalkToTowner(player, talk.TownerId),
             DiabloSetFriendlyModeIntent mode => SetFriendlyMode(player, mode.FriendlyMode),
             DiabloAllocateAttributeIntent allocation => AllocateAttribute(player, allocation),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
@@ -2010,6 +2014,33 @@ public sealed class DiabloWorldCommandProcessor
             quest.Active = false;
         }
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Validates and emits one general towner greeting without mutating quest state. */
+    private DiabloWorldIntentResult TalkToTowner(
+        AuthoritativePlayerState player,
+        int townerId)
+    {
+        if (townerGreetings is null
+            || !townerGreetings.TryGet(townerId, out var greeting)
+            || greeting.LevelId != player.LevelId
+            || player.HeldItem is not null
+            || DeterministicGridMetrics.ChebyshevDistance(
+                greeting.PositionX,
+                greeting.PositionY,
+                player.PositionX,
+                player.PositionY) > 1) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        return DiabloWorldIntentResult.AcceptedWith(
+            new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Dialogue,
+                player.EntityId,
+                0,
+                0) {
+                MessageId = greeting.MessageId,
+            });
     }
 
     /**

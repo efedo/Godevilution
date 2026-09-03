@@ -6,6 +6,60 @@ namespace Devilution.Diablo.Tests;
 public sealed class DiabloWorldCommandProcessorTests
 {
     [Fact]
+    public void TownerGreetingEmitsNativeDialogueEventWhenAdjacent()
+    {
+        var player = CreatePlayer(levelId: 0, positionX: 62, positionY: 64, entityId: 7);
+        var greetings = new AuthoritativeTownerGreetingCatalog([
+            new AuthoritativeTownerGreetingDefinition(0, 0, 62, 63, 188),
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(
+            new DiabloWorldState(),
+            townerGreetings: greetings).Execute(
+                player,
+                new DiabloTalkToTownerIntent(0),
+                1,
+                [player]);
+
+        var dialogue = Assert.Single(result.Events);
+        Assert.True(result.Succeeded);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(7U, dialogue.SourceEntityId);
+        Assert.Equal(188, dialogue.MessageId);
+    }
+
+    [Fact]
+    public void TownerGreetingRejectsHeldItemAndNonAdjacentPlayer()
+    {
+        var greetings = new AuthoritativeTownerGreetingCatalog([
+            new AuthoritativeTownerGreetingDefinition(0, 0, 62, 63, 188),
+        ]);
+        var processor = new DiabloWorldCommandProcessor(
+            new DiabloWorldState(),
+            townerGreetings: greetings);
+
+        var held = CreatePlayer(positionX: 62, positionY: 64, heldItem: new OwnedStoreItem(
+            1,
+            1,
+            1,
+            0,
+            0,
+            AuthoritativeItemState.Empty));
+        Assert.False(processor.Execute(
+            held,
+            new DiabloTalkToTownerIntent(0),
+            1,
+            [held]).Succeeded);
+
+        var distant = CreatePlayer(positionX: 60, positionY: 63);
+        Assert.False(processor.Execute(
+            distant,
+            new DiabloTalkToTownerIntent(0),
+            2,
+            [distant]).Succeeded);
+    }
+
+    [Fact]
     public void FriendlyModeIntentSetsExplicitRetrySafeState()
     {
         var processor = new DiabloWorldCommandProcessor(new DiabloWorldState());

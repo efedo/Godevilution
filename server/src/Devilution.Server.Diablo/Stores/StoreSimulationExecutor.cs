@@ -392,6 +392,12 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                         command.TurnInQuestRequested.QuestId,
                         command.TurnInQuestRequested.TownerId),
                     appliedTick),
+                Command.IntentOneofCase.TalkToTownerRequested => ExecuteWorldIntent(
+                    player,
+                    participants,
+                    new DiabloTalkToTownerIntent(
+                        checked((int)command.TalkToTownerRequested.TownerId)),
+                    appliedTick),
                 Command.IntentOneofCase.SetFriendlyModeRequested => ExecuteWorldIntent(
                     player,
                     participants,

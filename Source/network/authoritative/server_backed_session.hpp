@@ -107,6 +107,7 @@ public:
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> TalkToQuest(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> TalkToTowner(uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
 	/** Returns whether the latest authoritative snapshot has an active quest. */
 	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	/** Returns the lowest-ID active quest whose content declares this towner for turn-in. */

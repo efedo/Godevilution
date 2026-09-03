@@ -295,6 +295,11 @@ tl::expected<void, std::string> ServerBackedSession::TurnInQuest(uint32_t questI
 	return SubmitGameplayCommand(MakeTurnInQuestCommand(questId, townerId, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::TalkToTowner(uint32_t townerId, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeTalkToTownerCommand(townerId, requestedTick), nowMs);
+}
+
 bool ServerBackedSession::HasActiveQuest(uint32_t questId) const noexcept
 {
 	return std::any_of(questStates_.begin(), questStates_.end(), [questId](const auto &quest) {

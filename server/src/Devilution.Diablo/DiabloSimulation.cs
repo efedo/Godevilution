@@ -68,6 +68,9 @@ public sealed class DiabloSimulationOptions
     /** Validated staged unique-monster dialogue supplied by content. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; init; }
 
+    /** Validated native greetings for general town vendors and service NPCs. */
+    public AuthoritativeTownerGreetingCatalog? TownerGreetings { get; init; }
+
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; init; }
 
@@ -261,7 +264,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Difficulty,
             combatRules.GameVariant,
             options.MonsterTypes,
-            options.Experience);
+            options.Experience,
+            options.TownerGreetings);
         var simulation = new DiabloSimulation(
             options.StoreCatalog,
             worldState,

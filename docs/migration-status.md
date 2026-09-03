@@ -7,6 +7,11 @@ Authored unique-monster dialogue snapshots now carry an additive validated
 server-owned inquiring/combat state instead of inferring terminal progression
 from native AI or quest tables; legacy peers retain the zero-valued fallback.
 
+General town vendor greetings now have an additive `TalkToTownerRequested`
+command. The base content pack supplies native towner positions and message
+identities; the server validates adjacency and cursor state, emits the dialogue
+event, and leaves store-menu presentation to the client.
+
 The `ReadQuestNote` action now resolves its dialogue identity from the authored
 item definition (`item_action_message_id`) instead of embedding the native
 message number in the server action branch. Older packs remain compatible via
