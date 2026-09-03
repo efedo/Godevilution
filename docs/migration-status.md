@@ -547,6 +547,11 @@ countdown state, and the native gameplay-RNG draw across the lifecycle.
 The Scavenger replay lane now also covers Hellfire's max-health-fraction
 healing and corpse removal when the monster reaches full health.
 
+The Scavenger replay lane now also covers native coin-directed selection among
+multiple visible corpses. The compact native replay controller and managed
+runner preserve the same scan order, selected corpse identity, movement, and
+canonical checkpoints.
+
 The shared replay contract now covers the server-owned ZombieAi action band
 and deterministic long-range walk, including current/future occupancy parity
 across the following tick.

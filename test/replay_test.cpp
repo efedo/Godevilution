@@ -4905,6 +4905,50 @@ TEST(ReplayFixture, ExecutesScavengerCorpseLifecycleAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesScavengerMultiCandidateSelectionAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-scavenger-multicandidate-selection.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetScavengerHealingTicks = fixture.initialState.combatTargetScavengerHealingTicks;
+	state.combatTargetScavengerCorpseEntityId = fixture.initialState.combatTargetScavengerCorpseEntityId;
+	state.corpses = fixture.initialState.corpses;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_EQ(state.combatTargetScavengerCorpseEntityId, 11U);
+	EXPECT_EQ(state.combatTargetPositionX, 1);
+	EXPECT_EQ(state.combatTargetPositionY, 1);
+	EXPECT_TRUE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetFuturePositionX, 2);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 2);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
+	EXPECT_EQ(result.transitions[1].stateSha256, fixture.checkpoints[1].stateSha256);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesScavengerHellfireCorpseLifecycleAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-scavenger-hellfire-corpse.json");

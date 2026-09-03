@@ -22,6 +22,11 @@ All notable changes to this fork are documented below.
   autonomous avoidance branch, including authoritative movement and AI-stream
   checkpoint parity.
 
+- Added a Scavenger multi-candidate replay fixture and aligned the compact
+  native replay controller with the managed/native coin-directed corpse scan.
+  Both runners now preserve first-candidate selection, movement, selected-corpse
+  identity, and canonical checkpoints.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked

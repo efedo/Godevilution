@@ -4892,6 +4892,30 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayScavengerMultiCandidateSelectionMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-scavenger-multicandidate-selection.json");
+        var executor = CreateScavengerReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var corpses = result.FinalSnapshot.Corpses.OrderBy(corpse => corpse.EntityId).ToArray();
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal(11U, monster.ScavengerCorpseEntityId);
+        Assert.Equal((1, 1), (monster.PositionX, monster.PositionY));
+        Assert.True(monster.Moving);
+        Assert.Equal((2, 2), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(new uint[] { 10, 11 }, corpses.Select(corpse => corpse.EntityId));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayScavengerHellfireCorpseLifecycleMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-scavenger-hellfire-corpse.json");

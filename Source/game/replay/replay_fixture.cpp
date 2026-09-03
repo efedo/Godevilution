@@ -7154,23 +7154,35 @@ void AdvanceReplayMonsterAttack(
 				corpse = &*selected;
 		}
 		if (corpse == nullptr) {
-			// Native ScavengerFindCorpse consumes one gameplay random value for
-			// its coin-selected scan direction, even when this compact fixture
-			// controller resolves the only corpse directly.
-			AdvanceRandom(state);
-			const auto selected = std::find_if(
-			    state.corpses.begin(),
-			    state.corpses.end(),
-			    [&](auto &candidate) {
-				    return (candidate.levelId == 0
-				            || candidate.levelId == state.combatTargetLevelId)
-				        && std::max(
-				               std::abs(candidate.positionX - state.combatTargetPositionX),
-				               std::abs(candidate.positionY - state.combatTargetPositionY)) <= 4;
-			    });
-			if (selected != state.corpses.end()) {
-				state.combatTargetScavengerCorpseEntityId = selected->entityId;
-				corpse = &*selected;
+			// Native ScavengerFindCorpse consumes one gameplay random value to
+			// choose the direction of its bounded square scan. Preserve that
+			// order so multiple authored corpses select the same candidate as
+			// the managed authoritative controller.
+			const bool reverseSearch = GenerateRnd(state, 2) == 0;
+			const int first = reverseSearch ? 4 : -4;
+			const int last = reverseSearch ? -4 : 4;
+			const int increment = reverseSearch ? -1 : 1;
+			for (int y = first; reverseSearch ? y >= last : y <= last; y += increment) {
+				for (int x = first; reverseSearch ? x >= last : x <= last; x += increment) {
+					const int candidateX = state.combatTargetPositionX + x;
+					const int candidateY = state.combatTargetPositionY + y;
+					const auto selected = std::find_if(
+					    state.corpses.begin(),
+					    state.corpses.end(),
+					    [&](auto &candidate) {
+						    return (candidate.levelId == 0
+						            || candidate.levelId == state.combatTargetLevelId)
+						        && candidate.positionX == candidateX
+						        && candidate.positionY == candidateY;
+					    });
+					if (selected != state.corpses.end()) {
+						state.combatTargetScavengerCorpseEntityId = selected->entityId;
+						corpse = &*selected;
+						break;
+					}
+				}
+				if (corpse != nullptr)
+					break;
 			}
 		}
 		if (corpse == nullptr) {

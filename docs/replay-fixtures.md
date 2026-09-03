@@ -245,7 +245,7 @@ pack.
 The Bat retreat, Fat movement, and Zombie action fixtures likewise load their
 native AI tuning from the hash-checked `bat-retreat`, `fat-movement`, and
 `zombie-action` content packs.
-The Rhino charge and both Scavenger corpse-healing fixtures load their native
+The Rhino charge and all three Scavenger corpse-healing fixtures load their native
 charge, movement, delay, and healing tuples from the hash-checked
 `rhino-charge` and `scavenger-corpse` content packs.
 The Sneak conceal/reveal fixtures load their complete stealth distance and
@@ -385,7 +385,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-03,
-the native replay gate contains 173 checked-in JSON fixtures and 192 registered
+the native replay gate contains 174 checked-in JSON fixtures and 193 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -902,6 +902,9 @@ Notable shared fixtures include:
   movement-delay and failed adjacent-attack admission/countdown parity;
 - `gameplay-rhino-charge.json` for native charge admission, nearest adjacent
   landing, special damage, monster relocation, player knockback, and RNG parity;
+- `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
+  corpse scan order, first-candidate selection, deterministic movement, and
+  selected-corpse checkpoint parity;
 - `gameplay-goat-melee-movement.json` for zero-seed AiAvoidance movement
   admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-goat-melee-attack.json` for seeded adjacent attack admission,

@@ -128,6 +128,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-sneak-reveal.json" Link="Fixtures/gameplay-sneak-reveal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-retreat.json" Link="Fixtures/gameplay-bat-retreat.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-corpse.json" Link="Fixtures/gameplay-scavenger-corpse.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-scavenger-multicandidate-selection.json" Link="Fixtures/gameplay-scavenger-multicandidate-selection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-hellfire-corpse.json" Link="Fixtures/gameplay-scavenger-hellfire-corpse.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-zombie-action.json" Link="Fixtures/gameplay-zombie-action.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fat-movement.json" Link="Fixtures/gameplay-fat-movement.json" CopyToOutputDirectory="PreserveNewest" />
