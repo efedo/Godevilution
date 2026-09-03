@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.448.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.449.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -909,7 +909,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.447.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.448.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1993,6 +1993,7 @@ public sealed class ShippedContentTests
             Assert.True(note.Usable);
             Assert.Equal(DiabloItemActionKind.ReadQuestNote, note.ItemActionKind);
             Assert.Equal(1, note.ItemActionAmount);
+            Assert.Equal(322, note.ItemActionMessageId);
         }
         var baseJewelryExpectations = new[] {
             ("ring_level_5", 2195U, 156, 5, 26, 1000),
@@ -2769,6 +2770,45 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownItemActionDialogue()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var items = basePack.Tables.Single(table => table.SourcePath == "items.tsv");
+        var invalidItems = TsvTable.Parse(
+            items.SourcePath,
+            string.Join(
+                '\n',
+                items.ToCanonicalTsv()
+                    .Split('\n')
+                    .Select((line, index) => {
+                        if (index == 0 || !line.StartsWith("2001\t", StringComparison.Ordinal))
+                            return line;
+                        var columns = line.Split('\t');
+                        columns[41] = "9999";
+                        return string.Join('\t', columns);
+                    })));
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == items.SourcePath
+                    ? invalidItems
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Dialogue route references unknown message 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownUniqueItemBase()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
@@ -3313,7 +3353,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.448.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.449.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

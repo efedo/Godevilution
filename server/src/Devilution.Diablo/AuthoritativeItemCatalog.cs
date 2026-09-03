@@ -31,6 +31,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Content-owned magnitude for the item action, defaulting to one native unit. */
     public int ItemActionAmount { get; init; } = 1;
 
+    /** Optional content-owned dialogue identity emitted by a non-consuming item action. */
+    public int ItemActionMessageId { get; init; }
+
     public IReadOnlySet<string> GenerationTags { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     public int MinArmorClass { get; init; } = -1;
@@ -170,6 +173,9 @@ public sealed class AuthoritativeItemCatalog
                     && !Enum.IsDefined(definition.SpellSourceKind.Value))
                 || !Enum.IsDefined(definition.ItemActionKind)
                 || definition.ItemActionAmount <= 0
+                || definition.ItemActionMessageId is < 0 or > short.MaxValue
+                || definition.ItemActionMessageId != 0
+                    && definition.ItemActionKind == DiabloItemActionKind.None
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem
                     && (definition.SpellId <= 0 || definition.MaxCharges <= 0))
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem
@@ -1089,6 +1095,7 @@ public sealed class AuthoritativeItemCatalog
                 SpellSourceKind = ParseSpellSourceKind(row),
                 ItemActionKind = ParseItemActionKind(row),
                 ItemActionAmount = row.OptionalInt32("item_action_amount", 1),
+                ItemActionMessageId = row.OptionalInt32("item_action_message_id"),
                 Flags = ParseNormalizedFlags(row, nativeItemEffectCatalog),
                 HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(
                     row,

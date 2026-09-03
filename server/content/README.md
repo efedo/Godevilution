@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.448.0` schema in
+It declares its identity and `devilution.diablo@1.449.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.447.0` schema so existing manifest-based packs remain
+previous additive `1.448.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -3138,7 +3138,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.448.0"
+      "version": "1.449.0"
   },
   "dependencyConstraints": [
     {
@@ -3172,7 +3172,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.448.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.449.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -3795,10 +3795,14 @@ default. Schema 1.221 introduced the table and its externalized town-level
 identity used by Town Portal and Warp admission. Packs without the new geometry
 columns retain the spell-row destination tuning for compatibility.
 
-Normalized `items.tsv` also accepts the optional `item_action_amount` column.
-It supplies a validated positive magnitude for the semantic `item_action_kind`;
-omitted values default to one native unit. The shipped Hellfire Spectral Elixir
-sets this value to three so its all-attribute transition remains content-owned.
+Normalized `items.tsv` also accepts the optional `item_action_amount` and
+`item_action_message_id` columns. The first supplies a validated positive
+magnitude for the semantic `item_action_kind`; omitted values default to one
+native unit. The second supplies a validated dialogue identity for a
+non-consuming item action; omitted values retain the action's compatibility
+fallback. The shipped Hellfire Spectral Elixir sets its amount to three so its
+all-attribute transition remains content-owned, while each Na-Krul note sets
+its message identity to native `TEXT_BOOK9` (322).
 The `OpenCathedralMap` action is transient: an accepted use emits a
 recipient-scoped `MapOpenedEvent` and deliberately leaves the map item owned.
 The `ReadQuestNote` action is likewise non-consuming and emits the authored

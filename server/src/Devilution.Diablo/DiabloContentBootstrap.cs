@@ -1024,6 +1024,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 .SelectMany(stage => new[] { stage.MessageId, stage.NextMessageId }));
         dialogueMessages?.ValidateMessageIds(
             objectDefinitions.Select(@object => @object.DialogueMessageId));
+        dialogueMessages?.ValidateMessageIds(
+            (itemCatalog?.Definitions ?? [])
+                .Select(item => item.ItemActionMessageId));
 
         if (world is not null
             && quests is null

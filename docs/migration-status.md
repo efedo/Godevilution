@@ -2,17 +2,23 @@
 
 Status date: 2026-09-02
 
+The `ReadQuestNote` action now resolves its dialogue identity from the authored
+item definition (`item_action_message_id`) instead of embedding the native
+message number in the server action branch. Older packs remain compatible via
+the native `TEXT_BOOK9`/322 fallback. The Diablo content schema is now
+`1.449.0`; `1.448.0` remains accepted as the previous additive contract.
+
 Na-Krul note reading is now an authored `ReadQuestNote` item action. Connected
 clients submit the stable note reference, the server emits the content-backed
 `TEXT_BOOK9` dialogue without consuming the note, and native/Godot clients
-present the same server-owned text. The Diablo content schema is now `1.448.0`;
-`1.447.0` remains accepted as the previous additive contract.
+present the same server-owned text. The Diablo content schema is now `1.449.0`;
+`1.448.0` remains accepted as the previous additive contract.
 
 The Cathedral Map is now an authored `OpenCathedralMap` item action. Connected
 clients submit the stable item reference, the server validates ownership and
 emits a recipient-scoped `MapOpenedEvent`, and native/Godot clients present the
 map without consuming the item or mutating gameplay state. The Diablo content
-schema is now `1.448.0`; `1.447.0` remains accepted as the previous additive
+schema is now `1.449.0`; `1.448.0` remains accepted as the previous additive
 contract.
 
 Authoritative monster snapshots now enforce DevilutionX's 200-entry active
@@ -610,7 +616,7 @@ stage is pending. The same initial snapshot now projects the authored message
 identity, allowing Godot's target selector to resolve the dialogue before the
 first interaction. Snapshot restore reapplies the same projection after quest
 state hydration, including saves created before the projection was introduced.
-The active content schema is now `1.448.0`, with `1.447.0` accepted as the
+The active content schema is now `1.449.0`, with `1.448.0` accepted as the
 previous additive contract.
 
 The Golem spell now names its summon target with the stable
@@ -623,8 +629,8 @@ shared protocol. A live Godot fixture activates a quest-transition object,
 verifies its quest state and activation acknowledgement, and observes the
 server-persisted world-mutation cell in the projected level geometry. Both
 protocol mappers and the Godot model accept world-mutation, projectile, and
-encounter follow-ups on quest-transition objects; schema `1.448.0` remains
-current with `1.447.0` accepted for additive compatibility.
+encounter follow-ups on quest-transition objects; schema `1.449.0` remains
+current with `1.448.0` accepted for additive compatibility.
 
 The Halls of the Blind, Gateway of Blood, and Warlord steel-tome object
 templates now carry authored activation-message identities. Server object
@@ -636,7 +642,7 @@ mutation or encounter after the transition succeeds, providing the server-side
 hook needed by those future set-piece replacements without fabricating geometry.
 The base pack also carries presentation metadata for all three templates: the
 objects remain visible after activation and select the native open-book frame.
-The content schema is now `1.448.0`; the previous additive `1.447.0` schema
+The content schema is now `1.449.0`; the previous additive `1.448.0` schema
 remains accepted for pack compatibility.
 
 The deterministic replay gate now includes an occupied-inventory
@@ -690,7 +696,7 @@ item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,
 validates the Veil of Steel unique reward placement, consumes the Elixir, and
 applies the native dialogue defeat boundary. The legacy dialogue item/reward
 fields are empty in the shipped row. The stage rows remain compatible with the
-current `1.448.0` contract; `1.447.0` remains accepted as the previous additive
+current `1.449.0` contract; `1.448.0` remains accepted as the previous additive
 schema.
 
 Zhar's activation conversation now uses an authored unique-monster dialogue
@@ -698,29 +704,29 @@ stage with a validated normal-item reward. The server checks the target tile
 before advancing `_qvar1` from 0 to 2, emits native message 148, and generates
 the level-14 book from content; the legacy dialogue reward fields are empty in
 the shipped quest row. The stage row remains compatible with the current
-`1.448.0` contract; `1.447.0` remains accepted as the previous additive schema.
+`1.449.0` contract; `1.448.0` remains accepted as the previous additive schema.
 
 The Lazarus storyteller opening now uses authored quest/towner stages. The
 single-player Staff of Lazarus hand-in consumes its item and advances native
 `_qvar1` to 2, while the multiplayer unlogged opening dialogue records the
 same native message without an item; the existing completion stage remains
 authored. Those rows were introduced under schema `1.438.0` and remain
-compatible with the current `1.448.0` pack contract, which also accepts
-`1.447.0` as its previous additive schema.
+compatible with the current `1.449.0` pack contract, which also accepts
+`1.448.0` as its previous additive schema.
 
 The base Black Mushroom healer hand-in now uses an authored `Advance` stage.
 The server validates the Spectral Elixir placement before consuming the Brain,
 then advances native `_qvar1` from 5 to 6, emits message 124, and creates the
 declared reward. Those rows were introduced under schema `1.436.0` and remain
-compatible with the current `1.448.0` pack contract, which also accepts
-`1.447.0` as its previous additive schema.
+compatible with the current `1.449.0` pack contract, which also accepts
+`1.448.0` as its previous additive schema.
 
 The remaining shipped base item hand-ins now use authored quest/towner rows:
 Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
 and the Butcher activation preserve their native town coordinates, variable
 gates, messages, item consumption, and quest-declared rewards. Those rows were
 introduced under schema `1.435.0` and remain compatible with the current
-`1.448.0` pack contract. Legacy quest-state turn-in fields remain
+`1.449.0` pack contract. Legacy quest-state turn-in fields remain
 available to older packs and direct compatibility callers.
 
 The generic host now persists each initialized session's completed command
@@ -803,10 +809,10 @@ Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.
 
-Live Godot overlay fixtures now declare the active `1.448.0` content schema,
+Live Godot overlay fixtures now declare the active `1.449.0` content schema,
 matching the shipped base pack. Manifest composition continues to reject a
 mixed current/previous schema set before module activation; the Diablo module
-still accepts the previous additive `1.447.0` schema when a complete manifest
+still accepts the previous additive `1.448.0` schema when a complete manifest
 uses it.
 
 Godot local movement prediction now stops at authoritative blocked cells and
@@ -2664,7 +2670,7 @@ when omitted, the active content pack's validated default level remains in use.
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, additive live authoritative level-geometry projections, live authored progression-warp transition through server-owned movement with same-session resume retention, live authored quest/towner dialogue submission through the Godot protocol model, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, live single-player and multiplayer handshakes/cast slices, a twelve-cycle server soak plus an eight-cycle live Godot-client reconnect soak while another participant remains connected, live Godot two-participant process-restart restoration, protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias, server-owned adjacent melee plus line-of-sight ranged player-versus-player admission with native timing, physical/elemental damage, target resistance, shield/class blocking, equipment knockback, lethal death/ear handling, targeted Firebolt/Charged Bolt/Bone Spirit admission for living remote players, live Firebolt, Charged Bolt, Bone Spirit, Heal Other, and Resurrection player-target coverage, live two-client coverage including effect-tick shield resolution, typed Diablo victory events for client presentation, exact additive native `NovaBall` projectile visual identity, exact additive Godot `NovaBall` presentation identity with behavior fallback for older snapshots, and Normal/Nightmare/Hell difficulty projection in authoritative snapshots | Add broader reconnect/multiplayer fixtures and production-client soak coverage |
 | Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with server-owned corpse tiles, native per-tick monster regeneration, refreshed ordinary-death and spell-timeline checkpoints, deterministic quest-pool selection/rejection, a 1,000-tick autonomous regeneration soak, multiplayer autonomous-tick participant fixtures with explicit secondary-session movement, melee-attack, and portal-transition routing, shared melee and ranged elemental-equipment fixtures covering native fire/lightning and arrow channels, resistance, and RNG, native/C# chained-action timing coverage for first-frame attack skips, seeded and autonomous GoatRanged and SkeletonRanged MonsterArrow admission/travel/impact/removal parity including secondary-participant routing, Hellfire HorkDemon Hork Spawn admission, nearest-participant target selection, and decision-delay parity, autonomous Succubus BloodStar admission, nearest-participant target selection, travel/player-impact parity with deterministic monster-magic hit/block RNG, Q6 damage, and block-animation state, plus Lich-family MonsterMagic admission/travel/player-impact parity for deterministic hits, misses, and secondary-participant impacts, live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus composed-manifest Hellfire ranged replay and shared Firebolt, Fireball, Bone Spirit player-target, and Bone Spirit homing/resistant-monster replays | Expand broader multi-actor autonomous and reconnect replay coverage |
-| Stores and inventory | C# remote for vendor actions, item services, spell-book, potion, rejuvenation, elixir (including Hellfire Spectral Elixir), and Blacksmith/Accuracy/Sharpness/Fortitude oil consumption, authoritative inventory relocation, and server-owned stash pages (100 native-compatible 10x10 grids) with stable page/cell item references, persistence, overlap validation, inventory↔stash transfers, explicit open/close session control, and authoritative stash-gold deposit/withdraw commands; stash-targeted Repair, Recharge, and Identify commands now require the server-owned stash session; stable item references remain carried by native and Godot clients; content-backed moves enforce native equipment-slot topology and belt footprint rules, normal native equipment drags preserve the selected slot through atomic `AutoEquipItemRequested`, all native automatic equipment, inventory, belt, potion, rejuvenation, elixir, and oil paths use stable server-owned intents, the server enforces active-arena-only Arena Potion admission, and the Godot HUD submits inventory or belt sources as stable references for books, targetless consumables, and two-item oils through the same protocol; native authoritative stash entry projects validated page grids, session state, and server-reconciled gold, and native normal, automatic, and Ctrl-click stash transfers now submit stable page/cell moves | Add broader live-client coverage and exact legacy edge-case characterization |
+| Stores and inventory | C# remote for vendor actions, item services, spell-book, potion, rejuvenation, elixir (including Hellfire Spectral Elixir), and Blacksmith/Accuracy/Sharpness/Fortitude oil consumption, authoritative inventory relocation, and server-owned stash pages (100 native-compatible 10x10 grids) with stable page/cell item references, persistence, overlap validation, inventory↔stash transfers, explicit open/close session control, and authoritative stash-gold deposit/withdraw commands; stash-targeted Repair, Recharge, and Identify commands now require the server-owned stash session; stable item references remain carried by native and Godot clients; content-backed moves enforce native equipment-slot topology and belt footprint rules, normal native equipment drags preserve the selected slot through atomic `AutoEquipItemRequested`, all native automatic equipment, inventory, belt, potion, rejuvenation, elixir, and oil paths use stable server-owned intents, the server enforces active-arena-only Arena Potion admission, and the Godot HUD submits inventory or belt sources as stable references for books, targetless consumables, two-item oils, Cathedral Maps, and authored quest notes through the same protocol; native authoritative stash entry projects validated page grids, session state, and server-reconciled gold, and native normal, automatic, and Ctrl-click stash transfers now submit stable page/cell moves; non-consuming item dialogues resolve their message identities from validated content | Add broader live-client coverage and exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice with content-owned quest item transitions, generic authored towner turn-ins (including item-consuming activation-only, non-consuming dialogue-only, completion-stage, alternate-item, and normal-item rewards), repeatable content-owned quest/towner stages (including all four Black Mushroom/Adria stages and Ogden's post-completion King Leoric dialogue), explicit itemless and completed-quest interaction availability, server-owned per-player visited-level state for native `_pLvlVisited` gates, unique-monster quest dialogue and authored follow-up variable transitions, activation rewards, and hand-ins, content-declared quest-object effects with validated quest activation/completion, native variable transitions, and one-level spell grants, validated content-backed world-cell mutation overlays persisted with the session and projected through effective level geometry, and the Hellfire Na-Krul tome completion's deterministic server-owned unique spawn, native weakening transition, anchor-relative four-value native d-piece room-opening mutation, and validated `uberroom.dun` native mega-tile/d-piece fragment; the native authoritative client submits `TurnInQuestRequested`, `TalkToQuestRequested`, and `OperateObjectRequested` and projects server dialogue/events (first shipped base Skeleton King route/completion and Butcher activation/completion, Hellfire Farmer activation/post-Hive reward, base Cain/Lazarus staff hand-in and Lazarus Storyteller completion stage, Hellfire Grave Matters/Barmaid dialogue, base and Hellfire Magic Rock and Anvil/Blacksmith, base Ogden's Sign, Little Girl, Jersey's Jersey, Defiler, Zhar, Warlord, Lachdanan, and Na-Krul paths) | Expand AI, level generation, remaining quests, dialogs, towners, environmental behaviors, supply and activate the fragment's optional external collision definitions and complete native Na-Krul collision/tile-definition parity beyond the projected fragment layer, then externalize the remaining set-piece mutation, book/lever, placement, projectile, and map behaviors not yet covered by the Chamber of Bone and Vile Betrayer templates; expand multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec, integrity-hash verification, fail-closed player/session/world-state import validation, validated saved-class reconstruction for cold sessions, persisted per-player native-compatible `visited_level_ids`, immediate post-handshake session persistence, live process-restart restoration through a fresh TCP host/adapter with resume-token precedence, an atomic combined per-session checkpoint with compatibility fallback to separate files, a four-cycle fresh-host/adapter recovery soak that preserves canonical snapshot hashes and replays every accepted command while retaining durable receipt identities and exactly-once replacement execution, command-synchronized state/receipt exports, concurrent multi-instance atomic-save publication coverage, and a durable save-root world seed that keeps generated geometry stable across restarts | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode; connected native character-panel attribute allocation now submits server-owned stat-point intents and applies projected stat points/resources, with legacy `CMD_ADD*` retained only when disconnected; connected native stash-close drops now submit the authoritative held-item drop intent, native mouse/controller dungeon talker interactions now submit authoritative quest dialogue, controller item/object projections fail closed when their entity IDs are unavailable, and controller quest-target movement submits authoritative target cells; connected controller monster, remote-player, and object interactions now resolve projected targets to authoritative entity IDs with fail-closed handling for missing projections, including stale highlighted objects that no longer have a projected entity; normal item-cursor inventory/belt placement uses stable-reference transfers, normal equipment drags carry the selected slot through atomic `AutoEquipItemRequested`, automatic inventory/equipment/belt relocation remains server-owned, connected native spell casts now honor server-projected tile, player, combat-entity, and world-entity targeting roles while preserving legacy behavior for older snapshots, and content-declared towner/unique-monster/quest-object interactions submit `TurnInQuestRequested`/`TalkToQuestRequested`/`OperateObjectRequested` with server dialogue/event projection, including repeatable Black Mushroom/Adria stages, server-owned `visited_level_ids` for native `_pLvlVisited` gates, and Ogden's itemless post-completion King Leoric dialogue (first shipped by the base Skeleton King route/completion and Butcher activation/completion, Hellfire Farmer activation/post-Hive reward, base Cain/Lazarus staff hand-in and Lazarus Storyteller completion stage, base and Hellfire Magic Rock and Anvil/Blacksmith, Ogden's Sign, Little Girl, Jersey's Jersey, Defiler, Zhar, Warlord, Lachdanan, and Na-Krul paths); presentation-only remote-player sprites now draw from authoritative snapshots without entering native simulation pools, including action-tick animation timing, automap arrows, party-panel portraits, party-panel hover/right-click entity routing, and projected inspection stats/spells/item layout | Continue removing compatibility-pool assumptions as Godot presentation matures; broaden interpolation soak coverage and finish legacy interaction parity |

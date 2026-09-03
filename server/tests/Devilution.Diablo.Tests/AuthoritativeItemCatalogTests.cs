@@ -113,6 +113,26 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LoadsItemActionDialogueIdentityFromContent()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_action_kind\titem_action_message_id\n"
+                + "2004\t0\t0\t0\tReadQuestNote\t322\n");
+
+        Assert.Equal(322, catalog.GetRequired(2004).ItemActionMessageId);
+    }
+
+    [Fact]
+    public void RejectsItemActionDialogueIdentityWithoutAnAction()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_action_message_id\n"
+                + "7\t1\t75\t100\t322\n"));
+    }
+
+    [Fact]
     public void RejectsNonPositiveItemActionMagnitude()
     {
         Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(

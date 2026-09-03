@@ -4705,6 +4705,45 @@ public sealed class DiabloStoreCommandProcessorTests
         Assert.Equal(322, dialogue.MessageId);
     }
 
+    [Fact]
+    public void ItemActionDialogueIdentityResolvesFromTheActiveDefinition()
+    {
+        var player = CreatePlayer();
+        player.EntityId = 44;
+        player.Inventory.Add(new OwnedStoreItem(
+            0,
+            0,
+            9003,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 9003,
+                MiscId = 42,
+                ItemActionKind = DiabloItemActionKind.ReadQuestNote,
+            }));
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(9003, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 42,
+                ItemActionKind = DiabloItemActionKind.ReadQuestNote,
+                ItemActionMessageId = 777,
+            },
+        ]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog(), items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    9003)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(777, Assert.Single(result.Events).MessageId);
+        Assert.Single(player.Inventory);
+    }
+
     private static AuthoritativePlayerState CreatePlayer(
         uint gold = 100,
         int life = 640,

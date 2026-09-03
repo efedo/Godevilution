@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move item-action dialogue identities into validated content metadata. Na-Krul
+  notes now declare their `TEXT_BOOK9` message ID in `items.tsv`; the server
+  resolves it through the active item definition and retains the native `322`
+  fallback for older packs. Advance the Diablo content schema to `1.449.0`;
+  `1.448.0` remains accepted as the previous additive contract.
+
 - Externalized Na-Krul note reading as the authored `ReadQuestNote` item action. Connected clients now submit the existing stable item-use command; the server emits the native `TEXT_BOOK9` dialogue without consuming the note, and native/Godot clients present the same text. Advance the Diablo content schema to `1.448.0`; `1.447.0` remains accepted as the previous additive contract.
 
 - Routed the native Cathedral Map action through the authoritative item-command

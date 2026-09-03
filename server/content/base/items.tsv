@@ -1,153 +1,153 @@
-item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor_class	durability	max_durability	inventory_width	inventory_height	identified	item_tags	equip_location	item_class	misc_id	spell_id	spell_symbol	flags	min_strength	min_magic	min_dexterity	native_item_index	charges	max_charges	spell_source_kind	name	identified_name	cursor_graphic	min_monster_level	drop_rate	usable	special_effects	hellfire_effects	min_armor_class	max_armor_class	item_action_kind	item_action_amount	book_template_minimum_item_level	arena_only
-1	short_sword	1	75	75	4	8	0	20	20	1	1	1	Weapon,Sword	0	0	0	0		0	0	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0	false			0	0	None	1	-1	false
-2	buckler	1	25	25	0	0	5	20	20	1	1	1	Armor,Shield	0	0	0	0		0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0	false			5	5	None	1	-1	false
-114	optic_amulet	13	9750	9750	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	11	0	0	0	None	Optic Amulet	Optic Amulet	AMULET	1	1	true			0	0	None	1	-1	false
-118	arkaine_s_valor	8	42000	42000	0	0	0	40	40	2	2	1	Armor,MediumArmor,BodyArmor	3	2	28	0		0	0	0	30	0	0	0	None	Arkaine's Valor	Arkaine's Valor	ARKAINES_VALOR	1	1	true			0	0	None	1	-1	false
-2139	black_mushroom	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	17	0	0	None	Black Mushroom	Black Mushroom	BLACK_MUSHROOM	0	0	false			0	0	None	1	-1	false
-2140	brain	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	18	0	0	None	Brain	Brain	BRAIN	0	0	false			0	0	None	1	-1	false
-2141	fungal_tome	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	19	0	0	None	Fungal Tome	Fungal Tome	FUNGAL_TOME	0	0	false			0	0	None	1	-1	false
-2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	IncreaseAllAttributes	3	-1	false
-116	harlequin_crest	7	4000	4000	0	0	0	15	15	1	1	1	Armor,Helmet	4	2	28	0		0	0	0	15	0	0	0	None	Harlequin Crest	Harlequin Crest	HARLEQUIN_CREST	1	1	true			0	0	None	1	-1	false
-119	griswold_s_edge	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	28	0		2	40	0	0	32	0	0	None	Griswold's Edge	Griswold's Edge	BROAD_SWORD	0	0	false			0	0	None	1	-1	false
-2135	magic_rock	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	9	0	0	None	Magic Rock	Magic Rock	MAGIC_ROCK	0	0	false			0	0	None	1	-1	false
-2136	tavern_sign	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	12	0	0	None	Tavern Sign	Tavern Sign	TAVERN_SIGN	0	0	false			0	0	None	1	-1	false
-2138	anvil_of_fury	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	16	0	0	None	Anvil of Fury	Anvil of Fury	ANVIL_OF_FURY	0	0	false			0	0	None	1	-1	false
-24	ear	0	0	0	0	0	0	0	0	1	1	0	Misc,Ear	7	3	44	0		0	0	0	0	23	0	0	None	Ear	Ear	-	0	0	false			0	0	None	1	-1	false
-25	gold	11	0	0	0	0	0	0	0	1	1	1	Gold	7	4	0	0		0	0	0	0	0	0	0	None	Gold	Gold	GOLD_SMALL	1	1	true			0	0	None	1	-1	false
-34	lazarus_staff	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest,NoSale	7	0	0	0		0	0	0	0	33	0	0	None	Staff of Lazarus	Staff of Lazarus	STAFF_OF_LAZARUS	0	0	false			0	0	None	1	-1	false
-100	short_sword_starting	1	120	120	2	6	0	24	24	1	3	0	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0	false			0	0	None	1	-1	false
-101	buckler_starting	5	30	30	0	0	3	16	16	2	2	0	Armor,Shield,OneHanded	1	2	0	0		0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0	false			3	3	None	1	-1	false
-102	club_starting	4	20	20	1	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0		0	0	0	0	3	0	0	None	Club	Club	CLUB	1	0	false			0	0	None	1	-1	false
-103	short_bow_starting	3	100	100	1	4	0	30	30	2	3	0	Bow,TwoHanded	2	1	0	0		0	0	0	0	4	0	0	None	Short Bow	Short Bow	SHORT_BOW	1	0	false			0	0	None	1	-1	false
-104	short_staff_charged_bolt_starting	10	470	470	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	23	30	charged_bolt	0	0	25	0	166	40	40	ChargedItem	Short Staff of Charged Bolt	Short Staff of Charged Bolt	SHORT_STAFF	1	0	false			0	0	None	1	-1	false
-105	potion_healing	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0		0	0	0	0	24	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	0	0	true			0	0	RestorePartialLife	1	-1	false
-106	potion_mana	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0		0	0	0	0	25	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	0	0	true			0	0	RestorePartialMana	1	-1	false
-107	short_staff_starting	10	20	20	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	0	0		0	0	0	0	36	0	0	None	Short Staff	Short Staff	SHORT_STAFF	1	0	false			0	0	None	1	-1	false
-108	sword_starting	1	20	20	1	5	0	8	8	1	3	0	Weapon,Sword,OneHanded	1	1	0	0		0	15	0	20	37	0	0	None	Sword	Sword	SHORT_SWORD	2	0	false			0	0	None	1	-1	false
-109	dagger_starting	1	20	20	1	4	0	16	16	1	2	0	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	38	0	0	None	Dagger	Dagger	DAGGER	1	0	false			0	0	None	1	-1	false
-110	spiked_club_starting	4	225	225	3	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0		0	18	0	0	139	0	0	None	Spiked Club	Spiked Club	SPIKED_CLUB	4	1	false			0	0	None	1	-1	false
-2001	torn_note_1	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	42	0	0	None	Torn Note 1	Torn Note 1	TORN_NOTE_1	0	0	true			0	0	ReadQuestNote	1	-1	false
-2002	torn_note_2	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	43	0	0	None	Torn Note 2	Torn Note 2	TORN_NOTE_2	0	0	true			0	0	ReadQuestNote	1	-1	false
-2003	torn_note_3	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	44	0	0	None	Torn Note 3	Torn Note 3	TORN_NOTE_3	0	0	true			0	0	ReadQuestNote	1	-1	false
-2004	reconstructed_note	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	45	0	0	None	Reconstructed Note	Reconstructed Note	RECONSTRUCTED_NOTE	0	0	true			0	0	ReadQuestNote	1	-1	false
-2106	rune_of_fire	0	100	100	0	0	0	0	0	1	1	0	Misc,Rune	7	3	47	12	fireball	0	0	0	0	161	0	0	ConsumableItem	Rune of Fire	Rune	RUNE_OF_FIRE	1	1	true			0	0	None	1	-1	false
-2107	rune_of_lightning	0	200	200	0	0	0	0	0	1	1	0	Misc,Rune	7	3	48	50	lightning_wall	0	0	0	0	162	0	0	ConsumableItem	Rune of Lightning	Rune	RUNE_OF_LIGHTNING	3	1	true			0	0	None	1	-1	false
-2108	greater_rune_of_fire	0	400	400	0	0	0	0	0	1	1	0	Misc,Rune	7	3	50	45	immolation	0	0	0	0	163	0	0	ConsumableItem	Greater Rune of Fire	Rune	GREATER_RUNE_OF_FIRE	7	1	true			0	0	None	1	-1	false
-2109	greater_rune_of_lightning	0	500	500	0	0	0	0	0	1	1	0	Misc,Rune	7	3	49	18	nova	0	0	0	0	164	0	0	ConsumableItem	Greater Rune of Lightning	Rune	GREATER_RUNE_OF_LIGHTNING	7	1	true			0	0	None	1	-1	false
-2110	rune_of_stone	0	300	300	0	0	0	0	0	1	1	0	Misc,Rune	7	3	51	8	stone_curse	0	0	0	0	165	0	0	ConsumableItem	Rune of Stone	Rune	RUNE_OF_STONE	7	1	true			0	0	None	1	-1	false
-2111	scroll_of_town_portal_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	27	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	0	true			0	0	None	1	-1	false
-2112	scroll_of_resurrect_fixed	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	34	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	0	true			0	0	None	1	-1	false
-2113	scroll_of_healing	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	2	healing	0	0	0	0	91	0	0	ConsumableItem	Scroll of Healing	Scroll of Healing	SCROLL_OF	1	1	true			0	0	None	1	-1	false
-2114	scroll_of_search	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	46	search	0	0	0	0	92	0	0	ConsumableItem	Scroll of Search	Scroll of Search	SCROLL_OF	1	1	true			0	0	None	1	-1	false
-2115	scroll_of_lightning	0	150	150	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	3	lightning	0	0	0	0	93	0	0	ConsumableItem	Scroll of Lightning	Scroll of Lightning	SCROLL_OF	4	1	true			0	0	None	1	-1	false
-2116	scroll_of_resurrect	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	95	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	1	true			0	0	None	1	-1	false
-2117	scroll_of_fire_wall	0	400	400	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	6	fire_wall	0	0	0	0	96	0	0	ConsumableItem	Scroll of Fire Wall	Scroll of Fire Wall	SCROLL_OF	4	1	true			0	0	None	1	-1	false
-2118	scroll_of_inferno	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	21	inferno	0	0	0	0	97	0	0	ConsumableItem	Scroll of Inferno	Scroll of Inferno	SCROLL_OF	1	1	true			0	0	None	1	-1	false
-2119	scroll_of_town_portal	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	98	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	1	true			0	0	None	1	-1	false
-2120	scroll_of_flash	0	500	500	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	4	flash	0	0	0	0	99	0	0	ConsumableItem	Scroll of Flash	Scroll of Flash	SCROLL_OF	6	1	true			0	0	None	1	-1	false
-2121	scroll_of_infravision	0	600	600	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	9	infravision	0	0	0	0	100	0	0	ConsumableItem	Scroll of Infravision	Scroll of Infravision	SCROLL_OF	8	1	true			0	0	None	1	-1	false
-2122	scroll_of_phasing	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	10	phasing	0	0	0	0	101	0	0	ConsumableItem	Scroll of Phasing	Scroll of Phasing	SCROLL_OF	6	1	true			0	0	None	1	-1	false
-2123	scroll_of_mana_shield	0	1200	1200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	11	mana_shield	0	0	0	0	102	0	0	ConsumableItem	Scroll of Mana Shield	Scroll of Mana Shield	SCROLL_OF	8	1	true			0	0	None	1	-1	false
-2124	scroll_of_flame_wave	0	650	650	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	15	flame_wave	0	0	0	0	103	0	0	ConsumableItem	Scroll of Flame Wave	Scroll of Flame Wave	SCROLL_OF	10	1	true			0	0	None	1	-1	false
-2125	scroll_of_fireball	0	300	300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	12	fireball	0	0	0	0	104	0	0	ConsumableItem	Scroll of Fireball	Scroll of Fireball	SCROLL_OF	8	1	true			0	0	None	1	-1	false
-2126	scroll_of_stone_curse	0	800	800	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	8	stone_curse	0	0	0	0	105	0	0	ConsumableItem	Scroll of Stone Curse	Scroll of Stone Curse	SCROLL_OF	6	1	true			0	0	None	1	-1	false
-2127	scroll_of_chain_lightning	0	750	750	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	16	chain_lightning	0	0	0	0	106	0	0	ConsumableItem	Scroll of Chain Lightning	Scroll of Chain Lightning	SCROLL_OF	10	1	true			0	0	None	1	-1	false
-2128	scroll_of_guardian	0	950	950	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	7	guardian	0	0	0	0	107	0	0	ConsumableItem	Scroll of Guardian	Scroll of Guardian	SCROLL_OF	12	1	true			0	0	None	1	-1	false
-2129	scroll_of_nova	0	1300	1300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	18	nova	0	0	0	0	109	0	0	ConsumableItem	Scroll of Nova	Scroll of Nova	SCROLL_OF	14	1	true			0	0	None	1	-1	false
-2130	scroll_of_golem	0	1100	1100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	52	golem	0	0	0	0	110	0	0	ConsumableItem	Scroll of Golem	Scroll of Golem	SCROLL_OF	10	1	true			0	0	None	1	-1	false
-2131	scroll_of_teleport	0	3000	3000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	23	teleport	0	0	0	0	112	0	0	ConsumableItem	Scroll of Teleport	Scroll of Teleport	SCROLL_OF	14	1	true			0	0	None	1	-1	false
-2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	113	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None	1	-1	false
-2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	26	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify	1	-1	false
-2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	94	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify	1	-1	false
-127	dagger	1	60	60	1	4	0	16	16	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	118	0	0	None	Dagger	Dagger	DAGGER	1	1	false			0	0	None	1	-1	false
-2160	short_sword_standard	1	120	120	2	6	0	24	24	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	119	0	0	None	Short Sword	Sword	SHORT_SWORD	1	1	false			0	0	None	1	-1	false
-129	falchion	1	250	250	4	8	0	20	20	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	120	0	0	None	Falchion	Sword	FALCHION	2	1	false			0	0	None	1	-1	false
-134	scimitar	1	200	200	3	7	0	28	28	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	23	0	23	121	0	0	None	Scimitar	Sword	SCIMITAR	4	1	false			0	0	None	1	-1	false
-132	claymore	1	450	450	1	12	0	36	36	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	35	0	0	122	0	0	None	Claymore	Sword	CLAYMORE	5	1	false			0	0	None	1	-1	false
-2161	blade	1	280	280	3	8	0	30	30	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	25	0	30	123	0	0	None	Blade	Blade	BLADE	4	1	false			0	0	None	1	-1	false
-128	sabre	1	170	170	1	8	0	45	45	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	17	0	0	124	0	0	None	Sabre	Sabre	SABRE	1	1	false			0	0	None	1	-1	false
-131	long_sword	1	350	350	2	10	0	40	40	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	30	125	0	0	None	Long Sword	Sword	LONG_SWORD	6	1	false			0	0	None	1	-1	false
-130	broad_sword	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	126	0	0	None	Broad Sword	Sword	BROAD_SWORD	8	1	false			0	0	None	1	-1	false
-135	bastard_sword	1	1000	1000	6	15	0	60	60	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	50	0	0	127	0	0	None	Bastard Sword	Sword	BASTARD_SWORD	10	1	false			0	0	None	1	-1	false
-136	two_handed_sword	1	1800	1800	8	16	0	75	75	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	65	0	0	128	0	0	None	Two-Handed Sword	Sword	TWO_HANDED_SWORD	14	1	false			0	0	None	1	-1	false
-2162	great_sword	1	3000	3000	10	20	0	100	100	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	75	0	0	129	0	0	None	Great Sword	Sword	GREAT_SWORD	17	1	false			0	0	None	1	-1	false
-140	small_axe	1	150	150	2	10	0	24	24	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	0	0	0	130	0	0	None	Small Axe	Axe	SMALL_AXE	2	1	false			0	0	None	1	-1	false
-2163	axe	1	450	450	4	12	0	32	32	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	22	0	0	131	0	0	None	Axe	Axe	AXE	4	1	false			0	0	None	1	-1	false
-137	large_axe	1	750	750	6	16	0	40	40	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	30	0	0	132	0	0	None	Large Axe	Axe	LARGE_AXE	6	1	false			0	0	None	1	-1	false
-138	broad_axe	1	1000	1000	8	20	0	50	50	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	50	0	0	133	0	0	None	Broad Axe	Axe	BROAD_AXE	8	1	false			0	0	None	1	-1	false
-139	battle_axe	1	1500	1500	10	25	0	60	60	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	65	0	0	134	0	0	None	Battle Axe	Axe	BATTLE_AXE	10	1	false			0	0	None	1	-1	false
-141	great_axe	1	2500	2500	12	30	0	75	75	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	80	0	0	135	0	0	None	Great Axe	Axe	GREAT_AXE	12	1	false			0	0	None	1	-1	false
-142	mace	1	200	200	1	8	0	32	32	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	16	0	0	136	0	0	None	Mace	Mace	MACE	2	1	false			0	0	None	1	-1	false
-145	morning_star	1	300	300	1	10	0	40	40	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	26	0	0	137	0	0	None	Morning Star	Mace	MORNING_STAR	3	1	false			0	0	None	1	-1	false
-146	war_hammer	1	600	600	5	9	0	50	50	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	40	0	0	138	0	0	None	War Hammer	Hammer	WAR_HAMMER	5	1	false			0	0	None	1	-1	false
-2164	spiked_club	1	225	225	3	6	0	20	20	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	18	0	0	139	0	0	None	Spiked Club	Club	SPIKED_CLUB	4	1	false			0	0	None	1	-1	false
-2165	club	1	20	20	1	6	0	20	20	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	0	0	0	140	0	0	None	Club	Club	CLUB	1	1	false			0	0	None	1	-1	false
-144	flail	1	500	500	2	12	0	36	36	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	30	0	0	141	0	0	None	Flail	Flail	FLAIL	7	1	false			0	0	None	1	-1	false
-143	maul	1	900	900	6	20	0	50	50	1	1	1	Weapon,Mace,TwoHanded	2	1	0	0		0	55	0	0	142	0	0	None	Maul	Maul	MAUL	10	1	false			0	0	None	1	-1	false
-124	short_bow	1	100	100	1	4	0	30	30	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	0	0	0	143	0	0	None	Short Bow	Bow	SHORT_BOW	1	1	false			0	0	None	1	-1	false
-122	hunters_bow	1	350	350	2	5	0	40	40	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	20	0	35	144	0	0	None	Hunter's Bow	Bow	HUNTERS_BOW	3	1	false			0	0	None	1	-1	false
-123	long_bow	1	250	250	1	6	0	35	35	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	25	0	30	145	0	0	None	Long Bow	Bow	HUNTERS_BOW	5	1	false			0	0	None	1	-1	false
-2166	composite_bow	1	600	600	3	6	0	45	45	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	25	0	40	146	0	0	None	Composite Bow	Bow	COMPOSITE_BOW	7	1	false			0	0	None	1	-1	false
-126	short_battle_bow	1	750	750	3	7	0	45	45	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	30	0	50	147	0	0	None	Short Battle Bow	Bow	SHORT_BATTLE_BOW	9	1	false			0	0	None	1	-1	false
-2167	long_battle_bow	1	1000	1000	1	10	0	50	50	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	30	0	60	148	0	0	None	Long Battle Bow	Bow	LONG_BATTLE_BOW	11	1	false			0	0	None	1	-1	false
-2168	short_war_bow	1	1500	1500	4	8	0	55	55	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	35	0	70	149	0	0	None	Short War Bow	Bow	SHORT_WAR_BOW	15	1	false			0	0	None	1	-1	false
-125	long_war_bow	1	2000	2000	1	14	0	60	60	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	45	0	80	150	0	0	None	Long War Bow	Bow	LONG_WAR_BOW	19	1	false			0	0	None	1	-1	false
-149	short_staff	1	30	30	2	4	0	25	25	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	151	0	0	None	Short Staff	Staff	SHORT_STAFF	1	1	false			0	0	None	1	-1	false
-147	long_staff	1	100	100	4	8	0	35	35	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	Long Staff	Staff	LONG_STAFF	4	1	false			0	0	None	1	-1	false
-150	composite_staff	1	500	500	5	10	0	45	45	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	153	0	0	None	Composite Staff	Staff	COMPOSITE_STAFF	6	1	false			0	0	None	1	-1	false
-151	quarter_staff	1	1000	1000	6	12	0	55	55	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	20	0	0	154	0	0	None	Quarter Staff	Staff	SHORT_STAFF	9	1	false			0	0	None	1	-1	false
-148	war_staff	1	1500	1500	8	16	0	75	75	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	30	0	0	155	0	0	None	War Staff	Staff	WAR_STAFF	12	1	false			0	0	None	1	-1	false
-152	helm	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	50	0	0	None	Helm	Helm	HELM	8	1	false			4	6	None	1	-1	false
-153	skull_cap	7	25	25	0	0	2	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	49	0	0	None	Skull Cap	Cap	SKULL_CAP	4	1	false			2	4	None	1	-1	false
-154	great_helm	7	400	400	0	0	10	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	53	0	0	None	Great Helm	Helm	GREAT_HELM	20	1	false			10	15	None	1	-1	false
-155	crown	7	200	200	0	0	8	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	52	0	0	None	Crown	Crown	CROWN	16	1	false			8	12	None	1	-1	false
-156	rags	7	5	5	0	0	2	6	6	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	55	0	0	None	Rags	Rags	RAGS	1	1	false			2	6	None	1	-1	false
-157	studded_leather_armor	7	700	700	0	0	15	45	45	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	20	0	0	61	0	0	None	Studded Leather Armor	Armor	STUDDED_LEATHER_ARMOR	9	1	false			15	17	None	1	-1	false
-158	cloak	7	40	40	0	0	3	18	18	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	56	0	0	None	Cloak	Cloak	CLOAK	2	1	false			3	7	None	1	-1	false
-159	leather_armor	7	300	300	0	0	10	35	35	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	59	0	0	None	Leather Armor	Armor	LEATHER_ARMOR	6	1	false			10	13	None	1	-1	false
-160	robe	7	75	75	0	0	4	24	24	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	57	0	0	None	Robe	Robe	ROBE	3	1	false			4	7	None	1	-1	false
-161	chain_mail	7	1250	1250	0	0	18	55	55	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	30	0	0	63	0	0	None	Chain Mail	Mail	CHAIN_MAIL	13	1	false			18	22	None	1	-1	false
-162	breast_plate	7	2800	2800	0	0	20	80	80	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	40	0	0	65	0	0	None	Breast Plate	Plate	BREAST_PLATE	16	1	false			20	24	None	1	-1	false
-163	cape	7	10	10	0	0	1	12	12	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	54	0	0	None	Cape	Cape	CAPE	1	1	false			1	5	None	1	-1	false
-164	plate_mail	7	4600	4600	0	0	42	75	75	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	60	0	0	67	0	0	None	Plate Mail	Plate	FIELD_PLATE	19	1	false			42	50	None	1	-1	false
-165	full_plate_mail	7	6500	6500	0	0	60	90	90	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	90	0	0	70	0	0	None	Full Plate Mail	Plate	FULL_PLATE_MAIL	25	1	false			60	75	None	1	-1	false
-167	kite_shield	7	400	400	0	0	8	40	40	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	50	0	0	74	0	0	None	Kite Shield	Shield	KITE_SHIELD	14	1	false			8	15	None	1	-1	false
-168	small_shield	7	90	90	0	0	3	24	24	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	25	0	0	72	0	0	None	Small Shield	Shield	SMALL_SHIELD	5	1	false			3	8	None	1	-1	false
-169	large_shield	7	200	200	0	0	5	32	32	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	40	0	0	73	0	0	None	Large Shield	Shield	LARGE_SHIELD	9	1	false			5	10	None	1	-1	false
-170	gothic_shield	7	2300	2300	0	0	14	60	60	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	80	0	0	76	0	0	None	Gothic Shield	Shield	GOTHIC_SHIELD	23	1	false			14	18	None	1	-1	false
-2169	cap	7	15	15	0	0	1	15	15	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	48	0	0	None	Cap	Cap	CAP	1	1	false			1	3	None	1	-1	false
-2170	full_helm	7	90	90	0	0	6	35	35	1	1	1	Armor,Helmet	4	2	0	0		0	35	0	0	51	0	0	None	Full Helm	Helm	FULL_HELM	12	1	false			6	8	None	1	-1	false
-2171	quilted_armor	7	200	200	0	0	7	30	30	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	58	0	0	None	Quilted Armor	Armor	QUILTED_ARMOR	4	1	false			7	10	None	1	-1	false
-2172	hard_leather_armor	7	450	450	0	0	11	40	40	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	60	0	0	None	Hard Leather Armor	Armor	HARD_LEATHER_ARMOR	7	1	false			11	14	None	1	-1	false
-2173	ring_mail	7	900	900	0	0	17	50	50	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	25	0	0	62	0	0	None	Ring Mail	Mail	RING_MAIL	11	1	false			17	20	None	1	-1	false
-2174	scale_mail	7	2300	2300	0	0	23	60	60	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	35	0	0	64	0	0	None	Scale Mail	Mail	SCALE_MAIL	15	1	false			23	28	None	1	-1	false
-2175	splint_mail	7	3250	3250	0	0	30	65	65	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	40	0	0	66	0	0	None	Splint Mail	Mail	SPLINT_MAIL	17	1	false			30	35	None	1	-1	false
-2176	field_plate	7	5800	5800	0	0	40	80	80	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	65	0	0	68	0	0	None	Field Plate	Plate	FIELD_PLATE	21	1	false			40	45	None	1	-1	false
-2177	gothic_plate	7	8000	8000	0	0	50	100	100	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	80	0	0	69	0	0	None	Gothic Plate	Plate	GOTHIC_PLATE	23	1	false			50	60	None	1	-1	false
-2178	buckler_standard	7	30	30	0	0	1	16	16	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	0	0	0	71	0	0	None	Buckler	Shield	BUCKLER	1	1	false			1	5	None	1	-1	false
-2179	tower_shield	7	850	850	0	0	12	50	50	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	60	0	0	75	0	0	None	Tower Shield	Shield	TOWER_SHIELD	20	1	false			12	20	None	1	-1	false
-2180	potion_healing_standard	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0		0	0	0	0	77	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	1	1	true			0	0	RestorePartialLife	1	-1	false
-2181	potion_full_healing	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	2	0		0	0	0	0	78	0	0	None	Potion of Full Healing	Potion of Full Healing	POTION_OF_FULL_HEALING	1	1	true			0	0	RestoreFullLife	1	-1	false
-2182	potion_mana_standard	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0		0	0	0	0	79	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	1	1	true			0	0	RestorePartialMana	1	-1	false
-2183	potion_full_mana	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	7	0		0	0	0	0	80	0	0	None	Potion of Full Mana	Potion of Full Mana	POTION_OF_FULL_MANA	1	1	true			0	0	RestoreFullMana	1	-1	false
-2184	potion_rejuvenation_standard	0	120	120	0	0	0	0	0	1	1	0	Misc,Belt	7	3	19	0		0	0	0	0	81	0	0	None	Potion of Rejuvenation	Potion of Rejuvenation	POTION_OF_REJUVENATION	3	1	true			0	0	RestorePartialLifeAndMana	1	-1	false
-2185	potion_full_rejuvenation_standard	0	600	600	0	0	0	0	0	1	1	0	Misc,Belt	7	3	20	0		0	0	0	0	82	0	0	None	Potion of Full Rejuvenation	Potion of Full Rejuvenation	POTION_OF_FULL_REJUVENATION	7	1	true			0	0	RestoreFullLifeAndMana	1	-1	false
-2186	oil_of_blacksmith_standard	0	100	100	0	0	0	0	0	1	1	0	Misc,Belt	7	3	37	0		0	0	0	0	83	0	0	None	Blacksmith Oil	Blacksmith Oil	OIL	1	1	true			0	0	ApplyBlacksmithOil	1	-1	false
-2187	oil_of_accuracy_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	32	0		0	0	0	0	84	0	0	None	Oil of Accuracy	Oil of Accuracy	OIL	1	1	true			0	0	ApplyAccuracyOil	1	-1	false
-2188	oil_of_sharpness_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	34	0		0	0	0	0	85	0	0	None	Oil of Sharpness	Oil of Sharpness	OIL	1	1	true			0	0	ApplySharpnessOil	1	-1	false
-2189	oil_standard	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	31	0		0	0	0	0	86	0	0	None	Oil	Oil	OIL	10	1	true			0	0	ApplyFortitudeOil	1	-1	false
-2190	elixir_of_strength_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	11	0		0	0	0	0	87	0	0	None	Elixir of Strength	Elixir of Strength	ELIXIR_OF_STRENGTH	15	1	true			0	0	IncreaseStrength	1	-1	false
-2191	elixir_of_magic_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	12	0		0	0	0	0	88	0	0	None	Elixir of Magic	Elixir of Magic	ELIXIR_OF_MAGIC	15	1	true			0	0	IncreaseMagic	1	-1	false
-2192	elixir_of_dexterity_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	13	0		0	0	0	0	89	0	0	None	Elixir of Dexterity	Elixir of Dexterity	ELIXIR_OF_DEXTERITY	15	1	true			0	0	IncreaseDexterity	1	-1	false
-2193	elixir_of_vitality_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	14	0		0	0	0	0	90	0	0	None	Elixir of Vitality	Elixir of Vitality	ELIXIR_OF_VITALITY	20	1	true			0	0	IncreaseVitality	1	-1	false
-2195	ring_level_5	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	156	0	0	None	Ring	Ring	RING	5	1	false			0	0	None	1	-1	false
-2196	ring_level_10	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	157	0	0	None	Ring	Ring	RING	10	1	false			0	0	None	1	-1	false
-2197	ring_level_15	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	158	0	0	None	Ring	Ring	RING	15	1	false			0	0	None	1	-1	false
-2198	amulet_level_8	13	1200	1200	0	0	0	0	0	1	1	0	Misc,Amulet	6	3	27	0		0	0	0	0	159	0	0	None	Amulet	Amulet	AMULET	8	1	false			0	0	None	1	-1	false
-2199	amulet_level_16	13	1200	1200	0	0	0	0	0	1	1	0	Misc,Amulet	6	3	27	0		0	0	0	0	160	0	0	None	Amulet	Amulet	AMULET	16	1	false			0	0	None	1	-1	false
-2200	arena_potion	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	55	0		0	0	0	0	167	0	0	None	Arena Potion	Arena Potion	ARENA_POTION	7	0	true			0	0	RestoreFullLifeAndMana	1	-1	true
-2201	book_template_level_2	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	114	0	0	None	Book of	Book of	BOOK_BLUE	2	1	true			0	0	None	1	1	false
-2202	book_template_level_8	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	115	0	0	None	Book of	Book of	BOOK_BLUE	8	1	true			0	0	None	1	4	false
-2203	book_template_level_14	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	116	0	0	None	Book of	Book of	BOOK_BLUE	14	1	true			0	0	None	1	7	false
-2204	book_template_level_20	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	117	0	0	None	Book of	Book of	BOOK_BLUE	20	1	true			0	0	None	1	10	false
-43	cathedral_map	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	43	0		0	0	0	0	22	0	0	None	Cathedral Map	Cathedral Map	MAP_OF_THE_STARS	0	0	true			0	0	OpenCathedralMap	1	-1	false
+item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor_class	durability	max_durability	inventory_width	inventory_height	identified	item_tags	equip_location	item_class	misc_id	spell_id	spell_symbol	flags	min_strength	min_magic	min_dexterity	native_item_index	charges	max_charges	spell_source_kind	name	identified_name	cursor_graphic	min_monster_level	drop_rate	usable	special_effects	hellfire_effects	min_armor_class	max_armor_class	item_action_kind	item_action_amount	book_template_minimum_item_level	arena_only	item_action_message_id
+1	short_sword	1	75	75	4	8	0	20	20	1	1	1	Weapon,Sword	0	0	0	0		0	0	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0	false			0	0	None	1	-1	false	0
+2	buckler	1	25	25	0	0	5	20	20	1	1	1	Armor,Shield	0	0	0	0		0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0	false			5	5	None	1	-1	false	0
+114	optic_amulet	13	9750	9750	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	11	0	0	0	None	Optic Amulet	Optic Amulet	AMULET	1	1	true			0	0	None	1	-1	false	0
+118	arkaine_s_valor	8	42000	42000	0	0	0	40	40	2	2	1	Armor,MediumArmor,BodyArmor	3	2	28	0		0	0	0	30	0	0	0	None	Arkaine's Valor	Arkaine's Valor	ARKAINES_VALOR	1	1	true			0	0	None	1	-1	false	0
+2139	black_mushroom	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	17	0	0	None	Black Mushroom	Black Mushroom	BLACK_MUSHROOM	0	0	false			0	0	None	1	-1	false	0
+2140	brain	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	18	0	0	None	Brain	Brain	BRAIN	0	0	false			0	0	None	1	-1	false	0
+2141	fungal_tome	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	19	0	0	None	Fungal Tome	Fungal Tome	FUNGAL_TOME	0	0	false			0	0	None	1	-1	false	0
+2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	IncreaseAllAttributes	3	-1	false	0
+116	harlequin_crest	7	4000	4000	0	0	0	15	15	1	1	1	Armor,Helmet	4	2	28	0		0	0	0	15	0	0	0	None	Harlequin Crest	Harlequin Crest	HARLEQUIN_CREST	1	1	true			0	0	None	1	-1	false	0
+119	griswold_s_edge	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	28	0		2	40	0	0	32	0	0	None	Griswold's Edge	Griswold's Edge	BROAD_SWORD	0	0	false			0	0	None	1	-1	false	0
+2135	magic_rock	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	9	0	0	None	Magic Rock	Magic Rock	MAGIC_ROCK	0	0	false			0	0	None	1	-1	false	0
+2136	tavern_sign	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	12	0	0	None	Tavern Sign	Tavern Sign	TAVERN_SIGN	0	0	false			0	0	None	1	-1	false	0
+2138	anvil_of_fury	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	16	0	0	None	Anvil of Fury	Anvil of Fury	ANVIL_OF_FURY	0	0	false			0	0	None	1	-1	false	0
+24	ear	0	0	0	0	0	0	0	0	1	1	0	Misc,Ear	7	3	44	0		0	0	0	0	23	0	0	None	Ear	Ear	-	0	0	false			0	0	None	1	-1	false	0
+25	gold	11	0	0	0	0	0	0	0	1	1	1	Gold	7	4	0	0		0	0	0	0	0	0	0	None	Gold	Gold	GOLD_SMALL	1	1	true			0	0	None	1	-1	false	0
+34	lazarus_staff	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest,NoSale	7	0	0	0		0	0	0	0	33	0	0	None	Staff of Lazarus	Staff of Lazarus	STAFF_OF_LAZARUS	0	0	false			0	0	None	1	-1	false	0
+100	short_sword_starting	1	120	120	2	6	0	24	24	1	3	0	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0	false			0	0	None	1	-1	false	0
+101	buckler_starting	5	30	30	0	0	3	16	16	2	2	0	Armor,Shield,OneHanded	1	2	0	0		0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0	false			3	3	None	1	-1	false	0
+102	club_starting	4	20	20	1	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0		0	0	0	0	3	0	0	None	Club	Club	CLUB	1	0	false			0	0	None	1	-1	false	0
+103	short_bow_starting	3	100	100	1	4	0	30	30	2	3	0	Bow,TwoHanded	2	1	0	0		0	0	0	0	4	0	0	None	Short Bow	Short Bow	SHORT_BOW	1	0	false			0	0	None	1	-1	false	0
+104	short_staff_charged_bolt_starting	10	470	470	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	23	30	charged_bolt	0	0	25	0	166	40	40	ChargedItem	Short Staff of Charged Bolt	Short Staff of Charged Bolt	SHORT_STAFF	1	0	false			0	0	None	1	-1	false	0
+105	potion_healing	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0		0	0	0	0	24	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	0	0	true			0	0	RestorePartialLife	1	-1	false	0
+106	potion_mana	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0		0	0	0	0	25	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	0	0	true			0	0	RestorePartialMana	1	-1	false	0
+107	short_staff_starting	10	20	20	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	0	0		0	0	0	0	36	0	0	None	Short Staff	Short Staff	SHORT_STAFF	1	0	false			0	0	None	1	-1	false	0
+108	sword_starting	1	20	20	1	5	0	8	8	1	3	0	Weapon,Sword,OneHanded	1	1	0	0		0	15	0	20	37	0	0	None	Sword	Sword	SHORT_SWORD	2	0	false			0	0	None	1	-1	false	0
+109	dagger_starting	1	20	20	1	4	0	16	16	1	2	0	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	38	0	0	None	Dagger	Dagger	DAGGER	1	0	false			0	0	None	1	-1	false	0
+110	spiked_club_starting	4	225	225	3	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0		0	18	0	0	139	0	0	None	Spiked Club	Spiked Club	SPIKED_CLUB	4	1	false			0	0	None	1	-1	false	0
+2001	torn_note_1	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	42	0	0	None	Torn Note 1	Torn Note 1	TORN_NOTE_1	0	0	true			0	0	ReadQuestNote	1	-1	false	322
+2002	torn_note_2	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	43	0	0	None	Torn Note 2	Torn Note 2	TORN_NOTE_2	0	0	true			0	0	ReadQuestNote	1	-1	false	322
+2003	torn_note_3	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	44	0	0	None	Torn Note 3	Torn Note 3	TORN_NOTE_3	0	0	true			0	0	ReadQuestNote	1	-1	false	322
+2004	reconstructed_note	0	0	0	0	0	0	0	0	1	1	0	Misc,Quest	7	3	0	0		0	0	0	0	45	0	0	None	Reconstructed Note	Reconstructed Note	RECONSTRUCTED_NOTE	0	0	true			0	0	ReadQuestNote	1	-1	false	322
+2106	rune_of_fire	0	100	100	0	0	0	0	0	1	1	0	Misc,Rune	7	3	47	12	fireball	0	0	0	0	161	0	0	ConsumableItem	Rune of Fire	Rune	RUNE_OF_FIRE	1	1	true			0	0	None	1	-1	false	0
+2107	rune_of_lightning	0	200	200	0	0	0	0	0	1	1	0	Misc,Rune	7	3	48	50	lightning_wall	0	0	0	0	162	0	0	ConsumableItem	Rune of Lightning	Rune	RUNE_OF_LIGHTNING	3	1	true			0	0	None	1	-1	false	0
+2108	greater_rune_of_fire	0	400	400	0	0	0	0	0	1	1	0	Misc,Rune	7	3	50	45	immolation	0	0	0	0	163	0	0	ConsumableItem	Greater Rune of Fire	Rune	GREATER_RUNE_OF_FIRE	7	1	true			0	0	None	1	-1	false	0
+2109	greater_rune_of_lightning	0	500	500	0	0	0	0	0	1	1	0	Misc,Rune	7	3	49	18	nova	0	0	0	0	164	0	0	ConsumableItem	Greater Rune of Lightning	Rune	GREATER_RUNE_OF_LIGHTNING	7	1	true			0	0	None	1	-1	false	0
+2110	rune_of_stone	0	300	300	0	0	0	0	0	1	1	0	Misc,Rune	7	3	51	8	stone_curse	0	0	0	0	165	0	0	ConsumableItem	Rune of Stone	Rune	RUNE_OF_STONE	7	1	true			0	0	None	1	-1	false	0
+2111	scroll_of_town_portal_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	27	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	0	true			0	0	None	1	-1	false	0
+2112	scroll_of_resurrect_fixed	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	34	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	0	true			0	0	None	1	-1	false	0
+2113	scroll_of_healing	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	2	healing	0	0	0	0	91	0	0	ConsumableItem	Scroll of Healing	Scroll of Healing	SCROLL_OF	1	1	true			0	0	None	1	-1	false	0
+2114	scroll_of_search	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	46	search	0	0	0	0	92	0	0	ConsumableItem	Scroll of Search	Scroll of Search	SCROLL_OF	1	1	true			0	0	None	1	-1	false	0
+2115	scroll_of_lightning	0	150	150	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	3	lightning	0	0	0	0	93	0	0	ConsumableItem	Scroll of Lightning	Scroll of Lightning	SCROLL_OF	4	1	true			0	0	None	1	-1	false	0
+2116	scroll_of_resurrect	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	95	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	1	true			0	0	None	1	-1	false	0
+2117	scroll_of_fire_wall	0	400	400	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	6	fire_wall	0	0	0	0	96	0	0	ConsumableItem	Scroll of Fire Wall	Scroll of Fire Wall	SCROLL_OF	4	1	true			0	0	None	1	-1	false	0
+2118	scroll_of_inferno	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	21	inferno	0	0	0	0	97	0	0	ConsumableItem	Scroll of Inferno	Scroll of Inferno	SCROLL_OF	1	1	true			0	0	None	1	-1	false	0
+2119	scroll_of_town_portal	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	98	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	1	true			0	0	None	1	-1	false	0
+2120	scroll_of_flash	0	500	500	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	4	flash	0	0	0	0	99	0	0	ConsumableItem	Scroll of Flash	Scroll of Flash	SCROLL_OF	6	1	true			0	0	None	1	-1	false	0
+2121	scroll_of_infravision	0	600	600	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	9	infravision	0	0	0	0	100	0	0	ConsumableItem	Scroll of Infravision	Scroll of Infravision	SCROLL_OF	8	1	true			0	0	None	1	-1	false	0
+2122	scroll_of_phasing	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	10	phasing	0	0	0	0	101	0	0	ConsumableItem	Scroll of Phasing	Scroll of Phasing	SCROLL_OF	6	1	true			0	0	None	1	-1	false	0
+2123	scroll_of_mana_shield	0	1200	1200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	11	mana_shield	0	0	0	0	102	0	0	ConsumableItem	Scroll of Mana Shield	Scroll of Mana Shield	SCROLL_OF	8	1	true			0	0	None	1	-1	false	0
+2124	scroll_of_flame_wave	0	650	650	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	15	flame_wave	0	0	0	0	103	0	0	ConsumableItem	Scroll of Flame Wave	Scroll of Flame Wave	SCROLL_OF	10	1	true			0	0	None	1	-1	false	0
+2125	scroll_of_fireball	0	300	300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	12	fireball	0	0	0	0	104	0	0	ConsumableItem	Scroll of Fireball	Scroll of Fireball	SCROLL_OF	8	1	true			0	0	None	1	-1	false	0
+2126	scroll_of_stone_curse	0	800	800	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	8	stone_curse	0	0	0	0	105	0	0	ConsumableItem	Scroll of Stone Curse	Scroll of Stone Curse	SCROLL_OF	6	1	true			0	0	None	1	-1	false	0
+2127	scroll_of_chain_lightning	0	750	750	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	16	chain_lightning	0	0	0	0	106	0	0	ConsumableItem	Scroll of Chain Lightning	Scroll of Chain Lightning	SCROLL_OF	10	1	true			0	0	None	1	-1	false	0
+2128	scroll_of_guardian	0	950	950	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	7	guardian	0	0	0	0	107	0	0	ConsumableItem	Scroll of Guardian	Scroll of Guardian	SCROLL_OF	12	1	true			0	0	None	1	-1	false	0
+2129	scroll_of_nova	0	1300	1300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	18	nova	0	0	0	0	109	0	0	ConsumableItem	Scroll of Nova	Scroll of Nova	SCROLL_OF	14	1	true			0	0	None	1	-1	false	0
+2130	scroll_of_golem	0	1100	1100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	52	golem	0	0	0	0	110	0	0	ConsumableItem	Scroll of Golem	Scroll of Golem	SCROLL_OF	10	1	true			0	0	None	1	-1	false	0
+2131	scroll_of_teleport	0	3000	3000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	23	teleport	0	0	0	0	112	0	0	ConsumableItem	Scroll of Teleport	Scroll of Teleport	SCROLL_OF	14	1	true			0	0	None	1	-1	false	0
+2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	113	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None	1	-1	false	0
+2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	26	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify	1	-1	false	0
+2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	94	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify	1	-1	false	0
+127	dagger	1	60	60	1	4	0	16	16	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	118	0	0	None	Dagger	Dagger	DAGGER	1	1	false			0	0	None	1	-1	false	0
+2160	short_sword_standard	1	120	120	2	6	0	24	24	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	119	0	0	None	Short Sword	Sword	SHORT_SWORD	1	1	false			0	0	None	1	-1	false	0
+129	falchion	1	250	250	4	8	0	20	20	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	120	0	0	None	Falchion	Sword	FALCHION	2	1	false			0	0	None	1	-1	false	0
+134	scimitar	1	200	200	3	7	0	28	28	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	23	0	23	121	0	0	None	Scimitar	Sword	SCIMITAR	4	1	false			0	0	None	1	-1	false	0
+132	claymore	1	450	450	1	12	0	36	36	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	35	0	0	122	0	0	None	Claymore	Sword	CLAYMORE	5	1	false			0	0	None	1	-1	false	0
+2161	blade	1	280	280	3	8	0	30	30	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	25	0	30	123	0	0	None	Blade	Blade	BLADE	4	1	false			0	0	None	1	-1	false	0
+128	sabre	1	170	170	1	8	0	45	45	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	17	0	0	124	0	0	None	Sabre	Sabre	SABRE	1	1	false			0	0	None	1	-1	false	0
+131	long_sword	1	350	350	2	10	0	40	40	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	30	125	0	0	None	Long Sword	Sword	LONG_SWORD	6	1	false			0	0	None	1	-1	false	0
+130	broad_sword	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	126	0	0	None	Broad Sword	Sword	BROAD_SWORD	8	1	false			0	0	None	1	-1	false	0
+135	bastard_sword	1	1000	1000	6	15	0	60	60	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	50	0	0	127	0	0	None	Bastard Sword	Sword	BASTARD_SWORD	10	1	false			0	0	None	1	-1	false	0
+136	two_handed_sword	1	1800	1800	8	16	0	75	75	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	65	0	0	128	0	0	None	Two-Handed Sword	Sword	TWO_HANDED_SWORD	14	1	false			0	0	None	1	-1	false	0
+2162	great_sword	1	3000	3000	10	20	0	100	100	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	75	0	0	129	0	0	None	Great Sword	Sword	GREAT_SWORD	17	1	false			0	0	None	1	-1	false	0
+140	small_axe	1	150	150	2	10	0	24	24	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	0	0	0	130	0	0	None	Small Axe	Axe	SMALL_AXE	2	1	false			0	0	None	1	-1	false	0
+2163	axe	1	450	450	4	12	0	32	32	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	22	0	0	131	0	0	None	Axe	Axe	AXE	4	1	false			0	0	None	1	-1	false	0
+137	large_axe	1	750	750	6	16	0	40	40	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	30	0	0	132	0	0	None	Large Axe	Axe	LARGE_AXE	6	1	false			0	0	None	1	-1	false	0
+138	broad_axe	1	1000	1000	8	20	0	50	50	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	50	0	0	133	0	0	None	Broad Axe	Axe	BROAD_AXE	8	1	false			0	0	None	1	-1	false	0
+139	battle_axe	1	1500	1500	10	25	0	60	60	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	65	0	0	134	0	0	None	Battle Axe	Axe	BATTLE_AXE	10	1	false			0	0	None	1	-1	false	0
+141	great_axe	1	2500	2500	12	30	0	75	75	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	80	0	0	135	0	0	None	Great Axe	Axe	GREAT_AXE	12	1	false			0	0	None	1	-1	false	0
+142	mace	1	200	200	1	8	0	32	32	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	16	0	0	136	0	0	None	Mace	Mace	MACE	2	1	false			0	0	None	1	-1	false	0
+145	morning_star	1	300	300	1	10	0	40	40	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	26	0	0	137	0	0	None	Morning Star	Mace	MORNING_STAR	3	1	false			0	0	None	1	-1	false	0
+146	war_hammer	1	600	600	5	9	0	50	50	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	40	0	0	138	0	0	None	War Hammer	Hammer	WAR_HAMMER	5	1	false			0	0	None	1	-1	false	0
+2164	spiked_club	1	225	225	3	6	0	20	20	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	18	0	0	139	0	0	None	Spiked Club	Club	SPIKED_CLUB	4	1	false			0	0	None	1	-1	false	0
+2165	club	1	20	20	1	6	0	20	20	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	0	0	0	140	0	0	None	Club	Club	CLUB	1	1	false			0	0	None	1	-1	false	0
+144	flail	1	500	500	2	12	0	36	36	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	30	0	0	141	0	0	None	Flail	Flail	FLAIL	7	1	false			0	0	None	1	-1	false	0
+143	maul	1	900	900	6	20	0	50	50	1	1	1	Weapon,Mace,TwoHanded	2	1	0	0		0	55	0	0	142	0	0	None	Maul	Maul	MAUL	10	1	false			0	0	None	1	-1	false	0
+124	short_bow	1	100	100	1	4	0	30	30	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	0	0	0	143	0	0	None	Short Bow	Bow	SHORT_BOW	1	1	false			0	0	None	1	-1	false	0
+122	hunters_bow	1	350	350	2	5	0	40	40	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	20	0	35	144	0	0	None	Hunter's Bow	Bow	HUNTERS_BOW	3	1	false			0	0	None	1	-1	false	0
+123	long_bow	1	250	250	1	6	0	35	35	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	25	0	30	145	0	0	None	Long Bow	Bow	HUNTERS_BOW	5	1	false			0	0	None	1	-1	false	0
+2166	composite_bow	1	600	600	3	6	0	45	45	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	25	0	40	146	0	0	None	Composite Bow	Bow	COMPOSITE_BOW	7	1	false			0	0	None	1	-1	false	0
+126	short_battle_bow	1	750	750	3	7	0	45	45	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	30	0	50	147	0	0	None	Short Battle Bow	Bow	SHORT_BATTLE_BOW	9	1	false			0	0	None	1	-1	false	0
+2167	long_battle_bow	1	1000	1000	1	10	0	50	50	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	30	0	60	148	0	0	None	Long Battle Bow	Bow	LONG_BATTLE_BOW	11	1	false			0	0	None	1	-1	false	0
+2168	short_war_bow	1	1500	1500	4	8	0	55	55	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	35	0	70	149	0	0	None	Short War Bow	Bow	SHORT_WAR_BOW	15	1	false			0	0	None	1	-1	false	0
+125	long_war_bow	1	2000	2000	1	14	0	60	60	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	45	0	80	150	0	0	None	Long War Bow	Bow	LONG_WAR_BOW	19	1	false			0	0	None	1	-1	false	0
+149	short_staff	1	30	30	2	4	0	25	25	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	151	0	0	None	Short Staff	Staff	SHORT_STAFF	1	1	false			0	0	None	1	-1	false	0
+147	long_staff	1	100	100	4	8	0	35	35	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	Long Staff	Staff	LONG_STAFF	4	1	false			0	0	None	1	-1	false	0
+150	composite_staff	1	500	500	5	10	0	45	45	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	153	0	0	None	Composite Staff	Staff	COMPOSITE_STAFF	6	1	false			0	0	None	1	-1	false	0
+151	quarter_staff	1	1000	1000	6	12	0	55	55	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	20	0	0	154	0	0	None	Quarter Staff	Staff	SHORT_STAFF	9	1	false			0	0	None	1	-1	false	0
+148	war_staff	1	1500	1500	8	16	0	75	75	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	30	0	0	155	0	0	None	War Staff	Staff	WAR_STAFF	12	1	false			0	0	None	1	-1	false	0
+152	helm	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	50	0	0	None	Helm	Helm	HELM	8	1	false			4	6	None	1	-1	false	0
+153	skull_cap	7	25	25	0	0	2	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	49	0	0	None	Skull Cap	Cap	SKULL_CAP	4	1	false			2	4	None	1	-1	false	0
+154	great_helm	7	400	400	0	0	10	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	53	0	0	None	Great Helm	Helm	GREAT_HELM	20	1	false			10	15	None	1	-1	false	0
+155	crown	7	200	200	0	0	8	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	52	0	0	None	Crown	Crown	CROWN	16	1	false			8	12	None	1	-1	false	0
+156	rags	7	5	5	0	0	2	6	6	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	55	0	0	None	Rags	Rags	RAGS	1	1	false			2	6	None	1	-1	false	0
+157	studded_leather_armor	7	700	700	0	0	15	45	45	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	20	0	0	61	0	0	None	Studded Leather Armor	Armor	STUDDED_LEATHER_ARMOR	9	1	false			15	17	None	1	-1	false	0
+158	cloak	7	40	40	0	0	3	18	18	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	56	0	0	None	Cloak	Cloak	CLOAK	2	1	false			3	7	None	1	-1	false	0
+159	leather_armor	7	300	300	0	0	10	35	35	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	59	0	0	None	Leather Armor	Armor	LEATHER_ARMOR	6	1	false			10	13	None	1	-1	false	0
+160	robe	7	75	75	0	0	4	24	24	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	57	0	0	None	Robe	Robe	ROBE	3	1	false			4	7	None	1	-1	false	0
+161	chain_mail	7	1250	1250	0	0	18	55	55	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	30	0	0	63	0	0	None	Chain Mail	Mail	CHAIN_MAIL	13	1	false			18	22	None	1	-1	false	0
+162	breast_plate	7	2800	2800	0	0	20	80	80	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	40	0	0	65	0	0	None	Breast Plate	Plate	BREAST_PLATE	16	1	false			20	24	None	1	-1	false	0
+163	cape	7	10	10	0	0	1	12	12	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	54	0	0	None	Cape	Cape	CAPE	1	1	false			1	5	None	1	-1	false	0
+164	plate_mail	7	4600	4600	0	0	42	75	75	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	60	0	0	67	0	0	None	Plate Mail	Plate	FIELD_PLATE	19	1	false			42	50	None	1	-1	false	0
+165	full_plate_mail	7	6500	6500	0	0	60	90	90	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	90	0	0	70	0	0	None	Full Plate Mail	Plate	FULL_PLATE_MAIL	25	1	false			60	75	None	1	-1	false	0
+167	kite_shield	7	400	400	0	0	8	40	40	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	50	0	0	74	0	0	None	Kite Shield	Shield	KITE_SHIELD	14	1	false			8	15	None	1	-1	false	0
+168	small_shield	7	90	90	0	0	3	24	24	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	25	0	0	72	0	0	None	Small Shield	Shield	SMALL_SHIELD	5	1	false			3	8	None	1	-1	false	0
+169	large_shield	7	200	200	0	0	5	32	32	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	40	0	0	73	0	0	None	Large Shield	Shield	LARGE_SHIELD	9	1	false			5	10	None	1	-1	false	0
+170	gothic_shield	7	2300	2300	0	0	14	60	60	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	80	0	0	76	0	0	None	Gothic Shield	Shield	GOTHIC_SHIELD	23	1	false			14	18	None	1	-1	false	0
+2169	cap	7	15	15	0	0	1	15	15	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	48	0	0	None	Cap	Cap	CAP	1	1	false			1	3	None	1	-1	false	0
+2170	full_helm	7	90	90	0	0	6	35	35	1	1	1	Armor,Helmet	4	2	0	0		0	35	0	0	51	0	0	None	Full Helm	Helm	FULL_HELM	12	1	false			6	8	None	1	-1	false	0
+2171	quilted_armor	7	200	200	0	0	7	30	30	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	58	0	0	None	Quilted Armor	Armor	QUILTED_ARMOR	4	1	false			7	10	None	1	-1	false	0
+2172	hard_leather_armor	7	450	450	0	0	11	40	40	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	60	0	0	None	Hard Leather Armor	Armor	HARD_LEATHER_ARMOR	7	1	false			11	14	None	1	-1	false	0
+2173	ring_mail	7	900	900	0	0	17	50	50	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	25	0	0	62	0	0	None	Ring Mail	Mail	RING_MAIL	11	1	false			17	20	None	1	-1	false	0
+2174	scale_mail	7	2300	2300	0	0	23	60	60	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	35	0	0	64	0	0	None	Scale Mail	Mail	SCALE_MAIL	15	1	false			23	28	None	1	-1	false	0
+2175	splint_mail	7	3250	3250	0	0	30	65	65	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	40	0	0	66	0	0	None	Splint Mail	Mail	SPLINT_MAIL	17	1	false			30	35	None	1	-1	false	0
+2176	field_plate	7	5800	5800	0	0	40	80	80	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	65	0	0	68	0	0	None	Field Plate	Plate	FIELD_PLATE	21	1	false			40	45	None	1	-1	false	0
+2177	gothic_plate	7	8000	8000	0	0	50	100	100	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	80	0	0	69	0	0	None	Gothic Plate	Plate	GOTHIC_PLATE	23	1	false			50	60	None	1	-1	false	0
+2178	buckler_standard	7	30	30	0	0	1	16	16	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	0	0	0	71	0	0	None	Buckler	Shield	BUCKLER	1	1	false			1	5	None	1	-1	false	0
+2179	tower_shield	7	850	850	0	0	12	50	50	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	60	0	0	75	0	0	None	Tower Shield	Shield	TOWER_SHIELD	20	1	false			12	20	None	1	-1	false	0
+2180	potion_healing_standard	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0		0	0	0	0	77	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	1	1	true			0	0	RestorePartialLife	1	-1	false	0
+2181	potion_full_healing	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	2	0		0	0	0	0	78	0	0	None	Potion of Full Healing	Potion of Full Healing	POTION_OF_FULL_HEALING	1	1	true			0	0	RestoreFullLife	1	-1	false	0
+2182	potion_mana_standard	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0		0	0	0	0	79	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	1	1	true			0	0	RestorePartialMana	1	-1	false	0
+2183	potion_full_mana	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	7	0		0	0	0	0	80	0	0	None	Potion of Full Mana	Potion of Full Mana	POTION_OF_FULL_MANA	1	1	true			0	0	RestoreFullMana	1	-1	false	0
+2184	potion_rejuvenation_standard	0	120	120	0	0	0	0	0	1	1	0	Misc,Belt	7	3	19	0		0	0	0	0	81	0	0	None	Potion of Rejuvenation	Potion of Rejuvenation	POTION_OF_REJUVENATION	3	1	true			0	0	RestorePartialLifeAndMana	1	-1	false	0
+2185	potion_full_rejuvenation_standard	0	600	600	0	0	0	0	0	1	1	0	Misc,Belt	7	3	20	0		0	0	0	0	82	0	0	None	Potion of Full Rejuvenation	Potion of Full Rejuvenation	POTION_OF_FULL_REJUVENATION	7	1	true			0	0	RestoreFullLifeAndMana	1	-1	false	0
+2186	oil_of_blacksmith_standard	0	100	100	0	0	0	0	0	1	1	0	Misc,Belt	7	3	37	0		0	0	0	0	83	0	0	None	Blacksmith Oil	Blacksmith Oil	OIL	1	1	true			0	0	ApplyBlacksmithOil	1	-1	false	0
+2187	oil_of_accuracy_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	32	0		0	0	0	0	84	0	0	None	Oil of Accuracy	Oil of Accuracy	OIL	1	1	true			0	0	ApplyAccuracyOil	1	-1	false	0
+2188	oil_of_sharpness_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	34	0		0	0	0	0	85	0	0	None	Oil of Sharpness	Oil of Sharpness	OIL	1	1	true			0	0	ApplySharpnessOil	1	-1	false	0
+2189	oil_standard	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	31	0		0	0	0	0	86	0	0	None	Oil	Oil	OIL	10	1	true			0	0	ApplyFortitudeOil	1	-1	false	0
+2190	elixir_of_strength_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	11	0		0	0	0	0	87	0	0	None	Elixir of Strength	Elixir of Strength	ELIXIR_OF_STRENGTH	15	1	true			0	0	IncreaseStrength	1	-1	false	0
+2191	elixir_of_magic_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	12	0		0	0	0	0	88	0	0	None	Elixir of Magic	Elixir of Magic	ELIXIR_OF_MAGIC	15	1	true			0	0	IncreaseMagic	1	-1	false	0
+2192	elixir_of_dexterity_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	13	0		0	0	0	0	89	0	0	None	Elixir of Dexterity	Elixir of Dexterity	ELIXIR_OF_DEXTERITY	15	1	true			0	0	IncreaseDexterity	1	-1	false	0
+2193	elixir_of_vitality_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	14	0		0	0	0	0	90	0	0	None	Elixir of Vitality	Elixir of Vitality	ELIXIR_OF_VITALITY	20	1	true			0	0	IncreaseVitality	1	-1	false	0
+2195	ring_level_5	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	156	0	0	None	Ring	Ring	RING	5	1	false			0	0	None	1	-1	false	0
+2196	ring_level_10	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	157	0	0	None	Ring	Ring	RING	10	1	false			0	0	None	1	-1	false	0
+2197	ring_level_15	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	158	0	0	None	Ring	Ring	RING	15	1	false			0	0	None	1	-1	false	0
+2198	amulet_level_8	13	1200	1200	0	0	0	0	0	1	1	0	Misc,Amulet	6	3	27	0		0	0	0	0	159	0	0	None	Amulet	Amulet	AMULET	8	1	false			0	0	None	1	-1	false	0
+2199	amulet_level_16	13	1200	1200	0	0	0	0	0	1	1	0	Misc,Amulet	6	3	27	0		0	0	0	0	160	0	0	None	Amulet	Amulet	AMULET	16	1	false			0	0	None	1	-1	false	0
+2200	arena_potion	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	55	0		0	0	0	0	167	0	0	None	Arena Potion	Arena Potion	ARENA_POTION	7	0	true			0	0	RestoreFullLifeAndMana	1	-1	true	0
+2201	book_template_level_2	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	114	0	0	None	Book of	Book of	BOOK_BLUE	2	1	true			0	0	None	1	1	false	0
+2202	book_template_level_8	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	115	0	0	None	Book of	Book of	BOOK_BLUE	8	1	true			0	0	None	1	4	false	0
+2203	book_template_level_14	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	116	0	0	None	Book of	Book of	BOOK_BLUE	14	1	true			0	0	None	1	7	false	0
+2204	book_template_level_20	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	117	0	0	None	Book of	Book of	BOOK_BLUE	20	1	true			0	0	None	1	10	false	0
+43	cathedral_map	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	43	0		0	0	0	0	22	0	0	None	Cathedral Map	Cathedral Map	MAP_OF_THE_STARS	0	0	true			0	0	OpenCathedralMap	1	-1	false	0

@@ -13,6 +13,8 @@ public sealed class DiabloStoreCommandProcessor
     public const uint AdriaStoreId = 10;
     /** Reserved service-only store used by Cain's paid identification action. */
     public const uint StorytellerStoreId = 11;
+    /** Native compatibility message used by older packs for Na-Krul notes. */
+    private const int LegacyQuestNoteDialogueMessageId = 322;
 
     private readonly StoreCatalog catalog;
     private readonly IDiabloStoreRules rules;
@@ -838,7 +840,7 @@ public sealed class DiabloStoreCommandProcessor
                     player.EntityId,
                     player.EntityId,
                     0) {
-                    MessageId = 322,
+                    MessageId = ResolveItemActionMessageId(item.State, action),
                 }],
             };
         }
@@ -911,6 +913,20 @@ public sealed class DiabloStoreCommandProcessor
         // Preserve the native Spectral Elixir behavior for states that cannot
         // resolve a stable or native content identity.
         return action == DiabloItemActionKind.IncreaseAllAttributes ? 3 : 1;
+    }
+
+    private int ResolveItemActionMessageId(
+        AuthoritativeItemState state,
+        DiabloItemActionKind action)
+    {
+        if (action != DiabloItemActionKind.ReadQuestNote)
+            return 0;
+        if (items is not null
+            && items.TryGetByState(state, out var definition)
+            && definition.ItemActionMessageId != 0) {
+            return definition.ItemActionMessageId;
+        }
+        return LegacyQuestNoteDialogueMessageId;
     }
 
     private DiabloItemActionKind ResolveItemActionKind(AuthoritativeItemState state)
