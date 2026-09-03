@@ -13,6 +13,10 @@ All notable changes to this fork are documented below.
   leader, identity, level, AI, vitality, intelligence, animation, and timer
   state; broader multi-actor selection remains follow-up replay work.
 
+- Added a seeded GoatMelee multi-participant replay fixture. Native and managed
+  runners now verify nearest-live-participant selection for autonomous
+  AiAvoidance movement while preserving the farther participant's state.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked

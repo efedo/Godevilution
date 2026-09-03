@@ -904,6 +904,9 @@ Notable shared fixtures include:
   admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-goat-melee-attack.json` for seeded adjacent attack admission,
   secondary-player block timing, and native AI-stream advancement;
+- `gameplay-goat-melee-multiplayer-target.json` for seeded AiAvoidance movement
+  selecting the nearest live participant, preserving the farther primary while
+  the secondary participant drives the autonomous path;
 - `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
   native monster runtime-seed advancement, secondary hit/block stream
   consumption, block timing, and cross-language canonical hashing;
@@ -1047,8 +1050,9 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
-current Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes, multi-actor
-target selection beyond the current projectile lanes, mod/content reload
+current Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes,
+multi-actor target selection beyond the current GoatMelee and projectile lanes,
+mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup
 overflow is already covered by `gameplay-gold-pickup-overflow.json`.

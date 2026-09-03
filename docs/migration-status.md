@@ -15,6 +15,11 @@ expands incrementally. Native and managed fixture loaders now reject the same
 missing-leader, duplicate-identity, cross-level, non-Fallen-AI, vitality,
 intelligence, animation, and rally-timer companion states before execution.
 
+The deterministic replay gate now also includes a seeded GoatMelee
+multi-participant movement fixture. Both runners select the nearest live
+participant for the autonomous path while preserving the farther participant's
+state, extending multi-actor coverage beyond projectile-only lanes.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance
