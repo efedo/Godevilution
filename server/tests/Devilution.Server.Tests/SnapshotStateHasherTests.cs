@@ -1697,6 +1697,25 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectDialogueIdentityChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = { new ObjectSnapshot { EntityId = 20, ObjectId = 4 } },
+        };
+        var dialogue = baseline.Clone();
+        dialogue.Objects[0].DialogueMessageId = 412;
+        var changedDialogue = dialogue.Clone();
+        changedDialogue.Objects[0].DialogueMessageId = 413;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(dialogue));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(dialogue),
+            SnapshotStateHasher.Compute(changedDialogue));
+    }
+
+    [Fact]
     public void QuestPoolAvailabilityChangesTheHash()
     {
         var available = new Snapshot {

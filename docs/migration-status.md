@@ -20,6 +20,9 @@ authoritative interaction even when `quest_id` is zero, enabling dialogue-only
 environmental objects without client-side message tables.
 The server now applies the same authored-interaction predicate at command
 admission, so presentation-only objects cannot be activated by crafted intents.
+Snapshot replacement also reapplies the authored dialogue identity to existing
+object instances, and canonical snapshot hashing includes that identity,
+preserving dialogue-only interactions across reconnect and save hydration.
 
 The `ReadQuestNote` action now resolves its dialogue identity from the authored
 item definition (`item_action_message_id`) instead of embedding the native

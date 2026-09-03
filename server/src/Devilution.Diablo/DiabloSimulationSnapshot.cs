@@ -2527,6 +2527,7 @@ public sealed partial class DiabloSimulation
                 target.HideWhenActivated = @object.HideWhenActivated;
                 target.AnimationFrame = @object.AnimationFrame;
                 target.ActivatedAnimationFrame = @object.ActivatedAnimationFrame;
+                target.DialogueMessageId = @object.DialogueMessageId;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,

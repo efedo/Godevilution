@@ -247,6 +247,39 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripRestoresDialogueIdentityOnExistingObject()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Objects = [new AuthoritativeWorldObject(
+                    20,
+                    71,
+                    1,
+                    8,
+                    8,
+                    dialogueMessageId: 412)],
+            });
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+
+        var replacementWorld = new AuthoritativeWorld();
+        replacementWorld.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = replacementWorld,
+                Objects = [new AuthoritativeWorldObject(20, 71, 1, 0, 0)],
+            });
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.Objects.Values);
+        Assert.Equal(412, restored.DialogueMessageId);
+        Assert.Equal((8, 8), (restored.PositionX, restored.PositionY));
+    }
+
+    [Fact]
     public void SnapshotRoundTripRestoresSetLevelAnchoredMutation()
     {
         var mutationCatalog = new AuthoritativeWorldMutationCatalog([

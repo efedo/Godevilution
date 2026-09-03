@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Snapshot hydration and canonical state hashing now preserve authored object
+  dialogue identities when an existing object is updated in place, keeping
+  dialogue-only interactions available across replacement-session restores.
+
 - Server object command admission now requires an authored interaction. Direct
   commands cannot activate presentation-only objects, while dialogue-only
   objects remain valid authoritative targets.
