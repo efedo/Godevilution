@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.447.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.448.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -304,6 +304,10 @@ public sealed class ShippedContentTests
         Assert.Equal(
             "The armories of Hell are home to the Warlord of Blood. In his wake lay the mutilated bodies of thousands. Angels and men alike have been cut down to fulfill his endless sacrifices to the Dark ones who scream for one thing - blood.",
             dialogueMessages.TryGet(256, out var bloodwar) ? bloodwar.Text : null);
+        Assert.Contains(
+            "Whoever finds this scroll is charged with stopping the demonic creature",
+            dialogueMessages.TryGet(322, out var book9) ? book9.Text : string.Empty,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -905,7 +909,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.446.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.447.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1325,7 +1329,7 @@ public sealed class ShippedContentTests
             table.SourcePath,
             table.ToCanonicalTsv());
 
-        Assert.Equal([12, 21, 22, 23, 110, 144, 145, 146, 147, 148, 254, 255, 256],
+        Assert.Equal([12, 21, 22, 23, 110, 144, 145, 146, 147, 148, 254, 255, 256, 322],
             catalog.Definitions.Select(message => message.MessageId));
         Assert.Equal(
             "Master, I have a strange experience to relate. I know that you have a great knowledge of those monstrosities that inhabit the labyrinth, and this is something that I cannot understand for the very life of me... I was awakened during the night by a scraping sound just outside of my tavern. When I looked out from my bedroom, I saw the shapes of small demon-like creatures in the inn yard. After a short time, they ran off, but not before stealing the sign to my inn. I don't know why the demons would steal my sign but leave my family in peace... 'tis strange, no?",
@@ -1978,6 +1982,18 @@ public sealed class ShippedContentTests
         Assert.True(baseCathedralMap.Usable);
         Assert.Equal(DiabloItemActionKind.OpenCathedralMap, baseCathedralMap.ItemActionKind);
         Assert.Equal(1, baseCathedralMap.ItemActionAmount);
+        foreach (var (symbol, itemId) in new[] {
+            ("torn_note_1", 2001U),
+            ("torn_note_2", 2002U),
+            ("torn_note_3", 2003U),
+            ("reconstructed_note", 2004U),
+        }) {
+            var note = baseItems.GetRequired(itemId);
+            Assert.Equal(itemId, baseStableIds.Resolve("item", symbol));
+            Assert.True(note.Usable);
+            Assert.Equal(DiabloItemActionKind.ReadQuestNote, note.ItemActionKind);
+            Assert.Equal(1, note.ItemActionAmount);
+        }
         var baseJewelryExpectations = new[] {
             ("ring_level_5", 2195U, 156, 5, 26, 1000),
             ("ring_level_10", 2196U, 157, 10, 26, 1000),
@@ -3297,7 +3313,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.447.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.448.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

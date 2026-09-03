@@ -1364,6 +1364,8 @@ public sealed class ClientModelTests
             ItemActionKind.IncreaseAllAttributes));
         Assert.True(AuthoritativeItemActionRules.IsTargetlessConsumable(
             ItemActionKind.OpenCathedralMap));
+        Assert.True(AuthoritativeItemActionRules.IsTargetlessConsumable(
+            ItemActionKind.ReadQuestNote));
         Assert.False(AuthoritativeItemActionRules.IsTargetlessConsumable(
             ItemActionKind.ApplySharpnessOil));
         Assert.True(AuthoritativeItemActionRules.IsTargetedConsumable(

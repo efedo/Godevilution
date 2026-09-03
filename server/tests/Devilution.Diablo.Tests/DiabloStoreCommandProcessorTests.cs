@@ -4670,6 +4670,41 @@ public sealed class DiabloStoreCommandProcessorTests
         Assert.Equal(42U, opened.TargetEntityId);
     }
 
+    [Fact]
+    public void NaKrulNoteRemainsOwnedAndEmitsBookNineDialogue()
+    {
+        var player = CreatePlayer();
+        player.EntityId = 43;
+        player.Inventory.Add(new OwnedStoreItem(
+            0,
+            0,
+            9002,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 9002,
+                MiscId = 42,
+                ItemActionKind = DiabloItemActionKind.ReadQuestNote,
+            }));
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    9002)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Single(player.Inventory);
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(43U, dialogue.SourceEntityId);
+        Assert.Equal(322, dialogue.MessageId);
+    }
+
     private static AuthoritativePlayerState CreatePlayer(
         uint gold = 100,
         int life = 640,

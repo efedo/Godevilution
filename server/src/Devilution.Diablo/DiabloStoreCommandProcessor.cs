@@ -808,7 +808,8 @@ public sealed class DiabloStoreCommandProcessor
                 or DiabloItemActionKind.ApplyAccuracyOil
                 or DiabloItemActionKind.ApplySharpnessOil
                 or DiabloItemActionKind.ApplyFortitudeOil
-                or DiabloItemActionKind.OpenCathedralMap)) {
+                or DiabloItemActionKind.OpenCathedralMap
+                or DiabloItemActionKind.ReadQuestNote)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
@@ -827,6 +828,18 @@ public sealed class DiabloStoreCommandProcessor
                     0,
                     player.EntityId,
                     0)],
+            };
+        }
+
+        if (action == DiabloItemActionKind.ReadQuestNote) {
+            return DiabloIntentResult.Accepted with {
+                Events = [new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Dialogue,
+                    player.EntityId,
+                    player.EntityId,
+                    0) {
+                    MessageId = 322,
+                }],
             };
         }
 

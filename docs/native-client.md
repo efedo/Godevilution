@@ -206,6 +206,8 @@ same stable-reference command path; closed-stash targets are rejected and the
 cursor remains armed. The Cathedral Map now uses the same command boundary:
 the server validates the owned item and emits a transient `MapOpenedEvent`,
 while the item remains in inventory and each client opens its native map view.
+The Hellfire Na-Krul notes now use the same boundary as `ReadQuestNote`:
+the server emits the authored `TEXT_BOOK9` dialogue and leaves the note owned.
 
 Connected stash books use `ReadBookRequested` with the same open-session stable
 reference, and stash consumables are consumed by the server rather than a local

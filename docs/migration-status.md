@@ -2,11 +2,17 @@
 
 Status date: 2026-09-02
 
+Na-Krul note reading is now an authored `ReadQuestNote` item action. Connected
+clients submit the stable note reference, the server emits the content-backed
+`TEXT_BOOK9` dialogue without consuming the note, and native/Godot clients
+present the same server-owned text. The Diablo content schema is now `1.448.0`;
+`1.447.0` remains accepted as the previous additive contract.
+
 The Cathedral Map is now an authored `OpenCathedralMap` item action. Connected
 clients submit the stable item reference, the server validates ownership and
 emits a recipient-scoped `MapOpenedEvent`, and native/Godot clients present the
 map without consuming the item or mutating gameplay state. The Diablo content
-schema is now `1.447.0`; `1.446.0` remains accepted as the previous additive
+schema is now `1.448.0`; `1.447.0` remains accepted as the previous additive
 contract.
 
 Authoritative monster snapshots now enforce DevilutionX's 200-entry active
@@ -604,7 +610,7 @@ stage is pending. The same initial snapshot now projects the authored message
 identity, allowing Godot's target selector to resolve the dialogue before the
 first interaction. Snapshot restore reapplies the same projection after quest
 state hydration, including saves created before the projection was introduced.
-The active content schema is now `1.447.0`, with `1.446.0` accepted as the
+The active content schema is now `1.448.0`, with `1.447.0` accepted as the
 previous additive contract.
 
 The Golem spell now names its summon target with the stable
@@ -617,8 +623,8 @@ shared protocol. A live Godot fixture activates a quest-transition object,
 verifies its quest state and activation acknowledgement, and observes the
 server-persisted world-mutation cell in the projected level geometry. Both
 protocol mappers and the Godot model accept world-mutation, projectile, and
-encounter follow-ups on quest-transition objects; schema `1.447.0` remains
-current with `1.446.0` accepted for additive compatibility.
+encounter follow-ups on quest-transition objects; schema `1.448.0` remains
+current with `1.447.0` accepted for additive compatibility.
 
 The Halls of the Blind, Gateway of Blood, and Warlord steel-tome object
 templates now carry authored activation-message identities. Server object
@@ -630,7 +636,7 @@ mutation or encounter after the transition succeeds, providing the server-side
 hook needed by those future set-piece replacements without fabricating geometry.
 The base pack also carries presentation metadata for all three templates: the
 objects remain visible after activation and select the native open-book frame.
-The content schema is now `1.447.0`; the previous additive `1.446.0` schema
+The content schema is now `1.448.0`; the previous additive `1.447.0` schema
 remains accepted for pack compatibility.
 
 The deterministic replay gate now includes an occupied-inventory
@@ -684,7 +690,7 @@ item-absent branch, preserves native messages 81/83 and `_qvar1/_qvar2`,
 validates the Veil of Steel unique reward placement, consumes the Elixir, and
 applies the native dialogue defeat boundary. The legacy dialogue item/reward
 fields are empty in the shipped row. The stage rows remain compatible with the
-current `1.447.0` contract; `1.446.0` remains accepted as the previous additive
+current `1.448.0` contract; `1.447.0` remains accepted as the previous additive
 schema.
 
 Zhar's activation conversation now uses an authored unique-monster dialogue
@@ -692,29 +698,29 @@ stage with a validated normal-item reward. The server checks the target tile
 before advancing `_qvar1` from 0 to 2, emits native message 148, and generates
 the level-14 book from content; the legacy dialogue reward fields are empty in
 the shipped quest row. The stage row remains compatible with the current
-`1.447.0` contract; `1.446.0` remains accepted as the previous additive schema.
+`1.448.0` contract; `1.447.0` remains accepted as the previous additive schema.
 
 The Lazarus storyteller opening now uses authored quest/towner stages. The
 single-player Staff of Lazarus hand-in consumes its item and advances native
 `_qvar1` to 2, while the multiplayer unlogged opening dialogue records the
 same native message without an item; the existing completion stage remains
 authored. Those rows were introduced under schema `1.438.0` and remain
-compatible with the current `1.447.0` pack contract, which also accepts
-`1.446.0` as its previous additive schema.
+compatible with the current `1.448.0` pack contract, which also accepts
+`1.447.0` as its previous additive schema.
 
 The base Black Mushroom healer hand-in now uses an authored `Advance` stage.
 The server validates the Spectral Elixir placement before consuming the Brain,
 then advances native `_qvar1` from 5 to 6, emits message 124, and creates the
 declared reward. Those rows were introduced under schema `1.436.0` and remain
-compatible with the current `1.447.0` pack contract, which also accepts
-`1.446.0` as its previous additive schema.
+compatible with the current `1.448.0` pack contract, which also accepts
+`1.447.0` as its previous additive schema.
 
 The remaining shipped base item hand-ins now use authored quest/towner rows:
 Magic Rock and Anvil of Fury completion, Ogden's Sign activation and return,
 and the Butcher activation preserve their native town coordinates, variable
 gates, messages, item consumption, and quest-declared rewards. Those rows were
 introduced under schema `1.435.0` and remain compatible with the current
-`1.447.0` pack contract. Legacy quest-state turn-in fields remain
+`1.448.0` pack contract. Legacy quest-state turn-in fields remain
 available to older packs and direct compatibility callers.
 
 The generic host now persists each initialized session's completed command
@@ -797,10 +803,10 @@ Godot live protocol tests now launch the authoritative server from the same
 Debug or Release output selected for the test assembly, avoiding stale
 configuration binaries during boundary verification.
 
-Live Godot overlay fixtures now declare the active `1.447.0` content schema,
+Live Godot overlay fixtures now declare the active `1.448.0` content schema,
 matching the shipped base pack. Manifest composition continues to reject a
 mixed current/previous schema set before module activation; the Diablo module
-still accepts the previous additive `1.446.0` schema when a complete manifest
+still accepts the previous additive `1.447.0` schema when a complete manifest
 uses it.
 
 Godot local movement prediction now stops at authoritative blocked cells and
@@ -2834,8 +2840,10 @@ scaled hit points), not only the client's difficulty label.
 - Native authoritative held Rune Bomb and Cathedral Map interactions now route
   through projected server-owned dungeon objects; missing projections fail
   closed instead of opening local set pieces.
-- Native authoritative inventory Cathedral Maps now also fail closed when no
-  projected grave interaction is available, preventing legacy DoomFlag changes.
+- Native authoritative inventory Cathedral Maps now route standalone map use
+  through `UseConsumable`; when no projected grave interaction is available,
+  the server emits `MapOpenedEvent` and the client presents the map without a
+  local DoomFlag mutation.
 - Native authoritative unique-monster quest lookup now includes eligible
   activation-stage quests, so conversations such as Zhar and Warlord cannot
   fall through to local quest activation or reward mutation.

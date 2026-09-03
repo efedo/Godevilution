@@ -2545,6 +2545,22 @@ bool UseInvItem(int cii)
 		}
 	}
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected() && item->_iMiscId == IMISC_NOTE) {
+		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
+		if (!reference.has_value()) {
+			LogError("Server-backed Na-Krul note use has no authoritative item reference.");
+			return true;
+		}
+		if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*reference, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+			LogError("Server-backed Na-Krul note use failed: {}", result.error());
+			return true;
+		}
+		NewCursor(CURSOR_HAND);
+		return true;
+	}
+#endif
+
 	if (!item->isUsable())
 		return false;
 
@@ -2567,16 +2583,6 @@ bool UseInvItem(int cii)
 	if (item->_iMiscId > IMISC_RUNEFIRST && item->_iMiscId < IMISC_RUNELAST && levelType() == DTYPE_TOWN) {
 		return true;
 	}
-
-#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-	if (authoritative::GetServerBackedRuntime().IsConnected() && item->_iMiscId == IMISC_MAPOFDOOM) {
-		// A Cathedral Map may only affect the authoritative grave object. If the
-		// adjacent-object path above did not route it, fail closed instead of
-		// setting the legacy local DoomFlag.
-		LogError("Server-backed Cathedral Map use has no authoritative grave interaction.");
-		return true;
-	}
-#endif
 
 	if (item->_iMiscId == IMISC_ARENAPOT && !player.isOnArenaLevel()) {
 		player.Say(HeroSpeech::ThatWontWorkHere);

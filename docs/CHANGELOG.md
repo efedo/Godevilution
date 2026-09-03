@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized Na-Krul note reading as the authored `ReadQuestNote` item action. Connected clients now submit the existing stable item-use command; the server emits the native `TEXT_BOOK9` dialogue without consuming the note, and native/Godot clients present the same text. Advance the Diablo content schema to `1.448.0`; `1.447.0` remains accepted as the previous additive contract.
+
 - Routed the native Cathedral Map action through the authoritative item-command
   boundary. Base and Hellfire content now declare `OpenCathedralMap`; the server
   keeps the item owned and emits a recipient-scoped `MapOpenedEvent`, while
