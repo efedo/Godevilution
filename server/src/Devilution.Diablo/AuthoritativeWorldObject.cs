@@ -246,6 +246,16 @@ public sealed class AuthoritativeWorldObject
     /** Optional authored dialogue emitted when this object is activated. */
     public int DialogueMessageId { get; set; }
 
+    /** Returns whether this object declares behavior that may be submitted as an intent. */
+    public bool HasAuthoritativeInteraction
+        => EffectKind != AuthoritativeObjectEffectKind.None
+            || QuestId != 0
+            || QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
+            || RewardKind != AuthoritativeObjectRewardKind.None
+            || QuestSequenceFollowUpKind != AuthoritativeQuestSequenceFollowUpKind.None
+            || DialogueMessageId != 0
+            || TrapArmed;
+
     /** Authored projectile origin; object-target remains the compatibility default. */
     public AuthoritativeObjectProjectileSourceKind ProjectileSourceKind { get; set; }
     public bool MissilePassable { get; set; }

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Server object command admission now requires an authored interaction. Direct
+  commands cannot activate presentation-only objects, while dialogue-only
+  objects remain valid authoritative targets.
+
 - Projected authored object snapshots now carry an additive
   `dialogue_message_id`. Dialogue-only environmental objects can be discovered
   and routed by native and Godot clients even when they are not linked to a

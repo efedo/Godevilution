@@ -18,6 +18,8 @@ Authored object snapshots now also carry an optional dialogue identity. Native
 and Godot object selectors treat a nonzero `dialogue_message_id` as an
 authoritative interaction even when `quest_id` is zero, enabling dialogue-only
 environmental objects without client-side message tables.
+The server now applies the same authored-interaction predicate at command
+admission, so presentation-only objects cannot be activated by crafted intents.
 
 The `ReadQuestNote` action now resolves its dialogue identity from the authored
 item definition (`item_action_message_id`) instead of embedding the native

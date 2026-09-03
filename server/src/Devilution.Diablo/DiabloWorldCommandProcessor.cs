@@ -1289,6 +1289,7 @@ public sealed class DiabloWorldCommandProcessor
             participants = participants.Append(player).ToArray();
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
             || @object.Activated
+            || !@object.HasAuthoritativeInteraction
             || @object.LevelId != player.LevelId
             || (requireAdjacent
                 && DeterministicGridMetrics.ChebyshevDistance(

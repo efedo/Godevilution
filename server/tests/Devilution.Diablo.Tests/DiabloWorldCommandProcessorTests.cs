@@ -60,6 +60,64 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void PresentationOnlyObjectCannotBeActivatedByDirectIntent()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            2,
+            2);
+        var world = new DiabloWorldState(
+            AuthoritativeWorld.LoadTsv(
+                "levels.tsv",
+                "level_id\twidth\theight\tblocked_cells\n1\t8\t8\tnone\n"),
+            objects: [@object]);
+        var player = CreatePlayer(levelId: 1, positionX: 2, positionY: 1, entityId: 7);
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(@object.EntityId),
+            1,
+            [player]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.False(@object.Activated);
+        Assert.Equal(0, @object.AnimationFrame);
+    }
+
+    [Fact]
+    public void DialogueOnlyObjectRemainsActivatable()
+    {
+        var @object = new AuthoritativeWorldObject(
+            21,
+            71,
+            1,
+            2,
+            2,
+            dialogueMessageId: 412);
+        var world = new DiabloWorldState(
+            AuthoritativeWorld.LoadTsv(
+                "levels.tsv",
+                "level_id\twidth\theight\tblocked_cells\n1\t8\t8\tnone\n"),
+            objects: [@object]);
+        var player = CreatePlayer(levelId: 1, positionX: 2, positionY: 1, entityId: 7);
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(@object.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(@object.Activated);
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(412, dialogue.MessageId);
+        Assert.Equal(0U, dialogue.QuestId);
+    }
+
+    [Fact]
     public void FriendlyModeIntentSetsExplicitRetrySafeState()
     {
         var processor = new DiabloWorldCommandProcessor(new DiabloWorldState());
