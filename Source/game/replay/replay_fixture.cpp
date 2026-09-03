@@ -499,8 +499,11 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 	if (hasSecondaryPlayer && state.secondaryPlayerEntityId >= state.entityId)
 		AppendSecondaryPlayerState(hasher, state);
 
+	if (state.combatTargetEntityId != 0 || state.combatTargetCompanionEntityId != 0) {
+		hasher.AppendUint64(
+		    (state.combatTargetEntityId != 0 ? 1ULL : 0ULL)
+		    + (state.combatTargetCompanionEntityId != 0 ? 1ULL : 0ULL));
 	if (state.combatTargetEntityId != 0) {
-		hasher.AppendUint64(1);
 		hasher.AppendUint32(state.combatTargetEntityId);
 		hasher.AppendUint32(state.combatTargetMonsterId);
 		hasher.AppendUint32(state.combatTargetLevelId);
@@ -693,6 +696,34 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-counselor-retreat-v1");
 			hasher.AppendInt32(state.combatTargetCounselorRetreatTicks);
 		}
+	}
+	if (state.combatTargetCompanionEntityId != 0) {
+		hasher.AppendUint32(state.combatTargetCompanionEntityId);
+		hasher.AppendUint32(state.combatTargetCompanionMonsterId);
+		hasher.AppendUint32(state.combatTargetCompanionLevelId);
+		hasher.AppendInt32(state.combatTargetCompanionPositionX);
+		hasher.AppendInt32(state.combatTargetCompanionPositionY);
+		hasher.AppendInt32(state.combatTargetCompanionHitPoints);
+		hasher.AppendInt32(state.combatTargetCompanionMaxHitPoints);
+		hasher.AppendInt32(0);
+		hasher.AppendBool(state.combatTargetCompanionHitPoints > 0);
+		if (!state.combatTargetCompanionNativeAi.empty()) {
+			hasher.AppendString("godevilution-monster-native-ai-v1");
+			hasher.AppendString(state.combatTargetCompanionNativeAi);
+		}
+		if (state.combatTargetCompanionIntelligence != 0) {
+			hasher.AppendString("godevilution-monster-intelligence-v1");
+			hasher.AppendInt32(state.combatTargetCompanionIntelligence);
+		}
+		if (state.combatTargetCompanionFallenStandAnimationFrame != 0
+		    || state.combatTargetCompanionFallenStandAnimationTick != 0
+		    || state.combatTargetCompanionFallenRallyTicks != 0) {
+			hasher.AppendString("godevilution-monster-fallen-rally-v1");
+			hasher.AppendInt32(state.combatTargetCompanionFallenStandAnimationFrame);
+			hasher.AppendInt32(state.combatTargetCompanionFallenStandAnimationTick);
+			hasher.AppendInt32(state.combatTargetCompanionFallenRallyTicks);
+		}
+	}
 	}
 
 	if (!state.corpses.empty()) {
@@ -3708,6 +3739,33 @@ void AdvanceReplayFallenRallyPursuit(ReplayFixtureExecutionState &state)
 		}
 	}
 	--state.combatTargetFallenRallyTicks;
+}
+
+/** Advances the bounded companion projection used by the rally propagation fixture. */
+void AdvanceReplayFallenRallyCompanion(ReplayFixtureExecutionState &state, bool propagated)
+{
+	if (state.combatTargetCompanionEntityId == 0
+	    || state.combatTargetCompanionNativeAi != "Fallen"
+	    || state.combatTargetCompanionHitPointsQ6 <= 0)
+		return;
+	if (propagated
+	    && state.combatTargetCompanionLevelId == state.combatTargetLevelId
+	    && std::max(
+	           std::abs(state.combatTargetCompanionPositionX - state.combatTargetPositionX),
+	           std::abs(state.combatTargetCompanionPositionY - state.combatTargetPositionY))
+	        <= 2 * state.combatTargetIntelligence + 4)
+		state.combatTargetCompanionFallenRallyTicks = 30 * state.combatTargetIntelligence + 105;
+	// Native ProcessMonsters advances the shared stream for the propagated
+	// member's follow-up decision even when the member remains adjacent.
+	if (propagated)
+		state.randomState = 0x015A4E35U * state.randomState + 1U;
+	constexpr int32_t TicksPerFrame = 3;
+	if (state.combatTargetCompanionFallenStandAnimationTick + 1 < TicksPerFrame)
+		++state.combatTargetCompanionFallenStandAnimationTick;
+	else
+		state.combatTargetCompanionFallenStandAnimationTick = 0;
+	if (state.combatTargetCompanionFallenRallyTicks > 0)
+		--state.combatTargetCompanionFallenRallyTicks;
 }
 
 int32_t GenerateReplayMana(
@@ -9178,8 +9236,12 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		const int32_t rallyTicksBefore = state.combatTargetFallenRallyTicks;
 		if (!AdvanceReplayFallenStandAnimation(state))
 			AdvanceReplayFallenRallyPursuit(state);
+		AdvanceReplayFallenRallyCompanion(
+			state,
+			state.combatTargetFallenRallyTicks > rallyTicksBefore);
 		state.combatTargetAutonomousActionHandled =
 			AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
@@ -9643,6 +9705,30 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationTick);
 			if (key == "combat_target_fallen_rally_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetFallenRallyTicks);
+			if (key == "combat_target_companion_entity_id")
+				return ParseUnsigned(fixture_.initialState.combatTargetCompanion.entityId);
+			if (key == "combat_target_companion_level_id")
+				return ParseUnsigned(fixture_.initialState.combatTargetCompanion.levelId);
+			if (key == "combat_target_companion_position_x")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.positionX);
+			if (key == "combat_target_companion_position_y")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.positionY);
+			if (key == "combat_target_companion_hit_points")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.hitPoints);
+			if (key == "combat_target_companion_max_hit_points")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.maxHitPoints);
+			if (key == "combat_target_companion_monster_id")
+				return ParseUnsigned(fixture_.initialState.combatTargetCompanion.monsterId);
+			if (key == "combat_target_companion_native_ai")
+				return ParseString(fixture_.initialState.combatTargetCompanion.nativeAi);
+			if (key == "combat_target_companion_intelligence")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.intelligence);
+			if (key == "combat_target_companion_fallen_stand_animation_frame")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.fallenStandAnimationFrame);
+			if (key == "combat_target_companion_fallen_stand_animation_tick")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.fallenStandAnimationTick);
+			if (key == "combat_target_companion_fallen_rally_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetCompanion.fallenRallyTicks);
 			if (key == "combat_target_gargoyle_special_active")
 				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
@@ -10482,12 +10568,15 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		return false;
 	}
 	auto &target = fixture.initialState;
+	auto &companion = fixture.initialState.combatTargetCompanion;
 	if ((target.combatTargetMonsterItemSeed == 0) != (target.combatTargetMonsterAiSeed == 0)) {
 		error = "Replay fixture monster runtime seeds must be supplied together.";
 		return false;
 	}
 	if (target.combatTargetMaxHitPoints == 0 && target.combatTargetHitPoints > 0)
 		target.combatTargetMaxHitPoints = target.combatTargetHitPoints;
+	if (companion.maxHitPoints == 0 && companion.hitPoints > 0)
+		companion.maxHitPoints = companion.hitPoints;
 	if (!target.combatTargetMoving
 	    && target.combatTargetFuturePositionX == 0
 	    && target.combatTargetFuturePositionY == 0) {
@@ -10616,6 +10705,38 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	        && (target.combatTargetFuturePositionX != target.combatTargetPositionX
 	            || target.combatTargetFuturePositionY != target.combatTargetPositionY))) {
 		error = "Replay fixture contains invalid combat-target occupancy state.";
+		return false;
+	}
+	if (companion.entityId != 0
+	    && (target.combatTargetEntityId == 0
+	        || companion.entityId == target.combatTargetEntityId
+	        || companion.hitPoints < 0
+	        || companion.maxHitPoints < companion.hitPoints
+	        || companion.levelId != target.combatTargetLevelId
+	        || companion.nativeAi != "Fallen"
+	        || companion.intelligence < 0 || companion.intelligence > 255
+	        || companion.fallenStandAnimationFrame < 0
+	        || companion.fallenStandAnimationFrame > 127
+	        || companion.fallenStandAnimationTick < 0
+	        || companion.fallenStandAnimationTick > 127
+	        || companion.fallenRallyTicks < 0
+	        || companion.fallenRallyTicks > 4096)) {
+		error = "Replay fixture contains invalid combat-target companion state.";
+		return false;
+	}
+	if (companion.entityId == 0
+	    && (companion.levelId != 0
+	        || companion.positionX != 0
+	        || companion.positionY != 0
+	        || companion.hitPoints != 0
+	        || companion.maxHitPoints != 0
+	        || companion.monsterId != 0
+	        || !companion.nativeAi.empty()
+	        || companion.intelligence != 0
+	        || companion.fallenStandAnimationFrame != 0
+	        || companion.fallenStandAnimationTick != 0
+	        || companion.fallenRallyTicks != 0)) {
+		error = "Replay fixture contains invalid combat-target companion state.";
 		return false;
 	}
 	auto &secondaryPlayer = fixture.initialState.secondaryPlayer;

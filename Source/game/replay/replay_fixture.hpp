@@ -151,6 +151,22 @@ struct ReplayFixtureCorpseState {
 	int32_t positionY = 0;
 };
 
+/** Optional compact Fallen companion used by rally-propagation fixtures. */
+struct ReplayFixtureCombatCompanion {
+	uint32_t entityId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+	int32_t hitPoints = 0;
+	int32_t maxHitPoints = 0;
+	uint32_t monsterId = 0;
+	std::string nativeAi;
+	int32_t intelligence = 0;
+	int32_t fallenStandAnimationFrame = 0;
+	int32_t fallenStandAnimationTick = 0;
+	int32_t fallenRallyTicks = 0;
+};
+
 struct ReplayFixtureInitialState {
 	std::string player;
 	std::string characterName;
@@ -263,6 +279,7 @@ struct ReplayFixtureInitialState {
 	std::vector<ReplayFixtureBeltItem> belt;
 	std::vector<ReplayFixtureCorpseState> corpses;
 	ReplayFixtureSecondaryPlayer secondaryPlayer;
+	ReplayFixtureCombatCompanion combatTargetCompanion;
 };
 
 struct ReplayFixtureStoreState {
@@ -648,6 +665,20 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetFuturePositionY = 0;
 	bool combatTargetPetrified = false;
 	bool combatTargetStoneCurseImmune = false;
+	uint32_t combatTargetCompanionEntityId = 0;
+	uint32_t combatTargetCompanionLevelId = 0;
+	int32_t combatTargetCompanionPositionX = 0;
+	int32_t combatTargetCompanionPositionY = 0;
+	int32_t combatTargetCompanionHitPoints = 0;
+	int32_t combatTargetCompanionMaxHitPoints = 0;
+	int32_t combatTargetCompanionHitPointsQ6 = 0;
+	int32_t combatTargetCompanionMaxHitPointsQ6 = 0;
+	uint32_t combatTargetCompanionMonsterId = 0;
+	std::string combatTargetCompanionNativeAi;
+	int32_t combatTargetCompanionIntelligence = 0;
+	int32_t combatTargetCompanionFallenStandAnimationFrame = 0;
+	int32_t combatTargetCompanionFallenStandAnimationTick = 0;
+	int32_t combatTargetCompanionFallenRallyTicks = 0;
 	std::vector<ReplayFixtureCorpseState> corpses;
 	uint32_t worldItemEntityId = 0;
 	uint32_t worldItemLevelId = 0;

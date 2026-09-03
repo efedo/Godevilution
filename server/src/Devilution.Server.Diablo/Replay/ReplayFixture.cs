@@ -146,6 +146,30 @@ public sealed record ReplaySecondaryPlayer(
     public ReplaySecondaryInventoryItem? HeldItem { get; init; }
 }
 
+/** Optional second Fallen used to replay group rally propagation. */
+public sealed record ReplayCombatCompanion(
+    uint EntityId,
+    int PositionX,
+    int PositionY,
+    int HitPoints)
+{
+    public uint LevelId { get; init; }
+
+    public int MaxHitPoints { get; init; }
+
+    public uint MonsterId { get; init; }
+
+    public string NativeAi { get; init; } = string.Empty;
+
+    public int Intelligence { get; init; }
+
+    public int FallenStandAnimationFrame { get; init; }
+
+    public int FallenStandAnimationTick { get; init; }
+
+    public int FallenRallyTicks { get; init; }
+}
+
 public sealed record ReplayInitialState(string Player, uint Gold, uint Experience, int Life, int Mana)
 {
     public string CharacterName { get; init; } = string.Empty;
@@ -291,6 +315,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     /** Optional native Fallen rally timer used by parity fixtures. */
     public int CombatTargetFallenRallyTicks { get; init; }
+
+    /** Optional second monster used to verify group rally propagation. */
+    public ReplayCombatCompanion? CombatTargetCompanion { get; init; }
 
     /** Optional native Gargoyle special lock retained after self-healing. */
     public bool CombatTargetGargoyleSpecialActive { get; init; }

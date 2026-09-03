@@ -2550,6 +2550,69 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayFallenRallyPropagatesToNearbyCompanion()
+    {
+        var fixture = LoadReplayFixture("gameplay-fallen-rally-companion.json");
+        var initial = fixture.InitialState;
+        var leader = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            initialStandAnimationFrame: initial.CombatTargetFallenStandAnimationFrame,
+            initialStandAnimationTick: initial.CombatTargetFallenStandAnimationTick,
+            fallenRallyTicks: initial.CombatTargetFallenRallyTicks);
+        var companionState = Assert.IsType<ReplayCombatCompanion>(initial.CombatTargetCompanion);
+        var companion = new AuthoritativeCombatTarget(
+            companionState.EntityId,
+            companionState.PositionX,
+            companionState.PositionY,
+            companionState.HitPoints,
+            maxHitPoints: companionState.MaxHitPoints,
+            levelId: companionState.LevelId,
+            monsterId: companionState.MonsterId,
+            nativeAi: companionState.NativeAi,
+            intelligence: companionState.Intelligence,
+            initialStandAnimationFrame: companionState.FallenStandAnimationFrame,
+            initialStandAnimationTick: companionState.FallenStandAnimationTick,
+            fallenRallyTicks: companionState.FallenRallyTicks);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [leader, companion],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var monsters = result.FinalSnapshot.Monsters.OrderBy(monster => monster.EntityId).ToArray();
+        Assert.Equal(CommandStatus.Rejected, Assert.Single(result.Results).Status);
+        Assert.Equal(2, monsters.Length);
+        Assert.Equal(22, monsters[0].HitPoints);
+        Assert.Equal(105, monsters[0].FallenRallyTicks);
+        Assert.Equal(1, monsters[1].FallenStandAnimationTick);
+        Assert.Equal(104, monsters[1].FallenRallyTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerAutonomousTickMatchesNativeParticipantHashes()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-multiplayer-autonomous-tick.json");

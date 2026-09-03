@@ -4007,7 +4007,6 @@ TEST(ReplayFixture, ExecutesFallenStandAnimationAgainstCSharpCheckpoint)
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
 	state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
 	state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
-
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
@@ -4099,6 +4098,62 @@ TEST(ReplayFixture, ExecutesFallenRallyPursuitAgainstCSharpCheckpoint)
 	EXPECT_EQ(state.combatTargetFuturePositionX, 1);
 	EXPECT_EQ(state.combatTargetFuturePositionY, 0);
 	EXPECT_EQ(state.combatTargetDirection, 7);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesFallenRallyPropagationAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fallen-rally-companion.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetHitPointsQ6 = state.combatTargetHitPoints * 64;
+	state.combatTargetMaxHitPointsQ6 = state.combatTargetMaxHitPoints * 64;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+	state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
+	state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
+	state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
+	state.combatTargetCompanionEntityId = fixture.initialState.combatTargetCompanion.entityId;
+	state.combatTargetCompanionLevelId = fixture.initialState.combatTargetCompanion.levelId;
+	state.combatTargetCompanionPositionX = fixture.initialState.combatTargetCompanion.positionX;
+	state.combatTargetCompanionPositionY = fixture.initialState.combatTargetCompanion.positionY;
+	state.combatTargetCompanionHitPoints = fixture.initialState.combatTargetCompanion.hitPoints;
+	state.combatTargetCompanionMaxHitPoints = fixture.initialState.combatTargetCompanion.maxHitPoints;
+	state.combatTargetCompanionHitPointsQ6 = state.combatTargetCompanionHitPoints * 64;
+	state.combatTargetCompanionMaxHitPointsQ6 = state.combatTargetCompanionMaxHitPoints * 64;
+	state.combatTargetCompanionMonsterId = fixture.initialState.combatTargetCompanion.monsterId;
+	state.combatTargetCompanionNativeAi = fixture.initialState.combatTargetCompanion.nativeAi;
+	state.combatTargetCompanionIntelligence = fixture.initialState.combatTargetCompanion.intelligence;
+	state.combatTargetCompanionFallenStandAnimationFrame = fixture.initialState.combatTargetCompanion.fallenStandAnimationFrame;
+	state.combatTargetCompanionFallenStandAnimationTick = fixture.initialState.combatTargetCompanion.fallenStandAnimationTick;
+	state.combatTargetCompanionFallenRallyTicks = fixture.initialState.combatTargetCompanion.fallenRallyTicks;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_FALSE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.combatTargetHitPoints, 22);
+	EXPECT_EQ(state.combatTargetFallenRallyTicks, 105);
+	EXPECT_EQ(state.combatTargetCompanionFallenStandAnimationTick, 1);
+	EXPECT_EQ(state.combatTargetCompanionFallenRallyTicks, 104);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 

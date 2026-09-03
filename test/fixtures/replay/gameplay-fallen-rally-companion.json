@@ -1,0 +1,54 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/fallen-rally-companion",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "fallen-rally-companion-fixture"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 2,
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "life_maximum": 40,
+    "position_x": 3,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 30,
+    "combat_target_monster_id": 1,
+    "combat_target_native_ai": "Fallen",
+    "combat_target_intelligence": 0,
+    "combat_target_fallen_stand_animation_frame": 10,
+    "combat_target_fallen_stand_animation_tick": 2,
+    "combat_target_companion_entity_id": 10,
+    "combat_target_companion_level_id": 1,
+    "combat_target_companion_position_x": 4,
+    "combat_target_companion_position_y": 0,
+    "combat_target_companion_hit_points": 30,
+    "combat_target_companion_max_hit_points": 30,
+    "combat_target_companion_monster_id": 1,
+    "combat_target_companion_native_ai": "Fallen"
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 0 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "a7405cfc00ff07fd72dfdb092dee35d38e8699dc092f973535f7be031f3c1ff9" }
+  ]
+}

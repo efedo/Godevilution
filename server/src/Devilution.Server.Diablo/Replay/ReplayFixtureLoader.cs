@@ -91,6 +91,21 @@ public static class ReplayFixtureLoader
             throw new InvalidDataException(
                 "Replay fixture monster runtime seeds must be supplied together.");
         }
+        if (initialTarget.CombatTargetCompanion is { } companion
+            && (companion.EntityId == 0
+                || companion.EntityId == initialTarget.CombatTargetEntityId
+                || companion.HitPoints < 0
+                || companion.MaxHitPoints < companion.HitPoints
+                || companion.LevelId != initialTarget.CombatTargetLevelId
+                || companion.Intelligence is < 0 or > 255
+                || companion.FallenStandAnimationFrame is < 0 or > 127
+                || companion.FallenStandAnimationTick is < 0 or > 127
+                || companion.FallenRallyTicks is < 0 or > 4096
+                || string.IsNullOrEmpty(companion.NativeAi)
+                || !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(companion.NativeAi))) {
+            throw new InvalidDataException(
+                "Replay fixture contains invalid combat-target companion state.");
+        }
         if ((initialTarget.CombatTargetEntityId == 0
                 && (initialTarget.CombatTargetPositionX != 0
                     || initialTarget.CombatTargetPositionY != 0
@@ -430,6 +445,7 @@ public static class ReplayFixtureLoader
             CombatTargetFallenRallyTicks = GetOptionalInt(
                 value,
                 "combat_target_fallen_rally_ticks"),
+            CombatTargetCompanion = ParseCombatTargetCompanion(value),
             CombatTargetGargoyleSpecialActive = GetOptionalBool(
                 value,
                 "combat_target_gargoyle_special_active"),
@@ -688,6 +704,48 @@ public static class ReplayFixtureLoader
                 "Replay fixture contains invalid secondary-player state.");
         }
         return result;
+    }
+
+    private static ReplayCombatCompanion? ParseCombatTargetCompanion(JsonElement value)
+    {
+        if (!value.TryGetProperty("combat_target_companion_entity_id", out var entityId)
+            && !value.EnumerateObject().Any(property =>
+                property.Name.StartsWith("combat_target_companion_", StringComparison.Ordinal)))
+            return null;
+
+        var companionEntityId = value.TryGetProperty(
+            "combat_target_companion_entity_id",
+            out var declaredEntityId)
+            ? declaredEntityId.GetUInt32()
+            : 0U;
+
+        var positionX = GetOptionalInt(value, "combat_target_companion_position_x");
+        var positionY = GetOptionalInt(value, "combat_target_companion_position_y");
+        var hitPoints = GetOptionalInt(value, "combat_target_companion_hit_points");
+        return new ReplayCombatCompanion(
+            companionEntityId,
+            positionX,
+            positionY,
+            hitPoints) {
+            LevelId = GetOptionalUInt(value, "combat_target_companion_level_id"),
+            MaxHitPoints = value.TryGetProperty(
+                "combat_target_companion_max_hit_points",
+                out var maxHitPoints)
+                ? maxHitPoints.GetInt32()
+                : hitPoints,
+            MonsterId = GetOptionalUInt(value, "combat_target_companion_monster_id"),
+            NativeAi = OptionalString(value, "combat_target_companion_native_ai") ?? string.Empty,
+            Intelligence = GetOptionalInt(value, "combat_target_companion_intelligence"),
+            FallenStandAnimationFrame = GetOptionalInt(
+                value,
+                "combat_target_companion_fallen_stand_animation_frame"),
+            FallenStandAnimationTick = GetOptionalInt(
+                value,
+                "combat_target_companion_fallen_stand_animation_tick"),
+            FallenRallyTicks = GetOptionalInt(
+                value,
+                "combat_target_companion_fallen_rally_ticks"),
+        };
     }
 
     private static ReplaySecondaryInventoryItem? ParseSecondaryInventoryItem(JsonElement player)
