@@ -702,6 +702,22 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	        && static_cast<std::size_t>(snapshot.dialogueMessageId) < Speeches.size()
 	    ? static_cast<_speech_id>(snapshot.dialogueMessageId)
 	    : TEXT_NONE;
+	// Authored unique-monster routes carry their encounter state explicitly.
+	// This keeps the compatibility pool from inferring a terminal combat
+	// transition from the native AI or quest-variable tables.
+	switch (ResolveAuthoritativeMonsterDialoguePresentationState(snapshot.dialogueState)) {
+	case AuthoritativeMonsterDialoguePresentationState::Inquiring:
+		monster.goal = MonsterGoal::Inquiring;
+		break;
+	case AuthoritativeMonsterDialoguePresentationState::Combat:
+		monster.goal = MonsterGoal::Normal;
+		monster.activeForTicks = UINT8_MAX;
+		if (monster.mode == MonsterMode::Talk)
+			monster.startStand(monster.direction);
+		break;
+	case AuthoritativeMonsterDialoguePresentationState::Legacy:
+		break;
+	}
 	if (snapshot.alive) {
 		monster.occupyTile(position, false);
 		if (snapshot.moving)
@@ -976,6 +992,18 @@ bool IsRemotePlayerOnActiveLevel(uint32_t projectedLevelId, const Player &player
 bool IsAuthoritativeMonsterPresentable(const ProjectedMonsterSnapshot &snapshot)
 {
 	return snapshot.alive && !snapshot.sneakHidden;
+}
+
+AuthoritativeMonsterDialoguePresentationState ResolveAuthoritativeMonsterDialoguePresentationState(int32_t dialogueState) noexcept
+{
+	switch (dialogueState) {
+	case 1:
+		return AuthoritativeMonsterDialoguePresentationState::Inquiring;
+	case 2:
+		return AuthoritativeMonsterDialoguePresentationState::Combat;
+	default:
+		return AuthoritativeMonsterDialoguePresentationState::Legacy;
+	}
 }
 
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(

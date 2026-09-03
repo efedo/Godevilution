@@ -737,16 +737,21 @@ public sealed partial class DiabloSimulation
 
             if (quest.Unavailable || quest.Completed || !quest.Active) {
                 target.DialogueMessageId = 0;
+                target.DialogueState = AuthoritativeMonsterDialogueState.Unspecified;
                 continue;
             }
 
-            target.DialogueMessageId = QuestDialogueStages.TryGetPresentationStage(
+            if (QuestDialogueStages.TryGetPresentationStage(
                 quest.QuestId,
                 quest.Variable1,
                 quest.Variable2,
-                out var stage)
-                ? stage.MessageId
-                : 0;
+                out var stage)) {
+                target.DialogueMessageId = stage.MessageId;
+                target.DialogueState = AuthoritativeMonsterDialogueState.Inquiring;
+            } else {
+                target.DialogueMessageId = 0;
+                target.DialogueState = AuthoritativeMonsterDialogueState.Combat;
+            }
         }
     }
 

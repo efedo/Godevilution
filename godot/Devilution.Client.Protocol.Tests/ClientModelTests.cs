@@ -2731,6 +2731,7 @@ public sealed class ClientModelTests
                 monster.HitPoints = 0;
                 monster.HitPointsQ6 = 0;
             },
+            monster => monster.DialogueState = (MonsterDialogueState)3,
         }) {
             var invalid = valid.Clone();
             mutate(invalid.Monsters[0]);

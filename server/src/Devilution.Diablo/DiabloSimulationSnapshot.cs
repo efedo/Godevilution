@@ -47,6 +47,9 @@ public sealed record DiabloMonsterState(
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; init; }
 
+    /** Server-owned authored dialogue state used by native compatibility presentation. */
+    public AuthoritativeMonsterDialogueState DialogueState { get; init; }
+
     public bool Petrified { get; init; }
 
     public bool StoneCurseImmune { get; init; }
@@ -637,6 +640,7 @@ public sealed partial class DiabloSimulation
                     MonsterItemSeed = target.MonsterItemSeed,
                     MonsterAiSeed = target.MonsterAiSeed,
                     DialogueMessageId = target.DialogueMessageId,
+                    DialogueState = target.DialogueState,
                     Petrified = target.IsPetrified,
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
@@ -1102,6 +1106,9 @@ public sealed partial class DiabloSimulation
                 || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
                 || (!string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique)
                 || (monster.DialogueMessageId != 0 && !monster.IsUnique)
+                || !Enum.IsDefined(monster.DialogueState)
+                || (monster.DialogueState != AuthoritativeMonsterDialogueState.Unspecified
+                    && !monster.IsUnique)
                 || !Enum.IsDefined(monster.LeaderRelation)
                 || (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.None
                     ? monster.LeaderEntityId != 0
@@ -2207,6 +2214,7 @@ public sealed partial class DiabloSimulation
                 target.MonsterItemSeed = monster.MonsterItemSeed;
                 target.MonsterAiSeed = monster.MonsterAiSeed;
                 target.DialogueMessageId = monster.DialogueMessageId;
+                target.RestoreDialogueState(monster.DialogueState);
                 target.ArmorClass = monster.ArmorClass;
                 target.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
@@ -2335,6 +2343,7 @@ public sealed partial class DiabloSimulation
                     monsterItemSeed: monster.MonsterItemSeed,
                     monsterAiSeed: monster.MonsterAiSeed,
                     dialogueMessageId: monster.DialogueMessageId,
+                    dialogueState: monster.DialogueState,
                     petrified: monster.Petrified,
                     stoneCurseImmune: monster.StoneCurseImmune,
                     undead: monster.IsUndead,

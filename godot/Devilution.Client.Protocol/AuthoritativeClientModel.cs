@@ -841,6 +841,13 @@ public sealed class AuthoritativeClientModel
             throw new InvalidDataException(
                 "The authoritative snapshot contains an invalid monster dialogue identity.");
         }
+        var dialogueState = (int)monster.DialogueState;
+        if (dialogueState < 0
+            || dialogueState > 2
+            || dialogueState != 0 && !monster.IsUnique) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid monster dialogue state.");
+        }
     }
 
     private static void ValidateObject(

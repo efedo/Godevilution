@@ -549,6 +549,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		    .isUnique = source.is_unique(),
 		    .uniqueIdentity = source.unique_identity(),
 		    .dialogueMessageId = source.dialogue_message_id(),
+		    .dialogueState = source.dialogue_state(),
 		    .levelId = source.level_id(),
 		    .positionX = source.position_x(),
 		    .positionY = source.position_y(),
@@ -1351,6 +1352,8 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.dialogue_message_id() < 0
 		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
 		    || (monster.dialogue_message_id() != 0 && !monster.is_unique())
+		    || monster.dialogue_state() < 0 || monster.dialogue_state() > 2
+		    || (monster.dialogue_state() != 0 && !monster.is_unique())
 		    || monster.leader_relation() < 0 || monster.leader_relation() > 2
 		    || (monster.leader_relation() == 0
 		        ? monster.leader_entity_id() != 0

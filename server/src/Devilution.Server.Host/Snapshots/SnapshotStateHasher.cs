@@ -335,6 +335,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-dialogue-message-v1");
                     hasher.AppendInt32(monster.DialogueMessageId);
                 }
+                if (monster.DialogueState != MonsterDialogueState.Unspecified) {
+                    hasher.AppendString("godevilution-monster-dialogue-state-v1");
+                    hasher.AppendInt32((int)monster.DialogueState);
+                }
                 if (monster.MonsterItemSeed != 0 || monster.MonsterAiSeed != 0) {
                     hasher.AppendString("godevilution-monster-runtime-seeds-v1");
                     hasher.AppendUInt32(monster.MonsterItemSeed);

@@ -282,8 +282,9 @@ when their validated procedural unique encounters materialize. Gharbad's four
 user-visible dialogue stages now use the server-owned
 `quest_dialogue_stages.tsv` contract for authored messages and monotonic
 quest-variable transitions. Its random item reward is server-owned; the current
-authored dialogue identity is now retained in the authoritative monster
-snapshot, while encounter-state transitions remain local fallbacks.
+authored dialogue identity and `Inquiring`/`Combat` encounter state are now
+retained in the authoritative monster snapshot, so the compatibility client no
+longer infers the terminal combat transition from native quest tables.
 When the active pack includes `dialogue_messages.tsv`, the server also sends
 the authored text on `DialogueEvent.text`; older packs continue to use the
 message identity fallback.
@@ -291,8 +292,9 @@ The shared Ogden's Sign/Snotspill quest now uses the same contract for
 Snotspill's banner dialogue, server-owned sign-chest Banner reward, and Tavern
 Sign hand-in, including item consumption and quest completion.
 Warlord's two authored dialogue transitions now use the same staged contract;
-the next authored message identity survives in authoritative snapshots, while
-native AI-driven speech completion remains a compatibility fallback.
+the next authored message identity and terminal combat state survive in
+authoritative snapshots. Native AI-driven speech timing remains a presentation
+fallback, but the encounter-state transition is server-owned.
 Unauthored legacy monster conversations retain their local fallback until
 their content actions are externalized.
 
@@ -364,12 +366,13 @@ explicit migration seams, not server-authority claims:
   transition.
   Gharbad's authored dialogue messages, quest-variable transitions, and
   second-stage random unique-monster reward now move through
-  `TalkToQuestRequested`; his remaining encounter-state and presentation
-  transitions stay in the native compatibility path until they have an
-  authoritative encounter-state contract.
+  `TalkToQuestRequested`; the authoritative snapshot now carries his
+  inquiring/combat encounter state, while speech/audio timing remains a native
+  presentation fallback.
 - Warlord's staged unique-monster conversation now uses authored messages and
-  `_qvar1` transitions through `TalkToQuestRequested`, while its native AI-driven
-  speech completion and encounter-state presentation remain local fallbacks.
+  `_qvar1` transitions through `TalkToQuestRequested`. The authoritative
+  snapshot now carries its authored inquiring/combat state; native speech/audio
+  timing remains a presentation fallback.
 - Lachdanan's item-gated dialogue hand-in now uses the authored server transition
   for its completion message, Veil of Steel reward, and post-dialogue defeat;
   native presentation still supplies the legacy speech/audio timing fallback.

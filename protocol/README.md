@@ -635,6 +635,13 @@ Windows toolchain command.
   pending authored conversation; clients present the identity but never advance
   quest state or execute monster AI from it. The value is included in the
   conditional `godevilution-monster-dialogue-message-v1` canonical hash.
+- `MonsterSnapshot.dialogue_state` field 97 carries the server-owned state of an
+  authored unique-monster dialogue route: `1` means the target is waiting for
+  the next conversation step and `2` means its authored dialogue is complete
+  and normal combat may resume. `0` preserves the legacy fallback for older or
+  unauthored routes. Non-zero states are valid only for unique monsters, and
+  the state participates in the conditional `godevilution-monster-dialogue-
+  state-v1` canonical hash.
 - Optional `MonsterSnapshot.monster_item_seed` and `monster_ai_seed` fields
   86-87 preserve the two native `InitMonster` runtime seeds across snapshots.
   The item seed is the server-owned loot seed; the AI seed is retained for

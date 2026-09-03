@@ -1012,6 +1012,9 @@ public static class AuthoritativeSnapshotValidator
                 || monster.DialogueMessageId < 0
                 || monster.DialogueMessageId > short.MaxValue
                 || monster.DialogueMessageId != 0 && !monster.IsUnique
+                || !Enum.IsDefined(monster.DialogueState)
+                || monster.DialogueState != MonsterDialogueState.Unspecified
+                    && !monster.IsUnique
                 || monster.AttackDamage < 0
                 || monster.MinDamage < 0
                 || monster.MaxDamage < monster.MinDamage

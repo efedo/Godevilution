@@ -1147,6 +1147,42 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsAuthoredMonsterDialogueState()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    2,
+                    0,
+                    0,
+                    0) {
+                    IsUnique = true,
+                    UniqueIdentity = "Warlord",
+                    DialogueMessageId = 110,
+                    DialogueState = AuthoritativeMonsterDialogueState.Inquiring,
+                }],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var monster = Assert.Single(projected.Monsters);
+        Assert.Equal(MonsterDialogueState.Inquiring, monster.DialogueState);
+
+        var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
+        Assert.Equal(
+            AuthoritativeMonsterDialogueState.Inquiring,
+            Assert.Single(restored.Monsters).DialogueState);
+    }
+
+    [Fact]
     public void EnforcesNativeMonsterPoolCapacityPerLevel()
     {
         var source = CreateOriginSnapshot(
@@ -1486,6 +1522,9 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { HitPointsQ6 = -1 });
         AssertRejected(value => value with { MaxHitPointsQ6 = 1, HitPointsQ6 = 2 });
         AssertRejected(value => value with { DialogueMessageId = 1 });
+        AssertRejected(value => value with {
+            DialogueState = AuthoritativeMonsterDialogueState.Combat,
+        });
         AssertRejected(value => value with { AttackDamage = -1 });
         AssertRejected(value => value with { MaxDamage = 0 });
         AssertRejected(value => value with { MinDamageSpecial = 3, MaxDamageSpecial = 2 });

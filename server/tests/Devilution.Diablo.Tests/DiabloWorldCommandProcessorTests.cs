@@ -2157,10 +2157,16 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(second.Succeeded);
         Assert.Equal(2, firstVariable1);
         Assert.Equal(110, Assert.Single(first.Events).MessageId);
+        Assert.Equal(
+            AuthoritativeMonsterDialogueState.Inquiring,
+            target.DialogueState);
         Assert.Equal(3, quest.Variable1);
         Assert.True(quest.Active);
         Assert.False(quest.Completed);
         Assert.Equal(110, Assert.Single(second.Events).MessageId);
+        Assert.Equal(
+            AuthoritativeMonsterDialogueState.Combat,
+            target.DialogueState);
     }
 
     [Fact]

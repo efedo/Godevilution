@@ -103,7 +103,8 @@ public sealed class AuthoritativeCombatTarget
         uint leaderEntityId = 0,
         AuthoritativeMonsterLeaderRelation leaderRelation = AuthoritativeMonsterLeaderRelation.None,
         int packSize = 0,
-        int activeForTicks = 0)
+        int activeForTicks = 0,
+        AuthoritativeMonsterDialogueState dialogueState = AuthoritativeMonsterDialogueState.Unspecified)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -220,6 +221,12 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(direction));
         if (dialogueMessageId is < 0 or > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(dialogueMessageId));
+        if (!Enum.IsDefined(dialogueState))
+            throw new ArgumentOutOfRangeException(nameof(dialogueState));
+        if (dialogueState != AuthoritativeMonsterDialogueState.Unspecified && !unique)
+            throw new ArgumentException(
+                "An authored dialogue state requires a unique encounter.",
+                nameof(dialogueState));
         if (dialogueMessageId != 0 && !unique)
             throw new ArgumentException(
                 "A dialogue identity requires a unique encounter.",
@@ -264,6 +271,7 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionY = resolvedFuturePositionY;
         Direction = direction;
         DialogueMessageId = dialogueMessageId;
+        DialogueState = dialogueState;
         IsMoving = moving;
         IsPetrified = petrified;
         StoneCurseImmune = stoneCurseImmune;
@@ -384,6 +392,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; set; }
+
+    /** Server-owned authored dialogue state used by native compatibility presentation. */
+    public AuthoritativeMonsterDialogueState DialogueState { get; set; }
     public bool IsMoving { get; private set; }
     public bool IsPetrified { get; set; }
     public bool StoneCurseImmune { get; set; }
@@ -1497,6 +1508,17 @@ public sealed class AuthoritativeCombatTarget
         if (activeForTicks is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(activeForTicks));
         ActiveForTicks = activeForTicks;
+    }
+
+    internal void RestoreDialogueState(AuthoritativeMonsterDialogueState dialogueState)
+    {
+        if (!Enum.IsDefined(dialogueState))
+            throw new ArgumentOutOfRangeException(nameof(dialogueState));
+        if (dialogueState != AuthoritativeMonsterDialogueState.Unspecified && !IsUnique)
+            throw new ArgumentException(
+                "An authored dialogue state requires a unique encounter.",
+                nameof(dialogueState));
+        DialogueState = dialogueState;
     }
 
     internal void RestoreDirection(int direction)

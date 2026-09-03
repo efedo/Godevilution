@@ -559,6 +559,9 @@ public sealed class DiabloSimulationTests
             });
 
         Assert.Equal(110, Assert.Single(simulation.WorldState.CombatTargets.Values).DialogueMessageId);
+        Assert.Equal(
+            AuthoritativeMonsterDialogueState.Inquiring,
+            Assert.Single(simulation.WorldState.CombatTargets.Values).DialogueState);
 
         var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 1);
         var legacySnapshot = snapshot with {

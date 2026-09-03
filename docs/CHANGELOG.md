@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Authoritative unique-monster dialogue snapshots now carry an additive,
+  validated state projection. Staged Gharbad/Warlord routes explicitly move
+  from `Inquiring` to `Combat`, allowing the native compatibility client to
+  render server-owned encounter transitions without consulting legacy quest
+  tables. Unauthored routes retain the unspecified legacy fallback.
+
 - Move item-action dialogue identities into validated content metadata. Na-Krul
   notes now declare their `TEXT_BOOK9` message ID in `items.tsv`; the server
   resolves it through the active item definition and retains the native `322`

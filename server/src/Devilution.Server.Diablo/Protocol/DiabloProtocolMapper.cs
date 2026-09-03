@@ -132,6 +132,7 @@ internal static class DiabloProtocolMapper
                 MovementEffectTick = monster.MovementEffectTick,
                 Direction = monster.Direction,
                 DialogueMessageId = monster.DialogueMessageId,
+                DialogueState = (MonsterDialogueState)monster.DialogueState,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,
                 IsUndead = monster.IsUndead,
@@ -1021,6 +1022,9 @@ internal static class DiabloProtocolMapper
                 || monster.DialogueMessageId < 0
                 || monster.DialogueMessageId > short.MaxValue
                 || monster.DialogueMessageId != 0 && !monster.IsUnique
+                || !Enum.IsDefined(monster.DialogueState)
+                || monster.DialogueState != AuthoritativeMonsterDialogueState.Unspecified
+                    && !monster.IsUnique
                 || monster.AttackDamage < 0
                 || monster.MinDamage < 0
                 || monster.MaxDamage < 0
@@ -1658,6 +1662,7 @@ internal static class DiabloProtocolMapper
                 MovementStartedTick = monster.MovementStartedTick,
                 MovementEffectTick = monster.MovementEffectTick,
                 Direction = monster.Direction,
+                DialogueState = (AuthoritativeMonsterDialogueState)monster.DialogueState,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,
                 IsUndead = monster.IsUndead,

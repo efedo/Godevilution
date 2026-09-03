@@ -670,6 +670,15 @@ message PlayerSpellLevelSnapshot {
 	SpellTargetingKind targeting_kind = 4;
 }
 
+// Server-owned compatibility state for an authored unique-monster dialogue.
+// UNSPECIFIED preserves the legacy native fallback for older or unauthored
+// encounter routes.
+enum MonsterDialogueState {
+	MONSTER_DIALOGUE_STATE_UNSPECIFIED = 0;
+	MONSTER_DIALOGUE_STATE_INQUIRING = 1;
+	MONSTER_DIALOGUE_STATE_COMBAT = 2;
+}
+
 message MonsterSnapshot {
 	uint32 entity_id = 1;
 	uint32 monster_id = 2;
@@ -816,6 +825,9 @@ message MonsterSnapshot {
 	optional int32 direction = 84;
 	// Server-owned dialogue identity currently displayed by a unique encounter.
 	int32 dialogue_message_id = 85;
+	// Server-owned dialogue state for native compatibility presentation. Zero
+	// preserves the legacy client fallback when no authored state is available.
+	MonsterDialogueState dialogue_state = 97;
 	// Native InitMonster seed used for monster-owned item drops.
 	optional uint32 monster_item_seed = 86;
 	// Native InitMonster seed used for multiplayer AI synchronization.

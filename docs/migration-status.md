@@ -1,6 +1,11 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-02
+Status date: 2026-09-03
+
+Authored unique-monster dialogue snapshots now carry an additive validated
+`dialogue_state` contract. Warlord and Gharbad compatibility clients use the
+server-owned inquiring/combat state instead of inferring terminal progression
+from native AI or quest tables; legacy peers retain the zero-valued fallback.
 
 The `ReadQuestNote` action now resolves its dialogue identity from the authored
 item definition (`item_action_message_id`) instead of embedding the native

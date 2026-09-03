@@ -288,6 +288,9 @@ same left-click path resolves its matching active quest and submits
 `TalkToQuestRequested`; Godot never advances the dialogue or mutates quest
 state locally. Those monsters receive a gold dialogue marker derived from the
 same authoritative snapshot field.
+Authored routes also carry the additive `MonsterSnapshot.dialogue_state`
+projection; Godot preserves the state for presentation and older/unauthored
+routes retain the legacy unspecified value.
 
 Targeted Firebolt, Charged Bolt, and Bone Spirit casts can also name a living
 same-level remote player. The client supplies any visible remote-player entity

@@ -2128,6 +2128,9 @@ public sealed class DiabloWorldCommandProcessor
             target.DialogueMessageId = stage.NextMessageId != 0
                 ? stage.NextMessageId
                 : nextMessageId;
+            target.DialogueState = target.DialogueMessageId != 0
+                ? AuthoritativeMonsterDialogueState.Inquiring
+                : AuthoritativeMonsterDialogueState.Combat;
             if (stage.CompleteQuest) {
                 quest.Progress = quest.RequiredProgress;
                 quest.Completed = true;
@@ -2205,6 +2208,9 @@ public sealed class DiabloWorldCommandProcessor
             quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
             quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
             target.DialogueMessageId = quest.DialogueCompletionMessageId;
+            target.DialogueState = target.DialogueMessageId != 0
+                ? AuthoritativeMonsterDialogueState.Inquiring
+                : AuthoritativeMonsterDialogueState.Unspecified;
 
             if (quest.CompletionActivateQuestId != 0
                 && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var nextQuest)
@@ -2241,6 +2247,9 @@ public sealed class DiabloWorldCommandProcessor
         quest.Variable1 = Math.Max(quest.Variable1, dialogueVariable1);
         quest.Variable2 = Math.Max(quest.Variable2, quest.DialogueVariable2);
         target.DialogueMessageId = quest.MessageId;
+        target.DialogueState = target.DialogueMessageId != 0
+            ? AuthoritativeMonsterDialogueState.Inquiring
+            : AuthoritativeMonsterDialogueState.Unspecified;
         if (rewardOnActivation)
             SpawnDialogueReward(quest, target, participants);
         return DiabloWorldIntentResult.AcceptedWith(

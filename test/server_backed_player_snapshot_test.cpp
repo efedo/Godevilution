@@ -624,6 +624,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_is_unique(true);
 	second->set_unique_identity("Defiler");
 	second->set_dialogue_message_id(274);
+	second->set_dialogue_state(protocol::MONSTER_DIALOGUE_STATE_INQUIRING);
 	second->set_level_id(2);
 	second->set_position_x(4);
 	second->set_position_y(5);
@@ -667,6 +668,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_TRUE((*projected)[2].isUnique);
 	EXPECT_EQ((*projected)[2].uniqueIdentity, "Defiler");
 	EXPECT_EQ((*projected)[2].dialogueMessageId, 274);
+	EXPECT_EQ((*projected)[2].dialogueState, 1);
 	EXPECT_EQ((*projected)[2].hitPoints, 7);
 	EXPECT_EQ((*projected)[2].hitPointsQ6, 432);
 	EXPECT_EQ((*projected)[2].maxHitPointsQ6, 1280);
@@ -1800,6 +1802,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	protocol::Snapshot invalidDialogue = makeMonster();
 	invalidDialogue.mutable_monsters(0)->set_dialogue_message_id(1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDialogue).has_value());
+	protocol::Snapshot invalidDialogueState = makeMonster();
+	invalidDialogueState.mutable_monsters(0)->set_dialogue_state(static_cast<protocol::MonsterDialogueState>(3));
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDialogueState).has_value());
 
 	protocol::Snapshot invalidGroupRelation = makeMonster();
 	invalidGroupRelation.mutable_monsters(0)->set_leader_relation(3);
@@ -3369,6 +3374,44 @@ TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMonsterWalkAnimation)
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 
 	EXPECT_EQ(presentation.AdvanceAnimations(), 1U);
+
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, AppliesAuthoredMonsterDialogueStateToNativePresentation)
+{
+	InitLevelMonsters();
+	LoadMonsterData();
+	ASSERT_TRUE(AddMonsterType(MT_NZOMBIE, PLACE_SCATTER).has_value());
+
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 42;
+	monster.monsterId = MT_NZOMBIE;
+	monster.levelId = 1;
+	monster.positionX = 4;
+	monster.positionY = 5;
+	monster.alive = true;
+	monster.isUnique = true;
+	monster.uniqueIdentity = "Warlord";
+	monster.dialogueState = 1;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(
+	    ResolveAuthoritativeMonsterDialoguePresentationState(monster.dialogueState),
+	    AuthoritativeMonsterDialoguePresentationState::Inquiring);
+
+	monster.dialogueState = 2;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(
+	    ResolveAuthoritativeMonsterDialoguePresentationState(monster.dialogueState),
+	    AuthoritativeMonsterDialoguePresentationState::Combat);
+	EXPECT_EQ(
+	    ResolveAuthoritativeMonsterDialoguePresentationState(0),
+	    AuthoritativeMonsterDialoguePresentationState::Legacy);
 
 	presentation.Clear();
 }
