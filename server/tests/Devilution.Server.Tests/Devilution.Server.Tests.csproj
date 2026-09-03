@@ -116,6 +116,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-attack.json" Link="Fixtures/gameplay-gargoyle-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-idle.json" Link="Fixtures/gameplay-gargoyle-avoidance-idle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-walk.json" Link="Fixtures/gameplay-gargoyle-avoidance-walk.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-gargoyle-multiplayer-target.json" Link="Fixtures/gameplay-gargoyle-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-move.json" Link="Fixtures/gameplay-gargoyle-avoidance-move.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-delay.json" Link="Fixtures/gameplay-skeleton-melee-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-attack-delay.json" Link="Fixtures/gameplay-skeleton-melee-attack-delay.json" CopyToOutputDirectory="PreserveNewest" />

@@ -4414,6 +4414,49 @@ TEST(ReplayFixture, ExecutesGargoyleAvoidanceWalkAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesGargoyleMultiplayerTargetSelectionAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-gargoyle-multiplayer-target.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
+	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_EQ(state.combatTargetPositionX, 1);
+	EXPECT_EQ(state.combatTargetPositionY, 9);
+	EXPECT_FALSE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetFuturePositionX, 1);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 9);
+	EXPECT_EQ(state.combatTargetDirection, 6);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
+	EXPECT_EQ(result.transitions[1].stateSha256, fixture.checkpoints[1].stateSha256);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesGargoyleAvoidanceMoveAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-gargoyle-avoidance-move.json");

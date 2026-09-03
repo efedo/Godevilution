@@ -20,6 +20,11 @@ multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's
 state, extending multi-actor coverage beyond projectile-only lanes.
 
+The same gate now covers a distinct Gargoyle AiAvoidance multi-participant
+fixture. Native and managed runners select the nearest live participant,
+preserve the farther participant, and advance the Gargoyle AI stream through
+the authored avoidance movement branch.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

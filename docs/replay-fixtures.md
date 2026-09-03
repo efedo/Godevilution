@@ -233,11 +233,12 @@ hash-checked `monster-arrow-autonomous` pack; its compact native projection
 preserves the pack’s retreat thresholds and native defaults when omitted.
 The two Counselor fixtures load their native Counselor type and timing bands
 from the hash-checked `test/content/replay/counselor` content pack.
-The two GoatMelee fixtures load their native AiAvoidance and adjacent-attack
+The three GoatMelee fixtures load their native AiAvoidance and adjacent-attack
 tuning from the hash-checked `test/content/replay/goat-melee` content pack.
-The five Gargoyle fixtures load native safety, healing, avoidance, and
+The six Gargoyle fixtures load native safety, healing, avoidance, and
 adjacent-attack tuning from the hash-checked `test/content/replay/gargoyle`
-content pack. Broader multi-actor selection remains future replay work.
+content pack. The multiplayer Gargoyle fixture also covers nearest-participant
+selection through the autonomous avoidance branch.
 The two SkeletonMelee delay fixtures load native chance bands and delay
 formulas from the hash-checked `test/content/replay/skeleton-melee` content
 pack.
@@ -383,8 +384,8 @@ the first drop remains authoritative.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
- spell/projectile-timeline checkpoints pass in both runners. As of 2026-08-31,
-the native replay gate contains 155 checked-in JSON fixtures and 173 registered
+ spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-03,
+the native replay gate contains 173 checked-in JSON fixtures and 192 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -401,7 +402,8 @@ Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
-tick, SkeletonMelee movement-delay admission/countdown, and failed adjacent-
+tick, GoatMelee and Gargoyle nearest-participant autonomous movement,
+SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Rhino charge admission, special damage, and
 knockback are also covered in both runners. Snake distant-delay and failed
 adjacent-attack admission/countdown are also covered in both runners, as is
@@ -907,6 +909,9 @@ Notable shared fixtures include:
 - `gameplay-goat-melee-multiplayer-target.json` for seeded AiAvoidance movement
   selecting the nearest live participant, preserving the farther primary while
   the secondary participant drives the autonomous path;
+- `gameplay-gargoyle-multiplayer-target.json` for seeded Gargoyle AiAvoidance
+  movement selecting the nearest live participant, preserving the farther
+  primary, and advancing the native AI stream through the avoidance branch;
 - `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
   native monster runtime-seed advancement, secondary hit/block stream
   consumption, block timing, and cross-language canonical hashing;
@@ -1051,7 +1056,7 @@ Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
 current Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes,
-multi-actor target selection beyond the current GoatMelee and projectile lanes,
+multi-actor target selection beyond the current GoatMelee, Gargoyle, and projectile lanes,
 mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup
