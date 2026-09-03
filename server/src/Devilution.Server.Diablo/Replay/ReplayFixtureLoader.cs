@@ -92,7 +92,8 @@ public static class ReplayFixtureLoader
                 "Replay fixture monster runtime seeds must be supplied together.");
         }
         if (initialTarget.CombatTargetCompanion is { } companion
-            && (companion.EntityId == 0
+            && (initialTarget.CombatTargetEntityId == 0
+                || companion.EntityId == 0
                 || companion.EntityId == initialTarget.CombatTargetEntityId
                 || companion.HitPoints < 0
                 || companion.MaxHitPoints < companion.HitPoints
@@ -101,8 +102,7 @@ public static class ReplayFixtureLoader
                 || companion.FallenStandAnimationFrame is < 0 or > 127
                 || companion.FallenStandAnimationTick is < 0 or > 127
                 || companion.FallenRallyTicks is < 0 or > 4096
-                || string.IsNullOrEmpty(companion.NativeAi)
-                || !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(companion.NativeAi))) {
+                || !string.Equals(companion.NativeAi, "Fallen", StringComparison.Ordinal))) {
             throw new InvalidDataException(
                 "Replay fixture contains invalid combat-target companion state.");
         }

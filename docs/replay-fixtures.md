@@ -75,7 +75,9 @@ propagation is covered by `gameplay-fallen-rally-companion.json`.
 That fixture uses the additive `combat_target_companion_*` fields for one
 same-level Fallen at the leader's rally radius; companion entity identity,
 position, vitality, native AI, animation, and rally timer are validated and
-hashed in entity order. The bounded shape is deliberate: larger pack
+hashed in entity order. The companion contract requires a nonzero distinct
+leader, the same level, and the exact `Fallen` AI identity in both loaders;
+malformed companion state is rejected before execution. The bounded shape is deliberate: larger pack
 topologies remain live-world coverage until their replay state is specified.
 
 The authoritative server represents every player bow shot as a `WeaponArrow`

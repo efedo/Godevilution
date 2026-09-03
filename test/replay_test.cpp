@@ -4,6 +4,8 @@
 #include <iterator>
 #include <string>
 #include <string_view>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -4155,6 +4157,36 @@ TEST(ReplayFixture, ExecutesFallenRallyPropagationAgainstCSharpCheckpoint)
 	EXPECT_EQ(state.combatTargetCompanionFallenStandAnimationTick, 1);
 	EXPECT_EQ(state.combatTargetCompanionFallenRallyTicks, 104);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, RejectsInvalidFallenRallyCompanionState)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fallen-rally-companion.json");
+	ASSERT_TRUE(file.good());
+	const std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	const std::vector<std::tuple<std::string, std::string, std::string>> mutations {
+	    { "\"combat_target_entity_id\": 9", "\"combat_target_entity_id\": 0", "Replay fixture contains invalid combat-target occupancy state." },
+	    { "\"combat_target_companion_entity_id\": 10", "\"combat_target_companion_entity_id\": 9", "Replay fixture contains invalid combat-target companion state." },
+	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"GoatMelee\"", "Replay fixture contains invalid combat-target companion state." },
+	    { "\"combat_target_companion_level_id\": 1", "\"combat_target_companion_level_id\": 2", "Replay fixture contains invalid combat-target companion state." },
+	    { "\"combat_target_companion_max_hit_points\": 30", "\"combat_target_companion_max_hit_points\": 29", "Replay fixture contains invalid combat-target companion state." },
+	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_intelligence\": 256", "Replay fixture contains invalid combat-target companion state." },
+	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_stand_animation_frame\": 128", "Replay fixture contains invalid combat-target companion state." },
+	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_rally_ticks\": 4097", "Replay fixture contains invalid combat-target companion state." },
+	};
+
+	for (const auto &[valid, invalid, expected] : mutations) {
+		SCOPED_TRACE(valid);
+		std::string json = source;
+		const size_t position = json.find(valid);
+		ASSERT_NE(position, std::string::npos);
+		json.replace(position, valid.size(), invalid);
+
+		ReplayFixture fixture;
+		std::string error;
+		EXPECT_FALSE(ParseReplayFixture(json, fixture, error));
+		EXPECT_EQ(error, expected);
+	}
 }
 
 TEST(ReplayFixture, ExecutesGargoyleHealingAgainstCSharpCheckpoints)

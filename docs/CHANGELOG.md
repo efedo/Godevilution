@@ -8,8 +8,10 @@ All notable changes to this fork are documented below.
   state. Native and managed runners now parse, validate, advance the authored
   frame/tick boundary, apply the native Q6 self-heal and rally timer, and hash
   the resulting state together. The replay gate now also covers one-tick
-  pursuit beyond normal aggro range; multi-actor propagation remains follow-up
-  replay work.
+  pursuit beyond normal aggro range and bounded same-level companion
+  propagation. Native and managed loaders reject the same malformed companion
+  leader, identity, level, AI, vitality, intelligence, animation, and timer
+  state; broader multi-actor selection remains follow-up replay work.
 
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command

@@ -11,7 +11,9 @@ stand-animation, rally-admission, one-tick pursuit, and bounded companion-
 propagation fixtures close the current Fallen checkpoint gap. The live
 controller remains authoritative for larger monster groups; the replay
 contract intentionally keeps this extension bounded while parity coverage
-expands incrementally.
+expands incrementally. Native and managed fixture loaders now reject the same
+missing-leader, duplicate-identity, cross-level, non-Fallen-AI, vitality,
+intelligence, animation, and rally-timer companion states before execution.
 
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,

@@ -2612,6 +2612,31 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("\"combat_target_entity_id\": 9", "\"combat_target_entity_id\": 0", "Replay fixture contains invalid combat-target occupancy state.")]
+    [InlineData("\"combat_target_companion_entity_id\": 10", "\"combat_target_companion_entity_id\": 9", "Replay fixture contains invalid combat-target companion state.")]
+    [InlineData("\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"GoatMelee\"", "Replay fixture contains invalid combat-target companion state.")]
+    [InlineData("\"combat_target_companion_level_id\": 1", "\"combat_target_companion_level_id\": 2", "Replay fixture contains invalid combat-target companion state.")]
+    [InlineData("\"combat_target_companion_max_hit_points\": 30", "\"combat_target_companion_max_hit_points\": 29", "Replay fixture contains invalid combat-target companion state.")]
+    [InlineData("\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_intelligence\": 256", "Replay fixture contains invalid combat-target companion state.")]
+    [InlineData("\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_stand_animation_frame\": 128", "Replay fixture contains invalid combat-target companion state.")]
+    [InlineData("\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_rally_ticks\": 4097", "Replay fixture contains invalid combat-target companion state.")]
+    public void InvalidFallenRallyCompanionStateIsRejected(
+        string valid,
+        string invalid,
+        string expectedMessage)
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-fallen-rally-companion.json");
+        var json = File.ReadAllText(path).Replace(valid, invalid, StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load(json));
+
+        Assert.Equal(expectedMessage, exception.Message);
+    }
+
     [Fact]
     public void GameplayMultiplayerAutonomousTickMatchesNativeParticipantHashes()
     {
