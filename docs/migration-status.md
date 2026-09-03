@@ -2,6 +2,14 @@
 
 Status date: 2026-09-03
 
+The shared replay envelope now carries Fallen stand-animation frame/tick
+state. Native and managed runners advance the same 11-frame/3-tick animation
+before rally admission, and canonical hashes include the additive
+`godevilution-monster-fallen-rally-v1` state. The first cross-runner fixture
+(`gameplay-fallen-stand-animation.json`) closes the previously uncovered
+animation checkpoint; rally admission and pursuit remain covered by the live
+authoritative controller and are the next replay expansion.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

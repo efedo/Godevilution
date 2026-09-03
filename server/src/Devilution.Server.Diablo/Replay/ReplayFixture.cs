@@ -284,6 +284,11 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetIntelligence { get; init; }
 
+    /** Optional native Fallen stand-animation state used by parity fixtures. */
+    public int CombatTargetFallenStandAnimationFrame { get; init; }
+
+    public int CombatTargetFallenStandAnimationTick { get; init; }
+
     /** Optional native Gargoyle special lock retained after self-healing. */
     public bool CombatTargetGargoyleSpecialActive { get; init; }
 

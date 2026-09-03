@@ -55,6 +55,15 @@ be checked independently. Both runners validate unique native slots and hash
 the resulting equipment. Attack profile, ranged admission, combat mode, and
 native speed flags are then derived from that state rather than declared as
 separate fixture outcomes.
+
+Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`
+and `combat_target_fallen_stand_animation_tick`. Both runners validate the
+native bounds, advance the authored 11-frame/3-tick stand animation during
+simulation, and include non-default state in the tagged
+`godevilution-monster-fallen-rally-v1` checkpoint extension. Rally admission
+and pursuit remain server-owned; replay coverage is being expanded from the
+stand-animation boundary.
+
 The authoritative server represents every player bow shot as a `WeaponArrow`
 projectile. A normal bow emits one arrow; native `MultipleArrows` emits the
 first shot at the attack effect boundary and two spread shots with a two-tick

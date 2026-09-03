@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added shared replay coverage for Fallen stand-animation state. Native and
+  managed runners now parse, validate, advance, and hash the authored frame /
+  tick pair together, closing the first replay gap ahead of rally-admission
+  and pursuit expansion.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked

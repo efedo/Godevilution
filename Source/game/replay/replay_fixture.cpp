@@ -617,6 +617,13 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetFallenStandAnimationFrame != 0
+		    || state.combatTargetFallenStandAnimationTick != 0) {
+			hasher.AppendString("godevilution-monster-fallen-rally-v1");
+			hasher.AppendInt32(state.combatTargetFallenStandAnimationFrame);
+			hasher.AppendInt32(state.combatTargetFallenStandAnimationTick);
+			hasher.AppendInt32(0);
+		}
 		if (state.combatTargetSneakHidden || state.combatTargetSneakRetreatTicks != 0) {
 			hasher.AppendString("godevilution-monster-sneak-v1");
 			hasher.AppendBool(state.combatTargetSneakHidden);
@@ -3622,6 +3629,25 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 			++iterator;
 		}
 	}
+}
+
+/** Advances the native Fallen stand animation before its rally decision. */
+void AdvanceReplayFallenStandAnimation(ReplayFixtureExecutionState &state)
+{
+	if (state.combatTargetNativeAi != "Fallen"
+	    || state.combatTargetHitPointsQ6 <= 0)
+		return;
+	constexpr int32_t Frames = 11;
+	constexpr int32_t TicksPerFrame = 3;
+	if (state.combatTargetFallenStandAnimationTick + 1 < TicksPerFrame) {
+		++state.combatTargetFallenStandAnimationTick;
+		return;
+	}
+	state.combatTargetFallenStandAnimationTick = 0;
+	if (state.combatTargetFallenStandAnimationFrame + 1 < Frames)
+		++state.combatTargetFallenStandAnimationFrame;
+	else
+		state.combatTargetFallenStandAnimationFrame = 0;
 }
 
 int32_t GenerateReplayMana(
@@ -9092,6 +9118,7 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		AdvanceReplayFallenStandAnimation(state);
 		state.combatTargetAutonomousActionHandled =
 			AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
@@ -9549,6 +9576,10 @@ private:
 				return ParseBool(fixture_.initialState.combatTargetBerserked);
 			if (key == "combat_target_intelligence")
 				return ParseSigned(fixture_.initialState.combatTargetIntelligence);
+			if (key == "combat_target_fallen_stand_animation_frame")
+				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationFrame);
+			if (key == "combat_target_fallen_stand_animation_tick")
+				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationTick);
 			if (key == "combat_target_gargoyle_special_active")
 				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
@@ -10417,6 +10448,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetMinDamage != 0
 			|| target.combatTargetMaxDamage != 0
 			|| target.combatTargetIntelligence != 0
+			|| target.combatTargetFallenStandAnimationFrame != 0
+			|| target.combatTargetFallenStandAnimationTick != 0
 			|| target.combatTargetGargoyleSpecialActive
 		    || target.combatTargetHorkDemonDelayTicks != 0
 		    || target.combatTargetSkeletonMeleeDelayTicks != 0
@@ -10497,6 +10530,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetFatMovementIdleTicks > 1024
 		|| target.combatTargetFatMovementMode < 0
 		|| target.combatTargetFatMovementMode > 3
+		|| target.combatTargetFallenStandAnimationFrame < 0
+		|| target.combatTargetFallenStandAnimationFrame > 127
+		|| target.combatTargetFallenStandAnimationTick < 0
+		|| target.combatTargetFallenStandAnimationTick > 127
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -11239,6 +11276,8 @@ bool ExecuteReplayFixture(
 		    : fixture.initialState.combatTargetMaxDamageSpecial;
 		state.combatTargetBerserked = fixture.initialState.combatTargetBerserked;
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+		state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
+		state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;

@@ -110,6 +110,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetMinDamageSpecial != 0
                     || initialTarget.CombatTargetMaxDamageSpecial != 0
                     || initialTarget.CombatTargetIntelligence != 0
+                    || initialTarget.CombatTargetFallenStandAnimationFrame != 0
+                    || initialTarget.CombatTargetFallenStandAnimationTick != 0
                     || initialTarget.CombatTargetGargoyleSpecialActive
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
@@ -149,6 +151,8 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetMinDamageSpecial < 0
             || initialTarget.CombatTargetMaxDamageSpecial < initialTarget.CombatTargetMinDamageSpecial
             || initialTarget.CombatTargetIntelligence is < 0 or > 255
+            || initialTarget.CombatTargetFallenStandAnimationFrame is < 0 or > 127
+            || initialTarget.CombatTargetFallenStandAnimationTick is < 0 or > 127
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
@@ -415,6 +419,12 @@ public static class ReplayFixtureLoader
             CombatTargetMinDamageSpecial = GetOptionalInt(value, "combat_target_min_damage_special"),
             CombatTargetMaxDamageSpecial = GetOptionalInt(value, "combat_target_max_damage_special"),
             CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
+            CombatTargetFallenStandAnimationFrame = GetOptionalInt(
+                value,
+                "combat_target_fallen_stand_animation_frame"),
+            CombatTargetFallenStandAnimationTick = GetOptionalInt(
+                value,
+                "combat_target_fallen_stand_animation_tick"),
             CombatTargetGargoyleSpecialActive = GetOptionalBool(
                 value,
                 "combat_target_gargoyle_special_active"),
