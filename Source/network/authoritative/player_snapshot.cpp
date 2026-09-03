@@ -19,6 +19,7 @@
 #include "game/objects/objects.hpp"
 #include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
+#include "game/quests/quest_stars.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "qol/floatingnumbers.h"
@@ -1482,6 +1483,9 @@ tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::E
 				return tl::make_unexpected("Server-backed event batch contains a Diablo kill level outside the native range.");
 			continue;
 		}
+		if (event.has_map_opened()) {
+			continue;
+		}
 		return tl::make_unexpected("Server-backed event batch contains an unknown event kind.");
 	}
 	return {};
@@ -1514,6 +1518,9 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 		if (event.has_victory() && event.victory().player_entity_id() == entityId) {
 			const auto killLevel = std::min<uint32_t>(event.victory().diablo_kill_level(), std::numeric_limits<uint8_t>::max());
 			player.pDiabloKillLevel = static_cast<uint8_t>(killLevel);
+		}
+		if (event.has_map_opened() && event.map_opened().player_entity_id() == entityId) {
+			doom_init();
 		}
 		if (event.has_dialogue()
 		    && event.dialogue().source_entity_id() == entityId

@@ -807,7 +807,8 @@ public sealed class DiabloStoreCommandProcessor
                 or DiabloItemActionKind.ApplyBlacksmithOil
                 or DiabloItemActionKind.ApplyAccuracyOil
                 or DiabloItemActionKind.ApplySharpnessOil
-                or DiabloItemActionKind.ApplyFortitudeOil)) {
+                or DiabloItemActionKind.ApplyFortitudeOil
+                or DiabloItemActionKind.OpenCathedralMap)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
@@ -818,6 +819,16 @@ public sealed class DiabloStoreCommandProcessor
 
         if (IsOilAction(action))
             return ApplyOil(player, intent, action);
+
+        if (action == DiabloItemActionKind.OpenCathedralMap) {
+            return DiabloIntentResult.Accepted with {
+                Events = [new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.MapOpened,
+                    0,
+                    player.EntityId,
+                    0)],
+            };
+        }
 
         switch (action) {
         case DiabloItemActionKind.RestorePartialLife:

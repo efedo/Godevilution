@@ -94,6 +94,7 @@ enum ItemActionKind {
 	ITEM_ACTION_KIND_APPLY_ACCURACY_OIL = 15;
 	ITEM_ACTION_KIND_APPLY_SHARPNESS_OIL = 16;
 	ITEM_ACTION_KIND_APPLY_FORTITUDE_OIL = 17;
+	ITEM_ACTION_KIND_OPEN_CATHEDRAL_MAP = 18;
 }
 
 message CommandBatch {
@@ -1288,6 +1289,7 @@ message GameEvent {
 		HealingEvent healing = 12;
 		DialogueEvent dialogue = 13;
 		VictoryEvent victory = 14;
+		MapOpenedEvent map_opened = 15;
 	}
 }
 
@@ -1327,6 +1329,12 @@ message VictoryEvent {
 	uint32 player_entity_id = 1;
 	uint32 boss_entity_id = 2;
 	uint32 diablo_kill_level = 3;
+}
+
+// Transient presentation event for the native Cathedral Map item. The map
+// remains an owned item; the server only authorizes opening its modal view.
+message MapOpenedEvent {
+	uint32 player_entity_id = 1;
 }
 
 message ProtocolError {

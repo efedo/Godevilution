@@ -1006,6 +1006,7 @@ public partial class HudPresentation : CanvasLayer
             GameEvent.EventOneofCase.Experience => $"Experience +{@event.Experience.Amount}",
             GameEvent.EventOneofCase.Healing => $"Healing +{FormatQ6(@event.Healing.AmountQ6 != 0 ? @event.Healing.AmountQ6 : @event.Healing.Amount)}",
             GameEvent.EventOneofCase.Dialogue => AuthoritativeDialoguePresentation.Format(@event.Dialogue),
+            GameEvent.EventOneofCase.MapOpened => "Cathedral Map opened",
             _ => "Authoritative event",
         }));
         return lines.Count == 0 ? "No interaction selected." : string.Join("\n", lines);

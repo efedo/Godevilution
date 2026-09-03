@@ -4636,6 +4636,40 @@ public sealed class DiabloStoreCommandProcessorTests
         return catalog;
     }
 
+    [Fact]
+    public void CathedralMapRemainsOwnedAndEmitsTransientOpenEvent()
+    {
+        var player = CreatePlayer();
+        player.EntityId = 42;
+        player.Inventory.Add(new OwnedStoreItem(
+            0,
+            0,
+            9001,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 9001,
+                MiscId = 43,
+                ItemActionKind = DiabloItemActionKind.OpenCathedralMap,
+            }));
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    9001)),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Single(player.Inventory);
+        var opened = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.MapOpened, opened.Kind);
+        Assert.Equal(42U, opened.TargetEntityId);
+    }
+
     private static AuthoritativePlayerState CreatePlayer(
         uint gold = 100,
         int life = 640,

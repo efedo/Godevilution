@@ -2275,6 +2275,21 @@ public sealed class DialogueProtocolProjectionTests
         ], 1, 7));
     }
 
+    [Fact]
+    public void ProjectsCathedralMapOpenToTheReceivingPlayer()
+    {
+        var batch = DiabloProtocolMapper.ToProtocolEventBatch([
+            new DiabloGameplayEvent(
+                DiabloGameplayEventKind.MapOpened,
+                0,
+                34,
+                0),
+        ], 12, 7);
+
+        var mapOpened = Assert.Single(batch!.Events).MapOpened;
+        Assert.Equal(34U, mapOpened.PlayerEntityId);
+    }
+
     [Theory]
     [InlineData(AuthoritativeProjectileBehavior.ChargedBolt, NativeProjectileVisual.ChargedBolt)]
     [InlineData(AuthoritativeProjectileBehavior.MonsterChargedBolt, NativeProjectileVisual.ChargedBolt)]

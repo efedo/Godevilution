@@ -40,6 +40,8 @@ public static class AuthoritativeEventBatchValidator
                     throw new InvalidDataException(
                         "The authoritative event batch contains an out-of-range Diablo kill level.");
                 break;
+            case GameEvent.EventOneofCase.MapOpened:
+                break;
             default:
                 throw new InvalidDataException("The authoritative event batch contains an unknown event kind.");
             }

@@ -16,6 +16,7 @@ public sealed class AuthoritativeEventBatchValidatorTests
                 new GameEvent { Healing = new HealingEvent() },
                 new GameEvent { Dialogue = new DialogueEvent() },
                 new GameEvent { Victory = new VictoryEvent() },
+                new GameEvent { MapOpened = new MapOpenedEvent() },
             },
         });
     }

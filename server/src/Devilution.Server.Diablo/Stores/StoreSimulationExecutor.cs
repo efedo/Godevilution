@@ -528,12 +528,14 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         var result = simulation.Execute(player, intent, appliedTick);
         if (result.Succeeded)
             return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
-                CommandExecutionResult.Accepted);
+                CommandExecutionResult.Accepted,
+                result.Events);
 
         var rejectReason = DiabloGameplayModule.ToCommandRejectReason(result.Failure)
             ?? throw new InvalidOperationException("A rejected Diablo intent must provide a reason.");
         return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
-            CommandExecutionResult.Rejected(rejectReason));
+            CommandExecutionResult.Rejected(rejectReason),
+            result.Events);
     }
 
     private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteWorldIntent(

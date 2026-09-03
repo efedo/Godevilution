@@ -2131,6 +2131,15 @@ internal static class DiabloProtocolMapper
                     },
                 });
                 break;
+            case DiabloGameplayEventKind.MapOpened:
+                batch.Events.Add(new GameEvent {
+                    MapOpened = new MapOpenedEvent {
+                        PlayerEntityId = gameplayEvent.TargetEntityId == 0
+                            ? entityId
+                            : gameplayEvent.TargetEntityId,
+                    },
+                });
+                break;
             default:
                 throw new InvalidOperationException(
                     $"Unsupported Diablo gameplay event kind '{gameplayEvent.Kind}'.");

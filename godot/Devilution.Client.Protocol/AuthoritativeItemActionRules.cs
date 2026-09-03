@@ -22,7 +22,8 @@ public static class AuthoritativeItemActionRules
             or ItemActionKind.IncreaseMagic
             or ItemActionKind.IncreaseDexterity
             or ItemActionKind.IncreaseVitality
-            or ItemActionKind.IncreaseAllAttributes;
+            or ItemActionKind.IncreaseAllAttributes
+            or ItemActionKind.OpenCathedralMap;
     }
 
     /** Returns true when the action needs a second owned-item target. */

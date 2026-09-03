@@ -150,3 +150,4 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2202	book_template_level_8	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	115	0	0	None	Book of	Book of	BOOK_BLUE	8	1	true			0	0	None	1	4	false
 2203	book_template_level_14	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	116	0	0	None	Book of	Book of	BOOK_BLUE	14	1	true			0	0	None	1	7	false
 2204	book_template_level_20	0	0	0	0	0	0	0	0	1	1	0	Misc,Book	7	3	25	0		0	0	0	0	117	0	0	None	Book of	Book of	BOOK_BLUE	20	1	true			0	0	None	1	10	false
+43	cathedral_map	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	43	0		0	0	0	0	22	0	0	None	Cathedral Map	Cathedral Map	MAP_OF_THE_STARS	0	0	true			0	0	OpenCathedralMap	1	-1	false

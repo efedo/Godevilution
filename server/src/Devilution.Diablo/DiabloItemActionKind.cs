@@ -21,4 +21,5 @@ public enum DiabloItemActionKind
     ApplyAccuracyOil,
     ApplySharpnessOil,
     ApplyFortitudeOil,
+    OpenCathedralMap,
 }

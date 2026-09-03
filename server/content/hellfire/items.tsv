@@ -1,5 +1,5 @@
 item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor_class	durability	max_durability	inventory_width	inventory_height	identified	item_tags	equip_location	item_class	misc_id	spell_id	spell_symbol	flags	min_strength	min_magic	min_dexterity	native_item_index	charges	max_charges	spell_source_kind	name	identified_name	cursor_graphic	min_monster_level	drop_rate	usable	special_effects	hellfire_effects	min_armor_class	max_armor_class	item_action_kind	item_action_amount	book_template_minimum_item_level	arena_only
-43	cathedral_map	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	43	0		0	0	0	0	22	0	0	None	Cathedral Map	Cathedral Map	MAP_OF_THE_STARS	0	0	false			0	0	None	1	-1	false
+43	cathedral_map	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	43	0		0	0	0	0	22	0	0	None	Cathedral Map	Cathedral Map	MAP_OF_THE_STARS	0	0	true			0	0	OpenCathedralMap	1	-1	false
 2101	rune_bomb	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	39	0	0	None	Rune Bomb	Rune Bomb	RUNE_BOMB	0	0	false			0	0	None	1	-1	false
 2102	theodore	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	40	0	0	None	Theodore	Theodore	THEODORE	0	0	false			0	0	None	1	-1	false
 2103	auric_amulet	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	41	0	0	None	Auric Amulet	Auric Amulet	AURIC_AMULET	0	0	false			0	0	None	1	-1	false

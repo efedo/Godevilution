@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.446.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.447.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -905,7 +905,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.445.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.446.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1970,6 +1970,14 @@ public sealed class ShippedContentTests
                 },
                 item.ItemActionKind);
         }
+        var baseCathedralMap = baseItems.GetRequired(43);
+        Assert.Equal(43U, baseStableIds.Resolve("item", "cathedral_map"));
+        Assert.Equal("cathedral_map", baseCathedralMap.StableSymbol);
+        Assert.Equal(22, baseCathedralMap.NativeItemIndex);
+        Assert.Equal(43, baseCathedralMap.MiscId);
+        Assert.True(baseCathedralMap.Usable);
+        Assert.Equal(DiabloItemActionKind.OpenCathedralMap, baseCathedralMap.ItemActionKind);
+        Assert.Equal(1, baseCathedralMap.ItemActionAmount);
         var baseJewelryExpectations = new[] {
             ("ring_level_5", 2195U, 156, 5, 26, 1000),
             ("ring_level_10", 2196U, 157, 10, 26, 1000),
@@ -3289,7 +3297,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.446.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.447.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

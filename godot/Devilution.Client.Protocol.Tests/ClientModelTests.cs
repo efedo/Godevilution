@@ -1362,6 +1362,8 @@ public sealed class ClientModelTests
             ItemActionKind.RestoreFullLifeAndMana));
         Assert.True(AuthoritativeItemActionRules.IsTargetlessConsumable(
             ItemActionKind.IncreaseAllAttributes));
+        Assert.True(AuthoritativeItemActionRules.IsTargetlessConsumable(
+            ItemActionKind.OpenCathedralMap));
         Assert.False(AuthoritativeItemActionRules.IsTargetlessConsumable(
             ItemActionKind.ApplySharpnessOil));
         Assert.True(AuthoritativeItemActionRules.IsTargetedConsumable(
@@ -1532,6 +1534,7 @@ public sealed class ClientModelTests
                 new GameEvent { Healing = new HealingEvent() },
                 new GameEvent { Dialogue = new DialogueEvent() },
                 new GameEvent { Victory = new VictoryEvent() },
+                new GameEvent { MapOpened = new MapOpenedEvent() },
             },
         }));
     }

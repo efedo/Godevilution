@@ -203,17 +203,17 @@ Q6 resource restoration, class multipliers, elixir stat/resource transitions, He
 full-resource effects, oil target restrictions and mutations, and `NoMana`
 suppression before consuming the source item. Open-stash oil targets use the
 same stable-reference command path; closed-stash targets are rejected and the
-cursor remains armed. Other cursor-driven miscellaneous
-items remain local follow-up seams until their content actions are externalized.
+cursor remains armed. The Cathedral Map now uses the same command boundary:
+the server validates the owned item and emits a transient `MapOpenedEvent`,
+while the item remains in inventory and each client opens its native map view.
 
 Connected stash books use `ReadBookRequested` with the same open-session stable
 reference, and stash consumables are consumed by the server rather than a local
 stash mutation. Closed-stash sources fail closed without changing player state.
 
-The Hellfire Cathedral Map is also server-backed: when its native adjacent-grave
-condition is met, the connected client submits the projected grave object through
-`OperateObjectRequested`. The server owns the quest-item completion and map
-consumption; the native client only presents the resulting snapshot.
+The Hellfire Cathedral Map's adjacent-grave quest remains a separate
+`OperateObjectRequested` interaction. The server owns that quest-item
+completion; opening the already-owned map is the transient item event above.
 
 Hellfire Rune Bomb use follows the same boundary. When the native Hive-opening
 condition is met, the connected client submits the nearest projected Hive

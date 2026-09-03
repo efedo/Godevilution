@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Routed the native Cathedral Map action through the authoritative item-command
+  boundary. Base and Hellfire content now declare `OpenCathedralMap`; the server
+  keeps the item owned and emits a recipient-scoped `MapOpenedEvent`, while
+  native and Godot clients present the transient map interaction. Advance the
+  Diablo content schema to `1.447.0`; `1.446.0` remains accepted as the previous
+  additive contract.
+
 - Added the optional `golem_monster_symbol` spell-content field. The shipped
   Golem row now names stable monster identity `golem_native_109` (stable ID
   111, native selector 109), while numeric-only rows remain compatible. Advance

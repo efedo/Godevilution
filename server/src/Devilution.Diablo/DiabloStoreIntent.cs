@@ -111,6 +111,9 @@ public readonly record struct DiabloIntentResult(
     bool Succeeded,
     DiabloRuleFailure? Failure)
 {
+    /** Transient presentation events emitted by this accepted transition. */
+    public IReadOnlyList<DiabloGameplayEvent> Events { get; init; } = [];
+
     public static DiabloIntentResult Accepted { get; } = new(true, null);
 
     public static DiabloIntentResult Rejected(DiabloRuleFailure failure)
