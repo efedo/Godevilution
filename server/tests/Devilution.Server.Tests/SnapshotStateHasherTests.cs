@@ -1716,6 +1716,25 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectQuestIdentityChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = { new ObjectSnapshot { EntityId = 20, ObjectId = 4 } },
+        };
+        var linked = baseline.Clone();
+        linked.Objects[0].QuestId = 40;
+        var changedLink = linked.Clone();
+        changedLink.Objects[0].QuestId = 41;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(linked));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(linked),
+            SnapshotStateHasher.Compute(changedLink));
+    }
+
+    [Fact]
     public void QuestPoolAvailabilityChangesTheHash()
     {
         var available = new Snapshot {

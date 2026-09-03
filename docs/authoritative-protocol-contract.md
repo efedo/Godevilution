@@ -873,6 +873,12 @@ the shrine, quest, breakable, and revealed-trap visual families. Trap metadata
 is emitted only when the existing trap-reveal boundary permits it; zero or
 unknown values retain generic object rendering.
 
+`ObjectSnapshot.quest_id` field 7 is the authored quest identity associated with
+an interactive object. When present, the server validates the linked quest,
+advances it atomically with object activation, and includes the identity in the
+tagged `godevilution-object-quest-v1` canonical-hash section; clients never
+infer or mutate this relationship locally.
+
 `ObjectSnapshot` fields 17-20 carry the optional authored quest transition
 kind, amount, and required `_qvar1`/`_qvar2` values. The server validates the
 linked quest and applies the transition atomically with object activation;

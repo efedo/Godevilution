@@ -233,7 +233,8 @@ An initial object may also declare `object_missile_passable`,
 `object_breakable`, and `object_destroyed`; both runners validate the same flag
 invariants and hash nondefault collision state. Quest-linked object interaction
 fixtures should declare `object_quest_id` explicitly so the replay models the
-authored link required by authoritative command admission. An initial combat target may
+authored link required by authoritative command admission and quest progression.
+An initial combat target may
 declare its current tile, adjacent future tile, movement state, and
 petrification. It may also declare armor class, attack damage, and aggro range
 for autonomous combat. Both runners reject inconsistent occupancy or negative

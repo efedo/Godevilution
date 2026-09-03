@@ -6,7 +6,8 @@ All notable changes to this fork are documented below.
 
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
-  admission was hardened.
+  admission was hardened; native and managed runners now apply the same linked
+  quest progression and duplicate-advance rejection.
 
 - Snapshot hydration and canonical state hashing now preserve authored object
   dialogue identities when an existing object is updated in place, keeping

@@ -752,6 +752,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-object-trap-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.objectQuestId != 0) {
+			hasher.AppendString("godevilution-object-quest-v1");
+			hasher.AppendUint32(state.objectQuestId);
+		}
 		if (state.objectQuestProgressAmount != 1) {
 			hasher.AppendString("godevilution-object-quest-progress-v1");
 			hasher.AppendUint32(state.objectQuestProgressAmount);
@@ -9487,6 +9491,8 @@ private:
 				return ParseUnsigned(fixture_.initialState.objectEntityId);
 			if (key == "object_id")
 				return ParseUnsigned(fixture_.initialState.objectId);
+			if (key == "object_quest_id")
+				return ParseUnsigned(fixture_.initialState.objectQuestId);
 			if (key == "object_position_x")
 				return ParseSigned(fixture_.initialState.objectPositionX);
 			if (key == "object_position_y")
@@ -10360,6 +10366,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	        && (fixture.initialState.objectMissilePassable
 	            || fixture.initialState.objectBreakable
 	            || fixture.initialState.objectDestroyed
+	            || fixture.initialState.objectQuestId != 0
 	            || fixture.initialState.objectEffectKind != 0
 	            || fixture.initialState.objectEffectAmount != 0))
 	    || fixture.initialState.objectEffectKind < 0
@@ -11197,6 +11204,7 @@ bool ExecuteReplayFixture(
 		state.objectEntityId = fixture.initialState.objectEntityId;
 		state.objectId = fixture.initialState.objectId;
 		state.objectLevelId = fixture.initialState.levelId;
+		state.objectQuestId = fixture.initialState.objectQuestId;
 		state.objectPositionX = fixture.initialState.objectPositionX;
 		state.objectPositionY = fixture.initialState.objectPositionY;
 		state.objectEffectKind = fixture.initialState.objectEffectKind;
@@ -12083,11 +12091,23 @@ bool ExecuteReplayFixture(
 				const int distance = std::max(std::abs(state.positionX - state.objectPositionX), std::abs(state.positionY - state.objectPositionY));
 				if (command.objectEntityId == state.objectEntityId
 				    && state.objectId != 0
+				    && (state.objectQuestId != 0 || state.objectEffectKind != 0 || state.objectTrapArmed)
 				    && !state.objectActivated
 				    && !state.objectDestroyed
 				    && state.levelId == state.objectLevelId
 				    && distance <= 1) {
 					state.objectActivated = true;
+					if (state.objectQuestId != 0
+					    && state.objectQuestId == state.questId
+					    && !state.questUnavailable
+					    && !state.questCompleted
+					    && state.levelId == state.questLevelId) {
+						state.questLogged = true;
+						state.questProgress = std::min(
+						    state.questProgress + state.objectQuestProgressAmount,
+						    state.questRequiredProgress);
+						state.questCompleted = state.questProgress >= state.questRequiredProgress;
+					}
 					accepted = true;
 				}
 			} else if (command.kind == "AdvanceQuest") {

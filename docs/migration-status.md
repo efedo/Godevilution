@@ -2,6 +2,11 @@
 
 Status date: 2026-09-03
 
+The shared object-quest replay fixture now carries an explicit authored quest
+link. Native and managed runners apply the same authored-interaction admission,
+quest progression, canonical object identity hashing, and duplicate-advance
+rejection, preserving deterministic parity across the migration boundary.
+
 Authored unique-monster dialogue snapshots now carry an additive validated
 `dialogue_state` contract. Warlord and Gharbad compatibility clients use the
 server-owned inquiring/combat state instead of inferring terminal progression

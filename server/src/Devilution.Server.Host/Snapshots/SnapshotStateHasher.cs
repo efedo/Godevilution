@@ -615,6 +615,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-object-dialogue-v1");
                     hasher.AppendInt32(@object.DialogueMessageId);
                 }
+                if (@object.QuestId != 0) {
+                    hasher.AppendString("godevilution-object-quest-v1");
+                    hasher.AppendUInt32(@object.QuestId);
+                }
                 if (@object.QuestProgressAmount != 1) {
                     hasher.AppendString("godevilution-object-quest-progress-v1");
                     hasher.AppendUInt32(@object.QuestProgressAmount);

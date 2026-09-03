@@ -2324,7 +2324,7 @@ public sealed class ReplayFixtureTests
 
         var result = ReplayFixtureExecutor.Execute(fixture, executor, new AuthoritativeCommandServer(executor));
 
-        Assert.Equal([CommandStatus.Accepted, CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal([CommandStatus.Accepted, CommandStatus.Rejected], result.Results.Select(command => command.Status));
         Assert.True(Assert.Single(result.FinalSnapshot.Objects).Activated);
         var quest = Assert.Single(result.FinalSnapshot.Quests);
         Assert.Equal(1U, quest.Progress);

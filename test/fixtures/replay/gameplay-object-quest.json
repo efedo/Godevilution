@@ -40,11 +40,12 @@
       "target_tick": 2,
       "server_receipt_sequence": 2,
       "kind": "AdvanceQuest",
+      "expected_status": "Rejected",
       "payload": { "quest_id": 40 }
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "0167e20c485ce666ec2e42ce7dbf3b1ef10df5086dfe3cfacdd689d46461a3bb" },
-    { "tick": 2, "state_sha256": "1fff6573a4325cb798e7ffc8042a1732eec076044a05ce288ae8b371296813fe" }
+    { "tick": 1, "state_sha256": "1df76a60750249a0129030b7fe70948b4671e03ca825f0b4b1a842644d1ee446" },
+    { "tick": 2, "state_sha256": "1df76a60750249a0129030b7fe70948b4671e03ca825f0b4b1a842644d1ee446" }
   ]
 }

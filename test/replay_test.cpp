@@ -3896,6 +3896,7 @@ TEST(ReplayFixture, ExecutesObjectQuestTransitions)
 	state.positionY = fixture.initialState.positionY;
 	state.objectEntityId = fixture.initialState.objectEntityId;
 	state.objectId = fixture.initialState.objectId;
+	state.objectQuestId = fixture.initialState.objectQuestId;
 	state.objectLevelId = fixture.initialState.levelId;
 	state.objectPositionX = fixture.initialState.objectPositionX;
 	state.objectPositionY = fixture.initialState.objectPositionY;
@@ -3907,7 +3908,7 @@ TEST(ReplayFixture, ExecutesObjectQuestTransitions)
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 2U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_FALSE(result.transitions[1].accepted);
 	EXPECT_TRUE(state.objectActivated);
 	EXPECT_EQ(state.questProgress, 1U);
 	EXPECT_TRUE(state.questCompleted);

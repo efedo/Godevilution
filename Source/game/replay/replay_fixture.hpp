@@ -184,6 +184,7 @@ struct ReplayFixtureInitialState {
 	uint32_t worldItemPrice = 0;
 	uint32_t objectEntityId = 0;
 	uint32_t objectId = 0;
+	uint32_t objectQuestId = 0;
 	int32_t objectPositionX = 0;
 	int32_t objectPositionY = 0;
 	int32_t objectEffectKind = 0;
@@ -653,6 +654,7 @@ struct ReplayFixtureExecutionState {
 	uint32_t objectEntityId = 0;
 	uint32_t objectId = 0;
 	uint32_t objectLevelId = 0;
+	uint32_t objectQuestId = 0;
 	int32_t objectPositionX = 0;
 	int32_t objectPositionY = 0;
 	bool objectActivated = false;
