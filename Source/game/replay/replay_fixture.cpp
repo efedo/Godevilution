@@ -618,11 +618,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendBool(true);
 		}
 		if (state.combatTargetFallenStandAnimationFrame != 0
-		    || state.combatTargetFallenStandAnimationTick != 0) {
+		    || state.combatTargetFallenStandAnimationTick != 0
+		    || state.combatTargetFallenRallyTicks != 0) {
 			hasher.AppendString("godevilution-monster-fallen-rally-v1");
 			hasher.AppendInt32(state.combatTargetFallenStandAnimationFrame);
 			hasher.AppendInt32(state.combatTargetFallenStandAnimationTick);
-			hasher.AppendInt32(0);
+			hasher.AppendInt32(state.combatTargetFallenRallyTicks);
 		}
 		if (state.combatTargetSneakHidden || state.combatTargetSneakRetreatTicks != 0) {
 			hasher.AppendString("godevilution-monster-sneak-v1");
@@ -3648,6 +3649,15 @@ void AdvanceReplayFallenStandAnimation(ReplayFixtureExecutionState &state)
 		++state.combatTargetFallenStandAnimationFrame;
 	else
 		state.combatTargetFallenStandAnimationFrame = 0;
+	const bool rallies = GenerateRnd(state, 4) == 0;
+	if (!rallies)
+		return;
+	const int32_t healing = 2 * state.combatTargetIntelligence + 2;
+	state.combatTargetHitPointsQ6 = std::min(
+		state.combatTargetMaxHitPointsQ6,
+		state.combatTargetHitPointsQ6 + healing * 64);
+	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	state.combatTargetFallenRallyTicks = 30 * state.combatTargetIntelligence + 105;
 }
 
 int32_t GenerateReplayMana(
@@ -9580,6 +9590,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationFrame);
 			if (key == "combat_target_fallen_stand_animation_tick")
 				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationTick);
+			if (key == "combat_target_fallen_rally_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetFallenRallyTicks);
 			if (key == "combat_target_gargoyle_special_active")
 				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
@@ -10450,6 +10462,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetIntelligence != 0
 			|| target.combatTargetFallenStandAnimationFrame != 0
 			|| target.combatTargetFallenStandAnimationTick != 0
+			|| target.combatTargetFallenRallyTicks != 0
 			|| target.combatTargetGargoyleSpecialActive
 		    || target.combatTargetHorkDemonDelayTicks != 0
 		    || target.combatTargetSkeletonMeleeDelayTicks != 0
@@ -10534,6 +10547,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetFallenStandAnimationFrame > 127
 		|| target.combatTargetFallenStandAnimationTick < 0
 		|| target.combatTargetFallenStandAnimationTick > 127
+		|| target.combatTargetFallenRallyTicks < 0
+		|| target.combatTargetFallenRallyTicks > 4096
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -11278,6 +11293,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 		state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
 		state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
+		state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;

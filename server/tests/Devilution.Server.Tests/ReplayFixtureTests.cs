@@ -2458,6 +2458,53 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayFallenRallyAdmissionMatchesNativeCheckpoint()
+    {
+        var fixture = LoadReplayFixture("gameplay-fallen-rally.json");
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            monsterId: fixture.InitialState.CombatTargetMonsterId,
+            nativeAi: fixture.InitialState.CombatTargetNativeAi,
+            intelligence: fixture.InitialState.CombatTargetIntelligence,
+            initialStandAnimationFrame: fixture.InitialState.CombatTargetFallenStandAnimationFrame,
+            initialStandAnimationTick: fixture.InitialState.CombatTargetFallenStandAnimationTick,
+            fallenRallyTicks: fixture.InitialState.CombatTargetFallenRallyTicks);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(22, monster.HitPoints);
+        Assert.Equal(105, monster.FallenRallyTicks);
+        Assert.Equal(0, monster.FallenStandAnimationFrame);
+        Assert.Equal(0, monster.FallenStandAnimationTick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerAutonomousTickMatchesNativeParticipantHashes()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-multiplayer-autonomous-tick.json");

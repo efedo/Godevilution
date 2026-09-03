@@ -4018,6 +4018,48 @@ TEST(ReplayFixture, ExecutesFallenStandAnimationAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesFallenRallyAdmissionAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fallen-rally.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetHitPointsQ6 = state.combatTargetHitPoints * 64;
+	state.combatTargetMaxHitPointsQ6 = state.combatTargetMaxHitPoints * 64;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+	state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
+	state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
+	state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.combatTargetHitPoints, 22);
+	EXPECT_EQ(state.combatTargetFallenRallyTicks, 105);
+	EXPECT_EQ(state.combatTargetFallenStandAnimationFrame, 0);
+	EXPECT_EQ(state.combatTargetFallenStandAnimationTick, 0);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesGargoyleHealingAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-gargoyle-healing.json");

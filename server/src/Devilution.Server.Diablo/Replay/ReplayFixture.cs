@@ -289,6 +289,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetFallenStandAnimationTick { get; init; }
 
+    /** Optional native Fallen rally timer used by parity fixtures. */
+    public int CombatTargetFallenRallyTicks { get; init; }
+
     /** Optional native Gargoyle special lock retained after self-healing. */
     public bool CombatTargetGargoyleSpecialActive { get; init; }
 

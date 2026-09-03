@@ -109,6 +109,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-quest-selection.json" Link="Fixtures/gameplay-quest-selection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-autonomous-regen-soak.json" Link="Fixtures/gameplay-autonomous-regen-soak.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fallen-stand-animation.json" Link="Fixtures/gameplay-fallen-stand-animation.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-fallen-rally.json" Link="Fixtures/gameplay-fallen-rally.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-healing.json" Link="Fixtures/gameplay-gargoyle-healing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-attack.json" Link="Fixtures/gameplay-gargoyle-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-idle.json" Link="Fixtures/gameplay-gargoyle-avoidance-idle.json" CopyToOutputDirectory="PreserveNewest" />
