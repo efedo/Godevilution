@@ -3633,16 +3633,16 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 }
 
 /** Advances the native Fallen stand animation before its rally decision. */
-void AdvanceReplayFallenStandAnimation(ReplayFixtureExecutionState &state)
+bool AdvanceReplayFallenStandAnimation(ReplayFixtureExecutionState &state)
 {
 	if (state.combatTargetNativeAi != "Fallen"
 	    || state.combatTargetHitPointsQ6 <= 0)
-		return;
+		return false;
 	constexpr int32_t Frames = 11;
 	constexpr int32_t TicksPerFrame = 3;
 	if (state.combatTargetFallenStandAnimationTick + 1 < TicksPerFrame) {
 		++state.combatTargetFallenStandAnimationTick;
-		return;
+		return false;
 	}
 	state.combatTargetFallenStandAnimationTick = 0;
 	if (state.combatTargetFallenStandAnimationFrame + 1 < Frames)
@@ -3651,13 +3651,63 @@ void AdvanceReplayFallenStandAnimation(ReplayFixtureExecutionState &state)
 		state.combatTargetFallenStandAnimationFrame = 0;
 	const bool rallies = GenerateRnd(state, 4) == 0;
 	if (!rallies)
-		return;
+		return true;
 	const int32_t healing = 2 * state.combatTargetIntelligence + 2;
 	state.combatTargetHitPointsQ6 = std::min(
 		state.combatTargetMaxHitPointsQ6,
 		state.combatTargetHitPointsQ6 + healing * 64);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	state.combatTargetFallenRallyTicks = 30 * state.combatTargetIntelligence + 105;
+	return true;
+}
+
+/** Advances the native Fallen rally pursuit step for the compact replay target. */
+void AdvanceReplayFallenRallyPursuit(ReplayFixtureExecutionState &state)
+{
+	if (state.combatTargetNativeAi != "Fallen"
+	    || state.combatTargetFallenRallyTicks == 0
+	    || state.combatTargetHitPointsQ6 <= 0)
+		return;
+	if (state.life <= 0
+	    || (state.combatTargetLevelId != 0
+	        && state.levelId != state.combatTargetLevelId)) {
+		--state.combatTargetFallenRallyTicks;
+		return;
+	}
+	const int32_t distance = std::max(
+	    std::abs(state.positionX - state.combatTargetPositionX),
+	    std::abs(state.positionY - state.combatTargetPositionY));
+	if (distance > 1) {
+		const int32_t direction = GetDirection(
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
+		    state.positionX,
+		    state.positionY);
+		const int32_t firstTurn = GenerateRnd(state, 2) == 0 ? 1 : -1;
+		const int32_t secondTurn = GenerateRnd(state, 2) == 0 ? 2 : -2;
+		const int32_t candidateDirections[] = {
+			direction,
+			(direction + firstTurn + 8) % 8,
+			(direction - firstTurn + 8) % 8,
+			(direction + secondTurn + 8) % 8,
+			(direction - secondTurn + 8) % 8,
+		};
+		for (const int32_t candidateDirection : candidateDirections) {
+			const auto displacement = DirectionDisplacements[candidateDirection];
+			const int32_t candidateX = state.combatTargetPositionX + displacement.first;
+			const int32_t candidateY = state.combatTargetPositionY + displacement.second;
+			if (candidateX < 0 || candidateX >= 40
+			    || candidateY < 0 || candidateY >= 40
+			    || (candidateX == state.positionX && candidateY == state.positionY))
+				continue;
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = candidateDirection;
+			break;
+		}
+	}
+	--state.combatTargetFallenRallyTicks;
 }
 
 int32_t GenerateReplayMana(
@@ -9128,7 +9178,8 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
-		AdvanceReplayFallenStandAnimation(state);
+		if (!AdvanceReplayFallenStandAnimation(state))
+			AdvanceReplayFallenRallyPursuit(state);
 		state.combatTargetAutonomousActionHandled =
 			AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);

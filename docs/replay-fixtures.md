@@ -64,8 +64,11 @@ animation boundary they perform the native `FlipCoin(4)` rally admission,
 apply the intelligence-scaled Q6 self-heal, and project the
 `30 * intelligence + 105` rally timer. Non-default Fallen state is included in
 the tagged `godevilution-monster-fallen-rally-v1` checkpoint extension. The
-replay path currently models one target; multi-actor rally propagation and
-pursuit remain server-owned and are the next replay expansion.
+replay path currently models one target, including one-tick pursuit beyond its
+normal aggro range with native future occupancy and rally-timer decrement;
+`gameplay-fallen-rally.json` covers admission and
+`gameplay-fallen-rally-pursuit.json` covers the pursuit tick. Multi-actor rally
+propagation remains server-owned and is the next replay expansion.
 
 The authoritative server represents every player bow shot as a `WeaponArrow`
 projectile. A normal bow emits one arrow; native `MultipleArrows` emits the

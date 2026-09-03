@@ -7,9 +7,9 @@ rally-timer state. Native and managed runners advance the same 11-frame/3-tick
 animation, perform the animation-boundary `FlipCoin(4)` admission, apply the
 native Q6 self-heal, and project the rally timer. Canonical hashes include the
 additive `godevilution-monster-fallen-rally-v1` state. The cross-runner
-stand-animation and rally-admission fixtures close the current checkpoint gap;
-multi-actor rally propagation and pursuit remain covered by the live
-authoritative controller and are the next replay expansion.
+stand-animation, rally-admission, and one-tick pursuit fixtures close the
+current checkpoint gap. Multi-actor rally propagation remains covered by the
+live authoritative controller and is the next replay expansion.
 
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
