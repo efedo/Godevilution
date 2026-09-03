@@ -49,6 +49,7 @@ public static class AuthoritativeObjectSelector
             || @object.QuestTransitionKind != 0
             || @object.RewardKind != 0
             || @object.QuestSequenceFollowUpKind != 0
+            || @object.DialogueMessageId != 0
             || @object.TrapArmed;
     }
 }

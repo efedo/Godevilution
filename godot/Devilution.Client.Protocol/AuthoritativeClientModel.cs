@@ -924,6 +924,7 @@ public sealed class AuthoritativeClientModel
             || @object.ProjectileSourceKind is < 0 or > 1
             || !producesProjectile && @object.ProjectileSourceKind != 0
             || @object.NativeObjectId > NativeMaximumObjectId
+            || @object.DialogueMessageId is < 0 or > short.MaxValue
             || @object.AnimationFrame > byte.MaxValue
             || @object.ActivatedAnimationFrame > byte.MaxValue
             || @object.Breakable && @object.MissilePassable

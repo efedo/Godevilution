@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Projected authored object snapshots now carry an additive
+  `dialogue_message_id`. Dialogue-only environmental objects can be discovered
+  and routed by native and Godot clients even when they are not linked to a
+  quest; invalid identities are rejected at the server, native, and Godot
+  boundaries.
+
 - Authoritative unique-monster dialogue snapshots now carry an additive,
   validated state projection. Staged Gharbad/Warlord routes explicitly move
   from `Inquiring` to `Combat`, allowing the native compatibility client to

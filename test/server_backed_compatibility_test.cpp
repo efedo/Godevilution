@@ -103,6 +103,11 @@ TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTarget
 	presentationObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation);
 	ASSERT_TRUE(projection.Apply({}, {}, { presentationObject }, 1).has_value());
 	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t> { 17 });
+
+	presentationObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::None);
+	presentationObject.dialogueMessageId = 412;
+	ASSERT_TRUE(projection.Apply({}, {}, { presentationObject }, 1).has_value());
+	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t> { 17 });
 }
 
 TEST(ServerBackedCompatibility, AuthoritativeMissilesDoNotOwnLegacyTileFlags)

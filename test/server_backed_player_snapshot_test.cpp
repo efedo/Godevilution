@@ -3480,6 +3480,22 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_native_object_id(static_cast<uint32_t>(OBJ_LAST) + 1);
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidNativePresentation).has_value());
 
+	protocol::Snapshot dialogueOnly;
+	auto *dialogueObject = dialogueOnly.add_objects();
+	dialogueObject->set_entity_id(7);
+	dialogueObject->set_object_id(1);
+	dialogueObject->set_dialogue_message_id(412);
+	auto projectedDialogue = ProjectObjectSnapshots(dialogueOnly);
+	ASSERT_TRUE(projectedDialogue.has_value());
+	EXPECT_EQ(projectedDialogue->front().dialogueMessageId, 412);
+
+	protocol::Snapshot invalidDialogue = dialogueOnly;
+	invalidDialogue.mutable_objects(0)->set_dialogue_message_id(-1);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidDialogue).has_value());
+	invalidDialogue = dialogueOnly;
+	invalidDialogue.mutable_objects(0)->set_dialogue_message_id(std::numeric_limits<int16_t>::max() + 1);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidDialogue).has_value());
+
 	protocol::Snapshot atCapacity;
 	for (int index = 0; index < MAXOBJECTS; ++index) {
 		auto *object = atCapacity.add_objects();

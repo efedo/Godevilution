@@ -266,6 +266,7 @@ internal static class DiabloProtocolMapper
                 KeepVisibleAfterActivation = !@object.HideWhenActivated,
                 AnimationFrame = checked((uint)@object.AnimationFrame),
                 ActivatedAnimationFrame = checked((uint)@object.ActivatedAnimationFrame),
+                DialogueMessageId = @object.DialogueMessageId,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -640,6 +641,7 @@ internal static class DiabloProtocolMapper
                 || !producesProjectile && @object.ProjectileSourceKind
                     != AuthoritativeObjectProjectileSourceKind.Object
                 || @object.NativeObjectId > AuthoritativeLevel.NativeMaximumObjectId
+                || @object.DialogueMessageId is < 0 or > short.MaxValue
                 || !AuthoritativeWorldObject.IsValidPresentation(
                     @object.HideWhenActivated,
                     @object.AnimationFrame,

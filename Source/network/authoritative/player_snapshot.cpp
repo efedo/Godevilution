@@ -648,6 +648,9 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		if (source.animation_frame() > std::numeric_limits<uint8_t>::max()
 		    || source.activated_animation_frame() > std::numeric_limits<uint8_t>::max())
 			return tl::make_unexpected("Server-backed snapshot contains an invalid object animation frame.");
+		if (source.dialogue_message_id() < 0
+		    || source.dialogue_message_id() > std::numeric_limits<int16_t>::max())
+			return tl::make_unexpected("Server-backed snapshot contains an invalid object dialogue identity.");
 		const bool transitionSetsVariable = source.quest_transition_kind() >= 3 && source.quest_transition_kind() <= 8;
 		const bool transitionValid = source.quest_transition_kind() == 0
 		    || (source.quest_id() != 0
@@ -725,6 +728,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .questTransitionKind = source.quest_transition_kind(),
 		    .rewardKind = source.reward_kind(),
 		    .questSequenceFollowUpKind = source.quest_sequence_follow_up_kind(),
+		    .dialogueMessageId = source.dialogue_message_id(),
 		});
 	}
 	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) { return left.entityId < right.entityId; });

@@ -14,6 +14,11 @@ event, and leaves store-menu presentation to the client.
 The same greeting metadata is now included in authoritative snapshots so the
 Godot client can discover and route these interactions without native positions.
 
+Authored object snapshots now also carry an optional dialogue identity. Native
+and Godot object selectors treat a nonzero `dialogue_message_id` as an
+authoritative interaction even when `quest_id` is zero, enabling dialogue-only
+environmental objects without client-side message tables.
+
 The `ReadQuestNote` action now resolves its dialogue identity from the authored
 item definition (`item_action_message_id`) instead of embedding the native
 message number in the server action branch. Older packs remain compatible via

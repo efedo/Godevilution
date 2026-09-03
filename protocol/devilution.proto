@@ -927,6 +927,9 @@ message ObjectSnapshot {
 	int32 reward_origin_kind = 37;
 	// Native set-level identity for set-level-origin rewards; zero is legacy default.
 	int32 reward_set_level_id = 38;
+	// Optional authored dialogue identity emitted when this object is activated.
+	// Unlike quest-linked dialogue, this may be nonzero with quest_id unset.
+	int32 dialogue_message_id = 39;
 }
 
 enum ObjectPresentationKind {

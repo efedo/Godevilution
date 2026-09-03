@@ -320,7 +320,8 @@ std::optional<uint32_t> ServerBackedWorldProjection::AuthoritativeObjectAt(int32
 		    || candidate.questId != 0
 		    || candidate.questTransitionKind != 0
 		    || candidate.rewardKind != 0
-		    || candidate.questSequenceFollowUpKind != 0;
+		    || candidate.questSequenceFollowUpKind != 0
+		    || candidate.dialogueMessageId != 0;
 		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed
 		    && (hasAuthoritativeBehavior || candidate.trapArmed)
 		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)

@@ -63,6 +63,17 @@ public sealed class AuthoritativeObjectSelectorTests
     }
 
     [Fact]
+    public void SelectsDialogueOnlyObjects()
+    {
+        var snapshot = SnapshotWithObject(new ObjectSnapshot {
+            EntityId = 21,
+            DialogueMessageId = 412,
+        });
+
+        Assert.Equal(21U, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
+    }
+
+    [Fact]
     public void RejectsInactiveOrMisplacedObjects()
     {
         var snapshot = new Snapshot {

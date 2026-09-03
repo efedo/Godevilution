@@ -491,6 +491,10 @@ Windows toolchain command.
   for an item reward and carry its native set-level identity. Zero preserves
   legacy object-relative reward behavior; clients must treat both fields as
   server-owned projection metadata.
+- `ObjectSnapshot.dialogue_message_id` field 39 carries an optional authored
+  dialogue identity emitted when an object activates. It may be nonzero when
+  `quest_id` is zero, allowing dialogue-only environmental objects to be
+  discovered and routed without client-side message tables.
 - `ObjectSnapshot.projectile_source_kind` field 32 carries the authored
   projectile origin. Zero preserves target-origin compatibility; the additive
   activating-player value is currently valid for Phasing rows. Nonzero source

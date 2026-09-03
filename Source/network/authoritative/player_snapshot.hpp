@@ -228,6 +228,8 @@ struct ProjectedObjectSnapshot {
 	int32_t rewardKind = 0;
 	/** Ordered quest/world-mutation follow-up identity, when present. */
 	int32_t questSequenceFollowUpKind = 0;
+	/** Optional authored dialogue identity emitted when the object activates. */
+	int32_t dialogueMessageId = 0;
 };
 
 struct ProjectedProjectileSnapshot {

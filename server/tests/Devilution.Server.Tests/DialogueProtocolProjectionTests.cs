@@ -1585,6 +1585,53 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsDialogueOnlyObjectIdentity()
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [],
+            null) {
+            Objects = [new DiabloObjectState(
+                2,
+                4,
+                0,
+                4,
+                5,
+                false,
+                0,
+                AuthoritativeObjectEffectKind.None,
+                0) {
+                DialogueMessageId = 412,
+            }],
+        };
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        var @object = Assert.Single(snapshot.Objects);
+        Assert.Equal(0U, @object.QuestId);
+        Assert.Equal(412, @object.DialogueMessageId);
+    }
+
+    [Fact]
     public void RejectsInvalidProjectedObjectState()
     {
         var player = new StorePlayerSnapshot(
@@ -1676,6 +1723,8 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with {
             NativeObjectId = (uint)(AuthoritativeLevel.NativeMaximumObjectId + 1),
         });
+        AssertRejected(value => value with { DialogueMessageId = -1 });
+        AssertRejected(value => value with { DialogueMessageId = short.MaxValue + 1 });
         AssertRejected(value => value with {
             Breakable = true,
             MissilePassable = true,
