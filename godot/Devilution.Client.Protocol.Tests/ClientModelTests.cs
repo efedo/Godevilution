@@ -9,6 +9,47 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientModelTests
 {
     [Fact]
+    public void SelectsAdjacentServerOwnedTownerGreeting()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7, LevelId = 0, PositionX = 2, PositionY = 3 } },
+                LevelGeometry = { new LevelGeometrySnapshot { LevelId = 0, Width = 10, Height = 10 } },
+                TownerGreetings = {
+                    new TownerGreetingSnapshot { TownerId = 4, LevelId = 0, PositionX = 2, PositionY = 2, MessageId = 150 },
+                },
+            }));
+
+        var greeting = model.TownerGreetingAt(2, 2);
+        Assert.NotNull(greeting);
+        Assert.Equal(4, greeting!.TownerId);
+        Assert.Equal(150, greeting.MessageId);
+
+        var heldSnapshot = model.Snapshot!.Clone();
+        heldSnapshot.Players[0].HeldItem = new ItemSnapshot {
+            ItemSeed = 1,
+            State = new ItemStateSnapshot { ItemType = 1, ItemIndex = 1 },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: heldSnapshot));
+        Assert.Null(model.TownerGreetingAt(2, 2));
+    }
+
+    [Fact]
+    public void RejectsDuplicateTownerGreetingIds()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+                TownerGreetings = {
+                    new TownerGreetingSnapshot { TownerId = 4, LevelId = 0, PositionX = 2, PositionY = 2, MessageId = 150 },
+                    new TownerGreetingSnapshot { TownerId = 4, LevelId = 0, PositionX = 3, PositionY = 3, MessageId = 151 },
+                },
+            })));
+    }
+
+    [Fact]
     public void ValidatesAuthoritativeStateHashFormatWhileRetainingLegacySnapshots()
     {
         var model = new AuthoritativeClientModel();

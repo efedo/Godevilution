@@ -11,6 +11,8 @@ General town vendor greetings now have an additive `TalkToTownerRequested`
 command. The base content pack supplies native towner positions and message
 identities; the server validates adjacency and cursor state, emits the dialogue
 event, and leaves store-menu presentation to the client.
+The same greeting metadata is now included in authoritative snapshots so the
+Godot client can discover and route these interactions without native positions.
 
 The `ReadQuestNote` action now resolves its dialogue identity from the authored
 item definition (`item_action_message_id`) instead of embedding the native

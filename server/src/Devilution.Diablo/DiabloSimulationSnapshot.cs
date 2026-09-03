@@ -528,6 +528,9 @@ public sealed record DiabloSimulationSnapshot(
     /** Content-owned repeatable quest/towner interaction definitions. */
     public IReadOnlyList<AuthoritativeQuestTownerInteractionDefinition> QuestTownerInteractions { get; init; } = [];
 
+    /** Content-owned general towner greeting definitions. */
+    public IReadOnlyList<AuthoritativeTownerGreetingDefinition> TownerGreetings { get; init; } = [];
+
     /** Active content world-cell mutations persisted with the session. */
     public IReadOnlyList<uint> ActiveWorldMutationIds { get; init; } = [];
 
@@ -895,6 +898,7 @@ public sealed partial class DiabloSimulation
             VictoryTriggered = WorldState.VictoryTriggered,
             Difficulty = this.Difficulty,
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
+            TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
                 .OrderBy(mutationId => mutationId)
                 .ToArray(),

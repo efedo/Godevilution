@@ -24,8 +24,8 @@ public sealed class AuthoritativeTownerGreetingCatalog
                 definition.TownerId < 0
                 || definition.TownerId > byte.MaxValue
                 || definition.LevelId > ushort.MaxValue
-                || definition.PositionX < 0
-                || definition.PositionY < 0
+                || definition.PositionX is < 0 or > byte.MaxValue
+                || definition.PositionY is < 0 or > byte.MaxValue
                 || definition.MessageId <= 0
                 || definition.MessageId > short.MaxValue)) {
             throw new InvalidDataException("Towner greetings contain invalid values.");

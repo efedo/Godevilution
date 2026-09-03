@@ -11,6 +11,40 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsTownerGreetingMetadata()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                TownerGreetings = [
+                    new AuthoritativeTownerGreetingDefinition(4, 17, 7, 8, 150),
+                ],
+            };
+
+        var greeting = Assert.Single(
+            DiabloProtocolMapper.ToProtocolSnapshot(source).TownerGreetings);
+
+        Assert.Equal(4, greeting.TownerId);
+        Assert.Equal(17U, greeting.LevelId);
+        Assert.Equal((7, 8), (greeting.PositionX, greeting.PositionY));
+        Assert.Equal(150, greeting.MessageId);
+    }
+
+    [Fact]
+    public void RejectsDuplicateTownerGreetingMetadata()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                TownerGreetings = [
+                    new AuthoritativeTownerGreetingDefinition(4, 17, 7, 8, 150),
+                    new AuthoritativeTownerGreetingDefinition(4, 17, 8, 8, 151),
+                ],
+            };
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void ProjectsPlayerLightRadiusThroughTheProtocolSnapshot()
     {
         var source = CreateOriginSnapshot(

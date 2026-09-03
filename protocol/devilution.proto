@@ -465,6 +465,8 @@ message Snapshot {
 	// canonical gameplay state hash.
 	string content_manifest_hash = 20;
 	string ruleset_identity_hash = 21;
+	// Additive content-owned general towner greeting metadata.
+	repeated TownerGreetingSnapshot towner_greetings = 22;
 }
 
 message SetLevelObjectOriginSnapshot {
@@ -1310,6 +1312,15 @@ message GameEvent {
 		VictoryEvent victory = 14;
 		MapOpenedEvent map_opened = 15;
 	}
+}
+
+/** Content-owned native location and message identity for a general greeting. */
+message TownerGreetingSnapshot {
+	int32 towner_id = 1;
+	uint32 level_id = 2;
+	int32 position_x = 3;
+	int32 position_y = 4;
+	int32 message_id = 5;
 }
 
 message DamageEvent {

@@ -403,6 +403,15 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            if (model.TownerGreetingAt(target.X, target.Y) is { } greeting) {
+                QueueInteractionAfterMove(target, new Command {
+                    TalkToTownerRequested = new TalkToTownerRequested {
+                        TownerId = checked((uint)greeting.TownerId),
+                    },
+                });
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             if (model.WarpTriggerAt(target.X, target.Y) is { } warp) {
                 if (!warp.Available) {
                     hud?.SetStatus("That route is not currently available.");
@@ -527,6 +536,9 @@ public partial class Main : Node2D
                     pending.Target.Y) is { } dialogue
                 && dialogue.QuestId == pending.Command.TalkToQuestRequested.QuestId
                 && dialogue.MonsterEntityId == pending.Command.TalkToQuestRequested.TargetEntityId,
+            Command.IntentOneofCase.TalkToTownerRequested =>
+                model.TownerGreetingAt(pending.Target.X, pending.Target.Y) is { } greeting
+                && greeting.TownerId == pending.Command.TalkToTownerRequested.TownerId,
             _ => false,
         };
     }

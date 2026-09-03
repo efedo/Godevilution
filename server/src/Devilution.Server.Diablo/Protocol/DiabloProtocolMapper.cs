@@ -39,6 +39,7 @@ internal static class DiabloProtocolMapper
             source.QuestTownerInteractions,
             source.Quests,
             projectedLevels);
+        ValidateProjectedTownerGreetings(source.TownerGreetings, projectedLevels);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
         ValidateProjectedMaterializedProceduralLevelIds(
             source.MaterializedProceduralLevelIds);
@@ -344,6 +345,15 @@ internal static class DiabloProtocolMapper
             if (interaction.MessageId != 0)
                 projectedInteraction.MessageId = interaction.MessageId;
             snapshot.QuestTownerInteractions.Add(projectedInteraction);
+        }
+        foreach (var greeting in source.TownerGreetings.OrderBy(greeting => greeting.TownerId)) {
+            snapshot.TownerGreetings.Add(new TownerGreetingSnapshot {
+                TownerId = greeting.TownerId,
+                LevelId = greeting.LevelId,
+                PositionX = greeting.PositionX,
+                PositionY = greeting.PositionY,
+                MessageId = greeting.MessageId,
+            });
         }
         foreach (var projectile in source.Projectiles) {
             snapshot.Projectiles.Add(new ProjectileSnapshot {
@@ -1100,6 +1110,34 @@ internal static class DiabloProtocolMapper
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "Authoritative monster state contains an invalid pack leader.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedTownerGreetings(
+        IReadOnlyList<AuthoritativeTownerGreetingDefinition> greetings,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        if (greetings.Count > 256) {
+            throw new InvalidDataException(
+                "Authoritative towner greetings exceed the shared protocol limit.");
+        }
+
+        var townerIds = new HashSet<int>();
+        foreach (var greeting in greetings) {
+            var hasLevel = levels.TryGetValue(greeting.LevelId, out var level);
+            if (!townerIds.Add(greeting.TownerId)
+                || greeting.TownerId is < 0 or > byte.MaxValue
+                || greeting.LevelId > ushort.MaxValue
+                || greeting.PositionX is < 0 or > byte.MaxValue
+                || greeting.PositionY is < 0 or > byte.MaxValue
+                || levels.Count > 0
+                    && (!hasLevel
+                        || greeting.PositionX >= level!.Width
+                        || greeting.PositionY >= level.Height)
+                || greeting.MessageId is <= 0 or > short.MaxValue) {
+                throw new InvalidDataException(
+                    "Authoritative towner greeting is outside the shared protocol range.");
             }
         }
     }

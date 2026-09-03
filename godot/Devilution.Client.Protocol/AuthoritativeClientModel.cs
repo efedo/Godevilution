@@ -96,6 +96,10 @@ public sealed class AuthoritativeClientModel
     public QuestTownerInteractionSnapshot? QuestTownerInteractionAt(int x, int y)
         => AuthoritativeQuestTownerInteractionSelector.SelectAt(Snapshot, x, y);
 
+    /** Returns a general towner greeting at a clicked tile; range is checked before submission. */
+    public TownerGreetingSnapshot? TownerGreetingAt(int x, int y)
+        => AuthoritativeTownerGreetingSelector.SelectAt(Snapshot, x, y);
+
     public ulong CurrentTick => Snapshot?.Tick ?? 0;
 
     /** The server puts the receiving participant first in every snapshot. */
@@ -213,6 +217,7 @@ public sealed class AuthoritativeClientModel
             ValidateMaterializedProceduralLevels(message.Snapshot);
             ValidateEntityPositions(message.Snapshot);
             ValidateQuestTownerInteractions(message.Snapshot);
+            ValidateTownerGreetings(message.Snapshot);
             var portalIds = new HashSet<uint>();
             foreach (var portal in message.Snapshot.Portals) {
                 if (portal.PortalId == 0
@@ -1047,6 +1052,32 @@ public sealed class AuthoritativeClientModel
                     && interaction.Variable2 is < 0 or > byte.MaxValue)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
+            }
+        }
+    }
+
+    private static void ValidateTownerGreetings(Snapshot snapshot)
+    {
+        if (snapshot.TownerGreetings.Count > 256) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many towner greetings.");
+        }
+
+        var levelGeometry = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        var townerIds = new HashSet<int>();
+        foreach (var greeting in snapshot.TownerGreetings) {
+            if (greeting.TownerId is < 0 or > byte.MaxValue
+                || !townerIds.Add(greeting.TownerId)
+                || greeting.LevelId > ushort.MaxValue
+                || greeting.PositionX is < 0 or > byte.MaxValue
+                || greeting.PositionY is < 0 or > byte.MaxValue
+                || levelGeometry.Count > 0
+                    && (!levelGeometry.TryGetValue(greeting.LevelId, out var level)
+                        || level.Width > 0 && greeting.PositionX >= level.Width
+                        || level.Height > 0 && greeting.PositionY >= level.Height)
+                || greeting.MessageId is <= 0 or > short.MaxValue) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid towner greeting.");
             }
         }
     }

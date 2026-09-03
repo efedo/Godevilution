@@ -12,6 +12,19 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class AuthoritativeClientTransportTests
 {
     [Fact]
+    public void PreservesTownerGreetingCommandAcrossProtocolSerialization()
+    {
+        var command = new Command {
+            TalkToTownerRequested = new TalkToTownerRequested { TownerId = 7 },
+        };
+
+        var roundTrip = Command.Parser.ParseFrom(command.ToByteArray());
+
+        Assert.Equal(Command.IntentOneofCase.TalkToTownerRequested, roundTrip.IntentCase);
+        Assert.Equal(7U, roundTrip.TalkToTownerRequested.TownerId);
+    }
+
+    [Fact]
     public void PreservesTargetCellMovementFieldsAcrossProtocolSerialization()
     {
         var command = new Command {

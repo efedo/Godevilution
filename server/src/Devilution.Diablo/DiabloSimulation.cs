@@ -338,7 +338,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             proceduralSetPieceOriginSeed: options.RandomSeed,
             experience: options.Experience,
             nativeMissiles: options.NativeMissiles,
-            nativeMissileSprites: options.NativeMissileSprites);
+            nativeMissileSprites: options.NativeMissileSprites,
+            townerGreetings: options.TownerGreetings);
         worldState.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         return simulation;
@@ -419,7 +420,8 @@ public sealed partial class DiabloSimulation
         uint proceduralSetPieceOriginSeed = 0,
         AuthoritativeExperienceCatalog? experience = null,
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
-        AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null)
+        AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -448,6 +450,7 @@ public sealed partial class DiabloSimulation
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
         QuestDialogueStages = questDialogueStages;
+        TownerGreetings = townerGreetings;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
         if (proceduralSetPieceOrigins is not null) {
@@ -506,6 +509,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated staged unique-monster dialogue projected to world commands. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; }
+
+    /** Validated native greetings projected to presentation clients. */
+    public AuthoritativeTownerGreetingCatalog? TownerGreetings { get; }
 
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }

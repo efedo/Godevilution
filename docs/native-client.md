@@ -434,6 +434,8 @@ explicit migration seams, not server-authority claims:
   remain server commands where a store service is declared. Greeting text
   still resolves through the native text catalog until localized presentation
   content is externalized.
+  The Godot client now discovers the same positions from the authoritative
+  snapshot and queues the command after reaching the selected towner.
 
 New authored rows must be accompanied by native parity tests and a protocol
 projection before these fallback branches are removed. The legacy path remains

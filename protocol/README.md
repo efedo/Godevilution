@@ -308,6 +308,10 @@ Windows toolchain command.
   `_qvar1` gate, marker, and progress-only flag. The server consumes the
   authored item and reward while retaining the quest's active/completion state;
   absent fields preserve the completing-turn-in behavior.
+- `Snapshot.towner_greetings` carries validated content-owned native towner
+  locations and greeting message identities. Godot clients use these entries
+  to discover clicked towners and submit `TalkToTownerRequested`; the text
+  itself may remain in the legacy localization catalog during migration.
 - `QuestSnapshot.native_quest_id` field 28 optionally carries the validated
   native quest ordinal (`0` through `23`). It must be unique within a snapshot.
   Compatibility clients use it to hydrate legacy quest records without deriving
