@@ -144,6 +144,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
+        foreach (var projectileEntityId in this.world.Projectiles.Keys)
+            projectileEntityIds.Reserve(projectileEntityId);
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
         this.reflectSpell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Reflect);
@@ -5082,6 +5084,16 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionX,
                 target.PositionY);
             var distance = ClampNativeDistance(victimDistance);
+            // Acid owns one continuous controller from the travelling missile
+            // through its splat and persistent puddle. Never admit a second
+            // Acid controller while that chain is still live.
+            if (target.NativeAi is "Acid" or "AcidUnique"
+                && world.Projectiles.Values.Any(projectile =>
+                    projectile.SourceEntityId == target.EntityId
+                    && (projectile.Behavior == AuthoritativeProjectileBehavior.Acid
+                        || projectile.Behavior == AuthoritativeProjectileBehavior.AcidSplat
+                        || projectile.Behavior == AuthoritativeProjectileBehavior.AcidPuddle)))
+                continue;
             if (TryAdvanceFallenRally(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceSneakAi(target, victim, players, distance))
@@ -8737,12 +8749,19 @@ public sealed class DiabloCombatCommandProcessor
             && monster.AdvanceRangedAvoidanceDelay())
             return true;
         if (world.Projectiles.Values.Any(projectile =>
-                projectile.SourceEntityId == monster.EntityId
-                && (projectile.Behavior == missile.ProjectileBehavior
-                    || (missile.ProjectileBehavior
-                            == AuthoritativeProjectileBehavior.ApocalypseController
-                        && projectile.Behavior
-                        == AuthoritativeProjectileBehavior.ApocalypseBoom))))
+            {
+                if (projectile.SourceEntityId != monster.EntityId)
+                    return false;
+                if (projectile.Behavior == missile.ProjectileBehavior)
+                    return true;
+                if (missile.ProjectileBehavior
+                    == AuthoritativeProjectileBehavior.ApocalypseController
+                    && projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseBoom)
+                    return true;
+                return missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+                    && (projectile.Behavior == AuthoritativeProjectileBehavior.AcidSplat
+                        || projectile.Behavior == AuthoritativeProjectileBehavior.AcidPuddle);
+            }))
             return true;
         var rangedAvoidanceUsesRoundWalk = false;
         var rangedAvoidanceRoundWalkTurn = -1;

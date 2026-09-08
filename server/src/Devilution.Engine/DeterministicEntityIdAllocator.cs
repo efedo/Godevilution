@@ -21,6 +21,18 @@ public class DeterministicEntityIdAllocator
         return allocated;
     }
 
+    /** Reserves an externally-created ID so later allocations cannot reuse it. */
+    public void Reserve(uint reservedId)
+    {
+        if (reservedId == 0)
+            throw new ArgumentOutOfRangeException(nameof(reservedId));
+        if (nextId == 0)
+            return;
+        if (reservedId < nextId)
+            return;
+        nextId = reservedId == uint.MaxValue ? 0 : reservedId + 1;
+    }
+
     /** Allocates the next non-zero ID that is not occupied by caller-owned state. */
     public uint Allocate(Func<uint, bool> isOccupied)
     {

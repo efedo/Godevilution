@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/acid-lifecycle",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.acid",
+    "version": "0.1.0",
+    "sha256": "9020e612052f5db1591894ff1c8807722533a7475f37bb2524990fa55424a9dd"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 5,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 0,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Acid",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "spell_id": 51,
+      "level_id": 1,
+      "position_x": 3,
+      "position_y": 3,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 1,
+      "damage_type": 4,
+      "remaining_ticks": 1,
+      "behavior": 51,
+      "phase": 0,
+      "speed": 0,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "456be39d55fe83c8c55ddd2f2b70e5da1f8abb2fb9d1a0c53374f768c416e25c" },
+    { "tick": 2, "state_sha256": "0cb82afe0114358a20ff6deec7001793e23a93c0e73a73d7c43876b7d1b1513d" },
+    { "tick": 3, "state_sha256": "c3d8fb9991fc063c056fdf3fc34fab36d9a9bb9eec38cca1546c6c67248929ab" },
+    { "tick": 4, "state_sha256": "c3d8fb9991fc063c056fdf3fc34fab36d9a9bb9eec38cca1546c6c67248929ab" }
+  ]
+}

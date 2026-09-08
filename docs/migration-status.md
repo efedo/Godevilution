@@ -2,6 +2,12 @@
 
 Status date: 2026-09-08
 
+The replay gate now covers the validated Acid projectile lifecycle across the
+native and managed runners. A seeded initial Acid missile expires into its
+splat, shifts into the authored one-tile puddle, enters impact, and expires
+without admitting a duplicate controller; projectile identity allocation also
+reserves externally seeded IDs so replacement projectiles remain collision-free.
+
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
 animation, perform the animation-boundary `FlipCoin(4)` admission, apply the

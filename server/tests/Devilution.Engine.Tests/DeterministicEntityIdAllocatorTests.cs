@@ -42,6 +42,17 @@ public sealed class DeterministicEntityIdAllocatorTests
     }
 
     [Fact]
+    public void ReservesExternallyCreatedIdentitiesBeforeTheyAreReleased()
+    {
+        var allocator = new DeterministicEntityIdAllocator(20);
+
+        allocator.Reserve(20);
+        Assert.Equal(21U, allocator.Allocate());
+        allocator.Reserve(25);
+        Assert.Equal(26U, allocator.Allocate());
+    }
+
+    [Fact]
     public void CollisionAtTheEndOfTheIdentitySpaceFailsWithoutReturningZero()
     {
         var allocator = new DeterministicEntityIdAllocator(uint.MaxValue);

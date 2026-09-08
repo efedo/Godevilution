@@ -72,6 +72,10 @@ constexpr int32_t EtherealizeStatusBehavior = 3;
 constexpr int32_t BerserkBehavior = 44;
 constexpr int32_t HorkSpawnBehavior = 57;
 constexpr int32_t SnakeChargeBehavior = 54;
+constexpr int32_t AcidBehavior = 51;
+constexpr int32_t AcidSplatBehavior = 52;
+constexpr int32_t AcidPuddleBehavior = 53;
+constexpr int32_t AcidDamageType = 4;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
 	{ 6, 0 }, { 5, 0 }, { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 },
 	{ 6, 1 }, { 5, 1 }, { 4, 1 }, { 3, 1 }, { 6, 2 }, { 2, 1 },
@@ -7562,6 +7566,8 @@ void AdvanceReplayMonsterAttack(
 	}
 	if (state.combatTargetNativeAi == "SkeletonRanged"
 	    || state.combatTargetNativeAi == "HorkDemon"
+	    || state.combatTargetNativeAi == "Acid"
+	    || state.combatTargetNativeAi == "AcidUnique"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
 	    || state.combatTargetNativeAi == "Lich"
@@ -8895,6 +8901,97 @@ void AdmitReplayAutonomousMonsterArrow(
 	}
 }
 
+/** Advances the native Acid projectile, splat, and persistent puddle chain. */
+void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state)
+{
+	const size_t initialProjectileCount = state.projectiles.size();
+	for (size_t index = 0; index < initialProjectileCount && index < state.projectiles.size();) {
+		auto &projectile = state.projectiles[index];
+		if (projectile.behavior == AcidBehavior) {
+			static_cast<void>(MoveReplayNativeProjectile(projectile));
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks != 0) {
+				++index;
+				continue;
+			}
+			const uint32_t entityId = [&] {
+				uint32_t next = 0x80000000U;
+				for (const auto &candidate : state.projectiles)
+					next = std::max(next, candidate.entityId + 1U);
+				return next;
+			}();
+			ReplayFixtureProjectileState splat;
+			splat.entityId = entityId;
+			splat.sourceEntityId = projectile.sourceEntityId;
+			splat.spellId = projectile.spellId;
+			splat.levelId = projectile.levelId;
+			splat.positionX = projectile.positionX;
+			splat.positionY = projectile.positionY;
+			splat.targetX = projectile.positionX;
+			splat.targetY = projectile.positionY;
+			splat.startX = splat.positionX;
+			splat.startY = splat.positionY;
+			splat.damageType = AcidDamageType;
+			splat.remainingTicks = 1;
+			splat.behavior = AcidSplatBehavior;
+			state.projectiles.erase(state.projectiles.begin() + index);
+			state.projectiles.push_back(std::move(splat));
+			continue;
+		}
+		if (projectile.behavior == AcidSplatBehavior) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks != 0) {
+				++index;
+				continue;
+			}
+			const uint32_t entityId = [&] {
+				uint32_t next = 0x80000000U;
+				for (const auto &candidate : state.projectiles)
+					next = std::max(next, candidate.entityId + 1U);
+				return next;
+			}();
+			ReplayFixtureProjectileState puddle;
+			puddle.entityId = entityId;
+			puddle.sourceEntityId = projectile.sourceEntityId;
+			puddle.spellId = projectile.spellId;
+			puddle.levelId = projectile.levelId;
+			puddle.positionX = projectile.positionX + 1;
+			puddle.positionY = projectile.positionY + 1;
+			puddle.targetX = puddle.positionX;
+			puddle.targetY = puddle.positionY;
+			puddle.startX = puddle.positionX;
+			puddle.startY = puddle.positionY;
+			puddle.damage = state.combatTargetMonsterLevel >= 2 ? 2 : 1;
+			puddle.damageType = AcidDamageType;
+			puddle.remainingTicks = static_cast<uint32_t>(GenerateRnd(state, 1) + 1);
+			puddle.behavior = AcidPuddleBehavior;
+			state.projectiles.erase(state.projectiles.begin() + index);
+			state.projectiles.push_back(std::move(puddle));
+			continue;
+		}
+		if (projectile.behavior == AcidPuddleBehavior) {
+			if (projectile.phase == 1) {
+				if (projectile.remainingTicks > 0)
+					--projectile.remainingTicks;
+				if (projectile.remainingTicks == 0)
+					state.projectiles.erase(state.projectiles.begin() + index);
+				else
+					++index;
+				continue;
+			}
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks == 0) {
+				projectile.phase = 1;
+				projectile.remainingTicks = 2;
+			}
+		}
+		++index;
+	}
+}
+
 /** Admits the compact Hellfire HorkDemon Hork Spawn branch. */
 void AdmitReplayAutonomousHorkSpawn(
     ReplayFixtureExecutionState &state,
@@ -9460,6 +9557,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayGuardianOneTick(state);
 		AdvanceReplayRageOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
+		AdvanceReplayAcidOneTick(state);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceMagicBoltsOneTick(state, simulationTick);

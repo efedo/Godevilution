@@ -393,7 +393,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 193 checked-in JSON fixtures and 212 registered
+the native replay gate contains 194 checked-in JSON fixtures and 213 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -956,6 +956,8 @@ Notable shared fixtures include:
 - `gameplay-mega-inferno-multiplayer-target.json` for nearest-participant
   InfernoController admission, secondary-target routing, and farther-primary
   preservation;
+- `gameplay-acid-lifecycle.json` for validated Acid expiry, splat conversion,
+  one-tile puddle placement, persistent impact, and deterministic expiry;
 - `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
   corpse scan order, first-candidate selection, deterministic movement, and
   selected-corpse checkpoint parity;

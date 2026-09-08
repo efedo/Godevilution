@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added cross-runner Acid lifecycle coverage. Native and managed replay now
+  agree on validated Acid expiry, splat conversion, puddle placement and
+  persistence, and puddle expiry; seeded projectile IDs are reserved so
+  replacement projectiles cannot reuse a released identity.
+
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both
   identities instead of allowing generic combat or movement to run.

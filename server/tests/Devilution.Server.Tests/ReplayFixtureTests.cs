@@ -7308,6 +7308,27 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidProjectileSplatAndPuddleLifecycleMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-lifecycle.json");
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Equal(6400, player.Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(
@@ -8287,6 +8308,68 @@ public sealed class ReplayFixtureTests
             startingProjectiles: startingProjectiles,
             startingMonsterMissiles: missiles,
             startingMonsterSpawnPlanner: enableSpawnPlanner ? spawnPlanner : null,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateAcidReplayExecutor(ReplayFixture fixture)
+    {
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            attackDamage: initial.CombatTargetAttackDamage,
+            acidResistance: initial.CombatTargetAcidResistance,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence);
+        var missiles = LoadReplayMonsterMissiles(fixture, "acid");
+        var projectiles = fixture.InitialProjectiles
+            .Select(source => new AuthoritativeProjectile(
+                source.EntityId,
+                source.SourceEntityId,
+                source.TargetEntityId,
+                source.SpellId,
+                source.LevelId,
+                source.PositionX,
+                source.PositionY,
+                source.TargetX,
+                source.TargetY,
+                source.Damage,
+                (AuthoritativeDamageType)source.DamageType,
+                source.AreaRadius,
+                source.RemainingTicks,
+                allowZeroSpellId: source.SpellId == 0) {
+                Behavior = (AuthoritativeProjectileBehavior)source.Behavior,
+                Phase = (AuthoritativeProjectilePhase)source.Phase,
+                Speed = source.Speed,
+                ImpactLifetime = source.ImpactLifetime,
+                DamageMinimum = source.DamageMinimum,
+                DamageMaximum = source.DamageMaximum,
+            })
+            .ToArray();
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        return new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingProjectiles: projectiles,
+            startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }
