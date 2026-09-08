@@ -7587,6 +7587,7 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
 	    || state.combatTargetNativeAi == "FireBat"
 	    || state.combatTargetNativeAi == "Torchant"
+	    || state.combatTargetNativeAi == "Magma"
 	    || state.combatTargetNativeAi == "Lich"
 	    || state.combatTargetNativeAi == "ArchLich"
 	    || state.combatTargetNativeAi == "Psychorb"
@@ -9439,7 +9440,8 @@ void AdmitReplayAutonomousMonsterMagic(
 	        && state.combatTargetNativeAi != "ArchLich"
 	        && state.combatTargetNativeAi != "Psychorb"
 	        && state.combatTargetNativeAi != "Necromorb"
-	        && state.combatTargetNativeAi != "BoneDemon")
+	        && state.combatTargetNativeAi != "BoneDemon"
+	        && state.combatTargetNativeAi != "Magma")
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
@@ -9500,7 +9502,7 @@ void AdmitReplayAutonomousMonsterMagic(
 	projectile.targetX = target.positionX;
 	projectile.targetY = target.positionY;
 	projectile.damage = 4;
-	projectile.damageType = 3;
+	projectile.damageType = state.combatTargetNativeAi == "Magma" ? 1 : 3;
 	projectile.remainingTicks = 256;
 	projectile.behavior = MonsterMagicBehavior;
 	projectile.originalDirection = GetDirection(
@@ -9513,6 +9515,17 @@ void AdmitReplayAutonomousMonsterMagic(
 	projectile.speed = 16;
 	projectile.impactLifetime = 1;
 	projectile.resistantDamageDivisor = 1;
+	if (state.combatTargetNativeAi == "Magma") {
+		projectile.traveledX = projectile.velocityX * 3;
+		projectile.traveledY = projectile.velocityY * 3;
+		const auto initialTile = CalculateReplayMissileTile(
+		    projectile.startX,
+		    projectile.startY,
+		    projectile.traveledX,
+		    projectile.traveledY);
+		projectile.positionX = initialTile.first;
+		projectile.positionY = initialTile.second;
+	}
 	state.projectiles.push_back(std::move(projectile));
 }
 

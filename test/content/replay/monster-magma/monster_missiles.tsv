@@ -1,0 +1,2 @@
+native_ai	missile_id	projectile_behavior	attack_mode	damage_type	projectile_speed	projectile_lifetime	projectile_damage	projectile_impact_lifetime	ranged_avoidance_minimum_distance	ranged_avoidance_far_distance	ranged_avoidance_chance_base	ranged_avoidance_chance_intelligence_scale	initial_travel_quanta
+Magma	MagmaBall	MonsterMagic	RangedAvoidance	Fire	16	256	4	1	2	3	500	500	3

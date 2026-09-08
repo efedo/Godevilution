@@ -19,6 +19,8 @@ All notable changes to this fork are documented below.
   coverage for nearest-secondary target selection and projectile travel parity.
 - Added a validated Torchant Fireball missile mapping and multiplayer replay
   coverage for nearest-secondary target selection and projectile travel parity.
+- Added a validated Magma MagmaBall mapping and Hellfire multiplayer replay
+  coverage for nearest-secondary target selection and native initial travel.
 
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both

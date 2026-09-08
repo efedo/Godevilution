@@ -20,6 +20,10 @@ Torchant now has a validated external Fireball missile mapping and a two-
 participant replay lane. Native and managed runners select the nearer
 secondary participant and preserve the monster-owned Fireball travel state.
 
+Magma now has a validated external MagmaBall mapping and a two-participant
+Hellfire replay lane. Native and managed runners select the nearer secondary
+participant and preserve the monster-owned initial travel advance.
+
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
 animation, perform the animation-boundary `FlipCoin(4)` admission, apply the

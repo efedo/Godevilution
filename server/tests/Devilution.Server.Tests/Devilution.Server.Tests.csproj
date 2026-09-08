@@ -195,6 +195,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus-multiplayer-target.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-multiplayer-target.json" Link="Fixtures/gameplay-fire-bat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-target.json" Link="Fixtures/gameplay-torchant-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-magma-multiplayer-target.json" Link="Fixtures/gameplay-magma-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous.json" Link="Fixtures/gameplay-monster-magic-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-arch-lich.json" Link="Fixtures/gameplay-monster-magic-arch-lich.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-bone-demon.json" Link="Fixtures/gameplay-monster-magic-bone-demon.json" CopyToOutputDirectory="PreserveNewest" />
