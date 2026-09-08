@@ -9,6 +9,9 @@ save contract,
 handshake identity publication, and explicit verified module packages. The
 module-package loader rejects malformed UTF-8 manifests, reparse-point
 entries, and noncanonical assembly paths before hashing or loading an assembly.
+Server-owned save envelopes, combined session checkpoints, command ledgers, and
+world-seed files use strict UTF-8 I/O and fail closed on malformed text during
+recovery.
 leased adapter wrapper uses a read/write operation barrier: replacement waits
 for in-flight operations, migrates initialized sessions before publication,
 and disposes drained game targets through an injected host policy.

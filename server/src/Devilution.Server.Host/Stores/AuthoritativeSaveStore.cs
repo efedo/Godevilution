@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text;
 
 namespace Devilution.Server.Stores;
 
@@ -28,8 +27,7 @@ public sealed class AuthoritativeSaveStore
         var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
         lock (pathLock) {
             try {
-                var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
-                    .GetBytes(serializedSave);
+                var bytes = StrictUtf8Text.Encode(serializedSave, "authoritative save");
                 using (var stream = new FileStream(
                     temporaryPath,
                     FileMode.CreateNew,
@@ -53,7 +51,9 @@ public sealed class AuthoritativeSaveStore
         var path = GetPath(sessionId);
         var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
         lock (pathLock)
-            return File.Exists(path) ? File.ReadAllText(path) : null;
+            return File.Exists(path)
+                ? StrictUtf8Text.ReadAllText(path, "authoritative save")
+                : null;
     }
 
     public bool Delete(string sessionId)

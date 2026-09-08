@@ -93,6 +93,39 @@ public sealed class AuthoritativeSaveStoreTests
     }
 
     [Fact]
+    public void SaveAndReceiptStoresRejectMalformedUtf8()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-persistence-encoding-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            var invalidTextException = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSaveStore(root).Save("session-b", "\uD800"));
+            Assert.Contains("UTF-16", invalidTextException.Message);
+            Assert.False(File.Exists(Path.Combine(root, "session-b.json")));
+
+            File.WriteAllBytes(
+                Path.Combine(root, "session-a.json"),
+                [0x7B, 0xC3, 0x28]);
+            var saveException = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSaveStore(root).Load("session-a"));
+            Assert.Contains("UTF-8", saveException.Message);
+
+            File.WriteAllBytes(
+                Path.Combine(root, "session-a.commands.json"),
+                [0x5B, 0xC3, 0x28, 0x5D]);
+            var receiptException = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeCommandReceiptStore(root).Load("session-a"));
+            Assert.Contains("UTF-8", receiptException.Message);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void SessionStoreRoundTripsStateAndCommandReceiptsAtomically()
     {
         var root = Path.Combine(
@@ -202,6 +235,36 @@ public sealed class AuthoritativeSaveStoreTests
 
             Assert.Throws<InvalidDataException>(() =>
                 new AuthoritativeSessionStore(root).Load("session-a"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreRejectsMalformedUtf8BeforeJsonParsing()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-store-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            var invalidTextException = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSessionStore(root).Save(
+                    "session-b",
+                    "\uD800",
+                    new Dictionary<ulong, CommandResult>()));
+            Assert.Contains("UTF-16", invalidTextException.Message);
+            Assert.False(File.Exists(Path.Combine(root, "session-b.session.json")));
+
+            File.WriteAllBytes(
+                Path.Combine(root, "session-a.session.json"),
+                [0x7B, 0xC3, 0x28, 0x7D]);
+
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSessionStore(root).Load("session-a"));
+            Assert.Contains("UTF-8", exception.Message);
         } finally {
             if (Directory.Exists(root))
                 Directory.Delete(root, recursive: true);

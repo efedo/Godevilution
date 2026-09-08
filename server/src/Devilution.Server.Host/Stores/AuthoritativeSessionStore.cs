@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Devilution.Protocol.V1;
 
@@ -31,6 +30,7 @@ public sealed class AuthoritativeSessionStore
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(serializedState);
         ArgumentNullException.ThrowIfNull(commandResults);
+        StrictUtf8Text.Encode(serializedState, "authoritative session state");
         var receipts = commandResults
             .OrderBy(entry => entry.Key)
             .Select(entry => Receipt.From(entry.Key, entry.Value))
@@ -41,7 +41,9 @@ public sealed class AuthoritativeSessionStore
         lock (pathLock) {
             try {
                 var document = new SessionDocument(CurrentFormatVersion, serializedState, receipts);
-                var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(document, JsonOptions));
+                var bytes = StrictUtf8Text.Encode(
+                    JsonSerializer.Serialize(document, JsonOptions),
+                    "authoritative session checkpoint");
                 using (var stream = new FileStream(
                     temporaryPath,
                     FileMode.CreateNew,
@@ -71,7 +73,9 @@ public sealed class AuthoritativeSessionStore
                 return null;
             SessionDocument? document;
             try {
-                document = JsonSerializer.Deserialize<SessionDocument>(File.ReadAllText(path), JsonOptions);
+                document = JsonSerializer.Deserialize<SessionDocument>(
+                    StrictUtf8Text.ReadAllText(path, "authoritative session checkpoint"),
+                    JsonOptions);
             } catch (JsonException exception) {
                 throw new InvalidDataException("The authoritative session checkpoint is malformed.", exception);
             }

@@ -74,6 +74,12 @@ public sealed class AuthoritativeWorldSeedStoreTests
                 Path.Combine(root, AuthoritativeWorldSeedStore.FileName),
                 "not-a-seed");
             Assert.Throws<InvalidDataException>(() => store.LoadOrCreate());
+
+            File.WriteAllBytes(
+                Path.Combine(root, AuthoritativeWorldSeedStore.FileName),
+                [0x33, 0xC3, 0x28]);
+            var exception = Assert.Throws<InvalidDataException>(() => store.LoadOrCreate());
+            Assert.Contains("UTF-8", exception.Message);
         } finally {
             DeleteRoot(root);
         }

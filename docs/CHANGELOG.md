@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Server-owned save envelopes, combined session checkpoints, command ledgers,
+  and world-seed files now use strict UTF-8 file I/O; malformed bytes and
+  invalid UTF-16 fail closed instead of being silently replaced during
+  persistence recovery.
 - Hardened verified gameplay-module packages: manifests now require strict
   UTF-8 decoding and package roots reject reparse-point entries before assembly
   hashing or reflection loading; assembly paths must also be canonical and

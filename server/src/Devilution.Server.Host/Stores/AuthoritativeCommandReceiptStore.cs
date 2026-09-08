@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Devilution.Protocol.V1;
 
@@ -38,7 +37,9 @@ public sealed class AuthoritativeCommandReceiptStore
         var pathLock = GetPathLock(path);
         lock (pathLock) {
             try {
-                var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(entries, JsonOptions));
+                var bytes = StrictUtf8Text.Encode(
+                    JsonSerializer.Serialize(entries, JsonOptions),
+                    "command receipt ledger");
                 using (var stream = new FileStream(
                     temporaryPath,
                     FileMode.CreateNew,
@@ -68,7 +69,9 @@ public sealed class AuthoritativeCommandReceiptStore
                 return [];
             Receipt[] receipts;
             try {
-                receipts = JsonSerializer.Deserialize<Receipt[]>(File.ReadAllText(path), JsonOptions)
+                receipts = JsonSerializer.Deserialize<Receipt[]>(
+                    StrictUtf8Text.ReadAllText(path, "command receipt ledger"),
+                    JsonOptions)
                     ?? throw new InvalidDataException("The command receipt ledger is empty.");
             } catch (JsonException exception) {
                 throw new InvalidDataException("The command receipt ledger is malformed.", exception);

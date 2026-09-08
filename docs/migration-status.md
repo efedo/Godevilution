@@ -2,6 +2,11 @@
 
 Status date: 2026-09-08
 
+All server-owned save envelopes, combined session checkpoints, command
+receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
+bytes and invalid UTF-16 are rejected before a recovery path can treat the
+content as authoritative.
+
 External content-pack tables, overlays, and binary assets now share canonical
 relative-path validation, so traversal and path aliases cannot enter content
 composition or manifest identity.

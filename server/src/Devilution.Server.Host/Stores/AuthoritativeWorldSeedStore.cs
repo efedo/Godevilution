@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Devilution.Server.Stores;
 
@@ -35,8 +34,9 @@ public sealed class AuthoritativeWorldSeedStore
                 ?? BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(sizeof(uint)));
             var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try {
-                var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
-                    .GetBytes(seed.ToString(CultureInfo.InvariantCulture));
+                var bytes = StrictUtf8Text.Encode(
+                    seed.ToString(CultureInfo.InvariantCulture),
+                    "world seed");
                 using (var stream = new FileStream(
                     temporaryPath,
                     FileMode.CreateNew,
@@ -62,7 +62,7 @@ public sealed class AuthoritativeWorldSeedStore
 
     private static uint ReadExisting(string path, uint? requestedSeed)
     {
-        var persistedSeed = Parse(File.ReadAllText(path));
+        var persistedSeed = Parse(StrictUtf8Text.ReadAllText(path, "world seed"));
         if (requestedSeed is uint explicitSeed && explicitSeed != persistedSeed) {
             throw new InvalidDataException(
                 $"The configured world seed {explicitSeed} does not match "
