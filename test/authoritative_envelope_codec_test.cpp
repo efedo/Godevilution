@@ -14,6 +14,8 @@
 namespace devilution::authoritative {
 namespace {
 
+static_assert(EnvelopeCodec::MaxEnvelopeBytes == MaximumEnvelopeBytes);
+
 using asio::ip::tcp;
 
 struct LoopbackSocketPair {

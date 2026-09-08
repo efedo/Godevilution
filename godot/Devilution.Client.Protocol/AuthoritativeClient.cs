@@ -14,7 +14,6 @@ namespace Devilution.Client.Protocol;
  */
 public sealed class AuthoritativeClient : IAsyncDisposable
 {
-    private const int MaximumEnvelopeBytes = 1024 * 1024;
     private readonly ClientConnectionOptions options;
     private readonly ConcurrentQueue<AuthoritativeClientMessage> incoming = new();
     private readonly Dictionary<ulong, PendingCommand> pending = [];
@@ -343,7 +342,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private async Task WriteEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken)
     {
         var payload = envelope.ToByteArray();
-        if (payload.Length == 0 || payload.Length > MaximumEnvelopeBytes)
+        if (payload.Length == 0 || payload.Length > AuthoritativeProtocolLimits.MaximumEnvelopeBytes)
             throw new InvalidDataException("The authoritative envelope is outside the allowed size range.");
         var header = new byte[sizeof(int)];
         BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
@@ -364,7 +363,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (!await ReadExactlyAsync(networkStream, header, cancellationToken))
             return null;
         var length = BinaryPrimitives.ReadInt32LittleEndian(header);
-        if (length <= 0 || length > MaximumEnvelopeBytes)
+        if (length <= 0 || length > AuthoritativeProtocolLimits.MaximumEnvelopeBytes)
             throw new InvalidDataException("The authoritative envelope length is outside the allowed range.");
         var payload = new byte[length];
         if (!await ReadExactlyAsync(networkStream, payload, cancellationToken))

@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
 using Xunit;
@@ -6,6 +7,14 @@ namespace Devilution.Server.Tests;
 
 public sealed class EnvelopeCodecTests
 {
+    [Fact]
+    public void EnvelopeLimitUsesTheSharedProtocolMaximum()
+    {
+        Assert.Equal(
+            AuthoritativeProtocolLimits.MaximumEnvelopeBytes,
+            EnvelopeCodec.MaxEnvelopeBytes);
+    }
+
     [Fact]
     public async Task RoundTripPreservesTheEnvelopePayload()
     {

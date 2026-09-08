@@ -2,6 +2,9 @@
 
 Status date: 2026-09-08
 
+The 1 MiB authoritative envelope cap is now a named shared protocol limit
+consumed by the managed server, Godot client, and native compatibility codec.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

@@ -196,6 +196,7 @@ enum class ObjectPresentationKind : int {
 	Trap = 5,
 };
 
+inline constexpr std::size_t MaximumEnvelopeBytes = 1024 * 1024;
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
 inline constexpr std::size_t MaximumWorldMutationCount = 4096;
 inline constexpr std::size_t MaximumSnapshotQuestCount = 4096;

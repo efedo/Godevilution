@@ -6,6 +6,7 @@ namespace Devilution.Protocol;
 /** Shared wire-level limits for server-owned text, identities, and bounded collections. */
 public static class AuthoritativeProtocolLimits
 {
+    public const int MaximumEnvelopeBytes = 1024 * 1024;
     public const int MaximumDialogueTextBytes = 16 * 1024;
     public const int MaximumIdentityBytes = 128;
     public const int MaximumEventBatchCount = 4096;

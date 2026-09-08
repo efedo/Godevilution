@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using Google.Protobuf;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Server.Protocol;
@@ -8,7 +9,7 @@ namespace Devilution.Server.Protocol;
 public static class EnvelopeCodec
 {
     public const int HeaderSize = sizeof(uint);
-    public const int MaxEnvelopeBytes = 1024 * 1024;
+    public const int MaxEnvelopeBytes = AuthoritativeProtocolLimits.MaximumEnvelopeBytes;
 
     public static async ValueTask WriteAsync(Stream stream, Envelope envelope, CancellationToken cancellationToken = default)
     {

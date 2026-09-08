@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- The 1 MiB authoritative envelope cap is now a named shared protocol limit
+  consumed by the managed server, Godot client, and native compatibility codec.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

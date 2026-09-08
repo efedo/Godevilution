@@ -17,6 +17,8 @@
 
 #include <expected.hpp>
 
+#include "network/authoritative/protocol_limits.hpp"
+
 namespace devilution::authoritative {
 
 class EnvelopeCodec {
@@ -25,7 +27,7 @@ public:
 	using ReadResult = tl::expected<std::optional<Payload>, std::string>;
 	using WriteResult = tl::expected<void, std::string>;
 
-	static constexpr uint32_t MaxEnvelopeBytes = 1024 * 1024;
+	static constexpr uint32_t MaxEnvelopeBytes = static_cast<uint32_t>(MaximumEnvelopeBytes);
 
 	/** Writes one bounded, four-byte little-endian length-prefixed payload. */
 	static WriteResult Write(asio::ip::tcp::socket &socket, std::span<const uint8_t> payload);

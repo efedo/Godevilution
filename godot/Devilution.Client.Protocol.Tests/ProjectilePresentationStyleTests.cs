@@ -58,6 +58,7 @@ public sealed class ProjectilePresentationStyleTests
     [Fact]
     public void UsesSharedAuthoritativeCollectionCaps()
     {
+        Assert.Equal(1024 * 1024, AuthoritativeProtocolLimits.MaximumEnvelopeBytes);
         Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumEventBatchCount);
         Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumWorldMutationCount);
         Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumSnapshotQuestCount);
