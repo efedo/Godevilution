@@ -1,0 +1,47 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/sneak-multiplayer-target",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": { "id": "replay.sneak", "version": "0.1.0", "sha256": "bf2926fa0db688a7db7dfd3a8ecdc75c0d6fbdd6d5bdd08d92b207c49dc3e8d9" },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 4,
+      "position_y": 10,
+      "level_id": 1,
+      "character_level": 1
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 10,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 113,
+    "combat_target_native_ai": "Sneak",
+    "combat_target_sneak_hidden": false,
+    "combat_target_intelligence": 0
+  },
+  "commands": [
+    { "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "69f90e5a440eba0f465d2e102f7920761f1e77933a29b84a2e63950fcffe53ae" }
+  ]
+}

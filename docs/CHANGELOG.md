@@ -35,6 +35,10 @@ All notable changes to this fork are documented below.
   managed runners now cover the nearer secondary participant, farther-primary
   preservation, and branch-specific movement state for both autonomous lanes.
 
+- Added a Sneak multiplayer target-selection fixture. Native and managed runners
+  now preserve preferred-distance concealment admission against a nearer
+  secondary participant while retaining the farther primary state.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked

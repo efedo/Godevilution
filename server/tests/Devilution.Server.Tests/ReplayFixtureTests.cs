@@ -4846,6 +4846,29 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySneakMultiplayerTargetSelectionMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-sneak-multiplayer-target.json");
+        var executor = CreateStealthReplayExecutor(fixture, "sneak");
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.False(monster.SneakHidden);
+        Assert.Equal((0, 10), (monster.PositionX, monster.PositionY));
+        Assert.Equal((10, 10), (primary.PositionX, primary.PositionY));
+        Assert.Equal((4, 10), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayBatRetreatMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-bat-retreat.json");

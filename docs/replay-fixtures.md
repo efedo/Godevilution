@@ -249,7 +249,8 @@ native AI tuning from the hash-checked `bat-retreat`, `fat-movement`, and
 The Rhino charge and all three Scavenger corpse-healing fixtures load their native
 charge, movement, delay, and healing tuples from the hash-checked
 `rhino-charge` and `scavenger-corpse` content packs.
-The Sneak conceal/reveal fixtures load their complete stealth distance and
+The Sneak conceal/reveal fixtures, including the multiplayer target fixture,
+load their complete stealth distance and
 retreat tuple from the hash-checked `sneak` content pack.
 The elemental equipment and ranged-arrow fixtures validate the canonical
 `devilution.base` content manifest before replaying their equipment channels.
@@ -386,7 +387,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-03,
-the native replay gate contains 177 checked-in JSON fixtures and 196 registered
+the native replay gate contains 178 checked-in JSON fixtures and 197 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -908,6 +909,9 @@ Notable shared fixtures include:
   selected-corpse checkpoint parity;
 - `gameplay-bat-multiplayer-target.json` for Bat retreat movement selecting the
   nearest live participant while preserving the farther primary participant;
+- `gameplay-sneak-multiplayer-target.json` for Sneak concealment target
+  selection, nearest-participant distance admission, and participant-state
+  preservation;
 - `gameplay-zombie-multiplayer-target.json` for Zombie long-range action
   selecting the nearer participant while preserving the farther primary;
 - `gameplay-fat-multiplayer-target.json` for Fat movement selecting the nearer
@@ -1067,7 +1071,7 @@ already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
 current Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes,
 multi-actor target selection beyond the current Bat, Fat, GoatMelee, Gargoyle,
-Zombie, and projectile lanes,
+Sneak, Zombie, and projectile lanes,
 mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup
