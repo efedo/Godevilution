@@ -30,6 +30,10 @@ participants. Native and managed runners select the nearer secondary player,
 preserve the farther primary player, and retain the same retreat movement
 state and canonical checkpoints.
 
+The same multi-participant boundary now covers Zombie long-range action and Fat
+movement. Both runners select the nearer secondary player, preserve the farther
+primary player, and retain each AI branch's authoritative movement state.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
   verify nearest-live-participant selection for the retreat controller while
   preserving the farther primary participant and movement checkpoints.
 
+- Added multiplayer target-selection fixtures for Zombie and Fat. Native and
+  managed runners now cover the nearer secondary participant, farther-primary
+  preservation, and branch-specific movement state for both autonomous lanes.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked

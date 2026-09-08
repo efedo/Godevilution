@@ -242,8 +242,8 @@ selection through the autonomous avoidance branch.
 The two SkeletonMelee delay fixtures load native chance bands and delay
 formulas from the hash-checked `test/content/replay/skeleton-melee` content
 pack.
-The Bat retreat fixtures, along with the Fat movement and Zombie action fixtures,
-likewise load their
+The Bat retreat, Fat movement, and Zombie action fixture families likewise load
+their
 native AI tuning from the hash-checked `bat-retreat`, `fat-movement`, and
 `zombie-action` content packs.
 The Rhino charge and all three Scavenger corpse-healing fixtures load their native
@@ -386,7 +386,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-03,
-the native replay gate contains 175 checked-in JSON fixtures and 194 registered
+the native replay gate contains 177 checked-in JSON fixtures and 196 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -908,6 +908,10 @@ Notable shared fixtures include:
   selected-corpse checkpoint parity;
 - `gameplay-bat-multiplayer-target.json` for Bat retreat movement selecting the
   nearest live participant while preserving the farther primary participant;
+- `gameplay-zombie-multiplayer-target.json` for Zombie long-range action
+  selecting the nearer participant while preserving the farther primary;
+- `gameplay-fat-multiplayer-target.json` for Fat movement selecting the nearer
+  participant while preserving its idle/mode and movement checkpoint state;
 - `gameplay-goat-melee-movement.json` for zero-seed AiAvoidance movement
   admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-goat-melee-attack.json` for seeded adjacent attack admission,
@@ -1062,7 +1066,8 @@ Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
 current Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and Gargoyle admission lanes,
-multi-actor target selection beyond the current GoatMelee, Gargoyle, and projectile lanes,
+multi-actor target selection beyond the current Bat, Fat, GoatMelee, Gargoyle,
+Zombie, and projectile lanes,
 mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup
