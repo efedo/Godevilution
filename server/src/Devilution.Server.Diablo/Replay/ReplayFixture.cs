@@ -325,6 +325,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native HorkDemon decision-delay state. */
     public int CombatTargetHorkDemonDelayTicks { get; init; }
 
+    /** Optional native Skeleton King decision-delay state. */
+    public int CombatTargetSkeletonKingDelayTicks { get; init; }
+
     /** Optional native SkeletonMelee decision-delay state. */
     public int CombatTargetSkeletonMeleeDelayTicks { get; init; }
 

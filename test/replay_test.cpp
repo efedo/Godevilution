@@ -6254,19 +6254,20 @@ TEST(ReplayFixture, ExecutesSkeletonKingMultiplayerTargetSelectionAgainstCSharpC
 	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
 	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetSkeletonKingDelayTicks = fixture.initialState.combatTargetSkeletonKingDelayTicks;
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 1U);
+	ASSERT_EQ(result.transitions.size(), 2U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 2U);
 	EXPECT_EQ(state.positionX, 6);
 	EXPECT_EQ(state.positionY, 0);
 	EXPECT_EQ(state.secondaryPlayerPositionX, 3);
 	EXPECT_EQ(state.secondaryPlayerPositionY, 1);
-	EXPECT_TRUE(state.combatTargetMoving);
-	EXPECT_EQ(state.combatTargetFuturePositionX, 0);
-	EXPECT_EQ(state.combatTargetFuturePositionY, 1);
+	EXPECT_FALSE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetSkeletonKingDelayTicks, 9);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 

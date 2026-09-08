@@ -4883,7 +4883,8 @@ public sealed class ReplayFixtureTests
             levelId: initial.CombatTargetLevelId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
-            intelligence: initial.CombatTargetIntelligence);
+            intelligence: initial.CombatTargetIntelligence,
+            skeletonKingDelayTicks: initial.CombatTargetSkeletonKingDelayTicks);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -4909,12 +4910,13 @@ public sealed class ReplayFixtureTests
         var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
         var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
 
-        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
         Assert.Equal((6, 0), (primary.PositionX, primary.PositionY));
         Assert.Equal((3, 1), (secondary.PositionX, secondary.PositionY));
         Assert.Equal((0, 0), (monster.PositionX, monster.PositionY));
-        Assert.True(monster.Moving);
-        Assert.Equal((0, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(9, monster.SkeletonKingDelayTicks);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));

@@ -234,6 +234,7 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetFallenRallyTicks = 0;
 	bool combatTargetGargoyleSpecialActive = false;
 	int32_t combatTargetHorkDemonDelayTicks = 0;
+	int32_t combatTargetSkeletonKingDelayTicks = 0;
 	int32_t combatTargetSkeletonMeleeDelayTicks = 0;
 	int32_t combatTargetSnakeDelayTicks = 0;
 	int32_t combatTargetCounselorDelayTicks = 0;
@@ -636,6 +637,7 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetAvoidanceMovementIdleTicks = -1;
 	int32_t combatTargetAvoidanceMovementMode = 0;
 	int32_t combatTargetHorkDemonDelayTicks = 0;
+	int32_t combatTargetSkeletonKingDelayTicks = 0;
 	int32_t combatTargetSkeletonMeleeDelayTicks = 0;
 	int32_t combatTargetSnakeDelayTicks = 0;
 	int32_t combatTargetCounselorDelayTicks = 0;

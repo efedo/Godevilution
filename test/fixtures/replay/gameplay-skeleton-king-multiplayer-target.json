@@ -21,7 +21,7 @@
     "position_y": 0,
     "level_id": 1,
     "character_level": 1,
-    "combat_target_entity_id": 9,
+    "combat_target_entity_id": 40,
     "combat_target_level_id": 1,
     "combat_target_position_x": 0,
     "combat_target_position_y": 0,
@@ -48,9 +48,17 @@
       "server_receipt_sequence": 1,
       "kind": "OpenStore",
       "payload": { "store_id": 1 }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "d48ffea656c1e6bdf885e1b36b5e6add610b80139f4ebe86dbfcf6725779bc0a" }
+    { "tick": 1, "state_sha256": "de946d12a1e971a692ee939a777fcf88416504b6c9537bfc1ce60df7a4cef2c1" },
+    { "tick": 2, "state_sha256": "906348917a7a3090822641e136ad4a2b6a6d4e76e508a78f40c55e0ed74d03b9" }
   ]
 }

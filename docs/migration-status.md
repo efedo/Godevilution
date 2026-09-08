@@ -27,8 +27,8 @@ the straight candidate.
 
 Skeleton King pursuit now has two-participant replay coverage. Native and
 managed runners select the nearer secondary participant, preserve the farther
-primary, and agree on the compatibility RoundWalk 90/45/straight candidate
-ordering.
+primary, agree on the compatibility RoundWalk 90/45/straight candidate
+ordering, and preserve the native decision-delay admission/countdown.
 
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live

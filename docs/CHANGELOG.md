@@ -4,10 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Added a Skeleton King multi-participant replay fixture and aligned the
-  compact native projection with Leoric's compatibility RoundWalk admission.
-  Both runners now verify nearest-secondary selection, farther-primary
-  preservation, and the native 90/45/straight turn ordering.
+- Extended the Skeleton King multi-participant replay fixture through
+  Leoric's compatibility decision-delay lifecycle. Both runners now verify
+  nearest-secondary selection, farther-primary preservation, the native
+  90/45/straight RoundWalk ordering, delay admission, and countdown state.
 
 - Added a Butcher multi-participant replay fixture and aligned the compact
   native projection with the managed RandomWalk turn ordering. Both runners

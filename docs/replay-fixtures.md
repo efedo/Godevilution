@@ -409,7 +409,8 @@ occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
 tick, GoatMelee and Gargoyle nearest-participant autonomous movement, Fallen
 rally nearest-participant pursuit, Butcher RandomWalk nearest-participant
-pursuit, and Skeleton King RoundWalk nearest-participant pursuit,
+pursuit, and Skeleton King RoundWalk nearest-participant pursuit with
+decision-delay countdown,
 SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Counselor nearest-participant delay selection,
 SkeletonMelee nearest-participant adjacent attack, Snake nearest-participant
@@ -467,7 +468,7 @@ continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
 attack admission/countdown lifecycles, Counselor nearest-participant delay
 selection, Fallen rally nearest-participant pursuit, Butcher RandomWalk
 nearest-participant pursuit, Skeleton King RoundWalk nearest-participant
-pursuit, SkeletonMelee
+pursuit and decision-delay countdown, SkeletonMelee
 nearest-participant adjacent attack, Snake
 nearest-participant charge routing, Rhino charge admission,
 nearest-
@@ -937,8 +938,8 @@ Notable shared fixtures include:
   pursuit, active-object blocking of the straight step, native five-direction
   RandomWalk turn ordering, and farther-primary preservation;
 - `gameplay-skeleton-king-multiplayer-target.json` for nearest-participant
-  Skeleton King pursuit, native RoundWalk 90/45/straight ordering, and
-  farther-primary preservation;
+  Skeleton King pursuit, native RoundWalk 90/45/straight ordering, delay
+  admission/countdown, and farther-primary preservation;
 - `gameplay-mega-inferno-multiplayer-target.json` for nearest-participant
   InfernoController admission, secondary-target routing, and farther-primary
   preservation;

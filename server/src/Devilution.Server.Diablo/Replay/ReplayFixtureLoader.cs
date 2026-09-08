@@ -130,6 +130,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetFallenRallyTicks != 0
                     || initialTarget.CombatTargetGargoyleSpecialActive
                     || initialTarget.CombatTargetHorkDemonDelayTicks != 0
+                    || initialTarget.CombatTargetSkeletonKingDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonMeleeDelayTicks != 0
                     || initialTarget.CombatTargetSnakeDelayTicks != 0
                     || initialTarget.CombatTargetCounselorDelayTicks != 0
@@ -171,6 +172,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetFallenStandAnimationTick is < 0 or > 127
             || initialTarget.CombatTargetFallenRallyTicks is < 0 or > 4096
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
+            || initialTarget.CombatTargetSkeletonKingDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetCounselorDelayTicks is < 0 or > 1024
@@ -452,6 +454,9 @@ public static class ReplayFixtureLoader
             CombatTargetHorkDemonDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_hork_demon_delay_ticks"),
+            CombatTargetSkeletonKingDelayTicks = GetOptionalInt(
+                value,
+                "combat_target_skeleton_king_delay_ticks"),
             CombatTargetSkeletonMeleeDelayTicks = GetOptionalInt(
                 value,
                 "combat_target_skeleton_melee_delay_ticks"),

@@ -676,6 +676,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
 			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
 		}
+		if (state.combatTargetSkeletonKingDelayTicks != 0) {
+			hasher.AppendString("godevilution-monster-skeleton-king-delay-v1");
+			hasher.AppendInt32(state.combatTargetSkeletonKingDelayTicks);
+		}
 		if (state.combatTargetSnakeDelayTicks != 0) {
 			hasher.AppendString("godevilution-monster-snake-delay-v1");
 			hasher.AppendInt32(state.combatTargetSnakeDelayTicks);
@@ -8115,14 +8119,21 @@ void AdvanceReplayMonsterAttack(
 	// the compatibility action seed, and checks its 90/45/straight candidates
 	// before the opposite-direction fallback.
 	if (state.combatTargetNativeAi == "SkeletonKing" && distance > 1) {
+		if (state.combatTargetSkeletonKingDelayTicks > 0) {
+			--state.combatTargetSkeletonKingDelayTicks;
+			return;
+		}
 		const uint32_t actionSeed = static_cast<uint32_t>(tick)
 		    ^ state.combatTargetEntityId
 		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
 		const int movementChance = std::min(
 		    100,
 		    25 + state.combatTargetIntelligence);
-		if (static_cast<int>(actionSeed % 100U) >= movementChance)
+		if (static_cast<int>(actionSeed % 100U) >= movementChance) {
+			state.combatTargetSkeletonKingDelayTicks = 10
+			    + static_cast<int>((actionSeed / 200U) % 10U);
 			return;
+		}
 		if (distance < 3 || (actionSeed / 100U) % 4U != 0U)
 			return;
 		const int direction = GetDirection(
@@ -9902,6 +9913,8 @@ private:
 				return ParseBool(fixture_.initialState.combatTargetGargoyleSpecialActive);
 			if (key == "combat_target_hork_demon_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetHorkDemonDelayTicks);
+			if (key == "combat_target_skeleton_king_delay_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetSkeletonKingDelayTicks);
 		if (key == "combat_target_skeleton_melee_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
 			if (key == "combat_target_snake_delay_ticks")
@@ -10774,6 +10787,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetFallenRallyTicks != 0
 			|| target.combatTargetGargoyleSpecialActive
 		    || target.combatTargetHorkDemonDelayTicks != 0
+		    || target.combatTargetSkeletonKingDelayTicks != 0
 		    || target.combatTargetSkeletonMeleeDelayTicks != 0
 		    || target.combatTargetSnakeDelayTicks != 0
 		    || target.combatTargetCounselorDelayTicks != 0
@@ -10812,6 +10826,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
 		|| target.combatTargetHorkDemonDelayTicks < 0
 		|| target.combatTargetHorkDemonDelayTicks > 1024
+		|| target.combatTargetSkeletonKingDelayTicks < 0
+		|| target.combatTargetSkeletonKingDelayTicks > 1024
 		|| target.combatTargetSkeletonMeleeDelayTicks < 0
 		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
 		|| target.combatTargetSnakeDelayTicks < 0
@@ -11637,6 +11653,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
+		state.combatTargetSkeletonKingDelayTicks = fixture.initialState.combatTargetSkeletonKingDelayTicks;
 		state.combatTargetSkeletonMeleeDelayTicks = fixture.initialState.combatTargetSkeletonMeleeDelayTicks;
 		state.combatTargetSnakeDelayTicks = fixture.initialState.combatTargetSnakeDelayTicks;
 		state.combatTargetCounselorDelayTicks = fixture.initialState.combatTargetCounselorDelayTicks;
