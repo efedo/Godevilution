@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added shared replay coverage for the Zhar and Lazarus native CounselorAi
+  aliases. Native and managed runners now preserve each authored identity,
+  select the nearer secondary participant, and agree on Counselor delay
+  checkpoints.
+
 - Added a Gharbad multi-participant replay fixture through the shared
   GoatMelee/AiAvoidance compatibility path. Native and managed runners now
   preserve the authored Gharbad identity, select the nearest live participant,

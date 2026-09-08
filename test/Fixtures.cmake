@@ -116,6 +116,8 @@ set(devilutionx_fixtures
   replay/gameplay-charged-bolt-resolution.json
   replay/gameplay-charged-bolt.json
   replay/gameplay-counselor-multiplayer-target.json
+  replay/gameplay-zhar-multiplayer-target.json
+  replay/gameplay-lazarus-multiplayer-target.json
   replay/gameplay-fallen-rally-multiplayer-target.json
   replay/gameplay-elemental-arrows.json
   replay/gameplay-elemental-equipment.json

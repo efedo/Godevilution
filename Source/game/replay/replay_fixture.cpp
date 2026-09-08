@@ -7077,7 +7077,9 @@ void AdvanceReplayMonsterAttack(
 	// and wounded retreat lanes. The ranged missile branch remains outside this
 	// replay projection, but these stateful decisions are shared by both
 	// authoritative runners and must suppress generic melee fallback.
-	if (state.combatTargetNativeAi == "Counselor") {
+	if (state.combatTargetNativeAi == "Counselor"
+	    || state.combatTargetNativeAi == "Zhar"
+	    || state.combatTargetNativeAi == "Lazarus") {
 		if (state.combatTargetCounselorDelayTicks > 0) {
 			--state.combatTargetCounselorDelayTicks;
 			return;

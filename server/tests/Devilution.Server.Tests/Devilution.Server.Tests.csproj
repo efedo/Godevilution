@@ -82,6 +82,8 @@
     <None Include="../../../test/fixtures/replay/gameplay-town-portal-resolution.json" Link="Fixtures/gameplay-town-portal-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-counselor-delay.json" Link="Fixtures/gameplay-counselor-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-counselor-multiplayer-target.json" Link="Fixtures/gameplay-counselor-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-zhar-multiplayer-target.json" Link="Fixtures/gameplay-zhar-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-lazarus-multiplayer-target.json" Link="Fixtures/gameplay-lazarus-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-counselor-retreat.json" Link="Fixtures/gameplay-counselor-retreat.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-telekinesis-world-item.json" Link="Fixtures/gameplay-telekinesis-world-item.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-telekinesis-object.json" Link="Fixtures/gameplay-telekinesis-object.json" CopyToOutputDirectory="PreserveNewest" />

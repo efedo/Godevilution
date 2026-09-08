@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/zhar-multiplayer-target",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.counselor",
+    "version": "0.1.0",
+    "sha256": "584de70b4d7bb0ee1f752722f21c6930eaffdfc7dabed08f271f98638d116a7b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 8,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 1,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    },
+    "combat_target_entity_id": 80,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_monster_id": 105,
+    "combat_target_native_ai": "Zhar",
+    "combat_target_intelligence": 0
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 3,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "6457d899b8840d117ea99648055a039be404ceab1ecbbeecd5a37ae8a5cb867c" },
+    { "tick": 2, "state_sha256": "ea80cc6520b832d7a449f7825afd66167413404913e0903e9e8200ca86875f5c" },
+    { "tick": 3, "state_sha256": "050dbf1f21ae6caac233c5a20da3011f16d39e4b8b5498ab9679a824c87cd72d" }
+  ]
+}

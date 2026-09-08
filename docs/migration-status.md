@@ -40,6 +40,11 @@ authored Gharbad identity, select the nearest live participant, and agree on
 the deterministic movement checkpoints. External Gharbad rows also accept the
 same validated avoidance-delay tuning as GoatMelee and Gargoyle.
 
+Zhar and Lazarus now share two-participant replay coverage through the native
+CounselorAi compatibility path. Native and managed runners preserve their
+authored identities, route the nearer secondary participant, and agree on the
+delay/countdown state.
+
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's
