@@ -17,6 +17,7 @@
 #include "network/authoritative/vendor_snapshot.hpp"
 #include "network/authoritative/server_backed_vendor_state.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 #include "network/protocol/legacy_attribute_policy.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
 #include "network/protocol/legacy_debug_policy.hpp"
@@ -108,6 +109,37 @@ TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTarget
 	presentationObject.dialogueMessageId = 412;
 	ASSERT_TRUE(projection.Apply({}, {}, { presentationObject }, 1).has_value());
 	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t> { 17 });
+}
+
+TEST(ServerBackedCompatibility, WorldProjectionUsesNamedNativeScalarBounds)
+{
+	ServerBackedWorldProjection projection;
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 1;
+	monster.packSize = MaximumNativeMonsterPackSize;
+	monster.activeForTicks = MaximumNativeMonsterActiveTicks;
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
+
+	monster.packSize = MaximumNativeMonsterPackSize + 1;
+	EXPECT_FALSE(projection.Apply({ monster }, {}, {}, 1).has_value());
+	monster.packSize = MaximumNativeMonsterPackSize;
+	monster.activeForTicks = MaximumNativeMonsterActiveTicks + 1;
+	EXPECT_FALSE(projection.Apply({ monster }, {}, {}, 1).has_value());
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 2;
+	projectile.sourceEntityId = 1;
+	projectile.behavior = static_cast<int>(ProjectileBehavior::WeaponArrow);
+	projectile.remainingTicks = 1;
+	projectile.damageType = MaximumProjectileDamageType;
+	projectile.phase = MaximumProjectilePhase;
+	ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
+
+	projectile.damageType = MaximumProjectileDamageType + 1;
+	EXPECT_FALSE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
+	projectile.damageType = MaximumProjectileDamageType;
+	projectile.phase = MaximumProjectilePhase + 1;
+	EXPECT_FALSE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 }
 
 TEST(ServerBackedCompatibility, AuthoritativeMissilesDoNotOwnLegacyTileFlags)

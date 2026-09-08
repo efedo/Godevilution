@@ -738,8 +738,8 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	monster.armorClass = static_cast<uint8_t>(std::clamp(snapshot.armorClass, 0, 255));
 	monster.minDamage = static_cast<uint8_t>(std::clamp(snapshot.attackDamage, 0, 255));
 	monster.maxDamage = monster.minDamage;
-	monster.activeForTicks = static_cast<uint8_t>(std::clamp(snapshot.activeForTicks, 0, 255));
-	monster.packSize = static_cast<uint8_t>(std::clamp(snapshot.packSize, 0, 255));
+		monster.activeForTicks = static_cast<uint8_t>(std::clamp(snapshot.activeForTicks, 0, MaximumNativeMonsterActiveTicks));
+		monster.packSize = static_cast<uint8_t>(std::clamp(snapshot.packSize, 0, MaximumNativeMonsterPackSize));
 	// Resolve the entity-based leader reference after all projected slots have
 	// been assigned. A hidden leader is intentionally treated as an ordinary
 	// presentation monster so native compatibility code never follows a null

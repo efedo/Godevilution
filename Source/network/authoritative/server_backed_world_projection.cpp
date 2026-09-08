@@ -136,13 +136,13 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 		    || (monster.movementStartedTick != 0 || monster.movementEffectTick != 0)
 		        && monster.movementEffectTick <= monster.movementStartedTick)
 			return tl::make_unexpected("Authoritative monster projection contains invalid movement timing.");
-		if (monster.leaderRelation < 0 || monster.leaderRelation > 2
+		if (monster.leaderRelation < 0 || monster.leaderRelation > MaximumMonsterLeaderRelation
 		    || (monster.leaderRelation == 0
 		        ? monster.leaderEntityId != 0
 		        : monster.leaderEntityId == 0)
 		    || (monster.leaderRelation != 0 && monster.isUnique)
-		    || monster.packSize < 0 || monster.packSize > 255
-		    || monster.activeForTicks < 0 || monster.activeForTicks > 255)
+		    || monster.packSize < 0 || monster.packSize > MaximumNativeMonsterPackSize
+		    || monster.activeForTicks < 0 || monster.activeForTicks > MaximumNativeMonsterActiveTicks)
 			return tl::make_unexpected("Authoritative monster projection contains invalid group-unity state.");
 	}
 	for (const auto &monster : monsters) {
@@ -184,9 +184,9 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.remainingTicks == 0
 			    || projectile.damage < 0
 			    || projectile.areaRadius < 0
-			    || projectile.damageType < 0 || projectile.damageType > 4
+			    || projectile.damageType < 0 || projectile.damageType > MaximumProjectileDamageType
 			    || projectile.behavior < 0 || projectile.behavior > MaximumProjectileBehavior
-			    || projectile.phase < 0 || projectile.phase > 1
+			    || projectile.phase < 0 || projectile.phase > MaximumProjectilePhase
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > MaximumNativeProjectileVisual
 			    || !isInBounds(projectile.levelId, projectile.positionX, projectile.positionY)
 			    || UsesDirectionalPresentation(projectile)

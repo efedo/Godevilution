@@ -37,6 +37,10 @@ Stable item-reference command construction and server mapping now reject
 inventory, belt, equipment, and stash slots outside those native topology
 limits before a gameplay intent is created.
 
+Native world projection and presentation now consume the same named bounds for
+monster pack state and projectile damage/phase metadata as the snapshot and
+managed validation paths.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the
