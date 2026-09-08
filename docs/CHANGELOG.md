@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native spell identity compatibility now has one shared `0..51` limit across
+  the protocol/domain contract, Diablo content catalogs, replay validation, and
+  native compatibility tests.
+
 - Replay parity fixtures now use the active base-content manifest identity.
   Native and managed replay checkpoints also agree on multiplayer Snake,
   Fallen-rally, and Mega Inferno targeting, including native RNG and impact

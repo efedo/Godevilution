@@ -1,5 +1,6 @@
 using Devilution.Data;
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -37,7 +38,7 @@ public sealed class AuthoritativeSpellBookCatalog
 {
     private const int BookMiscId = 25;
     private const uint FirstNativeSpellId = 1;
-    private const uint MaximumNativeSpellId = 51;
+    private const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
     private const uint NativeResurrectSpellId = 32;
     private const uint NativeHealOtherSpellId = 34;
     private readonly Dictionary<uint, AuthoritativeSpellBookDefinition> definitions;

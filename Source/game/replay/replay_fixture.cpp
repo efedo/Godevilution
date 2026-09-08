@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "engine/crawl.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 
 namespace devilution {
 
@@ -10899,7 +10900,7 @@ private:
 			    || item.itemIndex > std::numeric_limits<uint8_t>::max()
 			    || (item.miscId != 21 && item.miscId != 22)
 			    || item.spellId < 1
-			    || item.spellId > 51
+			    || item.spellId > authoritative::MaximumNativeSpellId
 			    || std::any_of(fixture_.initialState.belt.begin(), fixture_.initialState.belt.end(), [&](const auto &candidate) {
 				    return candidate.slot == item.slot;
 			    })) {

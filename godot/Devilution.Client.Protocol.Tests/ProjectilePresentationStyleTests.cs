@@ -117,6 +117,7 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(-100, AuthoritativeProtocolLimits.MinimumNativeMonsterResistance);
         Assert.Equal(100, AuthoritativeProtocolLimits.MaximumNativeMonsterResistance);
         Assert.Equal((uint)255, AuthoritativeProtocolLimits.MaximumStableSpellId);
+        Assert.Equal((uint)51, AuthoritativeProtocolLimits.MaximumNativeSpellId);
         Assert.Equal((uint)15, AuthoritativeProtocolLimits.MaximumNativeSpellLevel);
         Assert.Equal(51, AuthoritativeProtocolLimits.MaximumMemorizedSpellCount);
         Assert.Equal((uint)50, AuthoritativeProtocolLimits.MaximumNativeCharacterLevel);

@@ -38,6 +38,7 @@ static_assert(MaximumNativeMonsterDirection == 7);
 static_assert(MaximumNativeMonsterPackSize == 255);
 static_assert(MaximumNativeMonsterActiveTicks == 255);
 static_assert(MaximumStableSpellId == 255);
+static_assert(MaximumNativeSpellId == 51);
 static_assert(MaximumNativeSpellLevel == 15);
 static_assert(MaximumMemorizedSpellCount == 51);
 static_assert(MaximumNativeCharacterLevel == 50);

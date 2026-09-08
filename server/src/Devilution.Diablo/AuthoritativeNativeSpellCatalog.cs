@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -10,7 +11,7 @@ public sealed record AuthoritativeNativeSpellDefinition(
 /** Validated external native spell namespace used by legacy item data. */
 public sealed class AuthoritativeNativeSpellCatalog
 {
-    public const uint MaximumNativeSpellId = 51;
+    public const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
 
     private readonly Dictionary<uint, AuthoritativeNativeSpellDefinition> byId;
     private readonly Dictionary<string, uint> bySymbol =

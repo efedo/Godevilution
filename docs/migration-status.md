@@ -2,6 +2,10 @@
 
 Status date: 2026-09-08
 
+Native spell identity compatibility now uses one shared `0..51` limit exposed
+to the protocol/domain contract, Diablo content catalogs, replay validation,
+and native/Godot boundary tests.
+
 Replay parity maintenance now keeps base-content fixture manifests current
 and aligns the managed replay executor with native multiplayer Snake, Fallen,
 and Mega Inferno checkpoint hashes, including deterministic RNG consumption and

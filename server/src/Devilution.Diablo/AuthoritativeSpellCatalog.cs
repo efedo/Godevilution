@@ -1,5 +1,6 @@
 using Devilution.Data;
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -529,7 +530,7 @@ public sealed record AuthoritativeSpellDefinition(
 
 public sealed class AuthoritativeSpellCatalog
 {
-    private const uint MaximumNativeSpellId = 51;
+    private const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
     public const int LegacyRuneFireConsumableMiscId = 47;
     private const int FirstRuneMiscId = LegacyRuneFireConsumableMiscId;
     private const int LastRuneMiscId = 51;

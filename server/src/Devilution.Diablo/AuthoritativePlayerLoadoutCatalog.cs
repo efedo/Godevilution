@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Devilution.Data;
 using Devilution.Domain.Inventory;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -49,7 +50,7 @@ public sealed record AuthoritativePlayerLoadoutDefinition(
 public sealed class AuthoritativePlayerLoadoutCatalog
 {
     /** Maximum native spell identity retained by legacy item/animation fields. */
-    public const uint MaximumNativeSpellId = 51;
+    public const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
     /** Maximum stable spell identity accepted in authoritative player state. */
     public const uint MaximumSpellId = byte.MaxValue;
     public const uint MaximumNativeSpellLevel = 15;

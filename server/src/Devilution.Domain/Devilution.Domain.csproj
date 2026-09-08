@@ -7,5 +7,6 @@
 
   <ItemGroup>
     <Compile Include="../../../protocol/Devilution.Protocol/NativeVision.cs" Link="NativeVision.cs" />
+    <Compile Include="../../../protocol/Devilution.Protocol/NativeCompatibilityLimits.cs" Link="NativeCompatibilityLimits.cs" />
   </ItemGroup>
 </Project>

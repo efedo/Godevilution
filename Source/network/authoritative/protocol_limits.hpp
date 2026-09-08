@@ -249,6 +249,7 @@ inline constexpr int MaximumNativeObjectOffset = 32;
 inline constexpr int MinimumNativeDirection = -1;
 inline constexpr int MaximumNativeDirection = 1;
 inline constexpr std::uint32_t MaximumStableSpellId = UINT8_MAX;
+inline constexpr std::uint32_t MaximumNativeSpellId = 51;
 inline constexpr std::uint32_t MaximumNativeSpellLevel = 15;
 inline constexpr int MaximumMemorizedSpellCount = 51;
 inline constexpr std::uint32_t MaximumNativeCharacterLevel = 50;

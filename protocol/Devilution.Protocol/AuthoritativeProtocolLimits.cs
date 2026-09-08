@@ -1,5 +1,6 @@
 using System.Text;
 using Devilution.Protocol.V1;
+using Devilution.Shared;
 
 namespace Devilution.Protocol;
 
@@ -60,6 +61,7 @@ public static class AuthoritativeProtocolLimits
     public const int MinimumNativeDirection = -1;
     public const int MaximumNativeDirection = 1;
     public const uint MaximumStableSpellId = byte.MaxValue;
+    public const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
     public const uint MaximumNativeSpellLevel = 15;
     public const int MaximumMemorizedSpellCount = 51;
     public const uint MaximumNativeCharacterLevel = 50;
