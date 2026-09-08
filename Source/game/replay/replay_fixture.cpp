@@ -2577,9 +2577,21 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 		bool impacted = false;
 		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
 		if (visitedTiles.empty()) {
-			const auto collision = resolveCollision(
-			    projectile.positionX,
-			    projectile.positionY);
+			const bool targetAtTile = state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && state.combatTargetPositionX == projectile.positionX
+			    && state.combatTargetPositionY == projectile.positionY;
+			const bool playerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == projectile.positionX
+			    && state.secondaryPlayerPositionY == projectile.positionY;
+			const uint32_t collisionTargetEntityId = targetAtTile
+			    ? state.combatTargetEntityId
+			    : playerAtTile ? state.secondaryPlayerEntityId : 0;
+			const auto collision = projectile.lastCollisionTargetEntityId == collisionTargetEntityId
+			    ? std::pair<bool, uint32_t> { false, collisionTargetEntityId }
+			    : resolveCollision(projectile.positionX, projectile.positionY);
 			if (projectile.lastCollisionTargetEntityId != collision.second
 			    && collision.first) {
 				impacted = true;

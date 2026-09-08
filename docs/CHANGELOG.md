@@ -37,6 +37,8 @@ All notable changes to this fork are documented below.
 - Added the Torchant Fireball multiplayer secondary-impact fixture and aligned
   the compact native replay with the managed distance-based monster-magic hit
   admission, Q6 damage, collision marker, and impact/removal lifecycle.
+- Added Torchant Fireball secondary-miss coverage and aligned native duplicate
+  zero-distance collision suppression with the managed impact lifecycle.
 - Added a validated Torchant Fireball missile mapping and multiplayer replay
   coverage for nearest-secondary target selection and projectile travel parity.
 - Added a validated Magma MagmaBall mapping and Hellfire multiplayer replay

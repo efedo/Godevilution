@@ -1035,6 +1035,11 @@ Notable shared fixtures include:
   mapping and nearest-secondary target selection;
 - `gameplay-torchant-multiplayer-target.json` for Torchant's external Fireball
   mapping and nearest-secondary target selection;
+- `gameplay-torchant-multiplayer-secondary-impact.json` for Torchant's full-Q6
+  secondary-player impact and two-tick impact/removal lifecycle;
+- `gameplay-torchant-multiplayer-secondary-miss.json` for distance-based
+  monster-magic miss admission, duplicate-collision suppression, and retained
+  impact-phase projectile parity;
 - `gameplay-magma-multiplayer-target.json` for Magma's external MagmaBall
   mapping, native initial travel advance, and nearest-secondary target selection;
 - `gameplay-storm-multiplayer-target.json` for Storm's external ThinLightning

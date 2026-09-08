@@ -6777,8 +6777,9 @@ public sealed class ReplayFixtureTests
     [Theory]
     [InlineData("gameplay-fire-bat-multiplayer-secondary-impact.json", "monster-firebolt", 2, 1U, 1, 6144)]
     [InlineData("gameplay-torchant-multiplayer-secondary-impact.json", "monster-fireball", 16, 12U, 1, 6144)]
+    [InlineData("gameplay-torchant-multiplayer-secondary-miss.json", "monster-fireball", 16, 12U, 1, 6400)]
     [InlineData("gameplay-magma-multiplayer-secondary-impact.json", "monster-magma", 50, 1U, 1, 6144)]
-    public void MonsterProjectileSecondaryImpactsMatchNativeLifecycle(
+    public void MonsterProjectileSecondaryLifecyclesMatchNativeLifecycle(
         string fixtureName,
         string missileId,
         int behavior,

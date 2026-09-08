@@ -26,6 +26,9 @@ Torchant Fireball now has the same seeded secondary-impact coverage. Native and
 managed runners agree on the authoritative distance-based hit admission, full
 Q6 damage, impact-phase collision marker, projectile removal, and preserved
 primary-player terminal state.
+The companion miss fixture now proves the same distance-based admission on both
+the direct and shifted checks, suppresses duplicate zero-distance collision
+rolls, and retains the impact-phase projectile through the next tick.
 
 Torchant now has a validated external Fireball missile mapping and a two-
 participant replay lane. Native and managed runners select the nearer

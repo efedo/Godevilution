@@ -7804,6 +7804,28 @@ TEST(ReplayFixture, ExecutesTorchantFireballMultiplayerSecondaryImpactAgainstCSh
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesTorchantFireballMultiplayerSecondaryMissAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-torchant-multiplayer-secondary-miss.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ReplayFixtureExecutionState state = CreateMonsterProjectileImpactState(fixture);
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 2U);
+	EXPECT_EQ(state.life, 0);
+	EXPECT_EQ(state.secondaryPlayerLife, 6400);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	EXPECT_EQ(state.projectiles[0].phase, 1);
+	EXPECT_EQ(state.projectiles[0].remainingTicks, 1U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMagmaMagmaBallMultiplayerSecondaryImpactAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-magma-multiplayer-secondary-impact.json");
