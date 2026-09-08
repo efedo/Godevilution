@@ -97,6 +97,7 @@ set(devilutionx_fixtures
   replay/gameplay-snake-distant-delay.json
   replay/gameplay-snake-adjacent-delay.json
   replay/gameplay-snake-charge-lifecycle.json
+  replay/gameplay-snake-multiplayer-target.json
   replay/gameplay-blood-star-autonomous.json
   replay/gameplay-blood-star-impact.json
   replay/gameplay-blood-star-multiplayer-target.json

@@ -4925,6 +4925,34 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySnakeChargeTargetsNearestMultiplayerParticipant()
+    {
+        var fixture = LoadReplayFixture("gameplay-snake-multiplayer-target.json");
+        var executor = CreateSnakeChargeReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, primary.Life);
+        Assert.Equal((8, 0), (primary.PositionX, primary.PositionY));
+        Assert.Equal(6400, secondary.Life);
+        Assert.Equal((2, 0), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal((2, 0), (monster.PositionX, monster.PositionY));
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(2042977527U, result.FinalSnapshot.RandomState);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySneakConcealmentMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-sneak-conceal.json");

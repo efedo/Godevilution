@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   runners now verify nearest-participant adjacent attack admission, secondary
   damage, and farther-primary preservation.
 
+- Added a Snake multiplayer target-selection fixture. Native and managed runners
+  now verify nearest-participant charge routing through the full projectile
+  lifecycle while preserving the farther primary participant.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked
