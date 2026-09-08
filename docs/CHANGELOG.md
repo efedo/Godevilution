@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Hardened the Godot reconnect epoch boundary: transient event batches are now
+  ignored until the first validated snapshot of the new server epoch, preventing
+  delayed events from the prior transport stream from entering presentation
+  history while preserving command-result retry state.
 - Made Godot reconnect/resync presentation rewind-safe. An older authoritative
   snapshot now emits a one-advance clock marker so cached players, monsters,
   and projectiles snap to the resync state instead of easing backward from

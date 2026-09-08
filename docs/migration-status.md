@@ -9,6 +9,11 @@ state before resuming normal interpolation. This keeps reconnect/resync
 presentation from easing backward through stale positions while leaving the
 authoritative tick and simulation unchanged.
 
+Godot reconnect epoch handling now also ignores transient event batches until
+the first validated snapshot of the new epoch arrives. Events resume normally
+after that snapshot, while command-result state remains available for retry and
+feedback.
+
 The replay gate now covers the validated Acid projectile lifecycle across the
 native and managed runners. A seeded initial Acid missile expires into its
 splat, shifts into the authored one-tile puddle, enters impact, and expires

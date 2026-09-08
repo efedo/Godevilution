@@ -3366,6 +3366,45 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void IgnoresEventsUntilTheReconnectEpochSnapshotArrives()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 10,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+
+        model.ResetTransientPresentation();
+        model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+            Tick = 11,
+            Events = {
+                new GameEvent {
+                    Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 99 },
+                },
+            },
+        }));
+
+        Assert.Empty(model.RecentEvents);
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 1,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+        model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+            Tick = 2,
+            Events = {
+                new GameEvent {
+                    Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = 10 },
+                },
+            },
+        }));
+
+        var accepted = Assert.Single(model.RecentEvents);
+        Assert.Equal(10U, accepted.Experience.Amount);
+        Assert.Equal(1UL, model.CurrentTick);
+    }
+
+    [Fact]
     public void IgnoresStaleSnapshotsWhileApplyingTheirAcknowledgements()
     {
         var model = new AuthoritativeClientModel();

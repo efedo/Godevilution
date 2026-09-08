@@ -247,6 +247,7 @@ public sealed class AuthoritativeClientModel
         }
 
         if (message.Events is { } events
+            && !acceptNextSnapshotAsNewEpoch
             && events.Tick >= CurrentTick) {
             ValidateEventBatch(events);
             recentEvents.AddRange(events.Events.Select(gameEvent => gameEvent.Clone()));

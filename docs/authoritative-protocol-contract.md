@@ -269,7 +269,10 @@ host, Godot client, and native compatibility client each accept at most 4096
 events in one batch and reject unknown event kinds, negative damage/healing
 amounts, negative dialogue message IDs, or dialogue text containing NUL
 characters; zero entity IDs remain tolerated for compatibility with events that
-do not target the local presentation.
+do not target the local presentation. During a Godot reconnect epoch boundary,
+event batches are ignored until the next validated snapshot is accepted, so
+events from the prior transport stream cannot populate the new presentation
+history.
 
 Godot and the native compatibility client accept an omitted snapshot hash for
 legacy peers, but reject any non-empty hash that is not exactly 64 hexadecimal
