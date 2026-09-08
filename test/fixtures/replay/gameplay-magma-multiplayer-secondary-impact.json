@@ -1,0 +1,79 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/magma-multiplayer-secondary-impact",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-magma",
+    "version": "0.1.0",
+    "sha256": "fbbc95efe4a81114c92acfe0a6cb72b307011ab23b8c118214ae03d119ee345b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 0,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 5,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Magma",
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "spell_id": 1,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 4,
+      "damage_type": 1,
+      "remaining_ticks": 2,
+      "behavior": 50,
+      "phase": 0,
+      "speed": 0,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "6aaab8a57bcf73d3c612331ddcf04279aa1a0ceaf36776fdc7923a57b9a74bd9" },
+    { "tick": 2, "state_sha256": "12dd8908bb5236b6bfcec30cad444f69f557dd06c8bb013b5effe468217dd9ee" }
+  ]
+}

@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
   nearer secondary participant.
 - Added a validated FireBat Firebolt missile mapping and multiplayer replay
   coverage for nearest-secondary target selection and projectile travel parity.
+- Added FireBat Firebolt and Magma MagmaBall multiplayer secondary-impact
+  fixtures. Native and managed replay now agree on the two-tick impact/removal
+  lifecycle, shifted Q6 damage, and preservation of the primary player's dead
+  state for both authored monster projectile families.
 - Added a validated Torchant Fireball missile mapping and multiplayer replay
   coverage for nearest-secondary target selection and projectile travel parity.
 - Added a validated Magma MagmaBall mapping and Hellfire multiplayer replay

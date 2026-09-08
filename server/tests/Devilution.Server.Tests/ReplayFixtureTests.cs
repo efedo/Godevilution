@@ -6774,6 +6774,106 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-fire-bat-multiplayer-secondary-impact.json", "monster-firebolt", 2, 1U, 1, 6144)]
+    [InlineData("gameplay-magma-multiplayer-secondary-impact.json", "monster-magma", 50, 1U, 1, 6144)]
+    public void MonsterProjectileSecondaryImpactsMatchNativeLifecycle(
+        string fixtureName,
+        string missileId,
+        int behavior,
+        uint spellId,
+        int damageType,
+        int expectedSecondaryLife)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", fixtureName);
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var initialProjectile = Assert.Single(fixture.InitialProjectiles);
+        Assert.Equal(behavior, initialProjectile.Behavior);
+        Assert.Equal(spellId, initialProjectile.SpellId);
+        Assert.Equal(damageType, initialProjectile.DamageType);
+        Assert.Equal(secondary.EntityId, initialProjectile.TargetEntityId);
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            attackDamage: initial.CombatTargetAttackDamage,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            toHit: initial.CombatTargetToHit,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var startingProjectiles = fixture.InitialProjectiles
+            .Select(source => new AuthoritativeProjectile(
+                source.EntityId,
+                source.SourceEntityId,
+                source.TargetEntityId,
+                source.SpellId,
+                source.LevelId,
+                source.PositionX,
+                source.PositionY,
+                source.TargetX,
+                source.TargetY,
+                source.Damage,
+                (AuthoritativeDamageType)source.DamageType,
+                source.AreaRadius,
+                source.RemainingTicks,
+                allowZeroSpellId: source.SpellId == 0) {
+                Behavior = (AuthoritativeProjectileBehavior)source.Behavior,
+                Phase = (AuthoritativeProjectilePhase)source.Phase,
+                Speed = source.Speed,
+                ImpactLifetime = source.ImpactLifetime,
+                DamageMinimum = source.DamageMinimum,
+                DamageMaximum = source.DamageMaximum,
+            })
+            .ToArray();
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingProjectiles: startingProjectiles,
+            startingMonsterMissiles: LoadReplayMonsterMissiles(fixture, missileId),
+            startingCombatRules: missileId == "monster-magma"
+                ? new AuthoritativeCombatRules(10, 1, 100, gameVariant: fixture.GameVariant)
+                : null,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0, primary.Life);
+        Assert.Equal(expectedSecondaryLife, secondaryState.Life);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplaySuccubusBloodStarImpactMatchesNativeLifecycle()
     {
