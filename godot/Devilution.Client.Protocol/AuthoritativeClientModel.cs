@@ -1,4 +1,3 @@
-using System.Text;
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
@@ -27,7 +26,6 @@ public sealed class AuthoritativeClientModel
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
     private const int MaximumEventBatchCount = 4096;
-    private const int MaximumDialogueTextBytes = 16 * 1024;
     private const int MaximumWorldMutationCount = 4096;
     private const uint MaximumStableSpellId = byte.MaxValue;
     private const uint MaximumNativeSpellLevel = 15;
@@ -1341,9 +1339,7 @@ public sealed class AuthoritativeClientModel
                 break;
             case GameEvent.EventOneofCase.Dialogue:
                 if (gameEvent.Dialogue.MessageId < 0
-                    || gameEvent.Dialogue.Text.Contains('\0')
-                    || gameEvent.Dialogue.Text.Contains('\r')
-                    || Encoding.UTF8.GetByteCount(gameEvent.Dialogue.Text) > MaximumDialogueTextBytes) {
+                    || !AuthoritativeProtocolLimits.IsDialogueTextValid(gameEvent.Dialogue.Text)) {
                     throw new InvalidDataException(
                         "The authoritative event batch contains invalid dialogue.");
                 }
@@ -1517,7 +1513,7 @@ public sealed class AuthoritativeClientModel
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
         if (projectile.Behavior != 50
-            || Encoding.UTF8.GetByteCount(projectile.NativeMissileId) > 128
+            || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(projectile.NativeMissileId)
             || !IsAsciiLetter(projectile.NativeMissileId[0])
                 && projectile.NativeMissileId[0] != '_') {
             return false;

@@ -6,6 +6,10 @@ transport is TCP: each serialized `Envelope` is prefixed by a four-byte
 little-endian payload length. Empty payloads and payloads larger than 1 MiB are
 rejected.
 
+Managed consumers use `AuthoritativeProtocolLimits` from the generated protocol
+assembly for the shared 16 KiB dialogue-text and 128-byte identity boundaries;
+the native bridge mirrors those limits in its C++ validator.
+
 `protocol/Devilution.Protocol/Devilution.Protocol.csproj` is the only managed
 binding generator. The C# server host, Diablo adapter, Godot transport, and
 tests all reference that assembly, so a process contains one identity for every

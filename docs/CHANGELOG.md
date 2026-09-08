@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   UTF-8 and rejects NUL/carriage-return payloads before presentation.
 - Applied the shared 128-byte identity boundary to native missile identities
   at server, Godot, and native snapshot validation.
+- Centralized the managed dialogue and opaque-identity limits in the protocol
+  assembly so server and Godot validation consume one contract.
 - Extended native compatibility presentation to consume server-owned localized
   dialogue text when supplied by `DialogueEvent`, retaining the legacy message
   catalog only for ID-only peers. Vendor/service greetings can now cross the

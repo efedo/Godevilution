@@ -27,6 +27,8 @@ payloads above 16 KiB of UTF-8 bytes before presentation.
 Content-owned native missile identities now use the same 128-byte UTF-8 limit
 as other opaque protocol identities at every snapshot boundary, preventing an
 oversized presentation identity from reaching native or Godot projection.
+Managed validators now consume these limits from the protocol assembly rather
+than maintaining separate server/Godot constants.
 
 The replay gate now covers the validated Acid projectile lifecycle across the
 native and managed runners. A seeded initial Acid missile expires into its

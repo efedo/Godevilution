@@ -267,9 +267,10 @@ not carry mutable quest state. Events are not a second source of truth. A
 reconnect or dropped event cannot invalidate the next snapshot. The generic
 host, Godot client, and native compatibility client each accept at most 4096
 events in one batch and reject unknown event kinds, negative damage/healing
-amounts, negative dialogue message IDs, or dialogue text containing NUL
-characters; zero entity IDs remain tolerated for compatibility with events that
-do not target the local presentation. During a Godot reconnect epoch boundary,
+amounts, negative dialogue message IDs, or dialogue text containing NUL or
+carriage-return characters or exceeding 16 KiB of UTF-8 bytes; zero entity IDs
+remain tolerated for compatibility with events that do not target the local
+presentation. During a Godot reconnect epoch boundary,
 event batches are ignored until the next validated snapshot is accepted, so
 events from the prior transport stream cannot populate the new presentation
 history.
@@ -869,8 +870,9 @@ its damage channel is Lightning; ordinary Fire Wall and Ring of Fire segments
 continue to use the Fire Wall identity.
 `ProjectileSnapshot.native_missile_id` field 57 carries the validated
 content-owned native missile identity for native monster-magic projectiles.
-An empty value preserves the enum/behavior compatibility fallback, and older
-peers ignore this additive field.
+It is limited to 128 UTF-8 bytes and must use the validated native identity
+syntax. An empty value preserves the enum/behavior compatibility fallback, and
+older peers ignore this additive field.
 `ItemStateSnapshot.presentation_kind` is additive server-owned metadata for
 world-item presentation. `Gold` and `Ear` identify the shipped currency and
 dynamic PvP-ear families; zero or unknown values retain generic item rendering,
