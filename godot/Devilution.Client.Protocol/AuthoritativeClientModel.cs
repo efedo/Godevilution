@@ -32,14 +32,14 @@ public sealed class AuthoritativeClientModel
     private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
     private const int MaximumNativeSetLevelId = AuthoritativeProtocolLimits.MaximumNativeSetLevelId;
     private const int MaximumMonsterLeaderRelation = AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation;
-    private const uint MaximumStableSpellId = byte.MaxValue;
-    private const uint MaximumNativeSpellLevel = 15;
-    private const int MaximumMemorizedSpellCount = 51;
-    private const uint MaximumNativeCharacterLevel = 50;
-    private const uint MaximumNativeDiabloKillLevel = byte.MaxValue;
-    private const uint MaximumNativeReflectCharges = ushort.MaxValue;
-    private const int MinimumNativeLightRadius = 2;
-    private const int MaximumNativeLightRadius = 15;
+    private const uint MaximumStableSpellId = AuthoritativeProtocolLimits.MaximumStableSpellId;
+    private const uint MaximumNativeSpellLevel = AuthoritativeProtocolLimits.MaximumNativeSpellLevel;
+    private const int MaximumMemorizedSpellCount = AuthoritativeProtocolLimits.MaximumMemorizedSpellCount;
+    private const uint MaximumNativeCharacterLevel = AuthoritativeProtocolLimits.MaximumNativeCharacterLevel;
+    private const uint MaximumNativeDiabloKillLevel = AuthoritativeProtocolLimits.MaximumNativeDiabloKillLevel;
+    private const uint MaximumNativeReflectCharges = AuthoritativeProtocolLimits.MaximumNativeReflectCharges;
+    private const int MinimumNativeLightRadius = AuthoritativeProtocolLimits.MinimumNativeLightRadius;
+    private const int MaximumNativeLightRadius = AuthoritativeProtocolLimits.MaximumNativeLightRadius;
     private const int MaximumProjectileDamageType = AuthoritativeProtocolLimits.MaximumProjectileDamageType;
     private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
@@ -51,11 +51,11 @@ public sealed class AuthoritativeClientModel
     private const int MaximumSpellTargetingKind = AuthoritativeProtocolLimits.MaximumSpellTargetingKind;
     private const int MaximumProjectilePhase = AuthoritativeProtocolLimits.MaximumProjectilePhase;
     private const int MaximumMonsterDialogueState = AuthoritativeProtocolLimits.MaximumMonsterDialogueState;
-    private const int MaximumNativeMonsterDirection = 7;
-    private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
-    private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
-    private const int MaximumNativeMonsterToHit = 255;
-    private const int MaximumNativeMonsterIntelligence = 255;
+    private const int MaximumNativeMonsterDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection;
+    private const int MaximumNativeMonsterDeathAnimationTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterDeathAnimationTicks;
+    private const uint MaximumNativeMonsterExperienceReward = AuthoritativeProtocolLimits.MaximumNativeMonsterExperienceReward;
+    private const int MaximumNativeMonsterToHit = AuthoritativeProtocolLimits.MaximumNativeMonsterToHit;
+    private const int MaximumNativeMonsterIntelligence = AuthoritativeProtocolLimits.MaximumNativeMonsterIntelligence;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
     private const int MaximumObjectQuestTransitionKind = AuthoritativeProtocolLimits.MaximumObjectQuestTransitionKind;
@@ -1036,7 +1036,7 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateQuestTownerInteractions(Snapshot snapshot)
     {
-        if (snapshot.QuestTownerInteractions.Count > 1024) {
+        if (snapshot.QuestTownerInteractions.Count > AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains too many quest/towner interactions.");
         }
@@ -1086,7 +1086,7 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateTownerGreetings(Snapshot snapshot)
     {
-        if (snapshot.TownerGreetings.Count > 256) {
+        if (snapshot.TownerGreetings.Count > AuthoritativeProtocolLimits.MaximumTownerGreetingCount) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains too many towner greetings.");
         }
@@ -1294,7 +1294,7 @@ public sealed class AuthoritativeClientModel
     private static void ValidateVisitedLevels(PlayerSnapshot player)
     {
         if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
-            || player.VisitedLevelIds.Count > 256
+            || player.VisitedLevelIds.Count > AuthoritativeProtocolLimits.MaximumNativeVisitedLevelCount
             || player.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
             || (player.VisitedLevelIds.Count > 0
                 && AuthoritativeLevelIdRules.IsRegularLevel(player.LevelId)
@@ -1414,8 +1414,8 @@ public sealed class AuthoritativeClientModel
                 ? monster.LeaderEntityId != 0
                 : monster.LeaderEntityId == 0)
             || monster.LeaderRelation != 0 && monster.IsUnique
-            || monster.PackSize is < 0 or > 255
-            || monster.ActiveForTicks is < 0 or > 255
+            || monster.PackSize is < 0 or > AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize
+            || monster.ActiveForTicks is < 0 or > AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks
             || monster.FallenStandAnimationFrame is < 0 or > 127
             || monster.FallenStandAnimationTick is < 0 or > 127
             || monster.FallenRallyTicks is < 0 or > 4096

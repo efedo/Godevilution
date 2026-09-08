@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
 - Native player/entity capacities and level geometry bounds are now named shared
   protocol limits consumed by managed validation, Godot validation, Diablo
   mapping, and the native compatibility layer.
+- Native scalar compatibility bounds for monster state, player progression,
+  spell levels, visited-level history, light radius, and quest/towner payloads
+  now use the same named limits across managed validation and native projection.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

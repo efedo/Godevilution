@@ -135,7 +135,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		return tl::make_unexpected("Server-backed snapshot contains an unsupported player level identity.");
 	if (!IsValidCharacterName(player->character_name()))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid character name.");
-	if (player->visited_level_ids_size() > 256) {
+	if (player->visited_level_ids_size() > MaximumNativeVisitedLevelCount) {
 		return tl::make_unexpected("Server-backed snapshot contains too many visited levels.");
 	}
 	std::unordered_set<uint32_t> visitedLevelIds;
@@ -150,9 +150,10 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	        == player->visited_level_ids().end()) {
 		return tl::make_unexpected("Server-backed snapshot omits the player's current visited level.");
 	}
-	if (player->reflect_charges() > std::numeric_limits<uint16_t>::max())
+	if (player->reflect_charges() > MaximumNativeReflectCharges)
 		return tl::make_unexpected("Server-backed snapshot contains Reflect charges outside the native range.");
-	if (player->light_radius() != 0 && (player->light_radius() < 2 || player->light_radius() > 15))
+	if (player->light_radius() != 0
+	    && (player->light_radius() < MinimumNativeLightRadius || player->light_radius() > MaximumNativeLightRadius))
 		return tl::make_unexpected("Server-backed snapshot contains a light radius outside the native range.");
 	if (player->stash_size() > StashPageCount * StashCellCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many stash items.");
@@ -534,8 +535,8 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		        ? source.leader_entity_id() != 0
 		        : source.leader_entity_id() == 0)
 		    || source.leader_relation() != 0 && source.is_unique()
-		    || source.pack_size() < 0 || source.pack_size() > 255
-		    || source.active_for_ticks() < 0 || source.active_for_ticks() > 255) {
+		    || source.pack_size() < 0 || source.pack_size() > MaximumNativeMonsterPackSize
+		    || source.active_for_ticks() < 0 || source.active_for_ticks() > MaximumNativeMonsterActiveTicks) {
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster group-unity state.");
 		}
 		projected.push_back({
@@ -1005,7 +1006,7 @@ tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot 
 
 tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::Snapshot &snapshot)
 {
-	if (snapshot.quest_towner_interactions_size() > 1024)
+	if (snapshot.quest_towner_interactions_size() > MaximumQuestTownerInteractionCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many quest/towner interactions.");
 	std::unordered_set<uint32_t> questIds;
 	questIds.reserve(snapshot.quests_size());
@@ -1336,15 +1337,15 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.aggro_range() < 0
 		    || monster.monster_level() < 0
 		    || monster.death_animation_ticks() < 0
-		    || monster.death_animation_ticks() > 1024
+		    || monster.death_animation_ticks() > MaximumNativeMonsterDeathAnimationTicks
 		    || monster.death_ticks_remaining() < 0
 		    || monster.death_ticks_remaining() > monster.death_animation_ticks()
 		    || (monster.hit_points_q6() > 0 && monster.death_ticks_remaining() != 0)
-		    || monster.experience_reward() > 1'000'000
-		    || monster.to_hit() < 0 || monster.to_hit() > 255
-		    || monster.to_hit_special() < 0 || monster.to_hit_special() > 255
-		    || monster.intelligence() < 0 || monster.intelligence() > 255
-		    || monster.direction() < 0 || monster.direction() > 7
+		    || monster.experience_reward() > MaximumNativeMonsterExperienceReward
+		    || monster.to_hit() < 0 || monster.to_hit() > MaximumNativeMonsterToHit
+		    || monster.to_hit_special() < 0 || monster.to_hit_special() > MaximumNativeMonsterToHit
+		    || monster.intelligence() < 0 || monster.intelligence() > MaximumNativeMonsterIntelligence
+		    || monster.direction() < 0 || monster.direction() > MaximumNativeMonsterDirection
 		    || monster.fire_resistance() < -100 || monster.fire_resistance() > 100
 		    || monster.lightning_resistance() < -100 || monster.lightning_resistance() > 100
 		    || monster.magic_resistance() < -100 || monster.magic_resistance() > 100
@@ -1360,8 +1361,8 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		        ? monster.leader_entity_id() != 0
 		        : monster.leader_entity_id() == 0)
 		    || monster.leader_relation() != 0 && monster.is_unique()
-		    || monster.pack_size() < 0 || monster.pack_size() > 255
-		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > 255
+		    || monster.pack_size() < 0 || monster.pack_size() > MaximumNativeMonsterPackSize
+		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > MaximumNativeMonsterActiveTicks
 		    || (!monster.moving()
 		        && (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0))
 		    || (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0)
@@ -1449,7 +1450,7 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || static_cast<int32_t>(projectile.native_visual()) < 0
 		    || static_cast<int32_t>(projectile.native_visual()) > MaximumNativeProjectileVisual
 		    || usesDirectionalPresentation(projectile)
-		        && (projectile.original_direction() < 0 || projectile.original_direction() > 7)
+		        && (projectile.original_direction() < 0 || projectile.original_direction() > MaximumNativeMonsterDirection)
 		    || !projectile.native_missile_id().empty()
 		        && (projectile.behavior() != static_cast<int>(ProjectileBehavior::MonsterMagic)
 		            || !IsValidNativeMissileIdentity(projectile.native_missile_id())))
@@ -1487,7 +1488,7 @@ tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::E
 			continue;
 		}
 		if (event.has_victory()) {
-			if (event.victory().diablo_kill_level() > std::numeric_limits<uint8_t>::max())
+			if (event.victory().diablo_kill_level() > MaximumNativeDiabloKillLevel)
 				return tl::make_unexpected("Server-backed event batch contains a Diablo kill level outside the native range.");
 			continue;
 		}
@@ -1524,7 +1525,7 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			AddFloatingExperienceNumber(player.position.tile, event.experience().amount());
 		}
 		if (event.has_victory() && event.victory().player_entity_id() == entityId) {
-			const auto killLevel = std::min<uint32_t>(event.victory().diablo_kill_level(), std::numeric_limits<uint8_t>::max());
+			const auto killLevel = std::min<uint32_t>(event.victory().diablo_kill_level(), MaximumNativeDiabloKillLevel);
 			player.pDiabloKillLevel = static_cast<uint8_t>(killLevel);
 		}
 		if (event.has_map_opened() && event.map_opened().player_entity_id() == entityId) {

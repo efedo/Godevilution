@@ -85,6 +85,24 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal((uint)1378, AuthoritativeProtocolLimits.NativeMaximumDunPieceId);
         Assert.Equal((uint)108, AuthoritativeProtocolLimits.NativeMaximumObjectId);
         Assert.Equal((uint)23, AuthoritativeProtocolLimits.NativeMaximumQuestId);
+        Assert.Equal(256, AuthoritativeProtocolLimits.MaximumNativeVisitedLevelCount);
+        Assert.Equal(1024, AuthoritativeProtocolLimits.MaximumNativeMonsterDeathAnimationTicks);
+        Assert.Equal((uint)1_000_000, AuthoritativeProtocolLimits.MaximumNativeMonsterExperienceReward);
+        Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeMonsterToHit);
+        Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeMonsterIntelligence);
+        Assert.Equal(7, AuthoritativeProtocolLimits.MaximumNativeMonsterDirection);
+        Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize);
+        Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks);
+        Assert.Equal((uint)255, AuthoritativeProtocolLimits.MaximumStableSpellId);
+        Assert.Equal((uint)15, AuthoritativeProtocolLimits.MaximumNativeSpellLevel);
+        Assert.Equal(51, AuthoritativeProtocolLimits.MaximumMemorizedSpellCount);
+        Assert.Equal((uint)50, AuthoritativeProtocolLimits.MaximumNativeCharacterLevel);
+        Assert.Equal((uint)255, AuthoritativeProtocolLimits.MaximumNativeDiabloKillLevel);
+        Assert.Equal((uint)65_535, AuthoritativeProtocolLimits.MaximumNativeReflectCharges);
+        Assert.Equal(2, AuthoritativeProtocolLimits.MinimumNativeLightRadius);
+        Assert.Equal(15, AuthoritativeProtocolLimits.MaximumNativeLightRadius);
+        Assert.Equal(1024, AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount);
+        Assert.Equal(256, AuthoritativeProtocolLimits.MaximumTownerGreetingCount);
     }
 
     [Fact]

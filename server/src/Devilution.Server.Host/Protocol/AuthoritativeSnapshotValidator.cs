@@ -15,11 +15,14 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeMaximumItemCount = AuthoritativeProtocolLimits.NativeMaximumItemCount;
     private const int NativeMaximumWarpTriggerCount = AuthoritativeProtocolLimits.NativeMaximumWarpTriggerCount;
     private const int NativeMaximumPortalCount = AuthoritativeProtocolLimits.NativeMaximumPortalCount;
-    private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
-    private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
-    private const int MaximumNativeMonsterToHit = 255;
-    private const int MaximumNativeMonsterDirection = 7;
-    private const int MaximumNativeObjectId = 108;
+    private const int MaximumNativeMonsterDeathAnimationTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterDeathAnimationTicks;
+    private const uint MaximumNativeMonsterExperienceReward = AuthoritativeProtocolLimits.MaximumNativeMonsterExperienceReward;
+    private const int MaximumNativeMonsterToHit = AuthoritativeProtocolLimits.MaximumNativeMonsterToHit;
+    private const int MaximumNativeMonsterIntelligence = AuthoritativeProtocolLimits.MaximumNativeMonsterIntelligence;
+    private const int MaximumNativeMonsterDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection;
+    private const int MaximumNativeMonsterPackSize = AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize;
+    private const int MaximumNativeMonsterActiveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks;
+    private const uint MaximumNativeObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
     private const int MaximumObjectQuestTransitionKind = AuthoritativeProtocolLimits.MaximumObjectQuestTransitionKind;
@@ -48,19 +51,19 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeStashPageCount = 100;
     private const int NativeStashCellCount = 100;
     private const int MaximumQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
-    private const int MaximumQuestTownerInteractionCount = 1024;
+    private const int MaximumQuestTownerInteractionCount = AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount;
     private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
     private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
     private const int MaximumWorldMutationCount = AuthoritativeProtocolLimits.MaximumWorldMutationCount;
     private const int MaximumNativeSetLevelId = AuthoritativeProtocolLimits.MaximumNativeSetLevelId;
     private const int MaximumMonsterLeaderRelation = AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation;
-    private const uint MaximumNativeSpellLevel = 15;
-    private const int MaximumMemorizedSpellCount = 51;
-    private const uint MaximumNativeCharacterLevel = 50;
-    private const uint MaximumNativeDiabloKillLevel = byte.MaxValue;
-    private const uint MaximumNativeReflectCharges = ushort.MaxValue;
-    private const int MinimumNativeLightRadius = 2;
-    private const int MaximumNativeLightRadius = 15;
+    private const uint MaximumNativeSpellLevel = AuthoritativeProtocolLimits.MaximumNativeSpellLevel;
+    private const int MaximumMemorizedSpellCount = AuthoritativeProtocolLimits.MaximumMemorizedSpellCount;
+    private const uint MaximumNativeCharacterLevel = AuthoritativeProtocolLimits.MaximumNativeCharacterLevel;
+    private const uint MaximumNativeDiabloKillLevel = AuthoritativeProtocolLimits.MaximumNativeDiabloKillLevel;
+    private const uint MaximumNativeReflectCharges = AuthoritativeProtocolLimits.MaximumNativeReflectCharges;
+    private const int MinimumNativeLightRadius = AuthoritativeProtocolLimits.MinimumNativeLightRadius;
+    private const int MaximumNativeLightRadius = AuthoritativeProtocolLimits.MaximumNativeLightRadius;
 
     public static void Validate(Snapshot snapshot)
     {
@@ -531,7 +534,7 @@ public static class AuthoritativeSnapshotValidator
     private static void ValidateVisitedLevels(PlayerSnapshot player)
     {
         if (!AuthoritativeLevelIdRules.IsSupported(player.LevelId)
-            || player.VisitedLevelIds.Count > 256
+            || player.VisitedLevelIds.Count > AuthoritativeProtocolLimits.MaximumNativeVisitedLevelCount
             || player.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
             || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count
             || player.VisitedLevelIds.Count > 0
@@ -1047,7 +1050,7 @@ public static class AuthoritativeSnapshotValidator
                 || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
                 || monster.ToHit is < 0 or > MaximumNativeMonsterToHit
                 || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
-                || monster.Intelligence is < 0 or > byte.MaxValue
+                || monster.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
                 || monster.Direction is < 0 or > MaximumNativeMonsterDirection
                 || monster.FireResistance is < -100 or > 100
                 || monster.LightningResistance is < -100 or > 100
@@ -1059,8 +1062,8 @@ public static class AuthoritativeSnapshotValidator
                     ? monster.LeaderEntityId != 0
                     : monster.LeaderEntityId == 0)
                 || monster.LeaderRelation != 0 && monster.IsUnique
-                || monster.PackSize is < 0 or > byte.MaxValue
-                || monster.ActiveForTicks is < 0 or > byte.MaxValue
+                || monster.PackSize is < 0 or > MaximumNativeMonsterPackSize
+                || monster.ActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
                 || monster.FallenStandAnimationFrame is < 0 or > 127
                 || monster.FallenStandAnimationTick is < 0 or > 127
                 || monster.FallenRallyTicks is < 0 or > 4096

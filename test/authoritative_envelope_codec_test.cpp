@@ -29,6 +29,24 @@ static_assert(NativeMaximumDunObjectLayerId == 146);
 static_assert(NativeMaximumDunPieceId == 1378);
 static_assert(NativeMaximumObjectId == 108);
 static_assert(NativeMaximumQuestId == 23);
+static_assert(MaximumNativeVisitedLevelCount == 256);
+static_assert(MaximumNativeMonsterDeathAnimationTicks == 1024);
+static_assert(MaximumNativeMonsterExperienceReward == 1'000'000);
+static_assert(MaximumNativeMonsterToHit == 255);
+static_assert(MaximumNativeMonsterIntelligence == 255);
+static_assert(MaximumNativeMonsterDirection == 7);
+static_assert(MaximumNativeMonsterPackSize == 255);
+static_assert(MaximumNativeMonsterActiveTicks == 255);
+static_assert(MaximumStableSpellId == 255);
+static_assert(MaximumNativeSpellLevel == 15);
+static_assert(MaximumMemorizedSpellCount == 51);
+static_assert(MaximumNativeCharacterLevel == 50);
+static_assert(MaximumNativeDiabloKillLevel == 255);
+static_assert(MaximumNativeReflectCharges == 65535);
+static_assert(MinimumNativeLightRadius == 2);
+static_assert(MaximumNativeLightRadius == 15);
+static_assert(MaximumQuestTownerInteractionCount == 1024);
+static_assert(MaximumTownerGreetingCount == 256);
 
 using asio::ip::tcp;
 

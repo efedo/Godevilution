@@ -10,6 +10,11 @@ shared protocol contract. Managed validation, Godot validation, Diablo mapping,
 and native compatibility code now consume the same values for player, monster,
 object, item, portal, warp-trigger, and level-dimension boundaries.
 
+Native scalar compatibility bounds for monster state, player progression, spell
+levels, visited-level history, light radius, and quest/towner payloads are now
+named in that contract as well. Managed validators and native projection use
+the same maxima instead of repeating raw literals.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the
