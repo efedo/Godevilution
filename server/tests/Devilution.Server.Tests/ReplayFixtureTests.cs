@@ -4867,6 +4867,33 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayBatMultiplayerTargetSelectionMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-bat-multiplayer-target.json");
+        var executor = CreateStealthReplayExecutor(fixture, "bat-retreat");
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal((0, 10), (monster.PositionX, monster.PositionY));
+        Assert.True(monster.Moving);
+        Assert.Equal((1, 10), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(7, monster.Direction);
+        Assert.Equal(0, monster.BatRetreatTicks);
+        Assert.Equal((10, 10), (primary.PositionX, primary.PositionY));
+        Assert.Equal((4, 4), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayScavengerCorpseLifecycleMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-scavenger-corpse.json");

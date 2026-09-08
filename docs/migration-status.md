@@ -25,6 +25,11 @@ fixture. Native and managed runners select the nearest live participant,
 preserve the farther participant, and advance the Gargoyle AI stream through
 the authored avoidance movement branch.
 
+The replay gate also covers Bat retreat target selection with two live
+participants. Native and managed runners select the nearer secondary player,
+preserve the farther primary player, and retain the same retreat movement
+state and canonical checkpoints.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

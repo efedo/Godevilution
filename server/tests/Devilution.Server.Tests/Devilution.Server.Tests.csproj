@@ -127,6 +127,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-sneak-conceal.json" Link="Fixtures/gameplay-sneak-conceal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-sneak-reveal.json" Link="Fixtures/gameplay-sneak-reveal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-retreat.json" Link="Fixtures/gameplay-bat-retreat.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-bat-multiplayer-target.json" Link="Fixtures/gameplay-bat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-corpse.json" Link="Fixtures/gameplay-scavenger-corpse.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-multicandidate-selection.json" Link="Fixtures/gameplay-scavenger-multicandidate-selection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-hellfire-corpse.json" Link="Fixtures/gameplay-scavenger-hellfire-corpse.json" CopyToOutputDirectory="PreserveNewest" />

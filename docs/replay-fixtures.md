@@ -242,7 +242,8 @@ selection through the autonomous avoidance branch.
 The two SkeletonMelee delay fixtures load native chance bands and delay
 formulas from the hash-checked `test/content/replay/skeleton-melee` content
 pack.
-The Bat retreat, Fat movement, and Zombie action fixtures likewise load their
+The Bat retreat fixtures, along with the Fat movement and Zombie action fixtures,
+likewise load their
 native AI tuning from the hash-checked `bat-retreat`, `fat-movement`, and
 `zombie-action` content packs.
 The Rhino charge and all three Scavenger corpse-healing fixtures load their native
@@ -385,7 +386,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-03,
-the native replay gate contains 174 checked-in JSON fixtures and 193 registered
+the native replay gate contains 175 checked-in JSON fixtures and 194 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -905,6 +906,8 @@ Notable shared fixtures include:
 - `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
   corpse scan order, first-candidate selection, deterministic movement, and
   selected-corpse checkpoint parity;
+- `gameplay-bat-multiplayer-target.json` for Bat retreat movement selecting the
+  nearest live participant while preserving the farther primary participant;
 - `gameplay-goat-melee-movement.json` for zero-seed AiAvoidance movement
   admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-goat-melee-attack.json` for seeded adjacent attack admission,
