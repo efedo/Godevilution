@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-03
+Status date: 2026-09-08
 
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
@@ -38,6 +38,11 @@ Sneak concealment now has the same two-participant replay coverage. The nearer
 secondary keeps the monster inside the native preferred-distance band, while
 the farther primary would trigger concealment; both runners preserve the
 nearest-target decision and canonical state.
+
+Rhino charge now has the same two-participant replay coverage. The nearer
+secondary receives the native special damage and knockback while the farther
+primary remains unchanged; both runners preserve the charge landing and
+canonical checkpoint.
 
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,

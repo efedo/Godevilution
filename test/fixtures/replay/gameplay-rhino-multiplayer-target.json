@@ -1,0 +1,62 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/rhino-multiplayer-target",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.rhino-charge",
+    "version": "0.1.0",
+    "sha256": "81005b5b6e68ead6921fc747e3390c143d10abac952ff442bc2a362067873f9a"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 8,
+    "position_y": 0,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 5,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_id": 111,
+    "combat_target_attack_damage": 3,
+    "combat_target_aggro_range": 8,
+    "combat_target_monster_level": 10,
+    "combat_target_to_hit": 255,
+    "combat_target_to_hit_special": 255,
+    "combat_target_min_damage": 3,
+    "combat_target_max_damage": 3,
+    "combat_target_native_ai": "Rhino",
+    "combat_target_intelligence": 0
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "09c6e01017a992da9bd2cda3c9316a96a40c6a8076731fa1150e21362ecf14c9" }
+  ]
+}
