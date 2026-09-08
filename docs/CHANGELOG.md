@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added the stable `AuthoritativeProjectileBehavior` identity enum to the
+  dependency-free protocol assembly and replaced managed/native projectile
+  behavior bounds with the shared protocol limit. Godot's legacy presentation
+  fallback now uses named protocol identities instead of raw numeric literals.
 - Unified projectile presentation precedence across the Godot and native
   clients: the server-owned `native_visual` enum is authoritative, while
   `native_missile_id` remains a legacy fallback only when that enum is absent.

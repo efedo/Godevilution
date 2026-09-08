@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Client.Protocol;
 using Xunit;
@@ -7,6 +8,20 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class ProjectilePresentationStyleTests
 {
+    [Fact]
+    public void UsesStableProtocolBehaviorIdentities()
+    {
+        Assert.Equal(59, (int)AuthoritativeProjectileBehavior.MonsterArrow);
+        Assert.Equal(
+            (int)AuthoritativeProjectileBehavior.MonsterArrow,
+            AuthoritativeProtocolLimits.MaximumProjectileBehavior);
+        Assert.Equal(
+            ProjectilePresentationKind.Fire,
+            ProjectilePresentationStyle.Resolve(
+                (int)AuthoritativeProjectileBehavior.Firebolt,
+                phase: 0));
+    }
+
     [Theory]
     [InlineData(2, 0, ProjectilePresentationKind.Fire)]
     [InlineData(2, 1, ProjectilePresentationKind.FireImpact)]

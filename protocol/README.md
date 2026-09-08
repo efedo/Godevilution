@@ -394,6 +394,10 @@ Windows toolchain command.
   damage, resistance, lifetime, and spell-level fields preserve deterministic
   resume without adding a protocol field. Clients render the two phases but do
   not select splash targets or resolve damage.
+  `ProjectileSnapshot.behavior` uses the stable `AuthoritativeProjectileBehavior`
+  identities (0 through 59); this is simulation state carried for resume and
+  legacy compatibility, not a client-owned gameplay decision. Current clients
+  prefer the server-owned presentation fields below.
   `ProjectileSnapshot.presentation_kind` field 53 is an additive server-owned
   presentation family. Current servers populate it for every projectile so
   Godot does not need to maintain the behavior-to-visual mapping; older peers

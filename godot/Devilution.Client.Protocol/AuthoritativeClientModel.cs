@@ -36,7 +36,7 @@ public sealed class AuthoritativeClientModel
     private const int MinimumNativeLightRadius = 2;
     private const int MaximumNativeLightRadius = 15;
     private const int MaximumProjectileDamageType = 4;
-    private const int MaximumProjectileBehavior = 59;
+    private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePhase = 1;
     private const int MaximumNativeMonsterDirection = 7;
     private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
@@ -1472,7 +1472,7 @@ public sealed class AuthoritativeClientModel
     private static void ValidateProjectile(ProjectileSnapshot projectile)
     {
         if (projectile.SourceEntityId == 0
-            || (projectile.SpellId == 0 && projectile.Behavior is not (58 or 59))
+            || (projectile.SpellId == 0 && !IsWeaponProjectile(projectile.Behavior))
             || projectile.RemainingTicks == 0
             || projectile.Damage < 0
             || projectile.AreaRadius < 0
@@ -1502,17 +1502,49 @@ public sealed class AuthoritativeClientModel
             || !string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
 
-        return projectile.Behavior is
-            1 or 2 or 3 or 4 or 6 or 7 or 11 or 15 or 16 or 19 or 20 or 21
-            or 23 or 24 or 25 or 27 or 29 or 31 or 33 or 35 or 36 or 49
-            or 51 or 52 or 53 or 56 or 57 or 58 or 59;
+        return (AuthoritativeProjectileBehavior)projectile.Behavior is
+            AuthoritativeProjectileBehavior.ChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.LightningSegment
+                or AuthoritativeProjectileBehavior.FlashBottom
+                or AuthoritativeProjectileBehavior.FlashTop
+                or AuthoritativeProjectileBehavior.ResurrectionBeam
+                or AuthoritativeProjectileBehavior.Phasing
+                or AuthoritativeProjectileBehavior.Fireball
+                or AuthoritativeProjectileBehavior.HolyBolt
+                or AuthoritativeProjectileBehavior.BloodStar
+                or AuthoritativeProjectileBehavior.BoneSpirit
+                or AuthoritativeProjectileBehavior.FireWallSegment
+                or AuthoritativeProjectileBehavior.FlameWaveController
+                or AuthoritativeProjectileBehavior.FlameWaveSegment
+                or AuthoritativeProjectileBehavior.InfernoSegment
+                or AuthoritativeProjectileBehavior.ChainLightningBolt
+                or AuthoritativeProjectileBehavior.NovaBall
+                or AuthoritativeProjectileBehavior.ApocalypseBoom
+                or AuthoritativeProjectileBehavior.Elemental
+                or AuthoritativeProjectileBehavior.GuardianController
+                or AuthoritativeProjectileBehavior.Etherealize
+                or AuthoritativeProjectileBehavior.Acid
+                or AuthoritativeProjectileBehavior.AcidSplat
+                or AuthoritativeProjectileBehavior.AcidPuddle
+                or AuthoritativeProjectileBehavior.MonsterChargedBolt
+                or AuthoritativeProjectileBehavior.HorkSpawn
+                or AuthoritativeProjectileBehavior.WeaponArrow
+                or AuthoritativeProjectileBehavior.MonsterArrow;
     }
+
+    private static bool IsWeaponProjectile(int behavior)
+        => (AuthoritativeProjectileBehavior)behavior is
+            AuthoritativeProjectileBehavior.WeaponArrow
+                or AuthoritativeProjectileBehavior.MonsterArrow;
 
     private static bool IsValidNativeMissileIdentity(ProjectileSnapshot projectile)
     {
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
-        if (projectile.Behavior != 50
+        if ((AuthoritativeProjectileBehavior)projectile.Behavior
+                != AuthoritativeProjectileBehavior.MonsterMagic
             || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(projectile.NativeMissileId)
             || !IsAsciiLetter(projectile.NativeMissileId[0])
                 && projectile.NativeMissileId[0] != '_') {

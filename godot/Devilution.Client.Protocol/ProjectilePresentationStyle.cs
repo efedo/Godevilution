@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Client.Protocol;
@@ -36,48 +37,48 @@ public enum ProjectilePresentationKind
 /** Maps authoritative behavior identities to client-only visual families. */
 public static class ProjectilePresentationStyle
 {
-    private const int Lightning = 3;
-    private const int LightningSegment = 4;
-    private const int ChargedBolt = 1;
-    private const int ResurrectionBeam = 11;
-    private const int StoneCurse = 13;
-    private const int RageController = 34;
-    private const int Flash = 5;
-    private const int FlashBottom = 6;
-    private const int FlashTop = 7;
-    private const int Teleport = 9;
-    private const int Phasing = 15;
-    private const int Firebolt = 2;
-    private const int Fireball = 16;
-    private const int HolyBolt = 19;
-    private const int BloodStar = 20;
-    private const int MonsterMagic = 50;
-    private const int HorkSpawn = 57;
-    private const int BoneSpirit = 21;
-    private const int FireWallController = 22;
-    private const int FireWallSegment = 23;
+    private const AuthoritativeProjectileBehavior Lightning = AuthoritativeProjectileBehavior.Lightning;
+    private const AuthoritativeProjectileBehavior LightningSegment = AuthoritativeProjectileBehavior.LightningSegment;
+    private const AuthoritativeProjectileBehavior ChargedBolt = AuthoritativeProjectileBehavior.ChargedBolt;
+    private const AuthoritativeProjectileBehavior ResurrectionBeam = AuthoritativeProjectileBehavior.ResurrectionBeam;
+    private const AuthoritativeProjectileBehavior StoneCurse = AuthoritativeProjectileBehavior.StoneCurse;
+    private const AuthoritativeProjectileBehavior RageController = AuthoritativeProjectileBehavior.RageController;
+    private const AuthoritativeProjectileBehavior Flash = AuthoritativeProjectileBehavior.Flash;
+    private const AuthoritativeProjectileBehavior FlashBottom = AuthoritativeProjectileBehavior.FlashBottom;
+    private const AuthoritativeProjectileBehavior FlashTop = AuthoritativeProjectileBehavior.FlashTop;
+    private const AuthoritativeProjectileBehavior Teleport = AuthoritativeProjectileBehavior.Teleport;
+    private const AuthoritativeProjectileBehavior Phasing = AuthoritativeProjectileBehavior.Phasing;
+    private const AuthoritativeProjectileBehavior Firebolt = AuthoritativeProjectileBehavior.Firebolt;
+    private const AuthoritativeProjectileBehavior Fireball = AuthoritativeProjectileBehavior.Fireball;
+    private const AuthoritativeProjectileBehavior HolyBolt = AuthoritativeProjectileBehavior.HolyBolt;
+    private const AuthoritativeProjectileBehavior BloodStar = AuthoritativeProjectileBehavior.BloodStar;
+    private const AuthoritativeProjectileBehavior MonsterMagic = AuthoritativeProjectileBehavior.MonsterMagic;
+    private const AuthoritativeProjectileBehavior HorkSpawn = AuthoritativeProjectileBehavior.HorkSpawn;
+    private const AuthoritativeProjectileBehavior BoneSpirit = AuthoritativeProjectileBehavior.BoneSpirit;
+    private const AuthoritativeProjectileBehavior FireWallController = AuthoritativeProjectileBehavior.FireWallController;
+    private const AuthoritativeProjectileBehavior FireWallSegment = AuthoritativeProjectileBehavior.FireWallSegment;
     private const int LightningDamageType = 2;
-    private const int FlameWaveController = 24;
-    private const int FlameWaveSegment = 25;
-    private const int InfernoController = 26;
-    private const int InfernoSegment = 27;
-    private const int ApocalypseController = 32;
-    private const int ApocalypseBoom = 33;
-    private const int Elemental = 35;
-    private const int GuardianController = 36;
-    private const int ChainLightningController = 28;
-    private const int ChainLightningBolt = 29;
-    private const int NovaController = 30;
-    private const int NovaBall = 31;
-    private const int RingOfFireController = 42;
-    private const int ImmolationController = 43;
-    private const int LightningWallController = 47;
-    private const int Acid = 51;
-    private const int AcidSplat = 52;
-    private const int AcidPuddle = 53;
-    private const int WeaponArrow = 58;
-    private const int MonsterArrow = 59;
-    private const int MonsterChargedBolt = 56;
+    private const AuthoritativeProjectileBehavior FlameWaveController = AuthoritativeProjectileBehavior.FlameWaveController;
+    private const AuthoritativeProjectileBehavior FlameWaveSegment = AuthoritativeProjectileBehavior.FlameWaveSegment;
+    private const AuthoritativeProjectileBehavior InfernoController = AuthoritativeProjectileBehavior.InfernoController;
+    private const AuthoritativeProjectileBehavior InfernoSegment = AuthoritativeProjectileBehavior.InfernoSegment;
+    private const AuthoritativeProjectileBehavior ApocalypseController = AuthoritativeProjectileBehavior.ApocalypseController;
+    private const AuthoritativeProjectileBehavior ApocalypseBoom = AuthoritativeProjectileBehavior.ApocalypseBoom;
+    private const AuthoritativeProjectileBehavior Elemental = AuthoritativeProjectileBehavior.Elemental;
+    private const AuthoritativeProjectileBehavior GuardianController = AuthoritativeProjectileBehavior.GuardianController;
+    private const AuthoritativeProjectileBehavior ChainLightningController = AuthoritativeProjectileBehavior.ChainLightningController;
+    private const AuthoritativeProjectileBehavior ChainLightningBolt = AuthoritativeProjectileBehavior.ChainLightningBolt;
+    private const AuthoritativeProjectileBehavior NovaController = AuthoritativeProjectileBehavior.NovaController;
+    private const AuthoritativeProjectileBehavior NovaBall = AuthoritativeProjectileBehavior.NovaBall;
+    private const AuthoritativeProjectileBehavior RingOfFireController = AuthoritativeProjectileBehavior.RingOfFireController;
+    private const AuthoritativeProjectileBehavior ImmolationController = AuthoritativeProjectileBehavior.ImmolationController;
+    private const AuthoritativeProjectileBehavior LightningWallController = AuthoritativeProjectileBehavior.LightningWallController;
+    private const AuthoritativeProjectileBehavior Acid = AuthoritativeProjectileBehavior.Acid;
+    private const AuthoritativeProjectileBehavior AcidSplat = AuthoritativeProjectileBehavior.AcidSplat;
+    private const AuthoritativeProjectileBehavior AcidPuddle = AuthoritativeProjectileBehavior.AcidPuddle;
+    private const AuthoritativeProjectileBehavior WeaponArrow = AuthoritativeProjectileBehavior.WeaponArrow;
+    private const AuthoritativeProjectileBehavior MonsterArrow = AuthoritativeProjectileBehavior.MonsterArrow;
+    private const AuthoritativeProjectileBehavior MonsterChargedBolt = AuthoritativeProjectileBehavior.MonsterChargedBolt;
     private const int ImpactPhase = 1;
 
     public static ProjectilePresentationKind Resolve(ProjectileSnapshot projectile)
@@ -159,6 +160,12 @@ public static class ProjectilePresentationStyle
         => Resolve(behavior, phase, 0);
 
     public static ProjectilePresentationKind Resolve(int behavior, int phase, int damageType)
+        => Resolve((AuthoritativeProjectileBehavior)behavior, phase, damageType);
+
+    private static ProjectilePresentationKind Resolve(
+        AuthoritativeProjectileBehavior behavior,
+        int phase,
+        int damageType)
     {
         if (behavior == ResurrectionBeam)
             return ProjectilePresentationKind.Beam;

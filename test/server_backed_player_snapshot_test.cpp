@@ -1908,7 +1908,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidDamage).has_value());
 
 	protocol::Snapshot invalidLifecycle = makeProjectile();
-	invalidLifecycle.mutable_projectiles(0)->set_behavior(60);
+	invalidLifecycle.mutable_projectiles(0)->set_behavior(MaximumProjectileBehavior + 1);
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidLifecycle).has_value());
 
 	protocol::Snapshot lightningWallPresentation = makeProjectile();

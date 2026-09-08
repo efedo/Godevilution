@@ -22,7 +22,7 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumNativeObjectId = 108;
     private const int MaximumObjectEffectKind = 9;
     private const int MaximumProjectileDamageType = 4;
-    private const int MaximumProjectileBehavior = 59;
+    private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePhase = 1;
     private const int NativeMaximumWidth = 112;
     private const int NativeMaximumHeight = 112;

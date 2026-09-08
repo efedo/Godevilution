@@ -854,6 +854,9 @@ impact phase, resistance divisor, exact damage, and stationary-collision state.
 A resumed Lightning cast retains its invisible controller, stationary damaging
 segments, source spell level, remaining lifetimes, exact Q6 damage, and native
 per-tick collision/RNG boundary.
+`ProjectileSnapshot.behavior` uses the stable `AuthoritativeProjectileBehavior`
+identities (0 through 59). The value remains authoritative simulation state
+and a compatibility field; clients do not use it to make gameplay decisions.
 `ProjectileSnapshot.presentation_kind` field 53 is an additive server-owned
 presentation family. Current servers populate it for every projectile so
 presentation clients do not need to maintain the behavior-to-visual mapping;

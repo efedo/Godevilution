@@ -8,5 +8,6 @@ namespace devilution::authoritative {
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
+inline constexpr int MaximumProjectileBehavior = 59;
 
 } // namespace devilution::authoritative

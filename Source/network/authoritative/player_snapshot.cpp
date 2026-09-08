@@ -1447,7 +1447,7 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || projectile.peril_self_damage_q6() < 0
 		    || projectile.effective_spell_level() < 0
 		    || projectile.damage_type() < 0 || projectile.damage_type() > 4
-		    || projectile.behavior() < 0 || projectile.behavior() > 59
+		    || projectile.behavior() < 0 || projectile.behavior() > MaximumProjectileBehavior
 		    || projectile.phase() < 0 || projectile.phase() > 1
 		    || static_cast<int32_t>(projectile.presentation_kind()) < 0
 		    || static_cast<int32_t>(projectile.presentation_kind()) > 19

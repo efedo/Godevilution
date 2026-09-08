@@ -7,6 +7,8 @@ public static class AuthoritativeProtocolLimits
 {
     public const int MaximumDialogueTextBytes = 16 * 1024;
     public const int MaximumIdentityBytes = 128;
+    public const int MaximumProjectileBehavior =
+        (int)AuthoritativeProjectileBehavior.MonsterArrow;
 
     public static bool IsDialogueTextValid(string value)
     {

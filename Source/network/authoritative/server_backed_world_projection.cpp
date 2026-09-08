@@ -1,5 +1,7 @@
 #include "network/authoritative/server_backed_world_projection.hpp"
 
+#include "network/authoritative/protocol_limits.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <unordered_set>
@@ -181,7 +183,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.damage < 0
 			    || projectile.areaRadius < 0
 			    || projectile.damageType < 0 || projectile.damageType > 4
-			    || projectile.behavior < 0 || projectile.behavior > 59
+			    || projectile.behavior < 0 || projectile.behavior > MaximumProjectileBehavior
 			    || projectile.phase < 0 || projectile.phase > 1
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > 35
 			    || !isInBounds(projectile.levelId, projectile.positionX, projectile.positionY)

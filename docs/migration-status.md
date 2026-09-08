@@ -2,6 +2,10 @@
 
 Status date: 2026-09-08
 
+Projectile behavior values now have one named protocol identity enum shared by
+managed validation and legacy Godot presentation fallback; native bounds mirror
+the same maximum rather than repeating an unexplained literal.
+
 Projectile presentation now uses the typed server-owned `native_visual` enum
 as the authoritative identity in both Godot and native clients. The validated
 content-owned `native_missile_id` remains available only as a compatibility

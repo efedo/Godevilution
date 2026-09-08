@@ -3,6 +3,7 @@ using Devilution.Protocol.V1;
 using Devilution.Domain.Protocol;
 using Devilution.Engine;
 using Devilution.Server.Snapshots;
+using AuthoritativeProjectileBehavior = Devilution.Diablo.AuthoritativeProjectileBehavior;
 
 namespace Devilution.Server.Protocol;
 
