@@ -1517,6 +1517,7 @@ public sealed class AuthoritativeClientModel
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
         if (projectile.Behavior != 50
+            || Encoding.UTF8.GetByteCount(projectile.NativeMissileId) > 128
             || !IsAsciiLetter(projectile.NativeMissileId[0])
                 && projectile.NativeMissileId[0] != '_') {
             return false;

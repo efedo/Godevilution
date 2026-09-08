@@ -105,6 +105,8 @@ bool IsValidNativeMissileIdentity(const std::string &value)
 {
 	if (value.empty())
 		return true;
+	if (value.size() > 128)
+		return false;
 	const auto isLetter = [](char character) {
 		return character >= 'A' && character <= 'Z'
 		    || character >= 'a' && character <= 'z';

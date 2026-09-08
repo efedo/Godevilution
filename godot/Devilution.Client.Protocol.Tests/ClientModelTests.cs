@@ -2303,6 +2303,11 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativeMissile)));
 
+        var oversizedNativeMissile = invalidNativeMissile.Clone();
+        oversizedNativeMissile.Projectiles[0].NativeMissileId = new string('x', 129);
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: oversizedNativeMissile)));
+
         var misplacedNativeMissile = invalidNativeMissile.Clone();
         misplacedNativeMissile.Projectiles[0].Behavior = 49;
         misplacedNativeMissile.Projectiles[0].NativeMissileId = "Lightning";

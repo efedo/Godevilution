@@ -1923,6 +1923,11 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	invalidNativeIdentity.mutable_projectiles(0)->set_native_missile_id("-invalid");
 	EXPECT_FALSE(ValidateProjectileSnapshots(invalidNativeIdentity).has_value());
 
+	protocol::Snapshot oversizedNativeIdentity = makeProjectile();
+	oversizedNativeIdentity.mutable_projectiles(0)->set_behavior(50); // MonsterMagic
+	oversizedNativeIdentity.mutable_projectiles(0)->set_native_missile_id(std::string(129, 'x'));
+	EXPECT_FALSE(ValidateProjectileSnapshots(oversizedNativeIdentity).has_value());
+
 	protocol::Snapshot misplacedNativeIdentity = makeProjectile();
 	misplacedNativeIdentity.mutable_projectiles(0)->set_behavior(49);
 	misplacedNativeIdentity.mutable_projectiles(0)->set_native_missile_id("Lightning");

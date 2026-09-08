@@ -37,8 +37,9 @@ Windows toolchain command.
 - Protocol fields 54 (monster `unique_identity`) and 13 (quest
   `completion_unique_identity`) are additive opaque server-owned identities;
   each identity is limited to 128 UTF-8 bytes, and monster identities are only
-  valid for unique monsters. Clients may ignore them while preserving them
-  through authoritative snapshots.
+  valid for unique monsters. Content-owned `ProjectileSnapshot.native_missile_id`
+  uses the same 128-byte identity limit. Clients may ignore these identities
+  while preserving them through authoritative snapshots.
 - `client_sequence` is scoped to a resumable session. Retrying a command with
   the same sequence returns the recorded result without applying it twice.
 - `DialogueEvent.text` carries server-owned localized presentation text. It is

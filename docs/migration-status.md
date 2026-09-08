@@ -24,6 +24,10 @@ The same dialogue boundary is now validated consistently at every protocol
 edge: server, Godot, and native clients reject NUL/carriage-return text and
 payloads above 16 KiB of UTF-8 bytes before presentation.
 
+Content-owned native missile identities now use the same 128-byte UTF-8 limit
+as other opaque protocol identities at every snapshot boundary, preventing an
+oversized presentation identity from reaching native or Godot projection.
+
 The replay gate now covers the validated Acid projectile lifecycle across the
 native and managed runners. A seeded initial Acid missile expires into its
 splat, shifts into the authored one-tile puddle, enters impact, and expires

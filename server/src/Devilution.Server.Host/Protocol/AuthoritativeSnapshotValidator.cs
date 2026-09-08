@@ -1108,6 +1108,7 @@ public static class AuthoritativeSnapshotValidator
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
         if (projectile.Behavior != 50
+            || !NativeTextLimits.IsIdentityWithinLimit(projectile.NativeMissileId)
             || !IsAsciiLetter(projectile.NativeMissileId[0])
                 && projectile.NativeMissileId[0] != '_')
             return false;

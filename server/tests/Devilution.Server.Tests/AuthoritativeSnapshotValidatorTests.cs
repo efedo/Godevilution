@@ -662,12 +662,24 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var oversizedMissileIdentity = new Snapshot {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    RemainingTicks = 1,
+                    Behavior = 50,
+                    NativeMissileId = new string('x', 129),
+                },
+            },
+        };
 
         foreach (var snapshot in new[] {
             missingSource,
             invalidDamageRange,
             invalidPresentation,
             invalidMissileIdentity,
+            oversizedMissileIdentity,
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
