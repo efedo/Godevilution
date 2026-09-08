@@ -872,7 +872,11 @@ continue to use the Fire Wall identity.
 content-owned native missile identity for native monster-magic projectiles.
 It is limited to 128 UTF-8 bytes and must use the validated native identity
 syntax. An empty value preserves the enum/behavior compatibility fallback, and
-older peers ignore this additive field.
+older peers ignore this additive field. When both `native_visual` and
+`native_missile_id` are present, clients must use the server-owned
+`native_visual`; the string is a compatibility fallback only when the enum is
+unspecified. This keeps content identity out of the presentation decision for
+current clients.
 `ItemStateSnapshot.presentation_kind` is additive server-owned metadata for
 world-item presentation. `Gold` and `Ear` identify the shipped currency and
 dynamic PvP-ear families; zero or unknown values retain generic item rendering,

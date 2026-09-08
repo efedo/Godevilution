@@ -110,12 +110,26 @@ public sealed class ProjectilePresentationStyleTests
     }
 
     [Fact]
-    public void PrefersContentOwnedNativeMissileIdentity()
+    public void PrefersServerOwnedNativeVisualOverLegacyMissileIdentity()
     {
         var projectile = new ProjectileSnapshot {
             Behavior = 50,
             PresentationKind = ProtocolProjectilePresentationKind.MonsterMagic,
             NativeVisual = NativeProjectileVisual.MonsterOrangeFlare,
+            NativeMissileId = "BlueFlare2",
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.MonsterOrangeFlare,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void UsesLegacyNativeMissileIdentityWhenServerVisualIsAbsent()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 50,
+            PresentationKind = ProtocolProjectilePresentationKind.MonsterMagic,
             NativeMissileId = "BlueFlare2",
         };
 

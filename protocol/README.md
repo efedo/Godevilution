@@ -407,8 +407,9 @@ Windows toolchain command.
   content-owned native missile identity when a presentation client needs the
   source row rather than only its compatibility visual. Empty retains the
   legacy enum/behavior fallback, and the field is only valid for native
-  monster-magic projectiles. Both Godot and the native compatibility bridge
-  prefer the identity before applying that fallback. Older peers ignore this
+  monster-magic projectiles. When both fields are present, clients use the
+  server-owned enum and consult the string only as a compatibility fallback
+  for older snapshots that omit `native_visual`. Older peers ignore this
   additive field.
   Blood Star uses behavior value `20` for its fixed native magic projectile;
   Bone Spirit uses behavior value `21` for its native homing projectile and

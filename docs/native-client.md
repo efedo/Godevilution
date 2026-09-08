@@ -38,6 +38,10 @@ are applied directly, while local process, collision, damage, and lifetime
 logic is skipped. Their sprite animation advances locally as presentation
 state only. Unsupported families or content-missing sprites remain
 projection-only until their native presentation mapping is available.
+For current snapshots, the typed server `native_visual` identity is authoritative;
+the content-owned `native_missile_id` is consulted only when that enum is absent,
+preserving compatibility with older servers without making current presentation
+depend on raw content strings.
 
 On Windows, initialize the matching Visual Studio developer environment first.
 See [ai/msvc-build.md](ai/msvc-build.md) for the verified workspace commands.

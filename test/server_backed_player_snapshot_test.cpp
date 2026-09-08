@@ -3055,7 +3055,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsContentOwnedMonsterMagicVisualFamilies)
 	Missiles.clear();
 }
 
-TEST(ServerBackedPlayerSnapshot, PrefersContentOwnedNativeMonsterMagicIdentity)
+TEST(ServerBackedPlayerSnapshot, PrefersServerNativeVisualOverLegacyMonsterMagicIdentity)
 {
 	LoadMissileData();
 	Missiles.clear();
@@ -3069,7 +3069,7 @@ TEST(ServerBackedPlayerSnapshot, PrefersContentOwnedNativeMonsterMagicIdentity)
 	projectile.positionY = 5;
 	projectile.remainingTicks = 4;
 	projectile.behavior = 50; // MonsterMagic
-	projectile.nativeVisual = 30; // OrangeFlare compatibility fallback.
+	projectile.nativeVisual = 25; // ChargedBolt server-owned visual.
 	projectile.nativeMissileId = "Lightning";
 
 	ServerBackedWorldProjection projection;
@@ -3078,7 +3078,7 @@ TEST(ServerBackedPlayerSnapshot, PrefersContentOwnedNativeMonsterMagicIdentity)
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 
 	ASSERT_EQ(Missiles.size(), 1U);
-	EXPECT_EQ(Missiles.front()._mitype, MissileID::Lightning);
+	EXPECT_EQ(Missiles.front()._mitype, MissileID::ChargedBolt);
 	presentation.Clear();
 	Missiles.clear();
 }

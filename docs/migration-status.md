@@ -2,6 +2,12 @@
 
 Status date: 2026-09-08
 
+Projectile presentation now uses the typed server-owned `native_visual` enum
+as the authoritative identity in both Godot and native clients. The validated
+content-owned `native_missile_id` remains available only as a compatibility
+fallback for older snapshots that omit the enum, keeping current presentation
+decisions independent of raw content strings.
+
 Godot presentation now treats an older authoritative snapshot as a bounded
 rewind event. The presentation clock exposes a one-advance rewind marker, and
 the world view snaps cached players, monsters, and projectiles to the resync

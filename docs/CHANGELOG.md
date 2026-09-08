@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Unified projectile presentation precedence across the Godot and native
+  clients: the server-owned `native_visual` enum is authoritative, while
+  `native_missile_id` remains a legacy fallback only when that enum is absent.
+  This keeps current presentation decisions independent of raw content IDs.
 - Unified dialogue-event validation across the server, Godot client, and
   native compatibility bridge: server-owned text is now bounded to 16 KiB of
   UTF-8 and rejects NUL/carriage-return payloads before presentation.

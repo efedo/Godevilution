@@ -82,10 +82,10 @@ public static class ProjectilePresentationStyle
 
     public static ProjectilePresentationKind Resolve(ProjectileSnapshot projectile)
     {
-        if (ResolveNativeMissile(projectile.NativeMissileId) is { } nativeMissile)
-            return nativeMissile;
         if (ResolveNativeVisual(projectile.NativeVisual) is { } nativeVisual)
             return nativeVisual;
+        if (ResolveNativeMissile(projectile.NativeMissileId) is { } nativeMissile)
+            return nativeMissile;
 
         return projectile.PresentationKind switch {
             Devilution.Protocol.V1.ProjectilePresentationKind.Generic
