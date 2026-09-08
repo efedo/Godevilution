@@ -41,6 +41,10 @@ Windows toolchain command.
   through authoritative snapshots.
 - `client_sequence` is scoped to a resumable session. Retrying a command with
   the same sequence returns the recorded result without applying it twice.
+- `DialogueEvent.text` carries server-owned localized presentation text. It is
+  limited to 16 KiB of UTF-8 bytes and may not contain NUL or carriage-return
+  characters; validators on the server, Godot client, and native bridge apply
+  the same boundary. An empty text retains the legacy message-ID fallback.
 - `OpenStoreRequested` selects a validated vendor or service store, while
   `CloseStoreRequested` clears the active store and is safe to repeat. Clients
   wait for the authoritative snapshot to remove `active_store` instead of

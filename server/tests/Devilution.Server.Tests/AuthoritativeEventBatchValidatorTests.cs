@@ -32,6 +32,8 @@ public sealed class AuthoritativeEventBatchValidatorTests
             new GameEvent { Healing = new HealingEvent { AmountQ6 = -1 } },
             new GameEvent { Dialogue = new DialogueEvent { MessageId = -1 } },
             new GameEvent { Dialogue = new DialogueEvent { Text = "bad\0text" } },
+            new GameEvent { Dialogue = new DialogueEvent { Text = "bad\rtext" } },
+            new GameEvent { Dialogue = new DialogueEvent { Text = new string('x', AuthoritativeEventBatchValidator.MaximumDialogueTextBytes + 1) } },
             new GameEvent { Victory = new VictoryEvent { DiabloKillLevel = byte.MaxValue + 1U } },
             new GameEvent(),
         })

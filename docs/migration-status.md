@@ -20,6 +20,10 @@ older ID-only peers. General vendor/service greeting presentation therefore no
 longer requires the local native text catalog when the active content pack
 provides the message.
 
+The same dialogue boundary is now validated consistently at every protocol
+edge: server, Godot, and native clients reject NUL/carriage-return text and
+payloads above 16 KiB of UTF-8 bytes before presentation.
+
 The replay gate now covers the validated Acid projectile lifecycle across the
 native and managed runners. A seeded initial Acid missile expires into its
 splat, shifts into the authored one-tile puddle, enters impact, and expires

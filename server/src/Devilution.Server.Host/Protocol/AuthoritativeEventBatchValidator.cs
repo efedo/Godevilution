@@ -1,3 +1,4 @@
+using System.Text;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Server.Protocol;
@@ -6,6 +7,7 @@ namespace Devilution.Server.Protocol;
 public static class AuthoritativeEventBatchValidator
 {
     public const int MaximumEventBatchCount = 4096;
+    public const int MaximumDialogueTextBytes = 16 * 1024;
 
     public static void Validate(EventBatch events)
     {
@@ -32,7 +34,10 @@ public static class AuthoritativeEventBatchValidator
                     throw new InvalidDataException("The authoritative event batch contains invalid healing.");
                 break;
             case GameEvent.EventOneofCase.Dialogue:
-                if (gameEvent.Dialogue.MessageId < 0 || gameEvent.Dialogue.Text.Contains('\0'))
+                if (gameEvent.Dialogue.MessageId < 0
+                    || gameEvent.Dialogue.Text.Contains('\0')
+                    || gameEvent.Dialogue.Text.Contains('\r')
+                    || Encoding.UTF8.GetByteCount(gameEvent.Dialogue.Text) > MaximumDialogueTextBytes)
                     throw new InvalidDataException("The authoritative event batch contains invalid dialogue.");
                 break;
             case GameEvent.EventOneofCase.Victory:

@@ -507,7 +507,7 @@ TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedbac
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
 {
-	const std::array<void (*)(protocol::EventBatch *), 9> configure = {
+	const std::array<void (*)(protocol::EventBatch *), 11> configure = {
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount_q6(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_damage()->set_amount(std::numeric_limits<int32_t>::max() / 64 + 1); },
@@ -515,6 +515,8 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_healing()->set_amount_q6(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_message_id(-1); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_text(std::string("bad\0text", 8)); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_text("bad\rtext"); },
+		[](protocol::EventBatch *batch) { batch->add_events()->mutable_dialogue()->set_text(std::string(16 * 1024 + 1, 'x')); },
 		[](protocol::EventBatch *batch) { batch->add_events()->mutable_victory()->set_diablo_kill_level(std::numeric_limits<uint8_t>::max() + 1U); },
 		[](protocol::EventBatch *batch) { batch->add_events(); },
 	};

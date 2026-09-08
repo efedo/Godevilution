@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Unified dialogue-event validation across the server, Godot client, and
+  native compatibility bridge: server-owned text is now bounded to 16 KiB of
+  UTF-8 and rejects NUL/carriage-return payloads before presentation.
 - Extended native compatibility presentation to consume server-owned localized
   dialogue text when supplied by `DialogueEvent`, retaining the legacy message
   catalog only for ID-only peers. Vendor/service greetings can now cross the

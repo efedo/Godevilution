@@ -1461,6 +1461,7 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 
 tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::EventBatch &eventBatch)
 {
+	constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 	if (eventBatch.events_size() > 4096)
 		return tl::make_unexpected("Server-backed event batch is too large.");
 	for (const auto &event : eventBatch.events()) {
@@ -1481,7 +1482,9 @@ tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::E
 		}
 		if (event.has_dialogue()) {
 			if (event.dialogue().message_id() < 0
-			    || event.dialogue().text().find('\0') != std::string::npos)
+			    || event.dialogue().text().find('\0') != std::string::npos
+			    || event.dialogue().text().find('\r') != std::string::npos
+			    || event.dialogue().text().size() > MaximumDialogueTextBytes)
 				return tl::make_unexpected("Server-backed event batch contains invalid dialogue.");
 			continue;
 		}
