@@ -390,7 +390,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 184 checked-in JSON fixtures and 203 registered
+the native replay gate contains 185 checked-in JSON fixtures and 204 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -408,7 +408,8 @@ avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
 tick, GoatMelee and Gargoyle nearest-participant autonomous movement, Fallen
-rally nearest-participant pursuit,
+rally nearest-participant pursuit, Butcher RandomWalk nearest-participant
+pursuit,
 SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Counselor nearest-participant delay selection,
 SkeletonMelee nearest-participant adjacent attack, Snake nearest-participant
@@ -464,7 +465,8 @@ active-object occupancy checks, and far-distance Move-goal admission with
 persisted goal ticks, turn state, RoundWalk destination, and next-tick
 continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
 attack admission/countdown lifecycles, Counselor nearest-participant delay
-selection, Fallen rally nearest-participant pursuit, SkeletonMelee
+selection, Fallen rally nearest-participant pursuit, Butcher RandomWalk
+nearest-participant pursuit, SkeletonMelee
 nearest-participant adjacent attack, Snake
 nearest-participant charge routing, Rhino charge admission,
 nearest-
@@ -930,6 +932,9 @@ Notable shared fixtures include:
 - `gameplay-fallen-rally-multiplayer-target.json` for nearest-participant
   Fallen rally pursuit, diagonal movement, countdown, and farther-primary
   preservation;
+- `gameplay-butcher-multiplayer-target.json` for nearest-participant Butcher
+  pursuit, active-object blocking of the straight step, native five-direction
+  RandomWalk turn ordering, and farther-primary preservation;
 - `gameplay-mega-inferno-multiplayer-target.json` for nearest-participant
   InfernoController admission, secondary-target routing, and farther-primary
   preservation;
@@ -1099,9 +1104,11 @@ Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
 current Counselor, SkeletonMelee, Snake, Sneak, Bat, Fat, Zombie, Rhino, Fallen,
+Butcher,
 Scavenger, and Gargoyle admission lanes,
 multi-actor target selection beyond the current Bat, Fat, GoatMelee, Gargoyle,
-Counselor, Rhino, SkeletonMelee, Snake, Sneak, Zombie, Fallen, and projectile lanes,
+Counselor, Rhino, SkeletonMelee, Snake, Sneak, Zombie, Fallen, Butcher, and
+projectile lanes,
 mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup

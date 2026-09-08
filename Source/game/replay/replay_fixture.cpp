@@ -8061,6 +8061,55 @@ void AdvanceReplayMonsterAttack(
 			++state.combatTargetFatMovementIdleTicks;
 		return;
 	}
+	// Compact the native ButcherAi RandomWalk pursuit. The managed controller
+	// uses the same five-direction turn ordering before generic crawl fallback.
+	if (state.combatTargetNativeAi == "Butcher" && distance > 1) {
+		const int direction = GetDirection(
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
+		    victim.positionX,
+		    victim.positionY);
+		const uint32_t actionSeed = state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int firstTurn = state.combatTargetMonsterAiSeed != 0
+		    ? (std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1)
+		    : ((actionSeed / 100U) % 2U == 0 ? 1 : -1);
+		const int secondTurn = state.combatTargetMonsterAiSeed != 0
+		    ? (std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2)
+		    : ((actionSeed / 200U) % 2U == 0 ? 2 : -2);
+		const int candidateDirections[] = {
+			direction,
+			(direction + firstTurn + 8) % 8,
+			(direction - firstTurn + 8) % 8,
+			(direction + secondTurn + 8) % 8,
+			(direction - secondTurn + 8) % 8,
+		};
+		for (const int candidateDirection : candidateDirections) {
+			const auto displacement = DirectionDisplacements[candidateDirection];
+			const int candidateX = state.combatTargetPositionX + displacement.first;
+			const int candidateY = state.combatTargetPositionY + displacement.second;
+			if (candidateX < 0 || candidateX >= 40
+			    || candidateY < 0 || candidateY >= 40
+			    || (candidateX == state.positionX && candidateY == state.positionY)
+			    || (state.secondaryPlayerEntityId != 0
+			        && candidateX == state.secondaryPlayerPositionX
+			        && candidateY == state.secondaryPlayerPositionY)
+			    || (state.objectEntityId != 0
+			        && !state.objectActivated
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable
+			        && state.objectLevelId == state.combatTargetLevelId
+			        && candidateX == state.objectPositionX
+			        && candidateY == state.objectPositionY))
+				continue;
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = candidateDirection;
+			break;
+		}
+		return;
+	}
 	if (distance > 1 && state.combatTargetNativeAi != "Rhino") {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;

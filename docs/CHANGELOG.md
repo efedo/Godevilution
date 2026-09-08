@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a Butcher multi-participant replay fixture and aligned the compact
+  native projection with the managed RandomWalk turn ordering. Both runners
+  now verify nearest-secondary target selection, farther-primary preservation,
+  and an active object blocking the straight pursuit candidate.
+
 - Added a Fallen rally multi-participant replay fixture and aligned the compact
   native projection with the managed nearest-participant pursuit decision.
   Both runners now preserve the farther primary while hashing the diagonal

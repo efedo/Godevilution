@@ -20,6 +20,11 @@ managed runners select the nearer secondary participant for the rally attack
 goal, preserve the farther primary, and agree on the diagonal movement and
 countdown checkpoint.
 
+Butcher pursuit now has two-participant replay coverage. Native and managed
+runners select the nearer secondary participant, preserve the farther primary,
+and agree on the seeded RandomWalk turn ordering when an active object blocks
+the straight candidate.
+
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's

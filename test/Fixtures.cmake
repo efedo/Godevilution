@@ -104,6 +104,7 @@ set(devilutionx_fixtures
   replay/gameplay-blood-star-secondary-block.json
   replay/gameplay-bone-spirit-homing.json
   replay/gameplay-bone-spirit-pvp.json
+  replay/gameplay-butcher-multiplayer-target.json
   replay/gameplay-charged-bolt-hellfire-block.json
   replay/gameplay-charged-bolt-moving-occupancy.json
   replay/gameplay-charged-bolt-object-collision.json
