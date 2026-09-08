@@ -53,6 +53,45 @@ public sealed class GameplayModulePackageLoaderTests
     }
 
     [Fact]
+    public void RejectsInvalidUtf8Manifest()
+    {
+        using var package = TestPackage.Create();
+        File.WriteAllBytes(
+            Path.Combine(package.Root, GameplayModulePackageLoader.ManifestFileName),
+            [0x7B, 0x22, 0x69, 0x64, 0x22, 0x3A, 0xC3, 0x28, 0x7D]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            new GameplayModulePackageLoader().LoadDirectory(package.Root));
+
+        Assert.Contains("not valid UTF-8", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RejectsReparsePointEntries()
+    {
+        using var package = TestPackage.Create();
+        var outside = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Module-Package-Outside-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(outside);
+        try {
+            try {
+                Directory.CreateSymbolicLink(Path.Combine(package.Root, "linked"), outside);
+            } catch (Exception exception) when (exception is UnauthorizedAccessException
+                or PlatformNotSupportedException
+                or IOException) {
+                return;
+            }
+
+            var error = Assert.Throws<InvalidDataException>(() =>
+                new GameplayModulePackageLoader().LoadDirectory(package.Root));
+            Assert.Contains("reparse-point", error.Message, StringComparison.Ordinal);
+        } finally {
+            Directory.Delete(outside, recursive: true);
+        }
+    }
+
+    [Fact]
     public void RejectsEscapingAssemblyPathsAndUndeclaredTypes()
     {
         using var escaping = TestPackage.Create(assemblyPath: "../outside.dll");

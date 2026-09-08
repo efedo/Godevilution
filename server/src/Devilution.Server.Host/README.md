@@ -7,6 +7,8 @@ filesystem persistence, adapter selection, per-operation ruleset-generation
 leases, live ruleset replacement, complete session-state migration through the
 save contract,
 handshake identity publication, and explicit verified module packages. The
+module-package loader rejects malformed UTF-8 manifests and reparse-point
+entries before hashing or loading an assembly.
 leased adapter wrapper uses a read/write operation barrier: replacement waits
 for in-flight operations, migrates initialized sessions before publication,
 and disposes drained game targets through an injected host policy.

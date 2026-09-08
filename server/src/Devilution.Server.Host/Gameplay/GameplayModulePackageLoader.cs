@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Devilution.Data;
 using Devilution.Domain.Hashing;
@@ -29,6 +30,9 @@ public sealed class GameplayModulePackageLoader
     public const string ManifestFileName = "gameplay-module.json";
     public const int CurrentFormatVersion = 1;
     public const long MaximumAssemblyBytes = 256L * 1024 * 1024;
+    private static readonly Encoding StrictUtf8 = new UTF8Encoding(
+        encoderShouldEmitUTF8Identifier: false,
+        throwOnInvalidBytes: true);
 
     public GameplayModulePackageLoader(
         IEnumerable<Assembly>? additionalSharedAssemblies = null)
@@ -60,6 +64,7 @@ public sealed class GameplayModulePackageLoader
             throw new DirectoryNotFoundException(
                 $"Gameplay module package directory '{packageDirectory}' does not exist.");
         }
+        RejectReparsePoints(root, packageDirectory);
         var manifestPath = Path.Combine(root, ManifestFileName);
         if (!File.Exists(manifestPath)) {
             throw new FileNotFoundException(
@@ -70,7 +75,7 @@ public sealed class GameplayModulePackageLoader
         ModulePackageDocument? document;
         try {
             document = JsonSerializer.Deserialize<ModulePackageDocument>(
-                File.ReadAllText(manifestPath),
+                ReadUtf8Text(manifestPath),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         } catch (JsonException exception) {
             throw PackageError(manifestPath, "is not valid JSON", exception);
@@ -215,6 +220,30 @@ public sealed class GameplayModulePackageLoader
         if (normalized.Length != 64 || normalized.Any(character => !Uri.IsHexDigit(character)))
             throw PackageError(manifestPath, "assemblySha256 must contain exactly 64 hexadecimal characters");
         return normalized;
+    }
+
+    private static string ReadUtf8Text(string path)
+    {
+        try {
+            return StrictUtf8.GetString(File.ReadAllBytes(path));
+        } catch (DecoderFallbackException exception) {
+            throw PackageError(path, "is not valid UTF-8", exception);
+        }
+    }
+
+    private static void RejectReparsePoints(string directory, string displayPath)
+    {
+        var directoryAttributes = File.GetAttributes(directory);
+        if ((directoryAttributes & FileAttributes.ReparsePoint) != 0)
+            throw PackageError(displayPath, "is a reparse-point entry");
+
+        foreach (var entry in Directory.EnumerateFileSystemEntries(directory)) {
+            var attributes = File.GetAttributes(entry);
+            if ((attributes & FileAttributes.ReparsePoint) != 0)
+                throw PackageError(displayPath, $"contains a reparse-point entry '{entry}'");
+            if ((attributes & FileAttributes.Directory) != 0)
+                RejectReparsePoints(entry, displayPath);
+        }
     }
 
     private static InvalidDataException PackageError(
