@@ -16,6 +16,10 @@ FireBat now has a validated external Firebolt missile mapping and a two-
 participant replay lane. Native and managed runners select the nearer
 secondary participant and preserve the monster-owned Firebolt travel state.
 
+Torchant now has a validated external Fireball missile mapping and a two-
+participant replay lane. Native and managed runners select the nearer
+secondary participant and preserve the monster-owned Fireball travel state.
+
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
 animation, perform the animation-boundary `FlipCoin(4)` admission, apply the

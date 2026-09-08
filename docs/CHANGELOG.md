@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
   nearer secondary participant.
 - Added a validated FireBat Firebolt missile mapping and multiplayer replay
   coverage for nearest-secondary target selection and projectile travel parity.
+- Added a validated Torchant Fireball missile mapping and multiplayer replay
+  coverage for nearest-secondary target selection and projectile travel parity.
 
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both

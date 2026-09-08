@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/torchant-multiplayer-target",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-fireball",
+    "version": "0.1.0",
+    "sha256": "2aa9f8cca3d915be5a0862c786a6bf0c48ea22e89f7325f97085038b8caaf8c2"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 8,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Torchant",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 3,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "7e5a78146e0fd08ea64d130d689b39c333672fe778402315c52b5b41b7b63c6b" }
+  ]
+}
