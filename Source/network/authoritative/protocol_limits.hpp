@@ -133,11 +133,20 @@ enum class NativeProjectileVisual : int {
 	MonsterMagmaBall = 35,
 };
 
+/** Server-owned status effect identity carried by player snapshots. */
+enum class StatusEffectBehavior : int {
+	Unspecified = 0,
+	Infravision = 1,
+	Search = 2,
+	Etherealize = 3,
+};
+
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
 inline constexpr int MaximumProjectileBehavior = static_cast<int>(ProjectileBehavior::MonsterArrow);
 inline constexpr int MaximumProjectilePresentationKind = static_cast<int>(ProjectilePresentationKind::NovaBall);
 inline constexpr int MaximumNativeProjectileVisual = static_cast<int>(NativeProjectileVisual::MonsterMagmaBall);
+inline constexpr int MaximumStatusEffectBehavior = static_cast<int>(StatusEffectBehavior::Etherealize);
 
 } // namespace devilution::authoritative

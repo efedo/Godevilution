@@ -39,6 +39,7 @@ public sealed class AuthoritativeClientModel
     private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
     private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
+    private const int MaximumStatusEffectBehavior = AuthoritativeProtocolLimits.MaximumStatusEffectBehavior;
     private const int MaximumProjectilePhase = 1;
     private const int MaximumNativeMonsterDirection = 7;
     private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
@@ -511,6 +512,7 @@ public sealed class AuthoritativeClientModel
         foreach (var effect in player.StatusEffects) {
             if (effect.EffectId == 0
                 || effect.RemainingTicks == 0
+                || (int)effect.Behavior is < 0 or > MaximumStatusEffectBehavior
                 || !Enum.IsDefined(effect.Behavior)
                 || ((effect.Behavior is StatusEffectBehavior.Infravision
                         or StatusEffectBehavior.Search

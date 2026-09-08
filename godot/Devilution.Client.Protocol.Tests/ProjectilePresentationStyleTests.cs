@@ -22,6 +22,9 @@ public sealed class ProjectilePresentationStyleTests
             (int)NativeProjectileVisual.MonsterMagmaBall,
             AuthoritativeProtocolLimits.MaximumNativeProjectileVisual);
         Assert.Equal(
+            (int)StatusEffectBehavior.Etherealize,
+            AuthoritativeProtocolLimits.MaximumStatusEffectBehavior);
+        Assert.Equal(
             ProjectilePresentationKind.Fire,
             ProjectilePresentationStyle.Resolve(
                 (int)AuthoritativeProjectileBehavior.Firebolt,

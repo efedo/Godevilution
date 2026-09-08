@@ -10,6 +10,10 @@ Projectile presentation-family and native-visual bounds now use named shared
 protocol limits in managed validation and native snapshot projection, keeping
 all three additive presentation identities aligned at the wire boundary.
 
+Status-effect behavior identities now use the same shared-limit boundary in
+server/Godot validation and native player projection, preserving typed Search,
+Infravision, and Etherealize state across the compatibility bridge.
+
 Projectile behavior values now have one named protocol identity enum shared by
 managed validation and legacy Godot presentation fallback; native bounds mirror
 the same maximum rather than repeating an unexplained literal.

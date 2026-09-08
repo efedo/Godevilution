@@ -12,6 +12,7 @@
 #include "engine/lighting.h"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 #include "qol/stash.h"
 #include "ui/automap.h"
 #include "utils/string/utf8.hpp"
@@ -137,7 +138,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	}
 	std::set<uint32_t> statusEffectIds;
 	for (const auto &effect : snapshot.statusEffects) {
-		if (effect.effectId == 0 || effect.remainingTicks == 0 || effect.behavior > 3
+		if (effect.effectId == 0 || effect.remainingTicks == 0 || effect.behavior > MaximumStatusEffectBehavior
 		    || ((effect.behavior == 1 || effect.behavior == 2 || effect.behavior == 3) && effect.magnitude != 0)
 		    || !statusEffectIds.insert(effect.effectId).second) {
 			return tl::make_unexpected("Server-backed status effects contain invalid or duplicate state.");

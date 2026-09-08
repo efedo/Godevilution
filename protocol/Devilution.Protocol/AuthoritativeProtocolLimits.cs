@@ -14,6 +14,8 @@ public static class AuthoritativeProtocolLimits
         (int)ProjectilePresentationKind.NovaBall;
     public const int MaximumNativeProjectileVisual =
         (int)NativeProjectileVisual.MonsterMagmaBall;
+    public const int MaximumStatusEffectBehavior =
+        (int)StatusEffectBehavior.Etherealize;
 
     public static bool IsDialogueTextValid(string value)
     {

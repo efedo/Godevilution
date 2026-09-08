@@ -868,6 +868,9 @@ Fireball behavior `16` use `Fire` during travel and `FireImpact` during impact.
 The protocol assembly exposes the maximum presentation-family identity and
 native-visual identity alongside the behavior limit; managed validators and the
 native bridge consume those shared limits rather than duplicating wire bounds.
+The same protocol limit covers `StatusEffectSnapshot.behavior`; zero is the
+unspecified compatibility value and the shipped identities are Infravision,
+Search, and Etherealize.
 `ProjectileSnapshot.native_visual` field 56 carries the exact native
 compatibility sprite identity for presentation-only rendering. A zero value
 retains the behavior-based fallback for older servers; an unknown nonzero value

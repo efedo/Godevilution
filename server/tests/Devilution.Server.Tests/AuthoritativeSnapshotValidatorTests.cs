@@ -1001,6 +1001,20 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var invalidStatusBehavior = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    StatusEffects = {
+                        new StatusEffectSnapshot {
+                            EffectId = 1,
+                            RemainingTicks = 1,
+                            Behavior = (StatusEffectBehavior)4,
+                        },
+                    },
+                },
+            },
+        };
         var overlappingStash = new Snapshot {
             Players = {
                 new PlayerSnapshot {
@@ -1032,6 +1046,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
             incompleteAttributes,
             invalidSpells,
             invalidStatus,
+            invalidStatusBehavior,
             overlappingStash,
         })
             Assert.Throws<InvalidDataException>(() =>

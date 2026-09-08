@@ -25,6 +25,7 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
     private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
+    private const int MaximumStatusEffectBehavior = AuthoritativeProtocolLimits.MaximumStatusEffectBehavior;
     private const int MaximumProjectilePhase = 1;
     private const int NativeMaximumWidth = 112;
     private const int NativeMaximumHeight = 112;
@@ -448,6 +449,7 @@ public static class AuthoritativeSnapshotValidator
             if (effect is null
                 || effect.EffectId == 0
                 || effect.RemainingTicks == 0
+                || (int)effect.Behavior is < 0 or > MaximumStatusEffectBehavior
                 || !Enum.IsDefined(effect.Behavior)
                 || (effect.Behavior is StatusEffectBehavior.Infravision
                         or StatusEffectBehavior.Search

@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   alongside the behavior identity limit. Managed server/Godot validation and
   native snapshot projection now consume the same maximums instead of raw
   presentation literals.
+- Centralized the status-effect behavior bound across the protocol assembly,
+  managed validators, and native player projection; the compatibility bridge no
+  longer repeats the raw maximum.
 - Applied the named projectile behavior identities across the server snapshot
   validator/hasher and native projection/presentation validators, removing the
   remaining raw behavior-number switches from the compatibility boundary.

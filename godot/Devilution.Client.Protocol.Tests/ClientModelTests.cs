@@ -2584,6 +2584,11 @@ public sealed class ClientModelTests
         invalidEtherealize.Players[0].StatusEffects[2].Magnitude = 1;
         Assert.Throws<InvalidDataException>(() => model.Apply(
             new AuthoritativeClientMessage(Snapshot: invalidEtherealize)));
+        var invalidBehavior = snapshot.Clone();
+        invalidBehavior.Players[0].StatusEffects[0].Behavior
+            = (StatusEffectBehavior)4;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidBehavior)));
     }
 
     [Fact]
