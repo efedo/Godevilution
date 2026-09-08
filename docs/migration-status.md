@@ -7,6 +7,10 @@ receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the
 content as authoritative.
 
+The version-one Diablo save codec also requires canonical Base64 snapshot text,
+so whitespace and alternate encodings cannot produce multiple persisted forms
+of the same authoritative state.
+
 External content-pack tables, overlays, and binary assets now share canonical
 relative-path validation, so traversal and path aliases cannot enter content
 composition or manifest identity.

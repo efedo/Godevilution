@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
@@ -13,6 +14,9 @@ namespace Devilution.Server.Stores;
 public sealed class AuthoritativeSaveCodec
 {
     public const int CurrentFormatVersion = 1;
+    private static readonly UTF8Encoding StrictUtf8 = new(
+        encoderShouldEmitUTF8Identifier: false,
+        throwOnInvalidBytes: true);
     private readonly AuthoritativeItemCatalog? items;
 
     public AuthoritativeSaveCodec(AuthoritativeItemCatalog? items = null)
@@ -35,6 +39,13 @@ public sealed class AuthoritativeSaveCodec
     public DiabloSimulationSnapshot Deserialize(string serializedSave)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serializedSave);
+        try {
+            StrictUtf8.GetBytes(serializedSave);
+        } catch (EncoderFallbackException exception) {
+            throw new InvalidDataException(
+                "The authoritative save contains invalid UTF-16 text.",
+                exception);
+        }
         AuthoritativeSaveDocument? document;
         try {
             document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(serializedSave);
@@ -57,15 +68,29 @@ public sealed class AuthoritativeSaveCodec
 
     private static DiabloSimulationSnapshot DeserializeVersionOne(string snapshotBase64)
     {
-        Snapshot snapshot;
+        byte[] snapshotBytes;
         try {
-            snapshot = Snapshot.Parser.ParseFrom(Convert.FromBase64String(snapshotBase64));
-        } catch (Exception exception)
-            when (exception is FormatException or InvalidProtocolBufferException) {
+            snapshotBytes = Convert.FromBase64String(snapshotBase64);
+        } catch (FormatException exception) {
             throw new InvalidDataException(
-                "The authoritative save snapshot is not valid.",
+                "The authoritative save snapshot is not valid Base64.",
                 exception);
         }
-        return DiabloProtocolMapper.FromProtocolSnapshot(snapshot);
+        if (!string.Equals(
+                Convert.ToBase64String(snapshotBytes),
+                snapshotBase64,
+                StringComparison.Ordinal)) {
+            throw new InvalidDataException(
+                "The authoritative save snapshot must use canonical Base64 encoding.");
+        }
+
+        try {
+            return DiabloProtocolMapper.FromProtocolSnapshot(
+                Snapshot.Parser.ParseFrom(snapshotBytes));
+        } catch (InvalidProtocolBufferException exception) {
+            throw new InvalidDataException(
+                "The authoritative save snapshot is not valid Protobuf.",
+                exception);
+        }
     }
 }

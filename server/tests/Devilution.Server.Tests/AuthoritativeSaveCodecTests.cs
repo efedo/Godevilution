@@ -297,6 +297,24 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void RejectsInvalidUtf16AndNoncanonicalSnapshotBase64()
+    {
+        var codec = new AuthoritativeSaveCodec();
+        var invalidText = Assert.Throws<InvalidDataException>(() =>
+            codec.Deserialize("\uD800"));
+        Assert.Contains("UTF-16", invalidText.Message, StringComparison.Ordinal);
+
+        var document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            codec.Serialize(CreateSnapshot()))!;
+        var noncanonical = document with {
+            SnapshotBase64 = " " + document.SnapshotBase64,
+        };
+        var noncanonicalException = Assert.Throws<InvalidDataException>(() =>
+            codec.Deserialize(JsonSerializer.Serialize(noncanonical)));
+        Assert.Contains("canonical Base64", noncanonicalException.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsCrossCollectionEntityIdCollisionsInSaves()
     {
         var source = CreateSnapshot() with {
