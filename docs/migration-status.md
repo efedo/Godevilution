@@ -24,6 +24,10 @@ Magma now has a validated external MagmaBall mapping and a two-participant
 Hellfire replay lane. Native and managed runners select the nearer secondary
 participant and preserve the monster-owned initial travel advance.
 
+Storm now has a validated external ThinLightning mapping and a two-participant
+Hellfire replay lane. Native and managed runners preserve the monster-owned
+controller/segment lifecycle while selecting the nearer secondary participant.
+
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
 animation, perform the animation-boundary `FlipCoin(4)` admission, apply the

@@ -1,0 +1,2 @@
+native_ai	missile_id	projectile_behavior	attack_mode	spell_id	damage_type	projectile_speed	projectile_lifetime	ranged_avoidance_minimum_distance	ranged_avoidance_far_distance	ranged_avoidance_chance_base	ranged_avoidance_chance_intelligence_scale
+Storm	ThinLightningControl	Lightning	RangedAvoidance	3	Lightning	32	256	2	3	500	500
