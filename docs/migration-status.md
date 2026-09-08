@@ -15,6 +15,11 @@ expands incrementally. Native and managed fixture loaders now reject the same
 missing-leader, duplicate-identity, cross-level, non-Fallen-AI, vitality,
 intelligence, animation, and rally-timer companion states before execution.
 
+Fallen rally pursuit now has two-participant replay coverage. Native and
+managed runners select the nearer secondary participant for the rally attack
+goal, preserve the farther primary, and agree on the diagonal movement and
+countdown checkpoint.
+
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's

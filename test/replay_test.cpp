@@ -4151,6 +4151,54 @@ TEST(ReplayFixture, ExecutesFallenRallyPursuitAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesFallenRallyMultiplayerTargetSelectionAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fallen-rally-multiplayer-target.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetHitPointsQ6 = state.combatTargetHitPoints * 64;
+	state.combatTargetMaxHitPointsQ6 = state.combatTargetMaxHitPoints * 64;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
+	state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.positionX, 5);
+	EXPECT_EQ(state.positionY, 0);
+	EXPECT_EQ(state.secondaryPlayerPositionX, 2);
+	EXPECT_EQ(state.secondaryPlayerPositionY, 2);
+	EXPECT_EQ(state.combatTargetFallenRallyTicks, 1);
+	EXPECT_TRUE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetFuturePositionX, 1);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 1);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesFallenRallyPropagationAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-fallen-rally-companion.json");

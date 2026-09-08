@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a Fallen rally multi-participant replay fixture and aligned the compact
+  native projection with the managed nearest-participant pursuit decision.
+  Both runners now preserve the farther primary while hashing the diagonal
+  secondary-target movement and rally countdown together.
+
 - Added a Mega Inferno multi-participant replay fixture. Native and managed
   runners now verify nearest-participant InfernoController admission,
   secondary-target routing, persistent segment state, and farther-primary

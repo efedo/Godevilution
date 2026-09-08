@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/fallen-rally-multiplayer-target",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "fallen-rally-multiplayer-target-fixture"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 2,
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "life_maximum": 40,
+    "position_x": 5,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 30,
+    "combat_target_aggro_range": 0,
+    "combat_target_monster_id": 1,
+    "combat_target_native_ai": "Fallen",
+    "combat_target_monster_item_seed": 11,
+    "combat_target_monster_ai_seed": 7,
+    "combat_target_fallen_rally_ticks": 2,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 40,
+      "life_maximum": 40,
+      "position_x": 2,
+      "position_y": 2,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "012a358ae97e8bcdcb28f06b64729cf0f41826e4676d84cdbd149104acf4811b" }
+  ]
+}

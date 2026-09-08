@@ -3699,21 +3699,51 @@ void AdvanceReplayFallenRallyPursuit(ReplayFixtureExecutionState &state)
 	    || state.combatTargetFallenRallyTicks == 0
 	    || state.combatTargetHitPointsQ6 <= 0)
 		return;
-	if (state.life <= 0
-	    || (state.combatTargetLevelId != 0
-	        && state.levelId != state.combatTargetLevelId)) {
+	struct Victim {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Victim> victims;
+	if (state.life > 0
+	    && state.combatMode != 10
+	    && state.combatMode != 11
+	    && (state.combatTargetLevelId == 0
+	        || state.levelId == state.combatTargetLevelId))
+		victims.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerCombatMode != 10
+	    && state.secondaryPlayerCombatMode != 11
+	    && (state.combatTargetLevelId == 0
+	        || state.secondaryPlayerLevelId == state.combatTargetLevelId))
+		victims.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (victims.empty()) {
 		--state.combatTargetFallenRallyTicks;
 		return;
 	}
+	const auto victimDistance = [&](const Victim &victim) {
+		return std::max(
+		    std::abs(victim.positionX - state.combatTargetPositionX),
+		    std::abs(victim.positionY - state.combatTargetPositionY));
+	};
+	std::sort(victims.begin(), victims.end(), [&](const auto &left, const auto &right) {
+		const int32_t leftDistance = victimDistance(left);
+		const int32_t rightDistance = victimDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Victim &victim = victims.front();
 	const int32_t distance = std::max(
-	    std::abs(state.positionX - state.combatTargetPositionX),
-	    std::abs(state.positionY - state.combatTargetPositionY));
+	    std::abs(victim.positionX - state.combatTargetPositionX),
+	    std::abs(victim.positionY - state.combatTargetPositionY));
 	if (distance > 1) {
 		const int32_t direction = GetDirection(
 		    state.combatTargetPositionX,
 		    state.combatTargetPositionY,
-		    state.positionX,
-		    state.positionY);
+		    victim.positionX,
+		    victim.positionY);
 		const int32_t firstTurn = GenerateRnd(state, 2) == 0 ? 1 : -1;
 		const int32_t secondTurn = GenerateRnd(state, 2) == 0 ? 2 : -2;
 		const int32_t candidateDirections[] = {
@@ -3729,7 +3759,10 @@ void AdvanceReplayFallenRallyPursuit(ReplayFixtureExecutionState &state)
 			const int32_t candidateY = state.combatTargetPositionY + displacement.second;
 			if (candidateX < 0 || candidateX >= 40
 			    || candidateY < 0 || candidateY >= 40
-			    || (candidateX == state.positionX && candidateY == state.positionY))
+			    || (candidateX == state.positionX && candidateY == state.positionY)
+			    || (state.secondaryPlayerEntityId != 0
+			        && candidateX == state.secondaryPlayerPositionX
+			        && candidateY == state.secondaryPlayerPositionY))
 				continue;
 			state.combatTargetMoving = true;
 			state.combatTargetFuturePositionX = candidateX;
