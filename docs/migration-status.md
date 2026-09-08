@@ -33,6 +33,10 @@ same named protocol contract in the C# host/Godot models and native snapshot,
 runtime, and UI projection paths; the dependency-free Diablo domain retains
 its independent stash-layout helper to preserve assembly boundaries.
 
+Stable item-reference command construction and server mapping now reject
+inventory, belt, equipment, and stash slots outside those native topology
+limits before a gameplay intent is created.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

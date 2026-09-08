@@ -873,6 +873,59 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolItemReferencesRejectNativeSlotOverflow()
+    {
+        var executor = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var inventory = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            SellItemRequested = new SellItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 40,
+                },
+            },
+        }, 0);
+        var belt = server.Process("player-a", new Command {
+            ClientSequence = 2,
+            RequestedTick = 2,
+            SellItemRequested = new SellItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Belt,
+                    Slot = 8,
+                },
+            },
+        }, 1);
+        var equipment = server.Process("player-a", new Command {
+            ClientSequence = 3,
+            RequestedTick = 3,
+            SellItemRequested = new SellItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 7,
+                },
+            },
+        }, 2);
+        var stash = server.Process("player-a", new Command {
+            ClientSequence = 4,
+            RequestedTick = 4,
+            SellItemRequested = new SellItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Slot = 0,
+                    Page = 100,
+                },
+            },
+        }, 3);
+
+        Assert.All(
+            new[] { inventory, belt, equipment, stash },
+            result => Assert.Equal(CommandRejectReason.Malformed, result.RejectReason));
+    }
+
+    [Fact]
     public void ServiceCommandsCanTargetBeltAndEquipmentSlots()
     {
         var executor = new StoreSimulationExecutor(

@@ -23,6 +23,8 @@ All notable changes to this fork are documented below.
   contract across the mapper, managed/Godot validators, and native projection.
 - Native-compatible stash page, cell, and 10x10 geometry limits now use the
   shared protocol contract in managed and native projection/runtime paths.
+- Stable item-reference commands now reject slots and stash pages outside the
+  shared native inventory, belt, equipment, and stash topology limits.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

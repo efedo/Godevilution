@@ -1,4 +1,5 @@
 using Devilution.Engine;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Gameplay;
@@ -21,6 +22,11 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
 {
     /** Reserved service-only store used by Adria's mana refill action. */
     public const uint AdriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId;
+    private const int NativeMaximumInventoryCount = AuthoritativeProtocolLimits.NativeMaximumInventoryCount;
+    private const int NativeMaximumBeltCount = AuthoritativeProtocolLimits.NativeMaximumBeltCount;
+    private const int NativeMaximumEquipmentCount = AuthoritativeProtocolLimits.NativeMaximumEquipmentCount;
+    private const int NativeStashPageCount = AuthoritativeProtocolLimits.NativeStashPageCount;
+    private const int NativeStashCellCount = AuthoritativeProtocolLimits.NativeStashCellCount;
     private readonly DiabloSimulation simulation;
     private readonly AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime;
     private readonly AuthoritativeSaveCodec saveCodec;
@@ -846,6 +852,19 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             _ => (DiabloPlayerItemLocation?)null,
         };
         if (!location.HasValue) {
+            destination = null;
+            return false;
+        }
+
+        if (source.Slot >= (location.Value switch {
+            DiabloPlayerItemLocation.Inventory => NativeMaximumInventoryCount,
+            DiabloPlayerItemLocation.Belt => NativeMaximumBeltCount,
+            DiabloPlayerItemLocation.Equipment => NativeMaximumEquipmentCount,
+            DiabloPlayerItemLocation.Stash => NativeStashCellCount,
+            _ => 0,
+        })
+            || location.Value == DiabloPlayerItemLocation.Stash
+                && source.Page >= NativeStashPageCount) {
             destination = null;
             return false;
         }

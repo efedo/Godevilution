@@ -6,7 +6,9 @@ namespace Devilution.Diablo;
 public static class DiabloStashLayout
 {
     public const int PageCount = 100;
-    public const int CellCount = InventoryGridLayout.ColumnCount * 10;
+    public const int ColumnCount = InventoryGridLayout.ColumnCount;
+    public const int RowCount = 10;
+    public const int CellCount = ColumnCount * RowCount;
     public const int MaximumItems = PageCount * CellCount;
 
     public static int[] CreateEmptyPage()

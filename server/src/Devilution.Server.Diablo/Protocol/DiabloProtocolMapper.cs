@@ -1504,8 +1504,8 @@ internal static class DiabloProtocolMapper
             foreach (var item in pageGroup) {
                 var width = Math.Max(1, item.State.InventoryWidth);
                 var height = Math.Max(1, item.State.InventoryHeight);
-                if (width > 10
-                    || height > 10
+                if (width > DiabloStashLayout.ColumnCount
+                    || height > DiabloStashLayout.RowCount
                     || !DiabloStashLayout.CanPlace(cells, item.Cell, width, height)) {
                     throw new InvalidDataException(
                         "Authoritative stash contains an invalid or overlapping footprint.");

@@ -124,6 +124,23 @@ TEST(ServerBackedVendorCommand, RejectsSentinelInventoryValues)
 	EXPECT_FALSE(MakeMoveInventoryItemCommand(1, UINT32_MAX, 1).has_value());
 }
 
+TEST(ServerBackedVendorCommand, RejectsItemReferencesOutsideNativeTopology)
+{
+	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 40 };
+	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 8 };
+	const ServerBackedItemReference equipment { .location = ServerBackedItemLocation::Equipment, .slot = 7 };
+	const ServerBackedItemReference stash { .location = ServerBackedItemLocation::Stash, .slot = 100, .page = 0 };
+	const ServerBackedItemReference stashPage { .location = ServerBackedItemLocation::Stash, .slot = 0, .page = 100 };
+
+	EXPECT_FALSE(MakeSellItemCommand(inventory, 1).has_value());
+	EXPECT_FALSE(MakeUseConsumableCommand(belt, 1).has_value());
+	EXPECT_FALSE(MakeRepairItemCommand(equipment, 1).has_value());
+	EXPECT_FALSE(MakeMoveItemCommand(stash, inventory, 1).has_value());
+	EXPECT_FALSE(MakeMoveItemCommand(stashPage, inventory, 1).has_value());
+	EXPECT_FALSE(MakeMoveInventoryItemCommand(0, 40, 1).has_value());
+	EXPECT_FALSE(MakeAutoEquipItemCommand(inventory, 7, 1).has_value());
+}
+
 TEST(ServerBackedVendorCommand, RejectsInvalidQuestTurnInIdentifiers)
 {
 	EXPECT_FALSE(MakeTurnInQuestCommand(0, 0, 1).has_value());

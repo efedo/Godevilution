@@ -7,6 +7,7 @@
 #include "network/authoritative/store_command.hpp"
 
 #include "devilution.pb.h"
+#include "network/authoritative/protocol_limits.hpp"
 
 namespace devilution::authoritative {
 
@@ -19,16 +20,22 @@ tl::expected<protocol::v1::PlayerItemReference, std::string> MakeItemReference(S
 	reference.set_stable_item_id(item.stableItemId);
 	switch (item.location) {
 	case ServerBackedItemLocation::Inventory:
+		if (item.slot >= NativeMaximumInventoryCount)
+			return tl::make_unexpected("Cannot reference an inventory slot outside the native range.");
 		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_INVENTORY);
 		break;
 	case ServerBackedItemLocation::Belt:
+		if (item.slot >= NativeMaximumBeltCount)
+			return tl::make_unexpected("Cannot reference a belt slot outside the native range.");
 		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_BELT);
 		break;
 	case ServerBackedItemLocation::Equipment:
+		if (item.slot >= NativeMaximumEquipmentCount)
+			return tl::make_unexpected("Cannot reference an equipment slot outside the native range.");
 		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_EQUIPMENT);
 		break;
 	case ServerBackedItemLocation::Stash:
-		if (item.page >= 100 || item.slot >= 100)
+		if (item.page >= NativeStashPageCount || item.slot >= NativeStashCellCount)
 			return tl::make_unexpected("Cannot reference a stash item outside the native page grid.");
 		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_STASH);
 		reference.set_page(item.page);
@@ -132,7 +139,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakePurchaseComma
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeSellItemCommand(uint32_t inventoryIndex, uint64_t requestedTick)
 {
-	if (inventoryIndex == UINT32_MAX)
+	if (inventoryIndex >= NativeMaximumInventoryCount)
 		return tl::make_unexpected("Cannot sell an invalid inventory index.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
@@ -142,7 +149,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeSellItemComma
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCommand(uint32_t inventoryIndex, uint64_t requestedTick)
 {
-	if (inventoryIndex == UINT32_MAX)
+	if (inventoryIndex >= NativeMaximumInventoryCount)
 		return tl::make_unexpected("Cannot repair an invalid inventory index.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
@@ -152,7 +159,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCom
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRechargeItemCommand(uint32_t inventoryIndex, uint64_t requestedTick)
 {
-	if (inventoryIndex == UINT32_MAX)
+	if (inventoryIndex >= NativeMaximumInventoryCount)
 		return tl::make_unexpected("Cannot recharge an invalid inventory index.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
@@ -162,7 +169,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeRechargeItemC
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeIdentifyItemCommand(uint32_t inventoryIndex, uint64_t requestedTick)
 {
-	if (inventoryIndex == UINT32_MAX)
+	if (inventoryIndex >= NativeMaximumInventoryCount)
 		return tl::make_unexpected("Cannot identify an invalid inventory index.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
@@ -288,7 +295,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeRefillManaCom
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveInventoryItemCommand(uint32_t inventoryIndex, uint32_t targetCell, uint64_t requestedTick)
 {
-	if (inventoryIndex == UINT32_MAX || targetCell == UINT32_MAX)
+	if (inventoryIndex >= NativeMaximumInventoryCount || targetCell >= NativeMaximumInventoryGridCount)
 		return tl::make_unexpected("Cannot move an invalid inventory item or cell.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
@@ -300,7 +307,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveInventory
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveInventoryItemCommand(ServerBackedItemReference item, uint32_t targetCell, uint64_t requestedTick)
 {
-	if (item.location != ServerBackedItemLocation::Inventory || item.slot == UINT32_MAX || targetCell == UINT32_MAX)
+	if (item.location != ServerBackedItemLocation::Inventory || targetCell >= NativeMaximumInventoryGridCount)
 		return tl::make_unexpected("Cannot move an invalid inventory item or cell.");
 	auto reference = MakeItemReference(item);
 	if (!reference.has_value())
@@ -339,6 +346,8 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeAutoEquipItem
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeAutoEquipItemCommand(ServerBackedItemReference item, uint32_t equipmentSlot, uint64_t requestedTick)
 {
+	if (equipmentSlot >= NativeMaximumEquipmentCount)
+		return tl::make_unexpected("Cannot target an equipment slot outside the native range.");
 	return MakeItemCommand(item, requestedTick, [equipmentSlot](protocol::v1::Command &command) {
 		auto *request = command.mutable_auto_equip_item_requested();
 		request->set_equipment_slot(equipmentSlot);
