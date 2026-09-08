@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added Hellfire multiplayer Acid and AcidUnique secondary-participant impact
+  fixtures. Native and managed replay now agree on shifted Q6 impact damage,
+  splat/puddle expiry, primary-player preservation, and the authored alias
+  dispatch; the native compact runner now consumes the same Acid hit and
+  damage RNG boundary as the server.
 - Extended cross-runner MonsterMagic impact coverage to BoneDemon, ArchLich,
   Psychorb, and Necromorb. Each authored alias now verifies the 27-tick
   secondary-participant Q6 impact, preserved primary death state, and retained

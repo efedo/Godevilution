@@ -170,6 +170,8 @@ set(devilutionx_fixtures
   replay/gameplay-monster-magic-arch-lich-secondary-impact.json
   replay/gameplay-monster-magic-psychorb-secondary-impact.json
   replay/gameplay-monster-magic-necromorb-secondary-impact.json
+  replay/gameplay-acid-multiplayer-secondary-impact.json
+  replay/gameplay-acid-unique-multiplayer-secondary-impact.json
   replay/gameplay-monster-magic-necromorb.json
   replay/gameplay-monster-magic-psychorb.json
   replay/gameplay-monster-magic-secondary-block.json

@@ -7724,6 +7724,31 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-acid-multiplayer-secondary-impact.json")]
+    [InlineData("gameplay-acid-unique-multiplayer-secondary-impact.json")]
+    public void GameplayAcidAliasesRoutePuddleLifecycleToSecondaryParticipant(string fixtureName)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(0, result.FinalSnapshot.Players[0].Life);
+        Assert.Equal(6336, secondaryState.Life);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayLichMonsterMagicRoutesImpactToSecondaryParticipant()
     {

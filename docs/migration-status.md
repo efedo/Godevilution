@@ -9,6 +9,9 @@ without admitting a duplicate controller; projectile identity allocation also
 reserves externally seeded IDs so replacement projectiles remain collision-free.
 The authored AcidUnique identity now exercises the same lifecycle through its
 validated alias mapping and fails closed before generic combat dispatch.
+Hellfire multiplayer Acid and AcidUnique fixtures now route an authored Acid
+missile to the secondary participant, apply shifted Q6 damage, and preserve
+the primary player's terminal state through the shared splat/puddle expiry.
 The native fixture runner also carries the authoritative monster activation
 window used by multiplayer death suppression.
 

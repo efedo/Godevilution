@@ -1,0 +1,82 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/acid-unique-multiplayer-secondary-impact",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.acid",
+    "version": "0.1.0",
+    "sha256": "19d4f3470227495c136a4ce3c0d0c2099b564f5aa201e8df41efcdae1a75fbbc"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 0,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 5,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 0,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "AcidUnique",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "spell_id": 51,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 1,
+      "damage_type": 4,
+      "remaining_ticks": 1,
+      "behavior": 51,
+      "phase": 0,
+      "speed": 0,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "94df2be5971d066332e719ea8832c461db827fc6d60e81db69c2d6905f3b5adb" },
+    { "tick": 2, "state_sha256": "70a684c48766834ec8d0b6e7d081796c1a5f3ae239a474ffc7ad63f4c0ae9490" },
+    { "tick": 3, "state_sha256": "4645a993b7832036b5ce34923721bdd21fddc450c77371957e9dc20bec1bd779" },
+    { "tick": 4, "state_sha256": "4645a993b7832036b5ce34923721bdd21fddc450c77371957e9dc20bec1bd779" }
+  ]
+}

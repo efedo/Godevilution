@@ -197,6 +197,10 @@ Fireball movement, and canonical projectile hashing.
 runner loads its mana and healing values from the hash-checked
 `test/content/replay/spell-cast` content pack; native execution continues to
 validate the same replay contract and checkpoint.
+The Hellfire Acid fixtures load the validated `Acid`/`AcidUnique` mappings from
+the hash-checked `test/content/replay/acid` pack. Their multiplayer companions
+route shifted Acid damage to the secondary participant while preserving the
+four-tick splat/puddle lifecycle.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
@@ -393,7 +397,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 208 checked-in JSON fixtures and 235 registered
+the native replay gate contains 210 checked-in JSON fixtures and 237 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -404,6 +408,8 @@ selection, autonomous Succubus BloodStar admission/impact/block lanes, Succubus
 and LazarusSuccubus BloodStar multiplayer target-selection lanes, FireBat
 Firebolt, Torchant Fireball, Magma MagmaBall, and Storm ThinLightning
 multiplayer target selection,
+Hellfire Acid and AcidUnique secondary-participant impact and puddle-expiry
+lanes,
 ArchLich, Psychorb,
 Necromorb, BoneDemon, and two-projectile multiplayer MonsterArrow participant
 volley coverage, and Lich-family
@@ -1033,6 +1039,9 @@ Notable shared fixtures include:
   mapping, native initial travel advance, and nearest-secondary target selection;
 - `gameplay-storm-multiplayer-target.json` for Storm's external ThinLightning
   mapping, controller/segment admission, and nearest-secondary target selection;
+- `gameplay-acid-multiplayer-secondary-impact.json` and
+  `gameplay-acid-unique-multiplayer-secondary-impact.json` for Hellfire Acid
+  alias routing, shifted Q6 secondary-player impact, and splat/puddle expiry;
 - `gameplay-blood-star-impact.json` for deterministic monster-magic hit RNG,
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,

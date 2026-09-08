@@ -8959,16 +8959,85 @@ void AdmitReplayAutonomousMonsterArrow(
 }
 
 /** Advances the native Acid projectile, splat, and persistent puddle chain. */
-void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state)
+void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
 	const size_t initialProjectileCount = state.projectiles.size();
 	for (size_t index = 0; index < initialProjectileCount && index < state.projectiles.size();) {
 		auto &projectile = state.projectiles[index];
 		if (projectile.behavior == AcidBehavior) {
-			static_cast<void>(MoveReplayNativeProjectile(projectile));
+			const auto resolvePlayerAt = [&](int32_t x, int32_t y) {
+				const bool primaryPlayerAtTile = state.life > 0
+				    && state.levelId == projectile.levelId
+				    && state.positionX == x
+				    && state.positionY == y;
+				const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+				    && state.secondaryPlayerLife > 0
+				    && state.secondaryPlayerLevelId == projectile.levelId
+				    && state.secondaryPlayerPositionX == x
+				    && state.secondaryPlayerPositionY == y;
+				if (!primaryPlayerAtTile && !secondaryPlayerAtTile)
+					return false;
+				const uint32_t targetEntityId = primaryPlayerAtTile
+				    ? (state.entityId == 0 ? 1U : state.entityId)
+				    : state.secondaryPlayerEntityId;
+				if (projectile.lastCollisionTargetEntityId == targetEntityId)
+					return false;
+				projectile.lastCollisionTargetEntityId = targetEntityId;
+				const int targetLevel = primaryPlayerAtTile
+				    ? static_cast<int>(state.characterLevel)
+				    : static_cast<int>(state.secondaryPlayerCharacterLevel);
+				const int distance = std::max(
+				    std::abs((primaryPlayerAtTile ? state.positionX : state.secondaryPlayerPositionX)
+				        - state.combatTargetPositionX),
+				    std::abs((primaryPlayerAtTile ? state.positionY : state.secondaryPlayerPositionY)
+				        - state.combatTargetPositionY));
+				const int hitChance = std::clamp(
+				    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
+				        - 2 * targetLevel - 2 * distance),
+				    0,
+				    100);
+				if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
+					return false;
+
+				// Native shifted Acid damage still consumes its zero-width damage roll.
+				static_cast<void>(GenerateRnd(state, 1));
+				const int32_t damageQ6 = std::max(1, projectile.damage) * 64;
+				if (primaryPlayerAtTile) {
+					state.life = std::max(0, state.life - damageQ6);
+					if (state.life > 0
+					    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+						state.combatMode = 7;
+						state.combatModeEndTick = tick + 6;
+					}
+				} else {
+					state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
+					if (state.secondaryPlayerLife == 0)
+						StartReplaySecondaryPlayerDeath(state, true);
+					else if ((damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+						state.secondaryPlayerCombatMode = 7;
+						state.secondaryPlayerCombatModeEndTick = tick + 6;
+					}
+				}
+				return true;
+			};
+
+			const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+			bool playerHit = false;
+			for (const auto &tile : visitedTiles) {
+				projectile.positionX = tile.x;
+				projectile.positionY = tile.y;
+				projectile.traveledX = tile.traveledX;
+				projectile.traveledY = tile.traveledY;
+				if (resolvePlayerAt(tile.x, tile.y)) {
+					playerHit = true;
+					break;
+				}
+			}
+			if (visitedTiles.empty())
+				playerHit = resolvePlayerAt(projectile.positionX, projectile.positionY);
 			if (projectile.remainingTicks > 0)
 				--projectile.remainingTicks;
-			if (projectile.remainingTicks != 0) {
+			if (!playerHit && projectile.remainingTicks != 0) {
 				++index;
 				continue;
 			}
@@ -9871,7 +9940,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayGuardianOneTick(state);
 		AdvanceReplayRageOneTick(state);
 		AdvanceReplayFireWallsOneTick(state);
-		AdvanceReplayAcidOneTick(state);
+		AdvanceReplayAcidOneTick(state, simulationTick);
 		AdvanceReplayAutonomousMonsterMagicOneTick(state, simulationTick);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceMagicBoltsOneTick(state, simulationTick);
