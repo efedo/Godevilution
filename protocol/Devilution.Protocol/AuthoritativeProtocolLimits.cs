@@ -57,6 +57,8 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumNativeRewardOffset = 16;
     public const int MinimumNativeObjectOffset = -32;
     public const int MaximumNativeObjectOffset = 32;
+    public const int MinimumNativeDirection = -1;
+    public const int MaximumNativeDirection = 1;
     public const uint MaximumStableSpellId = byte.MaxValue;
     public const uint MaximumNativeSpellLevel = 15;
     public const int MaximumMemorizedSpellCount = 51;

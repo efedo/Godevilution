@@ -71,8 +71,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    && (snapshot.combatMode == static_cast<uint32_t>(PM_WALK_NORTHWARDS)
 		        || snapshot.combatMode == static_cast<uint32_t>(PM_WALK_SOUTHWARDS)
 		        || snapshot.combatMode == static_cast<uint32_t>(PM_WALK_SIDEWAYS))
-		    && action.directionX >= -1 && action.directionX <= 1
-		    && action.directionY >= -1 && action.directionY <= 1
+	    && action.directionX >= MinimumNativeDirection && action.directionX <= MaximumNativeDirection
+	    && action.directionY >= MinimumNativeDirection && action.directionY <= MaximumNativeDirection
 		    && (action.directionX != 0 || action.directionY != 0)
 		    && action.targetEntityId == 0 && !action.hasCast;
 		const bool attackIsValid = action.kind == 2

@@ -43,6 +43,8 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumNativeRewardOffset = AuthoritativeProtocolLimits.MaximumNativeRewardOffset;
     private const int MinimumNativeObjectOffset = AuthoritativeProtocolLimits.MinimumNativeObjectOffset;
     private const int MaximumNativeObjectOffset = AuthoritativeProtocolLimits.MaximumNativeObjectOffset;
+    private const int MinimumNativeDirection = AuthoritativeProtocolLimits.MinimumNativeDirection;
+    private const int MaximumNativeDirection = AuthoritativeProtocolLimits.MaximumNativeDirection;
     private const uint MaximumNativeObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
@@ -977,8 +979,8 @@ public static class AuthoritativeSnapshotValidator
                     player.CombatMode is PlayerCombatMode.WalkNorthwards
                         or PlayerCombatMode.WalkSouthwards
                         or PlayerCombatMode.WalkSideways
-                    && action.DirectionX is >= -1 and <= 1
-                    && action.DirectionY is >= -1 and <= 1
+                    && action.DirectionX is >= MinimumNativeDirection and <= MaximumNativeDirection
+                    && action.DirectionY is >= MinimumNativeDirection and <= MaximumNativeDirection
                     && (action.DirectionX != 0 || action.DirectionY != 0)
                     && action.TargetEntityId == 0
                     && action.Cast is null

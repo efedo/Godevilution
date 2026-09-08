@@ -77,6 +77,8 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(16, AuthoritativeProtocolLimits.MaximumNativeRewardOffset);
         Assert.Equal(-32, AuthoritativeProtocolLimits.MinimumNativeObjectOffset);
         Assert.Equal(32, AuthoritativeProtocolLimits.MaximumNativeObjectOffset);
+        Assert.Equal(-1, AuthoritativeProtocolLimits.MinimumNativeDirection);
+        Assert.Equal(1, AuthoritativeProtocolLimits.MaximumNativeDirection);
         Assert.Equal(4, AuthoritativeProtocolLimits.NativeMaximumPlayerCount);
         Assert.Equal(40, AuthoritativeProtocolLimits.NativeMaximumInventoryCount);
         Assert.Equal(7, AuthoritativeProtocolLimits.NativeMaximumEquipmentCount);

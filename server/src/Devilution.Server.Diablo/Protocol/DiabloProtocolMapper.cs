@@ -37,6 +37,8 @@ internal static class DiabloProtocolMapper
     private const int MaximumNativeRewardOffset = AuthoritativeProtocolLimits.MaximumNativeRewardOffset;
     private const int MinimumNativeObjectOffset = AuthoritativeProtocolLimits.MinimumNativeObjectOffset;
     private const int MaximumNativeObjectOffset = AuthoritativeProtocolLimits.MaximumNativeObjectOffset;
+    private const int MinimumNativeDirection = AuthoritativeProtocolLimits.MinimumNativeDirection;
+    private const int MaximumNativeDirection = AuthoritativeProtocolLimits.MaximumNativeDirection;
     private const uint MaximumNativeCharacterLevel = AuthoritativeProtocolLimits.MaximumNativeCharacterLevel;
     private const int MinimumNativeLightRadius = AuthoritativeProtocolLimits.MinimumNativeLightRadius;
     private const int MaximumNativeLightRadius = AuthoritativeProtocolLimits.MaximumNativeLightRadius;
@@ -1615,8 +1617,8 @@ internal static class DiabloProtocolMapper
                 state.CombatMode is DiabloPlayerCombatMode.WalkNorthwards
                     or DiabloPlayerCombatMode.WalkSouthwards
                     or DiabloPlayerCombatMode.WalkSideways
-                && action.DirectionX is >= -1 and <= 1
-                && action.DirectionY is >= -1 and <= 1
+                && action.DirectionX is >= MinimumNativeDirection and <= MaximumNativeDirection
+                && action.DirectionY is >= MinimumNativeDirection and <= MaximumNativeDirection
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
                 && action.CastIntent is null,

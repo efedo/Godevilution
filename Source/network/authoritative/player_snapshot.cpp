@@ -1319,8 +1319,8 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && (combatMode == protocol::PLAYER_COMBAT_MODE_WALK_NORTHWARDS
 		        || combatMode == protocol::PLAYER_COMBAT_MODE_WALK_SOUTHWARDS
 		        || combatMode == protocol::PLAYER_COMBAT_MODE_WALK_SIDEWAYS)
-		    && action.direction_x() >= -1 && action.direction_x() <= 1
-		    && action.direction_y() >= -1 && action.direction_y() <= 1
+		    && action.direction_x() >= MinimumNativeDirection && action.direction_x() <= MaximumNativeDirection
+		    && action.direction_y() >= MinimumNativeDirection && action.direction_y() <= MaximumNativeDirection
 		    && (action.direction_x() != 0 || action.direction_y() != 0)
 		    && action.target_entity_id() == 0
 		    && !action.has_cast()

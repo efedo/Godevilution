@@ -334,8 +334,8 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.position.future = player.position.tile;
 	if (snapshot.currentAction.has_value() && snapshot.currentAction->kind == 1
 	    && !snapshot.currentAction->effectApplied
-	    && snapshot.currentAction->directionX >= -1 && snapshot.currentAction->directionX <= 1
-	    && snapshot.currentAction->directionY >= -1 && snapshot.currentAction->directionY <= 1
+	    && snapshot.currentAction->directionX >= MinimumNativeDirection && snapshot.currentAction->directionX <= MaximumNativeDirection
+	    && snapshot.currentAction->directionY >= MinimumNativeDirection && snapshot.currentAction->directionY <= MaximumNativeDirection
 	    && (snapshot.currentAction->directionX != 0 || snapshot.currentAction->directionY != 0)) {
 		player.position.future += Displacement {
 		    static_cast<int8_t>(snapshot.currentAction->directionX),
@@ -1209,8 +1209,8 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		    && snapshot.currentAction->kind == 1
 		    && !snapshot.currentAction->effectApplied) {
 			const auto &action = *snapshot.currentAction;
-			if (action.directionX < -1 || action.directionX > 1
-			    || action.directionY < -1 || action.directionY > 1
+			if (action.directionX < MinimumNativeDirection || action.directionX > MaximumNativeDirection
+			    || action.directionY < MinimumNativeDirection || action.directionY > MaximumNativeDirection
 			    || (action.directionX == 0 && action.directionY == 0)
 			    || !IsValidWorldPosition(snapshot.positionX + action.directionX, snapshot.positionY + action.directionY))
 				return tl::make_unexpected("Authoritative remote player walk destination cannot be represented by the native world tile type.");

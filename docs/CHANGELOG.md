@@ -35,6 +35,8 @@ All notable changes to this fork are documented below.
 - Replay fixture validation now consumes the shared native inventory, equipment,
   belt, monster, character-level, and resistance compatibility limits instead
   of maintaining duplicate scalar bounds.
+- Native movement-intent direction bounds now use named shared `-1..1` limits
+  across managed, Godot, and native protocol validation and command creation.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

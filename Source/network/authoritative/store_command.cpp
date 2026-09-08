@@ -357,7 +357,9 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeAutoEquipItem
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveCommand(int32_t directionX, int32_t directionY, uint64_t requestedTick)
 {
-	if (directionX < -1 || directionX > 1 || directionY < -1 || directionY > 1 || (directionX == 0 && directionY == 0))
+	if (directionX < MinimumNativeDirection || directionX > MaximumNativeDirection
+	    || directionY < MinimumNativeDirection || directionY > MaximumNativeDirection
+	    || (directionX == 0 && directionY == 0))
 		return tl::make_unexpected("Movement direction must be a non-zero adjacent step.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);

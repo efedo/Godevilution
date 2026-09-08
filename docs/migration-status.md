@@ -53,6 +53,9 @@ Replay fixture validation now consumes the shared native inventory, equipment,
 belt, monster, character-level, and resistance compatibility limits, keeping
 the cross-language replay gate aligned with snapshot validation.
 
+Native movement-intent direction bounds now use named shared `-1..1` limits at
+managed, Godot, native validation, and native command-construction boundaries.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the
