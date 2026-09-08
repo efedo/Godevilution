@@ -6,7 +6,8 @@ All notable changes to this fork are documented below.
 
 - Hardened verified gameplay-module packages: manifests now require strict
   UTF-8 decoding and package roots reject reparse-point entries before assembly
-  hashing or reflection loading.
+  hashing or reflection loading; assembly paths must also be canonical and
+  traversal-free.
 - Hardened external content-pack resource paths: tables, overlays, and binary
   assets now share canonical relative-path validation and reject traversal,
   absolute paths, and separator aliases before composition or hashing.

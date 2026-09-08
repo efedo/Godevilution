@@ -196,9 +196,8 @@ public sealed class GameplayModulePackageLoader
         string relativeAssemblyPath,
         string manifestPath)
     {
-        if (Path.IsPathRooted(relativeAssemblyPath))
-            throw PackageError(manifestPath, "assembly must be a package-relative path");
-        var assemblyPath = Path.GetFullPath(Path.Combine(root, relativeAssemblyPath));
+        var canonicalPath = NormalizePackageRelativePath(relativeAssemblyPath, manifestPath);
+        var assemblyPath = Path.GetFullPath(Path.Combine(root, canonicalPath));
         var containedRoot = root.EndsWith(Path.DirectorySeparatorChar)
             ? root
             : root + Path.DirectorySeparatorChar;
@@ -212,6 +211,25 @@ public sealed class GameplayModulePackageLoader
                 assemblyPath);
         }
         return assemblyPath;
+    }
+
+    private static string NormalizePackageRelativePath(string path, string manifestPath)
+    {
+        var normalized = path.Replace('\\', '/');
+        var segments = normalized.Split('/', StringSplitOptions.None);
+        if (string.IsNullOrWhiteSpace(path)
+            || Path.IsPathRooted(normalized)
+            || normalized.Contains(':', StringComparison.Ordinal)
+            || normalized.StartsWith("/", StringComparison.Ordinal)
+            || normalized.EndsWith("/", StringComparison.Ordinal)
+            || normalized.Contains("//", StringComparison.Ordinal)
+            || segments.Any(segment => segment is "" or "." or "..")) {
+            throw PackageError(
+                manifestPath,
+                "assembly must be a canonical package-relative path without traversal segments; "
+                + "assembly path escapes the package directory or uses an alias");
+        }
+        return normalized;
     }
 
     private static string NormalizeSha256(string value, string manifestPath)

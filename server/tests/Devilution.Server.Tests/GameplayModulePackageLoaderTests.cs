@@ -110,6 +110,24 @@ public sealed class GameplayModulePackageLoaderTests
     }
 
     [Fact]
+    public void RejectsNonCanonicalAssemblyPaths()
+    {
+        using var dotAlias = TestPackage.Create(assemblyPath: "./module.dll");
+        Assert.Contains(
+            "canonical package-relative path",
+            Assert.Throws<InvalidDataException>(() =>
+                new GameplayModulePackageLoader().LoadDirectory(dotAlias.Root)).Message,
+            StringComparison.Ordinal);
+
+        using var traversalAlias = TestPackage.Create(assemblyPath: "sub/../module.dll");
+        Assert.Contains(
+            "canonical package-relative path",
+            Assert.Throws<InvalidDataException>(() =>
+                new GameplayModulePackageLoader().LoadDirectory(traversalAlias.Root)).Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsUnsupportedManifestFormat()
     {
         using var package = TestPackage.Create(formatVersion: 2);

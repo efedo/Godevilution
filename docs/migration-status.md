@@ -9,8 +9,9 @@ composition or manifest identity.
 Content-pack manifests and TSV tables now reject malformed UTF-8 before
 composition, keeping external pack validation deterministic across hosts.
 
-Verified gameplay-module packages now reject malformed UTF-8 manifests and
-reparse-point entries before assembly hashing or reflection loading.
+Verified gameplay-module packages now reject malformed UTF-8 manifests,
+reparse-point entries, and noncanonical assembly paths before assembly hashing
+or reflection loading.
 
 The named projectile behavior contract now reaches the server snapshot hasher
 and native compatibility projection/presentation switches, so resume hashing
