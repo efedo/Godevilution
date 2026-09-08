@@ -15,6 +15,7 @@
 #include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
@@ -527,9 +528,14 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
 		EXPECT_FALSE(result.has_value());
 	}
 
+	protocol::EventBatch maximumDialogue;
+	maximumDialogue.add_events()->mutable_dialogue()->set_text(
+	    std::string(MaximumDialogueTextBytes, 'x'));
+	EXPECT_TRUE(ValidateServerBackedEventBatch(maximumDialogue).has_value());
+
 	protocol::EventBatch oversized;
-	for (int index = 0; index <= 4096; index++)
-		oversized.add_events()->mutable_experience()->set_amount(index);
+	for (std::size_t index = 0; index <= MaximumEventBatchCount; index++)
+		oversized.add_events()->mutable_experience()->set_amount(static_cast<uint32_t>(index));
 	EXPECT_FALSE(ValidateServerBackedEventBatch(oversized).has_value());
 }
 
@@ -1927,6 +1933,12 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedProjectileMetadata)
 	oversizedNativeIdentity.mutable_projectiles(0)->set_behavior(50); // MonsterMagic
 	oversizedNativeIdentity.mutable_projectiles(0)->set_native_missile_id(std::string(129, 'x'));
 	EXPECT_FALSE(ValidateProjectileSnapshots(oversizedNativeIdentity).has_value());
+
+	protocol::Snapshot maximumNativeIdentity = makeProjectile();
+	maximumNativeIdentity.mutable_projectiles(0)->set_behavior(50); // MonsterMagic
+	maximumNativeIdentity.mutable_projectiles(0)->set_native_missile_id(
+	    std::string(MaximumIdentityBytes, 'x'));
+	EXPECT_TRUE(ValidateProjectileSnapshots(maximumNativeIdentity).has_value());
 
 	protocol::Snapshot misplacedNativeIdentity = makeProjectile();
 	misplacedNativeIdentity.mutable_projectiles(0)->set_behavior(49);

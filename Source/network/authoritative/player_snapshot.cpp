@@ -1,5 +1,7 @@
 #include "network/authoritative/player_snapshot.hpp"
 
+#include "network/authoritative/protocol_limits.hpp"
+
 #include <cstdlib>
 #include <limits>
 #include <set>
@@ -105,7 +107,7 @@ bool IsValidNativeMissileIdentity(const std::string &value)
 {
 	if (value.empty())
 		return true;
-	if (value.size() > 128)
+	if (value.size() > MaximumIdentityBytes)
 		return false;
 	const auto isLetter = [](char character) {
 		return character >= 'A' && character <= 'Z'
@@ -1463,8 +1465,7 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 
 tl::expected<void, std::string> ValidateServerBackedEventBatch(const protocol::EventBatch &eventBatch)
 {
-	constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
-	if (eventBatch.events_size() > 4096)
+	if (eventBatch.events_size() > MaximumEventBatchCount)
 		return tl::make_unexpected("Server-backed event batch is too large.");
 	for (const auto &event : eventBatch.events()) {
 		if (event.has_damage()) {
