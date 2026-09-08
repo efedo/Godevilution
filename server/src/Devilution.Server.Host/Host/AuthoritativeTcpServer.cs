@@ -33,6 +33,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private readonly AuthoritativeSaveStore? saveStore;
     private readonly AuthoritativeCommandReceiptStore? commandReceiptStore;
     private readonly AuthoritativeSessionStore? sessionStore;
+    private readonly AuthoritativeSessionPersistence sessionPersistence;
     private readonly IAuthoritativeSaveProvider? saveProvider;
     private readonly IAuthoritativeParticipantInitializer? participantInitializer;
     private IAuthoritativeGameHostAdapter? gameAdapter;
@@ -147,6 +148,10 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             ?? (saveStore is null
                 ? null
                 : new AuthoritativeSessionStore(saveStore.RootDirectory));
+        sessionPersistence = new AuthoritativeSessionPersistence(
+            this.saveStore,
+            this.commandReceiptStore,
+            this.sessionStore);
         this.saveProvider = saveProvider;
         this.participantInitializer = participantInitializer;
         listener = new TcpListener(address ?? IPAddress.Loopback, port);
@@ -423,12 +428,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 ? null
                 : saveProvider.ExportSessionState(session.Id);
             var completedCommands = commandServer.ExportCompletedCommands(session.Id);
-            if (saveStore is not null && serializedState is not null)
-                saveStore.Save(session.Id, serializedState);
-            if (commandReceiptStore is not null)
-                commandReceiptStore.Save(session.Id, completedCommands);
-            if (sessionStore is not null && serializedState is not null)
-                sessionStore.Save(session.Id, serializedState, completedCommands);
+            sessionPersistence.Save(session.Id, serializedState, completedCommands);
         });
     }
 

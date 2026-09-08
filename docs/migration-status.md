@@ -11,6 +11,10 @@ The version-one Diablo save codec also requires canonical Base64 snapshot text,
 so whitespace and alternate encodings cannot produce multiple persisted forms
 of the same authoritative state.
 
+Session persistence now publishes the combined checkpoint before writing the
+legacy save and command-receipt mirrors. A failure in a compatibility mirror
+therefore leaves the latest authoritative recovery document available.
+
 External content-pack tables, overlays, and binary assets now share canonical
 relative-path validation, so traversal and path aliases cannot enter content
 composition or manifest identity.

@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
   persistence recovery.
 - Version-one Diablo save envelopes now require canonical Base64 snapshot
   text, rejecting whitespace or alternate encodings before Protobuf restore.
+- Combined session checkpoints are now published before legacy save and command
+  receipt mirrors, so a compatibility-write failure cannot leave the primary
+  server-owned recovery document stale.
 - Hardened verified gameplay-module packages: manifests now require strict
   UTF-8 decoding and package roots reject reparse-point entries before assembly
   hashing or reflection loading; assembly paths must also be canonical and
