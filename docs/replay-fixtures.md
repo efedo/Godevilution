@@ -211,8 +211,9 @@ admission/travel/impact state, including secondary-player
 block resolution, and Lich-family MonsterMagic admission, hit, miss,
 nearest-participant selection, and secondary-participant impact resolution;
 the Mega InfernoController moving fire-stream controller, segment lifetime,
-and recovery-delay lifecycle, including seeded multiplayer AI-stream
-advancement. Both Mega fixtures load their spell and native missile rows from
+recovery-delay lifecycle, and nearest-participant selection, including seeded
+multiplayer AI-stream advancement. Mega fixtures load their spell and
+native missile rows from
 the hash-checked `test/content/replay/mega-inferno` content pack.
 The seven Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
@@ -389,7 +390,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 182 checked-in JSON fixtures and 201 registered
+the native replay gate contains 183 checked-in JSON fixtures and 202 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -410,10 +411,9 @@ tick, GoatMelee and Gargoyle nearest-participant autonomous movement,
 SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Counselor nearest-participant delay selection,
 SkeletonMelee nearest-participant adjacent attack, Snake nearest-participant
-charge routing, Rhino charge admission,
-nearest-participant
-selection, special damage, and
-knockback are also covered in both runners. Snake distant-delay and failed
+charge routing, Rhino charge admission and nearest-participant selection,
+special damage, and knockback, and Mega InfernoController nearest-participant
+selection are also covered in both runners. Snake distant-delay and failed
 adjacent-attack admission/countdown are also covered in both runners, as is
 the mapped SnakeCharge travel, player collision, and impact phase. Sneak
 conceal/reveal transitions and the Bat retreat movement/countdown lifecycle
@@ -447,8 +447,9 @@ admission, multiplayer target selection, decision-delay state,
 miss-before-expiry lifecycle, secondary-player
 block and impact, current-tile breakable-object removal, primary-player block,
 a BoneDemon alias and Lich-family
-MonsterMagic
-impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
+MonsterMagic impact, miss, and secondary-participant impact, plus Mega
+InfernoController lifecycle and nearest-participant admission, and a
+multiplayer MonsterArrow
 impact against the secondary participant, plus a two-projectile participant
 volley whose managed counterpart also exercises both-participant save/restore
 continuation, and a lethal secondary MonsterArrow lane that verifies
@@ -923,6 +924,9 @@ Notable shared fixtures include:
   routing through projectile travel/removal and farther-primary preservation;
 - `gameplay-counselor-multiplayer-target.json` for nearest-participant selection,
   entity-id tie-breaking, adjacent delay admission, and farther-primary
+  preservation;
+- `gameplay-mega-inferno-multiplayer-target.json` for nearest-participant
+  InfernoController admission, secondary-target routing, and farther-primary
   preservation;
 - `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
   corpse scan order, first-candidate selection, deterministic movement, and

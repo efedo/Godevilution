@@ -56,6 +56,11 @@ Counselor now has two-participant replay coverage. The native and managed paths
 select the nearest eligible player with entity-id tie-breaking, preserve the
 farther primary, and agree on the adjacent delay checkpoint.
 
+Mega Inferno now has two-participant replay coverage. The native and managed
+paths select the nearer secondary participant for InfernoController admission,
+preserve the farther primary, and agree on the controller, segment, and delay
+checkpoint state.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance
@@ -330,7 +335,7 @@ pack, and the status-expiry fixture now loads its row from the validated
 `test/content/replay/status-expiry` pack; both manifests are hash-checked before
 catalog activation.
 
-The two Mega Inferno replay fixtures now share the validated
+The three Mega Inferno replay fixtures now share the validated
 `test/content/replay/mega-inferno` pack, which externalizes both the Inferno
 controller spell row and its native `Mega`/`InfernoControl` missile mapping.
 The managed runner validates the composite pack hash before loading either

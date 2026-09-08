@@ -135,6 +135,7 @@ set(devilutionx_fixtures
   replay/gameplay-infravision-resolution.json
   replay/gameplay-lightning-resolution.json
   replay/gameplay-mana-shield-resolution.json
+  replay/gameplay-mega-inferno-multiplayer-target.json
   replay/gameplay-monster-arrow-autonomous.json
   replay/gameplay-monster-arrow-multiplayer-target.json
   replay/gameplay-monster-arrow-resolution.json

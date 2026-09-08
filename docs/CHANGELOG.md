@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a Mega Inferno multi-participant replay fixture. Native and managed
+  runners now verify nearest-participant InfernoController admission,
+  secondary-target routing, persistent segment state, and farther-primary
+  preservation against the shared checkpoint hash.
+
 - Added shared replay coverage for Fallen stand-animation and rally-admission
   state. Native and managed runners now parse, validate, advance the authored
   frame/tick boundary, apply the native Q6 self-heal and rally timer, and hash

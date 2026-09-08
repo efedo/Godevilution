@@ -6302,6 +6302,48 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMegaInfernoMultiplayerTargetSelectionMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-mega-inferno-multiplayer-target.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMegaInfernoExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoController);
+        var segment = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoSegment);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(100, Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1).Life);
+        Assert.Equal(100, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, controller.TargetEntityId);
+        Assert.Equal(255U, controller.RemainingTicks);
+        Assert.Equal(1, controller.PathIndex);
+        Assert.Equal(4, segment.Damage);
+        Assert.Equal(39U, segment.RemainingTicks);
+        Assert.Equal(5, monster.MegaDelayTicks);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
