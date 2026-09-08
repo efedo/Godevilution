@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added shared replay coverage for the Warlord and Snotspill native SkeletonAi
+  aliases. Native and managed runners now preserve nearest-participant
+  selection, shared movement-delay admission, and countdown state for both
+  authored identities.
+
 - Extended the Skeleton King multi-participant replay fixture through
   Leoric's compatibility decision-delay lifecycle. Both runners now verify
   nearest-secondary selection, farther-primary preservation, the native

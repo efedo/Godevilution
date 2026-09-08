@@ -93,6 +93,8 @@ set(devilutionx_fixtures
   replay/gameplay-skeleton-melee-attack-delay.json
   replay/gameplay-skeleton-melee-multiplayer-target.json
   replay/gameplay-skeleton-king-multiplayer-target.json
+  replay/gameplay-snotspill-multiplayer-target.json
+  replay/gameplay-warlord-multiplayer-target.json
   replay/gameplay-rhino-charge.json
   replay/gameplay-rhino-multiplayer-target.json
   replay/gameplay-snake-distant-delay.json

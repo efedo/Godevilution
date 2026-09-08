@@ -7810,7 +7810,9 @@ void AdvanceReplayMonsterAttack(
 	}
 	// Compact the SkeletonAi movement-delay admission; the managed snapshot
 	// carries the remaining delay so the next autonomous tick can be compared.
-	if (state.combatTargetNativeAi == "SkeletonMelee") {
+	if (state.combatTargetNativeAi == "SkeletonMelee"
+	    || state.combatTargetNativeAi == "Snotspill"
+	    || state.combatTargetNativeAi == "Warlord") {
 		if (state.combatTargetSkeletonMeleeDelayTicks > 0) {
 			--state.combatTargetSkeletonMeleeDelayTicks;
 			return;
@@ -8306,7 +8308,9 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
-	if (state.combatTargetNativeAi == "SkeletonMelee") {
+	if (state.combatTargetNativeAi == "SkeletonMelee"
+	    || state.combatTargetNativeAi == "Snotspill"
+	    || state.combatTargetNativeAi == "Warlord") {
 		const uint32_t attackSeed = static_cast<uint32_t>(tick)
 		    ^ state.combatTargetEntityId
 		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);

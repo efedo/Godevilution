@@ -30,6 +30,10 @@ managed runners select the nearer secondary participant, preserve the farther
 primary, agree on the compatibility RoundWalk 90/45/straight candidate
 ordering, and preserve the native decision-delay admission/countdown.
 
+Warlord and Snotspill now share the same two-participant SkeletonAi replay
+coverage. Native and managed runners preserve their explicit authored native-AI
+identities while agreeing on movement-delay admission and countdown state.
+
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's

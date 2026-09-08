@@ -4923,6 +4923,112 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySnotspillUsesSkeletonAiAliasAgainstNativeCheckpoints()
+    {
+        var fixture = LoadReplayFixture("gameplay-snotspill-multiplayer-target.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            skeletonMeleeDelayTicks: initial.CombatTargetSkeletonMeleeDelayTicks);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal((6, 0), (primary.PositionX, primary.PositionY));
+        Assert.Equal((2, 0), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal((0, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(14, monster.SkeletonMeleeDelayTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplayWarlordUsesSkeletonAiAliasAgainstNativeCheckpoints()
+    {
+        var fixture = LoadReplayFixture("gameplay-warlord-multiplayer-target.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            skeletonMeleeDelayTicks: initial.CombatTargetSkeletonMeleeDelayTicks);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal((6, 0), (primary.PositionX, primary.PositionY));
+        Assert.Equal((2, 0), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal((0, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(14, monster.SkeletonMeleeDelayTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayRhinoChargeMatchesNativeLifecycle()
     {
         var path = Path.Combine(
