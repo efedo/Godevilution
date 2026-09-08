@@ -44,6 +44,10 @@ secondary receives the native special damage and knockback while the farther
 primary remains unchanged; both runners preserve the charge landing and
 canonical checkpoint.
 
+SkeletonMelee now has the same two-participant replay coverage. The nearer
+secondary receives the native adjacent attack while the farther primary remains
+unchanged; both runners preserve the branch-specific checkpoint.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

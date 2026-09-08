@@ -120,6 +120,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-move.json" Link="Fixtures/gameplay-gargoyle-avoidance-move.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-delay.json" Link="Fixtures/gameplay-skeleton-melee-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-attack-delay.json" Link="Fixtures/gameplay-skeleton-melee-attack-delay.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-multiplayer-target.json" Link="Fixtures/gameplay-skeleton-melee-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge.json" Link="Fixtures/gameplay-rhino-charge.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-multiplayer-target.json" Link="Fixtures/gameplay-rhino-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snake-distant-delay.json" Link="Fixtures/gameplay-snake-distant-delay.json" CopyToOutputDirectory="PreserveNewest" />
