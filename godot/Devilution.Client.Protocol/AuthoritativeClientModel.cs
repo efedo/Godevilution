@@ -30,6 +30,8 @@ public sealed class AuthoritativeClientModel
     private const int MaximumSnapshotQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
     private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
     private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
+    private const int MaximumNativeSetLevelId = AuthoritativeProtocolLimits.MaximumNativeSetLevelId;
+    private const int MaximumMonsterLeaderRelation = AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation;
     private const uint MaximumStableSpellId = byte.MaxValue;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
@@ -934,7 +936,7 @@ public sealed class AuthoritativeClientModel
             || @object.RewardOffsetY is < -16 or > 16
             || @object.RewardOriginKind is < 0 or > MaximumObjectRewardOriginKind
             || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
-            || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > 8
+            || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > MaximumNativeSetLevelId
             || !rewardValid
             || @object.ProjectileTargetOffsetX is < -32 or > 32
             || @object.ProjectileTargetOffsetY is < -32 or > 32
@@ -1166,7 +1168,7 @@ public sealed class AuthoritativeClientModel
     private static void ValidateSetLevelObjectOrigins(Snapshot snapshot)
     {
         if (snapshot.SetLevelObjectOrigins.Count > MaximumSetLevelObjectOriginCount
-            || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > MaximumNativeSetLevelId)
             || snapshot.SetLevelObjectOrigins
                 .Select(origin => origin.SetLevelId)
                 .Distinct()
@@ -1406,7 +1408,7 @@ public sealed class AuthoritativeClientModel
             || monster.LightningResistance is < -100 or > 100
             || monster.MagicResistance is < -100 or > 100
             || monster.AcidResistance is < -100 or > 100
-            || monster.LeaderRelation is < 0 or > 2
+            || monster.LeaderRelation is < 0 or > MaximumMonsterLeaderRelation
             || (monster.LeaderRelation == 0
                 ? monster.LeaderEntityId != 0
                 : monster.LeaderEntityId == 0)

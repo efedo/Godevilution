@@ -26,6 +26,10 @@ Event batches, world mutations, quests, set-level origins, and materialized
 procedural levels now consume shared collection caps in managed validation and
 native snapshot projection.
 
+Native set-level IDs and monster leader-relation values now consume shared
+compatibility maxima in managed validation, Diablo mapping, and native
+projection.
+
 Projectile behavior values now have one named protocol identity enum shared by
 managed validation and legacy Godot presentation fallback; native bounds mirror
 the same maximum rather than repeating an unexplained literal.

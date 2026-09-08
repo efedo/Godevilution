@@ -65,6 +65,13 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount);
     }
 
+    [Fact]
+    public void UsesSharedNativeCompatibilityCaps()
+    {
+        Assert.Equal(8, AuthoritativeProtocolLimits.MaximumNativeSetLevelId);
+        Assert.Equal(2, AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation);
+    }
+
     [Theory]
     [InlineData(2, 0, ProjectilePresentationKind.Fire)]
     [InlineData(2, 1, ProjectilePresentationKind.FireImpact)]

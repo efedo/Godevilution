@@ -625,7 +625,7 @@ internal static class DiabloProtocolMapper
                 || @object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.Object
                     && @object.RewardSetLevelId != -1
                 || @object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.SetLevelOrigin
-                    && @object.RewardSetLevelId is < 0 or > 8
+                    && @object.RewardSetLevelId is < 0 or > AuthoritativeProtocolLimits.MaximumNativeSetLevelId
                 || !rewardValid
                 || @object.ProjectileTargetOffsetX is < -32 or > 32
                 || @object.ProjectileTargetOffsetY is < -32 or > 32
@@ -826,7 +826,7 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, AuthoritativeLevel>? levels = null)
     {
         if (origins.Count > DiabloWorldState.MaximumWorldStateEntries
-            || origins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || origins.Any(origin => origin.SetLevelId is < 0 or > AuthoritativeProtocolLimits.MaximumNativeSetLevelId)
             || origins.Select(origin => origin.SetLevelId).Distinct().Count() != origins.Count) {
             throw new InvalidDataException(
                 "Authoritative set-level object origins contain invalid or duplicate identities.");
@@ -850,7 +850,7 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, LevelGeometrySnapshot>? levels = null)
     {
         if (origins.Count > DiabloWorldState.MaximumWorldStateEntries
-            || origins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || origins.Any(origin => origin.SetLevelId is < 0 or > AuthoritativeProtocolLimits.MaximumNativeSetLevelId)
             || origins.Select(origin => origin.SetLevelId).Distinct().Count() != origins.Count) {
             throw new InvalidDataException(
                 "Authoritative set-level object origins contain invalid or duplicate identities.");

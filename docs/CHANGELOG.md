@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Centralized event-batch and authoritative snapshot collection limits across
   the protocol assembly, managed validators, Godot client validation, and
   native snapshot projection.
+- Centralized native set-level and monster leader-relation compatibility bounds
+  across managed validation, the Diablo protocol mapper, and native projection.
 - Centralized the named projectile presentation-family and native-visual bounds
   alongside the behavior identity limit. Managed server/Godot validation and
   native snapshot projection now consume the same maximums instead of raw

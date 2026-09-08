@@ -52,6 +52,8 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
     private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
     private const int MaximumWorldMutationCount = AuthoritativeProtocolLimits.MaximumWorldMutationCount;
+    private const int MaximumNativeSetLevelId = AuthoritativeProtocolLimits.MaximumNativeSetLevelId;
+    private const int MaximumMonsterLeaderRelation = AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
     private const uint MaximumNativeCharacterLevel = 50;
@@ -672,7 +674,7 @@ public static class AuthoritativeSnapshotValidator
                 || @object.RewardOffsetY is < -16 or > 16
                 || @object.RewardOriginKind is < 0 or > MaximumObjectRewardOriginKind
                 || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
-                || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > 8
+                || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > MaximumNativeSetLevelId
                 || !rewardValid
                 || @object.ProjectileTargetOffsetX is < -32 or > 32
                 || @object.ProjectileTargetOffsetY is < -32 or > 32
@@ -818,7 +820,7 @@ public static class AuthoritativeSnapshotValidator
     private static void ValidateSetLevelObjectOrigins(Snapshot snapshot)
     {
         if (snapshot.SetLevelObjectOrigins.Count > MaximumSetLevelObjectOriginCount
-            || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > 8)
+            || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > MaximumNativeSetLevelId)
             || snapshot.SetLevelObjectOrigins
                 .Select(origin => origin.SetLevelId)
                 .Distinct()
@@ -1052,7 +1054,7 @@ public static class AuthoritativeSnapshotValidator
                 || monster.MagicResistance is < -100 or > 100
                 || monster.AcidResistance is < -100 or > 100
                 || !monster.IsPlayerMinion && monster.OwnerPlayerId != 0
-                || monster.LeaderRelation is < 0 or > 2
+                || monster.LeaderRelation is < 0 or > MaximumMonsterLeaderRelation
                 || (monster.LeaderRelation == 0
                     ? monster.LeaderEntityId != 0
                     : monster.LeaderEntityId == 0)

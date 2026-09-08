@@ -529,7 +529,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		        && source.movement_effect_tick() <= source.movement_started_tick()) {
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster movement timing.");
 		}
-		if (source.leader_relation() < 0 || source.leader_relation() > 2
+		if (source.leader_relation() < 0 || source.leader_relation() > MaximumMonsterLeaderRelation
 		    || (source.leader_relation() == 0
 		        ? source.leader_entity_id() != 0
 		        : source.leader_entity_id() == 0)
@@ -1130,7 +1130,7 @@ tl::expected<void, std::string> ValidateSetLevelObjectOriginSnapshots(const prot
 	std::unordered_set<int32_t> setLevelIds;
 	setLevelIds.reserve(snapshot.set_level_object_origins_size());
 	for (const auto &origin : snapshot.set_level_object_origins())
-		if (origin.set_level_id() < 0 || origin.set_level_id() > 8
+		if (origin.set_level_id() < 0 || origin.set_level_id() > MaximumNativeSetLevelId
 		    || !setLevelIds.insert(origin.set_level_id()).second)
 			return tl::make_unexpected("Server-backed snapshot contains invalid or duplicate set-level object origins.");
 	if (snapshot.level_geometry_size() == 0)
@@ -1355,7 +1355,7 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || (monster.dialogue_message_id() != 0 && !monster.is_unique())
 		    || monster.dialogue_state() < 0 || monster.dialogue_state() > 2
 		    || (monster.dialogue_state() != 0 && !monster.is_unique())
-		    || monster.leader_relation() < 0 || monster.leader_relation() > 2
+		    || monster.leader_relation() < 0 || monster.leader_relation() > MaximumMonsterLeaderRelation
 		    || (monster.leader_relation() == 0
 		        ? monster.leader_entity_id() != 0
 		        : monster.leader_entity_id() == 0)
