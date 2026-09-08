@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/acid-unique-lifecycle",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.acid",
+    "version": "0.1.0",
+    "sha256": "19d4f3470227495c136a4ce3c0d0c2099b564f5aa201e8df41efcdae1a75fbbc"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 5,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 0,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "AcidUnique",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "spell_id": 51,
+      "level_id": 1,
+      "position_x": 3,
+      "position_y": 3,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 1,
+      "damage_type": 4,
+      "remaining_ticks": 1,
+      "behavior": 51,
+      "phase": 0,
+      "speed": 0,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "39eb021179601e8de722f02ccbccaa6b94d73896b54a56f31be56b55012620e0" },
+    { "tick": 2, "state_sha256": "23d76bed19c97ce601abde6a0b8dc4fd45707e5fa64f0c541689d1c9601c7475" },
+    { "tick": 3, "state_sha256": "bfc95f2337a06c41550f0048f8577f11b94524fb90382398af88de2f790261ec" },
+    { "tick": 4, "state_sha256": "bfc95f2337a06c41550f0048f8577f11b94524fb90382398af88de2f790261ec" }
+  ]
+}

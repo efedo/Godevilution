@@ -1,2 +1,3 @@
 native_ai	missile_id	projectile_behavior	attack_mode	damage_type	puddle_duration_random_range	puddle_duration_base	puddle_duration_intelligence_scale	puddle_damage_minimum_monster_level	puddle_damage_low	puddle_damage_high
 Acid	Acid	Acid	RangedAvoidance	Acid	1	1	0	2	1	2
+AcidUnique	Acid	Acid	Ranged	Acid	1	1	0	2	1	2

@@ -7329,6 +7329,27 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidUniqueProjectileSplatAndPuddleLifecycleMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-unique-lifecycle.json");
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        Assert.Equal(6400, player.Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(

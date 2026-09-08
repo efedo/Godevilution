@@ -7,6 +7,8 @@ native and managed runners. A seeded initial Acid missile expires into its
 splat, shifts into the authored one-tile puddle, enters impact, and expires
 without admitting a duplicate controller; projectile identity allocation also
 reserves externally seeded IDs so replacement projectiles remain collision-free.
+The authored AcidUnique identity now exercises the same lifecycle through its
+validated alias mapping and fails closed before generic combat dispatch.
 
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick

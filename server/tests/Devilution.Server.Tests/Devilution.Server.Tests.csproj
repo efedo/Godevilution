@@ -178,6 +178,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-skeleton-ranged.json" Link="Fixtures/gameplay-monster-arrow-skeleton-ranged.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-autonomous.json" Link="Fixtures/gameplay-hork-spawn-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-lifecycle.json" Link="Fixtures/gameplay-acid-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-acid-unique-lifecycle.json" Link="Fixtures/gameplay-acid-unique-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-multiplayer-target.json" Link="Fixtures/gameplay-hork-spawn-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-delay.json" Link="Fixtures/gameplay-hork-spawn-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-impact.json" Link="Fixtures/gameplay-hork-spawn-impact.json" CopyToOutputDirectory="PreserveNewest" />

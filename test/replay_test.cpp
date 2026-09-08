@@ -6893,6 +6893,35 @@ TEST(ReplayFixture, ExecutesAcidLifecycleAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesAcidUniqueLifecycleAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-acid-unique-lifecycle.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_EQ(fixture.initialProjectiles.size(), 1U);
+	ASSERT_EQ(fixture.initialState.combatTargetNativeAi, "AcidUnique");
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 4U);
+	EXPECT_EQ(state.life, fixture.initialState.life);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesHorkDemonMultiplayerTargetSelectionAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-hork-spawn-multiplayer-target.json");

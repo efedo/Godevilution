@@ -135,6 +135,7 @@ set(devilutionx_fixtures
   replay/gameplay-healing-resolution.json
   replay/gameplay-hork-spawn-autonomous.json
   replay/gameplay-acid-lifecycle.json
+  replay/gameplay-acid-unique-lifecycle.json
   replay/gameplay-hork-spawn-delay.json
   replay/gameplay-hork-spawn-impact.json
   replay/gameplay-hork-spawn-miss.json

@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   agree on validated Acid expiry, splat conversion, puddle placement and
   persistence, and puddle expiry; seeded projectile IDs are reserved so
   replacement projectiles cannot reuse a released identity.
+- Added cross-runner AcidUnique alias coverage so the authored identity uses
+  the validated Acid lifecycle instead of generic combat fallback.
 
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both

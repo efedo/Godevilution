@@ -5,7 +5,7 @@
   "content_manifest": {
     "id": "replay.acid",
     "version": "0.1.0",
-    "sha256": "9020e612052f5db1591894ff1c8807722533a7475f37bb2524990fa55424a9dd"
+    "sha256": "19d4f3470227495c136a4ce3c0d0c2099b564f5aa201e8df41efcdae1a75fbbc"
   },
   "tick_rate_hz": 20,
   "rng_seed": 9,
