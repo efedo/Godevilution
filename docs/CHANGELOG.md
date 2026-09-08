@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added four cross-runner multiplayer MonsterMagic target-selection fixtures
+  for BoneDemon, ArchLich, Psychorb, and Necromorb. Native and managed replay
+  now verify each authored alias routes its OrangeFlare projectile to the
+  nearer secondary participant while preserving the farther primary state.
 - Added cross-runner Acid lifecycle coverage. Native and managed replay now
   agree on validated Acid expiry, splat conversion, puddle placement and
   persistence, and puddle expiry; seeded projectile IDs are reserved so

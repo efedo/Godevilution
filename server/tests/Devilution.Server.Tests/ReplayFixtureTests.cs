@@ -7113,6 +7113,39 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-monster-magic-bone-demon-multiplayer-target.json")]
+    [InlineData("gameplay-monster-magic-arch-lich-multiplayer-target.json")]
+    [InlineData("gameplay-monster-magic-psychorb-multiplayer-target.json")]
+    [InlineData("gameplay-monster-magic-necromorb-multiplayer-target.json")]
+    public void GameplayMonsterMagicAliasesMultiplayerTargetSelectionMatchesNativeLifecycle(string fixtureName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", fixtureName);
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(6400, Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1).Life);
+        Assert.Equal(6400, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(255U, projectile.RemainingTicks);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayLichMonsterMagicActiveProjectilePersistsAcrossSaveRestore()
     {

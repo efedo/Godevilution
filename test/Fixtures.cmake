@@ -162,6 +162,10 @@ set(devilutionx_fixtures
   replay/gameplay-monster-magic-bone-demon.json
   replay/gameplay-monster-magic-miss.json
   replay/gameplay-monster-magic-multiplayer-target.json
+  replay/gameplay-monster-magic-bone-demon-multiplayer-target.json
+  replay/gameplay-monster-magic-arch-lich-multiplayer-target.json
+  replay/gameplay-monster-magic-psychorb-multiplayer-target.json
+  replay/gameplay-monster-magic-necromorb-multiplayer-target.json
   replay/gameplay-monster-magic-necromorb.json
   replay/gameplay-monster-magic-psychorb.json
   replay/gameplay-monster-magic-secondary-block.json

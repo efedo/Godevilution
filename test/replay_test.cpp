@@ -8037,9 +8037,9 @@ TEST(ReplayFixture, ExecutesMegaInfernoMultiplayerTargetSelectionAgainstCSharpCh
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
-TEST(ReplayFixture, ExecutesLichMonsterMagicMultiplayerTargetSelectionAgainstCSharpCheckpoints)
+void ExecuteMonsterMagicMultiplayerTargetFixture(const char *path)
 {
-	std::ifstream file("test/fixtures/replay/gameplay-monster-magic-multiplayer-target.json");
+	std::ifstream file(path);
 	ASSERT_TRUE(file.good());
 	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	ReplayFixture fixture;
@@ -8084,6 +8084,31 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicMultiplayerTargetSelectionAgainstCSh
 	EXPECT_EQ(state.projectiles[0].phase, 0);
 	EXPECT_EQ(state.projectiles[0].remainingTicks, 255U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesLichMonsterMagicMultiplayerTargetSelectionAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicMultiplayerTargetFixture("test/fixtures/replay/gameplay-monster-magic-multiplayer-target.json");
+}
+
+TEST(ReplayFixture, ExecutesBoneDemonMonsterMagicMultiplayerTargetSelectionAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicMultiplayerTargetFixture("test/fixtures/replay/gameplay-monster-magic-bone-demon-multiplayer-target.json");
+}
+
+TEST(ReplayFixture, ExecutesArchLichMonsterMagicMultiplayerTargetSelectionAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicMultiplayerTargetFixture("test/fixtures/replay/gameplay-monster-magic-arch-lich-multiplayer-target.json");
+}
+
+TEST(ReplayFixture, ExecutesPsychorbMonsterMagicMultiplayerTargetSelectionAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicMultiplayerTargetFixture("test/fixtures/replay/gameplay-monster-magic-psychorb-multiplayer-target.json");
+}
+
+TEST(ReplayFixture, ExecutesNecromorbMonsterMagicMultiplayerTargetSelectionAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicMultiplayerTargetFixture("test/fixtures/replay/gameplay-monster-magic-necromorb-multiplayer-target.json");
 }
 
 TEST(ReplayFixture, ExecutesSkeletonRangedMonsterArrowMultiplayerTargetSelectionAgainstCSharpCheckpoints)
