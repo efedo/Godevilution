@@ -19,6 +19,11 @@ Authored towner greetings now pass the same count, identity, message, and level
 geometry validation at the server snapshot boundary, Diablo mapper boundary,
 Godot client boundary, and native session boundary.
 
+Player status-effect collection caps and native inventory, equipment, belt, and
+grid topology limits are now named in the shared protocol contract. Managed,
+Godot, and native snapshot boundaries consume those limits, and native
+projection now fails closed on malformed status-effect collections.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

@@ -623,6 +623,18 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 	invalidPlayer->clear_visited_level_ids();
 	invalidPlayer->set_reflect_charges(static_cast<uint32_t>(std::numeric_limits<uint16_t>::max()) + 1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
+	invalidPlayer->set_reflect_charges(0);
+	auto *invalidStatus = invalidPlayer->add_status_effects();
+	invalidStatus->set_effect_id(1);
+	invalidStatus->set_remaining_ticks(0);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
+	invalidPlayer->clear_status_effects();
+	for (uint32_t effectId = 1; effectId <= MaximumStatusEffectCount + 1; ++effectId) {
+		auto *status = invalidPlayer->add_status_effects();
+		status->set_effect_id(effectId);
+		status->set_remaining_ticks(1);
+	}
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMorePlayersThanTheNativePool)

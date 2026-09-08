@@ -14,6 +14,12 @@ public sealed class AuthoritativeClientModel
     // DUN conversion indices and therefore uses a separate compatibility bound.
     private const uint NativeMaximumObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
     private const int NativeMaximumPlayerCount = AuthoritativeProtocolLimits.NativeMaximumPlayerCount;
+    private const int NativeMaximumInventoryCount = AuthoritativeProtocolLimits.NativeMaximumInventoryCount;
+    private const int NativeMaximumEquipmentCount = AuthoritativeProtocolLimits.NativeMaximumEquipmentCount;
+    private const int NativeMaximumBeltCount = AuthoritativeProtocolLimits.NativeMaximumBeltCount;
+    private const int NativeMaximumInventoryGridCount = AuthoritativeProtocolLimits.NativeMaximumInventoryGridCount;
+    private const int NativeInventoryWidth = AuthoritativeProtocolLimits.NativeInventoryWidth;
+    private const int NativeInventoryHeight = AuthoritativeProtocolLimits.NativeInventoryHeight;
     private const int NativeMaximumObjectCount = AuthoritativeProtocolLimits.NativeMaximumObjectCount;
     private const int NativeMaximumItemCount = AuthoritativeProtocolLimits.NativeMaximumItemCount;
     private const int NativeMaximumMonsterCount = AuthoritativeProtocolLimits.NativeMaximumMonsterCount;
@@ -45,6 +51,7 @@ public sealed class AuthoritativeClientModel
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
     private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
     private const int MaximumStatusEffectBehavior = AuthoritativeProtocolLimits.MaximumStatusEffectBehavior;
+    private const int MaximumStatusEffectCount = AuthoritativeProtocolLimits.MaximumStatusEffectCount;
     private const int MaximumItemPresentationKind = AuthoritativeProtocolLimits.MaximumItemPresentationKind;
     private const int MaximumItemSpellSourceKind = AuthoritativeProtocolLimits.MaximumItemSpellSourceKind;
     private const int MaximumItemActionKind = AuthoritativeProtocolLimits.MaximumItemActionKind;
@@ -186,8 +193,8 @@ public sealed class AuthoritativeClientModel
                 }
                 if (player.HeldItem is { } heldItem
                     && (!HasValidItemIdentity(heldItem.ItemSeed, heldItem.State)
-                        || heldItem.State.InventoryWidth > 10
-                        || heldItem.State.InventoryHeight > 4)) {
+                        || heldItem.State.InventoryWidth > NativeInventoryWidth
+                        || heldItem.State.InventoryHeight > NativeInventoryHeight)) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid held item.");
                 }
@@ -521,7 +528,7 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateStatusEffects(PlayerSnapshot player)
     {
-        if (player.StatusEffects.Count > 128) {
+        if (player.StatusEffects.Count > MaximumStatusEffectCount) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains too many status effects.");
         }
@@ -563,9 +570,9 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateInventoryTopology(PlayerSnapshot player)
     {
-        if (player.Inventory.Count > 40
-            || player.Belt.Count > 8
-            || player.InventoryGrid.Count != 0 && player.InventoryGrid.Count != 40
+        if (player.Inventory.Count > NativeMaximumInventoryCount
+            || player.Belt.Count > NativeMaximumBeltCount
+            || player.InventoryGrid.Count != 0 && player.InventoryGrid.Count != NativeMaximumInventoryGridCount
             || player.InventoryGrid.Any(cell => cell < -1 || cell >= player.Inventory.Count)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains an invalid inventory topology.");
@@ -573,7 +580,7 @@ public sealed class AuthoritativeClientModel
 
         var equipmentSlots = new HashSet<uint>();
         foreach (var item in player.Equipment) {
-            if (item is null || item.Slot >= 7 || !equipmentSlots.Add(item.Slot)) {
+            if (item is null || item.Slot >= NativeMaximumEquipmentCount || !equipmentSlots.Add(item.Slot)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid or duplicate equipment slots.");
             }
@@ -581,7 +588,7 @@ public sealed class AuthoritativeClientModel
 
         var beltSlots = new HashSet<uint>();
         foreach (var item in player.Belt) {
-            if (item is null || item.Slot >= 8 || !beltSlots.Add(item.Slot)) {
+            if (item is null || item.Slot >= NativeMaximumBeltCount || !beltSlots.Add(item.Slot)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid or duplicate belt slots.");
             }
@@ -620,13 +627,13 @@ public sealed class AuthoritativeClientModel
         int width,
         int height)
     {
-        var column = anchor % 10;
-        var row = anchor / 10;
-        if (column + width > 10 || row + height > 4)
+        var column = anchor % NativeInventoryWidth;
+        var row = anchor / NativeInventoryWidth;
+        if (column + width > NativeInventoryWidth || row + height > NativeInventoryHeight)
             return false;
         for (var y = 0; y < height; y++) {
             for (var x = 0; x < width; x++) {
-                var cell = (row + y) * 10 + column + x;
+                var cell = (row + y) * NativeInventoryWidth + column + x;
                 if (expected[cell] >= 0)
                     return false;
                 expected[cell] = itemIndex;
@@ -710,7 +717,7 @@ public sealed class AuthoritativeClientModel
     {
         if (state is null)
             return;
-        if (state.InventoryWidth > 10 || state.InventoryHeight > 4) {
+        if (state.InventoryWidth > NativeInventoryWidth || state.InventoryHeight > NativeInventoryHeight) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains an item footprint outside the native inventory grid.");
         }

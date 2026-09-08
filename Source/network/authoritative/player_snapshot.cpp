@@ -155,15 +155,33 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	if (player->light_radius() != 0
 	    && (player->light_radius() < MinimumNativeLightRadius || player->light_radius() > MaximumNativeLightRadius))
 		return tl::make_unexpected("Server-backed snapshot contains a light radius outside the native range.");
+	if (player->status_effects_size() > MaximumStatusEffectCount)
+		return tl::make_unexpected("Server-backed snapshot contains too many status effects.");
+	std::unordered_set<uint32_t> statusEffectIds;
+	for (const auto &effect : player->status_effects()) {
+		const auto behavior = static_cast<int>(effect.behavior());
+		if (effect.effect_id() == 0
+		    || effect.remaining_ticks() == 0
+		    || behavior < 0
+		    || behavior > MaximumStatusEffectBehavior
+		    || (behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_INFRAVISION)
+		        || behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_SEARCH)
+		        || behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_ETHEREALIZE))
+		        && effect.magnitude() != 0
+		    || !statusEffectIds.insert(effect.effect_id()).second)
+			return tl::make_unexpected("Server-backed snapshot contains invalid status-effect state.");
+	}
 	if (player->stash_size() > StashPageCount * StashCellCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many stash items.");
 	if (player->stash_gold() > static_cast<uint32_t>(std::numeric_limits<int32_t>::max()))
 		return tl::make_unexpected("Server-backed snapshot contains stash gold outside the native range.");
 	if (player->stash_open() && player->active_store_id() != 0)
 		return tl::make_unexpected("Server-backed snapshot opens both a stash and a vendor.");
-	if (player->inventory_size() > 40 || player->equipment_size() > 7 || player->belt_size() > 8)
+	if (player->inventory_size() > NativeMaximumInventoryCount
+	    || player->equipment_size() > NativeMaximumEquipmentCount
+	    || player->belt_size() > NativeMaximumBeltCount)
 		return tl::make_unexpected("Server-backed snapshot contains player item collections outside the native topology.");
-	if (player->inventory_grid_size() != 0 && player->inventory_grid_size() != 40)
+	if (player->inventory_grid_size() != 0 && player->inventory_grid_size() != NativeMaximumInventoryGridCount)
 		return tl::make_unexpected("Server-backed snapshot contains an invalid inventory grid size.");
 	for (const auto cell : player->inventory_grid()) {
 		if (cell < -1 || cell >= player->inventory_size())
@@ -176,16 +194,16 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 			const uint32_t width = std::max(1U, state.inventory_width());
 			const uint32_t height = std::max(1U, state.inventory_height());
 			const auto anchor = std::find(player->inventory_grid().begin(), player->inventory_grid().end(), itemIndex);
-			if (width > 10 || height > 4 || anchor == player->inventory_grid().end())
+			if (width > NativeInventoryWidth || height > NativeInventoryHeight || anchor == player->inventory_grid().end())
 				return tl::make_unexpected("Server-backed snapshot contains an invalid inventory footprint topology.");
 			const auto anchorIndex = static_cast<uint32_t>(std::distance(player->inventory_grid().begin(), anchor));
-			const uint32_t column = anchorIndex % 10;
-			const uint32_t row = anchorIndex / 10;
-			if (column + width > 10 || row + height > 4)
+			const uint32_t column = anchorIndex % NativeInventoryWidth;
+			const uint32_t row = anchorIndex / NativeInventoryWidth;
+			if (column + width > NativeInventoryWidth || row + height > NativeInventoryHeight)
 				return tl::make_unexpected("Server-backed snapshot contains an invalid inventory footprint topology.");
 			for (uint32_t y = 0; y < height; ++y) {
 				for (uint32_t x = 0; x < width; ++x) {
-					const auto cellIndex = static_cast<std::size_t>((row + y) * 10 + column + x);
+					const auto cellIndex = static_cast<std::size_t>((row + y) * NativeInventoryWidth + column + x);
 					if (expectedInventoryGrid[cellIndex] != -1)
 						return tl::make_unexpected("Server-backed snapshot contains overlapping inventory footprints.");
 					expectedInventoryGrid[cellIndex] = itemIndex;
@@ -197,12 +215,12 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	std::set<uint32_t> equipmentSlots;
 	for (const auto &item : player->equipment()) {
-		if (item.slot() >= 7 || !equipmentSlots.insert(item.slot()).second)
+		if (item.slot() >= NativeMaximumEquipmentCount || !equipmentSlots.insert(item.slot()).second)
 			return tl::make_unexpected("Server-backed snapshot contains invalid or duplicate equipment slots.");
 	}
 	std::set<uint32_t> beltSlots;
 	for (const auto &item : player->belt()) {
-		if (item.slot() >= 8 || !beltSlots.insert(item.slot()).second)
+		if (item.slot() >= NativeMaximumBeltCount || !beltSlots.insert(item.slot()).second)
 			return tl::make_unexpected("Server-backed snapshot contains invalid or duplicate belt slots.");
 	}
 	std::set<uint32_t> itemSeeds;

@@ -11,7 +11,14 @@ namespace Devilution.Server.Protocol;
 internal static class DiabloProtocolMapper
 {
     private const int NativeMaximumPlayerCount = AuthoritativeProtocolLimits.NativeMaximumPlayerCount;
+    private const int NativeMaximumInventoryCount = AuthoritativeProtocolLimits.NativeMaximumInventoryCount;
+    private const int NativeMaximumEquipmentCount = AuthoritativeProtocolLimits.NativeMaximumEquipmentCount;
+    private const int NativeMaximumBeltCount = AuthoritativeProtocolLimits.NativeMaximumBeltCount;
+    private const int NativeMaximumInventoryGridCount = AuthoritativeProtocolLimits.NativeMaximumInventoryGridCount;
+    private const int NativeInventoryWidth = AuthoritativeProtocolLimits.NativeInventoryWidth;
+    private const int NativeInventoryHeight = AuthoritativeProtocolLimits.NativeInventoryHeight;
     private const int NativeMaximumWarpTriggerCount = AuthoritativeProtocolLimits.NativeMaximumWarpTriggerCount;
+    private const int MaximumStatusEffectCount = AuthoritativeProtocolLimits.MaximumStatusEffectCount;
 
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
@@ -1393,11 +1400,11 @@ internal static class DiabloProtocolMapper
             || state.Stash is null
             || state.Inventory.Any(item => item is null)
             || state.Stash.Any(item => item is null)
-            || state.Inventory.Count > 40
-            || state.Equipment.Count > 7
-            || state.Belt.Count > 8
+            || state.Inventory.Count > NativeMaximumInventoryCount
+            || state.Equipment.Count > NativeMaximumEquipmentCount
+            || state.Belt.Count > NativeMaximumBeltCount
             || state.Stash.Count > DiabloStashLayout.MaximumItems
-            || state.InventoryGrid.Count != 0 && state.InventoryGrid.Count != 40
+            || state.InventoryGrid.Count != 0 && state.InventoryGrid.Count != NativeMaximumInventoryGridCount
             || state.InventoryGrid.Any(cell => cell < -1 || cell >= state.Inventory.Count)) {
             throw new InvalidDataException(
                 "Authoritative player item collections have invalid topology.");
@@ -1409,8 +1416,8 @@ internal static class DiabloProtocolMapper
             for (var itemIndex = 0; itemIndex < state.Inventory.Count; itemIndex++) {
                 var anchor = Array.IndexOf(grid, itemIndex);
                 var itemState = state.Inventory[itemIndex].State;
-                var width = Math.Clamp(itemState.InventoryWidth, 1, 10);
-                var height = Math.Clamp(itemState.InventoryHeight, 1, 4);
+                var width = Math.Clamp(itemState.InventoryWidth, 1, NativeInventoryWidth);
+                var height = Math.Clamp(itemState.InventoryHeight, 1, NativeInventoryHeight);
                 if (anchor < 0
                     || !HasExactProjectedInventoryFootprint(
                         expected,
@@ -1430,7 +1437,7 @@ internal static class DiabloProtocolMapper
 
         var equipmentSlots = new HashSet<uint>();
         foreach (var item in state.Equipment) {
-            if (item is null || item.State is null || item.Slot >= 7
+            if (item is null || item.State is null || item.Slot >= NativeMaximumEquipmentCount
                 || !equipmentSlots.Add(item.Slot)) {
                 throw new InvalidDataException(
                     "Authoritative player equipment slots are invalid or duplicated.");
@@ -1439,7 +1446,7 @@ internal static class DiabloProtocolMapper
 
         var beltSlots = new HashSet<uint>();
         foreach (var item in state.Belt) {
-            if (item is null || item.State is null || item.Slot >= 8
+            if (item is null || item.State is null || item.Slot >= NativeMaximumBeltCount
                 || !beltSlots.Add(item.Slot)) {
                 throw new InvalidDataException(
                     "Authoritative player belt slots are invalid or duplicated.");
@@ -1499,13 +1506,13 @@ internal static class DiabloProtocolMapper
         int width,
         int height)
     {
-        var column = anchor % 10;
-        var row = anchor / 10;
-        if (column + width > 10 || row + height > 4)
+        var column = anchor % NativeInventoryWidth;
+        var row = anchor / NativeInventoryWidth;
+        if (column + width > NativeInventoryWidth || row + height > NativeInventoryHeight)
             return false;
         for (var y = 0; y < height; y++) {
             for (var x = 0; x < width; x++) {
-                var cell = (row + y) * 10 + column + x;
+                var cell = (row + y) * NativeInventoryWidth + column + x;
                 if (expected[cell] >= 0)
                     return false;
                 expected[cell] = itemIndex;
@@ -1550,7 +1557,7 @@ internal static class DiabloProtocolMapper
     private static void ValidateProjectedStatusEffects(StorePlayerSnapshot state)
     {
         if (state.StatusEffects is null
-            || state.StatusEffects.Count > 128
+            || state.StatusEffects.Count > MaximumStatusEffectCount
             || state.StatusEffects.Any(effect =>
                 effect is null
                 || effect.EffectId == 0
@@ -2569,9 +2576,9 @@ internal static class DiabloProtocolMapper
             || state.LightningMaxDamage < state.LightningMinDamage
             || !IsNativeItemStateRepresentable(state)
             || state.InventoryWidth < 0
-            || state.InventoryWidth > 10
+            || state.InventoryWidth > NativeInventoryWidth
             || state.InventoryHeight < 0
-            || state.InventoryHeight > 4
+            || state.InventoryHeight > NativeInventoryHeight
             || hasPresentation
                 && (string.IsNullOrEmpty(state.BaseName)
                     || string.IsNullOrEmpty(state.IdentifiedName)

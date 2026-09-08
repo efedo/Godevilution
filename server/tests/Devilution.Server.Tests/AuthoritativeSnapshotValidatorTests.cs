@@ -1067,6 +1067,18 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var oversizedStatus = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                },
+            },
+        };
+        for (var effectId = 1; effectId <= AuthoritativeProtocolLimits.MaximumStatusEffectCount + 1; effectId++)
+            oversizedStatus.Players[0].StatusEffects.Add(new StatusEffectSnapshot {
+                EffectId = (uint)effectId,
+                RemainingTicks = 1,
+            });
         var overlappingStash = new Snapshot {
             Players = {
                 new PlayerSnapshot {
@@ -1099,6 +1111,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
             invalidSpells,
             invalidStatus,
             invalidStatusBehavior,
+            oversizedStatus,
             overlappingStash,
         })
             Assert.Throws<InvalidDataException>(() =>

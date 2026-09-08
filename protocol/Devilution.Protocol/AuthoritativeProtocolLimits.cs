@@ -15,6 +15,12 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumSetLevelObjectOriginCount = 4096;
     public const int MaximumMaterializedProceduralLevelCount = 4096;
     public const int NativeMaximumPlayerCount = 4;
+    public const int NativeMaximumInventoryCount = 40;
+    public const int NativeMaximumEquipmentCount = 7;
+    public const int NativeMaximumBeltCount = 8;
+    public const int NativeMaximumInventoryGridCount = 40;
+    public const int NativeInventoryWidth = 10;
+    public const int NativeInventoryHeight = 4;
     public const int NativeMaximumMonsterCount = 200;
     public const int NativeMaximumObjectCount = 127;
     public const int NativeMaximumItemCount = 127;
@@ -46,6 +52,7 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumNativeLightRadius = 15;
     public const int MaximumQuestTownerInteractionCount = 1024;
     public const int MaximumTownerGreetingCount = 256;
+    public const int MaximumStatusEffectCount = 128;
     public const int MaximumNativeSetLevelId = 8;
     public const int MaximumMonsterLeaderRelation = 2;
     public const int MaximumMonsterDialogueState =

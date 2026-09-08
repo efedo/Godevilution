@@ -72,6 +72,12 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(8, AuthoritativeProtocolLimits.MaximumNativeSetLevelId);
         Assert.Equal(2, AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation);
         Assert.Equal(4, AuthoritativeProtocolLimits.NativeMaximumPlayerCount);
+        Assert.Equal(40, AuthoritativeProtocolLimits.NativeMaximumInventoryCount);
+        Assert.Equal(7, AuthoritativeProtocolLimits.NativeMaximumEquipmentCount);
+        Assert.Equal(8, AuthoritativeProtocolLimits.NativeMaximumBeltCount);
+        Assert.Equal(40, AuthoritativeProtocolLimits.NativeMaximumInventoryGridCount);
+        Assert.Equal(10, AuthoritativeProtocolLimits.NativeInventoryWidth);
+        Assert.Equal(4, AuthoritativeProtocolLimits.NativeInventoryHeight);
         Assert.Equal(200, AuthoritativeProtocolLimits.NativeMaximumMonsterCount);
         Assert.Equal(127, AuthoritativeProtocolLimits.NativeMaximumObjectCount);
         Assert.Equal(127, AuthoritativeProtocolLimits.NativeMaximumItemCount);
@@ -103,6 +109,7 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(15, AuthoritativeProtocolLimits.MaximumNativeLightRadius);
         Assert.Equal(1024, AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount);
         Assert.Equal(256, AuthoritativeProtocolLimits.MaximumTownerGreetingCount);
+        Assert.Equal(128, AuthoritativeProtocolLimits.MaximumStatusEffectCount);
     }
 
     [Fact]
