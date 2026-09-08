@@ -557,6 +557,13 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendUint32(state.combatTargetMonsterItemSeed);
 			hasher.AppendUint32(state.combatTargetMonsterAiSeed);
 		}
+		if (state.combatTargetActiveForTicks != 0) {
+			hasher.AppendString("godevilution-monster-group-unity-v1");
+			hasher.AppendUint32(0);
+			hasher.AppendInt32(0);
+			hasher.AppendInt32(0);
+			hasher.AppendInt32(state.combatTargetActiveForTicks);
+		}
 		if (state.combatTargetStoneCurseImmune) {
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
@@ -9997,6 +10004,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationTick);
 			if (key == "combat_target_fallen_rally_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetFallenRallyTicks);
+			if (key == "combat_target_active_for_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetActiveForTicks);
 			if (key == "combat_target_companion_entity_id")
 				return ParseUnsigned(fixture_.initialState.combatTargetCompanion.entityId);
 			if (key == "combat_target_companion_level_id")
@@ -10895,8 +10904,9 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetMaxDamage != 0
 			|| target.combatTargetIntelligence != 0
 			|| target.combatTargetFallenStandAnimationFrame != 0
-			|| target.combatTargetFallenStandAnimationTick != 0
-			|| target.combatTargetFallenRallyTicks != 0
+		    || target.combatTargetFallenStandAnimationTick != 0
+		    || target.combatTargetFallenRallyTicks != 0
+		    || target.combatTargetActiveForTicks != 0
 			|| target.combatTargetGargoyleSpecialActive
 		    || target.combatTargetHorkDemonDelayTicks != 0
 		    || target.combatTargetSkeletonKingDelayTicks != 0
@@ -10984,8 +10994,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetFallenStandAnimationFrame > 127
 		|| target.combatTargetFallenStandAnimationTick < 0
 		|| target.combatTargetFallenStandAnimationTick > 127
-		|| target.combatTargetFallenRallyTicks < 0
-		|| target.combatTargetFallenRallyTicks > 4096
+	    || target.combatTargetFallenRallyTicks < 0
+	    || target.combatTargetFallenRallyTicks > 4096
+	    || target.combatTargetActiveForTicks < 0
+	    || target.combatTargetActiveForTicks > 255
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -11763,6 +11775,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
 		state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
 		state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
+		state.combatTargetActiveForTicks = fixture.initialState.combatTargetActiveForTicks;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;
 		state.combatTargetHorkDemonDelayTicks = fixture.initialState.combatTargetHorkDemonDelayTicks;
 		state.combatTargetSkeletonKingDelayTicks = fixture.initialState.combatTargetSkeletonKingDelayTicks;

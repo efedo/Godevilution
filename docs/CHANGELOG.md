@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   replacement projectiles cannot reuse a released identity.
 - Added cross-runner AcidUnique alias coverage so the authored identity uses
   the validated Acid lifecycle instead of generic combat fallback.
+- Preserved the authoritative monster activation window in the native replay
+  state hash, restoring cross-runner parity for multiplayer death suppression.
 
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both

@@ -316,6 +316,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional native Fallen rally timer used by parity fixtures. */
     public int CombatTargetFallenRallyTicks { get; init; }
 
+    /** Native monster activation countdown carried by snapshot parity fixtures. */
+    public int CombatTargetActiveForTicks { get; init; }
+
     /** Optional second monster used to verify group rally propagation. */
     public ReplayCombatCompanion? CombatTargetCompanion { get; init; }
 

@@ -2259,7 +2259,8 @@ public sealed class ReplayFixtureTests
                 maxHitPoints: initial.CombatTargetMaxHitPoints,
                 levelId: initial.CombatTargetLevelId,
                 attackDamage: initial.CombatTargetAttackDamage,
-                aggroRange: initial.CombatTargetAggroRange)],
+                aggroRange: initial.CombatTargetAggroRange,
+                activeForTicks: initial.CombatTargetActiveForTicks)],
             startingWorld: geometry,
             startingCombatRules: rules,
             startingInventory: [new OwnedStoreItem(
@@ -2286,6 +2287,7 @@ public sealed class ReplayFixtureTests
         Assert.Equal(101U, Assert.Single(player.Inventory).Price);
         Assert.Empty(result.FinalSnapshot.WorldItems);
         Assert.Equal(1U, result.FinalSnapshot.RandomState);
+        Assert.Equal(255, Assert.Single(result.FinalSnapshot.Monsters).ActiveForTicks);
         Assert.True(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256)
                 .SequenceEqual(result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256)),

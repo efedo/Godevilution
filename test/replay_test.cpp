@@ -923,6 +923,7 @@ TEST(ReplayFixture, ExecutesMultiplayerDeathSuppressionAgainstCSharpCheckpoint)
 	EXPECT_EQ(state.inventory[0].price, 101U);
 	EXPECT_EQ(state.worldItemEntityId, 0U);
 	EXPECT_EQ(state.randomState, 1U);
+	EXPECT_EQ(state.combatTargetActiveForTicks, 255);
 
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }

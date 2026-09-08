@@ -9,6 +9,8 @@ without admitting a duplicate controller; projectile identity allocation also
 reserves externally seeded IDs so replacement projectiles remain collision-free.
 The authored AcidUnique identity now exercises the same lifecycle through its
 validated alias mapping and fails closed before generic combat dispatch.
+The native fixture runner also carries the authoritative monster activation
+window used by multiplayer death suppression.
 
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
