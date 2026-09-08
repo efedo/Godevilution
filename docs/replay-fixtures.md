@@ -235,6 +235,8 @@ preserves the pack’s retreat thresholds and native defaults when omitted.
 The four Counselor fixtures load their native Counselor type and timing bands
 from the hash-checked `test/content/replay/counselor` content pack. The Zhar
 and Lazarus fixtures exercise the corresponding native CounselorAi aliases.
+The Lachdanan and FireMan non-combat fixtures reuse the same validated target
+pack while asserting their quest-only and unregistered native identities.
 The three GoatMelee fixtures load their native AiAvoidance and adjacent-attack
 tuning from the hash-checked `test/content/replay/goat-melee` content pack.
 The six Gargoyle fixtures load native safety, healing, avoidance, and
@@ -391,7 +393,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 191 checked-in JSON fixtures and 210 registered
+the native replay gate contains 193 checked-in JSON fixtures and 212 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -416,7 +418,7 @@ and Snotspill SkeletonAi alias
 admission/countdown,
 SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Counselor, Zhar, and Lazarus nearest-participant
-delay selection,
+delay selection, and Lachdanan and FireMan non-combat fail-closed dispatch,
 SkeletonMelee nearest-participant adjacent attack, Snake nearest-participant
 charge routing, Rhino charge admission and nearest-participant selection,
 special damage, and knockback, and Mega InfernoController nearest-participant
@@ -472,7 +474,8 @@ continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
 attack admission/countdown lifecycles, Counselor, Zhar, and Lazarus
 nearest-participant delay selection, Fallen rally nearest-participant pursuit,
 Butcher RandomWalk
-nearest-participant pursuit, Skeleton King RoundWalk nearest-participant
+nearest-participant pursuit, Lachdanan and FireMan non-combat dispatch,
+Skeleton King RoundWalk nearest-participant
 pursuit and decision-delay countdown, Gharbad GoatMelee/AiAvoidance alias
 movement, Warlord and Snotspill SkeletonAi alias
 admission/countdown, SkeletonMelee

@@ -3445,6 +3445,48 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void LachdananRemainsNonCombatDuringReplay()
+    {
+        var fixture = LoadReplayFixture("gameplay-lachdanan-non-combat.json");
+        var executor = CreateCounselorExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal("Lachdanan", monster.NativeAi);
+        Assert.Equal((0, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(20, monster.HitPoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void FireManRemainsNonCombatDuringReplay()
+    {
+        var fixture = LoadReplayFixture("gameplay-fireman-non-combat.json");
+        var executor = CreateCounselorExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal("FireMan", monster.NativeAi);
+        Assert.Equal((0, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(20, monster.HitPoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(

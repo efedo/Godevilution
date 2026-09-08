@@ -45,6 +45,10 @@ CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the
 delay/countdown state.
 
+Lachdanan and FireMan now have explicit non-combat replay coverage. Native and
+managed runners preserve their quest-only or unregistered AI identities and
+fail closed before generic combat or movement dispatch.
+
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's

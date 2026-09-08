@@ -7570,6 +7570,11 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetNativeAi == "Necromorb"
 	    || state.combatTargetNativeAi == "BoneDemon")
 		return;
+	// Lachdanan exposes quest dialogue and FireMan has no registered native
+	// controller. Neither identity may fall through to generic combat.
+	if (state.combatTargetNativeAi == "Lachdanan"
+	    || state.combatTargetNativeAi == "FireMan")
+		return;
 	if (state.combatTargetAutonomousActionHandled)
 		return;
 	struct Victim {

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added replay coverage for the quest-only Lachdanan and unregistered FireMan
+  native identities. Native and managed runners now fail closed for both
+  identities instead of allowing generic combat or movement to run.
+
 - Added shared replay coverage for the Zhar and Lazarus native CounselorAi
   aliases. Native and managed runners now preserve each authored identity,
   select the nearer secondary participant, and agree on Counselor delay
