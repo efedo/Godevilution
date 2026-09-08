@@ -406,12 +406,12 @@ The eight Blood Star replay fixtures now share the validated
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The thirteen Monster Magic replay fixtures now share the validated
+The seventeen Monster Magic replay fixtures now share the validated
 `test/content/replay/monster-magic` pack, which externalizes the `OrangeFlare`
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The nine Monster Arrow replay fixtures now load validated GoatRanged and
+The eleven Monster Arrow replay fixtures now load validated GoatRanged and
 SkeletonRanged mappings from the shared `test/content/replay/monster-arrow`
 pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before

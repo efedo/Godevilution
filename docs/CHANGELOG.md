@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extended cross-runner MonsterMagic impact coverage to BoneDemon, ArchLich,
+  Psychorb, and Necromorb. Each authored alias now verifies the 27-tick
+  secondary-participant Q6 impact, preserved primary death state, and retained
+  impact-phase projectile snapshot.
 - Added four cross-runner multiplayer MonsterMagic target-selection fixtures
   for BoneDemon, ArchLich, Psychorb, and Necromorb. Native and managed replay
   now verify each authored alias routes its OrangeFlare projectile to the

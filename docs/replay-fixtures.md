@@ -215,12 +215,12 @@ recovery-delay lifecycle, and nearest-participant selection, including seeded
 multiplayer AI-stream advancement. Mega fixtures load their spell and
 native missile rows from
 the hash-checked `test/content/replay/mega-inferno` content pack.
-The seven Blood Star fixtures likewise load the Succubus and Lazarus Succubus
+The eight Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
-The thirteen Monster Magic fixtures likewise load their `OrangeFlare` mappings
+The seventeen Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
-The nine Monster Arrow fixtures load their GoatRanged and SkeletonRanged
+The eleven Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
 The nine Hork Spawn fixtures load their `HorkDemon` mapping from the
@@ -393,7 +393,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 204 checked-in JSON fixtures and 231 registered
+the native replay gate contains 208 checked-in JSON fixtures and 235 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1053,6 +1053,11 @@ Notable shared fixtures include:
   `gameplay-monster-magic-necromorb-multiplayer-target.json` for the remaining
   authored MonsterMagic aliases, nearest-secondary routing, and preserved
   primary-participant state;
+- `gameplay-monster-magic-bone-demon-secondary-impact.json`,
+  `gameplay-monster-magic-arch-lich-secondary-impact.json`,
+  `gameplay-monster-magic-psychorb-secondary-impact.json`, and
+  `gameplay-monster-magic-necromorb-secondary-impact.json` for the same aliases'
+  27-tick secondary-participant impact and retained impact-phase projectile;
 - `gameplay-multiplayer-monster-arrow.json` for secondary-participant target
   routing, complete participant hashing, and multiplayer impact/removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept

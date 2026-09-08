@@ -8803,9 +8803,9 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicMissAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
-TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
+void ExecuteMonsterMagicSecondaryImpactFixture(const char *path)
 {
-	std::ifstream file("test/fixtures/replay/gameplay-monster-magic-secondary-impact.json");
+	std::ifstream file(path);
 	ASSERT_TRUE(file.good());
 	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	ReplayFixture fixture;
@@ -8871,6 +8871,31 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoi
 	EXPECT_EQ(state.projectiles[0].remainingTicks, 1U);
 	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 0U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture("test/fixtures/replay/gameplay-monster-magic-secondary-impact.json");
+}
+
+TEST(ReplayFixture, ExecutesBoneDemonMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture("test/fixtures/replay/gameplay-monster-magic-bone-demon-secondary-impact.json");
+}
+
+TEST(ReplayFixture, ExecutesArchLichMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture("test/fixtures/replay/gameplay-monster-magic-arch-lich-secondary-impact.json");
+}
+
+TEST(ReplayFixture, ExecutesPsychorbMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture("test/fixtures/replay/gameplay-monster-magic-psychorb-secondary-impact.json");
+}
+
+TEST(ReplayFixture, ExecutesNecromorbMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture("test/fixtures/replay/gameplay-monster-magic-necromorb-secondary-impact.json");
 }
 
 TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryBlockAgainstCSharpCheckpoints)
