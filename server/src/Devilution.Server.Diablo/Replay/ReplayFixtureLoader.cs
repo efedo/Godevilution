@@ -1,12 +1,28 @@
 using System.Text.Json;
 using Devilution.Diablo;
 using Devilution.Protocol.V1;
+using ProtocolLimits = Devilution.Protocol.AuthoritativeProtocolLimits;
 
 namespace Devilution.Server.Replay;
 
 /** Strict loader for the versioned cross-language replay fixture envelope. */
 public static class ReplayFixtureLoader
 {
+    private const int NativeMaximumInventoryCount = ProtocolLimits.NativeMaximumInventoryCount;
+    private const int NativeMaximumEquipmentCount = ProtocolLimits.NativeMaximumEquipmentCount;
+    private const int NativeMaximumBeltCount = ProtocolLimits.NativeMaximumBeltCount;
+    private const int NativeMaximumInventoryGridCount = ProtocolLimits.NativeMaximumInventoryGridCount;
+    private const int MaximumNativeMonsterToHit = ProtocolLimits.MaximumNativeMonsterToHit;
+    private const int MaximumNativeMonsterIntelligence = ProtocolLimits.MaximumNativeMonsterIntelligence;
+    private const int MaximumNativeMonsterDirection = ProtocolLimits.MaximumNativeMonsterDirection;
+    private const int MaximumNativeMonsterActiveTicks = ProtocolLimits.MaximumNativeMonsterActiveTicks;
+    private const int MaximumNativeMonsterFallenStandAnimationFrame = ProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
+    private const int MaximumNativeMonsterFallenStandAnimationTick = ProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
+    private const int MaximumNativeMonsterFallenRallyTicks = ProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
+    private const int MinimumNativeMonsterResistance = ProtocolLimits.MinimumNativeMonsterResistance;
+    private const int MaximumNativeMonsterResistance = ProtocolLimits.MaximumNativeMonsterResistance;
+    private const uint MaximumNativeCharacterLevel = ProtocolLimits.MaximumNativeCharacterLevel;
+
     public static ReplayFixture Load(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -50,11 +66,11 @@ public static class ReplayFixtureLoader
                 && fixture.InitialState.GoldStackCell != 0)
             || (fixture.InitialState.GoldStackSeed != 0
                 && (fixture.InitialState.Gold == 0
-                    || fixture.InitialState.GoldStackCell >= 40))) {
+                    || fixture.InitialState.GoldStackCell >= (uint)NativeMaximumInventoryGridCount))) {
             throw new InvalidDataException(
                 "Replay fixture contains invalid initial Gold-stack topology.");
         }
-        if (fixture.InitialState.InventoryFillerCount > 39
+        if (fixture.InitialState.InventoryFillerCount >= (uint)NativeMaximumInventoryCount
             || (fixture.InitialState.InventoryFillerCount != 0
                 && fixture.InitialState.GoldStackSeed == 0)) {
             throw new InvalidDataException(
@@ -98,10 +114,10 @@ public static class ReplayFixtureLoader
                 || companion.HitPoints < 0
                 || companion.MaxHitPoints < companion.HitPoints
                 || companion.LevelId != initialTarget.CombatTargetLevelId
-                || companion.Intelligence is < 0 or > 255
-                || companion.FallenStandAnimationFrame is < 0 or > 127
-                || companion.FallenStandAnimationTick is < 0 or > 127
-                || companion.FallenRallyTicks is < 0 or > 4096
+                || companion.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
+                || companion.FallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
+                || companion.FallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
+                || companion.FallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
                 || !string.Equals(companion.NativeAi, "Fallen", StringComparison.Ordinal))) {
             throw new InvalidDataException(
                 "Replay fixture contains invalid combat-target companion state.");
@@ -162,17 +178,17 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetArmorClass < 0
             || initialTarget.CombatTargetAttackDamage < 0
             || initialTarget.CombatTargetAggroRange < 0
-            || initialTarget.CombatTargetToHit is < 0 or > 255
-            || initialTarget.CombatTargetToHitSpecial is < 0 or > 255
+            || initialTarget.CombatTargetToHit is < 0 or > MaximumNativeMonsterToHit
+            || initialTarget.CombatTargetToHitSpecial is < 0 or > MaximumNativeMonsterToHit
             || initialTarget.CombatTargetMinDamage < 0
             || initialTarget.CombatTargetMaxDamage < initialTarget.CombatTargetMinDamage
             || initialTarget.CombatTargetMinDamageSpecial < 0
             || initialTarget.CombatTargetMaxDamageSpecial < initialTarget.CombatTargetMinDamageSpecial
-            || initialTarget.CombatTargetIntelligence is < 0 or > 255
-            || initialTarget.CombatTargetFallenStandAnimationFrame is < 0 or > 127
-            || initialTarget.CombatTargetFallenStandAnimationTick is < 0 or > 127
-            || initialTarget.CombatTargetFallenRallyTicks is < 0 or > 4096
-            || initialTarget.CombatTargetActiveForTicks is < 0 or > 255
+            || initialTarget.CombatTargetIntelligence is < 0 or > MaximumNativeMonsterIntelligence
+            || initialTarget.CombatTargetFallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
+            || initialTarget.CombatTargetFallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
+            || initialTarget.CombatTargetFallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
+            || initialTarget.CombatTargetActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonKingDelayTicks is < 0 or > 1024
             || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
@@ -185,17 +201,17 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetSkeletonRangedMovementMode is < -1 or > 3
             || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > 1024
             || initialTarget.CombatTargetBatRetreatTicks is < 0 or > 1024
-            || initialTarget.CombatTargetBatRetreatDirection is < 0 or > 7
+            || initialTarget.CombatTargetBatRetreatDirection is < 0 or > MaximumNativeMonsterDirection
             || initialTarget.CombatTargetScavengerHealingTicks is < 0 or > 1024
             || initialTarget.CombatTargetFatMovementIdleTicks is < -1 or > 1024
             || initialTarget.CombatTargetFatMovementMode is < 0 or > 3
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
                     initialTarget.CombatTargetNativeAi))
-            || initialTarget.CombatTargetFireResistance is < -100 or > 100
-            || initialTarget.CombatTargetLightningResistance is < -100 or > 100
-            || initialTarget.CombatTargetMagicResistance is < -100 or > 100
-            || initialTarget.CombatTargetAcidResistance is < -100 or > 100
+            || initialTarget.CombatTargetFireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+            || initialTarget.CombatTargetLightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+            || initialTarget.CombatTargetMagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+            || initialTarget.CombatTargetAcidResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
             || initialTarget.CombatTargetMonsterLevel < 0
             || (initialTarget.CombatTargetMoving
                 && Math.Max(
@@ -695,7 +711,7 @@ public static class ReplayFixtureLoader
             || result.Life < 0
             || result.LifeMaximum <= 0
             || result.Life > result.LifeMaximum
-            || result.CharacterLevel is < 1 or > 50
+            || result.CharacterLevel is < 1 or > MaximumNativeCharacterLevel
             || (!string.IsNullOrEmpty(result.CharacterName)
                 && !DiabloPlayerName.IsValid(result.CharacterName))
             || !Enum.IsDefined(result.CombatMode)
@@ -707,8 +723,9 @@ public static class ReplayFixtureLoader
             || ((result.CombatMode is DiabloPlayerCombatMode.Block
                     or DiabloPlayerCombatMode.GotHit)
                 && result.CombatModeEndTick == 0)
-            || result.InventoryFillerCount > 40
-            || (result.InventoryItem is not null && result.InventoryFillerCount > 39)
+            || result.InventoryFillerCount > (uint)NativeMaximumInventoryCount
+            || (result.InventoryItem is not null
+                && result.InventoryFillerCount >= (uint)NativeMaximumInventoryCount)
             || (result.HeldItem is not null && result.HeldItem.Slot != 0)) {
             throw new InvalidDataException(
                 "Replay fixture contains invalid secondary-player state.");
@@ -787,7 +804,7 @@ public static class ReplayFixtureLoader
                 ? itemIndex.GetInt32()
                 : -1,
             RequiredBool(item, "stat_flag"));
-        if (result.Slot >= 40
+        if (result.Slot >= (uint)NativeMaximumInventoryCount
             || result.ItemSeed == 0
             || result.StableItemId == 0
             || result.Price > int.MaxValue
@@ -848,7 +865,7 @@ public static class ReplayFixtureLoader
                 StableItemId = GetOptionalUInt(item, "stable_item_id"),
             })
             .ToArray();
-        if (result.Any(item => item.Slot >= 7
+        if (result.Any(item => item.Slot >= (uint)NativeMaximumEquipmentCount
                 || item.ItemSeed == 0
                 || item.ItemType is < 0 or > byte.MaxValue
                 || item.ItemClass is < 0 or > 3
@@ -882,8 +899,8 @@ public static class ReplayFixtureLoader
                 StableItemId = GetOptionalUInt(item, "stable_item_id"),
             })
             .ToArray();
-        if (result.Length > 8
-            || result.Any(item => item.Slot >= 8
+        if (result.Length > NativeMaximumBeltCount
+            || result.Any(item => item.Slot >= (uint)NativeMaximumBeltCount
                 || item.ItemSeed == 0
                 || item.ItemType is < 0 or > byte.MaxValue
                 || item.ItemIndex is < -1 or > byte.MaxValue
