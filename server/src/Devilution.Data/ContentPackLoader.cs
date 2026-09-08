@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 namespace Devilution.Data;
@@ -6,6 +7,9 @@ namespace Devilution.Data;
 public static class ContentPackLoader
 {
     public const string ManifestFileName = "content-pack.json";
+    private static readonly Encoding StrictUtf8 = new UTF8Encoding(
+        encoderShouldEmitUTF8Identifier: false,
+        throwOnInvalidBytes: true);
 
     public static ContentPack LoadDirectory(string id, string version, string rootDirectory)
     {
@@ -25,7 +29,7 @@ public static class ContentPackLoader
             .ToArray();
         var tables = files
             .Where(file => string.Equals(Path.GetExtension(file.RelativePath), ".tsv", StringComparison.OrdinalIgnoreCase))
-            .Select(file => TsvTable.Parse(file.RelativePath, File.ReadAllText(file.FullPath)))
+            .Select(file => TsvTable.Parse(file.RelativePath, ReadUtf8Text(file.FullPath, "table")))
             .ToArray();
         var assets = files
             .Where(file => IsNativeBinaryAsset(file.RelativePath))
@@ -52,7 +56,7 @@ public static class ContentPackLoader
         ContentPackDocument? document;
         try {
             document = JsonSerializer.Deserialize<ContentPackDocument>(
-                File.ReadAllText(manifestPath),
+                ReadUtf8Text(manifestPath, "manifest"),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         } catch (JsonException exception) {
             throw new InvalidDataException(
@@ -148,6 +152,17 @@ public static class ContentPackLoader
         return string.Equals(extension, ".dun", StringComparison.OrdinalIgnoreCase)
             || string.Equals(extension, ".til", StringComparison.OrdinalIgnoreCase)
             || string.Equals(extension, ".sol", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ReadUtf8Text(string path, string resourceName)
+    {
+        try {
+            return StrictUtf8.GetString(File.ReadAllBytes(path));
+        } catch (DecoderFallbackException exception) {
+            throw new InvalidDataException(
+                $"Content pack {resourceName} '{path}' is not valid UTF-8.",
+                exception);
+        }
     }
 
     private static void RejectReparsePoints(string directory, string displayPath)

@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Hardened external content-pack resource paths: tables, overlays, and binary
   assets now share canonical relative-path validation and reject traversal,
   absolute paths, and separator aliases before composition or hashing.
+- Content-pack manifests and TSV tables now use strict UTF-8 decoding and
+  reject malformed text instead of silently replacing invalid byte sequences.
 - Centralized event-batch and authoritative snapshot collection limits across
   the protocol assembly, managed validators, Godot client validation, and
   native snapshot projection.

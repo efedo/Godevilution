@@ -8,6 +8,7 @@ rules module.
 The runtime currently owns:
 
 - deterministic TSV parsing with typed required and optional fields;
+- strict UTF-8 decoding for manifest and table text;
 - canonical relative resource paths that reject traversal and path aliases;
 - ordered directory loading for external content packs;
 - manifest-declared pack dependencies and composite-key table overlays;

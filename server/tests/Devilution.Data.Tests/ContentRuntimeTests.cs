@@ -172,6 +172,22 @@ public sealed class ContentRuntimeTests
     }
 
     [Fact]
+    public void ContentPackDirectoryLoaderRejectsInvalidUtf8Tables()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try {
+            File.WriteAllBytes(Path.Combine(root, "invalid.tsv"), [0x69, 0x64, 0x0A, 0xC3, 0x28]);
+
+            var error = Assert.Throws<InvalidDataException>(() =>
+                ContentPackLoader.LoadDirectory("base", "1", root));
+            Assert.Contains("UTF-8", error.Message, StringComparison.Ordinal);
+        } finally {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ContentPackDirectoryLoaderRejectsReparsePointEntries()
     {
         var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
