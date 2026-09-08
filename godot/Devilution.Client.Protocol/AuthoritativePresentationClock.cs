@@ -9,12 +9,17 @@ public sealed class AuthoritativePresentationClock
 
     public ulong? AuthoritativeSnapshotTick { get; private set; }
 
+    /** True only for the advance that accepted an older authoritative snapshot. */
+    public bool LastAdvanceRewound { get; private set; }
+
     /**
      * Advances from the latest authoritative snapshot while allowing at most
      * one additional server tick of presentation lead for timed walks.
      */
     public double Advance(ulong authoritativeTick, double deltaSeconds, uint tickRateHz)
     {
+        LastAdvanceRewound = AuthoritativeSnapshotTick is { } previousTick
+            && authoritativeTick < previousTick;
         if (AuthoritativeSnapshotTick is null
             || authoritativeTick < AuthoritativeSnapshotTick.Value) {
             CurrentTick = authoritativeTick;
@@ -40,5 +45,6 @@ public sealed class AuthoritativePresentationClock
     {
         CurrentTick = null;
         AuthoritativeSnapshotTick = null;
+        LastAdvanceRewound = false;
     }
 }

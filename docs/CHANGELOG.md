@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Made Godot reconnect/resync presentation rewind-safe. An older authoritative
+  snapshot now emits a one-advance clock marker so cached players, monsters,
+  and projectiles snap to the resync state instead of easing backward from
+  stale positions; authoritative simulation state is unchanged.
 - Added Hellfire multiplayer Acid and AcidUnique secondary-participant impact
   fixtures. Native and managed replay now agree on shifted Q6 impact damage,
   splat/puddle expiry, primary-player preservation, and the authored alias

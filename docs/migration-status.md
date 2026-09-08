@@ -2,6 +2,13 @@
 
 Status date: 2026-09-08
 
+Godot presentation now treats an older authoritative snapshot as a bounded
+rewind event. The presentation clock exposes a one-advance rewind marker, and
+the world view snaps cached players, monsters, and projectiles to the resync
+state before resuming normal interpolation. This keeps reconnect/resync
+presentation from easing backward through stale positions while leaving the
+authoritative tick and simulation unchanged.
+
 The replay gate now covers the validated Acid projectile lifecycle across the
 native and managed runners. A seeded initial Acid missile expires into its
 splat, shifts into the authored one-tile puddle, enters impact, and expires

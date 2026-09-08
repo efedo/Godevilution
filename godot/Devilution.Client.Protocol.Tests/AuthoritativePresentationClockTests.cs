@@ -35,6 +35,9 @@ public sealed class AuthoritativePresentationClockTests
 
         Assert.Equal(8, clock.Advance(8, 0, 20));
         Assert.Equal((ulong)8, clock.AuthoritativeSnapshotTick!.Value);
+        Assert.True(clock.LastAdvanceRewound);
+        Assert.Equal(8, clock.Advance(8, 0, 20));
+        Assert.False(clock.LastAdvanceRewound);
     }
 
     [Fact]
@@ -57,6 +60,7 @@ public sealed class AuthoritativePresentationClockTests
 
         Assert.Null(clock.CurrentTick);
         Assert.Null(clock.AuthoritativeSnapshotTick);
+        Assert.False(clock.LastAdvanceRewound);
         Assert.Equal(4, clock.Advance(4, 0, 20));
     }
 }

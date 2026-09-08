@@ -59,6 +59,7 @@ public partial class WorldPresentation : Node2D
             snapshot.Tick,
             delta,
             serverTickRateHz);
+        var snapshotRewound = presentationClock.LastAdvanceRewound;
 
         var activeEntityIds = new HashSet<uint>();
         levels.ApplyAuthoritative(snapshot.LevelGeometry);
@@ -77,7 +78,8 @@ public partial class WorldPresentation : Node2D
                 presentationTick,
                 player.EntityId == localPlayer?.EntityId ? predicted : null);
             var reset = displayedPlayerSnapshots.TryGetValue(player.EntityId, out var previous)
-                && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player);
+                && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player)
+                || snapshotRewound;
             UpdatePosition(
                 player.EntityId,
                 ToScreen(
@@ -99,7 +101,8 @@ public partial class WorldPresentation : Node2D
                          localLightRadius))) {
             activeEntityIds.Add(monster.EntityId);
             var reset = displayedMonsterSnapshots.TryGetValue(monster.EntityId, out var previous)
-                && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster);
+                && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster)
+                || snapshotRewound;
             var projected = AuthoritativeMonsterPositionProjection.ResolvePresentation(
                 monster,
                 presentationTick);
@@ -141,7 +144,8 @@ public partial class WorldPresentation : Node2D
                          localPlayer?.LevelId ?? 0))) {
             activeEntityIds.Add(projectile.EntityId);
             var reset = displayedProjectileSnapshots.TryGetValue(projectile.EntityId, out var previous)
-                && AuthoritativeProjectilePositionProjection.RequiresPresentationReset(previous, projectile);
+                && AuthoritativeProjectilePositionProjection.RequiresPresentationReset(previous, projectile)
+                || snapshotRewound;
             UpdatePosition(
                 projectile.EntityId,
                 ToScreen(projectile.PositionX, projectile.PositionY),

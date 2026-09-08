@@ -413,7 +413,11 @@ engine-independent client protocol projection from the server-declared tick
 rate between snapshots; this is presentation-only and does not alter
 authoritative occupancy or targeting.
 The presentation clock is reset when the local authoritative level identity
-changes, so a prior-level timing window cannot influence the new level.
+changes, so a prior-level timing window cannot influence the new level. If a
+reconnect or resync delivers an older snapshot, the clock marks that advance
+as a presentation rewind; Godot snaps cached players, monsters, and projectiles
+to the rewound snapshot instead of easing backward from stale positions. The
+rewind marker is one-shot and does not change authoritative simulation state.
 
 `MonsterSnapshot.stone_curse_immune` field 22 carries an immutable external-
 content capability needed by future authoritative casts and version-1 save
