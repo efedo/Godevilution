@@ -99,6 +99,11 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(7, AuthoritativeProtocolLimits.MaximumNativeMonsterDirection);
         Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize);
         Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks);
+        Assert.Equal(127, AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame);
+        Assert.Equal(127, AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick);
+        Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks);
+        Assert.Equal(-100, AuthoritativeProtocolLimits.MinimumNativeMonsterResistance);
+        Assert.Equal(100, AuthoritativeProtocolLimits.MaximumNativeMonsterResistance);
         Assert.Equal((uint)255, AuthoritativeProtocolLimits.MaximumStableSpellId);
         Assert.Equal((uint)15, AuthoritativeProtocolLimits.MaximumNativeSpellLevel);
         Assert.Equal(51, AuthoritativeProtocolLimits.MaximumMemorizedSpellCount);

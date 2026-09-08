@@ -24,6 +24,10 @@ grid topology limits are now named in the shared protocol contract. Managed,
 Godot, and native snapshot boundaries consume those limits, and native
 projection now fails closed on malformed status-effect collections.
 
+Fallen-rally timing, monster resistance, directional presentation, and native
+identity bounds now also consume named shared limits at the Diablo mapper,
+managed/Godot validation, and native projection boundaries.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

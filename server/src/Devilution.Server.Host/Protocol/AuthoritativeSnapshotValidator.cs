@@ -28,6 +28,11 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumNativeMonsterDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection;
     private const int MaximumNativeMonsterPackSize = AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize;
     private const int MaximumNativeMonsterActiveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks;
+    private const int MaximumNativeMonsterFallenStandAnimationFrame = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
+    private const int MaximumNativeMonsterFallenStandAnimationTick = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
+    private const int MaximumNativeMonsterFallenRallyTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
+    private const int MinimumNativeMonsterResistance = AuthoritativeProtocolLimits.MinimumNativeMonsterResistance;
+    private const int MaximumNativeMonsterResistance = AuthoritativeProtocolLimits.MaximumNativeMonsterResistance;
     private const uint MaximumNativeObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
@@ -1090,10 +1095,10 @@ public static class AuthoritativeSnapshotValidator
                 || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
                 || monster.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
                 || monster.Direction is < 0 or > MaximumNativeMonsterDirection
-                || monster.FireResistance is < -100 or > 100
-                || monster.LightningResistance is < -100 or > 100
-                || monster.MagicResistance is < -100 or > 100
-                || monster.AcidResistance is < -100 or > 100
+                || monster.FireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+                || monster.LightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+                || monster.MagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+                || monster.AcidResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
                 || !monster.IsPlayerMinion && monster.OwnerPlayerId != 0
                 || monster.LeaderRelation is < 0 or > MaximumMonsterLeaderRelation
                 || (monster.LeaderRelation == 0
@@ -1102,9 +1107,9 @@ public static class AuthoritativeSnapshotValidator
                 || monster.LeaderRelation != 0 && monster.IsUnique
                 || monster.PackSize is < 0 or > MaximumNativeMonsterPackSize
                 || monster.ActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
-                || monster.FallenStandAnimationFrame is < 0 or > 127
-                || monster.FallenStandAnimationTick is < 0 or > 127
-                || monster.FallenRallyTicks is < 0 or > 4096
+                || monster.FallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
+                || monster.FallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
+                || monster.FallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
                 || !monstersById.TryAdd(monster.EntityId, monster)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid monster state.");

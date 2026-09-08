@@ -119,7 +119,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	for (const auto &monster : monsters) {
 		if (monster.entityId == 0 || !projectedEntityIds.insert(monster.entityId).second)
 			return tl::make_unexpected("Authoritative monster projection contains invalid or duplicate entity IDs.");
-		if (monster.direction < 0 || monster.direction > 7)
+		if (monster.direction < 0 || monster.direction > MaximumNativeMonsterDirection)
 			return tl::make_unexpected("Authoritative monster projection contains an invalid direction.");
 		if (!isInBounds(monster.levelId, monster.positionX, monster.positionY)
 		    || (monster.moving && !isInBounds(monster.levelId, monster.futurePositionX, monster.futurePositionY)))
@@ -190,7 +190,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > MaximumNativeProjectileVisual
 			    || !isInBounds(projectile.levelId, projectile.positionX, projectile.positionY)
 			    || UsesDirectionalPresentation(projectile)
-			        && (projectile.originalDirection < 0 || projectile.originalDirection > 7)
+			        && (projectile.originalDirection < 0 || projectile.originalDirection > MaximumNativeMonsterDirection)
 			    || !projectile.nativeMissileId.empty()
 			    && (projectile.behavior != static_cast<int>(ProjectileBehavior::MonsterMagic)
 			            || !IsValidNativeMissileIdentity(projectile.nativeMissileId));

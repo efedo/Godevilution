@@ -63,6 +63,12 @@ public sealed class AuthoritativeClientModel
     private const uint MaximumNativeMonsterExperienceReward = AuthoritativeProtocolLimits.MaximumNativeMonsterExperienceReward;
     private const int MaximumNativeMonsterToHit = AuthoritativeProtocolLimits.MaximumNativeMonsterToHit;
     private const int MaximumNativeMonsterIntelligence = AuthoritativeProtocolLimits.MaximumNativeMonsterIntelligence;
+    private const int MaximumNativeMonsterFallenStandAnimationFrame = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
+    private const int MaximumNativeMonsterFallenStandAnimationTick = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
+    private const int MaximumNativeMonsterFallenRallyTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
+    private const int MinimumNativeMonsterResistance = AuthoritativeProtocolLimits.MinimumNativeMonsterResistance;
+    private const int MaximumNativeMonsterResistance = AuthoritativeProtocolLimits.MaximumNativeMonsterResistance;
+    private const int MaximumIdentityBytes = AuthoritativeProtocolLimits.MaximumIdentityBytes;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
     private const int MaximumObjectQuestTransitionKind = AuthoritativeProtocolLimits.MaximumObjectQuestTransitionKind;
@@ -868,7 +874,7 @@ public sealed class AuthoritativeClientModel
             || maxHitPointsQ6 < hitPointsQ6
             || hitPointsQ6 < 0
             || monster.Alive != (hitPointsQ6 > 0)
-            || System.Text.Encoding.UTF8.GetByteCount(monster.UniqueIdentity) > 128
+            || System.Text.Encoding.UTF8.GetByteCount(monster.UniqueIdentity) > MaximumIdentityBytes
             || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster vitality.");
@@ -1034,7 +1040,7 @@ public sealed class AuthoritativeClientModel
                 || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
                 || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
                 || quest.TurnInVariable1 is < -1 or > byte.MaxValue
-                || System.Text.Encoding.UTF8.GetByteCount(quest.CompletionUniqueIdentity) > 128) {
+                || System.Text.Encoding.UTF8.GetByteCount(quest.CompletionUniqueIdentity) > MaximumIdentityBytes) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid quest state.");
             }
@@ -1412,10 +1418,10 @@ public sealed class AuthoritativeClientModel
             || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
             || monster.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
             || monster.Direction is < 0 or > MaximumNativeMonsterDirection
-            || monster.FireResistance is < -100 or > 100
-            || monster.LightningResistance is < -100 or > 100
-            || monster.MagicResistance is < -100 or > 100
-            || monster.AcidResistance is < -100 or > 100
+            || monster.FireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+            || monster.LightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+            || monster.MagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+            || monster.AcidResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
             || monster.LeaderRelation is < 0 or > MaximumMonsterLeaderRelation
             || (monster.LeaderRelation == 0
                 ? monster.LeaderEntityId != 0
@@ -1423,9 +1429,9 @@ public sealed class AuthoritativeClientModel
             || monster.LeaderRelation != 0 && monster.IsUnique
             || monster.PackSize is < 0 or > AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize
             || monster.ActiveForTicks is < 0 or > AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks
-            || monster.FallenStandAnimationFrame is < 0 or > 127
-            || monster.FallenStandAnimationTick is < 0 or > 127
-            || monster.FallenRallyTicks is < 0 or > 4096
+            || monster.FallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
+            || monster.FallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
+            || monster.FallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
             || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster combat state.");
@@ -1524,7 +1530,7 @@ public sealed class AuthoritativeClientModel
             || (int)projectile.NativeVisual is < 0 or > MaximumNativeProjectileVisual
             || !Enum.IsDefined(projectile.NativeVisual)
             || UsesDirectionalPresentation(projectile)
-                && projectile.OriginalDirection is < 0 or > 7
+                && projectile.OriginalDirection is < 0 or > MaximumNativeMonsterDirection
             || !IsValidNativeMissileIdentity(projectile)) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid projectile state.");

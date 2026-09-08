@@ -19,6 +19,22 @@ internal static class DiabloProtocolMapper
     private const int NativeInventoryHeight = AuthoritativeProtocolLimits.NativeInventoryHeight;
     private const int NativeMaximumWarpTriggerCount = AuthoritativeProtocolLimits.NativeMaximumWarpTriggerCount;
     private const int MaximumStatusEffectCount = AuthoritativeProtocolLimits.MaximumStatusEffectCount;
+    private const int MaximumSnapshotQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
+    private const int MaximumQuestTownerInteractionCount = AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount;
+    private const int MaximumNativeMonsterDeathAnimationTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterDeathAnimationTicks;
+    private const uint MaximumNativeMonsterExperienceReward = AuthoritativeProtocolLimits.MaximumNativeMonsterExperienceReward;
+    private const int MaximumNativeMonsterDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection;
+    private const int MaximumNativeMonsterPackSize = AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize;
+    private const int MaximumNativeMonsterActiveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks;
+    private const int MaximumNativeMonsterFallenStandAnimationFrame = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
+    private const int MaximumNativeMonsterFallenStandAnimationTick = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
+    private const int MaximumNativeMonsterFallenRallyTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
+    private const int MinimumNativeMonsterResistance = AuthoritativeProtocolLimits.MinimumNativeMonsterResistance;
+    private const int MaximumNativeMonsterResistance = AuthoritativeProtocolLimits.MaximumNativeMonsterResistance;
+    private const uint MaximumNativeCharacterLevel = AuthoritativeProtocolLimits.MaximumNativeCharacterLevel;
+    private const int MinimumNativeLightRadius = AuthoritativeProtocolLimits.MinimumNativeLightRadius;
+    private const int MaximumNativeLightRadius = AuthoritativeProtocolLimits.MaximumNativeLightRadius;
+    private const int MaximumNativeVisitedLevelCount = AuthoritativeProtocolLimits.MaximumNativeVisitedLevelCount;
 
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
@@ -665,7 +681,7 @@ internal static class DiabloProtocolMapper
     private static void ValidateProjectedQuestStates(
         IReadOnlyList<DiabloQuestState> quests)
     {
-        if (quests.Count > 4096) {
+        if (quests.Count > MaximumSnapshotQuestCount) {
             throw new InvalidDataException(
                 "Authoritative quest state exceeds the shared protocol collection limit.");
         }
@@ -760,7 +776,7 @@ internal static class DiabloProtocolMapper
         IReadOnlyList<DiabloQuestState> quests,
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
-        if (interactions.Count > 1024) {
+        if (interactions.Count > MaximumQuestTownerInteractionCount) {
             throw new InvalidDataException(
                 "Authoritative quest/towner interactions exceed the shared protocol limit.");
         }
@@ -948,7 +964,7 @@ internal static class DiabloProtocolMapper
                 || projectile.Phase is < AuthoritativeProjectilePhase.Travel
                     or > AuthoritativeProjectilePhase.Impact
                 || UsesDirectionalPresentation(projectile)
-                    && projectile.OriginalDirection is < 0 or > 7) {
+                    && projectile.OriginalDirection is < 0 or > MaximumNativeMonsterDirection) {
                 throw new InvalidDataException(
                     "Authoritative projectile state is outside the shared protocol range.");
             }
@@ -1054,32 +1070,32 @@ internal static class DiabloProtocolMapper
                 || monster.MaxDamageSpecial < monster.MinDamageSpecial
                 || monster.AggroRange < 0
                 || monster.MonsterLevel < 0
-                || monster.DeathAnimationTicks is < 0 or > 1024
+                || monster.DeathAnimationTicks is < 0 or > MaximumNativeMonsterDeathAnimationTicks
                 || monster.DeathTicksRemaining < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
-                || monster.ExperienceReward > 1_000_000
+                || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
                 || monster.ToHit is < 0 or > byte.MaxValue
                 || monster.ToHitSpecial is < 0 or > byte.MaxValue
                 || monster.Intelligence is < 0 or > byte.MaxValue
                 || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
                 || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique
-                || monster.Direction is < 0 or > 7
-                || monster.FireResistance is < -100 or > 100
-                || monster.LightningResistance is < -100 or > 100
-                || monster.MagicResistance is < -100 or > 100
-                || monster.AcidResistance is < -100 or > 100
+                || monster.Direction is < 0 or > MaximumNativeMonsterDirection
+                || monster.FireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+                || monster.LightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+                || monster.MagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
+                || monster.AcidResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
                 || !Enum.IsDefined(monster.LeaderRelation)
                 || (monster.LeaderRelation == AuthoritativeMonsterLeaderRelation.None
                     ? monster.LeaderEntityId != 0
                     : monster.LeaderEntityId == 0)
                 || (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None
                     && monster.IsUnique)
-                || monster.PackSize is < 0 or > 255
-                || monster.ActiveForTicks is < 0 or > 255
-                || monster.FallenStandAnimationFrame is < 0 or > 127
-                || monster.FallenStandAnimationTick is < 0 or > 127
-                || monster.FallenRallyTicks is < 0 or > 4096
+                || monster.PackSize is < 0 or > MaximumNativeMonsterPackSize
+                || monster.ActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
+                || monster.FallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
+                || monster.FallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
+                || monster.FallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
                 || !monster.IsPlayerMinion && monster.OwnerPlayerId != 0) {
                 throw new InvalidDataException(
                     "Authoritative monster state is outside the shared protocol range.");
@@ -1238,7 +1254,7 @@ internal static class DiabloProtocolMapper
                 "Authoritative player projection contains an invalid enum value.");
         }
         if (state.LightRadius != 0
-            && (state.LightRadius is < 2 or > 15)) {
+            && (state.LightRadius is < MinimumNativeLightRadius or > MaximumNativeLightRadius)) {
             throw new InvalidDataException(
                 "Authoritative player projection contains an invalid light radius.");
         }
@@ -1278,7 +1294,7 @@ internal static class DiabloProtocolMapper
             || state.StatPoints > int.MaxValue
             || state.ReflectCharges > ushort.MaxValue
             || state.DiabloKillLevel > byte.MaxValue
-            || state.CharacterLevel > 50) {
+            || state.CharacterLevel > MaximumNativeCharacterLevel) {
             throw new InvalidDataException(
                 "Authoritative player resources exceed the shared protocol range.");
         }
@@ -1525,7 +1541,7 @@ internal static class DiabloProtocolMapper
     {
         if (state.VisitedLevelIds is null
             || !AuthoritativeLevelIdRules.IsSupported(state.LevelId)
-            || state.VisitedLevelIds.Count > 256
+            || state.VisitedLevelIds.Count > MaximumNativeVisitedLevelCount
             || state.VisitedLevelIds.Any(levelId => !AuthoritativeLevelIdRules.IsRegularLevel(levelId))
             || state.VisitedLevelIds.Count > 0
                 && AuthoritativeLevelIdRules.IsRegularLevel(state.LevelId)

@@ -42,6 +42,11 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumNativeMonsterDirection = 7;
     public const int MaximumNativeMonsterPackSize = 255;
     public const int MaximumNativeMonsterActiveTicks = 255;
+    public const int MaximumNativeMonsterFallenStandAnimationFrame = 127;
+    public const int MaximumNativeMonsterFallenStandAnimationTick = 127;
+    public const int MaximumNativeMonsterFallenRallyTicks = 4096;
+    public const int MinimumNativeMonsterResistance = -100;
+    public const int MaximumNativeMonsterResistance = 100;
     public const uint MaximumStableSpellId = byte.MaxValue;
     public const uint MaximumNativeSpellLevel = 15;
     public const int MaximumMemorizedSpellCount = 51;

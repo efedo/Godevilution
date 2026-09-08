@@ -611,7 +611,7 @@ void ApplyAuthoritativePresentationMissile(
 	missile._miDelFlag = false;
 	if (missile._mitype == MissileID::Guardian) {
 		missile.setFrameGroup<GuardianFrame>(GuardianFrame::Idle);
-	} else if (snapshot.originalDirection >= 0 && snapshot.originalDirection <= 7) {
+	} else if (snapshot.originalDirection >= 0 && snapshot.originalDirection <= MaximumNativeMonsterDirection) {
 		missile.setFrameGroupRaw(snapshot.originalDirection * 2);
 	}
 }

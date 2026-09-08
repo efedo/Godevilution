@@ -515,7 +515,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 			return tl::make_unexpected("Server-backed snapshot contains a monster with an invalid entity ID.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate monster entity IDs.");
-		if (source.unique_identity().size() > 128 || (!source.is_unique() && !source.unique_identity().empty()))
+		if (source.unique_identity().size() > MaximumIdentityBytes || (!source.is_unique() && !source.unique_identity().empty()))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid unique monster identity.");
 		const int64_t hitPointsQ6 = source.hit_points_q6() == 0 && source.hit_points() != 0
 		    ? static_cast<int64_t>(source.hit_points()) * 64
@@ -1016,7 +1016,7 @@ tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot 
 		    || quest.turn_in_completion_variable1() < -1 || quest.turn_in_completion_variable1() > 255
 		    || quest.turn_in_required_variable1() < -1 || quest.turn_in_required_variable1() > 255
 		    || quest.turn_in_variable1() < -1 || quest.turn_in_variable1() > 255
-		    || quest.completion_unique_identity().size() > 128)
+		    || quest.completion_unique_identity().size() > MaximumIdentityBytes)
 			return tl::make_unexpected("Server-backed snapshot contains invalid quest state.");
 	}
 	return {};
@@ -1375,7 +1375,7 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		const int64_t hitPointsQ6 = monster.hit_points_q6() == 0 && monster.hit_points() != 0
 		    ? static_cast<int64_t>(monster.hit_points()) * 64
 		    : monster.hit_points_q6();
-		if (monster.unique_identity().size() > 128
+		if (monster.unique_identity().size() > MaximumIdentityBytes
 		    || (!monster.is_unique() && !monster.unique_identity().empty())
 		    || hitPointsQ6 < 0
 		    || monster.alive() != (hitPointsQ6 > 0)
@@ -1396,10 +1396,10 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.to_hit_special() < 0 || monster.to_hit_special() > MaximumNativeMonsterToHit
 		    || monster.intelligence() < 0 || monster.intelligence() > MaximumNativeMonsterIntelligence
 		    || monster.direction() < 0 || monster.direction() > MaximumNativeMonsterDirection
-		    || monster.fire_resistance() < -100 || monster.fire_resistance() > 100
-		    || monster.lightning_resistance() < -100 || monster.lightning_resistance() > 100
-		    || monster.magic_resistance() < -100 || monster.magic_resistance() > 100
-		    || monster.acid_resistance() < -100 || monster.acid_resistance() > 100
+		    || monster.fire_resistance() < MinimumNativeMonsterResistance || monster.fire_resistance() > MaximumNativeMonsterResistance
+		    || monster.lightning_resistance() < MinimumNativeMonsterResistance || monster.lightning_resistance() > MaximumNativeMonsterResistance
+		    || monster.magic_resistance() < MinimumNativeMonsterResistance || monster.magic_resistance() > MaximumNativeMonsterResistance
+		    || monster.acid_resistance() < MinimumNativeMonsterResistance || monster.acid_resistance() > MaximumNativeMonsterResistance
 		    || (!monster.is_player_minion() && monster.owner_player_id() != 0)
 		    || monster.dialogue_message_id() < 0
 		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
