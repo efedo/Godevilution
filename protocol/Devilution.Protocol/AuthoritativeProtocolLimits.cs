@@ -15,6 +15,10 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumMaterializedProceduralLevelCount = 4096;
     public const int MaximumNativeSetLevelId = 8;
     public const int MaximumMonsterLeaderRelation = 2;
+    public const int MaximumMonsterDialogueState =
+        (int)MonsterDialogueState.Combat;
+    public const int MaximumProjectileDamageType = 4;
+    public const int MaximumProjectilePhase = 1;
     public const int MaximumProjectileBehavior =
         (int)AuthoritativeProjectileBehavior.MonsterArrow;
     public const int MaximumProjectilePresentationKind =

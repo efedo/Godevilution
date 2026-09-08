@@ -1353,7 +1353,7 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.dialogue_message_id() < 0
 		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
 		    || (monster.dialogue_message_id() != 0 && !monster.is_unique())
-		    || monster.dialogue_state() < 0 || monster.dialogue_state() > 2
+		    || monster.dialogue_state() < 0 || monster.dialogue_state() > MaximumMonsterDialogueState
 		    || (monster.dialogue_state() != 0 && !monster.is_unique())
 		    || monster.leader_relation() < 0 || monster.leader_relation() > MaximumMonsterLeaderRelation
 		    || (monster.leader_relation() == 0
@@ -1441,9 +1441,9 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || projectile.elemental_lightning_damage() < 0
 		    || projectile.peril_self_damage_q6() < 0
 		    || projectile.effective_spell_level() < 0
-		    || projectile.damage_type() < 0 || projectile.damage_type() > 4
+		    || projectile.damage_type() < 0 || projectile.damage_type() > MaximumProjectileDamageType
 		    || projectile.behavior() < 0 || projectile.behavior() > MaximumProjectileBehavior
-		    || projectile.phase() < 0 || projectile.phase() > 1
+		    || projectile.phase() < 0 || projectile.phase() > MaximumProjectilePhase
 		    || static_cast<int32_t>(projectile.presentation_kind()) < 0
 		    || static_cast<int32_t>(projectile.presentation_kind()) > MaximumProjectilePresentationKind
 		    || static_cast<int32_t>(projectile.native_visual()) < 0

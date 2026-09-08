@@ -28,7 +28,7 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumObjectQuestSequenceFollowUpKind = AuthoritativeProtocolLimits.MaximumObjectQuestSequenceFollowUpKind;
     private const int MaximumObjectProjectileSourceKind = AuthoritativeProtocolLimits.MaximumObjectProjectileSourceKind;
     private const int MaximumQuestTownerInteractionKind = AuthoritativeProtocolLimits.MaximumQuestTownerInteractionKind;
-    private const int MaximumProjectileDamageType = 4;
+    private const int MaximumProjectileDamageType = AuthoritativeProtocolLimits.MaximumProjectileDamageType;
     private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
     private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
@@ -37,7 +37,7 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumItemSpellSourceKind = AuthoritativeProtocolLimits.MaximumItemSpellSourceKind;
     private const int MaximumItemActionKind = AuthoritativeProtocolLimits.MaximumItemActionKind;
     private const int MaximumSpellTargetingKind = AuthoritativeProtocolLimits.MaximumSpellTargetingKind;
-    private const int MaximumProjectilePhase = 1;
+    private const int MaximumProjectilePhase = AuthoritativeProtocolLimits.MaximumProjectilePhase;
     private const int NativeMaximumWidth = 112;
     private const int NativeMaximumHeight = 112;
     private const int NativeMaximumMegaWidth = 40;

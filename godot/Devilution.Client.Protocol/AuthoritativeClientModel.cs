@@ -40,7 +40,7 @@ public sealed class AuthoritativeClientModel
     private const uint MaximumNativeReflectCharges = ushort.MaxValue;
     private const int MinimumNativeLightRadius = 2;
     private const int MaximumNativeLightRadius = 15;
-    private const int MaximumProjectileDamageType = 4;
+    private const int MaximumProjectileDamageType = AuthoritativeProtocolLimits.MaximumProjectileDamageType;
     private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
     private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
@@ -49,7 +49,8 @@ public sealed class AuthoritativeClientModel
     private const int MaximumItemSpellSourceKind = AuthoritativeProtocolLimits.MaximumItemSpellSourceKind;
     private const int MaximumItemActionKind = AuthoritativeProtocolLimits.MaximumItemActionKind;
     private const int MaximumSpellTargetingKind = AuthoritativeProtocolLimits.MaximumSpellTargetingKind;
-    private const int MaximumProjectilePhase = 1;
+    private const int MaximumProjectilePhase = AuthoritativeProtocolLimits.MaximumProjectilePhase;
+    private const int MaximumMonsterDialogueState = AuthoritativeProtocolLimits.MaximumMonsterDialogueState;
     private const int MaximumNativeMonsterDirection = 7;
     private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
     private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
@@ -873,7 +874,7 @@ public sealed class AuthoritativeClientModel
         }
         var dialogueState = (int)monster.DialogueState;
         if (dialogueState < 0
-            || dialogueState > 2
+            || dialogueState > MaximumMonsterDialogueState
             || dialogueState != 0 && !monster.IsUnique) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains an invalid monster dialogue state.");

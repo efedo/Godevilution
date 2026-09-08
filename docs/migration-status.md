@@ -30,6 +30,9 @@ Native set-level IDs and monster leader-relation values now consume shared
 compatibility maxima in managed validation, Diablo mapping, and native
 projection.
 
+Projectile damage/phase and unique-monster dialogue-state values now consume
+shared protocol maxima in managed validation and native projection.
+
 Projectile behavior values now have one named protocol identity enum shared by
 managed validation and legacy Godot presentation fallback; native bounds mirror
 the same maximum rather than repeating an unexplained literal.

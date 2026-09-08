@@ -72,6 +72,14 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(2, AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation);
     }
 
+    [Fact]
+    public void UsesSharedProjectileStateCaps()
+    {
+        Assert.Equal(2, AuthoritativeProtocolLimits.MaximumMonsterDialogueState);
+        Assert.Equal(4, AuthoritativeProtocolLimits.MaximumProjectileDamageType);
+        Assert.Equal(1, AuthoritativeProtocolLimits.MaximumProjectilePhase);
+    }
+
     [Theory]
     [InlineData(2, 0, ProjectilePresentationKind.Fire)]
     [InlineData(2, 1, ProjectilePresentationKind.FireImpact)]

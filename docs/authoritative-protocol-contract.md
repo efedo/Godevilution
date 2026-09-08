@@ -883,6 +883,8 @@ levels so native projection and managed validation reject the same oversized
 payloads.
 Native set-level IDs and monster leader-relation values likewise use shared
 compatibility maxima across the managed mapper, validators, and native bridge.
+Projectile damage channels/phases and unique-monster dialogue states use the
+same shared maxima across managed validation and native projection.
 `ProjectileSnapshot.native_visual` field 56 carries the exact native
 compatibility sprite identity for presentation-only rendering. A zero value
 retains the behavior-based fallback for older servers; an unknown nonzero value
