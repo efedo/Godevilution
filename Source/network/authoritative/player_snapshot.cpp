@@ -37,7 +37,7 @@ constexpr uint32_t StashPageCount = 100;
 constexpr uint32_t StashCellCount = 100;
 constexpr uint32_t StashGridWidth = 10;
 constexpr uint32_t StashGridHeight = 10;
-constexpr int MaxWorldMutationCount = 4096;
+constexpr int MaxWorldMutationCount = static_cast<int>(MaximumWorldMutationCount);
 
 bool HasValidItemIdentity(uint32_t itemSeed, const protocol::ItemStateSnapshot &state)
 {
@@ -975,7 +975,7 @@ tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLe
 
 tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot &snapshot)
 {
-	if (snapshot.quests_size() > 4096)
+	if (snapshot.quests_size() > MaximumSnapshotQuestCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many quests.");
 	std::unordered_set<uint32_t> questIds;
 	questIds.reserve(snapshot.quests_size());
@@ -1125,7 +1125,7 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 
 tl::expected<void, std::string> ValidateSetLevelObjectOriginSnapshots(const protocol::Snapshot &snapshot)
 {
-	if (snapshot.set_level_object_origins_size() > 4096)
+	if (snapshot.set_level_object_origins_size() > MaximumSetLevelObjectOriginCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many set-level object origins.");
 	std::unordered_set<int32_t> setLevelIds;
 	setLevelIds.reserve(snapshot.set_level_object_origins_size());
@@ -1153,7 +1153,7 @@ tl::expected<void, std::string> ValidateSetLevelObjectOriginSnapshots(const prot
 
 tl::expected<void, std::string> ValidateMaterializedProceduralLevelSnapshots(const protocol::Snapshot &snapshot)
 {
-	if (snapshot.materialized_procedural_level_ids_size() > 4096)
+	if (snapshot.materialized_procedural_level_ids_size() > MaximumMaterializedProceduralLevelCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many materialized procedural levels.");
 	std::unordered_set<uint32_t> levelIds;
 	levelIds.reserve(snapshot.materialized_procedural_level_ids_size());

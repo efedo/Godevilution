@@ -25,8 +25,11 @@ public sealed class AuthoritativeClientModel
 
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;
-    private const int MaximumEventBatchCount = 4096;
-    private const int MaximumWorldMutationCount = 4096;
+    private const int MaximumEventBatchCount = AuthoritativeProtocolLimits.MaximumEventBatchCount;
+    private const int MaximumWorldMutationCount = AuthoritativeProtocolLimits.MaximumWorldMutationCount;
+    private const int MaximumSnapshotQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
+    private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
+    private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
     private const uint MaximumStableSpellId = byte.MaxValue;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
@@ -995,7 +998,7 @@ public sealed class AuthoritativeClientModel
 
     private static void ValidateQuests(Snapshot snapshot)
     {
-        if (snapshot.Quests.Count > 4096) {
+        if (snapshot.Quests.Count > MaximumSnapshotQuestCount) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains too many quests.");
         }
@@ -1162,7 +1165,7 @@ public sealed class AuthoritativeClientModel
     /** Validates generated set-piece origins against supplied level geometry. */
     private static void ValidateSetLevelObjectOrigins(Snapshot snapshot)
     {
-        if (snapshot.SetLevelObjectOrigins.Count > 4096
+        if (snapshot.SetLevelObjectOrigins.Count > MaximumSetLevelObjectOriginCount
             || snapshot.SetLevelObjectOrigins.Any(origin => origin.SetLevelId is < 0 or > 8)
             || snapshot.SetLevelObjectOrigins
                 .Select(origin => origin.SetLevelId)
@@ -1190,7 +1193,7 @@ public sealed class AuthoritativeClientModel
     /** Validates the server-owned procedural encounter materialization set. */
     private static void ValidateMaterializedProceduralLevels(Snapshot snapshot)
     {
-        if (snapshot.MaterializedProceduralLevelIds.Count > 4096
+        if (snapshot.MaterializedProceduralLevelIds.Count > MaximumMaterializedProceduralLevelCount
             || snapshot.MaterializedProceduralLevelIds
                 .Distinct()
                 .Count() != snapshot.MaterializedProceduralLevelIds.Count) {

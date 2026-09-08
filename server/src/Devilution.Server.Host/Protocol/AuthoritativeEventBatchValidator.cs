@@ -6,7 +6,7 @@ namespace Devilution.Server.Protocol;
 /** Validates adapter-produced event batches before they cross the wire. */
 public static class AuthoritativeEventBatchValidator
 {
-    public const int MaximumEventBatchCount = 4096;
+    public const int MaximumEventBatchCount = AuthoritativeProtocolLimits.MaximumEventBatchCount;
     public const int MaximumDialogueTextBytes = AuthoritativeProtocolLimits.MaximumDialogueTextBytes;
 
     public static void Validate(EventBatch events)

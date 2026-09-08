@@ -22,6 +22,10 @@ Authored object presentation and quest-interaction metadata now consume shared
 protocol maxima in managed validation and native projection, keeping external
 object effects, transitions, rewards, follow-ups, and towner stages aligned.
 
+Event batches, world mutations, quests, set-level origins, and materialized
+procedural levels now consume shared collection caps in managed validation and
+native snapshot projection.
+
 Projectile behavior values now have one named protocol identity enum shared by
 managed validation and legacy Godot presentation fallback; native bounds mirror
 the same maximum rather than repeating an unexplained literal.

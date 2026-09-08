@@ -55,6 +55,16 @@ public sealed class ProjectilePresentationStyleTests
                 phase: 0));
     }
 
+    [Fact]
+    public void UsesSharedAuthoritativeCollectionCaps()
+    {
+        Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumEventBatchCount);
+        Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumWorldMutationCount);
+        Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumSnapshotQuestCount);
+        Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount);
+        Assert.Equal(4096, AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount);
+    }
+
     [Theory]
     [InlineData(2, 0, ProjectilePresentationKind.Fire)]
     [InlineData(2, 1, ProjectilePresentationKind.FireImpact)]

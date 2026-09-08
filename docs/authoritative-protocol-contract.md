@@ -877,6 +877,10 @@ and are not inferred from native item IDs.
 Authored object snapshots likewise use shared bounds for object presentation,
 effect, quest-transition, reward, reward-origin, projectile-source, and ordered
 follow-up kinds; quest/towner interaction kinds use the same cross-client limit.
+Event batches and bounded snapshot collections use shared caps for event count,
+world mutations, quests, set-level object origins, and materialized procedural
+levels so native projection and managed validation reject the same oversized
+payloads.
 `ProjectileSnapshot.native_visual` field 56 carries the exact native
 compatibility sprite identity for presentation-only rendering. A zero value
 retains the behavior-based fallback for older servers; an unknown nonzero value

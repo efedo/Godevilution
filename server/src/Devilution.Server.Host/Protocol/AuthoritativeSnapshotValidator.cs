@@ -47,11 +47,11 @@ public static class AuthoritativeSnapshotValidator
     private const uint NativeMaximumQuestId = 23;
     private const int NativeStashPageCount = 100;
     private const int NativeStashCellCount = 100;
-    private const int MaximumQuestCount = 4096;
+    private const int MaximumQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
     private const int MaximumQuestTownerInteractionCount = 1024;
-    private const int MaximumSetLevelObjectOriginCount = 4096;
-    private const int MaximumMaterializedProceduralLevelCount = 4096;
-    private const int MaximumWorldMutationCount = 4096;
+    private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
+    private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
+    private const int MaximumWorldMutationCount = AuthoritativeProtocolLimits.MaximumWorldMutationCount;
     private const uint MaximumNativeSpellLevel = 15;
     private const int MaximumMemorizedSpellCount = 51;
     private const uint MaximumNativeCharacterLevel = 50;

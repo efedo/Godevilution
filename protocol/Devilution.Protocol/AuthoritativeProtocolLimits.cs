@@ -3,11 +3,16 @@ using Devilution.Protocol.V1;
 
 namespace Devilution.Protocol;
 
-/** Shared byte-level limits for server-owned text and opaque protocol identities. */
+/** Shared wire-level limits for server-owned text, identities, and bounded collections. */
 public static class AuthoritativeProtocolLimits
 {
     public const int MaximumDialogueTextBytes = 16 * 1024;
     public const int MaximumIdentityBytes = 128;
+    public const int MaximumEventBatchCount = 4096;
+    public const int MaximumWorldMutationCount = 4096;
+    public const int MaximumSnapshotQuestCount = 4096;
+    public const int MaximumSetLevelObjectOriginCount = 4096;
+    public const int MaximumMaterializedProceduralLevelCount = 4096;
     public const int MaximumProjectileBehavior =
         (int)AuthoritativeProjectileBehavior.MonsterArrow;
     public const int MaximumProjectilePresentationKind =

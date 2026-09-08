@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Centralized event-batch and authoritative snapshot collection limits across
+  the protocol assembly, managed validators, Godot client validation, and
+  native snapshot projection.
 - Centralized the named projectile presentation-family and native-visual bounds
   alongside the behavior identity limit. Managed server/Godot validation and
   native snapshot projection now consume the same maximums instead of raw

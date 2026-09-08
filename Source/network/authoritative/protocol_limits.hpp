@@ -197,6 +197,10 @@ enum class ObjectPresentationKind : int {
 };
 
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
+inline constexpr std::size_t MaximumWorldMutationCount = 4096;
+inline constexpr std::size_t MaximumSnapshotQuestCount = 4096;
+inline constexpr std::size_t MaximumSetLevelObjectOriginCount = 4096;
+inline constexpr std::size_t MaximumMaterializedProceduralLevelCount = 4096;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
 inline constexpr int MaximumProjectileBehavior = static_cast<int>(ProjectileBehavior::MonsterArrow);
