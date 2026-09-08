@@ -51,6 +51,10 @@ All notable changes to this fork are documented below.
   now verify nearest-participant charge routing through the full projectile
   lifecycle while preserving the farther primary participant.
 
+- Added a Counselor multiplayer target-selection fixture and aligned the native
+  replay projection with nearest-player selection, including deterministic
+  entity-id tie-breaking and the authored adjacent delay state.
+
 - Replay object-interaction fixtures now declare their authored quest link
   explicitly, keeping object-quest timelines valid after inert-object command
   admission was hardened; native and managed runners now apply the same linked

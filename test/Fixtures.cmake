@@ -110,6 +110,7 @@ set(devilutionx_fixtures
   replay/gameplay-charged-bolt-pvp.json
   replay/gameplay-charged-bolt-resolution.json
   replay/gameplay-charged-bolt.json
+  replay/gameplay-counselor-multiplayer-target.json
   replay/gameplay-elemental-arrows.json
   replay/gameplay-elemental-equipment.json
   replay/gameplay-fireball-hellfire-block.json

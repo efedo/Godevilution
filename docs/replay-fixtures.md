@@ -246,8 +246,9 @@ The Bat retreat, Fat movement, and Zombie action fixture families likewise load
 their
 native AI tuning from the hash-checked `bat-retreat`, `fat-movement`, and
 `zombie-action` content packs.
-The Rhino charge fixtures, the SkeletonMelee target fixture, the Snake charge
-target fixture, and all three Scavenger corpse-healing fixtures load
+The Counselor target fixture, Rhino charge fixtures, the SkeletonMelee target
+fixture, the Snake charge target fixture, and all three Scavenger corpse-healing
+fixtures load
 their native charge, movement, delay, and healing tuples from the hash-checked
 `rhino-charge` and `scavenger-corpse` content packs.
 The Sneak conceal/reveal fixtures, including the multiplayer target fixture,
@@ -388,7 +389,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 181 checked-in JSON fixtures and 200 registered
+the native replay gate contains 182 checked-in JSON fixtures and 201 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -407,8 +408,9 @@ occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
 tick, GoatMelee and Gargoyle nearest-participant autonomous movement,
 SkeletonMelee movement-delay admission/countdown, and failed adjacent-
-attack admission/countdown. SkeletonMelee nearest-participant adjacent attack,
-Snake nearest-participant charge routing, Rhino charge admission,
+attack admission/countdown. Counselor nearest-participant delay selection,
+SkeletonMelee nearest-participant adjacent attack, Snake nearest-participant
+charge routing, Rhino charge admission,
 nearest-participant
 selection, special damage, and
 knockback are also covered in both runners. Snake distant-delay and failed
@@ -459,8 +461,9 @@ idle-band lifecycle, an admitted RandomWalk destination with participant and
 active-object occupancy checks, and far-distance Move-goal admission with
 persisted goal ticks, turn state, RoundWalk destination, and next-tick
 continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
-attack admission/countdown lifecycles, SkeletonMelee nearest-participant
-adjacent attack, Snake nearest-participant charge routing, Rhino charge admission,
+attack admission/countdown lifecycles, Counselor nearest-participant delay
+selection, SkeletonMelee nearest-participant adjacent attack, Snake
+nearest-participant charge routing, Rhino charge admission,
 nearest-
 participant selection, special damage, relocation, and player knockback, and
 Snake distant-delay and failed
@@ -918,6 +921,9 @@ Notable shared fixtures include:
   adjacent attack admission, secondary damage, and farther-primary preservation;
 - `gameplay-snake-multiplayer-target.json` for nearest-participant charge
   routing through projectile travel/removal and farther-primary preservation;
+- `gameplay-counselor-multiplayer-target.json` for nearest-participant selection,
+  entity-id tie-breaking, adjacent delay admission, and farther-primary
+  preservation;
 - `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
   corpse scan order, first-candidate selection, deterministic movement, and
   selected-corpse checkpoint parity;
@@ -1083,10 +1089,10 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
-current SkeletonMelee, Snake, Sneak, Bat, Fat, Zombie, Rhino, Scavenger, and
-Gargoyle admission lanes,
+current Counselor, SkeletonMelee, Snake, Sneak, Bat, Fat, Zombie, Rhino,
+Scavenger, and Gargoyle admission lanes,
 multi-actor target selection beyond the current Bat, Fat, GoatMelee, Gargoyle,
-Rhino, SkeletonMelee, Snake, Sneak, Zombie, and projectile lanes,
+Counselor, Rhino, SkeletonMelee, Snake, Sneak, Zombie, and projectile lanes,
 mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup

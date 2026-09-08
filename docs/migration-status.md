@@ -52,6 +52,10 @@ Snake charge now has the same two-participant replay coverage. The nearer
 secondary owns the charge projectile and its full travel/removal timeline while
 the farther primary remains unchanged; both runners preserve the final state.
 
+Counselor now has two-participant replay coverage. The native and managed paths
+select the nearest eligible player with entity-id tie-breaking, preserve the
+farther primary, and agree on the adjacent delay checkpoint.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

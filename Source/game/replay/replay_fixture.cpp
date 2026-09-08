@@ -7046,9 +7046,24 @@ void AdvanceReplayMonsterAttack(
 			return;
 		}
 		static_cast<void>(GenerateRnd(state, 100));
-		const bool counselorPrimary = primaryAlive;
+		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+		const int primaryDistance = primaryAlive
+		    ? std::max(
+		          std::abs(state.positionX - state.combatTargetPositionX),
+		          std::abs(state.positionY - state.combatTargetPositionY))
+		    : std::numeric_limits<int>::max();
+		const int secondaryDistance = secondaryAlive
+		    ? std::max(
+		          std::abs(state.secondaryPlayerPositionX - state.combatTargetPositionX),
+		          std::abs(state.secondaryPlayerPositionY - state.combatTargetPositionY))
+		    : std::numeric_limits<int>::max();
+		const bool counselorPrimary = primaryAlive
+		    && (!secondaryAlive
+		        || primaryDistance < secondaryDistance
+		        || (primaryDistance == secondaryDistance
+		            && primaryEntityId < state.secondaryPlayerEntityId));
 		const uint32_t victimEntityId = counselorPrimary
-		    ? (state.entityId == 0 ? 1U : state.entityId)
+		    ? primaryEntityId
 		    : state.secondaryPlayerEntityId;
 		const int32_t victimX = counselorPrimary
 		    ? state.positionX

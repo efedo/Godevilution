@@ -3309,6 +3309,33 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void CounselorMultiplayerTargetSelectionMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-counselor-multiplayer-target.json");
+        var executor = CreateCounselorExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal((8, 0), (primary.PositionX, primary.PositionY));
+        Assert.Equal(100, secondary.Life);
+        Assert.Equal((1, 0), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal((0, 0), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(8, monster.CounselorDelayTicks);
+        Assert.Equal(0, monster.CounselorRetreatTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerSecondaryItemPickupMatchesNativeParticipantHash()
     {
         var path = Path.Combine(
