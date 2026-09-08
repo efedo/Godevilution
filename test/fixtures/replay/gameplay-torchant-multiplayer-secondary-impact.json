@@ -1,0 +1,80 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/torchant-multiplayer-secondary-impact",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-fireball",
+    "version": "0.1.0",
+    "sha256": "2aa9f8cca3d915be5a0862c786a6bf0c48ea22e89f7325f97085038b8caaf8c2"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 0,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "magic": 100,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 5,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Torchant",
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "spell_id": 12,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 4,
+      "damage_type": 1,
+      "remaining_ticks": 2,
+      "behavior": 16,
+      "phase": 0,
+      "speed": 0,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "a112bf6f77d9d3c900514b1489a6d59afec54840eb1048197b4b9abff8e90ab7" },
+    { "tick": 2, "state_sha256": "1efba8b6b47a3cbfc0d6999b7e5cf3686e8f6c50fff43b8d7d7431397397916c" }
+  ]
+}

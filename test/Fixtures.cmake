@@ -108,6 +108,7 @@ set(devilutionx_fixtures
   replay/gameplay-blood-star-lazarus-succubus-multiplayer-target.json
   replay/gameplay-fire-bat-multiplayer-target.json
   replay/gameplay-fire-bat-multiplayer-secondary-impact.json
+  replay/gameplay-torchant-multiplayer-secondary-impact.json
   replay/gameplay-torchant-multiplayer-target.json
   replay/gameplay-magma-multiplayer-target.json
   replay/gameplay-magma-multiplayer-secondary-impact.json

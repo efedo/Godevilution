@@ -34,6 +34,9 @@ All notable changes to this fork are documented below.
   fixtures. Native and managed replay now agree on the two-tick impact/removal
   lifecycle, shifted Q6 damage, and preservation of the primary player's dead
   state for both authored monster projectile families.
+- Added the Torchant Fireball multiplayer secondary-impact fixture and aligned
+  the compact native replay with the managed distance-based monster-magic hit
+  admission, Q6 damage, collision marker, and impact/removal lifecycle.
 - Added a validated Torchant Fireball missile mapping and multiplayer replay
   coverage for nearest-secondary target selection and projectile travel parity.
 - Added a validated Magma MagmaBall mapping and Hellfire multiplayer replay

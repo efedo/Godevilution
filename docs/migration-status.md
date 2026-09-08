@@ -22,9 +22,10 @@ secondary participant and preserve the monster-owned Firebolt travel state.
 FireBat Firebolt and Magma MagmaBall now also have seeded multiplayer
 secondary-impact fixtures. Native and managed runners agree on the impact
 damage, projectile removal, and preserved primary-player terminal state. The
-remaining Torchant Fireball multiplayer explosion amount is intentionally left
-as a follow-up parity investigation; its native compact replay and managed
-authoritative paths currently apply different player damage amounts.
+Torchant Fireball now has the same seeded secondary-impact coverage. Native and
+managed runners agree on the authoritative distance-based hit admission, full
+Q6 damage, impact-phase collision marker, projectile removal, and preserved
+primary-player terminal state.
 
 Torchant now has a validated external Fireball missile mapping and a two-
 participant replay lane. Native and managed runners select the nearer

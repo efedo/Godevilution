@@ -6776,6 +6776,7 @@ public sealed class ReplayFixtureTests
 
     [Theory]
     [InlineData("gameplay-fire-bat-multiplayer-secondary-impact.json", "monster-firebolt", 2, 1U, 1, 6144)]
+    [InlineData("gameplay-torchant-multiplayer-secondary-impact.json", "monster-fireball", 16, 12U, 1, 6144)]
     [InlineData("gameplay-magma-multiplayer-secondary-impact.json", "monster-magma", 50, 1U, 1, 6144)]
     public void MonsterProjectileSecondaryImpactsMatchNativeLifecycle(
         string fixtureName,
@@ -6843,6 +6844,9 @@ public sealed class ReplayFixtureTests
             initial.Life,
             initial.Mana,
             startingLifeMaximum: initial.LifeMaximum,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
@@ -6850,7 +6854,7 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingProjectiles: startingProjectiles,
             startingMonsterMissiles: LoadReplayMonsterMissiles(fixture, missileId),
-            startingCombatRules: missileId == "monster-magma"
+            startingCombatRules: missileId is "monster-fireball" or "monster-magma"
                 ? new AuthoritativeCombatRules(10, 1, 100, gameVariant: fixture.GameVariant)
                 : null,
             startingRandomSeed: checked((uint)fixture.RngSeed),
