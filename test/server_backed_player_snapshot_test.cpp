@@ -23,6 +23,7 @@
 #include "tables/playerdat.hpp"
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
+#include "ui/minitext.h"
 #include "ui/automap.h"
 
 namespace devilution::authoritative {
@@ -470,6 +471,22 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources
 	EXPECT_EQ(player.life.current, 70);
 	EXPECT_EQ(player._pExperience, 40U);
 	EXPECT_EQ(player.pDiabloKillLevel, 3U);
+}
+
+TEST(ServerBackedPlayerSnapshot, UsesServerOwnedDialogueTextBeforeLegacySpeechIdentity)
+{
+	Player player;
+	qtextflag = false;
+	protocol::EventBatch events;
+	auto *dialogue = events.add_events()->mutable_dialogue();
+	dialogue->set_source_entity_id(7);
+	dialogue->set_message_id(0);
+	dialogue->set_text("The server owns this greeting.");
+
+	ApplyServerBackedEventBatch(player, events, 7);
+
+	EXPECT_TRUE(qtextflag);
+	qtextflag = false;
 }
 
 TEST(ServerBackedPlayerSnapshot, CapsAuthoritativeHealingBeforeProjectingFeedback)

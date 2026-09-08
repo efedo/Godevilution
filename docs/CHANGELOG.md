@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extended native compatibility presentation to consume server-owned localized
+  dialogue text when supplied by `DialogueEvent`, retaining the legacy message
+  catalog only for ID-only peers. Vendor/service greetings can now cross the
+  server/content boundary without local text lookup.
 - Hardened the Godot reconnect epoch boundary: transient event batches are now
   ignored until the first validated snapshot of the new server epoch, preventing
   delayed events from the prior transport stream from entering presentation

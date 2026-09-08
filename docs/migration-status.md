@@ -14,6 +14,12 @@ the first validated snapshot of the new epoch arrives. Events resume normally
 after that snapshot, while command-result state remains available for retry and
 feedback.
 
+The native compatibility bridge now consumes server-owned localized dialogue
+text when a `DialogueEvent` carries it, while retaining message-ID lookup for
+older ID-only peers. General vendor/service greeting presentation therefore no
+longer requires the local native text catalog when the active content pack
+provides the message.
+
 The replay gate now covers the validated Acid projectile lifecycle across the
 native and managed runners. A seeded initial Acid missile expires into its
 splat, shifts into the authored one-tile puddle, enters impact, and expires

@@ -1530,10 +1530,13 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			doom_init();
 		}
 		if (event.has_dialogue()
-		    && event.dialogue().source_entity_id() == entityId
-		    && event.dialogue().message_id() >= 0
-		    && static_cast<std::size_t>(event.dialogue().message_id()) < Speeches.size()) {
-			InitQTextMsg(static_cast<_speech_id>(event.dialogue().message_id()));
+		    && event.dialogue().source_entity_id() == entityId) {
+			if (!event.dialogue().text().empty()) {
+				InitQTextMsgText(event.dialogue().text());
+			} else if (event.dialogue().message_id() >= 0
+			           && static_cast<std::size_t>(event.dialogue().message_id()) < Speeches.size()) {
+				InitQTextMsg(static_cast<_speech_id>(event.dialogue().message_id()));
+			}
 		}
 	}
 }

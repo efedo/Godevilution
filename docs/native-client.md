@@ -430,10 +430,11 @@ explicit migration seams, not server-authority claims:
   externalizing those remaining map mutations.
 - General vendor/service greetings now submit `TalkToTownerRequested`; the
   server validates the content-owned position and emits the native message
-  identity before the client opens its presentation menu. Store transactions
-  remain server commands where a store service is declared. Greeting text
-  still resolves through the native text catalog until localized presentation
-  content is externalized.
+  identity before the client opens its presentation menu. When the server
+  supplies localized `DialogueEvent.text`, the native compatibility client now
+  presents that text directly; ID-only snapshots and older peers retain the
+  native text-catalog fallback. Store transactions remain server commands where
+  a store service is declared.
   The Godot client now discovers the same positions from the authoritative
   snapshot and queues the command after reaching the selected towner.
 

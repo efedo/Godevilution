@@ -5,6 +5,8 @@
  */
 #pragma once
 
+#include <string_view>
+
 #include "engine/gfx/surface.hpp"
 #include "tables/textdat.h"
 #include "utils/attributes.h"
@@ -29,6 +31,9 @@ void InitQuestText();
  * @param m Index of narration from the Texts table
  */
 void InitQTextMsg(_speech_id m);
+
+/** Start server-owned localized narration without requiring a local speech ID. */
+void InitQTextMsgText(std::string_view text);
 
 /**
  * @brief Draw the quest dialog window decoration and background.

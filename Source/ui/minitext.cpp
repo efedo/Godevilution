@@ -67,7 +67,7 @@ uint32_t CalculateTextSpeed(SfxID nSFX)
 	const auto numLines = static_cast<uint32_t>(TextLines.size());
 
 #ifndef NOSOUND
-	uint32_t sfxFrames = GetSFXLength(nSFX);
+	uint32_t sfxFrames = nSFX == SfxID::None ? numLines * 3000 : GetSFXLength(nSFX);
 #else
 	// Sound is disabled -- estimate length from the number of lines.
 	uint32_t sfxFrames = numLines * 3000;
@@ -170,6 +170,17 @@ void InitQTextMsg(_speech_id m)
 		ScrollStart = GetMillisecondsSinceStartup();
 	}
 	PlaySFX(sfxnr);
+}
+
+void InitQTextMsgText(std::string_view text)
+{
+	if (text.empty())
+		return;
+	QuestLogIsOpen = false;
+	LoadText(text);
+	qtextflag = true;
+	qtextSpd = CalculateTextSpeed(SfxID::None);
+	ScrollStart = GetMillisecondsSinceStartup();
 }
 
 void DrawQTextBack(const Surface &out)
