@@ -8110,6 +8110,66 @@ void AdvanceReplayMonsterAttack(
 		}
 		return;
 	}
+	// Compact the native SkeletonKing RoundWalk admission. The managed Leoric
+	// controller turns toward the nearest participant, admits RoundWalk from
+	// the compatibility action seed, and checks its 90/45/straight candidates
+	// before the opposite-direction fallback.
+	if (state.combatTargetNativeAi == "SkeletonKing" && distance > 1) {
+		const uint32_t actionSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int movementChance = std::min(
+		    100,
+		    25 + state.combatTargetIntelligence);
+		if (static_cast<int>(actionSeed % 100U) >= movementChance)
+			return;
+		if (distance < 3 || (actionSeed / 100U) % 4U != 0U)
+			return;
+		const int direction = GetDirection(
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
+		    victim.positionX,
+		    victim.positionY);
+		const int turn = (actionSeed / 100U) % 2U == 0U ? 1 : -1;
+		const int turn45 = (direction + turn + 8) % 8;
+		const int turn90 = (turn45 + turn + 8) % 8;
+		const int fallbackDirection = (turn90 + 4) % 8;
+		const int fallbackTurn = (actionSeed / 200U) % 2U == 0U ? 1 : -1;
+		const int candidateDirections[] = {
+			turn90,
+			turn45,
+			direction,
+			(fallbackDirection + fallbackTurn + 8) % 8,
+			(fallbackDirection - fallbackTurn + 8) % 8,
+			(fallbackDirection + 2 + 8) % 8,
+			(fallbackDirection - 2 + 8) % 8,
+		};
+		for (const int candidateDirection : candidateDirections) {
+			const auto displacement = DirectionDisplacements[candidateDirection];
+			const int candidateX = state.combatTargetPositionX + displacement.first;
+			const int candidateY = state.combatTargetPositionY + displacement.second;
+			if (candidateX < 0 || candidateX >= 40
+			    || candidateY < 0 || candidateY >= 40
+			    || (candidateX == state.positionX && candidateY == state.positionY)
+			    || (state.secondaryPlayerEntityId != 0
+			        && candidateX == state.secondaryPlayerPositionX
+			        && candidateY == state.secondaryPlayerPositionY)
+			    || (state.objectEntityId != 0
+			        && !state.objectActivated
+			        && !state.objectDestroyed
+			        && !state.objectMissilePassable
+			        && state.objectLevelId == state.combatTargetLevelId
+			        && candidateX == state.objectPositionX
+			        && candidateY == state.objectPositionY))
+				continue;
+			state.combatTargetMoving = true;
+			state.combatTargetFuturePositionX = candidateX;
+			state.combatTargetFuturePositionY = candidateY;
+			state.combatTargetDirection = candidateDirection;
+			break;
+		}
+		return;
+	}
 	if (distance > 1 && state.combatTargetNativeAi != "Rhino") {
 		const int32_t differenceX = victim.positionX - state.combatTargetPositionX;
 		const int32_t differenceY = victim.positionY - state.combatTargetPositionY;
