@@ -35,6 +35,8 @@ internal static class DiabloProtocolMapper
     private const int MinimumNativeOptionalQuestByte = AuthoritativeProtocolLimits.MinimumNativeOptionalQuestByte;
     private const int MinimumNativeRewardOffset = AuthoritativeProtocolLimits.MinimumNativeRewardOffset;
     private const int MaximumNativeRewardOffset = AuthoritativeProtocolLimits.MaximumNativeRewardOffset;
+    private const int MinimumNativeObjectOffset = AuthoritativeProtocolLimits.MinimumNativeObjectOffset;
+    private const int MaximumNativeObjectOffset = AuthoritativeProtocolLimits.MaximumNativeObjectOffset;
     private const uint MaximumNativeCharacterLevel = AuthoritativeProtocolLimits.MaximumNativeCharacterLevel;
     private const int MinimumNativeLightRadius = AuthoritativeProtocolLimits.MinimumNativeLightRadius;
     private const int MaximumNativeLightRadius = AuthoritativeProtocolLimits.MaximumNativeLightRadius;
@@ -654,15 +656,15 @@ internal static class DiabloProtocolMapper
                 || @object.RewardOriginKind == AuthoritativeObjectRewardOriginKind.SetLevelOrigin
                     && @object.RewardSetLevelId is < 0 or > AuthoritativeProtocolLimits.MaximumNativeSetLevelId
                 || !rewardValid
-                || @object.ProjectileTargetOffsetX is < -32 or > 32
-                || @object.ProjectileTargetOffsetY is < -32 or > 32
+                || @object.ProjectileTargetOffsetX is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
+                || @object.ProjectileTargetOffsetY is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
                 || !producesProjectile
                     && (@object.ProjectileTargetOffsetX != 0
                         || @object.ProjectileTargetOffsetY != 0)
                 || followUpKind is < AuthoritativeQuestSequenceFollowUpKind.None
                     or > AuthoritativeQuestSequenceFollowUpKind.SpawnNativeMonster
-                || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
-                || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
+                || @object.QuestSequenceFollowUpOffsetX is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
+                || @object.QuestSequenceFollowUpOffsetY is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
                 || !followUpValid
                 || @object.ProjectileSourceKind is < AuthoritativeObjectProjectileSourceKind.Object
                     or > AuthoritativeObjectProjectileSourceKind.ActivatingPlayer

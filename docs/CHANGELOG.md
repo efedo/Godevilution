@@ -30,6 +30,8 @@ All notable changes to this fork are documented below.
 - Quest/towner byte fields, optional-value sentinels, and authored reward
   offsets now use named shared protocol limits across managed, Godot, and native
   snapshot boundaries.
+- Authored object projectile and quest-follow-up offsets now use named shared
+  native object-offset limits across all snapshot validation boundaries.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

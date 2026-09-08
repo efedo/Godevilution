@@ -45,6 +45,10 @@ Quest/towner byte fields, optional-value sentinels, and authored reward
 offsets now use named shared protocol limits across managed validation, Diablo
 mapping, Godot validation, and native snapshot projection.
 
+Authored object projectile and quest-follow-up offsets now use the same named
+native object-offset limits across managed validation, Diablo mapping, Godot
+validation, and native snapshot projection.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

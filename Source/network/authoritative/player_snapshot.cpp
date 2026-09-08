@@ -709,12 +709,12 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    || source.reward_offset_x() < MinimumNativeRewardOffset || source.reward_offset_x() > MaximumNativeRewardOffset
 		    || source.reward_offset_y() < MinimumNativeRewardOffset || source.reward_offset_y() > MaximumNativeRewardOffset
 		    || !rewardValid
-		    || source.projectile_target_offset_x() < -32 || source.projectile_target_offset_x() > 32
-		    || source.projectile_target_offset_y() < -32 || source.projectile_target_offset_y() > 32
+		    || source.projectile_target_offset_x() < MinimumNativeObjectOffset || source.projectile_target_offset_x() > MaximumNativeObjectOffset
+		    || source.projectile_target_offset_y() < MinimumNativeObjectOffset || source.projectile_target_offset_y() > MaximumNativeObjectOffset
 		    || (!producesProjectile && (source.projectile_target_offset_x() != 0 || source.projectile_target_offset_y() != 0))
 		    || source.quest_sequence_follow_up_kind() < 0 || source.quest_sequence_follow_up_kind() > MaximumObjectQuestSequenceFollowUpKind
-		    || source.quest_sequence_follow_up_offset_x() < -32 || source.quest_sequence_follow_up_offset_x() > 32
-		    || source.quest_sequence_follow_up_offset_y() < -32 || source.quest_sequence_follow_up_offset_y() > 32
+		    || source.quest_sequence_follow_up_offset_x() < MinimumNativeObjectOffset || source.quest_sequence_follow_up_offset_x() > MaximumNativeObjectOffset
+		    || source.quest_sequence_follow_up_offset_y() < MinimumNativeObjectOffset || source.quest_sequence_follow_up_offset_y() > MaximumNativeObjectOffset
 		    || !followUpValid
 		    || source.projectile_source_kind() < 0 || source.projectile_source_kind() > MaximumObjectProjectileSourceKind
 		    || (!producesProjectile && source.projectile_source_kind() != 0))

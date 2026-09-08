@@ -41,6 +41,8 @@ public static class AuthoritativeSnapshotValidator
     private const int MinimumNativeOptionalQuestByte = AuthoritativeProtocolLimits.MinimumNativeOptionalQuestByte;
     private const int MinimumNativeRewardOffset = AuthoritativeProtocolLimits.MinimumNativeRewardOffset;
     private const int MaximumNativeRewardOffset = AuthoritativeProtocolLimits.MaximumNativeRewardOffset;
+    private const int MinimumNativeObjectOffset = AuthoritativeProtocolLimits.MinimumNativeObjectOffset;
+    private const int MaximumNativeObjectOffset = AuthoritativeProtocolLimits.MaximumNativeObjectOffset;
     private const uint MaximumNativeObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
@@ -728,14 +730,14 @@ public static class AuthoritativeSnapshotValidator
                 || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
                 || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > MaximumNativeSetLevelId
                 || !rewardValid
-                || @object.ProjectileTargetOffsetX is < -32 or > 32
-                || @object.ProjectileTargetOffsetY is < -32 or > 32
+                || @object.ProjectileTargetOffsetX is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
+                || @object.ProjectileTargetOffsetY is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
                 || !producesProjectile
                     && (@object.ProjectileTargetOffsetX != 0
                         || @object.ProjectileTargetOffsetY != 0)
                 || followUpKind is < 0 or > MaximumObjectQuestSequenceFollowUpKind
-                || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
-                || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
+                || @object.QuestSequenceFollowUpOffsetX is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
+                || @object.QuestSequenceFollowUpOffsetY is < MinimumNativeObjectOffset or > MaximumNativeObjectOffset
                 || !followUpValid
                 || @object.ProjectileSourceKind is < 0 or > MaximumObjectProjectileSourceKind
                 || !producesProjectile && @object.ProjectileSourceKind != 0
