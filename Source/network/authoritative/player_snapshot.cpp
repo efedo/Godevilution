@@ -33,10 +33,10 @@ namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
 namespace {
 
-constexpr uint32_t StashPageCount = 100;
-constexpr uint32_t StashCellCount = 100;
-constexpr uint32_t StashGridWidth = 10;
-constexpr uint32_t StashGridHeight = 10;
+constexpr uint32_t StashPageCount = NativeStashPageCount;
+constexpr uint32_t StashCellCount = NativeStashCellCount;
+constexpr uint32_t StashGridWidth = NativeStashGridWidth;
+constexpr uint32_t StashGridHeight = NativeStashGridHeight;
 constexpr int MaxWorldMutationCount = static_cast<int>(MaximumWorldMutationCount);
 
 bool HasValidItemIdentity(uint32_t itemSeed, const protocol::ItemStateSnapshot &state)

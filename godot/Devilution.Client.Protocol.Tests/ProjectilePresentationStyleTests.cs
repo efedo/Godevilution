@@ -78,6 +78,10 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(40, AuthoritativeProtocolLimits.NativeMaximumInventoryGridCount);
         Assert.Equal(10, AuthoritativeProtocolLimits.NativeInventoryWidth);
         Assert.Equal(4, AuthoritativeProtocolLimits.NativeInventoryHeight);
+        Assert.Equal(100, AuthoritativeProtocolLimits.NativeStashPageCount);
+        Assert.Equal(100, AuthoritativeProtocolLimits.NativeStashCellCount);
+        Assert.Equal(10, AuthoritativeProtocolLimits.NativeStashGridWidth);
+        Assert.Equal(10, AuthoritativeProtocolLimits.NativeStashGridHeight);
         Assert.Equal(200, AuthoritativeProtocolLimits.NativeMaximumMonsterCount);
         Assert.Equal(127, AuthoritativeProtocolLimits.NativeMaximumObjectCount);
         Assert.Equal(127, AuthoritativeProtocolLimits.NativeMaximumItemCount);

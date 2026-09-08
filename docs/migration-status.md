@@ -28,6 +28,11 @@ Fallen-rally timing, monster resistance, directional presentation, and native
 identity bounds now also consume named shared limits at the Diablo mapper,
 managed/Godot validation, and native projection boundaries.
 
+Native-compatible stash page, cell, and 10x10 geometry limits now consume the
+same named protocol contract in the C# host/Godot models and native snapshot,
+runtime, and UI projection paths; the dependency-free Diablo domain retains
+its independent stash-layout helper to preserve assembly boundaries.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

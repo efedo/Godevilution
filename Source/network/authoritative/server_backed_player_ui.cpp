@@ -40,7 +40,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
 	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX) || snapshot.statPoints > static_cast<uint32_t>(INT_MAX) || snapshot.reflectCharges > UINT16_MAX)
 		return tl::make_unexpected("Server-backed player resources are outside the native range.");
-	if (snapshot.stashGold > static_cast<uint32_t>(INT_MAX) || snapshot.stash.size() > 10000)
+	if (snapshot.stashGold > static_cast<uint32_t>(INT_MAX)
+	    || snapshot.stash.size() > NativeStashPageCount * NativeStashCellCount)
 		return tl::make_unexpected("Server-backed stash resources are outside the native range.");
 	if (snapshot.diabloKillLevel > UINT8_MAX)
 		return tl::make_unexpected("Server-backed player rank is outside the native range.");
@@ -187,24 +188,24 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    || !equipmentSlots.insert(equipment.slot).second)
 			return tl::make_unexpected("Server-backed equipment contains a duplicate or invalid slot.");
 	}
-	std::array<bool, 100 * 100> occupied { };
+	std::array<bool, NativeStashPageCount * NativeStashCellCount> occupied { };
 	for (const auto &stashItem : snapshot.stash) {
-		if (stashItem.page >= 100 || stashItem.cell >= 100
+		if (stashItem.page >= NativeStashPageCount || stashItem.cell >= NativeStashCellCount
 		    || stashItem.width == 0 || stashItem.height == 0
 		    || !IsValidSpellTargetingKind(stashItem.spellTargetingKind)
 		    || stashItem.price > static_cast<uint32_t>(INT_MAX)
 		    || !hasUniqueItemSeed(stashItem.itemSeed)
 		    || !HasValidProjectedItemIdentity(stashItem.itemSeed, stashItem.item)
-		    || stashItem.width > 10 || stashItem.height > 10
-		    || stashItem.cell % 10 + stashItem.width > 10
-		    || stashItem.cell / 10 + stashItem.height > 10) {
+		    || stashItem.width > NativeStashGridWidth || stashItem.height > NativeStashGridHeight
+		    || stashItem.cell % NativeStashGridWidth + stashItem.width > NativeStashGridWidth
+		    || stashItem.cell / NativeStashGridWidth + stashItem.height > NativeStashGridHeight) {
 			return tl::make_unexpected("Server-backed stash contains an invalid item footprint.");
 		}
 		for (uint32_t y = 0; y < stashItem.height; ++y) {
 			for (uint32_t x = 0; x < stashItem.width; ++x) {
-				const std::size_t index = static_cast<std::size_t>(stashItem.page) * 100
-				    + static_cast<std::size_t>(stashItem.cell / 10 + y) * 10
-				    + stashItem.cell % 10 + x;
+				const std::size_t index = static_cast<std::size_t>(stashItem.page) * NativeStashCellCount
+				    + static_cast<std::size_t>(stashItem.cell / NativeStashGridWidth + y) * NativeStashGridWidth
+				    + stashItem.cell % NativeStashGridWidth + x;
 				if (occupied[index])
 					return tl::make_unexpected("Server-backed stash contains overlapping items.");
 				occupied[index] = true;
@@ -240,8 +241,8 @@ tl::expected<void, std::string> ApplyServerBackedStashProjection(const Projected
 	Stash.dirty = false;
 	for (const auto &stashItem : snapshot.stash) {
 		Item item = stashItem.item;
-		const unsigned column = stashItem.cell % 10;
-		const unsigned row = stashItem.cell / 10;
+		const unsigned column = stashItem.cell % NativeStashGridWidth;
+		const unsigned row = stashItem.cell / NativeStashGridWidth;
 		item.position = { static_cast<int>(column), static_cast<int>(row + stashItem.height - 1) };
 		const auto stashIndex = static_cast<StashStruct::StashCell>(Stash.stashList.size());
 		Stash.stashList.push_back(std::move(item));

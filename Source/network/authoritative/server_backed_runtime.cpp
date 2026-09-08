@@ -3,6 +3,7 @@
 #include <array>
 
 #include "network/authoritative/server_backed_player_ui.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 #include "network/protocol/multi.h"
 #include "engine/cursor.h"
 #include <algorithm>
@@ -971,16 +972,16 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenc
 
 std::optional<ServerBackedItemReference> ServerBackedRuntime::StashItemReferenceAt(uint32_t page, uint32_t cell) const noexcept
 {
-	if (!session_ || page >= 100 || cell >= 100)
+	if (!session_ || page >= NativeStashPageCount || cell >= NativeStashCellCount)
 		return std::nullopt;
 	const auto *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return std::nullopt;
-	const uint32_t targetColumn = cell % 10;
-	const uint32_t targetRow = cell / 10;
+	const uint32_t targetColumn = cell % NativeStashGridWidth;
+	const uint32_t targetRow = cell / NativeStashGridWidth;
 	for (const auto &stashItem : snapshot->stash) {
-		const uint32_t itemColumn = stashItem.cell % 10;
-		const uint32_t itemRow = stashItem.cell / 10;
+		const uint32_t itemColumn = stashItem.cell % NativeStashGridWidth;
+		const uint32_t itemRow = stashItem.cell / NativeStashGridWidth;
 		if (stashItem.page == page
 		    && targetColumn >= itemColumn
 		    && targetColumn < itemColumn + stashItem.width
@@ -998,30 +999,30 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::StashItemReference
 
 std::optional<ServerBackedItemReference> ServerBackedRuntime::FindStashPlacement(uint32_t width, uint32_t height, uint32_t preferredPage) const noexcept
 {
-	if (!session_ || width == 0 || height == 0 || width > 10 || height > 10 || preferredPage >= 100)
+	if (!session_ || width == 0 || height == 0 || width > NativeStashGridWidth || height > NativeStashGridHeight || preferredPage >= NativeStashPageCount)
 		return std::nullopt;
 	const auto *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return std::nullopt;
-	for (uint32_t pageOffset = 0; pageOffset < 100; ++pageOffset) {
-		const uint32_t page = (preferredPage + pageOffset) % 100;
-		std::array<bool, 100> occupied { };
+	for (uint32_t pageOffset = 0; pageOffset < NativeStashPageCount; ++pageOffset) {
+		const uint32_t page = (preferredPage + pageOffset) % NativeStashPageCount;
+		std::array<bool, NativeStashCellCount> occupied { };
 		for (const auto &stashItem : snapshot->stash) {
 			if (stashItem.page != page)
 				continue;
-			const uint32_t itemColumn = stashItem.cell % 10;
-			const uint32_t itemRow = stashItem.cell / 10;
+			const uint32_t itemColumn = stashItem.cell % NativeStashGridWidth;
+			const uint32_t itemRow = stashItem.cell / NativeStashGridWidth;
 			for (uint32_t y = 0; y < stashItem.height; ++y) {
 				for (uint32_t x = 0; x < stashItem.width; ++x)
-					occupied[(itemRow + y) * 10 + itemColumn + x] = true;
+					occupied[(itemRow + y) * NativeStashGridWidth + itemColumn + x] = true;
 			}
 		}
-		for (uint32_t row = 0; row + height <= 10; ++row) {
-			for (uint32_t column = 0; column + width <= 10; ++column) {
+		for (uint32_t row = 0; row + height <= NativeStashGridHeight; ++row) {
+			for (uint32_t column = 0; column + width <= NativeStashGridWidth; ++column) {
 				bool fits = true;
 				for (uint32_t y = 0; y < height && fits; ++y) {
 					for (uint32_t x = 0; x < width; ++x) {
-						if (occupied[(row + y) * 10 + column + x]) {
+						if (occupied[(row + y) * NativeStashGridWidth + column + x]) {
 							fits = false;
 							break;
 						}

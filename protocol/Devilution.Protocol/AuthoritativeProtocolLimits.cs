@@ -21,6 +21,10 @@ public static class AuthoritativeProtocolLimits
     public const int NativeMaximumInventoryGridCount = 40;
     public const int NativeInventoryWidth = 10;
     public const int NativeInventoryHeight = 4;
+    public const int NativeStashPageCount = 100;
+    public const int NativeStashCellCount = 100;
+    public const int NativeStashGridWidth = 10;
+    public const int NativeStashGridHeight = 10;
     public const int NativeMaximumMonsterCount = 200;
     public const int NativeMaximumObjectCount = 127;
     public const int NativeMaximumItemCount = 127;

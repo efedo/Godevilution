@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Client.Protocol;
@@ -5,10 +6,10 @@ namespace Devilution.Client.Protocol;
 /** Pure client projection of one server-owned native-compatible stash page. */
 public sealed class StashLayout
 {
-    public const int PageCount = 100;
-    public const int ColumnCount = 10;
-    public const int RowCount = 10;
-    public const int CellCount = ColumnCount * RowCount;
+    public const int PageCount = AuthoritativeProtocolLimits.NativeStashPageCount;
+    public const int ColumnCount = AuthoritativeProtocolLimits.NativeStashGridWidth;
+    public const int RowCount = AuthoritativeProtocolLimits.NativeStashGridHeight;
+    public const int CellCount = AuthoritativeProtocolLimits.NativeStashCellCount;
 
     private StashLayout(uint page, int[] occupants, int[] anchors)
     {

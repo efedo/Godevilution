@@ -16,6 +16,10 @@ public static class AuthoritativeSnapshotValidator
     private const int NativeMaximumInventoryGridCount = AuthoritativeProtocolLimits.NativeMaximumInventoryGridCount;
     private const int NativeInventoryWidth = AuthoritativeProtocolLimits.NativeInventoryWidth;
     private const int NativeInventoryHeight = AuthoritativeProtocolLimits.NativeInventoryHeight;
+    private const int NativeStashPageCount = AuthoritativeProtocolLimits.NativeStashPageCount;
+    private const int NativeStashCellCount = AuthoritativeProtocolLimits.NativeStashCellCount;
+    private const int NativeStashGridWidth = AuthoritativeProtocolLimits.NativeStashGridWidth;
+    private const int NativeStashGridHeight = AuthoritativeProtocolLimits.NativeStashGridHeight;
     private const int NativeMaximumMonsterCount = AuthoritativeProtocolLimits.NativeMaximumMonsterCount;
     private const int NativeMaximumObjectCount = AuthoritativeProtocolLimits.NativeMaximumObjectCount;
     private const int NativeMaximumItemCount = AuthoritativeProtocolLimits.NativeMaximumItemCount;
@@ -60,8 +64,6 @@ public static class AuthoritativeSnapshotValidator
     private const uint NativeMaximumDunObjectLayerId = AuthoritativeProtocolLimits.NativeMaximumDunObjectLayerId;
     private const uint NativeMaximumDunPieceId = AuthoritativeProtocolLimits.NativeMaximumDunPieceId;
     private const uint NativeMaximumQuestId = AuthoritativeProtocolLimits.NativeMaximumQuestId;
-    private const int NativeStashPageCount = 100;
-    private const int NativeStashCellCount = 100;
     private const int MaximumQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
     private const int MaximumQuestTownerInteractionCount = AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount;
     private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
@@ -517,13 +519,13 @@ public static class AuthoritativeSnapshotValidator
                         "The authoritative snapshot contains a stash item without state.");
                 var widthValue = Math.Max(1U, state.InventoryWidth);
                 var heightValue = Math.Max(1U, state.InventoryHeight);
-                var column = item.Cell % 10;
-                var row = item.Cell / 10;
+                var column = item.Cell % NativeStashGridWidth;
+                var row = item.Cell / NativeStashGridWidth;
                 if (item.Cell >= NativeStashCellCount
-                    || widthValue > 10
-                    || heightValue > 10
-                    || column + widthValue > 10
-                    || row + heightValue > 10) {
+                    || widthValue > NativeStashGridWidth
+                    || heightValue > NativeStashGridHeight
+                    || column + widthValue > NativeStashGridWidth
+                    || row + heightValue > NativeStashGridHeight) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid stash footprint.");
                 }
@@ -533,7 +535,7 @@ public static class AuthoritativeSnapshotValidator
                 var rowIndex = (int)row;
                 for (var y = 0; y < height; y++) {
                     for (var x = 0; x < width; x++) {
-                        var cell = (rowIndex + y) * 10 + columnIndex + x;
+                        var cell = (rowIndex + y) * NativeStashGridWidth + columnIndex + x;
                         if (occupied[cell])
                             throw new InvalidDataException(
                                 "The authoritative snapshot contains overlapping stash items.");
