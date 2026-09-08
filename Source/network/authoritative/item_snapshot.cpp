@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include "devilution.pb.h"
+#include "network/authoritative/protocol_limits.hpp"
 #include "tables/itemdat.h"
 #include "utils/string/utf8.hpp"
 
@@ -46,10 +47,10 @@ tl::expected<Item, std::string> ProjectNativeItem(const protocol::ItemStateSnaps
 	    || state.fire_max_damage() < state.fire_min_damage()
 	    || state.lightning_min_damage() < 0
 	    || state.lightning_max_damage() < state.lightning_min_damage()
-	    || static_cast<uint32_t>(state.presentation_kind()) > static_cast<uint32_t>(protocol::ITEM_PRESENTATION_KIND_EAR)
-	    || static_cast<uint32_t>(state.spell_source_kind()) > static_cast<uint32_t>(protocol::ITEM_SPELL_SOURCE_KIND_CONSUMABLE_ITEM)
-	    || static_cast<uint32_t>(state.item_action_kind()) > static_cast<uint32_t>(protocol::ITEM_ACTION_KIND_READ_QUEST_NOTE)
-	    || static_cast<uint32_t>(state.spell_targeting_kind()) > static_cast<uint32_t>(protocol::SPELL_TARGETING_KIND_WORLD_ENTITY)
+	    || static_cast<uint32_t>(state.presentation_kind()) > static_cast<uint32_t>(MaximumItemPresentationKind)
+	    || static_cast<uint32_t>(state.spell_source_kind()) > static_cast<uint32_t>(MaximumItemSpellSourceKind)
+	    || static_cast<uint32_t>(state.item_action_kind()) > static_cast<uint32_t>(MaximumItemActionKind)
+	    || static_cast<uint32_t>(state.spell_targeting_kind()) > static_cast<uint32_t>(MaximumSpellTargetingKind)
 	    || state.spell_display_name().find('\0') != std::string::npos) {
 		return tl::make_unexpected("Server-backed item contains invalid semantic state.");
 	}

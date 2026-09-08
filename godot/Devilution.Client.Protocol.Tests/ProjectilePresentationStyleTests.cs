@@ -3,6 +3,7 @@ using Devilution.Protocol.V1;
 using Devilution.Client.Protocol;
 using Xunit;
 using ProtocolProjectilePresentationKind = Devilution.Protocol.V1.ProjectilePresentationKind;
+using ProtocolItemPresentationKind = Devilution.Protocol.V1.ItemPresentationKind;
 
 namespace Devilution.Client.Protocol.Tests;
 
@@ -24,6 +25,18 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(
             (int)StatusEffectBehavior.Etherealize,
             AuthoritativeProtocolLimits.MaximumStatusEffectBehavior);
+        Assert.Equal(
+            (int)ProtocolItemPresentationKind.Ear,
+            AuthoritativeProtocolLimits.MaximumItemPresentationKind);
+        Assert.Equal(
+            (int)ItemSpellSourceKind.ConsumableItem,
+            AuthoritativeProtocolLimits.MaximumItemSpellSourceKind);
+        Assert.Equal(
+            (int)ItemActionKind.ReadQuestNote,
+            AuthoritativeProtocolLimits.MaximumItemActionKind);
+        Assert.Equal(
+            (int)SpellTargetingKind.WorldEntity,
+            AuthoritativeProtocolLimits.MaximumSpellTargetingKind);
         Assert.Equal(
             ProjectilePresentationKind.Fire,
             ProjectilePresentationStyle.Resolve(

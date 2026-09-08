@@ -141,6 +141,51 @@ enum class StatusEffectBehavior : int {
 	Etherealize = 3,
 };
 
+/** Server-owned item classification identities carried by item snapshots. */
+enum class ItemPresentationKind : int {
+	Unspecified = 0,
+	Generic = 1,
+	Gold = 2,
+	Ear = 3,
+};
+
+enum class ItemSpellSourceKind : int {
+	Unspecified = 0,
+	ChargedItem = 1,
+	ConsumableItem = 2,
+};
+
+enum class ItemActionKind : int {
+	Unspecified = 0,
+	Identify = 1,
+	ReadBook = 2,
+	RestorePartialLife = 3,
+	RestoreFullLife = 4,
+	RestorePartialMana = 5,
+	RestoreFullMana = 6,
+	RestorePartialLifeAndMana = 7,
+	RestoreFullLifeAndMana = 8,
+	IncreaseStrength = 9,
+	IncreaseMagic = 10,
+	IncreaseDexterity = 11,
+	IncreaseVitality = 12,
+	IncreaseAllAttributes = 13,
+	ApplyBlacksmithOil = 14,
+	ApplyAccuracyOil = 15,
+	ApplySharpnessOil = 16,
+	ApplyFortitudeOil = 17,
+	OpenCathedralMap = 18,
+	ReadQuestNote = 19,
+};
+
+enum class SpellTargetingKind : int {
+	Unspecified = 0,
+	Tile = 1,
+	Player = 2,
+	CombatEntity = 3,
+	WorldEntity = 4,
+};
+
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
@@ -148,5 +193,9 @@ inline constexpr int MaximumProjectileBehavior = static_cast<int>(ProjectileBeha
 inline constexpr int MaximumProjectilePresentationKind = static_cast<int>(ProjectilePresentationKind::NovaBall);
 inline constexpr int MaximumNativeProjectileVisual = static_cast<int>(NativeProjectileVisual::MonsterMagmaBall);
 inline constexpr int MaximumStatusEffectBehavior = static_cast<int>(StatusEffectBehavior::Etherealize);
+inline constexpr int MaximumItemPresentationKind = static_cast<int>(ItemPresentationKind::Ear);
+inline constexpr int MaximumItemSpellSourceKind = static_cast<int>(ItemSpellSourceKind::ConsumableItem);
+inline constexpr int MaximumItemActionKind = static_cast<int>(ItemActionKind::ReadQuestNote);
+inline constexpr int MaximumSpellTargetingKind = static_cast<int>(SpellTargetingKind::WorldEntity);
 
 } // namespace devilution::authoritative

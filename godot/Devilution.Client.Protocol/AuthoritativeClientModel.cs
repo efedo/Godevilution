@@ -40,6 +40,10 @@ public sealed class AuthoritativeClientModel
     private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
     private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
     private const int MaximumStatusEffectBehavior = AuthoritativeProtocolLimits.MaximumStatusEffectBehavior;
+    private const int MaximumItemPresentationKind = AuthoritativeProtocolLimits.MaximumItemPresentationKind;
+    private const int MaximumItemSpellSourceKind = AuthoritativeProtocolLimits.MaximumItemSpellSourceKind;
+    private const int MaximumItemActionKind = AuthoritativeProtocolLimits.MaximumItemActionKind;
+    private const int MaximumSpellTargetingKind = AuthoritativeProtocolLimits.MaximumSpellTargetingKind;
     private const int MaximumProjectilePhase = 1;
     private const int MaximumNativeMonsterDirection = 7;
     private const int MaximumNativeMonsterDeathAnimationTicks = 1024;
@@ -717,9 +721,13 @@ public sealed class AuthoritativeClientModel
             || state.LightningMinDamage < 0
             || state.LightningMaxDamage < state.LightningMinDamage
             || !IsNativeItemStateRepresentable(state)
+            || (int)state.PresentationKind is < 0 or > MaximumItemPresentationKind
             || !Enum.IsDefined(state.PresentationKind)
+            || (int)state.SpellSourceKind is < 0 or > MaximumItemSpellSourceKind
             || !Enum.IsDefined(state.SpellSourceKind)
+            || (int)state.ItemActionKind is < 0 or > MaximumItemActionKind
             || !Enum.IsDefined(state.ItemActionKind)
+            || (int)state.SpellTargetingKind is < 0 or > MaximumSpellTargetingKind
             || !Enum.IsDefined(state.SpellTargetingKind)
             || state.SpellDisplayName.Contains('\0')) {
             throw new InvalidDataException(

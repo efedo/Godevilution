@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Centralized the status-effect behavior bound across the protocol assembly,
   managed validators, and native player projection; the compatibility bridge no
   longer repeats the raw maximum.
+- Centralized item presentation, spell-source, item-action, and spell-targeting
+  bounds across the protocol assembly, managed item validation, and native item
+  projection, keeping server-owned item semantics aligned at the wire edge.
 - Applied the named projectile behavior identities across the server snapshot
   validator/hasher and native projection/presentation validators, removing the
   remaining raw behavior-number switches from the compatibility boundary.

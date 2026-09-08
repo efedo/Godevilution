@@ -871,6 +871,9 @@ native bridge consume those shared limits rather than duplicating wire bounds.
 The same protocol limit covers `StatusEffectSnapshot.behavior`; zero is the
 unspecified compatibility value and the shipped identities are Infravision,
 Search, and Etherealize.
+Item snapshots use the shared maxima for presentation kind, spell source kind,
+item action kind, and spell targeting kind; these bounds are protocol identities
+and are not inferred from native item IDs.
 `ProjectileSnapshot.native_visual` field 56 carries the exact native
 compatibility sprite identity for presentation-only rendering. A zero value
 retains the behavior-based fallback for older servers; an unknown nonzero value

@@ -16,6 +16,14 @@ public static class AuthoritativeProtocolLimits
         (int)NativeProjectileVisual.MonsterMagmaBall;
     public const int MaximumStatusEffectBehavior =
         (int)StatusEffectBehavior.Etherealize;
+    public const int MaximumItemPresentationKind =
+        (int)ItemPresentationKind.Ear;
+    public const int MaximumItemSpellSourceKind =
+        (int)ItemSpellSourceKind.ConsumableItem;
+    public const int MaximumItemActionKind =
+        (int)ItemActionKind.ReadQuestNote;
+    public const int MaximumSpellTargetingKind =
+        (int)SpellTargetingKind.WorldEntity;
 
     public static bool IsDialogueTextValid(string value)
     {
