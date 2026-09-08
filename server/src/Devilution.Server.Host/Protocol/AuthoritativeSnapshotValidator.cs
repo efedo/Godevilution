@@ -77,6 +77,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateQuests(snapshot);
         ValidateObjects(snapshot);
         ValidateQuestTownerInteractions(snapshot);
+        ValidateTownerGreetings(snapshot);
         ValidateLevelGeometry(snapshot);
         ValidateSetLevelObjectOrigins(snapshot);
         ValidateMaterializedProceduralLevels(snapshot);
@@ -614,6 +615,36 @@ public static class AuthoritativeSnapshotValidator
                     && interaction.Variable2 is < 0 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
+            }
+        }
+    }
+
+    private static void ValidateTownerGreetings(Snapshot snapshot)
+    {
+        if (snapshot.TownerGreetings.Count > AuthoritativeProtocolLimits.MaximumTownerGreetingCount)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many towner greetings.");
+
+        var levels = new Dictionary<uint, LevelGeometrySnapshot>();
+        foreach (var level in snapshot.LevelGeometry) {
+            if (!levels.TryAdd(level.LevelId, level))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate level geometry.");
+        }
+        var townerIds = new HashSet<int>();
+        foreach (var greeting in snapshot.TownerGreetings) {
+            if (greeting.TownerId is < 0 or > byte.MaxValue
+                || !townerIds.Add(greeting.TownerId)
+                || greeting.LevelId > ushort.MaxValue
+                || greeting.PositionX is < 0 or > byte.MaxValue
+                || greeting.PositionY is < 0 or > byte.MaxValue
+                || levels.Count > 0
+                    && (!levels.TryGetValue(greeting.LevelId, out var level)
+                        || level.Width > 0 && greeting.PositionX >= level.Width
+                        || level.Height > 0 && greeting.PositionY >= level.Height)
+                || greeting.MessageId is <= 0 or > short.MaxValue) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid towner greeting.");
             }
         }
     }

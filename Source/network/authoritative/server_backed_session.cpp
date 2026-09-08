@@ -545,6 +545,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 		return tl::make_unexpected(quests.error());
 	if (auto interactions = ValidateQuestTownerInteractions(snapshot); !interactions.has_value())
 		return tl::make_unexpected(interactions.error());
+	if (auto greetings = ValidateTownerGreetingSnapshots(snapshot); !greetings.has_value())
+		return tl::make_unexpected(greetings.error());
 	auto sessionMetadata = ProjectSessionMetadata(snapshot);
 	if (!sessionMetadata.has_value())
 		return tl::make_unexpected(sessionMetadata.error());

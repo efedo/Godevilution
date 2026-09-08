@@ -859,7 +859,7 @@ TEST(ServerBackedPlayerSnapshot, EnforcesNativeWorldItemPoolCapacityPerLevel)
 	overflow->set_item_seed(1000);
 	auto rejected = ProjectWorldItemSnapshots(snapshot);
 	ASSERT_FALSE(rejected.has_value());
-	EXPECT_NE(rejected.error().find("MAXITEMS"), std::string::npos);
+	EXPECT_NE(rejected.error().find("native world-item capacity"), std::string::npos);
 }
 
 TEST(ServerBackedPlayerSnapshot, EnforcesNativePortalPoolCapacity)
@@ -875,7 +875,7 @@ TEST(ServerBackedPlayerSnapshot, EnforcesNativePortalPoolCapacity)
 	snapshot.add_portals()->set_portal_id(MAXPORTAL + 1);
 	auto rejected = ProjectPortalSnapshots(snapshot);
 	ASSERT_FALSE(rejected.has_value());
-	EXPECT_NE(rejected.error().find("MAXPORTAL"), std::string::npos);
+	EXPECT_NE(rejected.error().find("native portal capacity"), std::string::npos);
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsZeroSeedPvpEarDynamicPresentation)
@@ -1482,6 +1482,43 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedQuestTownerInteractions)
 	interaction->set_allow_completed(true);
 	interaction->set_message_id(1);
 	EXPECT_TRUE(ValidateQuestTownerInteractions(completionAfterQuest).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedTownerGreetings)
+{
+	protocol::Snapshot duplicate;
+	for (const auto messageId : { 150, 151 }) {
+		auto *greeting = duplicate.add_towner_greetings();
+		greeting->set_towner_id(4);
+		greeting->set_message_id(messageId);
+	}
+	EXPECT_FALSE(ValidateTownerGreetingSnapshots(duplicate).has_value());
+
+	protocol::Snapshot invalidMessage;
+	auto *greeting = invalidMessage.add_towner_greetings();
+	greeting->set_towner_id(4);
+	EXPECT_FALSE(ValidateTownerGreetingSnapshots(invalidMessage).has_value());
+
+	protocol::Snapshot outsideGeometry;
+	auto *level = outsideGeometry.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(10);
+	level->set_height(10);
+	greeting = outsideGeometry.add_towner_greetings();
+	greeting->set_towner_id(4);
+	greeting->set_level_id(1);
+	greeting->set_position_x(10);
+	greeting->set_message_id(150);
+	EXPECT_FALSE(ValidateTownerGreetingSnapshots(outsideGeometry).has_value());
+
+	protocol::Snapshot valid;
+	greeting = valid.add_towner_greetings();
+	greeting->set_towner_id(4);
+	greeting->set_level_id(1);
+	greeting->set_position_x(2);
+	greeting->set_position_y(3);
+	greeting->set_message_id(150);
+	EXPECT_TRUE(ValidateTownerGreetingSnapshots(valid).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)

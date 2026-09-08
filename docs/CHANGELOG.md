@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
 - Native scalar compatibility bounds for monster state, player progression,
   spell levels, visited-level history, light radius, and quest/towner payloads
   now use the same named limits across managed validation and native projection.
+- Server, Diablo mapping, and native session boundaries now validate authored
+  towner greetings consistently, including count, identity, message, and level
+  geometry constraints before publication or presentation.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

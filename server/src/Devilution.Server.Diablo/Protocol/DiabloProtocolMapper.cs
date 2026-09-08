@@ -1121,7 +1121,7 @@ internal static class DiabloProtocolMapper
         IReadOnlyList<AuthoritativeTownerGreetingDefinition> greetings,
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
-        if (greetings.Count > 256) {
+        if (greetings.Count > AuthoritativeProtocolLimits.MaximumTownerGreetingCount) {
             throw new InvalidDataException(
                 "Authoritative towner greetings exceed the shared protocol limit.");
         }

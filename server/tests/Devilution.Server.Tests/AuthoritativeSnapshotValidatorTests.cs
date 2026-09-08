@@ -98,6 +98,58 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsValidTownerGreetingProjection()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            TownerGreetings = {
+                new TownerGreetingSnapshot {
+                    TownerId = 4,
+                    LevelId = 1,
+                    PositionX = 2,
+                    PositionY = 3,
+                    MessageId = 150,
+                },
+            },
+        });
+    }
+
+    [Fact]
+    public void RejectsMalformedTownerGreetings()
+    {
+        var duplicate = new Snapshot {
+            TownerGreetings = {
+                new TownerGreetingSnapshot { TownerId = 4, MessageId = 150 },
+                new TownerGreetingSnapshot { TownerId = 4, MessageId = 151 },
+            },
+        };
+        var invalidMessage = new Snapshot {
+            TownerGreetings = {
+                new TownerGreetingSnapshot { TownerId = 4, MessageId = 0 },
+            },
+        };
+        var outsideGeometry = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            TownerGreetings = {
+                new TownerGreetingSnapshot {
+                    TownerId = 4,
+                    LevelId = 1,
+                    PositionX = 10,
+                    MessageId = 150,
+                },
+            },
+        };
+
+        foreach (var snapshot in new[] { duplicate, invalidMessage, outsideGeometry })
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(snapshot));
+    }
+
+    [Fact]
     public void RejectsInvalidQuestStateAndQuestTownerInteractions()
     {
         var invalidNativeQuest = new Snapshot {

@@ -15,6 +15,10 @@ levels, visited-level history, light radius, and quest/towner payloads are now
 named in that contract as well. Managed validators and native projection use
 the same maxima instead of repeating raw literals.
 
+Authored towner greetings now pass the same count, identity, message, and level
+geometry validation at the server snapshot boundary, Diablo mapper boundary,
+Godot client boundary, and native session boundary.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

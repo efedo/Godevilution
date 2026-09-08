@@ -1045,6 +1045,38 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 	return {};
 }
 
+tl::expected<void, std::string> ValidateTownerGreetingSnapshots(const protocol::Snapshot &snapshot)
+{
+	if (snapshot.towner_greetings_size() > MaximumTownerGreetingCount)
+		return tl::make_unexpected("Server-backed snapshot contains too many towner greetings.");
+	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;
+	levels.reserve(snapshot.level_geometry_size());
+	for (const auto &level : snapshot.level_geometry()) {
+		if (!levels.emplace(level.level_id(), &level).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
+	}
+	std::unordered_set<int32_t> townerIds;
+	for (const auto &greeting : snapshot.towner_greetings()) {
+		const auto level = levels.find(greeting.level_id());
+		if (greeting.towner_id() < 0
+		    || greeting.towner_id() > std::numeric_limits<uint8_t>::max()
+		    || !townerIds.insert(greeting.towner_id()).second
+		    || greeting.level_id() > std::numeric_limits<uint16_t>::max()
+		    || greeting.position_x() < 0
+		    || greeting.position_x() > std::numeric_limits<uint8_t>::max()
+		    || greeting.position_y() < 0
+		    || greeting.position_y() > std::numeric_limits<uint8_t>::max()
+		    || !levels.empty()
+		        && (level == levels.end()
+		            || level->second->width() > 0 && greeting.position_x() >= level->second->width()
+		            || level->second->height() > 0 && greeting.position_y() >= level->second->height())
+		    || greeting.message_id() <= 0
+		    || greeting.message_id() > std::numeric_limits<int16_t>::max())
+			return tl::make_unexpected("Server-backed snapshot contains an invalid towner greeting.");
+	}
+	return {};
+}
+
 tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::Snapshot &snapshot)
 {
 	std::unordered_map<uint32_t, const protocol::LevelGeometrySnapshot *> levels;

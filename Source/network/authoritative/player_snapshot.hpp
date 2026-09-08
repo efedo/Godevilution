@@ -469,7 +469,11 @@ void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &
 
 /** Validates authored quest/towner interaction records before native routing consumes them. */
 [[nodiscard]] tl::expected<void, std::string> ValidateQuestTownerInteractions(
-    const ::devilution::protocol::v1::Snapshot &snapshot);
+	const ::devilution::protocol::v1::Snapshot &snapshot);
+
+/** Validates server-authored towner greeting records before native session use. */
+[[nodiscard]] tl::expected<void, std::string> ValidateTownerGreetingSnapshots(
+	const ::devilution::protocol::v1::Snapshot &snapshot);
 
 /** Validates authoritative level geometry and warp-trigger metadata before projection use. */
 [[nodiscard]] tl::expected<void, std::string> ValidateLevelGeometrySnapshots(
