@@ -385,7 +385,7 @@ controller spell row and its native `Mega`/`InfernoControl` missile mapping.
 The managed runner validates the composite pack hash before loading either
 catalog.
 
-The seven Blood Star replay fixtures now share the validated
+The eight Blood Star replay fixtures now share the validated
 `test/content/replay/blood-star` pack, which externalizes the Succubus and
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.

@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   the validated Acid lifecycle instead of generic combat fallback.
 - Preserved the authoritative monster activation window in the native replay
   state hash, restoring cross-runner parity for multiplayer death suppression.
+- Added LazarusSuccubus multiplayer Blood Star target-selection coverage; both
+  runners now preserve the authored alias while routing the projectile to the
+  nearer secondary participant.
 
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both
