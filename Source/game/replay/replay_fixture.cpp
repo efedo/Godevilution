@@ -42,6 +42,7 @@ constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
+constexpr int32_t FireboltBehavior = 2;
 constexpr int32_t BloodStarBehavior = 20;
 constexpr int32_t MonsterMagicBehavior = 50;
 constexpr int32_t InfernoControllerBehavior = 26;
@@ -2208,6 +2209,11 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
+		if (projectile.behavior == FireboltBehavior
+		    && projectile.sourceEntityId == state.combatTargetEntityId) {
+			++iterator;
+			continue;
+		}
 		const bool holyBolt = projectile.behavior == 19;
 		if (projectile.behavior != 2 && projectile.behavior != 19) {
 			++iterator;
@@ -7577,6 +7583,7 @@ void AdvanceReplayMonsterAttack(
 	    || state.combatTargetNativeAi == "AcidUnique"
 	    || state.combatTargetNativeAi == "Succubus"
 	    || state.combatTargetNativeAi == "LazarusSuccubus"
+	    || state.combatTargetNativeAi == "FireBat"
 	    || state.combatTargetNativeAi == "Lich"
 	    || state.combatTargetNativeAi == "ArchLich"
 	    || state.combatTargetNativeAi == "Psychorb"
@@ -8660,7 +8667,7 @@ void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 }
 
-/** Advances compact autonomous monster-magic lanes through native travel and impact. */
+/** Advances compact autonomous monster-projectile lanes through native travel and impact. */
 void AdvanceReplayAutonomousMonsterMagicOneTick(
     ReplayFixtureExecutionState &state,
     uint64_t tick)
@@ -8668,7 +8675,8 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
 		if (projectile.behavior != BloodStarBehavior
-		    && projectile.behavior != MonsterMagicBehavior) {
+		    && projectile.behavior != MonsterMagicBehavior
+		    && projectile.behavior != FireboltBehavior) {
 			++iterator;
 			continue;
 		}
@@ -9505,6 +9513,87 @@ void AdmitReplayAutonomousMonsterMagic(
 	state.projectiles.push_back(std::move(projectile));
 }
 
+/** Admits the compact FireBat native AiRanged Firebolt branch. */
+void AdmitReplayAutonomousFirebolt(ReplayFixtureExecutionState &state)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetNativeAi != "FireBat"
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetAggroRange <= 0
+	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+			return projectile.sourceEntityId == state.combatTargetEntityId
+			    && projectile.behavior == FireboltBehavior;
+		}))
+		return;
+
+	struct Candidate {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Candidate> candidates;
+	if (state.life > 0 && state.levelId == state.combatTargetLevelId)
+		candidates.push_back({ state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId)
+		candidates.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (candidates.empty())
+		return;
+	const auto candidateDistance = [&](const Candidate &candidate) {
+		return std::max(
+		    std::abs(candidate.positionX - state.combatTargetPositionX),
+		    std::abs(candidate.positionY - state.combatTargetPositionY));
+	};
+	std::sort(candidates.begin(), candidates.end(), [&](const auto &left, const auto &right) {
+		const int32_t leftDistance = candidateDistance(left);
+		const int32_t rightDistance = candidateDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Candidate &target = candidates.front();
+	if (candidateDistance(target) > state.combatTargetAggroRange)
+		return;
+
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+	const auto velocity = CalculateVelocity(
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	    target.positionX,
+	    target.positionY,
+	    16);
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.combatTargetEntityId;
+	projectile.targetEntityId = target.entityId;
+	projectile.spellId = 1;
+	projectile.levelId = state.combatTargetLevelId;
+	projectile.positionX = state.combatTargetPositionX;
+	projectile.positionY = state.combatTargetPositionY;
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
+	projectile.targetX = target.positionX;
+	projectile.targetY = target.positionY;
+	projectile.damage = 4;
+	projectile.damageType = 1;
+	projectile.remainingTicks = 256;
+	projectile.behavior = FireboltBehavior;
+	projectile.originalDirection = GetDirection(
+	    projectile.positionX,
+	    projectile.positionY,
+	    projectile.targetX,
+	    projectile.targetY);
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.speed = 16;
+	projectile.impactLifetime = 1;
+	projectile.resistantDamageDivisor = 1;
+	state.projectiles.push_back(std::move(projectile));
+}
+
 void AdvanceReplayStateToTick(
     ReplayFixtureExecutionState &state,
     const ReplayFixture &fixture,
@@ -9546,6 +9635,7 @@ void AdvanceReplayStateToTick(
 		AdmitReplayAutonomousBloodStar(state, simulationTick);
 		AdmitReplayAutonomousMegaInferno(state, simulationTick);
 		AdmitReplayAutonomousMonsterMagic(state);
+		AdmitReplayAutonomousFirebolt(state);
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);

@@ -12,6 +12,10 @@ validated alias mapping and fails closed before generic combat dispatch.
 The native fixture runner also carries the authoritative monster activation
 window used by multiplayer death suppression.
 
+FireBat now has a validated external Firebolt missile mapping and a two-
+participant replay lane. Native and managed runners select the nearer
+secondary participant and preserve the monster-owned Firebolt travel state.
+
 The shared replay envelope now carries Fallen stand-animation frame/tick and
 rally-timer state. Native and managed runners advance the same 11-frame/3-tick
 animation, perform the animation-boundary `FlipCoin(4)` admission, apply the

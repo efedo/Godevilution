@@ -15,6 +15,8 @@ All notable changes to this fork are documented below.
 - Added LazarusSuccubus multiplayer Blood Star target-selection coverage; both
   runners now preserve the authored alias while routing the projectile to the
   nearer secondary participant.
+- Added a validated FireBat Firebolt missile mapping and multiplayer replay
+  coverage for nearest-secondary target selection and projectile travel parity.
 
 - Added replay coverage for the quest-only Lachdanan and unregistered FireMan
   native identities. Native and managed runners now fail closed for both

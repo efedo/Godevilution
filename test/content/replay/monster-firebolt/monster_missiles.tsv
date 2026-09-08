@@ -1,0 +1,2 @@
+native_ai	missile_id	projectile_behavior	spell_id	projectile_speed	projectile_lifetime	damage_type	projectile_damage	projectile_impact_lifetime	ranged_delay_random_range
+FireBat	Firebolt	Firebolt	1	16	256	Fire	4	1	20

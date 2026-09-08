@@ -393,7 +393,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 196 checked-in JSON fixtures and 215 registered
+the native replay gate contains 197 checked-in JSON fixtures and 216 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -401,7 +401,8 @@ miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
 HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
 selection, autonomous Succubus BloodStar admission/impact/block lanes, Succubus
-and LazarusSuccubus BloodStar multiplayer target-selection lanes, ArchLich, Psychorb,
+and LazarusSuccubus BloodStar multiplayer target-selection lanes, FireBat
+Firebolt multiplayer target selection, ArchLich, Psychorb,
 Necromorb, BoneDemon, and two-projectile multiplayer MonsterArrow participant
 volley coverage, and Lich-family
 MonsterMagic admission/hit/miss/block/nearest-participant/secondary-impact
@@ -1022,6 +1023,8 @@ Notable shared fixtures include:
   BloodStar alias mapping and admission parity;
 - `gameplay-blood-star-lazarus-succubus-multiplayer-target.json` for
   LazarusSuccubus nearest-secondary target selection and Blood Star routing;
+- `gameplay-fire-bat-multiplayer-target.json` for FireBat's external Firebolt
+  mapping and nearest-secondary target selection;
 - `gameplay-blood-star-impact.json` for deterministic monster-magic hit RNG,
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,

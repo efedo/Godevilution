@@ -106,6 +106,7 @@ set(devilutionx_fixtures
   replay/gameplay-blood-star-impact.json
   replay/gameplay-blood-star-multiplayer-target.json
   replay/gameplay-blood-star-lazarus-succubus-multiplayer-target.json
+  replay/gameplay-fire-bat-multiplayer-target.json
   replay/gameplay-blood-star-secondary-block.json
   replay/gameplay-bone-spirit-homing.json
   replay/gameplay-bone-spirit-pvp.json
