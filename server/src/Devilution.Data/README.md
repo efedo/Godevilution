@@ -8,6 +8,7 @@ rules module.
 The runtime currently owns:
 
 - deterministic TSV parsing with typed required and optional fields;
+- canonical relative resource paths that reject traversal and path aliases;
 - ordered directory loading for external content packs;
 - manifest-declared pack dependencies and composite-key table overlays;
 - versioned schema identities and inclusive semantic dependency constraints;

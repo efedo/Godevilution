@@ -29,7 +29,7 @@ public sealed record ContentTableOverlay
                 "Overlay key columns must be unique.",
                 nameof(keyColumns));
         }
-        TablePath = tablePath.Replace('\\', '/');
+        TablePath = ContentPath.NormalizeRelative(tablePath, "overlay table");
         KeyColumns = keys;
         Mode = mode;
     }
@@ -65,6 +65,10 @@ public sealed record ContentPack
         var tableList = tables.ToArray();
         if (tableList.Any(table => table is null))
             throw new ArgumentException("Content pack tables cannot be null.", nameof(tables));
+        if (tableList.Any(table => ContentPath.NormalizeRelative(table.SourcePath, "table") != table.SourcePath))
+            throw new ArgumentException(
+                "Content table source paths must use canonical relative paths.",
+                nameof(tables));
         if (tableList.Select(table => table.SourcePath).Distinct(StringComparer.OrdinalIgnoreCase).Count()
             != tableList.Length) {
             throw new ArgumentException(

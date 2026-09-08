@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Hardened external content-pack resource paths: tables, overlays, and binary
+  assets now share canonical relative-path validation and reject traversal,
+  absolute paths, and separator aliases before composition or hashing.
 - Centralized event-batch and authoritative snapshot collection limits across
   the protocol assembly, managed validators, Godot client validation, and
   native snapshot projection.

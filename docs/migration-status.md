@@ -2,6 +2,10 @@
 
 Status date: 2026-09-08
 
+External content-pack tables, overlays, and binary assets now share canonical
+relative-path validation, so traversal and path aliases cannot enter content
+composition or manifest identity.
+
 The named projectile behavior contract now reaches the server snapshot hasher
 and native compatibility projection/presentation switches, so resume hashing
 and legacy rendering no longer depend on unexplained raw behavior literals.

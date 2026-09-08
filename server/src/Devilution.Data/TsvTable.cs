@@ -117,8 +117,7 @@ public sealed record TsvTable(
 
     public static TsvTable Parse(string sourcePath, string contents)
     {
-        if (string.IsNullOrWhiteSpace(sourcePath))
-            throw new ArgumentException("A source path is required.", nameof(sourcePath));
+        sourcePath = ContentPath.NormalizeRelative(sourcePath, "table");
         ArgumentNullException.ThrowIfNull(contents);
 
         var lines = contents.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');

@@ -14,6 +14,26 @@ public sealed class ContentRuntimeTests
         Assert.Throws<ArgumentException>(() => new ContentAsset(sourcePath, ReadOnlyMemory<byte>.Empty));
     }
 
+    [Theory]
+    [InlineData("../outside.tsv")]
+    [InlineData("levels/../../outside.tsv")]
+    [InlineData("/absolute/table.tsv")]
+    [InlineData("C:/absolute/table.tsv")]
+    [InlineData("levels//table.tsv")]
+    public void TablesAndOverlaysRejectNonCanonicalPaths(string sourcePath)
+    {
+        Assert.Throws<ArgumentException>(() => TsvTable.Parse(sourcePath, "id\nvalue\n"));
+        Assert.Throws<ArgumentException>(() => new ContentTableOverlay(sourcePath, ["id"]));
+    }
+
+    [Fact]
+    public void ContentPackRejectsDirectTablesWithNonCanonicalPaths()
+    {
+        var table = new TsvTable("items\\nested.tsv", ["id"], []);
+
+        Assert.Throws<ArgumentException>(() => new ContentPack("base", "1", [table]));
+    }
+
     [Fact]
     public void TsvLoaderPreservesRowsAndRejectsMalformedValues()
     {
