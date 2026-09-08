@@ -1,10 +1,28 @@
 using Devilution.Data;
+using Devilution.Shared;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativePlayerLoadoutCatalogTests
 {
+    [Fact]
+    public void NativeProgressionBoundsUseTheSharedCompatibilityContract()
+    {
+        Assert.Equal(NativeCompatibilityLimits.MaximumStableSpellId,
+            AuthoritativePlayerLoadoutCatalog.MaximumSpellId);
+        Assert.Equal(NativeCompatibilityLimits.MaximumNativeSpellLevel,
+            AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel);
+        Assert.Equal(NativeCompatibilityLimits.MaximumMemorizedSpellCount,
+            AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount);
+        Assert.Equal(NativeCompatibilityLimits.MaximumNativeCharacterLevel,
+            AuthoritativePlayerLoadoutCatalog.MaximumNativeCharacterLevel);
+        Assert.Equal(NativeCompatibilityLimits.MaximumNativeDiabloKillLevel,
+            AuthoritativePlayerLoadoutCatalog.MaximumNativeDiabloKillLevel);
+        Assert.Equal(NativeCompatibilityLimits.MaximumNativeReflectCharges,
+            AuthoritativePlayerLoadoutCatalog.MaximumNativeReflectCharges);
+    }
+
     [Fact]
     public void ShippedLoadoutsPreserveNativeClassCreationState()
     {

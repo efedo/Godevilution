@@ -52,9 +52,12 @@ public sealed class AuthoritativePlayerLoadoutCatalog
     /** Maximum native spell identity retained by legacy item/animation fields. */
     public const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
     /** Maximum stable spell identity accepted in authoritative player state. */
-    public const uint MaximumSpellId = byte.MaxValue;
-    public const uint MaximumNativeSpellLevel = 15;
-    public const int MaximumMemorizedSpellCount = 51;
+    public const uint MaximumSpellId = NativeCompatibilityLimits.MaximumStableSpellId;
+    public const uint MaximumNativeSpellLevel = NativeCompatibilityLimits.MaximumNativeSpellLevel;
+    public const int MaximumMemorizedSpellCount = NativeCompatibilityLimits.MaximumMemorizedSpellCount;
+    public const uint MaximumNativeCharacterLevel = NativeCompatibilityLimits.MaximumNativeCharacterLevel;
+    public const uint MaximumNativeDiabloKillLevel = NativeCompatibilityLimits.MaximumNativeDiabloKillLevel;
+    public const uint MaximumNativeReflectCharges = NativeCompatibilityLimits.MaximumNativeReflectCharges;
     public const uint MaximumStartingGold = 5000;
     private const int InventoryCellCount = 40;
     private const int MaximumLoadoutItemCount = 5;

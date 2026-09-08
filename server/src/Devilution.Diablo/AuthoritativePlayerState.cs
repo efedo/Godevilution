@@ -1,5 +1,6 @@
 using Devilution.Domain.Protocol;
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -311,7 +312,7 @@ public sealed class AuthoritativePlayerState(
     public bool ManaShieldActive { get; set; } = manaShieldActive;
 
     /** Native-compatible remaining Reflect charges, capped at uint16 like DevilutionX. */
-    public uint ReflectCharges { get; set; } = reflectCharges <= ushort.MaxValue
+    public uint ReflectCharges { get; set; } = reflectCharges <= NativeCompatibilityLimits.MaximumNativeReflectCharges
         ? reflectCharges
         : throw new ArgumentOutOfRangeException(nameof(reflectCharges));
 

@@ -2,9 +2,11 @@
 
 Status date: 2026-09-08
 
-Native spell identity compatibility now uses one shared `0..51` limit exposed
-to the protocol/domain contract, Diablo content catalogs, replay validation,
-and native/Godot boundary tests.
+Native progression compatibility now uses one shared `Devilution.Shared`
+contract for stable/native spell IDs, spell levels, memorized slots, character
+levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo
+validation paths consume the same source; native spell identity remains the
+shared `0..51` limit used by replay and boundary tests.
 
 Replay parity maintenance now keeps base-content fixture manifests current
 and aligns the managed replay executor with native multiplayer Snake, Fallen,

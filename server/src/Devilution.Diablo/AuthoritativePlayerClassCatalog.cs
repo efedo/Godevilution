@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -208,7 +209,7 @@ public sealed record AuthoritativePlayerClassDefinition(
         int maximumAttribute,
         string parameterName)
     {
-        if (characterLevel is < 1 or > 50)
+        if (characterLevel is < 1 or > NativeCompatibilityLimits.MaximumNativeCharacterLevel)
             throw new ArgumentOutOfRangeException(nameof(characterLevel));
         if (attribute < 0 || attribute > maximumAttribute)
             throw new ArgumentOutOfRangeException(parameterName);

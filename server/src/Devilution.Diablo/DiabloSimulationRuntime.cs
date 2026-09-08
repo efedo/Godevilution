@@ -1,5 +1,6 @@
 using Devilution.Engine;
 using Devilution.Domain.Inventory;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -145,7 +146,7 @@ public sealed class DiabloPlayerTemplate
         BaseLifeMaximum = Math.Max(
             baseLifeMaximum >= 0 ? baseLifeMaximum : lifeMaximum,
             0);
-        CharacterLevel = Math.Clamp(characterLevel, 1U, 50U);
+        CharacterLevel = Math.Clamp(characterLevel, 1U, NativeCompatibilityLimits.MaximumNativeCharacterLevel);
         LevelId = levelId;
         ArmorClass = Math.Max(0, armorClass);
         CharacterClassId = characterClassId;
@@ -210,7 +211,7 @@ public sealed class DiabloPlayerTemplate
             if (abilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId)
                 throw new InvalidDataException(
                     "Player template contains an out-of-range ability spell.");
-            if (reflectCharges > ushort.MaxValue)
+            if (reflectCharges > NativeCompatibilityLimits.MaximumNativeReflectCharges)
                 throw new InvalidDataException(
                     "Player template contains out-of-range reflect charges.");
             if ((combatMode == DiabloPlayerCombatMode.Stand && combatModeEndTick != 0)

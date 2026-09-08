@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native progression bounds now have one shared `Devilution.Shared` source for
+  stable/native spell IDs, spell levels, memorized slots, character levels,
+  Diablo victory ranks, and Reflect charges; protocol and Diablo validation
+  consume the same contract.
+
 - Native spell identity compatibility now has one shared `0..51` limit across
   the protocol/domain contract, Diablo content catalogs, replay validation, and
   native compatibility tests.

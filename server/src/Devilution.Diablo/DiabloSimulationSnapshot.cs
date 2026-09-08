@@ -1,6 +1,7 @@
 using Devilution.Domain.Protocol;
 using Devilution.Domain.Inventory;
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -2677,7 +2678,7 @@ public sealed partial class DiabloSimulation
             || source.Life > expectedResources.LifeQ6
             || source.Mana < 0
             || source.Mana > expectedResources.ManaQ6
-            || source.CharacterLevel is < 1 or > 50
+            || source.CharacterLevel is < 1 or > NativeCompatibilityLimits.MaximumNativeCharacterLevel
             || (!string.IsNullOrEmpty(source.CharacterName)
                 && !DiabloPlayerName.IsValid(source.CharacterName))
             || !hasValidClass
@@ -2689,7 +2690,8 @@ public sealed partial class DiabloSimulation
             || source.InventoryGrid.Count > 400
             || source.AbilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
             || !Enum.IsDefined(source.AbilityKind)
-            || source.ReflectCharges > ushort.MaxValue
+            || source.ReflectCharges > NativeCompatibilityLimits.MaximumNativeReflectCharges
+            || source.DiabloKillLevel > NativeCompatibilityLimits.MaximumNativeDiabloKillLevel
             || source.MemorizedSpells.Count > AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount
             || source.StatusEffects.Count > 128
             || !Enum.IsDefined(source.FacingDirection)

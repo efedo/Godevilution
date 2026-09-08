@@ -1,6 +1,7 @@
 using Devilution.Data;
 using Devilution.Diablo;
 using Devilution.Engine;
+using Devilution.Shared;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -200,6 +201,27 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRejectsOutOfRangeDiabloKillLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 1) with {
+            Player = simulation.CapturePlayerState(CreatePlayer()) with {
+                DiabloKillLevel = NativeCompatibilityLimits.MaximumNativeDiabloKillLevel + 1,
+            },
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), snapshot));
+        Assert.Contains("out-of-range player state", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SnapshotRoundTripPreservesSetLevelRewardOriginMetadata()
     {
         var world = new AuthoritativeWorld();
@@ -265,6 +287,7 @@ public sealed class DiabloSimulationTests
         var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
 
         var replacementWorld = new AuthoritativeWorld();
+        replacementWorld.AddLevel(new AuthoritativeLevel(0, 16, 16));
         replacementWorld.AddLevel(new AuthoritativeLevel(1, 16, 16));
         var replacement = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {

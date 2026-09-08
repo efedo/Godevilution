@@ -1,4 +1,5 @@
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -2369,7 +2370,7 @@ public sealed class DiabloCombatCommandProcessor
                     : 2)
                 : effectiveSpellLevel;
             var chargeIncrement = checked((uint)reflectSpellLevel * player.CharacterLevel);
-            if (chargeIncrement <= ushort.MaxValue - player.ReflectCharges)
+            if (chargeIncrement <= NativeCompatibilityLimits.MaximumNativeReflectCharges - player.ReflectCharges)
                 player.ReflectCharges += chargeIncrement;
         } else if (isMagi) {
             player.Mana = player.ManaMaximum;
