@@ -107,6 +107,17 @@ public static class ReplayFixtureLoader
             throw new InvalidDataException(
                 "Replay fixture monster runtime seeds must be supplied together.");
         }
+        // Match the native parser's validation precedence when a companion is
+        // present on an otherwise invalid zero-entity combat target.
+        if (initialTarget.CombatTargetEntityId == 0
+            && (initialTarget.CombatTargetPositionX != 0
+                || initialTarget.CombatTargetPositionY != 0
+                || initialTarget.CombatTargetHitPoints != 0
+                || initialTarget.CombatTargetMaxHitPoints != 0
+                || initialTarget.CombatTargetLevelId != 0)) {
+            throw new InvalidDataException(
+                "Replay fixture contains invalid combat-target occupancy state.");
+        }
         if (initialTarget.CombatTargetCompanion is { } companion
             && (initialTarget.CombatTargetEntityId == 0
                 || companion.EntityId == 0

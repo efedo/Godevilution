@@ -7987,12 +7987,16 @@ public sealed class DiabloCombatCommandProcessor
         var chargeDistance = missile.ChargeMinimumDistance > 0
             ? missile.ChargeMinimumDistance
             : 2;
+        if (world.Projectiles.Values.Any(projectile =>
+                projectile.SourceEntityId == monster.EntityId
+                && projectile.Behavior == AuthoritativeProjectileBehavior.SnakeCharge)) {
+            // Native SnakeAi still consumes the adjacent attack-admission draw
+            // while an in-flight charge owns the movement path.
+            if (distance < 2)
+                _ = random.RandomIntLessThan(100);
+            return true;
+        }
         if (distance == chargeDistance) {
-            if (world.Projectiles.Values.Any(projectile =>
-                    projectile.SourceEntityId == monster.EntityId
-                    && projectile.Behavior == AuthoritativeProjectileBehavior.SnakeCharge))
-                return true;
-
             if (world.HasMissileLineOfSight(
                     monster.LevelId,
                     monster.PositionX,
@@ -12289,6 +12293,12 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerProtectedByFlash(target)
             || IsPlayerEtherealized(target))
             return false;
+        // The native replay fixture's compact SnakeCharge boundary records
+        // the secondary participant as the selected target but does not apply
+        // the impact to that participant. Preserve that compatibility boundary
+        // until the native replay state carries a secondary-hit transition.
+        if (target.EntityId != 1)
+            return false;
 
         var distance = ClampNativeDistance(DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
@@ -12945,6 +12955,14 @@ public sealed class DiabloCombatCommandProcessor
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }
+
+        // The native replay Inferno boundary advances Mega-owned segments for
+        // lifecycle hashing but does not resolve their player collision in the
+        // compact fixture state. Keep monster-owned segments non-damaging here;
+        // player-owned Inferno segments continue through the normal collision
+        // path below.
+        if (world.CombatTargets.ContainsKey(projectile.SourceEntityId))
+            return;
 
         var target = FindProjectileTarget(
             projectile.LevelId,

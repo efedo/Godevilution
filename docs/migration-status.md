@@ -2,6 +2,12 @@
 
 Status date: 2026-09-08
 
+Replay parity maintenance now keeps base-content fixture manifests current
+and aligns the managed replay executor with native multiplayer Snake, Fallen,
+and Mega Inferno checkpoint hashes, including deterministic RNG consumption and
+the native compact impact boundaries. Native and managed malformed companion
+fixtures now report the same validation precedence.
+
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
 

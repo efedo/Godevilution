@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Replay parity fixtures now use the active base-content manifest identity.
+  Native and managed replay checkpoints also agree on multiplayer Snake,
+  Fallen-rally, and Mega Inferno targeting, including native RNG and impact
+  lifecycle boundaries; malformed companion fixtures now report the same
+  validation precedence in both parsers.
+
 - The 1 MiB authoritative envelope cap is now a named shared protocol limit
   consumed by the managed server, Godot client, and native compatibility codec.
 - Native player/entity capacities and level geometry bounds are now named shared
