@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 namespace devilution::authoritative {
 
@@ -202,6 +203,20 @@ inline constexpr std::size_t MaximumWorldMutationCount = 4096;
 inline constexpr std::size_t MaximumSnapshotQuestCount = 4096;
 inline constexpr std::size_t MaximumSetLevelObjectOriginCount = 4096;
 inline constexpr std::size_t MaximumMaterializedProceduralLevelCount = 4096;
+inline constexpr int NativeMaximumPlayerCount = 4;
+inline constexpr int NativeMaximumMonsterCount = 200;
+inline constexpr int NativeMaximumObjectCount = 127;
+inline constexpr int NativeMaximumItemCount = 127;
+inline constexpr int NativeMaximumWarpTriggerCount = 7;
+inline constexpr int NativeMaximumPortalCount = 4;
+inline constexpr int NativeMaximumWidth = 112;
+inline constexpr int NativeMaximumHeight = 112;
+inline constexpr int NativeMaximumMegaWidth = 40;
+inline constexpr int NativeMaximumMegaHeight = 40;
+inline constexpr std::uint32_t NativeMaximumDunObjectLayerId = 146;
+inline constexpr std::uint32_t NativeMaximumDunPieceId = 1378;
+inline constexpr std::uint32_t NativeMaximumObjectId = 108;
+inline constexpr std::uint32_t NativeMaximumQuestId = 23;
 inline constexpr int MaximumNativeSetLevelId = 8;
 inline constexpr int MaximumMonsterLeaderRelation = 2;
 inline constexpr int MaximumMonsterDialogueState = 2;

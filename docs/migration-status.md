@@ -5,6 +5,11 @@ Status date: 2026-09-08
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
 
+Native player/entity capacities and level geometry bounds are also named in the
+shared protocol contract. Managed validation, Godot validation, Diablo mapping,
+and native compatibility code now consume the same values for player, monster,
+object, item, portal, warp-trigger, and level-dimension boundaries.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

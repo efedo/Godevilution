@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
 
 - The 1 MiB authoritative envelope cap is now a named shared protocol limit
   consumed by the managed server, Godot client, and native compatibility codec.
+- Native player/entity capacities and level geometry bounds are now named shared
+  protocol limits consumed by managed validation, Godot validation, Diablo
+  mapping, and the native compatibility layer.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

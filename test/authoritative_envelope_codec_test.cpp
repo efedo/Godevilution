@@ -15,6 +15,20 @@ namespace devilution::authoritative {
 namespace {
 
 static_assert(EnvelopeCodec::MaxEnvelopeBytes == MaximumEnvelopeBytes);
+static_assert(NativeMaximumPlayerCount == 4);
+static_assert(NativeMaximumMonsterCount == 200);
+static_assert(NativeMaximumObjectCount == 127);
+static_assert(NativeMaximumItemCount == 127);
+static_assert(NativeMaximumWarpTriggerCount == 7);
+static_assert(NativeMaximumPortalCount == 4);
+static_assert(NativeMaximumWidth == 112);
+static_assert(NativeMaximumHeight == 112);
+static_assert(NativeMaximumMegaWidth == 40);
+static_assert(NativeMaximumMegaHeight == 40);
+static_assert(NativeMaximumDunObjectLayerId == 146);
+static_assert(NativeMaximumDunPieceId == 1378);
+static_assert(NativeMaximumObjectId == 108);
+static_assert(NativeMaximumQuestId == 23);
 
 using asio::ip::tcp;
 

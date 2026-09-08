@@ -117,7 +117,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 {
 	if (!IsValidSnapshotHash(snapshot.state_sha256()))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid state hash.");
-	if (snapshot.players_size() > MAX_PLRS)
+	if (snapshot.players_size() > NativeMaximumPlayerCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many players for the native player pool.");
 	const protocol::PlayerSnapshot *player = nullptr;
 	std::unordered_set<uint32_t> entityIds;
@@ -466,7 +466,7 @@ tl::expected<std::vector<ProjectedPlayerSnapshot>, std::string> ProjectPlayerSna
 {
 	if (snapshot.players_size() == 0)
 		return tl::make_unexpected("Server-backed snapshot contains no player entity.");
-	if (snapshot.players_size() > MAX_PLRS)
+	if (snapshot.players_size() > NativeMaximumPlayerCount)
 		return tl::make_unexpected("Server-backed snapshot contains too many players for the native player pool.");
 	std::vector<ProjectedPlayerSnapshot> projected;
 	projected.reserve(snapshot.players_size());
@@ -486,7 +486,7 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 {
 	std::unordered_map<uint32_t, size_t> monsterCountsByLevel;
 	for (const auto &source : snapshot.monsters()) {
-		if (++monsterCountsByLevel[source.level_id()] > MaxMonsters)
+		if (++monsterCountsByLevel[source.level_id()] > NativeMaximumMonsterCount)
 			return tl::make_unexpected("Server-backed snapshot contains too many monsters on one level.");
 	}
 	std::vector<ProjectedMonsterSnapshot> projected;
@@ -600,8 +600,8 @@ tl::expected<std::vector<ProjectedWorldItemSnapshot>, std::string> ProjectWorldI
 	for (const auto &source : snapshot.world_items()) {
 		if (source.entity_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains a world item with an invalid entity ID.");
-		if (++itemCountsByLevel[source.level_id()] > MAXITEMS)
-			return tl::make_unexpected("Server-backed snapshot contains more than MAXITEMS world items on one level.");
+		if (++itemCountsByLevel[source.level_id()] > NativeMaximumItemCount)
+			return tl::make_unexpected("Server-backed snapshot exceeds the native world-item capacity on one level.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate world item entity IDs.");
 		if (!HasValidItemIdentity(source.item_seed(), source.state()))
@@ -636,8 +636,8 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 	for (const auto &source : snapshot.objects()) {
 		if (source.entity_id() == 0 || source.object_id() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains an object with an invalid entity or object ID.");
-		if (++objectCountsByLevel[source.level_id()] > MAXOBJECTS)
-			return tl::make_unexpected("Server-backed snapshot contains more than MAXOBJECTS objects on one level.");
+		if (++objectCountsByLevel[source.level_id()] > NativeMaximumObjectCount)
+			return tl::make_unexpected("Server-backed snapshot exceeds the native object capacity on one level.");
 		if (source.native_object_id() > static_cast<uint32_t>(OBJ_LAST))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid native object presentation ID.");
 		if (source.animation_frame() > std::numeric_limits<uint8_t>::max()
@@ -785,8 +785,8 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 
 tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSnapshots(const protocol::Snapshot &snapshot)
 {
-	if (snapshot.portals_size() > MAXPORTAL)
-		return tl::make_unexpected("Server-backed snapshot contains more than MAXPORTAL portals.");
+	if (snapshot.portals_size() > NativeMaximumPortalCount)
+		return tl::make_unexpected("Server-backed snapshot exceeds the native portal capacity.");
 	std::vector<ProjectedPortalSnapshot> projected;
 	projected.reserve(snapshot.portals_size());
 	for (const auto &source : snapshot.portals()) {
@@ -1050,26 +1050,26 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 	levels.reserve(snapshot.level_geometry_size());
 	for (const auto &level : snapshot.level_geometry()) {
 		if (level.width() < 0 || level.height() < 0
-		    || level.width() > MAXDUNX || level.height() > MAXDUNY
+		    || level.width() > NativeMaximumWidth || level.height() > NativeMaximumHeight
 		    || (!level.native_mega_tile_layer().empty()
-		        && ((static_cast<uint64_t>(level.width()) + 1) / 2 > DMAXX
-		            || (static_cast<uint64_t>(level.height()) + 1) / 2 > DMAXY))
+		        && ((static_cast<uint64_t>(level.width()) + 1) / 2 > NativeMaximumMegaWidth
+		            || (static_cast<uint64_t>(level.height()) + 1) / 2 > NativeMaximumMegaHeight))
 			|| !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
 				return value <= std::numeric_limits<uint8_t>::max();
 			})
 		    || !std::all_of(level.native_object_layer().begin(), level.native_object_layer().end(), [](uint32_t value) {
-				return value <= static_cast<uint32_t>(DUN_OBJECT_ID_LAST);
+				return value <= NativeMaximumDunObjectLayerId;
 			})
 		    || !std::all_of(level.native_mega_tile_layer().begin(), level.native_mega_tile_layer().end(), [](uint32_t value) {
 				return value <= std::numeric_limits<uint8_t>::max();
 			})
 		    || !std::all_of(level.native_piece_layer().begin(), level.native_piece_layer().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint16_t>::max();
+				return value <= NativeMaximumDunPieceId;
 			}))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry dimensions.");
 		if (!levels.emplace(level.level_id(), &level).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
-		if (level.warp_triggers_size() > MAXTRIGGERS)
+		if (level.warp_triggers_size() > NativeMaximumWarpTriggerCount)
 			return tl::make_unexpected("Server-backed snapshot contains too many warp triggers on one level.");
 		if (level.width() == 0 || level.height() == 0)
 			continue;

@@ -6,22 +6,22 @@ namespace Devilution.Client.Protocol;
 /** Main-thread authoritative projection consumed by Godot presentation nodes. */
 public sealed class AuthoritativeClientModel
 {
-    private const int NativeMaximumWidth = 112;
-    private const int NativeMaximumHeight = 112;
-    private const int NativeMaximumMegaWidth = 40;
-    private const int NativeMaximumMegaHeight = 40;
+    private const int NativeMaximumWidth = AuthoritativeProtocolLimits.NativeMaximumWidth;
+    private const int NativeMaximumHeight = AuthoritativeProtocolLimits.NativeMaximumHeight;
+    private const int NativeMaximumMegaWidth = AuthoritativeProtocolLimits.NativeMaximumMegaWidth;
+    private const int NativeMaximumMegaHeight = AuthoritativeProtocolLimits.NativeMaximumMegaHeight;
     // Object snapshots carry converted _object_id values; geometry carries raw
     // DUN conversion indices and therefore uses a separate compatibility bound.
-    private const uint NativeMaximumObjectId = 108;
-    private const int NativeMaximumPlayerCount = 4;
-    private const int NativeMaximumObjectCount = 127;
-    private const int NativeMaximumItemCount = 127;
-    private const int NativeMaximumMonsterCount = 200;
-    private const int NativeMaximumPortalCount = 4;
-    private const int NativeMaximumWarpTriggerCount = 7;
-    private const uint NativeMaximumDunObjectLayerId = 146;
-    private const uint NativeMaximumDunPieceId = 1378;
-    private const uint NativeMaximumQuestId = 23;
+    private const uint NativeMaximumObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
+    private const int NativeMaximumPlayerCount = AuthoritativeProtocolLimits.NativeMaximumPlayerCount;
+    private const int NativeMaximumObjectCount = AuthoritativeProtocolLimits.NativeMaximumObjectCount;
+    private const int NativeMaximumItemCount = AuthoritativeProtocolLimits.NativeMaximumItemCount;
+    private const int NativeMaximumMonsterCount = AuthoritativeProtocolLimits.NativeMaximumMonsterCount;
+    private const int NativeMaximumPortalCount = AuthoritativeProtocolLimits.NativeMaximumPortalCount;
+    private const int NativeMaximumWarpTriggerCount = AuthoritativeProtocolLimits.NativeMaximumWarpTriggerCount;
+    private const uint NativeMaximumDunObjectLayerId = AuthoritativeProtocolLimits.NativeMaximumDunObjectLayerId;
+    private const uint NativeMaximumDunPieceId = AuthoritativeProtocolLimits.NativeMaximumDunPieceId;
+    private const uint NativeMaximumQuestId = AuthoritativeProtocolLimits.NativeMaximumQuestId;
 
     private const int MaxPredictedMoves = 16;
     private const int MaxRecentEvents = 256;

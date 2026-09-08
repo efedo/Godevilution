@@ -10,8 +10,8 @@ namespace Devilution.Server.Protocol;
 /** Maps transport-neutral Diablo state and events to the versioned wire schema. */
 internal static class DiabloProtocolMapper
 {
-    private const int NativeMaximumPlayerCount = 4;
-    private const int NativeMaximumWarpTriggerCount = 7;
+    private const int NativeMaximumPlayerCount = AuthoritativeProtocolLimits.NativeMaximumPlayerCount;
+    private const int NativeMaximumWarpTriggerCount = AuthoritativeProtocolLimits.NativeMaximumWarpTriggerCount;
 
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
