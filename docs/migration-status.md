@@ -6,6 +6,10 @@ The named projectile behavior contract now reaches the server snapshot hasher
 and native compatibility projection/presentation switches, so resume hashing
 and legacy rendering no longer depend on unexplained raw behavior literals.
 
+Projectile presentation-family and native-visual bounds now use named shared
+protocol limits in managed validation and native snapshot projection, keeping
+all three additive presentation identities aligned at the wire boundary.
+
 Projectile behavior values now have one named protocol identity enum shared by
 managed validation and legacy Godot presentation fallback; native bounds mirror
 the same maximum rather than repeating an unexplained literal.

@@ -1454,9 +1454,9 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || projectile.behavior() < 0 || projectile.behavior() > MaximumProjectileBehavior
 		    || projectile.phase() < 0 || projectile.phase() > 1
 		    || static_cast<int32_t>(projectile.presentation_kind()) < 0
-		    || static_cast<int32_t>(projectile.presentation_kind()) > 19
+		    || static_cast<int32_t>(projectile.presentation_kind()) > MaximumProjectilePresentationKind
 		    || static_cast<int32_t>(projectile.native_visual()) < 0
-		    || static_cast<int32_t>(projectile.native_visual()) > 35
+		    || static_cast<int32_t>(projectile.native_visual()) > MaximumNativeProjectileVisual
 		    || usesDirectionalPresentation(projectile)
 		        && (projectile.original_direction() < 0 || projectile.original_direction() > 7)
 		    || !projectile.native_missile_id().empty()

@@ -16,6 +16,12 @@ public sealed class ProjectilePresentationStyleTests
             (int)AuthoritativeProjectileBehavior.MonsterArrow,
             AuthoritativeProtocolLimits.MaximumProjectileBehavior);
         Assert.Equal(
+            (int)ProtocolProjectilePresentationKind.NovaBall,
+            AuthoritativeProtocolLimits.MaximumProjectilePresentationKind);
+        Assert.Equal(
+            (int)NativeProjectileVisual.MonsterMagmaBall,
+            AuthoritativeProtocolLimits.MaximumNativeProjectileVisual);
+        Assert.Equal(
             ProjectilePresentationKind.Fire,
             ProjectilePresentationStyle.Resolve(
                 (int)AuthoritativeProjectileBehavior.Firebolt,

@@ -69,9 +69,75 @@ enum class ProjectileBehavior : int {
 	MonsterArrow = 59,
 };
 
+/** Server-owned projectile presentation family carried by snapshots. */
+enum class ProjectilePresentationKind : int {
+	Unspecified = 0,
+	Generic = 1,
+	Fire = 2,
+	FireImpact = 3,
+	Lightning = 4,
+	Holy = 5,
+	BloodStar = 6,
+	BoneSpirit = 7,
+	Acid = 8,
+	Arrow = 9,
+	Beam = 10,
+	StoneCurse = 11,
+	Teleport = 12,
+	Phasing = 13,
+	MonsterMagic = 14,
+	HorkSpawn = 15,
+	Guardian = 16,
+	Flash = 17,
+	Hidden = 18,
+	NovaBall = 19,
+};
+
+/** Exact native compatibility sprite identity carried by snapshots. */
+enum class NativeProjectileVisual : int {
+	Unspecified = 0,
+	Arrow = 1,
+	Firebolt = 2,
+	Lightning = 3,
+	ThinLightning = 4,
+	FlashBottom = 5,
+	FlashTop = 6,
+	ResurrectBeam = 7,
+	Phasing = 8,
+	Fireball = 9,
+	HolyBolt = 10,
+	BloodStar = 11,
+	BoneSpirit = 12,
+	FireWall = 13,
+	FlameWaveControl = 14,
+	FlameWave = 15,
+	Inferno = 16,
+	ChainLightning = 17,
+	ApocalypseBoom = 18,
+	Elemental = 19,
+	Guardian = 20,
+	Etherealize = 21,
+	Acid = 22,
+	AcidSplat = 23,
+	AcidPuddle = 24,
+	ChargedBolt = 25,
+	HorkSpawn = 26,
+	NovaBall = 27,
+	LightningWall = 28,
+	MonsterLightning = 29,
+	MonsterOrangeFlare = 30,
+	MonsterBlueFlare = 31,
+	MonsterRedFlare = 32,
+	MonsterYellowFlare = 33,
+	MonsterBlueFlare2 = 34,
+	MonsterMagmaBall = 35,
+};
+
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
 inline constexpr int MaximumProjectileBehavior = static_cast<int>(ProjectileBehavior::MonsterArrow);
+inline constexpr int MaximumProjectilePresentationKind = static_cast<int>(ProjectilePresentationKind::NovaBall);
+inline constexpr int MaximumNativeProjectileVisual = static_cast<int>(NativeProjectileVisual::MonsterMagmaBall);
 
 } // namespace devilution::authoritative

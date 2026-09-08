@@ -865,6 +865,9 @@ presentation clients do not need to maintain the behavior-to-visual mapping;
 older peers may omit it and clients retain their behavior/phase compatibility
 fallback. Charged Bolt behavior `1` uses `Lightning`; Firebolt behavior `2` and
 Fireball behavior `16` use `Fire` during travel and `FireImpact` during impact.
+The protocol assembly exposes the maximum presentation-family identity and
+native-visual identity alongside the behavior limit; managed validators and the
+native bridge consume those shared limits rather than duplicating wire bounds.
 `ProjectileSnapshot.native_visual` field 56 carries the exact native
 compatibility sprite identity for presentation-only rendering. A zero value
 retains the behavior-based fallback for older servers; an unknown nonzero value

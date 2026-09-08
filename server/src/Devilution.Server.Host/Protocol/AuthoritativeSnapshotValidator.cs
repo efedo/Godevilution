@@ -23,6 +23,8 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumObjectEffectKind = 9;
     private const int MaximumProjectileDamageType = 4;
     private const int MaximumProjectileBehavior = AuthoritativeProtocolLimits.MaximumProjectileBehavior;
+    private const int MaximumProjectilePresentationKind = AuthoritativeProtocolLimits.MaximumProjectilePresentationKind;
+    private const int MaximumNativeProjectileVisual = AuthoritativeProtocolLimits.MaximumNativeProjectileVisual;
     private const int MaximumProjectilePhase = 1;
     private const int NativeMaximumWidth = 112;
     private const int NativeMaximumHeight = 112;
@@ -1081,7 +1083,9 @@ public static class AuthoritativeSnapshotValidator
                 || projectile.DamageType is < 0 or > MaximumProjectileDamageType
                 || projectile.Behavior is < 0 or > MaximumProjectileBehavior
                 || projectile.Phase is < 0 or > MaximumProjectilePhase
+                || (int)projectile.PresentationKind is < 0 or > MaximumProjectilePresentationKind
                 || !Enum.IsDefined(projectile.PresentationKind)
+                || (int)projectile.NativeVisual is < 0 or > MaximumNativeProjectileVisual
                 || !Enum.IsDefined(projectile.NativeVisual)
                 || UsesDirectionalPresentation(projectile)
                     && projectile.OriginalDirection is < 0 or > MaximumNativeMonsterDirection

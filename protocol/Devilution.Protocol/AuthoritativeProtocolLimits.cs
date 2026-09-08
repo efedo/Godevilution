@@ -1,4 +1,5 @@
 using System.Text;
+using Devilution.Protocol.V1;
 
 namespace Devilution.Protocol;
 
@@ -9,6 +10,10 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumIdentityBytes = 128;
     public const int MaximumProjectileBehavior =
         (int)AuthoritativeProjectileBehavior.MonsterArrow;
+    public const int MaximumProjectilePresentationKind =
+        (int)ProjectilePresentationKind.NovaBall;
+    public const int MaximumNativeProjectileVisual =
+        (int)NativeProjectileVisual.MonsterMagmaBall;
 
     public static bool IsDialogueTextValid(string value)
     {

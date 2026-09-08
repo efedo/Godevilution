@@ -187,7 +187,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.damageType < 0 || projectile.damageType > 4
 			    || projectile.behavior < 0 || projectile.behavior > MaximumProjectileBehavior
 			    || projectile.phase < 0 || projectile.phase > 1
-			    || projectile.nativeVisual < 0 || projectile.nativeVisual > 35
+			    || projectile.nativeVisual < 0 || projectile.nativeVisual > MaximumNativeProjectileVisual
 			    || !isInBounds(projectile.levelId, projectile.positionX, projectile.positionY)
 			    || UsesDirectionalPresentation(projectile)
 			        && (projectile.originalDirection < 0 || projectile.originalDirection > 7)

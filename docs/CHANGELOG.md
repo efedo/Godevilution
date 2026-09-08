@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Centralized the named projectile presentation-family and native-visual bounds
+  alongside the behavior identity limit. Managed server/Godot validation and
+  native snapshot projection now consume the same maximums instead of raw
+  presentation literals.
 - Applied the named projectile behavior identities across the server snapshot
   validator/hasher and native projection/presentation validators, removing the
   remaining raw behavior-number switches from the compatibility boundary.
