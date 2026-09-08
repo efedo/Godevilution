@@ -14,6 +14,10 @@ All notable changes to this fork are documented below.
 - Centralized item presentation, spell-source, item-action, and spell-targeting
   bounds across the protocol assembly, managed item validation, and native item
   projection, keeping server-owned item semantics aligned at the wire edge.
+- Centralized authored object presentation and quest-interaction metadata bounds
+  across the protocol assembly, managed validators, and native snapshot
+  projection, covering object effects, transitions, rewards, follow-ups, and
+  quest/towner interaction kinds.
 - Applied the named projectile behavior identities across the server snapshot
   validator/hasher and native projection/presentation validators, removing the
   remaining raw behavior-number switches from the compatibility boundary.

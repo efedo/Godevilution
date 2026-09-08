@@ -4,6 +4,7 @@ using Devilution.Client.Protocol;
 using Xunit;
 using ProtocolProjectilePresentationKind = Devilution.Protocol.V1.ProjectilePresentationKind;
 using ProtocolItemPresentationKind = Devilution.Protocol.V1.ItemPresentationKind;
+using ProtocolObjectPresentationKind = Devilution.Protocol.V1.ObjectPresentationKind;
 
 namespace Devilution.Client.Protocol.Tests;
 
@@ -37,6 +38,16 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(
             (int)SpellTargetingKind.WorldEntity,
             AuthoritativeProtocolLimits.MaximumSpellTargetingKind);
+        Assert.Equal(
+            (int)ProtocolObjectPresentationKind.Trap,
+            AuthoritativeProtocolLimits.MaximumObjectPresentationKind);
+        Assert.Equal(9, AuthoritativeProtocolLimits.MaximumObjectEffectKind);
+        Assert.Equal(8, AuthoritativeProtocolLimits.MaximumObjectQuestTransitionKind);
+        Assert.Equal(2, AuthoritativeProtocolLimits.MaximumObjectRewardKind);
+        Assert.Equal(1, AuthoritativeProtocolLimits.MaximumObjectRewardOriginKind);
+        Assert.Equal(3, AuthoritativeProtocolLimits.MaximumObjectQuestSequenceFollowUpKind);
+        Assert.Equal(1, AuthoritativeProtocolLimits.MaximumObjectProjectileSourceKind);
+        Assert.Equal(4, AuthoritativeProtocolLimits.MaximumQuestTownerInteractionKind);
         Assert.Equal(
             ProjectilePresentationKind.Fire,
             ProjectilePresentationStyle.Resolve(

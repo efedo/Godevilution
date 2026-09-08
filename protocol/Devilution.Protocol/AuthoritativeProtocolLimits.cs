@@ -24,6 +24,15 @@ public static class AuthoritativeProtocolLimits
         (int)ItemActionKind.ReadQuestNote;
     public const int MaximumSpellTargetingKind =
         (int)SpellTargetingKind.WorldEntity;
+    public const int MaximumObjectPresentationKind =
+        (int)ObjectPresentationKind.Trap;
+    public const int MaximumObjectEffectKind = 9;
+    public const int MaximumObjectQuestTransitionKind = 8;
+    public const int MaximumObjectRewardKind = 2;
+    public const int MaximumObjectRewardOriginKind = 1;
+    public const int MaximumObjectQuestSequenceFollowUpKind = 3;
+    public const int MaximumObjectProjectileSourceKind = 1;
+    public const int MaximumQuestTownerInteractionKind = 4;
 
     public static bool IsDialogueTextValid(string value)
     {

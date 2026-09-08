@@ -50,7 +50,14 @@ public sealed class AuthoritativeClientModel
     private const uint MaximumNativeMonsterExperienceReward = 1_000_000;
     private const int MaximumNativeMonsterToHit = 255;
     private const int MaximumNativeMonsterIntelligence = 255;
-    private const int MaximumObjectEffectKind = 9;
+    private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
+    private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
+    private const int MaximumObjectQuestTransitionKind = AuthoritativeProtocolLimits.MaximumObjectQuestTransitionKind;
+    private const int MaximumObjectRewardKind = AuthoritativeProtocolLimits.MaximumObjectRewardKind;
+    private const int MaximumObjectRewardOriginKind = AuthoritativeProtocolLimits.MaximumObjectRewardOriginKind;
+    private const int MaximumObjectQuestSequenceFollowUpKind = AuthoritativeProtocolLimits.MaximumObjectQuestSequenceFollowUpKind;
+    private const int MaximumObjectProjectileSourceKind = AuthoritativeProtocolLimits.MaximumObjectProjectileSourceKind;
+    private const int MaximumQuestTownerInteractionKind = AuthoritativeProtocolLimits.MaximumQuestTownerInteractionKind;
     private readonly List<GameEvent> recentEvents = [];
     private readonly Dictionary<ulong, PredictedMove> predictedMoves = [];
     private ulong recentEventsStartSequence;
@@ -910,18 +917,19 @@ public sealed class AuthoritativeClientModel
             || @object.EffectAmount < 0
             || effectKind < 0
             || effectKind > MaximumObjectEffectKind
+            || (int)@object.PresentationKind is < 0 or > MaximumObjectPresentationKind
             || !Enum.IsDefined(@object.PresentationKind)
             || @object.QuestId != 0 && !questIds.Contains(@object.QuestId)
-            || transitionKind is < 0 or > 8
+            || transitionKind is < 0 or > MaximumObjectQuestTransitionKind
             || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
             || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue
             || @object.QuestTransitionRequiredVariable2 is < -1 or > byte.MaxValue
             || !transitionValid
-            || rewardKind is < 0 or > 2
+            || rewardKind is < 0 or > MaximumObjectRewardKind
             || @object.RewardItemLevel is < 0 or > byte.MaxValue
             || @object.RewardOffsetX is < -16 or > 16
             || @object.RewardOffsetY is < -16 or > 16
-            || @object.RewardOriginKind is < 0 or > 1
+            || @object.RewardOriginKind is < 0 or > MaximumObjectRewardOriginKind
             || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
             || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > 8
             || !rewardValid
@@ -930,11 +938,11 @@ public sealed class AuthoritativeClientModel
             || !producesProjectile
                 && (@object.ProjectileTargetOffsetX != 0
                     || @object.ProjectileTargetOffsetY != 0)
-            || followUpKind is < 0 or > 3
+            || followUpKind is < 0 or > MaximumObjectQuestSequenceFollowUpKind
             || @object.QuestSequenceFollowUpOffsetX is < -32 or > 32
             || @object.QuestSequenceFollowUpOffsetY is < -32 or > 32
             || !followUpValid
-            || @object.ProjectileSourceKind is < 0 or > 1
+            || @object.ProjectileSourceKind is < 0 or > MaximumObjectProjectileSourceKind
             || !producesProjectile && @object.ProjectileSourceKind != 0
             || @object.NativeObjectId > NativeMaximumObjectId
             || @object.DialogueMessageId is < 0 or > short.MaxValue
@@ -1053,7 +1061,7 @@ public sealed class AuthoritativeClientModel
                 || interaction.RequiredItemId > ushort.MaxValue
                 || interaction.PositionX < 0
                 || interaction.PositionY < 0
-                || interaction.Kind is < 0 or > 4
+            || interaction.Kind is < 0 or > MaximumQuestTownerInteractionKind
                 || !interaction.HasMessageId
                 || interaction.MessageId is <= 0 or > short.MaxValue
                 || (interaction.HasRequiredVariable1

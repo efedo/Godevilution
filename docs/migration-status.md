@@ -18,6 +18,10 @@ Item presentation, spell-source, item-action, and spell-targeting identities
 now consume shared protocol maxima in managed validation and native projection,
 so external item semantics cannot drift between clients.
 
+Authored object presentation and quest-interaction metadata now consume shared
+protocol maxima in managed validation and native projection, keeping external
+object effects, transitions, rewards, follow-ups, and towner stages aligned.
+
 Projectile behavior values now have one named protocol identity enum shared by
 managed validation and legacy Godot presentation fallback; native bounds mirror
 the same maximum rather than repeating an unexplained literal.

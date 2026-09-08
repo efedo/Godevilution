@@ -58,17 +58,8 @@ bool IsValidSpellTargetingKind(uint32_t value)
 
 bool IsValidObjectPresentationKind(protocol::ObjectPresentationKind value)
 {
-	switch (value) {
-	case protocol::OBJECT_PRESENTATION_KIND_UNSPECIFIED:
-	case protocol::OBJECT_PRESENTATION_KIND_GENERIC:
-	case protocol::OBJECT_PRESENTATION_KIND_SHRINE:
-	case protocol::OBJECT_PRESENTATION_KIND_QUEST:
-	case protocol::OBJECT_PRESENTATION_KIND_BREAKABLE:
-	case protocol::OBJECT_PRESENTATION_KIND_TRAP:
-		return true;
-	default:
-		return false;
-	}
+	return static_cast<int32_t>(value) >= 0
+	    && static_cast<int32_t>(value) <= MaximumObjectPresentationKind;
 }
 
 bool IsValidNativeTileCoordinate(int32_t x, int32_t y)
@@ -689,12 +680,12 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    || source.effect_kind() > static_cast<int32_t>(ProjectedObjectEffectKind::GrantSpellLevelAndSpawnProjectile)
 		    || !IsValidObjectPresentationKind(source.presentation_kind())
 		    || (source.quest_id() != 0 && questIds.find(source.quest_id()) == questIds.end())
-		    || source.quest_transition_kind() < 0 || source.quest_transition_kind() > 8
+		    || source.quest_transition_kind() < 0 || source.quest_transition_kind() > MaximumObjectQuestTransitionKind
 		    || source.quest_transition_amount() < 0 || source.quest_transition_amount() > 255
 		    || source.quest_transition_required_variable1() < -1 || source.quest_transition_required_variable1() > 255
 		    || source.quest_transition_required_variable2() < -1 || source.quest_transition_required_variable2() > 255
 		    || !transitionValid
-		    || source.reward_kind() < 0 || source.reward_kind() > 2
+		    || source.reward_kind() < 0 || source.reward_kind() > MaximumObjectRewardKind
 		    || source.reward_item_level() > 255
 		    || source.reward_offset_x() < -16 || source.reward_offset_x() > 16
 		    || source.reward_offset_y() < -16 || source.reward_offset_y() > 16
@@ -702,11 +693,11 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    || source.projectile_target_offset_x() < -32 || source.projectile_target_offset_x() > 32
 		    || source.projectile_target_offset_y() < -32 || source.projectile_target_offset_y() > 32
 		    || (!producesProjectile && (source.projectile_target_offset_x() != 0 || source.projectile_target_offset_y() != 0))
-		    || source.quest_sequence_follow_up_kind() < 0 || source.quest_sequence_follow_up_kind() > 3
+		    || source.quest_sequence_follow_up_kind() < 0 || source.quest_sequence_follow_up_kind() > MaximumObjectQuestSequenceFollowUpKind
 		    || source.quest_sequence_follow_up_offset_x() < -32 || source.quest_sequence_follow_up_offset_x() > 32
 		    || source.quest_sequence_follow_up_offset_y() < -32 || source.quest_sequence_follow_up_offset_y() > 32
 		    || !followUpValid
-		    || source.projectile_source_kind() < 0 || source.projectile_source_kind() > 1
+		    || source.projectile_source_kind() < 0 || source.projectile_source_kind() > MaximumObjectProjectileSourceKind
 		    || (!producesProjectile && source.projectile_source_kind() != 0))
 			return tl::make_unexpected("Server-backed snapshot contains invalid object effect metadata.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
@@ -1041,7 +1032,7 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		    || interaction.required_visited_level2() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_item_id() > std::numeric_limits<uint16_t>::max()
 		    || interaction.position_x() < 0 || interaction.position_y() < 0
-		    || interaction.kind() < 0 || interaction.kind() > 4
+		    || interaction.kind() < 0 || interaction.kind() > MaximumQuestTownerInteractionKind
 		    || !interaction.has_message_id()
 		    || interaction.message_id() <= 0 || interaction.message_id() > std::numeric_limits<int16_t>::max()
 		    || (interaction.has_required_variable1() && (interaction.required_variable1() < 0 || interaction.required_variable1() > 255))

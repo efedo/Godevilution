@@ -186,6 +186,16 @@ enum class SpellTargetingKind : int {
 	WorldEntity = 4,
 };
 
+/** Server-owned object presentation identity carried by object snapshots. */
+enum class ObjectPresentationKind : int {
+	Unspecified = 0,
+	Generic = 1,
+	Shrine = 2,
+	Quest = 3,
+	Breakable = 4,
+	Trap = 5,
+};
+
 inline constexpr std::size_t MaximumEventBatchCount = 4096;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
@@ -197,5 +207,13 @@ inline constexpr int MaximumItemPresentationKind = static_cast<int>(ItemPresenta
 inline constexpr int MaximumItemSpellSourceKind = static_cast<int>(ItemSpellSourceKind::ConsumableItem);
 inline constexpr int MaximumItemActionKind = static_cast<int>(ItemActionKind::ReadQuestNote);
 inline constexpr int MaximumSpellTargetingKind = static_cast<int>(SpellTargetingKind::WorldEntity);
+inline constexpr int MaximumObjectPresentationKind = static_cast<int>(ObjectPresentationKind::Trap);
+inline constexpr int MaximumObjectEffectKind = 9;
+inline constexpr int MaximumObjectQuestTransitionKind = 8;
+inline constexpr int MaximumObjectRewardKind = 2;
+inline constexpr int MaximumObjectRewardOriginKind = 1;
+inline constexpr int MaximumObjectQuestSequenceFollowUpKind = 3;
+inline constexpr int MaximumObjectProjectileSourceKind = 1;
+inline constexpr int MaximumQuestTownerInteractionKind = 4;
 
 } // namespace devilution::authoritative
