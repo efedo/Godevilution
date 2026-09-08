@@ -27,6 +27,9 @@ All notable changes to this fork are documented below.
   shared native inventory, belt, equipment, and stash topology limits.
 - Native world projection and presentation now consume the shared monster-pack,
   activation-tick, projectile-damage-type, and projectile-phase bounds.
+- Quest/towner byte fields, optional-value sentinels, and authored reward
+  offsets now use named shared protocol limits across managed, Godot, and native
+  snapshot boundaries.
 - Server-owned save envelopes, combined session checkpoints, command ledgers,
   and world-seed files now use strict UTF-8 file I/O; malformed bytes and
   invalid UTF-16 fail closed instead of being silently replaced during

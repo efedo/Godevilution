@@ -51,6 +51,10 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumNativeMonsterFallenRallyTicks = 4096;
     public const int MinimumNativeMonsterResistance = -100;
     public const int MaximumNativeMonsterResistance = 100;
+    public const int MaximumNativeQuestByte = byte.MaxValue;
+    public const int MinimumNativeOptionalQuestByte = -1;
+    public const int MinimumNativeRewardOffset = -16;
+    public const int MaximumNativeRewardOffset = 16;
     public const uint MaximumStableSpellId = byte.MaxValue;
     public const uint MaximumNativeSpellLevel = 15;
     public const int MaximumMemorizedSpellCount = 51;

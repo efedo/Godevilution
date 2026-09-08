@@ -37,6 +37,10 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumNativeMonsterFallenRallyTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
     private const int MinimumNativeMonsterResistance = AuthoritativeProtocolLimits.MinimumNativeMonsterResistance;
     private const int MaximumNativeMonsterResistance = AuthoritativeProtocolLimits.MaximumNativeMonsterResistance;
+    private const int MaximumNativeQuestByte = AuthoritativeProtocolLimits.MaximumNativeQuestByte;
+    private const int MinimumNativeOptionalQuestByte = AuthoritativeProtocolLimits.MinimumNativeOptionalQuestByte;
+    private const int MinimumNativeRewardOffset = AuthoritativeProtocolLimits.MinimumNativeRewardOffset;
+    private const int MaximumNativeRewardOffset = AuthoritativeProtocolLimits.MaximumNativeRewardOffset;
     private const uint MaximumNativeObjectId = AuthoritativeProtocolLimits.NativeMaximumObjectId;
     private const int MaximumObjectEffectKind = AuthoritativeProtocolLimits.MaximumObjectEffectKind;
     private const int MaximumObjectPresentationKind = AuthoritativeProtocolLimits.MaximumObjectPresentationKind;
@@ -394,16 +398,16 @@ public static class AuthoritativeSnapshotValidator
                 || quest.RequiredProgress == 0
                 || quest.Progress > quest.RequiredProgress
                 || quest.Unavailable && (quest.Completed || quest.Progress != 0)
-                || quest.Variable1 is < 0 or > byte.MaxValue
-                || quest.Variable2 is < 0 or > byte.MaxValue
+                || quest.Variable1 is < 0 or > MaximumNativeQuestByte
+                || quest.Variable2 is < 0 or > MaximumNativeQuestByte
                 || quest.MessageId is < 0 or > short.MaxValue
-                || quest.TurnInTownerId is < -1 or > byte.MaxValue
+                || quest.TurnInTownerId is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
                 || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
-                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue
-                || quest.TurnInCompletionRequiredVariable1 is < -1 or > byte.MaxValue
-                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
-                || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
-                || quest.TurnInVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionVariable2 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
+                || quest.TurnInCompletionRequiredVariable1 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
+                || quest.TurnInCompletionVariable1 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
+                || quest.TurnInRequiredVariable1 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
+                || quest.TurnInVariable1 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
                 || !NativeTextLimits.IsIdentityWithinLimit(quest.CompletionUniqueIdentity)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid quest state.");
@@ -609,7 +613,7 @@ public static class AuthoritativeSnapshotValidator
                     && (!levels.TryGetValue(interaction.LevelId, out var level)
                         || level.Width > 0 && interaction.PositionX >= level.Width
                         || level.Height > 0 && interaction.PositionY >= level.Height)
-                || interaction.TownerId is < 0 or > byte.MaxValue
+                || interaction.TownerId is < 0 or > MaximumNativeQuestByte
                 || interaction.LevelId > ushort.MaxValue
                 || interaction.RequiredVisitedLevel1 > ushort.MaxValue
                 || interaction.RequiredVisitedLevel2 > ushort.MaxValue
@@ -620,13 +624,13 @@ public static class AuthoritativeSnapshotValidator
                 || !interaction.HasMessageId
                 || interaction.MessageId is <= 0 or > short.MaxValue
                 || interaction.HasRequiredVariable1
-                    && interaction.RequiredVariable1 is < 0 or > byte.MaxValue
+                    && interaction.RequiredVariable1 is < 0 or > MaximumNativeQuestByte
                 || interaction.HasRequiredVariable2
-                    && interaction.RequiredVariable2 is < 0 or > byte.MaxValue
+                    && interaction.RequiredVariable2 is < 0 or > MaximumNativeQuestByte
                 || interaction.HasVariable1
-                    && interaction.Variable1 is < 0 or > byte.MaxValue
+                    && interaction.Variable1 is < 0 or > MaximumNativeQuestByte
                 || interaction.HasVariable2
-                    && interaction.Variable2 is < 0 or > byte.MaxValue) {
+                    && interaction.Variable2 is < 0 or > MaximumNativeQuestByte) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
             }
@@ -647,11 +651,11 @@ public static class AuthoritativeSnapshotValidator
         }
         var townerIds = new HashSet<int>();
         foreach (var greeting in snapshot.TownerGreetings) {
-            if (greeting.TownerId is < 0 or > byte.MaxValue
+            if (greeting.TownerId is < 0 or > MaximumNativeQuestByte
                 || !townerIds.Add(greeting.TownerId)
                 || greeting.LevelId > ushort.MaxValue
-                || greeting.PositionX is < 0 or > byte.MaxValue
-                || greeting.PositionY is < 0 or > byte.MaxValue
+                || greeting.PositionX is < 0 or > MaximumNativeQuestByte
+                || greeting.PositionY is < 0 or > MaximumNativeQuestByte
                 || levels.Count > 0
                     && (!levels.TryGetValue(greeting.LevelId, out var level)
                         || level.Width > 0 && greeting.PositionX >= level.Width
@@ -712,14 +716,14 @@ public static class AuthoritativeSnapshotValidator
                 || !Enum.IsDefined(@object.PresentationKind)
                 || @object.QuestId != 0 && !questIds.Contains(@object.QuestId)
                 || transitionKind is < 0 or > MaximumObjectQuestTransitionKind
-                || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
-                || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue
-                || @object.QuestTransitionRequiredVariable2 is < -1 or > byte.MaxValue
+                || @object.QuestTransitionAmount is < 0 or > MaximumNativeQuestByte
+                || @object.QuestTransitionRequiredVariable1 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
+                || @object.QuestTransitionRequiredVariable2 is < MinimumNativeOptionalQuestByte or > MaximumNativeQuestByte
                 || !transitionValid
                 || rewardKind is < 0 or > MaximumObjectRewardKind
-                || @object.RewardItemLevel is < 0 or > byte.MaxValue
-                || @object.RewardOffsetX is < -16 or > 16
-                || @object.RewardOffsetY is < -16 or > 16
+                || @object.RewardItemLevel is < 0 or > MaximumNativeQuestByte
+                || @object.RewardOffsetX is < MinimumNativeRewardOffset or > MaximumNativeRewardOffset
+                || @object.RewardOffsetY is < MinimumNativeRewardOffset or > MaximumNativeRewardOffset
                 || @object.RewardOriginKind is < 0 or > MaximumObjectRewardOriginKind
                 || @object.RewardOriginKind == 0 && @object.RewardSetLevelId != 0
                 || @object.RewardOriginKind == 1 && @object.RewardSetLevelId is < 0 or > MaximumNativeSetLevelId

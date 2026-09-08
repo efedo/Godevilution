@@ -71,6 +71,10 @@ public sealed class ProjectilePresentationStyleTests
     {
         Assert.Equal(8, AuthoritativeProtocolLimits.MaximumNativeSetLevelId);
         Assert.Equal(2, AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation);
+        Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeQuestByte);
+        Assert.Equal(-1, AuthoritativeProtocolLimits.MinimumNativeOptionalQuestByte);
+        Assert.Equal(-16, AuthoritativeProtocolLimits.MinimumNativeRewardOffset);
+        Assert.Equal(16, AuthoritativeProtocolLimits.MaximumNativeRewardOffset);
         Assert.Equal(4, AuthoritativeProtocolLimits.NativeMaximumPlayerCount);
         Assert.Equal(40, AuthoritativeProtocolLimits.NativeMaximumInventoryCount);
         Assert.Equal(7, AuthoritativeProtocolLimits.NativeMaximumEquipmentCount);

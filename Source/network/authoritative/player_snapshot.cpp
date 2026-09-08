@@ -700,14 +700,14 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    || !IsValidObjectPresentationKind(source.presentation_kind())
 		    || (source.quest_id() != 0 && questIds.find(source.quest_id()) == questIds.end())
 		    || source.quest_transition_kind() < 0 || source.quest_transition_kind() > MaximumObjectQuestTransitionKind
-		    || source.quest_transition_amount() < 0 || source.quest_transition_amount() > 255
-		    || source.quest_transition_required_variable1() < -1 || source.quest_transition_required_variable1() > 255
-		    || source.quest_transition_required_variable2() < -1 || source.quest_transition_required_variable2() > 255
+		    || source.quest_transition_amount() < 0 || source.quest_transition_amount() > MaximumNativeQuestByte
+		    || source.quest_transition_required_variable1() < MinimumNativeOptionalQuestByte || source.quest_transition_required_variable1() > MaximumNativeQuestByte
+		    || source.quest_transition_required_variable2() < MinimumNativeOptionalQuestByte || source.quest_transition_required_variable2() > MaximumNativeQuestByte
 		    || !transitionValid
 		    || source.reward_kind() < 0 || source.reward_kind() > MaximumObjectRewardKind
-		    || source.reward_item_level() > 255
-		    || source.reward_offset_x() < -16 || source.reward_offset_x() > 16
-		    || source.reward_offset_y() < -16 || source.reward_offset_y() > 16
+		    || source.reward_item_level() > MaximumNativeQuestByte
+		    || source.reward_offset_x() < MinimumNativeRewardOffset || source.reward_offset_x() > MaximumNativeRewardOffset
+		    || source.reward_offset_y() < MinimumNativeRewardOffset || source.reward_offset_y() > MaximumNativeRewardOffset
 		    || !rewardValid
 		    || source.projectile_target_offset_x() < -32 || source.projectile_target_offset_x() > 32
 		    || source.projectile_target_offset_y() < -32 || source.projectile_target_offset_y() > 32
@@ -1006,16 +1006,16 @@ tl::expected<void, std::string> ValidateQuestSnapshots(const protocol::Snapshot 
 		        && (quest.native_quest_id() >= MAXQUESTS || !nativeQuestIds.insert(quest.native_quest_id()).second))
 		    || quest.required_progress() == 0 || quest.progress() > quest.required_progress()
 		    || (quest.unavailable() && (quest.completed() || quest.progress() != 0))
-		    || quest.variable_1() < 0 || quest.variable_1() > 255
-		    || quest.variable_2() < 0 || quest.variable_2() > 255
+		    || quest.variable_1() < 0 || quest.variable_1() > MaximumNativeQuestByte
+		    || quest.variable_2() < 0 || quest.variable_2() > MaximumNativeQuestByte
 		    || quest.message_id() < 0 || quest.message_id() > std::numeric_limits<int16_t>::max()
-		    || quest.turn_in_towner_id() < -1 || quest.turn_in_towner_id() > 255
+		    || quest.turn_in_towner_id() < MinimumNativeOptionalQuestByte || quest.turn_in_towner_id() > MaximumNativeQuestByte
 		    || quest.turn_in_alternate_message_id() < 0 || quest.turn_in_alternate_message_id() > std::numeric_limits<int16_t>::max()
-		    || quest.turn_in_completion_variable2() < -1 || quest.turn_in_completion_variable2() > 255
-		    || quest.turn_in_completion_required_variable1() < -1 || quest.turn_in_completion_required_variable1() > 255
-		    || quest.turn_in_completion_variable1() < -1 || quest.turn_in_completion_variable1() > 255
-		    || quest.turn_in_required_variable1() < -1 || quest.turn_in_required_variable1() > 255
-		    || quest.turn_in_variable1() < -1 || quest.turn_in_variable1() > 255
+		    || quest.turn_in_completion_variable2() < MinimumNativeOptionalQuestByte || quest.turn_in_completion_variable2() > MaximumNativeQuestByte
+		    || quest.turn_in_completion_required_variable1() < MinimumNativeOptionalQuestByte || quest.turn_in_completion_required_variable1() > MaximumNativeQuestByte
+		    || quest.turn_in_completion_variable1() < MinimumNativeOptionalQuestByte || quest.turn_in_completion_variable1() > MaximumNativeQuestByte
+		    || quest.turn_in_required_variable1() < MinimumNativeOptionalQuestByte || quest.turn_in_required_variable1() > MaximumNativeQuestByte
+		    || quest.turn_in_variable1() < MinimumNativeOptionalQuestByte || quest.turn_in_variable1() > MaximumNativeQuestByte
 		    || quest.completion_unique_identity().size() > MaximumIdentityBytes)
 			return tl::make_unexpected("Server-backed snapshot contains invalid quest state.");
 	}
@@ -1045,7 +1045,7 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		        && (level == snapshot.level_geometry().end()
 	            || (level->width() > 0 && interaction.position_x() >= level->width())
 	            || (level->height() > 0 && interaction.position_y() >= level->height())))
-		    || interaction.towner_id() < 0 || interaction.towner_id() > 255
+		    || interaction.towner_id() < 0 || interaction.towner_id() > MaximumNativeQuestByte
 		    || interaction.level_id() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_visited_level1() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_visited_level2() > std::numeric_limits<uint16_t>::max()
@@ -1054,10 +1054,10 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		    || interaction.kind() < 0 || interaction.kind() > MaximumQuestTownerInteractionKind
 		    || !interaction.has_message_id()
 		    || interaction.message_id() <= 0 || interaction.message_id() > std::numeric_limits<int16_t>::max()
-		    || (interaction.has_required_variable1() && (interaction.required_variable1() < 0 || interaction.required_variable1() > 255))
-		    || (interaction.has_required_variable2() && (interaction.required_variable2() < 0 || interaction.required_variable2() > 255))
-		    || (interaction.has_variable1() && (interaction.variable1() < 0 || interaction.variable1() > 255))
-		    || (interaction.has_variable2() && (interaction.variable2() < 0 || interaction.variable2() > 255)))
+		    || (interaction.has_required_variable1() && (interaction.required_variable1() < 0 || interaction.required_variable1() > MaximumNativeQuestByte))
+		    || (interaction.has_required_variable2() && (interaction.required_variable2() < 0 || interaction.required_variable2() > MaximumNativeQuestByte))
+		    || (interaction.has_variable1() && (interaction.variable1() < 0 || interaction.variable1() > MaximumNativeQuestByte))
+		    || (interaction.has_variable2() && (interaction.variable2() < 0 || interaction.variable2() > MaximumNativeQuestByte)))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid quest/towner interaction.");
 	}
 	return {};
@@ -1077,13 +1077,13 @@ tl::expected<void, std::string> ValidateTownerGreetingSnapshots(const protocol::
 	for (const auto &greeting : snapshot.towner_greetings()) {
 		const auto level = levels.find(greeting.level_id());
 		if (greeting.towner_id() < 0
-		    || greeting.towner_id() > std::numeric_limits<uint8_t>::max()
+		    || greeting.towner_id() > MaximumNativeQuestByte
 		    || !townerIds.insert(greeting.towner_id()).second
 		    || greeting.level_id() > std::numeric_limits<uint16_t>::max()
 		    || greeting.position_x() < 0
-		    || greeting.position_x() > std::numeric_limits<uint8_t>::max()
+		    || greeting.position_x() > MaximumNativeQuestByte
 		    || greeting.position_y() < 0
-		    || greeting.position_y() > std::numeric_limits<uint8_t>::max()
+		    || greeting.position_y() > MaximumNativeQuestByte
 		    || !levels.empty()
 		        && (level == levels.end()
 		            || level->second->width() > 0 && greeting.position_x() >= level->second->width()
