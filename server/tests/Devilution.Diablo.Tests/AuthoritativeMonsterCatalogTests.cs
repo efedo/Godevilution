@@ -379,6 +379,20 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsGharbadAvoidanceDelayTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tavoidance_delay_base\tavoidance_delay_random_range\n"
+                + "2\t0\tGharbad\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tGharbad\t10\t10\n");
+
+        var gharbad = Assert.Single(catalog.Definitions);
+        Assert.Equal((10, 10), (
+            gharbad.AvoidanceDelayBase,
+            gharbad.AvoidanceDelayRandomRange));
+    }
+
+    [Fact]
     public void LoadsCounselorDelayTuningFromMonsterTypes()
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(

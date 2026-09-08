@@ -7644,7 +7644,8 @@ void AdvanceReplayMonsterAttack(
 		return;
 	}
 	if ((state.combatTargetNativeAi == "Gargoyle"
-	        || state.combatTargetNativeAi == "GoatMelee")
+	        || state.combatTargetNativeAi == "GoatMelee"
+	        || state.combatTargetNativeAi == "Gharbad")
 	    && distance > 1) {
 		const bool wounded = state.combatTargetNativeAi == "Gargoyle"
 		    && state.combatTargetMaxHitPoints > 0
@@ -7670,7 +7671,8 @@ void AdvanceReplayMonsterAttack(
 		const uint32_t actionSeed = static_cast<uint32_t>(tick)
 		    ^ state.combatTargetEntityId
 		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
-		const bool usesCompatibilitySeed = state.combatTargetNativeAi == "GoatMelee"
+		const bool usesCompatibilitySeed = (state.combatTargetNativeAi == "GoatMelee"
+		    || state.combatTargetNativeAi == "Gharbad")
 		    && state.combatTargetMonsterAiSeed == 0;
 		const int direction = GetDirection(
 		    state.combatTargetPositionX,
@@ -8429,7 +8431,8 @@ void AdvanceReplayMonsterAttack(
 		return;
 	}
 	if (state.combatTargetNativeAi == "Gargoyle"
-	    || state.combatTargetNativeAi == "GoatMelee") {
+	    || state.combatTargetNativeAi == "GoatMelee"
+	    || state.combatTargetNativeAi == "Gharbad") {
 		const int attackChance = std::min(
 		    100,
 		    23 + 2 * state.combatTargetIntelligence);

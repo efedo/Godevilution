@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a Gharbad multi-participant replay fixture through the shared
+  GoatMelee/AiAvoidance compatibility path. Native and managed runners now
+  preserve the authored Gharbad identity, select the nearest live participant,
+  and agree on deterministic movement checkpoints; external Gharbad rows also
+  accept validated avoidance-delay tuning.
+
 - Added shared replay coverage for the Warlord and Snotspill native SkeletonAi
   aliases. Native and managed runners now preserve nearest-participant
   selection, shared movement-delay admission, and countdown state for both

@@ -34,6 +34,12 @@ Warlord and Snotspill now share the same two-participant SkeletonAi replay
 coverage. Native and managed runners preserve their explicit authored native-AI
 identities while agreeing on movement-delay admission and countdown state.
 
+Gharbad now has two-participant replay coverage through the shared GoatMelee/
+AiAvoidance compatibility path. Native and managed runners preserve the
+authored Gharbad identity, select the nearest live participant, and agree on
+the deterministic movement checkpoints. External Gharbad rows also accept the
+same validated avoidance-delay tuning as GoatMelee and Gargoyle.
+
 The deterministic replay gate now also includes a seeded GoatMelee
 multi-participant movement fixture. Both runners select the nearest live
 participant for the autonomous path while preserving the farther participant's

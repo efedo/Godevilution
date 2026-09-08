@@ -89,6 +89,7 @@ set(devilutionx_fixtures
   replay/gameplay-gargoyle-avoidance-idle.json
   replay/gameplay-gargoyle-avoidance-walk.json
   replay/gameplay-gargoyle-avoidance-move.json
+  replay/gameplay-gharbad-multiplayer-target.json
   replay/gameplay-skeleton-melee-delay.json
   replay/gameplay-skeleton-melee-attack-delay.json
   replay/gameplay-skeleton-melee-multiplayer-target.json

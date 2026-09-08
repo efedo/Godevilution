@@ -614,7 +614,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.AvoidanceDelayRandomRange is < 0 or > 1024
                 || (definition.AvoidanceDelayBase != 0
                     || definition.AvoidanceDelayRandomRange != 0)
-                    && (definition.NativeAi is not ("GoatMelee" or "Gargoyle")
+                    && (definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
                         || definition.AvoidanceDelayBase <= 0
                         || definition.AvoidanceDelayRandomRange <= 0)
                 || definition.CounselorDelayBase is < 0 or > 1024

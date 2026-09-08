@@ -390,7 +390,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 188 checked-in JSON fixtures and 207 registered
+the native replay gate contains 189 checked-in JSON fixtures and 208 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -407,10 +407,11 @@ Gargoyle attack admission against a secondary blocker, and healthy Gargoyle
 avoidance-idle admission, and admitted avoidance RandomWalk destination and
 occupancy, including an active object blocking the straight candidate, and the
 far-distance Move-goal/RoundWalk state boundary across its first continuation
-tick, GoatMelee and Gargoyle nearest-participant autonomous movement, Fallen
+tick, GoatMelee, Gharbad, and Gargoyle nearest-participant autonomous movement, Fallen
 rally nearest-participant pursuit, Butcher RandomWalk nearest-participant
 pursuit, and Skeleton King RoundWalk nearest-participant pursuit with
-decision-delay countdown, Warlord and Snotspill SkeletonAi alias
+decision-delay countdown, Gharbad GoatMelee/AiAvoidance alias movement, Warlord
+and Snotspill SkeletonAi alias
 admission/countdown,
 SkeletonMelee movement-delay admission/countdown, and failed adjacent-
 attack admission/countdown. Counselor nearest-participant delay selection,
@@ -469,7 +470,8 @@ continuation parity, plus SkeletonMelee movement-delay and failed adjacent-
 attack admission/countdown lifecycles, Counselor nearest-participant delay
 selection, Fallen rally nearest-participant pursuit, Butcher RandomWalk
 nearest-participant pursuit, Skeleton King RoundWalk nearest-participant
-pursuit and decision-delay countdown, Warlord and Snotspill SkeletonAi alias
+pursuit and decision-delay countdown, Gharbad GoatMelee/AiAvoidance alias
+movement, Warlord and Snotspill SkeletonAi alias
 admission/countdown, SkeletonMelee
 nearest-participant adjacent attack, Snake
 nearest-participant charge routing, Rhino charge admission,
@@ -1114,11 +1116,11 @@ Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the
 current Counselor, SkeletonMelee, Snake, Sneak, Bat, Fat, Zombie, Rhino, Fallen,
-Butcher, Skeleton King, Warlord, and Snotspill,
+Butcher, Skeleton King, Gharbad, Warlord, and Snotspill,
 Scavenger, and Gargoyle admission lanes,
 multi-actor target selection beyond the current Bat, Fat, GoatMelee, Gargoyle,
 Counselor, Rhino, SkeletonMelee, Snake, Sneak, Zombie, Fallen, Butcher,
-Skeleton King, Warlord, Snotspill, and projectile lanes,
+Skeleton King, Gharbad, Warlord, Snotspill, and projectile lanes,
 mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, and broader combat/event ordering. Cursor-held pickup
