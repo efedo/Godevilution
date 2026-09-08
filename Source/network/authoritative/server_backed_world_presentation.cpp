@@ -19,6 +19,7 @@
 #include "devilution.pb.h"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 #include "tables/objdat.h"
 
 namespace devilution::authoritative {
@@ -452,7 +453,7 @@ std::optional<MissileID> NativePresentationMissileId(
 	}
 
 	if (!nativeMissileId.empty()) {
-		if (behavior != 50) // MonsterMagic
+		if (behavior != static_cast<int>(ProjectileBehavior::MonsterMagic))
 			return std::nullopt;
 		if (nativeMissileId == "Lightning")
 			return MissileID::Lightning;
@@ -475,67 +476,67 @@ std::optional<MissileID> NativePresentationMissileId(
 		return std::nullopt;
 	}
 
-	switch (behavior) {
-	case 1: // ChargedBolt
+	switch (static_cast<ProjectileBehavior>(behavior)) {
+	case ProjectileBehavior::ChargedBolt:
 		return MissileID::ChargedBolt;
-	case 2: // Firebolt
+	case ProjectileBehavior::Firebolt:
 		return MissileID::Firebolt;
-	case 3: // Lightning
+	case ProjectileBehavior::Lightning:
 		return MissileID::Lightning;
-	case 4: // LightningSegment
+	case ProjectileBehavior::LightningSegment:
 		return MissileID::ThinLightning;
-	case 6: // FlashBottom
+	case ProjectileBehavior::FlashBottom:
 		return MissileID::FlashBottom;
-	case 7: // FlashTop
+	case ProjectileBehavior::FlashTop:
 		return MissileID::FlashTop;
-	case 11: // ResurrectionBeam
+	case ProjectileBehavior::ResurrectionBeam:
 		return MissileID::ResurrectBeam;
-	case 15: // Phasing
+	case ProjectileBehavior::Phasing:
 		return MissileID::Phasing;
-	case 16: // Fireball
+	case ProjectileBehavior::Fireball:
 		return MissileID::Fireball;
-	case 19: // HolyBolt
+	case ProjectileBehavior::HolyBolt:
 		return MissileID::HolyBolt;
-	case 20: // BloodStar
+	case ProjectileBehavior::BloodStar:
 		return MissileID::BloodStar;
-	case 21: // BoneSpirit
+	case ProjectileBehavior::BoneSpirit:
 		return MissileID::BoneSpirit;
-	case 31: // NovaBall
+	case ProjectileBehavior::NovaBall:
 		return MissileID::NovaBall;
-	case 23: // FireWallSegment
+	case ProjectileBehavior::FireWallSegment:
 		// Lightning Wall reuses the shared wall-segment behavior. Older
 		// servers may omit native_visual, so retain the damage-channel
 		// fallback for native presentation compatibility.
 		return damageType == 2 ? MissileID::LightningWall : MissileID::FireWall;
-	case 24: // FlameWaveController
+	case ProjectileBehavior::FlameWaveController:
 		return MissileID::FlameWaveControl;
-	case 25: // FlameWaveSegment
+	case ProjectileBehavior::FlameWaveSegment:
 		return MissileID::FlameWave;
-	case 27: // InfernoSegment
+	case ProjectileBehavior::InfernoSegment:
 		return MissileID::Inferno;
-	case 29: // ChainLightningBolt
+	case ProjectileBehavior::ChainLightningBolt:
 		return MissileID::ChainLightning;
-	case 33: // ApocalypseBoom
+	case ProjectileBehavior::ApocalypseBoom:
 		return MissileID::ApocalypseBoom;
-	case 35: // Elemental
+	case ProjectileBehavior::Elemental:
 		return MissileID::Elemental;
-	case 36: // GuardianController
+	case ProjectileBehavior::GuardianController:
 		return MissileID::Guardian;
-	case 49: // Etherealize
+	case ProjectileBehavior::Etherealize:
 		return MissileID::Etherealize;
-	case 51: // Acid
+	case ProjectileBehavior::Acid:
 		return MissileID::Acid;
-	case 52: // AcidSplat
+	case ProjectileBehavior::AcidSplat:
 		return MissileID::AcidSplat;
-	case 53: // AcidPuddle
+	case ProjectileBehavior::AcidPuddle:
 		return MissileID::AcidPuddle;
-	case 56: // MonsterChargedBolt
+	case ProjectileBehavior::MonsterChargedBolt:
 		return MissileID::ChargedBolt;
-	case 57: // HorkSpawn
+	case ProjectileBehavior::HorkSpawn:
 		return MissileID::HorkSpawn;
-	case 58: // WeaponArrow
+	case ProjectileBehavior::WeaponArrow:
 		return MissileID::Arrow;
-	case 59: // MonsterArrow
+	case ProjectileBehavior::MonsterArrow:
 		return MissileID::Arrow;
 	default:
 		return std::nullopt;

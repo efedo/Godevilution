@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Applied the named projectile behavior identities across the server snapshot
+  validator/hasher and native projection/presentation validators, removing the
+  remaining raw behavior-number switches from the compatibility boundary.
 - Added the stable `AuthoritativeProjectileBehavior` identity enum to the
   dependency-free protocol assembly and replaced managed/native projectile
   behavior bounds with the shared protocol limit. Godot's legacy presentation

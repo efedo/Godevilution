@@ -745,7 +745,9 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 	projected.reserve(snapshot.projectiles_size());
 	for (const auto &source : snapshot.projectiles()) {
 		if (source.entity_id() == 0 || source.source_entity_id() == 0
-		    || (source.spell_id() == 0 && source.behavior() != 58 && source.behavior() != 59)
+		    || (source.spell_id() == 0
+		        && source.behavior() != static_cast<int>(ProjectileBehavior::WeaponArrow)
+		        && source.behavior() != static_cast<int>(ProjectileBehavior::MonsterArrow))
 		    || source.remaining_ticks() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains a projectile with an invalid identity or lifetime.");
 		if (source.damage() < 0 || source.area_radius() < 0)
@@ -1398,36 +1400,36 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || !projectile.native_missile_id().empty()) {
 			return true;
 		}
-		switch (projectile.behavior()) {
-		case 1:  // ChargedBolt
-		case 2:  // Firebolt
-		case 3:  // Lightning
-		case 4:  // LightningSegment
-		case 6:  // FlashBottom
-		case 7:  // FlashTop
-		case 11: // ResurrectionBeam
-		case 15: // Phasing
-		case 16: // Fireball
-		case 19: // HolyBolt
-		case 20: // BloodStar
-		case 21: // BoneSpirit
-		case 23: // FireWallSegment
-		case 24: // FlameWaveController
-		case 25: // FlameWaveSegment
-		case 27: // InfernoSegment
-		case 29: // ChainLightningBolt
-		case 31: // NovaBall
-		case 33: // ApocalypseBoom
-		case 35: // Elemental
-		case 36: // GuardianController
-		case 49: // Etherealize
-		case 51: // Acid
-		case 52: // AcidSplat
-		case 53: // AcidPuddle
-		case 56: // MonsterChargedBolt
-		case 57: // HorkSpawn
-		case 58: // WeaponArrow
-		case 59: // MonsterArrow
+		switch (static_cast<ProjectileBehavior>(projectile.behavior())) {
+		case ProjectileBehavior::ChargedBolt:
+		case ProjectileBehavior::Firebolt:
+		case ProjectileBehavior::Lightning:
+		case ProjectileBehavior::LightningSegment:
+		case ProjectileBehavior::FlashBottom:
+		case ProjectileBehavior::FlashTop:
+		case ProjectileBehavior::ResurrectionBeam:
+		case ProjectileBehavior::Phasing:
+		case ProjectileBehavior::Fireball:
+		case ProjectileBehavior::HolyBolt:
+		case ProjectileBehavior::BloodStar:
+		case ProjectileBehavior::BoneSpirit:
+		case ProjectileBehavior::FireWallSegment:
+		case ProjectileBehavior::FlameWaveController:
+		case ProjectileBehavior::FlameWaveSegment:
+		case ProjectileBehavior::InfernoSegment:
+		case ProjectileBehavior::ChainLightningBolt:
+		case ProjectileBehavior::NovaBall:
+		case ProjectileBehavior::ApocalypseBoom:
+		case ProjectileBehavior::Elemental:
+		case ProjectileBehavior::GuardianController:
+		case ProjectileBehavior::Etherealize:
+		case ProjectileBehavior::Acid:
+		case ProjectileBehavior::AcidSplat:
+		case ProjectileBehavior::AcidPuddle:
+		case ProjectileBehavior::MonsterChargedBolt:
+		case ProjectileBehavior::HorkSpawn:
+		case ProjectileBehavior::WeaponArrow:
+		case ProjectileBehavior::MonsterArrow:
 			return true;
 		default:
 			return false;
@@ -1435,7 +1437,9 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 	};
 	for (const auto &projectile : snapshot.projectiles()) {
 		if (projectile.source_entity_id() == 0
-		    || (projectile.spell_id() == 0 && projectile.behavior() != 58 && projectile.behavior() != 59)
+		    || (projectile.spell_id() == 0
+		        && projectile.behavior() != static_cast<int>(ProjectileBehavior::WeaponArrow)
+		        && projectile.behavior() != static_cast<int>(ProjectileBehavior::MonsterArrow))
 		    || projectile.remaining_ticks() == 0
 		    || projectile.damage() < 0
 		    || projectile.area_radius() < 0
@@ -1456,7 +1460,7 @@ tl::expected<void, std::string> ValidateProjectileSnapshots(const protocol::Snap
 		    || usesDirectionalPresentation(projectile)
 		        && (projectile.original_direction() < 0 || projectile.original_direction() > 7)
 		    || !projectile.native_missile_id().empty()
-		        && (projectile.behavior() != 50 // MonsterMagic
+		        && (projectile.behavior() != static_cast<int>(ProjectileBehavior::MonsterMagic)
 		            || !IsValidNativeMissileIdentity(projectile.native_missile_id())))
 			return tl::make_unexpected("Server-backed snapshot contains invalid projectile state.");
 	}

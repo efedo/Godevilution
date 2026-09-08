@@ -1,4 +1,5 @@
 using Devilution.Domain.Hashing;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Server.Snapshots;
@@ -6,9 +7,6 @@ namespace Devilution.Server.Snapshots;
 /** Hashes the authoritative fields currently exposed by Snapshot. */
 public static class SnapshotStateHasher
 {
-    private const int WeaponArrowBehavior = 58;
-    private const int MonsterArrowBehavior = 59;
-
     public static string Compute(Snapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -766,7 +764,8 @@ public static class SnapshotStateHasher
                 hasher.AppendInt32(projectile.DamageType);
                 hasher.AppendInt32(projectile.AreaRadius);
                 hasher.AppendUInt32(projectile.RemainingTicks);
-                if (projectile.Behavior != 0
+                if ((AuthoritativeProjectileBehavior)projectile.Behavior
+                    != AuthoritativeProjectileBehavior.Targeted
                     || projectile.Phase != 0
                     || projectile.StartX != 0
                     || projectile.StartY != 0
@@ -826,7 +825,8 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(projectile.ElementalOriginY);
                     hasher.AppendInt32(projectile.GuardianState);
                 }
-                if (projectile.Behavior == WeaponArrowBehavior
+                if ((AuthoritativeProjectileBehavior)projectile.Behavior
+                    == AuthoritativeProjectileBehavior.WeaponArrow
                     || projectile.DamageQ6 != 0
                     || projectile.ElementalFireDamage != 0
                     || projectile.ElementalLightningDamage != 0
@@ -843,7 +843,8 @@ public static class SnapshotStateHasher
                     hasher.AppendBool(projectile.DoppelgangerProc);
                     hasher.AppendUInt32(projectile.ActivationDelayTicks);
                 }
-                if (projectile.Behavior == MonsterArrowBehavior) {
+                if ((AuthoritativeProjectileBehavior)projectile.Behavior
+                    == AuthoritativeProjectileBehavior.MonsterArrow) {
                     hasher.AppendString("godevilution-projectile-monster-arrow-v1");
                     hasher.AppendInt32(projectile.Damage);
                     hasher.AppendInt32(projectile.DamageMinimum);

@@ -5,6 +5,7 @@ using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
 using Devilution.Server.Snapshots;
 using Xunit;
+using AuthoritativeProjectileBehavior = Devilution.Diablo.AuthoritativeProjectileBehavior;
 
 namespace Devilution.Server.Tests;
 

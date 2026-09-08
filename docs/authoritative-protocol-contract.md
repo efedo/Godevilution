@@ -857,6 +857,8 @@ per-tick collision/RNG boundary.
 `ProjectileSnapshot.behavior` uses the stable `AuthoritativeProjectileBehavior`
 identities (0 through 59). The value remains authoritative simulation state
 and a compatibility field; clients do not use it to make gameplay decisions.
+Native and managed snapshot validators, resume hashing, and legacy presentation
+fallbacks use the same named identity contract.
 `ProjectileSnapshot.presentation_kind` field 53 is an additive server-owned
 presentation family. Current servers populate it for every projectile so
 presentation clients do not need to maintain the behavior-to-visual mapping;
