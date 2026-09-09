@@ -1176,6 +1176,9 @@ Notable shared fixtures include:
 - `gameplay-monster-magic-secondary-monk-block.json` for multiplayer
   secondary-participant FlexibleBlock admission without equipment and shared
   class-aware impact checkpoints;
+- `gameplay-hork-spawn-primary-monk-block.json` for Hellfire Monk
+  FlexibleBlock admission during Hork Spawn impact without equipment; the
+  Hork replay executor loads the shared class catalog and fixture Dexterity;
 - `gameplay-acid-primary-equipment.json` for primary Acid impact GetHit and
   resistance before Mana Shield absorption, with puddle lifecycle checkpoints;
 - `gameplay-acid-puddle-primary-equipment.json` for active Acid puddle player

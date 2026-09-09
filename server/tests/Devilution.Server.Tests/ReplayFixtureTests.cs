@@ -6771,6 +6771,33 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnMonkBlocksWithoutEquipment()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-hork-spawn-primary-monk-block.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(PlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(5UL, player.CombatModeEndTick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLazarusSuccubusBloodStarMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -9474,6 +9501,9 @@ public sealed class ReplayFixtureTests
             intelligence: fixture.InitialState.CombatTargetIntelligence,
             horkDemonDelayTicks: fixture.InitialState.CombatTargetHorkDemonDelayTicks);
         var missiles = LoadReplayMonsterMissiles(fixture, "monster-hork-spawn");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
         var spawnWorld = new AuthoritativeWorld();
         spawnWorld.AddLevel(new AuthoritativeLevel(1, 40, 40));
         var spawnTypes = LoadReplayMonsterTypes(fixture, "monster-hork-spawn");
@@ -9539,6 +9569,13 @@ public sealed class ReplayFixtureTests
             fixture.InitialState.Mana,
             startingLifeMaximum: fixture.InitialState.LifeMaximum,
             startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingCharacterClassId: checked((uint)fixture.InitialState.CharacterClass),
+            startingPlayerClasses: classes,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(
+                    fixture.InitialState.Dexterity,
+                    fixture.InitialState.Dexterity),
+            },
             startingEquipment: startingEquipment,
             startingObjects: startingObjects,
             startingPositionX: fixture.InitialState.PositionX,

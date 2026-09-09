@@ -253,6 +253,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-secondary-impact.json" Link="Fixtures/gameplay-hork-spawn-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-object-break.json" Link="Fixtures/gameplay-hork-spawn-object-break.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-primary-block.json" Link="Fixtures/gameplay-hork-spawn-primary-block.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-primary-monk-block.json" Link="Fixtures/gameplay-hork-spawn-primary-monk-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-autonomous.json" Link="Fixtures/gameplay-blood-star-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-impact.json" Link="Fixtures/gameplay-blood-star-impact.json" CopyToOutputDirectory="PreserveNewest" />

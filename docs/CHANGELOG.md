@@ -17,6 +17,10 @@ All notable changes to this fork are documented below.
   both runners.
 - Extended Hellfire Monk MonsterMagic FlexibleBlock coverage to an unarmed
   secondary participant in multiplayer, including class base block chance.
+- Added Hellfire Monk Hork Spawn coverage proving the shared class-aware block
+  boundary applies to the primary player without equipment.
+- Hork Spawn replay setup now loads the validated player-class catalog and
+  initial Dexterity, so managed class-aware block checks use fixture state.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance
   are applied before Mana Shield absorption in both runners.
 - Added persistent Acid puddle impact coverage proving active-tick player

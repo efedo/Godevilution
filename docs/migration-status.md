@@ -8185,6 +8185,12 @@ The same class-aware block boundary now applies to unarmed Hellfire Monk
 secondary participants, while retaining the explicit legacy block-capable
 secondary path used by existing shield fixtures.
 
+Hork Spawn player impacts now reuse the same class-aware FlexibleBlock and base
+block chance boundary for primary and secondary participants, with a shared
+Hellfire Monk primary fixture covering the previously shield-only native path.
+Its replay setup now also supplies the validated class catalog and fixture
+Dexterity to the managed runner, keeping the class decision data-driven.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

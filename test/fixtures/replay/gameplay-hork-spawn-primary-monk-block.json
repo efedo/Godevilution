@@ -1,0 +1,71 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/hork-spawn-primary-monk-block",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-hork-spawn",
+    "version": "0.1.0",
+    "sha256": "a9073737d81a108ccc128e6e4fbf3c4ae7c84f76e275ea3c20c34ebe15f2c985"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 11,
+  "game_variant": "Hellfire",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_class": 3,
+    "character_level": 1,
+    "dexterity": 80,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 3,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 3,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "HorkDemon",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "spell_id": 117,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 0,
+      "damage_type": 0,
+      "remaining_ticks": 1,
+      "behavior": 57,
+      "phase": 0,
+      "speed": 8,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "cf818abd5c12e339222a29a92e55d47ad1344d41699b7f962c57fb5469552b09" }
+  ]
+}

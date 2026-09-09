@@ -10197,17 +10197,20 @@ void AdvanceReplayHorkSpawnsOneTick(
 			if (hit) {
 				const bool primaryPlayerBlockCapable = primaryPlayerAtTile
 				    && (state.combatMode == 0 || state.combatMode == 4)
-				    && std::any_of(state.equipment.begin(), state.equipment.end(), [](const auto &item) {
-					    return item.state.itemType == 5;
-				    });
+				    && IsReplayPrimaryPlayerBlockCapable(state);
+				const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
+				    || IsReplaySecondaryPlayerBlockCapable(state);
 				const bool canBlock = (secondaryPlayerAtTile
-				        && state.secondaryPlayerBlockCapable
+				        && secondaryPlayerBlockCapable
 				        && (state.secondaryPlayerCombatMode == 0
 				            || state.secondaryPlayerCombatMode == 4))
 				    || primaryPlayerBlockCapable;
 				const int blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 				const int blockChance = std::clamp(
-				    (secondaryPlayerAtTile ? state.secondaryPlayerDexterity : 0)
+				    (secondaryPlayerAtTile ? state.secondaryPlayerDexterity : state.attributes[5])
+				        + (secondaryPlayerAtTile
+				            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+				            : GetReplayBaseBlockChance(state.characterClassId))
 				        + 2 * targetLevel - 2 * state.combatTargetMonsterLevel,
 				    0,
 				    100);
