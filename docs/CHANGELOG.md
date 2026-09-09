@@ -28,6 +28,8 @@ All notable changes to this fork are documented below.
   the server domain assembly.
 - Death actions now require a nonzero killing/source entity reference at managed
   and native snapshot boundaries, matching the authoritative death lifecycle.
+- Native snapshot validation now enforces standalone player combat-mode lifetime
+  rules, matching the managed host and Godot validators.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

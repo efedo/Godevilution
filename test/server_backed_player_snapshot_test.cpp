@@ -1924,6 +1924,12 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	action->set_end_tick(4);
 	action->set_effect_applied(true);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidDeathSource).has_value());
+
+	protocol::Snapshot invalidCombatMode;
+	player = invalidCombatMode.add_players();
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_STAND);
+	player->set_combat_mode_end_tick(1);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidCombatMode).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)

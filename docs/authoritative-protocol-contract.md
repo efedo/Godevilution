@@ -1219,6 +1219,8 @@ it as the starting direction for native equipped-item death placement.
 mode. Stand with end tick zero is the additive legacy default. Only Stand and
 melee Attack admit missile blocking; Block and GotHit durations use validated
 per-class frame counts plus usable fast-block or hit-recovery item flags.
+Every boundary rejects Stand with a nonzero end tick and Block/GotHit with a
+zero end tick, even when no action is currently active.
 Nondefault mode state adds the tagged
 `godevilution-player-combat-mode-v1` canonical-hash section and round-trips
 through version-1 saves. Hellfire content also selects the native post-block

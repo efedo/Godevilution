@@ -1344,11 +1344,19 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		}
 	};
 	for (const auto &player : snapshot.players()) {
+		const int32_t combatMode = static_cast<int32_t>(player.combat_mode());
+		if (combatMode < protocol::PLAYER_COMBAT_MODE_STAND
+		    || combatMode > protocol::PLAYER_COMBAT_MODE_QUIT
+		    || (combatMode == protocol::PLAYER_COMBAT_MODE_STAND
+		        && player.combat_mode_end_tick() != 0)
+		    || (combatMode == protocol::PLAYER_COMBAT_MODE_BLOCK
+		        || combatMode == protocol::PLAYER_COMBAT_MODE_GOT_HIT)
+		        && player.combat_mode_end_tick() == 0)
+			return tl::make_unexpected("Server-backed snapshot contains an invalid player combat mode.");
 		if (!player.has_current_action())
 			continue;
 		const auto &action = player.current_action();
 		const int32_t kind = static_cast<int32_t>(action.kind());
-		const int32_t combatMode = static_cast<int32_t>(player.combat_mode());
 		const bool timingIsValid = kind >= 1 && kind <= 6
 		    && action.started_at_tick() <= snapshot.tick()
 		    && snapshot.tick() <= action.end_tick()

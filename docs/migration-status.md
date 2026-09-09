@@ -70,6 +70,8 @@ restore from accepting a timeline that the authoritative tick loop could not
 have produced.
 Death actions also require the nonzero source entity recorded by the server;
 managed and native snapshot validators reject an unreferenced death timeline.
+Native compatibility validation now also rejects impossible standalone combat
+mode lifetimes before action projection, matching the managed boundaries.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
