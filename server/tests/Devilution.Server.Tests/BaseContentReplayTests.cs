@@ -33,6 +33,7 @@ public sealed class BaseContentReplayTests
     [InlineData("gameplay-class-physical-damage-hellfire-armor-piercing.json", 0, 99)]
     [InlineData("gameplay-class-physical-damage-hellfire-decay.json", 0, 93)]
     [InlineData("gameplay-class-physical-damage-hellfire-jesters.json", 0, 95)]
+    [InlineData("gameplay-class-physical-damage-hellfire-peril.json", 0, 86)]
     public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
         string fixtureName,
         int expectedClassId,

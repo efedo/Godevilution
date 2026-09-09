@@ -176,6 +176,8 @@ before projectile resolution, with the refreshed Hellfire manifest identity
 checked by both runners.
 Hellfire physical replay now also applies the native post-armor `Jesters`
 roll and upper-half expansion at the shared checkpoint.
+Hellfire physical replay now also applies `Peril` self-damage from the
+pre-modifier attack and its final target-damage multiplier.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed

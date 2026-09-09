@@ -44,9 +44,11 @@ constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr uint32_t TripleDemonDamageFlag = 1U << 30;
 constexpr int32_t HellfireDevastationFlag = 1 << 0;
 constexpr int32_t HellfireDecayFlag = 1 << 1;
+constexpr int32_t HellfirePerilFlag = 1 << 2;
 constexpr int32_t HellfireJestersFlag = 1 << 3;
 constexpr int32_t HellfireDecayDamageReduction = 5;
 constexpr int32_t HellfireDecayRemovalThreshold = 100;
+constexpr int32_t HellfirePerilDamageMultiplier = 2;
 constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t FireboltBehavior = 2;
@@ -5359,6 +5361,7 @@ bool ApplyReplayAttack(
 		static_cast<void>(GenerateRnd(state, 1));
 	int32_t damage = 1;
 	bool attackHit = false;
+	int32_t perilSelfDamageQ6 = 0;
 	if (!ranged && state.attributes[1] > 0 && state.attributes[5] > 0) {
 		const int32_t level = static_cast<int32_t>(state.characterLevel);
 		const int32_t strength = state.attributes[1];
@@ -5469,6 +5472,9 @@ bool ApplyReplayAttack(
 		    ^ state.entityId;
 		attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
 		const int32_t damageBeforeFlat = rolledBaseDamage + rolledBaseDamage * damagePercent / 100;
+		if (state.hellfire
+		    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
+			perilSelfDamageQ6 = damageBeforeFlat * 64;
 		int32_t damageBeforeArmor = damageBeforeFlat + damageFlat + damageModifier;
 		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
 		// after the class damage profile and double damage before armor reduction.
@@ -5512,6 +5518,12 @@ bool ApplyReplayAttack(
 			roll = 100 + (roll - 100) * 5;
 		damageQ6 = damageQ6 * roll / 100;
 	}
+	if (perilSelfDamageQ6 > 0)
+		state.life = std::max(0, state.life - perilSelfDamageQ6);
+	if (state.hellfire
+	    && damageQ6 > 0
+	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
+		damageQ6 *= HellfirePerilDamageMultiplier;
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	// Resolve both channels before applying either one, matching the C# rule's
