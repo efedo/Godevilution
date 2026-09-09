@@ -177,6 +177,9 @@ struct ReplayFixtureInitialState {
 	int32_t mana = 0;
 	int32_t manaMaximum = 0;
 	int32_t magic = 0;
+	int32_t strength = 0;
+	int32_t dexterity = 0;
+	int32_t vitality = 0;
 	int32_t characterClass = 0;
 	uint8_t characterLevel = 1;
 	int32_t positionX = 0;

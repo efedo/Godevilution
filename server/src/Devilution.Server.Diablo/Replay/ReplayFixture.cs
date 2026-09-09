@@ -181,6 +181,15 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int Magic { get; init; }
 
+    /** Optional native base/current strength used by class-damage parity fixtures. */
+    public int Strength { get; init; }
+
+    /** Optional native base/current dexterity used by class-damage parity fixtures. */
+    public int Dexterity { get; init; }
+
+    /** Optional native base/current vitality used by class-damage parity fixtures. */
+    public int Vitality { get; init; }
+
     public int CharacterClass { get; init; }
 
     public byte CharacterLevel { get; init; } = 1;

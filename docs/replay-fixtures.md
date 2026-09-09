@@ -56,6 +56,13 @@ the resulting equipment. Attack profile, ranged admission, combat mode, and
 native speed flags are then derived from that state rather than declared as
 separate fixture outcomes.
 
+`gameplay-class-physical-damage.json` extends the initial-state contract with
+optional `strength` and `vitality` fields. Together with `dexterity` and
+`character_class`, these fields exercise a native class-specific unarmed
+physical-damage modifier at a shared checkpoint. Omitting the new fields keeps
+legacy compact fixtures on their compatibility fallback; class-damage fixtures
+must author all three physical attributes explicitly.
+
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and
 `combat_target_fallen_rally_ticks`. Both runners validate the native bounds and

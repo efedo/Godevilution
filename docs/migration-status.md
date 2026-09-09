@@ -89,6 +89,12 @@ and Mega Inferno checkpoint hashes, including deterministic RNG consumption and
 the native compact impact boundaries. Native and managed malformed companion
 fixtures now report the same validation precedence.
 
+The replay gate now also carries explicit player strength and vitality and
+covers Rogue class-specific unarmed physical damage at a shared native/managed
+checkpoint. Legacy compact attack fixtures retain their armor-only fallback
+until they author the full class-attribute contract; broader weapon and
+class-matrix replay coverage remains a follow-up native-parity task.
+
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
 

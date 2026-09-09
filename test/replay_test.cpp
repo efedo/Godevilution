@@ -511,6 +511,44 @@ TEST(ReplayFixture, ExecutesElementalEquipmentAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesClassPhysicalDamageAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-class-physical-damage.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_EQ(fixture.initialState.characterClass, 1);
+	ASSERT_EQ(fixture.initialState.strength, 20);
+	ASSERT_EQ(fixture.initialState.dexterity, 30);
+
+	ReplayFixtureExecutionState state;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[0] = fixture.initialState.strength;
+	state.attributes[1] = fixture.initialState.strength;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.attributes[4] = fixture.initialState.dexterity;
+	state.attributes[5] = fixture.initialState.dexterity;
+	state.attributes[6] = fixture.initialState.vitality;
+	state.attributes[7] = fixture.initialState.vitality;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.combatTargetHitPoints, 97);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-arrows.json");

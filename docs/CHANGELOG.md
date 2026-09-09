@@ -33,6 +33,10 @@ All notable changes to this fork are documented below.
 - Native tile-coordinate bounds are now named once in the shared protocol
   contract and consumed by managed mapper/host/Godot validation and native
   snapshot/world projection, including authored towner greetings.
+- The replay contract now carries explicit player strength and vitality and
+  covers Rogue class physical damage at a shared native/managed checkpoint;
+  native replay no longer relies on the armor-only melee fallback when class
+  attributes are authored.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

@@ -5302,9 +5302,32 @@ bool ApplyReplayAttack(
 	// compact unarmed fallback used by replay fixtures.
 	if (consumeRandom)
 		static_cast<void>(GenerateRnd(state, 1));
-	const int32_t damage = ranged
-	    ? 1
-	    : std::max(1, 10 - state.combatTargetArmorClass);
+	int32_t damage = 1;
+	if (!ranged && state.characterClassId != 0
+	    && state.attributes[1] > 0 && state.attributes[5] > 0) {
+		const int32_t level = static_cast<int32_t>(state.characterLevel);
+		const int32_t strength = state.attributes[1];
+		const int32_t dexterity = state.attributes[5];
+		const int32_t vitality = state.attributes[7];
+		const int32_t strengthModifier = level * strength;
+		const int32_t strengthDexterityModifier = level * (strength + dexterity);
+		const int32_t damageModifier = state.characterClassId == 1
+		        ? strengthDexterityModifier / 200
+		    : state.characterClassId == 3
+		        ? strengthDexterityModifier / 150
+		    : state.characterClassId == 4
+		        ? strengthModifier / 100
+		    : state.characterClassId == 5
+		        ? strengthModifier / 100 + level * vitality / 100
+		        : strengthModifier / 100;
+		const int32_t unarmedMaximum = state.characterClassId == 3
+		    ? std::max(1, level / 2)
+		    : 1;
+		const int32_t rolledBaseDamage = 1 + GenerateRnd(state, unarmedMaximum);
+		damage = std::max(1, rolledBaseDamage + damageModifier - std::max(0, state.combatTargetArmorClass));
+	} else {
+		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
+	}
 	const int32_t damageQ6 = damage * 64;
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
@@ -10296,6 +10319,12 @@ private:
 				return ParseSigned(fixture_.initialState.manaMaximum);
 			if (key == "magic")
 				return ParseSigned(fixture_.initialState.magic);
+			if (key == "strength")
+				return ParseSigned(fixture_.initialState.strength);
+			if (key == "dexterity")
+				return ParseSigned(fixture_.initialState.dexterity);
+			if (key == "vitality")
+				return ParseSigned(fixture_.initialState.vitality);
 			if (key == "character_class")
 				return ParseSigned(fixture_.initialState.characterClass);
 			if (key == "character_level")
