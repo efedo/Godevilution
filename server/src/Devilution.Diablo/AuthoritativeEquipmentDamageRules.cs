@@ -70,6 +70,12 @@ public static class AuthoritativeEquipmentDamageRules
         var hasSword = handItems.Any(item => AuthoritativeItemClassification.IsSword(item, items));
         var hasAxe = handItems.Any(item => AuthoritativeItemClassification.IsAxe(item, items));
         var hasMace = handItems.Any(item => AuthoritativeItemClassification.IsMace(item, items));
+        var hasUnclassifiedHandItem = !hasShield
+            && !hasStaff
+            && !hasBow
+            && !hasSword
+            && !hasAxe
+            && !hasMace;
 
         if (minimumDamage == 0 && maximumDamage == 0) {
             minimumDamage = 1;
@@ -95,7 +101,7 @@ public static class AuthoritativeEquipmentDamageRules
         var damageModifier = playerClass.PhysicalDamageFormula switch {
             AuthoritativePhysicalDamageFormula.Rogue =>
                 strengthDexterityModifier / rogueStrengthDexterityDamageDivisor,
-            AuthoritativePhysicalDamageFormula.Monk => hasStaff || handItems.Length == 0
+            AuthoritativePhysicalDamageFormula.Monk => hasStaff || hasUnclassifiedHandItem
                 ? strengthDexterityModifier / monkStaffUnarmedDamageDivisor
                 : strengthDexterityModifier / monkWeaponDamageDivisor,
             AuthoritativePhysicalDamageFormula.Bard => hasSword

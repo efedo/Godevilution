@@ -210,6 +210,66 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void MonkPhysicalDamageTreatsUnknownHandItemAsUnarmed()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-class-physical-damage-monk-unknown-hand.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var classDefinition = classes.GetRequired(checked((uint)initial.CharacterClass));
+        var attributes = classDefinition.CreateStartingAttributes() with {
+            Strength = new PlayerAttributeState(initial.Strength, initial.Strength),
+            Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            Vitality = new PlayerAttributeState(initial.Vitality, initial.Vitality),
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingAttributes: attributes,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                armorClass: initial.CombatTargetArmorClass,
+                maxHitPoints: initial.CombatTargetMaxHitPoints)],
+            startingPlayerClasses: classes,
+            startingPlayerClass: classDefinition,
+            startingCombatRules: new AuthoritativeCombatRules(10, 1, 100),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(88, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void MultipleArrowsPreservesVolleySpreadAndActivationDelay()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(

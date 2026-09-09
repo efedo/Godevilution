@@ -3626,8 +3626,8 @@ void CreateReplayWeaponArrow(
 			minimumDamage = 1;
 			maximumDamage = hasShield ? 3 : 1;
 			if (state.characterClassId == 3) {
-				minimumDamage = std::max(1, static_cast<int32_t>(state.characterLevel) / 5);
-				maximumDamage = std::max(1, static_cast<int32_t>(state.characterLevel) / 2);
+				minimumDamage = std::max(1, static_cast<int32_t>(state.characterLevel) / 2);
+				maximumDamage = std::max(1, static_cast<int32_t>(state.characterLevel));
 			}
 		}
 		const int32_t level = static_cast<int32_t>(state.characterLevel);
@@ -5618,8 +5618,8 @@ bool ApplyReplayAttack(
 			minimumDamage = 1;
 			maximumDamage = hasShield ? 3 : 1;
 			if (state.characterClassId == 3) {
-				minimumDamage = std::max(1, level / 5);
-				maximumDamage = std::max(1, level / 2);
+				minimumDamage = std::max(1, level / 2);
+				maximumDamage = std::max(1, level);
 			}
 		}
 		const int32_t strengthModifier = level * strength;

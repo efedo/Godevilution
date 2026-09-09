@@ -83,7 +83,9 @@ void ExecuteClassPhysicalDamageFixture(
 	int32_t expectedStrength,
 	int32_t expectedDexterity,
 	int32_t expectedVitality,
-	int32_t expectedHitPoints)
+	int32_t expectedHitPoints,
+	int32_t expectedMinimumDamage = 4,
+	int32_t expectedMaximumDamage = 4)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -96,8 +98,8 @@ void ExecuteClassPhysicalDamageFixture(
 	ASSERT_EQ(fixture.initialState.dexterity, expectedDexterity);
 	ASSERT_EQ(fixture.initialState.vitality, expectedVitality);
 	ASSERT_EQ(fixture.initialState.equipment.size(), 1U);
-	EXPECT_EQ(fixture.initialState.equipment[0].minDamage, 4);
-	EXPECT_EQ(fixture.initialState.equipment[0].maxDamage, 4);
+	EXPECT_EQ(fixture.initialState.equipment[0].minDamage, expectedMinimumDamage);
+	EXPECT_EQ(fixture.initialState.equipment[0].maxDamage, expectedMaximumDamage);
 
 	ReplayFixtureExecutionState state;
 	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
@@ -569,6 +571,12 @@ TEST(ReplayFixture, ExecutesMonkPhysicalDamageAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
 	    "test/fixtures/replay/gameplay-class-physical-damage-monk.json", 3, 25, 25, 20, 93);
+}
+
+TEST(ReplayFixture, ExecutesMonkUnknownHandPhysicalDamageAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-monk-unknown-hand.json", 3, 25, 25, 20, 88, 0, 0);
 }
 
 TEST(ReplayFixture, ExecutesBardPhysicalDamageAgainstCSharpCheckpoint)

@@ -104,6 +104,38 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
     }
 
     [Fact]
+    public void MonkUnclassifiedHandItemUsesUnarmedModifier()
+    {
+        var attributes = new PlayerAttributesState(
+            new PlayerAttributeState(100, 100),
+            new PlayerAttributeState(0, 0),
+            new PlayerAttributeState(20, 20),
+            new PlayerAttributeState(20, 20));
+        var monk = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Monk,
+        };
+        var unclassifiedHandItem = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemType = 0,
+                ItemClass = 2,
+                StatFlag = true,
+            });
+
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            attributes,
+            [unclassifiedHandItem],
+            monk);
+
+        Assert.Equal((5, 10, 8), (
+            profile.MinimumDamage,
+            profile.MaximumDamage,
+            profile.DamageModifier));
+    }
+
+    [Fact]
     public void ExplicitContentTagOverridesNativeItemTypeForDamageProfile()
     {
         var attributes = new PlayerAttributesState(

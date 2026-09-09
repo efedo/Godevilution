@@ -71,6 +71,9 @@ matrix with standard, staff, sword, and axe profiles; the critical-strike
 classes also preserve their class RNG draw. Omitting the new fields keeps
 legacy compact fixtures on their compatibility fallback; class-damage fixtures
 must author all three physical attributes explicitly.
+The `gameplay-class-physical-damage-monk-unknown-hand` companion adds an
+occupied but unclassified hand slot and proves native Monk unarmed range
+selection plus the staff/unarmed damage modifier branch.
 The armor and miss companions exercise the initialized class to-hit formula,
 native 5..95 chance clamp, deterministic hit seed, and minimum post-armor
 damage without changing the compact fallback. The armor-piercing companion
@@ -497,7 +500,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 238 checked-in JSON fixtures and 253 registered
+the native replay gate contains 239 checked-in JSON fixtures and 254 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

@@ -10,6 +10,10 @@ Initialized class replay now retains the native compact fallback when authored
 Strength is zero, matching the native positive-attribute gate and preserving
 the unadvanced RNG state for the fallback ranged attack.
 
+Monk unarmed replay now recognizes an unclassified occupied hand slot as an
+unarmed profile and uses the externalized level/2-to-level damage range in both
+runners, matching the native item and class rules.
+
 The replay parity boundary now covers initialized Rogue ranged attacks under
 Hellfire armor piercing: hit admission applies the shifted armor rule while
 projectile damage still applies the original target armor, with matching C# and

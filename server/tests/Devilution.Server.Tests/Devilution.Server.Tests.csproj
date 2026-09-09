@@ -34,6 +34,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-elemental-equipment.json" Link="Fixtures/gameplay-elemental-equipment.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage.json" Link="Fixtures/gameplay-class-physical-damage.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-monk.json" Link="Fixtures/gameplay-class-physical-damage-monk.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-monk-unknown-hand.json" Link="Fixtures/gameplay-class-physical-damage-monk-unknown-hand.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-bard.json" Link="Fixtures/gameplay-class-physical-damage-bard.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-barbarian.json" Link="Fixtures/gameplay-class-physical-damage-barbarian.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-barbarian-armor-piercing.json" Link="Fixtures/gameplay-class-physical-damage-barbarian-armor-piercing.json" CopyToOutputDirectory="PreserveNewest" />
