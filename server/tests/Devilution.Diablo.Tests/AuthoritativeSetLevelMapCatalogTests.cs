@@ -132,6 +132,43 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
         Assert.Empty(catalog.LoadAvailableGeometry(content));
     }
 
+    [Fact]
+    public void SharedExternalGeometryMaterializesSetLevelMapsWithoutBinaryPairs()
+    {
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(
+                1,
+                "levels/pre.dun",
+                "levels/active.dun",
+                "Cathedral",
+                0,
+                0),
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/pre.dun", MinimalDun(0)),
+                new ContentAsset("levels/active.dun", MinimalDun(0)),
+            ]),
+        ]));
+        var geometry = AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+            "native_dun_piece_definitions.tsv",
+            "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                + "0\t1\t1\t1\t1\n",
+            "native_dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_light\tblock_missile\n"
+                + "1\tfalse\tfalse\tfalse\n");
+
+        catalog.ValidateAssets(content, geometry);
+        var levels = catalog.LoadAvailableGeometry(content, geometry);
+
+        Assert.Equal(2, levels.Count);
+        Assert.All(levels, level => {
+            Assert.Equal(2, level.Width);
+            Assert.Equal(2, level.Height);
+            Assert.Equal([1, 1, 1, 1], level.NativePieceLayer);
+        });
+    }
+
     private static byte[] MinimalDun(ushort transparencyValue)
     {
         // A 1x1 mega-tile DUN has two header words, one tile word, and four

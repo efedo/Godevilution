@@ -15,15 +15,30 @@ public static class AuthoritativeNativeDunGeometryLoader
         AuthoritativeSetLevelMapDefinition definition,
         uint levelId,
         bool activeMap,
-        bool suppressMultiplayerDeathDrops = false)
+        bool suppressMultiplayerDeathDrops = false,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(definition);
         definition.Validate();
         if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
             || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
-            throw new InvalidDataException(
-                $"Set-level map {definition.SetLevelId} does not declare both native .til and .sol assets.");
+            if (externalGeometry is null)
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} does not declare native geometry inputs.");
+            var externalDunAssetPath = activeMap
+                ? definition.ActiveMapAssetPath
+                : definition.PreMapAssetPath;
+            var externalMap = AuthoritativeDunMapAsset.Load(
+                externalDunAssetPath,
+                content.GetRequiredAsset(externalDunAssetPath).Contents);
+            return AuthoritativeDunGeometryMaterializer.Materialize(
+                levelId,
+                externalMap,
+                externalGeometry.Pieces,
+                externalGeometry.TileProperties,
+                definition.SetLevelSymbol,
+                suppressMultiplayerDeathDrops);
         }
         var dunAssetPath = activeMap
             ? definition.ActiveMapAssetPath

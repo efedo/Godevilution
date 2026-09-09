@@ -560,6 +560,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 }
             }
         }
+        var nativeDunGeometry = LoadOptionalNativeDunGeometry(content);
         var nativeDunLevels = content.TryGetTable(
             "native_dun_levels.tsv",
             out var nativeDunLevelsTable)
@@ -572,8 +573,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             if (world is null)
                 throw new InvalidDataException(
                     "Native DUN level layers require levels.tsv or procedural_levels.tsv.");
-            nativeDunLevels.ValidateAssets(content);
-            nativeDunLevels.Apply(content, world);
+            nativeDunLevels.ValidateAssets(content, nativeDunGeometry);
+            nativeDunLevels.Apply(content, world, nativeDunGeometry);
         }
         var nativeDunFragments = content.TryGetTable(
                 "native_dun_fragments.tsv",
@@ -934,9 +935,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 throw new InvalidDataException(
                     "Set-level map definitions require set_level_names.tsv.");
             setLevelMaps.ValidateSetLevels(setLevelNames);
-            setLevelMaps.ValidateAssets(content);
+            setLevelMaps.ValidateAssets(content, nativeDunGeometry);
             if (world is not null) {
-                foreach (var level in setLevelMaps.LoadAvailableGeometry(content))
+                foreach (var level in setLevelMaps.LoadAvailableGeometry(content, nativeDunGeometry))
                     world.AddLevel(level);
             }
         }
@@ -1285,11 +1286,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeDunFragments.ValidateSetLevels(setLevelNames);
             if (setLevelNames is not null)
                 nativeDunFragmentObjects?.ValidateSetLevels(setLevelNames);
-            nativeDunFragments.ValidateAssets(content);
+            nativeDunFragments.ValidateAssets(content, nativeDunGeometry);
             nativeDunFragments
                 .Filter(definition => definition.AnchorEntityId != 0
                     || definition.AnchorPositionX is not null)
-                .Apply(content, world, objects, combatTargets);
+                .Apply(content, world, objects, combatTargets, externalGeometry: nativeDunGeometry);
         }
 
         var rules = new DiabloStoreRules(pricing, itemCatalog);
@@ -1377,6 +1378,28 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeMissileSprites,
             monsterSpawnPolicies,
             townerGreetings);
+    }
+
+    private static AuthoritativeNativeDunGeometryCatalog? LoadOptionalNativeDunGeometry(
+        ComposedContent content)
+    {
+        var hasPieces = content.TryGetTable(
+            "native_dun_piece_definitions.tsv",
+            out var piecesTable);
+        var hasProperties = content.TryGetTable(
+            "native_dun_tile_properties.tsv",
+            out var propertiesTable);
+        if (hasPieces != hasProperties)
+            throw new InvalidDataException(
+                "Native DUN external geometry requires both native_dun_piece_definitions.tsv "
+                + "and native_dun_tile_properties.tsv.");
+        return hasPieces
+            ? AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+                piecesTable.SourcePath,
+                piecesTable.ToCanonicalTsv(),
+                propertiesTable.SourcePath,
+                propertiesTable.ToCanonicalTsv())
+            : null;
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

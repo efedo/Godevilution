@@ -83,7 +83,9 @@ public sealed class AuthoritativeNativeDunLevelCatalog
     }
 
     /** Validates every deferred DUN and optional collision asset before activation. */
-    public void ValidateAssets(ComposedContent content)
+    public void ValidateAssets(
+        ComposedContent content,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         foreach (var definition in definitions) {
@@ -109,12 +111,21 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                     map,
                     pieces,
                     tileProperties);
+            } else if (externalGeometry is not null) {
+                _ = AuthoritativeDunGeometryMaterializer.Materialize(
+                    definition.LevelId,
+                    map,
+                    externalGeometry.Pieces,
+                    externalGeometry.TileProperties);
             }
         }
     }
 
     /** Applies each native DUN object's layer and optional external collision geometry. */
-    public void Apply(ComposedContent content, AuthoritativeWorld world)
+    public void Apply(
+        ComposedContent content,
+        AuthoritativeWorld world,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(world);
@@ -130,7 +141,7 @@ public sealed class AuthoritativeNativeDunLevelCatalog
                     $"Native DUN level {definition.LevelId} dimensions {map.TileWidth}x{map.TileHeight} "
                     + $"do not match level {level.Width}x{level.Height}.");
             }
-            var nativeGeometry = LoadOptionalGeometry(content, definition, map);
+            var nativeGeometry = LoadOptionalGeometry(content, definition, map, externalGeometry);
             replacements.Add(new AuthoritativeLevel(
                 level.LevelId,
                 level.Width,
@@ -161,11 +172,18 @@ public sealed class AuthoritativeNativeDunLevelCatalog
     private static AuthoritativeLevel? LoadOptionalGeometry(
         ComposedContent content,
         AuthoritativeNativeDunLevelDefinition definition,
-        AuthoritativeDunMapAsset map)
+        AuthoritativeDunMapAsset map,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry)
     {
         if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
             || string.IsNullOrWhiteSpace(definition.SolAssetPath))
-            return null;
+            return externalGeometry is null
+                ? null
+                : AuthoritativeDunGeometryMaterializer.Materialize(
+                    definition.LevelId,
+                    map,
+                    externalGeometry.Pieces,
+                    externalGeometry.TileProperties);
         var pieces = AuthoritativeDunPieceCatalog.LoadTil(
             definition.TileAssetPath,
             content.GetRequiredAsset(definition.TileAssetPath).Contents);

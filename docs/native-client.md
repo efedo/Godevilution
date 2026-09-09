@@ -343,6 +343,9 @@ Diablo module now parses native `.dun` layers, native little-endian `.til`
 mega-tile records, and `.sol` tile-property bytes, then exposes an exact
 materializer when those collision inputs are supplied, without guessing from
 tile presentation IDs.
+The same materializer accepts a validated external TSV pair for shared
+mega-tile and d-piece definitions, allowing the server to publish geometry
+contracts before licensed binary tile assets are available.
 
 Native object activation now resolves any projected object with an authored
 server effect or quest/reward link before consulting the legacy object behavior

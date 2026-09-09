@@ -211,6 +211,33 @@ public sealed class AuthoritativeDunTilePropertyCatalog
     }
 }
 
+/** Shared external native geometry definitions supplied by a content pack. */
+public sealed class AuthoritativeNativeDunGeometryCatalog
+{
+    public AuthoritativeNativeDunGeometryCatalog(
+        AuthoritativeDunPieceCatalog pieces,
+        AuthoritativeDunTilePropertyCatalog tileProperties)
+    {
+        Pieces = pieces ?? throw new ArgumentNullException(nameof(pieces));
+        TileProperties = tileProperties ?? throw new ArgumentNullException(nameof(tileProperties));
+    }
+
+    public AuthoritativeDunPieceCatalog Pieces { get; }
+
+    public AuthoritativeDunTilePropertyCatalog TileProperties { get; }
+
+    public static AuthoritativeNativeDunGeometryCatalog LoadTsv(
+        string pieceSourcePath,
+        string pieceContents,
+        string tilePropertySourcePath,
+        string tilePropertyContents)
+    {
+        return new AuthoritativeNativeDunGeometryCatalog(
+            AuthoritativeDunPieceCatalog.LoadTsv(pieceSourcePath, pieceContents),
+            AuthoritativeDunTilePropertyCatalog.LoadTsv(tilePropertySourcePath, tilePropertyContents));
+    }
+}
+
 /** Expands native .dun/.til/.sol data into authoritative movement geometry. */
 public static class AuthoritativeDunGeometryMaterializer
 {

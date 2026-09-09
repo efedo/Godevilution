@@ -136,7 +136,9 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
     }
 
     /** Validates that every deferred fragment asset is present before activation. */
-    public void ValidateAssets(ComposedContent content)
+    public void ValidateAssets(
+        ComposedContent content,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         foreach (var definition in definitions) {
@@ -163,6 +165,12 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                     map,
                     pieces,
                     tileProperties);
+            } else if (externalGeometry is not null) {
+                _ = AuthoritativeDunGeometryMaterializer.Materialize(
+                    definition.LevelId,
+                    map,
+                    externalGeometry.Pieces,
+                    externalGeometry.TileProperties);
             }
         }
     }
@@ -173,7 +181,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject> objects,
         IEnumerable<AuthoritativeCombatTarget>? combatTargets = null,
-        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null)
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(world);
@@ -283,14 +292,19 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
             var nativePieceProperties = level.NativePieceProperties.ToDictionary(
                 pair => pair.Key,
                 pair => pair.Value);
-            if (!string.IsNullOrWhiteSpace(definition.TileAssetPath)
-                && !string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
-                var pieces = AuthoritativeDunPieceCatalog.LoadTil(
-                    definition.TileAssetPath,
-                    content.GetRequiredAsset(definition.TileAssetPath).Contents);
-                var tileProperties = AuthoritativeDunTilePropertyCatalog.LoadSol(
-                    definition.SolAssetPath,
-                    content.GetRequiredAsset(definition.SolAssetPath).Contents);
+            var hasBinaryGeometry = !string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                && !string.IsNullOrWhiteSpace(definition.SolAssetPath);
+            if (hasBinaryGeometry || externalGeometry is not null) {
+                var pieces = hasBinaryGeometry
+                    ? AuthoritativeDunPieceCatalog.LoadTil(
+                        definition.TileAssetPath!,
+                        content.GetRequiredAsset(definition.TileAssetPath!).Contents)
+                    : externalGeometry!.Pieces;
+                var tileProperties = hasBinaryGeometry
+                    ? AuthoritativeDunTilePropertyCatalog.LoadSol(
+                        definition.SolAssetPath!,
+                        content.GetRequiredAsset(definition.SolAssetPath!).Contents)
+                    : externalGeometry!.TileProperties;
                 var fragmentGeometry = AuthoritativeDunGeometryMaterializer.Materialize(
                     definition.LevelId,
                     map,

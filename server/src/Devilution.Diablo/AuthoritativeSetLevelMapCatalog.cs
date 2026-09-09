@@ -126,7 +126,9 @@ public sealed class AuthoritativeSetLevelMapCatalog
     }
 
     /** Validates any supplied native set-level bundle before activation. */
-    public void ValidateAssets(ComposedContent content)
+    public void ValidateAssets(
+        ComposedContent content,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         foreach (var definition in definitions) {
@@ -142,7 +144,7 @@ public sealed class AuthoritativeSetLevelMapCatalog
             var geometryPresent = geometryPaths.Count(path => content.TryGetAsset(path, out _));
             var hasGeometry = !string.IsNullOrWhiteSpace(definition.TileAssetPath)
                 || !string.IsNullOrWhiteSpace(definition.SolAssetPath);
-            if (!hasGeometry && corePresent != 0)
+            if (!hasGeometry && externalGeometry is null && corePresent != 0)
                 throw new InvalidDataException(
                     $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle without its .til/.sol geometry inputs.");
 
@@ -172,6 +174,10 @@ public sealed class AuthoritativeSetLevelMapCatalog
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
                 || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
+                if (externalGeometry is not null && corePresent == corePaths.Length) {
+                    _ = LoadCompleteGeometryBundle(content, definition, externalGeometry);
+                    continue;
+                }
                 throw new InvalidDataException(
                     $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle without its .til/.sol geometry inputs.");
             }
@@ -186,18 +192,20 @@ public sealed class AuthoritativeSetLevelMapCatalog
     /**
      * Materializes every complete native bundle supplied by the active pack.
      * Legacy packs may declare paths before shipping the binary files; those
-     * rows remain metadata-only until all required assets are present.
+     * rows remain metadata-only until all required assets are present. Rows
+     * without binary geometry can materialize when shared external definitions
+     * are supplied by the active pack.
      */
-    public IReadOnlyList<AuthoritativeLevel> LoadAvailableGeometry(ComposedContent content)
+    public IReadOnlyList<AuthoritativeLevel> LoadAvailableGeometry(
+        ComposedContent content,
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(content);
-        ValidateAssets(content);
+        ValidateAssets(content, externalGeometry);
         var levels = new List<AuthoritativeLevel>();
         foreach (var definition in definitions) {
-            if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
-                || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
-                continue;
-            }
+            var hasBinaryGeometry = !string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                && !string.IsNullOrWhiteSpace(definition.SolAssetPath);
             var paths = GetNativeAssetPaths(definition);
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (present == 0)
@@ -209,10 +217,13 @@ public sealed class AuthoritativeSetLevelMapCatalog
             var geometryPresent = new[] {
                 definition.TileAssetPath,
                 definition.SolAssetPath,
-            }.Count(path => content.TryGetAsset(path, out _));
+            }.Where(path => !string.IsNullOrWhiteSpace(path))
+                .Count(path => content.TryGetAsset(path, out _));
             if (corePresent == 0 && geometryPresent == 0)
                 continue;
-            var (preMap, activeMap) = LoadCompleteGeometryBundle(content, definition);
+            if (!hasBinaryGeometry && externalGeometry is null)
+                continue;
+            var (preMap, activeMap) = LoadCompleteGeometryBundle(content, definition, externalGeometry);
             levels.Add(preMap);
             levels.Add(activeMap);
         }
@@ -223,18 +234,21 @@ public sealed class AuthoritativeSetLevelMapCatalog
     private static (AuthoritativeLevel PreMap, AuthoritativeLevel ActiveMap)
         LoadCompleteGeometryBundle(
             ComposedContent content,
-            AuthoritativeSetLevelMapDefinition definition)
+            AuthoritativeSetLevelMapDefinition definition,
+            AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
     {
         var preMap = AuthoritativeNativeDunGeometryLoader.Load(
             content,
             definition,
             GetRuntimeLevelId(definition.SetLevelId, activeMap: false),
-            activeMap: false);
+            activeMap: false,
+            externalGeometry: externalGeometry);
         var activeMap = AuthoritativeNativeDunGeometryLoader.Load(
             content,
             definition,
             GetRuntimeLevelId(definition.SetLevelId, activeMap: true),
-            activeMap: true);
+            activeMap: true,
+            externalGeometry: externalGeometry);
         if (!activeMap.ContainsPosition(definition.SpawnX, definition.SpawnY)
             || !activeMap.IsWalkable(definition.SpawnX, definition.SpawnY)) {
             throw new InvalidDataException(

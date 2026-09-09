@@ -2,6 +2,14 @@
 
 Status date: 2026-09-09
 
+Native DUN geometry definitions can now be supplied as a validated external
+TSV pair (`native_dun_piece_definitions.tsv` and
+`native_dun_tile_properties.tsv`). Ordinary levels, deferred fragments, and
+set-level maps may use that shared expansion when licensed `.til`/`.sol` bytes
+are unavailable; declared binary pairs remain authoritative. This advances
+the content boundary without claiming that any missing licensed tile data has
+been recreated.
+
 The Godot client now uses a shared authoritative viewport transform for world
 rendering and mouse hit-testing. Small levels are centered, large levels clamp
 to their edges while following the local player, and the transform uses the

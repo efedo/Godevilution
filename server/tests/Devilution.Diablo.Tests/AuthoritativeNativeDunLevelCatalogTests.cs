@@ -100,6 +100,59 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
     }
 
     [Fact]
+    public void AppliesExternalGeometryDefinitionsWhenBinaryInputsAreNotDeclared()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(2, 2, 2) {
+            StableSymbol = "catacombs",
+        });
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("level.dun", CreateDun([0, 0, 0, 0])),
+            ]),
+        ]));
+        var geometry = AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+            "native_dun_piece_definitions.tsv",
+            "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                + "0\t1\t2\t3\t4\n",
+            "native_dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_light\tblock_missile\n"
+                + "1\ttrue\tfalse\tfalse\n"
+                + "2\tfalse\tfalse\ttrue\n"
+                + "3\tfalse\tfalse\tfalse\n"
+                + "4\tfalse\tfalse\tfalse\n");
+        var catalog = new AuthoritativeNativeDunLevelCatalog([
+            new AuthoritativeNativeDunLevelDefinition(2, "level.dun"),
+        ]);
+
+        catalog.ValidateAssets(content, geometry);
+        catalog.Apply(content, world, geometry);
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal([0], level.BlockedCells);
+        Assert.Equal([1], level.MissileBlockedCells);
+        Assert.Equal([1, 2, 3, 4], level.NativePieceLayer);
+        Assert.Equal([0], level.NativePieceCollisionCells);
+        Assert.Equal([1], level.NativePieceMissileBlockedCells);
+    }
+
+    [Fact]
+    public void ExternalGeometryCatalogRejectsDuplicateDefinitions()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+                "native_dun_piece_definitions.tsv",
+                "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                    + "0\t1\t2\t3\t4\n"
+                    + "0\t1\t2\t3\t4\n",
+                "native_dun_tile_properties.tsv",
+                "piece_id\tsolid\tblock_light\tblock_missile\n"
+                    + "1\ttrue\tfalse\tfalse\n"));
+
+        Assert.Contains("duplicate IDs", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidatesAllReferencedAssetsBeforeActivation()
     {
         var content = ComposedContent.Compose(new ContentManifest("rules", "1", [

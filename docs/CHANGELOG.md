@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added the optional validated `native_dun_piece_definitions.tsv` and
+  `native_dun_tile_properties.tsv` tables. Ordinary native DUN levels, deferred
+  fragments, and set-level maps can now materialize shared d-piece collision
+  geometry without shipping licensed `.til`/`.sol` bytes; binary pairs remain
+  authoritative when declared, and incomplete table pairs fail activation.
+
 - Godot now renders a deterministic diagnostic overlay for complete
   authoritative native d-piece and transparency layers, while retaining the
   server-owned collision projection and floor fallback until licensed native
