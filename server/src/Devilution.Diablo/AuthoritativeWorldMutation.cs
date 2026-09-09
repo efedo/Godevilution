@@ -196,7 +196,8 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationPieceProperty>? piecePropertyOverrides = null,
         int anchorSetLevelId = -1,
         uint anchorProceduralQuestPieceOriginId = 0,
-        IEnumerable<AuthoritativeWorldMutationMonsterRectangle>? monsterLayerRectangles = null)
+        IEnumerable<AuthoritativeWorldMutationMonsterRectangle>? monsterLayerRectangles = null,
+        string megaTileAssetPath = "")
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -234,6 +235,10 @@ public sealed class AuthoritativeWorldMutation
         TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
         ObjectLayerRectangles = NormalizeObjectLayerRectangles(objectLayerRectangles);
         MonsterLayerRectangles = NormalizeMonsterLayerRectangles(monsterLayerRectangles);
+        MegaTileAssetPath = megaTileAssetPath.Trim();
+        if (MegaTileAssetPath.Length != 0 && !IsSafeDunAssetPath(MegaTileAssetPath))
+            throw new InvalidDataException(
+                $"World mutation {mutationId} contains an unsafe mega-tile asset path.");
         PieceLayerRectangles = NormalizePieceLayerRectangles(pieceLayerRectangles);
         MegaTileAssignments = NormalizeMegaTileAssignments(megaTileAssignments);
         MegaTileCopySourceLevelId = megaTileCopySourceLevelId;
@@ -306,6 +311,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Native monster-layer assignments retained for deferred DUN encounters. */
     public IReadOnlyList<AuthoritativeWorldMutationMonsterRectangle> MonsterLayerRectangles { get; }
+
+    /** Optional external native .dun asset expanded into mega-tile assignments. */
+    public string MegaTileAssetPath { get; }
 
     /** Native d-piece assignments retained for exact set-piece mutations. */
     public IReadOnlyList<AuthoritativeWorldMutationPieceRectangle> PieceLayerRectangles { get; }
@@ -604,6 +612,15 @@ public sealed class AuthoritativeWorldMutation
             throw new InvalidDataException("An anchored world mutation cell is outside its level bounds.");
         return checked(y * levelWidth + x);
     }
+
+    private static bool IsSafeDunAssetPath(string path)
+    {
+        return !Path.IsPathRooted(path)
+            && path.EndsWith(".dun", StringComparison.OrdinalIgnoreCase)
+            && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(segment => segment is not "." and not "..")
+            && !path.Contains(':', StringComparison.Ordinal);
+    }
 }
 
 /** Validated external world-cell mutations used by object interactions. */
@@ -801,7 +818,8 @@ public sealed class AuthoritativeWorldMutationCatalog
     public static AuthoritativeWorldMutationCatalog LoadTsv(
         string sourcePath,
         string contents,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        ComposedContent? content = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeWorldMutationCatalog(table.Rows.Select(row =>
@@ -821,7 +839,7 @@ public sealed class AuthoritativeWorldMutationCatalog
                     ? anchorUniqueIdentity
                     : string.Empty,
                 ParsePieceLayerRectangles(row),
-                ParseMegaTileAssignments(row),
+                ParseMegaTileAssignments(row, content),
                 row.OptionalInt32("anchor_mega_offset_x"),
                 row.OptionalInt32("anchor_mega_offset_y"),
                 row.OptionalBoolean("create_transparency_layer"),
@@ -830,7 +848,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParsePiecePropertyOverrides(row),
                 ParseAnchorSetLevelId(row, stableIds),
                 ParseAnchorProceduralQuestPieceOriginId(row, stableIds),
-                ParseMonsterLayerRectangles(row))));
+                ParseMonsterLayerRectangles(row),
+                ParseMegaTileAssetPath(row))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -1220,15 +1239,40 @@ public sealed class AuthoritativeWorldMutationCatalog
     }
 
     private static IReadOnlyList<AuthoritativeWorldMutationMegaTileAssignment>
-        ParseMegaTileAssignments(TsvRow row)
+        ParseMegaTileAssignments(TsvRow row, ComposedContent? content)
     {
-        const string column = "mega_tile_assignments";
-        if (!row.TryGet(column, out var value)
-            || string.IsNullOrWhiteSpace(value)
-            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
-            return [];
+        const string assignmentsColumn = "mega_tile_assignments";
+        const string assetColumn = "mega_tile_asset_path";
+        var hasAssignments = row.TryGet(assignmentsColumn, out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase);
+        var hasAsset = row.TryGet(assetColumn, out var assetPath)
+            && !string.IsNullOrWhiteSpace(assetPath)
+            && !string.Equals(assetPath, "none", StringComparison.OrdinalIgnoreCase);
+        if (hasAssignments && hasAsset)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} cannot combine inline mega-tile assignments with an asset.");
+        if (hasAsset) {
+            if (content is null)
+                throw new InvalidDataException(
+                    $"World mutation row {row.LineNumber} requires composed content to load '{assetPath}'.");
+            if (!IsSafeDunAssetPath(assetPath!))
+                throw new InvalidDataException(
+                    $"World mutation row {row.LineNumber} contains an unsafe mega-tile asset path '{assetPath}'.");
+            var map = AuthoritativeDunMapAsset.Load(
+                assetPath!,
+                content.GetRequiredAsset(assetPath!).Contents);
+            return Enumerable.Range(0, map.MegaHeight)
+                .SelectMany(y => Enumerable.Range(0, map.MegaWidth)
+                    .Select(x => new AuthoritativeWorldMutationMegaTileAssignment(
+                        x,
+                        y,
+                        map.TileLayer[y * map.MegaWidth + x])))
+                .ToArray();
         }
-        return value.Split(
+        if (!hasAssignments)
+            return [];
+        return value!.Split(
                 ';',
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(assignment => {
@@ -1240,17 +1284,36 @@ public sealed class AuthoritativeWorldMutationCatalog
                     || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y)
                     || !ushort.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var tileId)) {
                     throw new InvalidDataException(
-                        $"World mutation row {row.LineNumber} contains an invalid {column} assignment '{assignment}'.");
+                        $"World mutation row {row.LineNumber} contains an invalid {assignmentsColumn} assignment '{assignment}'.");
                 }
                 try {
                     return new AuthoritativeWorldMutationMegaTileAssignment(x, y, tileId);
                 } catch (ArgumentOutOfRangeException exception) {
                     throw new InvalidDataException(
-                        $"World mutation row {row.LineNumber} contains an invalid {column} assignment '{assignment}'.",
+                        $"World mutation row {row.LineNumber} contains an invalid {assignmentsColumn} assignment '{assignment}'.",
                         exception);
                 }
             })
             .ToArray();
+    }
+
+    private static bool IsSafeDunAssetPath(string path)
+    {
+        return !Path.IsPathRooted(path)
+            && path.EndsWith(".dun", StringComparison.OrdinalIgnoreCase)
+            && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(segment => segment is not "." and not "..")
+            && !path.Contains(':', StringComparison.Ordinal);
+    }
+
+    private static string ParseMegaTileAssetPath(TsvRow row)
+    {
+        const string column = "mega_tile_asset_path";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+        return value.Trim();
     }
 
     private static IReadOnlyList<AuthoritativeWorldMutationPieceProperty>

@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
@@ -6,6 +7,42 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeWorldMutationTests
 {
+    [Fact]
+    public void ExpandsAnExternalDunMegaTileLayerAtLoadTime()
+    {
+        var bytes = new byte[72];
+        var words = new ushort[36];
+        words[0] = 2;
+        words[1] = 1;
+        words[2] = 7;
+        words[3] = 8;
+        for (var index = 0; index < words.Length; index++)
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
+                words[index]);
+        var pack = new ContentPack(
+            "mutation-test",
+            "1.0.0",
+            [],
+            assets: [new ContentAsset("fixture/map.dun", bytes)]);
+        var content = ComposedContent.Compose(
+            new ContentManifest("mutation-test", "1", [pack]));
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tmega_tile_asset_path\n"
+                + "7\t1\tfixture/map.dun\n",
+            content: content);
+
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal("fixture/map.dun", mutation.MegaTileAssetPath);
+        Assert.Equal(
+            [(0, 0, (ushort)7), (1, 0, (ushort)8)],
+            mutation.MegaTileAssignments.Select(assignment => (
+                assignment.X,
+                assignment.Y,
+                assignment.TileId)).ToArray());
+    }
+
     [Fact]
     public void LoadsAndExpandsMonsterLayerRectanglesDeterministically()
     {

@@ -779,7 +779,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeWorldMutationCatalog.LoadTsv(
                 worldMutationsTable.SourcePath,
                 worldMutationsTable.ToCanonicalTsv(),
-                stableIds)
+                stableIds,
+                content)
             : null;
         if (stableIds is not null && objectDefinitions.Length > 0)
             stableIds.ValidateReferences(

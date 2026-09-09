@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added `mega_tile_asset_path` to `world_mutations.tsv`. Mutations can now
+  expand a complete validated native `.dun` mega-tile layer at load time,
+  keeping post-activation map presentation in external licensed assets. The
+  Gateway final-stage mutation now anchors `blood2.dun` alongside its mapped
+  monster layer. This advances the active content schema to `1.457.0` while
+  retaining `1.456.0` as the previous additive contract.
+
 - Added the server-owned Gateway pedestal progression: each staged interaction
   consumes a Blood Stone, the final stage activates the validated blood2.dun
   monster layer, and Arkaine's Valor is emitted as an authoritative reward.

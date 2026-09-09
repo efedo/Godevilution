@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.456.0` schema in
+It declares its identity and `devilution.diablo@1.457.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.455.0` schema so existing manifest-based packs remain
+previous additive `1.456.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1843,6 +1843,15 @@ Schema 1.456 adds the same optional set-level destination fields to
 pre-map or active-map variant, and the destination is validated before the
 portal enters the authoritative world state.
 
+Schema 1.457 adds optional `mega_tile_asset_path` to `world_mutations.tsv`.
+The path selects a validated external `.dun` asset whose complete native
+mega-tile layer is expanded into the mutation at load time. It is mutually
+exclusive with inline `mega_tile_assignments`, uses the existing anchored mega
+origin offsets, and rejects unsafe paths, missing assets, malformed maps,
+duplicate projected cells, or out-of-bounds placement. This keeps post-
+activation native map transitions authored in external content instead of
+duplicating licensed tile values in TSV rows.
+
 Schema 1.454 adds server-owned `object_item_gates.tsv` requirements and
 `monster_layer_rects` world-mutation assignments. The Gateway pedestal consumes
 one Blood Stone per stage and applies the licensed blood2.dun monster layer only
@@ -3130,7 +3139,7 @@ clients.
 | `objects.tsv` | `entity_id` | Optional `template_only` rows are validated and available for set-level/native-DUN behavior cloning but are excluded from ordinary world placement; rows omitted from the column or marked `0` retain the full world-object behavior contract. |
 | `object_presentations.tsv` | `entity_id` | Optional additive lifecycle metadata for authored objects and templates: `hide_when_activated` (default `1`), `animation_frame`, and `activated_animation_frame` (both default `0`). The sidecar preserves the legacy `objects.tsv` header while allowing a completed one-shot object to remain visible with an authored native frame. |
 | `object_item_gates.tsv` | `entity_id` | Optional server-owned inventory gates for object interactions. Each row names a validated item identity and whether one matching item is consumed when the object activation succeeds. |
-| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter; optional `anchor_set_level_id`/`anchor_set_level_symbol` follows a published generated set-piece origin; optional `anchor_procedural_origin_id`/`anchor_procedural_origin_symbol` follows a published ordinary-level quest-piece origin. These anchor columns are mutually exclusive, and unresolved dynamic anchors remain deferred. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer, with `create_transparency_layer` allowing an absent layer to be materialized; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer; optional `monster_layer_rects` values author semicolon-separated `x,y,width,height,native_monster_id` assignments that are materialized through `native_dun_monsters.tsv`; optional `piece_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native d-piece layer; optional `anchor_mega_offset_x`/`anchor_mega_offset_y` and `mega_tile_assignments` author anchored native mega-tile values for exact set-piece transitions; optional `mega_tile_copy_source_level_id` and `mega_tile_copy_rects` copy native mega-tile and d-piece state from a companion map using local mega coordinates, with dynamic-origin rows deferred until their anchors are published. |
+| `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `anchor_entity_id` makes authored cells and rectangles relative to a referenced runtime object; optional `anchor_unique_identity` follows exactly one server-owned unique encounter; optional `anchor_set_level_id`/`anchor_set_level_symbol` follows a published generated set-piece origin; optional `anchor_procedural_origin_id`/`anchor_procedural_origin_symbol` follows a published ordinary-level quest-piece origin. These anchor columns are mutually exclusive, and unresolved dynamic anchors remain deferred. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer, with `create_transparency_layer` allowing an absent layer to be materialized; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer; optional `monster_layer_rects` values author semicolon-separated `x,y,width,height,native_monster_id` assignments that are materialized through `native_dun_monsters.tsv`; optional `piece_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native d-piece layer; optional `anchor_mega_offset_x`/`anchor_mega_offset_y` and `mega_tile_assignments` author anchored native mega-tile values for exact set-piece transitions; optional `mega_tile_asset_path` expands a validated external `.dun` mega-tile layer at load time and is mutually exclusive with inline assignments; optional `mega_tile_copy_source_level_id` and `mega_tile_copy_rects` copy native mega-tile and d-piece state from a companion map using local mega coordinates, with dynamic-origin rows deferred until their anchors are published. |
 | `set_level_objects.tsv` | `placement_id`, `set_level_id`, `object_id` | Validated native fixed-object placements and template footprints for set-level maps, with optional `template_entity_id` linking an authored `objects.tsv` behavior template. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; positions and template rectangles are bounded, duplicate placements are rejected, template object IDs must match, and levels exceeding DevilutionX's native `MAXOBJECTS` capacity of 127 active objects reject materialization. |
 | `procedural_set_piece_origins.tsv` | `set_level_id`, `level_id` | Optional deterministic origins for generated set-piece footprints. Rows select aligned walkable rectangles from authoritative generated geometry using a content seed; unavailable target levels defer materialization. |
 | `procedural_quest_piece_origins.tsv` | `origin_id`/`origin_symbol`, `level_id` | Optional deterministic origins for generated quest geometry on ordinary levels. Rows select aligned walkable rectangles from authoritative geometry using a content seed; unavailable target levels defer publication. These origin identities are independent of fixed native set-level IDs. |
@@ -3189,7 +3198,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.456.0"
+    "version": "1.457.0"
   },
   "dependencyConstraints": [
     {
@@ -3223,7 +3232,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.456.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.457.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

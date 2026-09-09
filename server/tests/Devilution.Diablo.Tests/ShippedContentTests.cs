@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.456.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.457.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -302,9 +302,13 @@ public sealed class ShippedContentTests
         Assert.Equal([2023U, 2024U, 2025U], itemGates.Definitions.Select(definition => definition.EntityId));
         var gatewayMutation = AuthoritativeWorldMutationCatalog.LoadTsv(
                 "world_mutations.tsv",
-                pack.Tables.Single(table => table.SourcePath == "world_mutations.tsv").ToCanonicalTsv())
+                pack.Tables.Single(table => table.SourcePath == "world_mutations.tsv").ToCanonicalTsv(),
+                content: ComposedContent.Compose(new ContentManifest("gateway-mutation", "1", [pack])))
             .Definitions.Single(definition => definition.MutationId == 9310);
         Assert.Equal(2025U, gatewayMutation.AnchorEntityId);
+        Assert.Equal((-11, -16), (gatewayMutation.AnchorMegaOffsetX, gatewayMutation.AnchorMegaOffsetY));
+        Assert.Equal("levels/l2data/blood2.dun", gatewayMutation.MegaTileAssetPath);
+        Assert.Equal(160, gatewayMutation.MegaTileAssignments.Count);
         Assert.Equal(22, gatewayMutation.MonsterLayerRectangles.Count);
 
         var dialogueMessages = AuthoritativeDialogueMessageCatalog.LoadTsv(
@@ -934,6 +938,18 @@ public sealed class ShippedContentTests
         Assert.Contains(
             simulation.WorldState.WorldItems.Values,
             item => item.State.UniqueId == 1009);
+
+        var activatedGateway = AuthoritativeDunMapAsset.Load(
+            "levels/l2data/blood2.dun",
+            pack.Assets.Single(asset => asset.SourcePath == "levels/l2data/blood2.dun").Contents);
+        var projected = simulation.WorldState.LevelGeometry
+            .Single(level => level.LevelId == 2);
+        var projectedMegaWidth = (projected.Width + 1) / 2;
+        for (var y = 0; y < activatedGateway.MegaHeight; y++)
+            for (var x = 0; x < activatedGateway.MegaWidth; x++)
+                Assert.Equal(
+                    activatedGateway.TileLayer[y * activatedGateway.MegaWidth + x],
+                    projected.NativeMegaTileLayer[(4 / 2 + y) * projectedMegaWidth + 10 / 2 + x]);
     }
 
     [Fact]
@@ -1066,7 +1082,8 @@ public sealed class ShippedContentTests
         var openingMutation = Assert.Single(
             AuthoritativeWorldMutationCatalog.LoadTsv(
                 mutationTable.SourcePath,
-                mutationTable.ToCanonicalTsv()).Definitions,
+                mutationTable.ToCanonicalTsv(),
+                content: ComposedContent.Compose(new ContentManifest("snotspill-opening", "1", [pack]))).Definitions,
             definition => definition.MutationId == 9301);
         var openingTransparency = Assert.Single(openingMutation.TransparencyRectangles);
         Assert.Equal(("Snotspill", -11, -9), (
@@ -1081,7 +1098,8 @@ public sealed class ShippedContentTests
         var mutation = Assert.Single(
             AuthoritativeWorldMutationCatalog.LoadTsv(
                 mutationTable.SourcePath,
-                mutationTable.ToCanonicalTsv()).Definitions,
+                mutationTable.ToCanonicalTsv(),
+                content: ComposedContent.Compose(new ContentManifest("snotspill-transition", "1", [pack]))).Definitions,
             definition => definition.MutationId == 9300);
 
         Assert.Equal(("Snotspill", -11, -9), (
@@ -1186,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.455.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.456.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1367,7 +1385,8 @@ public sealed class ShippedContentTests
         var mutations = AuthoritativeWorldMutationCatalog.LoadTsv(
             mutationTable.SourcePath,
             mutationTable.ToCanonicalTsv(),
-            stableIds);
+            stableIds,
+            ComposedContent.Compose(new ContentManifest("set-level-mutations", "1", [pack])));
         Assert.Equal(
             (AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(5, true),
                 AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(5, false)),
@@ -1966,8 +1985,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\tmonster_layer_rects\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\tnone\t\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\tmonster_layer_rects\tmega_tile_asset_path\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\tnone\t\tnone\n");
         var warpTable = TsvTable.Parse(
             "warps.tsv",
             "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\ttarget_set_level_id\ttarget_set_level_symbol\ttarget_set_level_active_map\n"
@@ -2821,7 +2840,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -2850,7 +2870,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -2887,7 +2908,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -2917,7 +2939,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -2946,7 +2969,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3027,7 +3051,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3059,7 +3084,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3098,7 +3124,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3137,7 +3164,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3177,7 +3205,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3206,7 +3235,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3243,7 +3273,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3280,7 +3311,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3310,7 +3342,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3342,7 +3375,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3375,7 +3409,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3405,7 +3440,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
@@ -3442,7 +3478,8 @@ public sealed class ShippedContentTests
             [],
             [],
             basePack.Schema,
-            basePack.DependencyConstraints);
+            basePack.DependencyConstraints,
+            basePack.Assets);
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloModule.Instance.ContentBootstrap.Activate(
                 ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
@@ -3691,7 +3728,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.456.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.457.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
