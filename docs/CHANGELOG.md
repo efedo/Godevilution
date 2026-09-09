@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Replay fixture loaders now reject checkpoint labels longer than 64
+  characters in both managed and compact native runners, preventing malformed
+  hashes from being silently treated as symbolic checkpoints.
 - Corrected the first two Acid puddle replay checkpoints, which had been stored
   as malformed 65-character hashes; the managed and compact native runners now
   validate the same canonical tick-1 and tick-2 state hashes.

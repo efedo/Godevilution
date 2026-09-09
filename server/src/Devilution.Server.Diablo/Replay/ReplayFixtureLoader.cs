@@ -1113,9 +1113,15 @@ public static class ReplayFixtureLoader
             throw new InvalidDataException("Replay fixture checkpoints must be an array.");
 
         return value.EnumerateArray()
-            .Select(checkpoint => new ReplayCheckpoint(
-                RequiredULong(checkpoint, "tick"),
-                RequiredString(checkpoint, "state_sha256")))
+            .Select(checkpoint => {
+                var stateSha256 = RequiredString(checkpoint, "state_sha256");
+                if (stateSha256.Length > 64)
+                    throw new InvalidDataException(
+                        "Replay fixture checkpoint state_sha256 must not exceed 64 characters.");
+                return new ReplayCheckpoint(
+                    RequiredULong(checkpoint, "tick"),
+                    stateSha256);
+            })
             .ToArray();
     }
 

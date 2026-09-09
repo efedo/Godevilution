@@ -9212,6 +9212,23 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void StructuredFixtureWithOversizedCheckpointHashIsRejected()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load(
+            CreateStructuredFixture(
+                """
+                [
+                  { "tick": 1, "state_sha256": "12345678901234567890123456789012345678901234567890123456789012345" },
+                  { "tick": 2, "state_sha256": "legacy-buy" }
+                ]
+                """)));
+
+        Assert.Equal(
+            "Replay fixture checkpoint state_sha256 must not exceed 64 characters.",
+            exception.Message);
+    }
+
+    [Fact]
     public void FinalSnapshotHashMismatchIsRejected()
     {
         var fixture = ReplayFixtureLoader.Load(CreateStructuredFixture(

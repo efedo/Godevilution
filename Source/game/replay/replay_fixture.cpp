@@ -12053,8 +12053,13 @@ private:
 			if (!ParseObject([this, &checkpoint](std::string_view key) {
 				    if (key == "tick")
 					    return ParseUnsigned(checkpoint.tick);
-				    if (key == "state_sha256")
-					    return ParseString(checkpoint.stateSha256);
+				    if (key == "state_sha256") {
+					    if (!ParseString(checkpoint.stateSha256))
+						    return false;
+					    if (checkpoint.stateSha256.size() > 64)
+						    return Fail("checkpoint state_sha256 exceeds 64 characters");
+					    return true;
+				    }
 				    return SkipValue();
 			    }))
 				return false;

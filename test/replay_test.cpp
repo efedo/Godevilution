@@ -427,6 +427,22 @@ TEST(ReplayFixture, ParsesStructuredManifestCheckpointAndStorePayloads)
 	EXPECT_EQ(fixture.initialStateSha256, "initial-hash");
 }
 
+TEST(ReplayFixture, RejectsOversizedCheckpointStateHash)
+{
+	constexpr std::string_view Fixture = R"({
+  "content_manifest": { "id": "test", "version": "1", "sha256": "content" },
+  "commands": [],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "12345678901234567890123456789012345678901234567890123456789012345" }
+  ]
+})";
+
+	ReplayFixture fixture;
+	std::string error;
+	EXPECT_FALSE(ParseReplayFixture(Fixture, fixture, error));
+	EXPECT_NE(error.find("checkpoint state_sha256 exceeds 64 characters"), std::string::npos);
+}
+
 TEST(ReplayFixture, ParsesTransactionParityCommands)
 {
 	std::ifstream file("test/fixtures/replay/stores/transaction-parity.json");
