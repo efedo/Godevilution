@@ -136,6 +136,10 @@ The `gameplay/ranged-multiple-arrows` companion checks all three emitted
 projectiles, their spread positions, and the delayed activation state.
 The `gameplay/ranged-class-damage` companion proves authored Rogue bow ranges,
 class attribute scaling, and the shared damage-range RNG draw.
+The `gameplay/ranged-class-monk`, `gameplay/ranged-class-bard`, and
+`gameplay/ranged-class-barbarian` companions extend that boundary across the
+remaining ranged class profiles, including the class-specific damage branches
+and Barbarian critical-strike RNG consumption.
 The `gameplay/ranged-class-armor` companion proves ranged hit admission and
 post-hit target armor reduction for the same initialized Rogue bow profile.
 The `gameplay/ranged-class-hell` companion proves Hell difficulty armor is
@@ -490,7 +494,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 234 checked-in JSON fixtures and 249 registered
+the native replay gate contains 237 checked-in JSON fixtures and 252 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

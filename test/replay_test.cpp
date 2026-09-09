@@ -1108,6 +1108,42 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedClassState.randomState, 22695478U);
 	EXPECT_EQ(rangedClassResult.transitions[0].stateSha256, rangedClassFixture.checkpoints.back().stateSha256);
 
+	auto executeRangedClassProfile = [&](const char *fixturePath, int32_t expectedDamage, uint32_t expectedRandomState) {
+		std::ifstream fixtureFile(fixturePath);
+		ASSERT_TRUE(fixtureFile.good());
+		const std::string fixtureJson((std::istreambuf_iterator<char>(fixtureFile)), std::istreambuf_iterator<char>());
+		ReplayFixture fixture;
+		ASSERT_TRUE(ParseReplayFixture(fixtureJson, fixture, error)) << error;
+		ReplayFixtureExecutionState state;
+		state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+		state.attributes[0] = fixture.initialState.strength;
+		state.attributes[1] = fixture.initialState.strength;
+		state.attributes[2] = fixture.initialState.magic;
+		state.attributes[3] = fixture.initialState.magic;
+		state.attributes[4] = fixture.initialState.dexterity;
+		state.attributes[5] = fixture.initialState.dexterity;
+		state.attributes[6] = fixture.initialState.vitality;
+		state.attributes[7] = fixture.initialState.vitality;
+		state.characterLevel = fixture.initialState.characterLevel;
+		state.life = fixture.initialState.life;
+		state.lifeMaximum = fixture.initialState.life;
+		state.mana = fixture.initialState.mana;
+		state.manaMaximum = fixture.initialState.manaMaximum;
+		state.positionX = fixture.initialState.positionX;
+		state.positionY = fixture.initialState.positionY;
+		ReplayFixtureExecutionResult result;
+		ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+		ASSERT_EQ(state.projectiles.size(), 1U);
+		EXPECT_TRUE(state.projectiles[0].attackHit);
+		EXPECT_EQ(state.projectiles[0].damage, expectedDamage);
+		EXPECT_EQ(state.projectiles[0].damageQ6, expectedDamage * 64);
+		EXPECT_EQ(state.randomState, expectedRandomState);
+		EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
+	};
+	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-monk.json", 5, 22695478U);
+	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-bard.json", 6, 22695478U);
+	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-barbarian.json", 4, 2156045615U);
+
 	std::ifstream rangedClassArmorFile("test/fixtures/replay/gameplay-ranged-class-armor.json");
 	ASSERT_TRUE(rangedClassArmorFile.good());
 	const std::string rangedClassArmorJson((std::istreambuf_iterator<char>(rangedClassArmorFile)), std::istreambuf_iterator<char>());

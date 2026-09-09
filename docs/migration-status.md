@@ -2,6 +2,10 @@
 
 Status date: 2026-09-09
 
+Initialized ranged class replay now cross-checks Monk, Bard, and Barbarian
+damage profiles in both runners, including the Monk weapon, Bard bow, and
+Barbarian bow branches with their class-specific RNG checkpoints.
+
 The replay parity boundary now covers initialized Rogue ranged attacks under
 Hellfire armor piercing: hit admission applies the shifted armor rule while
 projectile damage still applies the original target armor, with matching C# and

@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added initialized Monk, Bard, and Barbarian ranged class-profile fixtures,
+  including cross-runner damage and RNG checkpoint coverage.
 - Added a composed Hellfire ranged-class replay fixture covering shifted armor
   admission and unchanged post-hit target armor reduction in both runners.
 - Added initialized Warrior ranged replay coverage for Critical Strike and
@@ -58,7 +60,8 @@ All notable changes to this fork are documented below.
   damage at a shared native/managed checkpoint; native replay no longer relies
   on the armor-only melee fallback when class attributes are authored.
 - Shared class-damage replay now covers Monk staff, Bard sword, and Barbarian
-  axe profiles, including Barbarian's class critical-strike RNG draw.
+  axe profiles, including Barbarian's class critical-strike RNG draw; ranged
+  replay additionally covers Monk weapon, Bard bow, and Barbarian bow profiles.
 - The class-damage replay matrix now also covers explicit Warrior and Sorcerer
   profiles; class-0 authored attributes use the native formula while omitted
   attributes retain the legacy compact fallback.

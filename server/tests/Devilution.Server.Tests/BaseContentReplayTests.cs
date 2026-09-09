@@ -589,6 +589,37 @@ public sealed class BaseContentReplayTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-ranged-class-monk.json", 3, 5, 22695478U)]
+    [InlineData("gameplay-ranged-class-bard.json", 4, 6, 22695478U)]
+    [InlineData("gameplay-ranged-class-barbarian.json", 5, 4, 2156045615U)]
+    public void RangedClassDamageUsesEachNativeClassProfile(
+        string fixtureName,
+        int expectedClassId,
+        int expectedDamage,
+        uint expectedRandomState)
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            fixtureName)));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        Assert.Equal(expectedClassId, fixture.InitialState.CharacterClass);
+
+        var result = ExecuteRangedClassFixture(fixture, contentRoot);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.True(arrow.AttackHit);
+        Assert.Equal(expectedDamage, arrow.Damage);
+        Assert.Equal(expectedDamage * 64, arrow.DamageQ6);
+        Assert.Equal(expectedRandomState, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void RangedClassDamageAppliesHellArmorBeforeProjectileCapture()
     {
@@ -3167,6 +3198,59 @@ public sealed class BaseContentReplayTests
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    private static ReplayExecutionResult ExecuteRangedClassFixture(
+        ReplayFixture fixture,
+        string contentRoot)
+    {
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var classDefinition = classes.GetRequired(checked((uint)initial.CharacterClass));
+        var attributes = classDefinition.CreateStartingAttributes() with {
+            Strength = new PlayerAttributeState(initial.Strength, initial.Strength),
+            Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            Vitality = new PlayerAttributeState(initial.Vitality, initial.Vitality),
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingAttributes: attributes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPlayerClass: classDefinition,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                armorClass: initial.CombatTargetArmorClass,
+                maxHitPoints: initial.CombatTargetMaxHitPoints)],
+            startingCombatRules: new AuthoritativeCombatRules(
+                1,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        return ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
     }
 
     private static void AssertUsesBaseContentManifest(
