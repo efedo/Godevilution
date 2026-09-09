@@ -61,6 +61,8 @@ public:
 	[[nodiscard]] std::optional<bool> IsBlocked(int32_t positionX, int32_t positionY) const noexcept;
 	/** Returns the authoritative missile-blocked result, or no value when geometry is unavailable/out of bounds. */
 	[[nodiscard]] std::optional<bool> IsMissileBlocked(int32_t positionX, int32_t positionY) const noexcept;
+	/** Returns the authoritative native vision-blocked result, or no value when geometry is unavailable/out of bounds. */
+	[[nodiscard]] std::optional<bool> IsVisionBlocked(int32_t positionX, int32_t positionY) const noexcept;
 
 	[[nodiscard]] std::optional<uint32_t> WorldItemAt(int32_t positionX, int32_t positionY) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> MonsterAt(int32_t positionX, int32_t positionY) const noexcept;

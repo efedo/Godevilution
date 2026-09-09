@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
 - Projected the authoritative native DUN monster layer through the shared
   protocol, including server, native, and Godot validation and wire coverage.
 
+- Preserved additive native vision-blocked cells in the C++ authoritative
+  projection and world-query bridge, with fallback to movement blockers for
+  older snapshots.
+
 - Added `replace_collision_geometry` to `native_dun_fragments.tsv`. Validated
   fragment collision bundles can now replace, rather than merely add to, the
   base movement/missile geometry within their footprint. This advances the

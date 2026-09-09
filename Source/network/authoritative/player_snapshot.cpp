@@ -953,6 +953,7 @@ tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLe
 		};
 		level.blockedCells.assign(source.blocked_cells().begin(), source.blocked_cells().end());
 		level.missileBlockedCells.assign(source.missile_blocked_cells().begin(), source.missile_blocked_cells().end());
+		level.nativeVisionBlockedCells.assign(source.native_vision_blocked_cells().begin(), source.native_vision_blocked_cells().end());
 		level.nativeTransparency.reserve(source.native_transparency_size());
 		for (const uint32_t value : source.native_transparency())
 			level.nativeTransparency.push_back(static_cast<uint16_t>(value));
@@ -1141,6 +1142,7 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			return true;
 		};
 		if (!validateCells(level.blocked_cells()) || !validateCells(level.missile_blocked_cells())
+		    || !validateCells(level.native_vision_blocked_cells())
 		    || (level.native_transparency_size() != 0 && static_cast<uint64_t>(level.native_transparency_size()) != cellCount)
 		    || (level.native_object_layer_size() != 0 && static_cast<uint64_t>(level.native_object_layer_size()) != cellCount)
 		    || (level.native_mega_tile_layer_size() != 0

@@ -117,6 +117,12 @@ The lower-level authoritative player-state owner enforces the same monotonic
 server-tick rule, so delayed snapshots cannot regress state even when an adapter
 applies a validated projection outside the normal session poll.
 
+The native compatibility projection now retains the server-authored
+`native_vision_blocked_cells` geometry alongside movement and missile collision.
+Its world-query bridge falls back to movement blockers for older snapshots that
+omit the additive field, preserving compatibility while keeping authored native
+vision data available to the presentation path.
+
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,
 and charge counts. The adapter rebuilds native equipment and spell masks from

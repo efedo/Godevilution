@@ -265,6 +265,19 @@ std::optional<bool> ServerBackedWorldProjection::IsMissileBlocked(int32_t positi
 	return std::find(geometry->missileBlockedCells.begin(), geometry->missileBlockedCells.end(), cell) != geometry->missileBlockedCells.end();
 }
 
+std::optional<bool> ServerBackedWorldProjection::IsVisionBlocked(int32_t positionX, int32_t positionY) const noexcept
+{
+	const auto *geometry = CurrentLevelGeometry();
+	if (geometry == nullptr || geometry->width <= 0 || geometry->height <= 0
+	    || positionX < 0 || positionY < 0 || positionX >= geometry->width || positionY >= geometry->height)
+		return std::nullopt;
+	const auto cell = positionY * geometry->width + positionX;
+	const auto &blockedCells = geometry->nativeVisionBlockedCells.empty()
+	    ? geometry->blockedCells
+	    : geometry->nativeVisionBlockedCells;
+	return std::find(blockedCells.begin(), blockedCells.end(), cell) != blockedCells.end();
+}
+
 std::optional<uint32_t> ServerBackedWorldProjection::WorldItemAt(int32_t positionX, int32_t positionY) const noexcept
 {
 	const auto levelId = levelId_;

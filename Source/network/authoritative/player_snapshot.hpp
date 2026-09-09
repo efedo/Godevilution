@@ -336,6 +336,7 @@ struct ProjectedLevelGeometrySnapshot {
 	int32_t height = 0;
 	std::vector<int32_t> blockedCells;
 	std::vector<int32_t> missileBlockedCells;
+	std::vector<int32_t> nativeVisionBlockedCells;
 	std::vector<uint16_t> nativeTransparency;
 	std::vector<ProjectedWarpTriggerSnapshot> warpTriggers;
 	std::vector<uint16_t> nativeObjectLayer;

@@ -1559,7 +1559,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->set_height(1);
 	level->add_native_transparency(65536);
 	level->add_native_piece_layer(65536);
+	level->add_native_vision_blocked_cells(0);
+	level->add_native_vision_blocked_cells(0);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidLayer).has_value());
+
+	protocol::Snapshot invalidVisionCells;
+	level = invalidVisionCells.add_level_geometry();
+	level->set_width(1);
+	level->set_height(1);
+	level->add_native_vision_blocked_cells(1);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidVisionCells).has_value());
 
 	protocol::Snapshot invalidNativePresentation;
 	level = invalidNativePresentation.add_level_geometry();
@@ -2297,6 +2306,21 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	EXPECT_EQ(projected->back().nativePieceLayer[3], 298U);
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsNativeVisionBlockedCells)
+{
+	protocol::Snapshot snapshot;
+	auto *level = snapshot.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(2);
+	level->set_height(2);
+	level->add_native_vision_blocked_cells(1);
+
+	auto projected = ProjectLevelGeometrySnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 1U);
+	EXPECT_EQ(projected->front().nativeVisionBlockedCells, std::vector<int32_t>({ 1 }));
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;
@@ -2322,6 +2346,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	geometry.height = 2;
 	geometry.blockedCells = { 4 };
 	geometry.missileBlockedCells = { 1 };
+	geometry.nativeVisionBlockedCells = { 3 };
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, { geometry }, 1).has_value());
@@ -2331,7 +2356,10 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	EXPECT_TRUE(*projection.IsBlocked(1, 1));
 	EXPECT_FALSE(*projection.IsBlocked(0, 0));
 	EXPECT_TRUE(*projection.IsMissileBlocked(1, 0));
+	EXPECT_TRUE(*projection.IsVisionBlocked(1, 1));
+	EXPECT_FALSE(*projection.IsVisionBlocked(0, 0));
 	EXPECT_FALSE(projection.IsBlocked(3, 0).has_value());
+	EXPECT_FALSE(projection.IsVisionBlocked(3, 0).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, FiltersDeadAndHiddenMonstersFromNativePresentation)
