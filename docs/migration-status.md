@@ -8181,6 +8181,11 @@ Hellfire Monk MonsterMagic impacts now use the validated FlexibleBlock and base
 block chance rules for unarmed primary-player targets in compact native replay,
 matching the managed class catalog and preserving the shared replay checkpoints.
 
+The same MonsterMagic boundary now covers a usable one-handed Hellfire Monk
+weapon. Replay equipment carries the native equip-location classification, so
+managed and native runners agree that one-handed weapons may block while
+two-handed weapons remain excluded.
+
 The same class-aware block boundary now applies to unarmed Hellfire Monk
 secondary participants, while retaining the explicit legacy block-capable
 secondary path used by existing shield fixtures.

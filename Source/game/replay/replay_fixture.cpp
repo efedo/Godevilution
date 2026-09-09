@@ -3641,10 +3641,8 @@ bool IsReplayFlexibleBlockCapable(
 		    }))
 		return true;
 
-	// Hellfire Monk's FlexibleBlock permits unarmed and staff blocking.  The
-	// compact fixture schema does not yet carry the native two-handed item
-	// classification, so only the unarmed and explicit staff cases are
-	// admitted here; managed CanBlock applies the full content classification.
+	// Hellfire Monk's FlexibleBlock permits unarmed, staff, and one-handed
+	// weapon blocking. EquipLocation 2 is the native two-handed marker.
 	if (!hellfire || characterClassId != 3)
 		return false;
 	const auto usableHands = std::count_if(
@@ -3662,7 +3660,17 @@ bool IsReplayFlexibleBlockCapable(
 			   return IsReplayEquipmentUsable(item.state)
 			       && (item.slot == 4 || item.slot == 5)
 			       && item.state.itemType == 10;
-		   });
+		   })
+	    || (usableHands == 1
+	        && std::any_of(
+		       equipment.begin(),
+		       equipment.end(),
+		       [](const ReplayFixtureSlottedItem &item) {
+			       return IsReplayEquipmentUsable(item.state)
+			           && (item.slot == 4 || item.slot == 5)
+			           && item.state.itemClass == 1
+			           && item.state.equipLocation != 2;
+		       }));
 }
 
 bool IsReplayPrimaryPlayerBlockCapable(const ReplayFixtureExecutionState &state)
@@ -11706,6 +11714,8 @@ private:
 					    definedFields |= 1U << 3;
 					    return true;
 				    }
+				    if (key == "equip_location")
+					    return ParseSigned(item.equipLocation);
 				    if (key == "flags") {
 					    if (!ParseUnsigned(item.flags))
 						    return false;
@@ -12968,6 +12978,7 @@ bool ExecuteReplayFixture(
 			item.stableItemId = source.stableItemId;
 			item.itemType = source.itemType;
 			item.itemClass = source.itemClass;
+			item.equipLocation = source.equipLocation;
 			item.itemIndex = source.itemIndex;
 			item.value = source.value;
 			item.identifiedValue = source.identifiedValue;
@@ -13073,6 +13084,7 @@ bool ExecuteReplayFixture(
 			itemState.stableItemId = source.stableItemId;
 			itemState.itemType = source.itemType;
 			itemState.itemClass = source.itemClass;
+			itemState.equipLocation = source.equipLocation;
 			itemState.itemIndex = source.itemIndex;
 			itemState.value = source.value;
 			itemState.identifiedValue = source.identifiedValue;

@@ -79,6 +79,8 @@ struct ReplayFixtureEquippedItem {
 	uint32_t stableItemId = 0;
 	int32_t itemType = -1;
 	int32_t itemClass = 0;
+	/** Native equip-location classification; 2 denotes a two-handed item. */
+	int32_t equipLocation = 0;
 	uint32_t flags = 0;
 	bool statFlag = false;
 	int32_t itemIndex = -1;

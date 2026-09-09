@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
 - Added Hellfire Monk MonsterMagic block coverage proving FlexibleBlock admits
   unarmed primary-player blocking and applies the class base block chance in
   both runners.
+- Added Hellfire Monk MonsterMagic coverage for a usable one-handed weapon,
+  extending the replay envelope with native equip-location classification so
+  both runners admit one-handed FlexibleBlock without admitting two-handed
+  weapons.
 - Extended Hellfire Monk MonsterMagic FlexibleBlock coverage to an unarmed
   secondary participant in multiplayer, including class base block chance.
 - Added Hellfire Monk Hork Spawn coverage proving the shared class-aware block

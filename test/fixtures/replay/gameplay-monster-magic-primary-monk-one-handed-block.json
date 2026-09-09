@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-magic-primary-monk-one-handed-block",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-magic",
+    "version": "0.1.0",
+    "sha256": "b6787fdcf7701f3e4fe77f79a87e1b84024f86da2330d1559f6b7335a104ba4b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "mana": 6000,
+    "mana_maximum": 6000,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_class": 3,
+    "character_level": 1,
+    "dexterity": 80,
+    "equipment": [
+      { "slot": 4, "item_seed": 42, "item_type": 1, "item_class": 1, "equip_location": 1, "flags": 0, "stat_flag": true }
+    ],
+    "memorized_spells": [
+      { "spell_id": 11, "level": 1 }
+    ],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Lich",
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "8a22c95a39fa0a65905e228a6c6e56c0d1f8ba4fe6250f6a890cf60c40516fc7" },
+    { "tick": 27, "state_sha256": "8660a316bfe8735990450e27d41e201abbae7631a27dcb2cbfddb0e371484f96" }
+  ]
+}

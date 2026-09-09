@@ -21,6 +21,9 @@ public sealed record ReplayEquippedItem(
 {
     public uint StableItemId { get; init; }
 
+    /** Native equip-location classification; 2 denotes a two-handed item. */
+    public int EquipLocation { get; init; }
+
     public int ItemIndex { get; init; } = -1;
 
     public int Value { get; init; }
@@ -70,6 +73,7 @@ public sealed record ReplayEquippedItem(
             AuthoritativeItemState.Empty with {
                 ItemType = ItemType,
                 ItemClass = ItemClass,
+                EquipLocation = EquipLocation,
                 ItemIndex = ItemIndex,
                 Value = Value,
                 IdentifiedValue = IdentifiedValue,
