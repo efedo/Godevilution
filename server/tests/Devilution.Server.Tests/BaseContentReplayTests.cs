@@ -34,6 +34,7 @@ public sealed class BaseContentReplayTests
     [InlineData("gameplay-class-physical-damage-hellfire-decay.json", 0, 93)]
     [InlineData("gameplay-class-physical-damage-hellfire-jesters.json", 0, 95)]
     [InlineData("gameplay-class-physical-damage-hellfire-peril.json", 0, 86)]
+    [InlineData("gameplay-class-physical-damage-hellfire-peril-get-hit.json", 0, 86)]
     public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
         string fixtureName,
         int expectedClassId,
@@ -1012,13 +1013,17 @@ public sealed class BaseContentReplayTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
-    [Fact]
-    public void HellfireRangedClassPerilUsesPreArmorDamagePayload()
+    [Theory]
+    [InlineData("gameplay-ranged-class-hellfire-peril-profile.json", 256)]
+    [InlineData("gameplay-ranged-class-hellfire-peril-get-hit.json", 448)]
+    public void HellfireRangedClassPerilUsesPreArmorDamagePayload(
+        string fixtureName,
+        int expectedPerilSelfDamageQ6)
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "Fixtures",
-            "gameplay-ranged-class-hellfire-peril-profile.json")));
+            fixtureName)));
         var repositoryRoot = FindRepositoryRoot();
         var basePack = ContentPackLoader.LoadManifestDirectory(
             Path.Combine(repositoryRoot, "server", "content", "base"));
@@ -1079,7 +1084,7 @@ public sealed class BaseContentReplayTests
         var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
         Assert.Equal(4, arrow.Damage);
         Assert.Equal(256, arrow.DamageQ6);
-        Assert.Equal(256, arrow.PerilSelfDamageQ6);
+        Assert.Equal(expectedPerilSelfDamageQ6, arrow.PerilSelfDamageQ6);
         Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),

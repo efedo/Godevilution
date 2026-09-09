@@ -41,6 +41,9 @@ public sealed record ReplayEquippedItem(
 
     public int PlusDamageModifier { get; init; }
 
+    /** Optional native `_pIGetHit` modifier used by Hellfire Peril replay. */
+    public int PlusGetHit { get; init; }
+
     public int PlusEnemyArmorClass { get; init; }
 
     public int FireMinDamage { get; init; }
@@ -71,6 +74,7 @@ public sealed record ReplayEquippedItem(
                 PlusDamage = PlusDamage,
                 PlusToHit = PlusToHit,
                 PlusDamageModifier = PlusDamageModifier,
+                PlusGetHit = PlusGetHit,
                 PlusEnemyArmorClass = PlusEnemyArmorClass,
                 Flags = Flags,
                 FireMinDamage = FireMinDamage,

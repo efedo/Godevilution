@@ -53,8 +53,8 @@ item index, type/class, value, identified value, flags, and usability state.
 Elemental replay cases may also carry `identified`, `magical`,
 `min_damage`, `max_damage`, `fire_min_damage`, `fire_max_damage`, `lightning_min_damage`, and
 `lightning_max_damage`; initialized physical cases may additionally carry
-`plus_damage`, `plus_to_hit`, and `plus_damage_modifier`. These fields are
-optional and default to the native zero/false values. Melee attacks select
+`plus_damage`, `plus_to_hit`, `plus_damage_modifier`, and `plus_get_hit`. These
+fields are optional and default to the native zero/false values. Melee attacks select
 `FireDamage`/`LightningDamage`, while
 ranged attacks select `FireArrows`/`LightningArrows`, so arrow-only effects can
 be checked independently. Both runners validate unique native slots and hash
@@ -161,6 +161,10 @@ advancing shared RNG state.
 The `gameplay/ranged-class-hellfire-peril-profile` companion proves initialized
 class Peril carries pre-armor attack damage while the projectile retains its
 post-armor Hellfire multiplier.
+The `gameplay/ranged-class-hellfire-peril-get-hit` and
+`gameplay-class-physical-damage-hellfire-peril-get-hit` companions prove that
+authored `PlusGetHit` is included in the carried/self-applied Peril payload
+for ranged and melee class profiles.
 The Hellfire ranged-decay companion additionally proves that eligible hand
 weapons mutate once per emitted arrow before projectile resolution.
 The Hellfire ranged-Devastation companion proves the post-hit 3x multiplier
@@ -484,7 +488,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 231 checked-in JSON fixtures and 246 registered
+the native replay gate contains 233 checked-in JSON fixtures and 248 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

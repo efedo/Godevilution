@@ -3578,6 +3578,7 @@ void CreateReplayWeaponArrow(
 		int32_t maximumDamage = 0;
 		int32_t damagePercent = 0;
 		int32_t damageFlat = 0;
+		int32_t getHitBonus = 0;
 		int32_t hitBonus = 0;
 		int32_t armorPiercingBonus = 0;
 		bool hasShield = false;
@@ -3593,6 +3594,7 @@ void CreateReplayWeaponArrow(
 			maximumDamage += std::max(0, equippedItem.state.maxDamage);
 			damagePercent += equippedItem.state.plusDamage;
 			damageFlat += equippedItem.state.plusDamageModifier;
+			getHitBonus += equippedItem.state.plusGetHit;
 			hitBonus += equippedItem.state.plusToHit;
 			armorPiercingBonus += equippedItem.state.plusEnemyArmorClass;
 			if (equippedItem.slot != 4 && equippedItem.slot != 5)
@@ -3662,7 +3664,7 @@ void CreateReplayWeaponArrow(
 		    + rolledBaseDamage * damagePercent / 100;
 		if (state.hellfire
 		    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
-			perilSelfDamageQ6 = damageBeforeFlat * 64;
+			perilSelfDamageQ6 = std::max(0, damageBeforeFlat + getHitBonus) * 64;
 		damage = damageBeforeFlat + damageFlat + damageModifier;
 		const int32_t baseRangedToHit = state.characterClassId == 0
 		        ? 60
@@ -5565,6 +5567,7 @@ bool ApplyReplayAttack(
 		int32_t maximumDamage = 0;
 		int32_t damagePercent = 0;
 		int32_t damageFlat = 0;
+		int32_t getHitBonus = 0;
 		int32_t hitBonus = 0;
 		int32_t armorPiercingBonus = 0;
 		bool hasShield = false;
@@ -5580,6 +5583,7 @@ bool ApplyReplayAttack(
 			maximumDamage += std::max(0, equippedItem.state.maxDamage);
 			damagePercent += equippedItem.state.plusDamage;
 			damageFlat += equippedItem.state.plusDamageModifier;
+			getHitBonus += equippedItem.state.plusGetHit;
 			hitBonus += equippedItem.state.plusToHit;
 			armorPiercingBonus += equippedItem.state.plusEnemyArmorClass;
 			if (equippedItem.slot != 4 && equippedItem.slot != 5)
@@ -5668,7 +5672,7 @@ bool ApplyReplayAttack(
 		const int32_t damageBeforeFlat = rolledBaseDamage + rolledBaseDamage * damagePercent / 100;
 		if (state.hellfire
 		    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
-			perilSelfDamageQ6 = damageBeforeFlat * 64;
+			perilSelfDamageQ6 = std::max(0, damageBeforeFlat + getHitBonus) * 64;
 		int32_t damageBeforeArmor = damageBeforeFlat + damageFlat + damageModifier;
 		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
 		// after the class damage profile and double damage before armor reduction.
@@ -11225,6 +11229,8 @@ private:
 					    return ParseSigned(item.plusToHit);
 				    if (key == "plus_damage_modifier")
 					    return ParseSigned(item.plusDamageModifier);
+				    if (key == "plus_get_hit")
+					    return ParseSigned(item.plusGetHit);
 				    if (key == "plus_enemy_armor_class")
 					    return ParseSigned(item.plusEnemyArmorClass);
 				    if (key == "fire_min_damage")
@@ -11256,6 +11262,8 @@ private:
 			    || item.plusToHit > std::numeric_limits<int16_t>::max()
 			    || item.plusDamageModifier < std::numeric_limits<int16_t>::min()
 			    || item.plusDamageModifier > std::numeric_limits<int16_t>::max()
+			    || item.plusGetHit < std::numeric_limits<int16_t>::min()
+			    || item.plusGetHit > std::numeric_limits<int16_t>::max()
 			    || item.plusEnemyArmorClass < std::numeric_limits<int16_t>::min()
 			    || item.plusEnemyArmorClass > std::numeric_limits<int16_t>::max()
 			    || item.fireMinDamage < 0
@@ -12449,6 +12457,7 @@ bool ExecuteReplayFixture(
 			item.plusDamage = source.plusDamage;
 			item.plusToHit = source.plusToHit;
 			item.plusDamageModifier = source.plusDamageModifier;
+			item.plusGetHit = source.plusGetHit;
 			item.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			item.fireMinDamage = source.fireMinDamage;
 			item.fireMaxDamage = source.fireMaxDamage;
@@ -12550,6 +12559,7 @@ bool ExecuteReplayFixture(
 			itemState.plusDamage = source.plusDamage;
 			itemState.plusToHit = source.plusToHit;
 			itemState.plusDamageModifier = source.plusDamageModifier;
+			itemState.plusGetHit = source.plusGetHit;
 			itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			itemState.fireMinDamage = source.fireMinDamage;
 			itemState.fireMaxDamage = source.fireMaxDamage;

@@ -677,6 +677,8 @@ TEST(ReplayFixture, ExecutesPhysicalHellfireDevastationAgainstCSharpCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-jesters.json", 0, 30, 20, 25, 95);
 	ExecuteClassPhysicalDamageFixture(
 	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-peril.json", 0, 30, 20, 25, 86);
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-peril-get-hit.json", 0, 30, 20, 25, 86);
 }
 
 TEST(ReplayFixture, ExecutesPhysicalHellfireArmorPiercingAgainstCSharpCheckpoint)
@@ -987,6 +989,36 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(hellfireClassPerilState.projectiles[0].perilSelfDamageQ6, 256);
 	EXPECT_EQ(hellfireClassPerilState.randomState, 22695478U);
 	EXPECT_EQ(hellfireClassPerilResult.transitions[0].stateSha256, hellfireClassPerilFixture.checkpoints.back().stateSha256);
+
+	std::ifstream hellfireClassPerilGetHitFile("test/fixtures/replay/gameplay-ranged-class-hellfire-peril-get-hit.json");
+	ASSERT_TRUE(hellfireClassPerilGetHitFile.good());
+	const std::string hellfireClassPerilGetHitJson((std::istreambuf_iterator<char>(hellfireClassPerilGetHitFile)), std::istreambuf_iterator<char>());
+	ReplayFixture hellfireClassPerilGetHitFixture;
+	ASSERT_TRUE(ParseReplayFixture(hellfireClassPerilGetHitJson, hellfireClassPerilGetHitFixture, error)) << error;
+	ReplayFixtureExecutionState hellfireClassPerilGetHitState;
+	hellfireClassPerilGetHitState.characterClassId = static_cast<uint32_t>(hellfireClassPerilGetHitFixture.initialState.characterClass);
+	hellfireClassPerilGetHitState.attributes[0] = hellfireClassPerilGetHitFixture.initialState.strength;
+	hellfireClassPerilGetHitState.attributes[1] = hellfireClassPerilGetHitFixture.initialState.strength;
+	hellfireClassPerilGetHitState.attributes[2] = hellfireClassPerilGetHitFixture.initialState.magic;
+	hellfireClassPerilGetHitState.attributes[3] = hellfireClassPerilGetHitFixture.initialState.magic;
+	hellfireClassPerilGetHitState.attributes[4] = hellfireClassPerilGetHitFixture.initialState.dexterity;
+	hellfireClassPerilGetHitState.attributes[5] = hellfireClassPerilGetHitFixture.initialState.dexterity;
+	hellfireClassPerilGetHitState.attributes[6] = hellfireClassPerilGetHitFixture.initialState.vitality;
+	hellfireClassPerilGetHitState.attributes[7] = hellfireClassPerilGetHitFixture.initialState.vitality;
+	hellfireClassPerilGetHitState.characterLevel = hellfireClassPerilGetHitFixture.initialState.characterLevel;
+	hellfireClassPerilGetHitState.life = hellfireClassPerilGetHitFixture.initialState.life;
+	hellfireClassPerilGetHitState.lifeMaximum = hellfireClassPerilGetHitFixture.initialState.life;
+	hellfireClassPerilGetHitState.mana = hellfireClassPerilGetHitFixture.initialState.mana;
+	hellfireClassPerilGetHitState.manaMaximum = hellfireClassPerilGetHitFixture.initialState.manaMaximum;
+	hellfireClassPerilGetHitState.positionX = hellfireClassPerilGetHitFixture.initialState.positionX;
+	hellfireClassPerilGetHitState.positionY = hellfireClassPerilGetHitFixture.initialState.positionY;
+	ReplayFixtureExecutionResult hellfireClassPerilGetHitResult;
+	ASSERT_TRUE(ExecuteReplayFixture(hellfireClassPerilGetHitFixture, hellfireClassPerilGetHitState, hellfireClassPerilGetHitResult, error)) << error;
+	ASSERT_EQ(hellfireClassPerilGetHitState.projectiles.size(), 1U);
+	EXPECT_EQ(hellfireClassPerilGetHitState.projectiles[0].damageQ6, 256);
+	EXPECT_EQ(hellfireClassPerilGetHitState.projectiles[0].perilSelfDamageQ6, 448);
+	EXPECT_EQ(hellfireClassPerilGetHitState.randomState, 22695478U);
+	EXPECT_EQ(hellfireClassPerilGetHitResult.transitions[0].stateSha256, hellfireClassPerilGetHitFixture.checkpoints.back().stateSha256);
 
 	std::ifstream multipleArrowsFile("test/fixtures/replay/gameplay-ranged-multiple-arrows.json");
 	ASSERT_TRUE(multipleArrowsFile.good());
