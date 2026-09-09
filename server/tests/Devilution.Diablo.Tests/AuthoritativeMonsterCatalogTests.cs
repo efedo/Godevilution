@@ -112,8 +112,19 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
-    public void SharesNativeMonsterAiTimerBoundsAcrossCatalogValidation()
+    public void SharesNativeMonsterCompatibilityBoundsAcrossCatalogValidation()
     {
+        Assert.Equal(1_000_000U, NativeCompatibilityLimits.MaximumNativeMonsterExperienceReward);
+        Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterToHit);
+        Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterIntelligence);
+        Assert.Equal(7, NativeCompatibilityLimits.MaximumNativeMonsterDirection);
+        Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterPackSize);
+        Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterActiveTicks);
+        Assert.Equal(127, NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationFrame);
+        Assert.Equal(127, NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationTick);
+        Assert.Equal(4096, NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks);
+        Assert.Equal(-100, NativeCompatibilityLimits.MinimumNativeMonsterResistance);
+        Assert.Equal(100, NativeCompatibilityLimits.MaximumNativeMonsterResistance);
         Assert.Equal(1024, NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks);
         Assert.Equal(64, NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks);
         Assert.Equal(64, NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks);
@@ -125,6 +136,16 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
             CreateType(1, 1, 1) with {
                 AvoidanceDelayBase = NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                ExperienceReward = NativeCompatibilityLimits.MaximumNativeMonsterExperienceReward + 1,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                FireResistance = NativeCompatibilityLimits.MaximumNativeMonsterResistance + 1,
             },
         ]));
     }

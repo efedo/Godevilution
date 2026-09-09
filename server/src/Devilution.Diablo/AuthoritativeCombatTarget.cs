@@ -120,29 +120,30 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(minDamage));
         if (monsterLevel < 0)
             throw new ArgumentOutOfRangeException(nameof(monsterLevel));
-        if (deathAnimationTicks < 0)
+        if (deathAnimationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks)
             throw new ArgumentOutOfRangeException(nameof(deathAnimationTicks));
-        if (experienceReward > 1_000_000)
+        if (experienceReward > NativeCompatibilityLimits.MaximumNativeMonsterExperienceReward)
             throw new ArgumentOutOfRangeException(nameof(experienceReward));
-        if (toHit is < 0 or > 255 || toHitSpecial is < 0 or > 255)
+        if (toHit is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterToHit
+            || toHitSpecial is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterToHit)
             throw new ArgumentOutOfRangeException(nameof(toHit));
-        if (intelligence is < 0 or > 255)
+        if (intelligence is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterIntelligence)
             throw new ArgumentOutOfRangeException(nameof(intelligence));
-        if (fallenFearTicks < 0)
+        if (fallenFearTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(fallenFearTicks));
-        if (fallenFearDirection is < 0 or >= 8)
+        if (fallenFearDirection is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(fallenFearDirection));
-        if (initialStandAnimationFrame is < 0 or > 127)
+        if (initialStandAnimationFrame is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationFrame)
             throw new ArgumentOutOfRangeException(nameof(initialStandAnimationFrame));
-        if (initialStandAnimationTick is < 0 or > 127)
+        if (initialStandAnimationTick is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationTick)
             throw new ArgumentOutOfRangeException(nameof(initialStandAnimationTick));
-        if (fallenRallyTicks is < 0 or > 4096)
+        if (fallenRallyTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks)
             throw new ArgumentOutOfRangeException(nameof(fallenRallyTicks));
         if (!Enum.IsDefined(leaderRelation))
             throw new ArgumentOutOfRangeException(nameof(leaderRelation));
-        if (packSize is < 0 or > 255)
+        if (packSize is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterPackSize)
             throw new ArgumentOutOfRangeException(nameof(packSize));
-        if (activeForTicks is < 0 or > 255)
+        if (activeForTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterActiveTicks)
             throw new ArgumentOutOfRangeException(nameof(activeForTicks));
         if (leaderRelation == AuthoritativeMonsterLeaderRelation.None
             ? leaderEntityId != 0
@@ -160,7 +161,7 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(scavengerHealingTicks));
         if (batRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
-        if (batRetreatDirection is < 0 or >= 8)
+        if (batRetreatDirection is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
         if (batMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(batMovementIdleTicks));
@@ -218,7 +219,7 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rangedDelayTicks));
         if (megaDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(megaDelayTicks));
-        if (direction is < 0 or >= 8)
+        if (direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(direction));
         if (dialogueMessageId is < 0 or > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(dialogueMessageId));
@@ -243,10 +244,10 @@ public sealed class AuthoritativeCombatTarget
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
-        if (fireResistance is < -100 or > 100
-            || lightningResistance is < -100 or > 100
-            || magicResistance is < -100 or > 100
-            || acidResistance is < -100 or > 100)
+        if (fireResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+            || lightningResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+            || magicResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+            || acidResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance)
             throw new ArgumentOutOfRangeException(nameof(fireResistance));
         var resolvedFuturePositionX = futurePositionX ?? positionX;
         var resolvedFuturePositionY = futurePositionY ?? positionY;
@@ -686,7 +687,8 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartFallenFear(int ticks, int direction)
     {
-        if (ticks < 0 || direction is < 0 or >= 8)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+            || direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         FallenFearTicks = ticks;
         FallenFearDirection = direction;
@@ -694,7 +696,8 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreFallenFear(int ticks, int direction)
     {
-        if (ticks < 0 || direction is < 0 or >= 8)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+            || direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         FallenFearTicks = ticks;
         FallenFearDirection = direction;
@@ -732,7 +735,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartFallenRally(int ticks)
     {
-        if (ticks < 0)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         FallenRallyTicks = ticks;
     }
@@ -748,7 +751,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreFallenRally(int ticks)
     {
-        if (ticks < 0 || ticks > 4096)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         FallenRallyTicks = ticks;
         FallenRallyAttackPending = false;
@@ -756,7 +759,8 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreFallenAnimation(int frame, int tick)
     {
-        if (frame is < 0 or > 127 || tick is < 0 or > 127)
+        if (frame is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationFrame
+            || tick is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationTick)
             throw new ArgumentOutOfRangeException(nameof(frame));
         FallenStandAnimationFrame = frame;
         FallenStandAnimationTick = tick;
@@ -833,7 +837,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartBatRetreat(int direction, int retreatTicks)
     {
-        if (direction is < 0 or >= 8)
+        if (direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(direction));
         if (retreatTicks is < 1 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(retreatTicks));
@@ -843,7 +847,8 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreBatRetreat(int ticks, int direction)
     {
-        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks || direction is < 0 or >= 8)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks
+            || direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         BatRetreatTicks = ticks;
         BatRetreatDirection = direction;
@@ -1478,7 +1483,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void IncrementPackSize()
     {
-        PackSize = Math.Min(255, PackSize + 1);
+        PackSize = Math.Min(NativeCompatibilityLimits.MaximumNativeMonsterPackSize, PackSize + 1);
     }
 
     internal void DecrementPackSize()
@@ -1492,7 +1497,7 @@ public sealed class AuthoritativeCombatTarget
         int packSize)
     {
         if (!Enum.IsDefined(leaderRelation)
-            || packSize is < 0 or > 255
+            || packSize is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterPackSize
             || (leaderRelation == AuthoritativeMonsterLeaderRelation.None
                 ? leaderEntityId != 0
                 : leaderEntityId == 0)
@@ -1506,7 +1511,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreActiveForTicks(int activeForTicks)
     {
-        if (activeForTicks is < 0 or > 255)
+        if (activeForTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterActiveTicks)
             throw new ArgumentOutOfRangeException(nameof(activeForTicks));
         ActiveForTicks = activeForTicks;
     }
@@ -1524,7 +1529,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreDirection(int direction)
     {
-        if (direction is < 0 or >= 8)
+        if (direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(direction));
         Direction = direction;
     }

@@ -30,6 +30,39 @@ public static class NativeCompatibilityLimits
     /** Maximum native monster death-animation duration retained by snapshots. */
     public const int MaximumNativeMonsterDeathAnimationTicks = MaximumNativeMonsterAiTimerTicks;
 
+    /** Maximum native monster experience reward retained by authoritative state. */
+    public const uint MaximumNativeMonsterExperienceReward = 1_000_000;
+
+    /** Maximum native monster attack accuracy retained by authoritative state. */
+    public const int MaximumNativeMonsterToHit = byte.MaxValue;
+
+    /** Maximum native monster intelligence retained by authoritative state. */
+    public const int MaximumNativeMonsterIntelligence = byte.MaxValue;
+
+    /** Maximum native monster direction ordinal retained by authoritative state. */
+    public const int MaximumNativeMonsterDirection = 7;
+
+    /** Maximum native monster pack size retained by authoritative state. */
+    public const int MaximumNativeMonsterPackSize = byte.MaxValue;
+
+    /** Maximum native monster activation duration retained by authoritative state. */
+    public const int MaximumNativeMonsterActiveTicks = byte.MaxValue;
+
+    /** Maximum native Fallen stand animation frame retained by authoritative state. */
+    public const int MaximumNativeMonsterFallenStandAnimationFrame = 127;
+
+    /** Maximum native Fallen stand animation tick retained by authoritative state. */
+    public const int MaximumNativeMonsterFallenStandAnimationTick = 127;
+
+    /** Maximum native Fallen rally duration retained by authoritative state. */
+    public const int MaximumNativeMonsterFallenRallyTicks = 4096;
+
+    /** Minimum native monster resistance retained by authoritative state. */
+    public const int MinimumNativeMonsterResistance = -100;
+
+    /** Maximum native monster resistance retained by authoritative state. */
+    public const int MaximumNativeMonsterResistance = 100;
+
     /** Maximum native monster short AI counter retained by authoritative snapshots. */
     public const int MaximumNativeMonsterShortTimerTicks = 64;
 

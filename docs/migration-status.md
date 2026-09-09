@@ -13,6 +13,12 @@ also consume one shared compatibility source across Diablo state/catalog
 validation, replay fixture loading, the protocol contract, and native envelope
 assertions.
 
+The remaining native monster scalar bounds for experience, accuracy,
+intelligence, directions, pack/activity state, Fallen animation/rally state,
+and resistances now consume that same compatibility source across Diablo
+construction, snapshot/catalog validation, replay/protocol aliases, and native
+envelope assertions.
+
 Replay parity maintenance now keeps base-content fixture manifests current
 and aligns the managed replay executor with native multiplayer Snake, Fallen,
 and Mega Inferno checkpoint hashes, including deterministic RNG consumption and

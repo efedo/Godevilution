@@ -1,4 +1,5 @@
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -308,7 +309,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         ArgumentNullException.ThrowIfNull(leader);
         if (minionMonsterId == 0)
             throw new ArgumentOutOfRangeException(nameof(minionMonsterId));
-        if (packSize is < 1 or > 255)
+        if (packSize is < 1 or > NativeCompatibilityLimits.MaximumNativeMonsterPackSize)
             throw new ArgumentOutOfRangeException(nameof(packSize));
         if (firstEntityId == 0)
             throw new ArgumentOutOfRangeException(nameof(firstEntityId));
@@ -452,7 +453,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         ArgumentNullException.ThrowIfNull(random);
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
-        if (direction is < 0 or >= 8)
+        if (direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection)
             throw new ArgumentOutOfRangeException(nameof(direction));
         if (!world.ContainsLevel(levelId) || levelId > int.MaxValue)
             return null;

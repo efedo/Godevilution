@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native monster scalar compatibility bounds for experience, accuracy,
+  intelligence, directions, pack/activity state, Fallen animation/rally state,
+  and resistances now have one shared source consumed by Diablo construction,
+  snapshot validation, catalog validation, replay/protocol aliases, and native
+  envelope assertions.
+
 - Native monster AI timer, short-counter, retreat, and death-animation bounds
   now have one shared compatibility source consumed by Diablo state/catalog
   validation, replay fixture validation, the protocol contract, and native

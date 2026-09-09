@@ -1104,10 +1104,10 @@ public sealed partial class DiabloSimulation
                 || monster.AggroRange < 0
                 || monster.MonsterLevel < 0
                 || monster.DeathAnimationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks
-                || monster.ExperienceReward > 1_000_000
-                || monster.ToHit is < 0 or > 255
-                || monster.ToHitSpecial is < 0 or > 255
-                || monster.Intelligence is < 0 or > 255
+                || monster.ExperienceReward > NativeCompatibilityLimits.MaximumNativeMonsterExperienceReward
+                || monster.ToHit is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterToHit
+                || monster.ToHitSpecial is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterToHit
+                || monster.Intelligence is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterIntelligence
                 || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
                 || (!string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique)
                 || (monster.DialogueMessageId != 0 && !monster.IsUnique)
@@ -1120,21 +1120,21 @@ public sealed partial class DiabloSimulation
                     : monster.LeaderEntityId == 0)
                 || (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None
                     && monster.IsUnique)
-                || monster.PackSize is < 0 or > 255
-                || monster.ActiveForTicks is < 0 or > 255
+                || monster.PackSize is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterPackSize
+                || monster.ActiveForTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterActiveTicks
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.FallenFearTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.FallenFearDirection is < 0 or >= 8
-                || monster.FallenStandAnimationFrame is < 0 or > 127
-                || monster.FallenStandAnimationTick is < 0 or > 127
-                || monster.FallenRallyTicks is < 0 or > 4096
-                || monster.Direction is < 0 or >= 8
+                || monster.FallenFearDirection is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection
+                || monster.FallenStandAnimationFrame is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationFrame
+                || monster.FallenStandAnimationTick is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationTick
+                || monster.FallenRallyTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks
+                || monster.Direction is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection
                 || monster.DialogueMessageId is < 0 or > short.MaxValue
                 || monster.SneakRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks
                 || monster.ScavengerHealingTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks
                 || monster.BatRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks
-                || monster.BatRetreatDirection is < 0 or >= 8
+                || monster.BatRetreatDirection is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection
                 || monster.BatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.BatMovementMode is < -1 or > 3
                 || monster.RangedAvoidanceMoveTicks is < -1 or > 255
@@ -1186,10 +1186,10 @@ public sealed partial class DiabloSimulation
                 || (monster.MovementStartedTick != 0
                     || monster.MovementEffectTick != 0)
                     && monster.MovementEffectTick <= monster.MovementStartedTick
-                || monster.FireResistance is < -100 or > 100
-                || monster.LightningResistance is < -100 or > 100
-                || monster.MagicResistance is < -100 or > 100
-                || monster.AcidResistance is < -100 or > 100
+                || monster.FireResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || monster.LightningResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || monster.MagicResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || monster.AcidResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
                 || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid monster.");

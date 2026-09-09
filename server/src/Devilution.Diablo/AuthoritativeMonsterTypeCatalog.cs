@@ -531,22 +531,22 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.MaximumDamage < definition.MinimumDamage
                 || definition.MinimumSpecialDamage < 0
                 || definition.MaximumSpecialDamage < definition.MinimumSpecialDamage
-                || definition.FireResistance is < -100 or > 100
-                || definition.LightningResistance is < -100 or > 100
-                || definition.MagicResistance is < -100 or > 100
-                || definition.AcidResistance is < -100 or > 100
-                || definition.FireResistanceHell is < -100 or > 100
-                || definition.LightningResistanceHell is < -100 or > 100
-                || definition.MagicResistanceHell is < -100 or > 100
-                || definition.AcidResistanceHell is < -100 or > 100
+                || definition.FireResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.LightningResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.MagicResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.AcidResistance is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.FireResistanceHell is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.LightningResistanceHell is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.MagicResistanceHell is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
+                || definition.AcidResistanceHell is < NativeCompatibilityLimits.MinimumNativeMonsterResistance or > NativeCompatibilityLimits.MaximumNativeMonsterResistance
                 || definition.AggroRange is < 0 or > 64
                 || definition.DeathAnimationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks
                 || definition.StandAnimationFrames is < 0 or > 127
                 || definition.StandAnimationTicksPerFrame is < 0 or > 127
-                || definition.ExperienceReward > 1_000_000
-                || definition.ToHit is < 0 or > 255
-                || definition.ToHitSpecial is < 0 or > 255
-                || definition.Intelligence is < 0 or > 255
+                || definition.ExperienceReward > NativeCompatibilityLimits.MaximumNativeMonsterExperienceReward
+                || definition.ToHit is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterToHit
+                || definition.ToHitSpecial is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterToHit
+                || definition.Intelligence is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterIntelligence
                 || !IsValidNativeAi(definition.NativeAi)
                 || definition.FallenFearRadius is < 0 or > 64
                 || definition.FallenFearLevelOffset is < 0 or > 255

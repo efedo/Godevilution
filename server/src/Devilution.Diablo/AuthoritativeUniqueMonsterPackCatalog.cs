@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -30,7 +31,7 @@ public sealed class AuthoritativeUniqueMonsterPackCatalog
         if (values.Any(definition => definition.PackId == 0
                 || definition.PlacementId == 0
                 || definition.MinionMonsterId == 0
-                || definition.PackSize is < 1 or > 255
+                || definition.PackSize is < 1 or > NativeCompatibilityLimits.MaximumNativeMonsterPackSize
                 || !Enum.IsDefined(definition.Kind))
             || values.GroupBy(definition => definition.PackId)
                 .Any(group => group.Count() != 1)
