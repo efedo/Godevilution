@@ -824,6 +824,7 @@ public sealed class AuthoritativeWorldMutationCatalog
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeWorldMutationCatalog(table.Rows.Select(row => {
             var nativeGeometry = ParseNativeCollisionGeometry(row, content);
+            var nativeLayers = ParseNativeLayerProjection(row, content);
             return new AuthoritativeWorldMutation(
                 row.RequiredUInt32("mutation_id"),
                 ResolveTargetLevelId(row, stableIds),
@@ -834,23 +835,23 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseRectangles(row, "geometry_rect_add"),
                 ParseRectangles(row, "geometry_rect_remove")
                     .Concat(nativeGeometry.GeometryRectanglesRemove),
-                ParseTransparencyRectangles(row),
-                ParseObjectLayerRectangles(row),
+                ParseTransparencyRectangles(row).Concat(nativeLayers.TransparencyRectangles),
+                ParseObjectLayerRectangles(row).Concat(nativeLayers.ObjectLayerRectangles),
                 row.OptionalUInt32("anchor_entity_id"),
                 row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
                     ? anchorUniqueIdentity
                     : string.Empty,
                 ParsePieceLayerRectangles(row).Concat(nativeGeometry.PieceLayerRectangles),
-                ParseMegaTileAssignments(row, content),
+                ParseMegaTileAssignments(row, content).Concat(nativeLayers.MegaTileAssignments),
                 row.OptionalInt32("anchor_mega_offset_x"),
                 row.OptionalInt32("anchor_mega_offset_y"),
-                row.OptionalBoolean("create_transparency_layer"),
+                row.OptionalBoolean("create_transparency_layer") || nativeLayers.CreateTransparencyLayer,
                 row.OptionalUInt32("mega_tile_copy_source_level_id"),
                 ParseRectangles(row, "mega_tile_copy_rects"),
                 ParsePiecePropertyOverrides(row).Concat(nativeGeometry.PiecePropertyOverrides),
                 ParseAnchorSetLevelId(row, stableIds),
                 ParseAnchorProceduralQuestPieceOriginId(row, stableIds),
-                ParseMonsterLayerRectangles(row),
+                ParseMonsterLayerRectangles(row).Concat(nativeLayers.MonsterLayerRectangles),
                 ParseMegaTileAssetPath(row));
         }));
     }
@@ -1335,9 +1336,12 @@ public sealed class AuthoritativeWorldMutationCatalog
             throw new InvalidDataException(
                 $"World mutation row {row.LineNumber} must specify both tile_asset_path and sol_asset_path.");
         var dunPath = ParseMegaTileAssetPath(row);
+        var nativeLayerPath = ParseNativeLayerAssetPath(row);
+        if (dunPath.Length == 0)
+            dunPath = nativeLayerPath;
         if (dunPath.Length == 0)
             throw new InvalidDataException(
-                $"World mutation row {row.LineNumber} requires mega_tile_asset_path for native collision geometry.");
+                $"World mutation row {row.LineNumber} requires mega_tile_asset_path or native_layer_asset_path for native collision geometry.");
         if (!IsSafeDunAssetPath(dunPath))
             throw new InvalidDataException(
                 $"World mutation row {row.LineNumber} contains an unsafe mega_tile_asset_path '{dunPath}'.");
@@ -1385,6 +1389,110 @@ public sealed class AuthoritativeWorldMutationCatalog
             [new AuthoritativeWorldMutationRectangle(0, 0, map.TileWidth, map.TileHeight)],
             pieceRectangles,
             propertyOverrides);
+    }
+
+    private static NativeLayerProjection ParseNativeLayerProjection(
+        TsvRow row,
+        ComposedContent? content)
+    {
+        var assetPath = ParseNativeLayerAssetPath(row);
+        if (assetPath.Length == 0)
+            return NativeLayerProjection.Empty;
+        if (content is null)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} requires composed content to load '{assetPath}'.");
+        if (HasEffectiveValue(row, "transparency_rects")
+            || HasEffectiveValue(row, "object_layer_rects")
+            || HasEffectiveValue(row, "monster_layer_rects")
+            || HasEffectiveValue(row, "mega_tile_assignments")
+            || ParseMegaTileAssetPath(row).Length != 0) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} cannot combine native_layer_asset_path with inline native layer overlays.");
+        }
+
+        var map = AuthoritativeDunMapAsset.Load(
+            assetPath,
+            content.GetRequiredAsset(assetPath).Contents);
+        try {
+            return new NativeLayerProjection(
+                BuildTransparencyRectangles(map.TileWidth, map.TileHeight, map.TransparencyLayer),
+                BuildObjectLayerRectangles(map.TileWidth, map.TileHeight, map.ObjectLayer),
+                BuildMonsterLayerRectangles(map.TileWidth, map.TileHeight, map.MonsterLayer),
+                Enumerable.Range(0, map.MegaHeight)
+                    .SelectMany(y => Enumerable.Range(0, map.MegaWidth)
+                        .Select(x => new AuthoritativeWorldMutationMegaTileAssignment(
+                            x,
+                            y,
+                            map.TileLayer[y * map.MegaWidth + x])))
+                    .ToArray(),
+                true);
+        } catch (ArgumentOutOfRangeException exception) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} contains a native DUN layer value outside the compatibility range.",
+                exception);
+        }
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationTransparencyRectangle>
+        BuildTransparencyRectangles(int width, int height, IReadOnlyList<ushort> values)
+        => BuildLayerRectangles(
+            width,
+            height,
+            values,
+            (x, y, runWidth, value) => new AuthoritativeWorldMutationTransparencyRectangle(
+                x,
+                y,
+                runWidth,
+                1,
+                value));
+
+    private static IReadOnlyList<AuthoritativeWorldMutationObjectRectangle>
+        BuildObjectLayerRectangles(int width, int height, IReadOnlyList<ushort> values)
+        => BuildLayerRectangles(
+            width,
+            height,
+            values,
+            (x, y, runWidth, value) => new AuthoritativeWorldMutationObjectRectangle(
+                x,
+                y,
+                runWidth,
+                1,
+                value));
+
+    private static IReadOnlyList<AuthoritativeWorldMutationMonsterRectangle>
+        BuildMonsterLayerRectangles(int width, int height, IReadOnlyList<ushort> values)
+        => BuildLayerRectangles(
+            width,
+            height,
+            values,
+            (x, y, runWidth, value) => new AuthoritativeWorldMutationMonsterRectangle(
+                x,
+                y,
+                runWidth,
+                1,
+                value));
+
+    private static IReadOnlyList<T> BuildLayerRectangles<T>(
+        int width,
+        int height,
+        IReadOnlyList<ushort> values,
+        Func<int, int, int, ushort, T> create)
+    {
+        var rectangles = new List<T>();
+        for (var y = 0; y < height; y++) {
+            var runStart = 0;
+            var runValue = values[y * width];
+            for (var x = 1; x <= width; x++) {
+                if (x < width && values[y * width + x] == runValue)
+                    continue;
+                rectangles.Add(create(runStart, y, x - runStart, runValue));
+                if (x < width) {
+                    runStart = x;
+                    runValue = values[y * width + x];
+                }
+            }
+        }
+        return rectangles;
     }
 
     private static string ParseOptionalNativeGeometryAssetPath(
@@ -1438,6 +1546,16 @@ public sealed class AuthoritativeWorldMutationCatalog
         public static NativeCollisionGeometry Empty { get; } = new([], [], []);
     }
 
+    private sealed record NativeLayerProjection(
+        IReadOnlyList<AuthoritativeWorldMutationTransparencyRectangle> TransparencyRectangles,
+        IReadOnlyList<AuthoritativeWorldMutationObjectRectangle> ObjectLayerRectangles,
+        IReadOnlyList<AuthoritativeWorldMutationMonsterRectangle> MonsterLayerRectangles,
+        IReadOnlyList<AuthoritativeWorldMutationMegaTileAssignment> MegaTileAssignments,
+        bool CreateTransparencyLayer)
+    {
+        public static NativeLayerProjection Empty { get; } = new([], [], [], [], false);
+    }
+
     private static string ParseMegaTileAssetPath(TsvRow row)
     {
         const string column = "mega_tile_asset_path";
@@ -1446,6 +1564,20 @@ public sealed class AuthoritativeWorldMutationCatalog
             || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
             return string.Empty;
         return value.Trim();
+    }
+
+    private static string ParseNativeLayerAssetPath(TsvRow row)
+    {
+        const string column = "native_layer_asset_path";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+        var path = value.Trim();
+        if (!IsSafeDunAssetPath(path))
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} contains an unsafe native layer asset path '{path}'.");
+        return path;
     }
 
     private static IReadOnlyList<AuthoritativeWorldMutationPieceProperty>

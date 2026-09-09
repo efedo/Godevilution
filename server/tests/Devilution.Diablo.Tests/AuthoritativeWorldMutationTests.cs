@@ -109,6 +109,77 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ProjectsNativeDunLayersFromAnExplicitLayerAsset()
+    {
+        var pack = new ContentPack(
+            "mutation-layer-test",
+            "1.0.0",
+            [],
+            assets: [new ContentAsset(
+                "fixture/layers.dun",
+                CreateDun(0, monsterId: 12, objectId: 5, transparency: 9))]);
+        var content = ComposedContent.Compose(
+            new ContentManifest("mutation-layer-test", "1", [pack]));
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tnative_layer_asset_path\n"
+                + "7\t1\tfixture/layers.dun\n",
+            content: content);
+
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.True(mutation.CreateTransparencyLayer);
+        Assert.Equal([(0, 0, (ushort)0)], mutation.MegaTileAssignments
+            .Select(assignment => (assignment.X, assignment.Y, assignment.TileId)));
+        Assert.Equal(
+            [(0, 0, 2, 1, (ushort)9), (0, 1, 2, 1, (ushort)9)],
+            mutation.TransparencyRectangles.Select(rectangle => (
+                rectangle.X,
+                rectangle.Y,
+                rectangle.Width,
+                rectangle.Height,
+                rectangle.Value)));
+        Assert.Equal(
+            [(0, 0, 2, 1, (ushort)5), (0, 1, 2, 1, (ushort)5)],
+            mutation.ObjectLayerRectangles.Select(rectangle => (
+                rectangle.X,
+                rectangle.Y,
+                rectangle.Width,
+                rectangle.Height,
+                rectangle.ObjectId)));
+        Assert.Equal(
+            [(0, 0, 2, 1, (ushort)12), (0, 1, 2, 1, (ushort)12)],
+            mutation.MonsterLayerRectangles.Select(rectangle => (
+                rectangle.X,
+                rectangle.Y,
+                rectangle.Width,
+                rectangle.Height,
+                rectangle.MonsterId)));
+    }
+
+    [Fact]
+    public void RejectsNativeDunLayerValuesOutsideCompatibilityRanges()
+    {
+        var pack = new ContentPack(
+            "mutation-layer-test",
+            "1.0.0",
+            [],
+            assets: [new ContentAsset(
+                "fixture/layers.dun",
+                CreateDun(0, objectId: 147))]);
+        var content = ComposedContent.Compose(
+            new ContentManifest("mutation-layer-test", "1", [pack]));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\tnative_layer_asset_path\n"
+                    + "7\t1\tfixture/layers.dun\n",
+                content: content));
+
+        Assert.Contains("outside the compatibility range", exception.Message);
+    }
+
+    [Fact]
     public void LoadsAndExpandsMonsterLayerRectanglesDeterministically()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
@@ -1997,12 +2068,21 @@ public sealed class AuthoritativeWorldMutationTests
             new ContentManifest("mutation-geometry-test", "1", [pack]));
     }
 
-    private static byte[] CreateDun(ushort megaTileId)
+    private static byte[] CreateDun(
+        ushort megaTileId,
+        ushort monsterId = 0,
+        ushort objectId = 0,
+        ushort transparency = 0)
     {
         var words = new ushort[19];
         words[0] = 1;
         words[1] = 1;
         words[2] = megaTileId;
+        for (var index = 0; index < 4; index++) {
+            words[7 + index] = monsterId;
+            words[11 + index] = objectId;
+            words[15 + index] = transparency;
+        }
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++)
             BinaryPrimitives.WriteUInt16LittleEndian(

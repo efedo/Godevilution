@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added `native_layer_asset_path` to `world_mutations.tsv`. Mutations can now
+  project a validated DUN mega-tile, transparency, object, and monster layer
+  atomically, with optional `.til`/`.sol` collision assets completing the same
+  map replacement. This advances the active content schema to `1.459.0` while
+  retaining `1.458.0` as the previous additive contract.
+
 - Added validated `tile_asset_path`/`sol_asset_path` pairs to
   `world_mutations.tsv`. Together with `mega_tile_asset_path`, a mutation now
   materializes native `.til`/`.sol` d-piece geometry and replaces movement and
