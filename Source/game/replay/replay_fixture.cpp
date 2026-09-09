@@ -620,14 +620,16 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		const int32_t targetMaxDamageSpecial = state.combatTargetMaxDamageSpecial != 0
 		    ? state.combatTargetMaxDamageSpecial
 		    : targetMaxDamage;
-		if (state.combatTargetBerserked
+		if (state.combatTargetUnique
+		    || state.combatTargetDiablo
+		    || state.combatTargetBerserked
 		    || targetMinDamage != state.combatTargetAttackDamage
 		    || targetMaxDamage != state.combatTargetAttackDamage
 		    || targetMinDamageSpecial != state.combatTargetAttackDamage
 		    || targetMaxDamageSpecial != state.combatTargetAttackDamage) {
 			hasher.AppendString("godevilution-monster-berserk-v1");
-			hasher.AppendBool(false);
-			hasher.AppendBool(false);
+			hasher.AppendBool(state.combatTargetUnique);
+			hasher.AppendBool(state.combatTargetDiablo);
 			hasher.AppendBool(false);
 			hasher.AppendInt32(targetMinDamage);
 			hasher.AppendInt32(targetMaxDamage);
@@ -3733,6 +3735,8 @@ void CreateReplayWeaponArrow(
 	bool doppelgangerProc = false;
 	if (state.hellfire
 	    && damageQ6 > 0
+	    && !state.combatTargetUnique
+	    && !state.combatTargetDiablo
 	    && HasReplayHellfireEquipmentFlag(state, HellfireDoppelgangerFlag)
 	    && GenerateRnd(state, 100) < 10)
 		doppelgangerProc = true;
@@ -10915,6 +10919,10 @@ private:
 				return ParseBool(fixture_.initialState.combatTargetDemon);
 			if (key == "combat_target_animal")
 				return ParseBool(fixture_.initialState.combatTargetAnimal);
+			if (key == "combat_target_unique")
+				return ParseBool(fixture_.initialState.combatTargetUnique);
+			if (key == "combat_target_diablo")
+				return ParseBool(fixture_.initialState.combatTargetDiablo);
 			if (key == "combat_target_moving")
 				return ParseBool(fixture_.initialState.combatTargetMoving);
 			if (key == "combat_target_future_position_x")
@@ -11791,6 +11799,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	            || target.combatTargetUndead
 	            || target.combatTargetDemon
 	            || target.combatTargetAnimal
+	            || target.combatTargetUnique
+	            || target.combatTargetDiablo
 	            || target.combatTargetLevelId != 0
 	            || target.combatTargetMoving
 	            || target.combatTargetPetrified))
@@ -12683,6 +12693,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetUndead = fixture.initialState.combatTargetUndead;
 		state.combatTargetDemon = fixture.initialState.combatTargetDemon;
 		state.combatTargetAnimal = fixture.initialState.combatTargetAnimal;
+		state.combatTargetUnique = fixture.initialState.combatTargetUnique;
+		state.combatTargetDiablo = fixture.initialState.combatTargetDiablo;
 		state.combatTargetMoving = fixture.initialState.combatTargetMoving;
 		state.combatTargetFuturePositionX = fixture.initialState.combatTargetFuturePositionX;
 		state.combatTargetFuturePositionY = fixture.initialState.combatTargetFuturePositionY;

@@ -814,6 +814,44 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_TRUE(doppelgangerState.projectiles[0].doppelgangerProc);
 	EXPECT_EQ(doppelgangerResult.transitions[0].stateSha256, doppelgangerFixture.checkpoints.back().stateSha256);
 
+	std::ifstream doppelgangerUniqueFile("test/fixtures/replay/gameplay-ranged-hellfire-doppelganger-unique.json");
+	ASSERT_TRUE(doppelgangerUniqueFile.good());
+	const std::string doppelgangerUniqueJson((std::istreambuf_iterator<char>(doppelgangerUniqueFile)), std::istreambuf_iterator<char>());
+	ReplayFixture doppelgangerUniqueFixture;
+	ASSERT_TRUE(ParseReplayFixture(doppelgangerUniqueJson, doppelgangerUniqueFixture, error)) << error;
+	ReplayFixtureExecutionState doppelgangerUniqueState;
+	doppelgangerUniqueState.life = doppelgangerUniqueFixture.initialState.life;
+	doppelgangerUniqueState.lifeMaximum = doppelgangerUniqueFixture.initialState.life;
+	doppelgangerUniqueState.mana = doppelgangerUniqueFixture.initialState.mana;
+	doppelgangerUniqueState.manaMaximum = doppelgangerUniqueFixture.initialState.manaMaximum;
+	doppelgangerUniqueState.positionX = doppelgangerUniqueFixture.initialState.positionX;
+	doppelgangerUniqueState.positionY = doppelgangerUniqueFixture.initialState.positionY;
+	ReplayFixtureExecutionResult doppelgangerUniqueResult;
+	ASSERT_TRUE(ExecuteReplayFixture(doppelgangerUniqueFixture, doppelgangerUniqueState, doppelgangerUniqueResult, error)) << error;
+	ASSERT_EQ(doppelgangerUniqueState.projectiles.size(), 1U);
+	EXPECT_FALSE(doppelgangerUniqueState.projectiles[0].doppelgangerProc);
+	EXPECT_EQ(doppelgangerUniqueState.randomState, 0U);
+	EXPECT_EQ(doppelgangerUniqueResult.transitions[0].stateSha256, doppelgangerUniqueFixture.checkpoints.back().stateSha256);
+
+	std::ifstream doppelgangerDiabloFile("test/fixtures/replay/gameplay-ranged-hellfire-doppelganger-diablo.json");
+	ASSERT_TRUE(doppelgangerDiabloFile.good());
+	const std::string doppelgangerDiabloJson((std::istreambuf_iterator<char>(doppelgangerDiabloFile)), std::istreambuf_iterator<char>());
+	ReplayFixture doppelgangerDiabloFixture;
+	ASSERT_TRUE(ParseReplayFixture(doppelgangerDiabloJson, doppelgangerDiabloFixture, error)) << error;
+	ReplayFixtureExecutionState doppelgangerDiabloState;
+	doppelgangerDiabloState.life = doppelgangerDiabloFixture.initialState.life;
+	doppelgangerDiabloState.lifeMaximum = doppelgangerDiabloFixture.initialState.life;
+	doppelgangerDiabloState.mana = doppelgangerDiabloFixture.initialState.mana;
+	doppelgangerDiabloState.manaMaximum = doppelgangerDiabloFixture.initialState.manaMaximum;
+	doppelgangerDiabloState.positionX = doppelgangerDiabloFixture.initialState.positionX;
+	doppelgangerDiabloState.positionY = doppelgangerDiabloFixture.initialState.positionY;
+	ReplayFixtureExecutionResult doppelgangerDiabloResult;
+	ASSERT_TRUE(ExecuteReplayFixture(doppelgangerDiabloFixture, doppelgangerDiabloState, doppelgangerDiabloResult, error)) << error;
+	ASSERT_EQ(doppelgangerDiabloState.projectiles.size(), 1U);
+	EXPECT_FALSE(doppelgangerDiabloState.projectiles[0].doppelgangerProc);
+	EXPECT_EQ(doppelgangerDiabloState.randomState, 0U);
+	EXPECT_EQ(doppelgangerDiabloResult.transitions[0].stateSha256, doppelgangerDiabloFixture.checkpoints.back().stateSha256);
+
 	std::ifstream perilImpactFile("test/fixtures/replay/gameplay-ranged-hellfire-peril-impact.json");
 	ASSERT_TRUE(perilImpactFile.good());
 	const std::string perilImpactJson((std::istreambuf_iterator<char>(perilImpactFile)), std::istreambuf_iterator<char>());

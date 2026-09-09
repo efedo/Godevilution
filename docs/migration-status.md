@@ -31,6 +31,10 @@ Initialized class Peril replay now carries the pre-armor attack payload for
 self-damage while preserving post-armor projectile damage and the Hellfire
 multiplier in both runners.
 
+Hellfire ranged replay now carries unique and Diablo target eligibility into
+the compact native projection, so Doppelganger rolls are skipped consistently
+for excluded targets while ordinary targets retain the proc path.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo

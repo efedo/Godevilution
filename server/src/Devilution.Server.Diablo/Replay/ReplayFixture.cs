@@ -315,6 +315,12 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional animal capability used by native sword/mace replay fixtures. */
     public bool CombatTargetAnimal { get; init; }
 
+    /** Optional unique-monster marker used by Hellfire proc replay fixtures. */
+    public bool CombatTargetUnique { get; init; }
+
+    /** Optional Diablo identity marker used by Hellfire proc replay fixtures. */
+    public bool CombatTargetDiablo { get; init; }
+
     /** Optional native AI identity used by autonomous monster replay fixtures. */
     public string CombatTargetNativeAi { get; init; } = string.Empty;
 

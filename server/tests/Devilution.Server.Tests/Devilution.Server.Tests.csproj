@@ -61,6 +61,8 @@
     <None Include="../../../test/fixtures/replay/gameplay-ranged-hellfire-peril.json" Link="Fixtures/gameplay-ranged-hellfire-peril.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-hellfire-peril-impact.json" Link="Fixtures/gameplay-ranged-hellfire-peril-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-hellfire-doppelganger.json" Link="Fixtures/gameplay-ranged-hellfire-doppelganger.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-ranged-hellfire-doppelganger-unique.json" Link="Fixtures/gameplay-ranged-hellfire-doppelganger-unique.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-ranged-hellfire-doppelganger-diablo.json" Link="Fixtures/gameplay-ranged-hellfire-doppelganger-diablo.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-multiple-arrows.json" Link="Fixtures/gameplay-ranged-multiple-arrows.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-damage.json" Link="Fixtures/gameplay-ranged-class-damage.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-armor.json" Link="Fixtures/gameplay-ranged-class-armor.json" CopyToOutputDirectory="PreserveNewest" />

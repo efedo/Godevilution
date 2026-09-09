@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   no damage is admitted, preserving native RNG state.
 - Corrected initialized class Peril payloads so self-damage uses pre-armor
   attack damage while projectile damage remains post-armor.
+- Added unique- and Diablo-target Hellfire ranged fixtures so both replay
+  runners skip ineligible Doppelganger rolls without consuming RNG.
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at

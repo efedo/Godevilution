@@ -273,6 +273,8 @@ struct ReplayFixtureInitialState {
 	bool combatTargetUndead = false;
 	bool combatTargetDemon = false;
 	bool combatTargetAnimal = false;
+	bool combatTargetUnique = false;
+	bool combatTargetDiablo = false;
 	bool combatTargetMoving = false;
 	int32_t combatTargetFuturePositionX = 0;
 	int32_t combatTargetFuturePositionY = 0;
@@ -680,6 +682,8 @@ struct ReplayFixtureExecutionState {
 	bool combatTargetUndead = false;
 	bool combatTargetDemon = false;
 	bool combatTargetAnimal = false;
+	bool combatTargetUnique = false;
+	bool combatTargetDiablo = false;
 	bool combatTargetMoving = false;
 	int32_t combatTargetFuturePositionX = 0;
 	int32_t combatTargetFuturePositionY = 0;
