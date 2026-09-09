@@ -11,6 +11,11 @@ saves, and protocol projection. The Warlord room and the Halls/Gateway
 Catacombs quest rooms now use the separate native-DUN path; remaining licensed
 native assets and authored quest placement rows remain deferred.
 
+Godot combat, Telekinesis, and unique-monster dialogue target selection now
+uses the same projected native vision boundary as monster rendering. Hidden,
+dead, sneak-hidden, and out-of-radius monsters therefore cannot be selected
+through a blocked or unlit tile.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,

@@ -111,6 +111,31 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void DoesNotSelectMonstersOutsideProjectedNativeVision()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2, PositionX = 0, PositionY = 0 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 2,
+                    PositionX = 4,
+                    Alive = true,
+                },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 2, Width = 5, Height = 1 },
+            },
+        };
+        snapshot.LevelGeometry[0].NativeVisionBlockedCells.Add(1);
+
+        Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 4, 0));
+        Assert.Null(AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 4, 0));
+    }
+
+    [Fact]
     public void SelectsAnAuthoredUniqueMonsterDialogueTarget()
     {
         var snapshot = new Snapshot {
@@ -141,6 +166,40 @@ public sealed class AuthoritativeTargetSelectorTests
         Assert.Equal(
             new AuthoritativeMonsterDialogueTarget(3003, 20),
             AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 5, 6));
+    }
+
+    [Fact]
+    public void DoesNotSelectHiddenUniqueMonsterDialogueTarget()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 4, PositionX = 0, PositionY = 0 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 20,
+                    LevelId = 4,
+                    PositionX = 4,
+                    Alive = true,
+                    IsUnique = true,
+                    UniqueIdentity = "Gharbad",
+                    DialogueMessageId = 145,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3003,
+                    LevelId = 4,
+                    CompletionUniqueIdentity = "Gharbad",
+                },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 4, Width = 5, Height = 1 },
+            },
+        };
+        snapshot.LevelGeometry[0].NativeVisionBlockedCells.Add(1);
+
+        Assert.Null(AuthoritativeMonsterDialogueSelector.Select(snapshot, 7, 4, 0));
     }
 
     [Fact]

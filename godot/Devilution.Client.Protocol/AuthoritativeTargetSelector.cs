@@ -68,6 +68,9 @@ public static class AuthoritativeTargetSelector
         if (localPlayer is null)
             return null;
 
+        var geometry = ResolveLocalGeometry(snapshot, localPlayer);
+        var lightRadius = ResolveLightRadius(localPlayer);
+
         var worldObject = snapshot.Objects
             .Where(candidate => candidate.EntityId != 0
                 && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
@@ -93,10 +96,8 @@ public static class AuthoritativeTargetSelector
 
         return snapshot.Monsters
             .Where(candidate => candidate.EntityId != 0
-                && candidate.Alive
-                && !candidate.SneakHidden
+                && IsVisibleMonster(candidate, localPlayer, geometry, lightRadius)
                 && candidate.DialogueMessageId == 0
-                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
@@ -136,15 +137,38 @@ public static class AuthoritativeTargetSelector
         int targetX,
         int targetY)
     {
+        var geometry = ResolveLocalGeometry(snapshot, localPlayer);
+        var lightRadius = ResolveLightRadius(localPlayer);
         return snapshot.Monsters
-            .Where(candidate => candidate.Alive
-                && !candidate.SneakHidden
-                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+            .Where(candidate => IsVisibleMonster(candidate, localPlayer, geometry, lightRadius)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)
             .FirstOrDefault();
     }
+
+    private static bool IsVisibleMonster(
+        MonsterSnapshot monster,
+        PlayerSnapshot localPlayer,
+        LevelGeometrySnapshot? geometry,
+        int lightRadius)
+        => AuthoritativeMonsterPresentationVisibility.IsVisible(
+            monster,
+            localPlayer.LevelId,
+            geometry,
+            localPlayer.PositionX,
+            localPlayer.PositionY,
+            lightRadius);
+
+    private static LevelGeometrySnapshot? ResolveLocalGeometry(
+        Snapshot snapshot,
+        PlayerSnapshot localPlayer)
+        => snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
+
+    private static int ResolveLightRadius(PlayerSnapshot localPlayer)
+        => localPlayer.LightRadius is >= 2 and <= 15
+            ? localPlayer.LightRadius
+            : 10;
 
     private static bool IsAtPresentationPosition(PlayerSnapshot player, int targetX, int targetY)
     {

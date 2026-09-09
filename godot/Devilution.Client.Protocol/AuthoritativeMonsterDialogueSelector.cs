@@ -24,13 +24,21 @@ public static class AuthoritativeMonsterDialogueSelector
         if (localPlayer is null)
             return null;
 
+        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
+        var lightRadius = localPlayer.LightRadius is >= 2 and <= 15
+            ? localPlayer.LightRadius
+            : 10;
         var monster = snapshot.Monsters
             .Where(candidate => candidate.EntityId != 0
                 && candidate.IsUnique
                 && candidate.DialogueMessageId != 0
-                && candidate.Alive
-                && !candidate.SneakHidden
-                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeMonsterPresentationVisibility.IsVisible(
+                    candidate,
+                    localPlayer.LevelId,
+                    geometry,
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    lightRadius)
                 && AuthoritativeMonsterPositionProjection.IsAt(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .FirstOrDefault();

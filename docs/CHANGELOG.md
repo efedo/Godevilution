@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Aligned Godot combat, Telekinesis, and unique-monster dialogue target
+  selection with the projected native vision boundary used for monster
+  rendering. Hidden, dead, sneak-hidden, and out-of-radius monsters now fail
+  closed at the interaction boundary.
+
 - Projected the authoritative native DUN monster layer through the shared
   protocol, including server, native, and Godot validation and wire coverage.
 
