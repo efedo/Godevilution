@@ -186,7 +186,8 @@ public sealed class DiabloWorldCommandProcessor
                 player.PositionX,
                 player.PositionY,
                 targetX,
-                targetY)) {
+                targetY,
+                player.LightRadius)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 

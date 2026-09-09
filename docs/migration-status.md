@@ -33,6 +33,8 @@ Authoritative direct-target spell and Telekinesis validation now uses the same
 native vision boundary whenever projected geometry is available. BlockLight-
 only native pieces therefore cannot be bypassed by a client action even when
 they do not contribute movement collision or a transparency layer.
+The query also applies the player's equipment-derived light radius, preserving
+the native distinction between target range and what the player can see.
 
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per

@@ -2069,7 +2069,8 @@ public sealed class DiabloCombatCommandProcessor
                     player.PositionX,
                     player.PositionY,
                     centerX,
-                    centerY);
+                    centerY,
+                    player.LightRadius);
             if (!hasLineOfSight) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }

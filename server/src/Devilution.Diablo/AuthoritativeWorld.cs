@@ -461,12 +461,29 @@ public sealed class AuthoritativeLevel
 
     /** Native DoVision-style line check, including diagonal corner blocking. */
     public bool HasNativeVisionLineOfSight(int startX, int startY, int endX, int endY)
+        => HasNativeVisionLineOfSight(
+            startX,
+            startY,
+            endX,
+            endY,
+            AuthoritativeEquipmentLightRules.NativeMaximumLightRadius);
+
+    /** Native DoVision-style line check using the viewer's equipment light radius. */
+    public bool HasNativeVisionLineOfSight(
+        int startX,
+        int startY,
+        int endX,
+        int endY,
+        int visionRadius)
         => NativeVision.IsVisible(
             startX,
             startY,
             endX,
             endY,
-            15,
+            visionRadius is >= AuthoritativeEquipmentLightRules.NativeMinimumLightRadius
+                and <= AuthoritativeEquipmentLightRules.NativeMaximumLightRadius
+                ? visionRadius
+                : AuthoritativeEquipmentLightRules.NativeDefaultLightRadius,
             PassesNativeVision,
             ContainsPosition);
 

@@ -381,7 +381,8 @@ public sealed class DiabloWorldState
         int startX,
         int startY,
         int endX,
-        int endY)
+        int endY,
+        int viewerLightRadius = AuthoritativeEquipmentLightRules.NativeDefaultLightRadius)
     {
         if (!ContainsPosition(levelId, startX, startY)
             || !ContainsPosition(levelId, endX, endY)) {
@@ -392,7 +393,12 @@ public sealed class DiabloWorldState
             && projectedLevels.TryGetValue(levelId, out var level)
             && (level.NativeTransparency.Count != 0
                 || level.NativeVisionBlockedCells.Count != 0)) {
-            return level.HasNativeVisionLineOfSight(startX, startY, endX, endY);
+            return level.HasNativeVisionLineOfSight(
+                startX,
+                startY,
+                endX,
+                endY,
+                viewerLightRadius);
         }
 
         return HasLineOfSight(levelId, startX, startY, endX, endY);
