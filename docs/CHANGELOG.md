@@ -18,6 +18,10 @@ All notable changes to this fork are documented below.
   presentation slot claiming, removing blocked monsters from the compatibility
   pool instead of leaving render/interact ghosts behind.
 
+- Corrected authoritative monster activation to honor additive native vision
+  blockers even when no transparency layer is present, preserving server/client
+  parity for metadata-only geometry snapshots.
+
 - Projected the authoritative native DUN monster layer through the shared
   protocol, including server, native, and Godot validation and wire coverage.
 

@@ -5497,7 +5497,8 @@ public sealed class DiabloCombatCommandProcessor
                 or DiabloPlayerCombatMode.Quit)
             && player.LevelId == target.LevelId
             && (level is null
-                || level.NativeTransparency.Count == 0
+                || (level.NativeTransparency.Count == 0
+                    && level.NativeVisionBlockedCells.Count == 0)
                 || IsWithinNativeVision(level, target, player)));
     }
 

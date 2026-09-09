@@ -25,6 +25,10 @@ Native compatibility presentation now consumes that same viewer-aware query
 before claiming monster-pool slots, so blocked projected monsters cannot
 survive as native rendering or interaction ghosts.
 
+Authoritative monster activation now also honors additive native vision
+blockers when a snapshot omits the transparency layer, keeping server AI
+visibility aligned with both presentation clients for metadata-only geometry.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,
