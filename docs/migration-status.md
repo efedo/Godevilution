@@ -29,6 +29,11 @@ Authoritative monster activation now also honors additive native vision
 blockers when a snapshot omits the transparency layer, keeping server AI
 visibility aligned with both presentation clients for metadata-only geometry.
 
+Authoritative direct-target spell and Telekinesis validation now uses the same
+native vision boundary whenever projected geometry is available. BlockLight-
+only native pieces therefore cannot be bypassed by a client action even when
+they do not contribute movement collision or a transparency layer.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,

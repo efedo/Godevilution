@@ -375,6 +375,29 @@ public sealed class DiabloWorldState
             (x, y) => !IsWalkable(levelId, x, y));
     }
 
+    /** Applies native vision to authoritative direct-target interactions when geometry is present. */
+    public bool HasTargetLineOfSight(
+        uint levelId,
+        int startX,
+        int startY,
+        int endX,
+        int endY)
+    {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
+        if (World is not null
+            && projectedLevels.TryGetValue(levelId, out var level)
+            && (level.NativeTransparency.Count != 0
+                || level.NativeVisionBlockedCells.Count != 0)) {
+            return level.HasNativeVisionLineOfSight(startX, startY, endX, endY);
+        }
+
+        return HasLineOfSight(levelId, startX, startY, endX, endY);
+    }
+
     private void RebuildProjectedGeometry()
     {
         projectedLevels.Clear();

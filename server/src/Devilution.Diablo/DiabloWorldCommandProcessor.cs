@@ -181,7 +181,7 @@ public sealed class DiabloWorldCommandProcessor
         ArgumentNullException.ThrowIfNull(players);
         var participants = players.ToArray();
         if (targetEntityId == 0
-            || !world.HasLineOfSight(
+            || !world.HasTargetLineOfSight(
                 player.LevelId,
                 player.PositionX,
                 player.PositionY,

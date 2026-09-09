@@ -2064,7 +2064,7 @@ public sealed class DiabloCombatCommandProcessor
                     player.PositionY,
                     centerX,
                     centerY)
-                : world.HasLineOfSight(
+                : world.HasTargetLineOfSight(
                     player.LevelId,
                     player.PositionX,
                     player.PositionY,

@@ -250,6 +250,114 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TelekinesisRejectsNativeBlockLightTargetBeforeSpendingMana()
+    {
+        var geometry = new AuthoritativeWorld();
+        var pieces = new ushort[5];
+        pieces[1] = 7;
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            5,
+            1,
+            nativePieceLayer: pieces,
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [7] = AuthoritativeDunTileFlags.BlockLight,
+            }));
+        var item = new AuthoritativeWorldItem(
+            100,
+            1,
+            2,
+            0,
+            42,
+            25,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(geometry, worldItems: [item]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            levelId: 1,
+            mana: 2000,
+            manaMaximum: 2000,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                100,
+                2,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(2000, player.Mana);
+        Assert.Same(item, Assert.Single(world.WorldItems.Values));
+    }
+
+    [Fact]
+    public void DirectSpellRejectsNativeBlockLightTargetBeforeSpendingMana()
+    {
+        var geometry = new AuthoritativeWorld();
+        var pieces = new ushort[5];
+        pieces[1] = 7;
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            5,
+            1,
+            nativePieceLayer: pieces,
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [7] = AuthoritativeDunTileFlags.BlockLight,
+            }));
+        var target = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            20,
+            levelId: 1);
+        var world = new DiabloWorldState(geometry, combatTargets: [target]);
+        var directSpell = new AuthoritativeSpellDefinition(77, 1, 0, 0, 0, 0) {
+            Range = 10,
+            DamageType = AuthoritativeDamageType.Magic,
+            DamageAmount = 5,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Targeted,
+            MinimumManaCost = 1,
+        };
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([directSpell]));
+        var player = CreatePlayer(
+            entityId: 7,
+            levelId: 1,
+            mana: 10000,
+            manaMaximum: 10000,
+            memorizedSpells: [new MemorizedSpellState(77, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                77,
+                9,
+                2,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(10000, player.Mana);
+        Assert.False(target.IsPetrified);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void TownPortalCreatesAReversibleServerOwnedPortalAndExpires()
     {
         var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
