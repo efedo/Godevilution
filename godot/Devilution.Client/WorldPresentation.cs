@@ -12,8 +12,14 @@ namespace Devilution.Client;
 public partial class WorldPresentation : Node2D
 {
     private const float TileSize = 32;
-    private const float OriginX = 96;
-    private const float OriginY = 96;
+    private AuthoritativeWorldViewport viewport = AuthoritativeWorldViewport.Create(
+        1280,
+        720,
+        LevelLayout.Empty.Width,
+        LevelLayout.Empty.Height,
+        0,
+        0,
+        TileSize);
     private readonly Dictionary<uint, Vector2> displayedPositions = [];
     private readonly Dictionary<uint, uint> displayedPositionLevels = [];
     private readonly Dictionary<uint, PlayerSnapshot> displayedPlayerSnapshots = [];
@@ -27,6 +33,10 @@ public partial class WorldPresentation : Node2D
     private ClientPosition? predictedPlayerPosition;
     private Vector2I? targetPreview;
     private LevelLayout currentLevel = LevelLayout.Empty;
+
+    private float OriginX => (float)viewport.OriginX;
+
+    private float OriginY => (float)viewport.OriginY;
 
     public void Apply(
         Snapshot? next,
@@ -46,6 +56,7 @@ public partial class WorldPresentation : Node2D
             presentationLevelId = null;
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
             currentLevel = LevelLayout.Empty;
+            viewport = CreateViewportTransform(currentLevel, null);
             QueueRedraw();
             return;
         }
@@ -64,6 +75,7 @@ public partial class WorldPresentation : Node2D
         var activeEntityIds = new HashSet<uint>();
         levels.ApplyAuthoritative(snapshot.LevelGeometry);
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
+        viewport = CreateViewportTransform(currentLevel, localPlayer);
         var localGeometry = localPlayer is null
             ? null
             : snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
@@ -167,11 +179,27 @@ public partial class WorldPresentation : Node2D
         QueueRedraw();
     }
 
+    private AuthoritativeWorldViewport CreateViewportTransform(
+        LevelLayout level,
+        PlayerSnapshot? localPlayer)
+    {
+        var size = GetViewportRect().Size;
+        return AuthoritativeWorldViewport.Create(
+            Math.Max(1, Mathf.RoundToInt(size.X)),
+            Math.Max(1, Mathf.RoundToInt(size.Y)),
+            level.Width,
+            level.Height,
+            localPlayer?.PositionX ?? level.Width / 2d,
+            localPlayer?.PositionY ?? level.Height / 2d,
+            TileSize);
+    }
+
     public Vector2I ScreenToTile(Vector2 screenPosition)
     {
+        var tile = viewport.ScreenToTile(screenPosition.X, screenPosition.Y);
         return new Vector2I(
-            Mathf.FloorToInt((screenPosition.X - OriginX) / TileSize),
-            Mathf.FloorToInt((screenPosition.Y - OriginY) / TileSize));
+            tile.X,
+            tile.Y);
     }
 
     public Vector2? ScreenPositionForEntity(uint entityId)
@@ -290,7 +318,7 @@ public partial class WorldPresentation : Node2D
 
     private void DrawGrid()
     {
-        DrawRect(new Rect2(0, 0, 1280, 720), new Color("090914"));
+        DrawRect(new Rect2(Vector2.Zero, GetViewportRect().Size), new Color("090914"));
         if (assets.Get("floor") is { } floor) {
             for (var x = 0; x < currentLevel.Width; x++)
                 for (var y = 0; y < currentLevel.Height; y++)
@@ -685,10 +713,16 @@ public partial class WorldPresentation : Node2D
         displayedPositionLevels[entityId] = levelId;
     }
 
-    private static Vector2 ToScreen(int x, int y) => new(OriginX + (x + 0.5f) * TileSize, OriginY + (y + 0.5f) * TileSize);
+    private Vector2 ToScreen(int x, int y)
+    {
+        var screen = viewport.WorldToScreen(x, y);
+        return new Vector2((float)screen.X, (float)screen.Y);
+    }
 
-    private static Vector2 ToScreen(double x, double y) => new(
-        (float)(OriginX + (x + 0.5) * TileSize),
-        (float)(OriginY + (y + 0.5) * TileSize));
+    private Vector2 ToScreen(double x, double y)
+    {
+        var screen = viewport.WorldToScreen(x, y);
+        return new Vector2((float)screen.X, (float)screen.Y);
+    }
 
 }

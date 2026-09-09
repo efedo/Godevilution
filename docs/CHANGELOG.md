@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a viewport transform shared by the Godot world presenter and input
+  hit-testing. The authoritative tile world now centers small maps, clamps
+  large maps around the local player, and adapts to the actual viewport instead
+  of relying on a fixed 1280×720 origin.
+
 - Added optional content-owned `start_x`/`start_y` entry positions to ordinary
   and procedural levels. The authoritative host now gives new participants the
   validated position for their selected level, while omitted columns preserve

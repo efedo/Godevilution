@@ -2,6 +2,12 @@
 
 Status date: 2026-09-09
 
+The Godot client now uses a shared authoritative viewport transform for world
+rendering and mouse hit-testing. Small levels are centered, large levels clamp
+to their edges while following the local player, and the transform uses the
+actual viewport dimensions rather than fixed 1280×720 coordinates. This keeps
+the presentation client aligned with server geometry as map sizes vary.
+
 Ordinary and procedural level definitions now carry optional content-owned
 `start_x`/`start_y` entry positions. Content activation validates that each
 position is in bounds and walkable, and the authoritative host applies the
