@@ -42,6 +42,10 @@ All notable changes to this fork are documented below.
   Hellfire rules, and native base/current attribute semantics in the managed
   Bone Spirit and Hork Spawn harnesses; added missing schema metadata to the
   remaining secondary-Monk fixtures.
+- Replay helper factories now construct their combat rules and difficulty from
+  fixture metadata, keeping the autonomous MonsterMagic, MonsterArrow, Blood
+  Star, Inferno, Hork Spawn, Snake, stealth, and melee lanes on the authored
+  Diablo/Hellfire and Normal/Nightmare/Hell rulesets.
 - Added Hellfire Monk secondary-participant MonsterMelee coverage, applying the
   same class-aware block admission and preserving the native AI seed stream.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance

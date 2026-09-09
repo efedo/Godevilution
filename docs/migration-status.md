@@ -8,6 +8,10 @@ Spirit and Hork Spawn harnesses. The two remaining secondary-Monk fixtures now
 carry the required protocol schema metadata, and the focused six-test managed
 lane matches native checkpoints.
 
+Reusable managed replay executors now also carry each fixture's declared game
+variant and difficulty into the simulation, preventing autonomous combat lanes
+from silently falling back to Diablo/Normal defaults.
+
 Autonomous MonsterMagic impacts now share the managed primary-player GetHit and
 Mana Shield boundary in compact native replay, while secondary impacts retain
 their Q6 GetHit adjustment. The new Lich fixtures verify projectile impact,

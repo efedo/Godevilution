@@ -9474,6 +9474,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterTypes: monsterTypes,
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -9539,6 +9541,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -9583,6 +9587,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -9625,6 +9631,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -9680,6 +9688,8 @@ public sealed class ReplayFixtureTests
             startingMonsterMissiles: missiles,
             startingSpells: spells,
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -9786,11 +9796,8 @@ public sealed class ReplayFixtureTests
             startingProjectiles: startingProjectiles,
             startingMonsterMissiles: missiles,
             startingMonsterSpawnPlanner: enableSpawnPlanner ? spawnPlanner : null,
-            startingCombatRules: new AuthoritativeCombatRules(
-                10,
-                1,
-                100,
-                gameVariant: fixture.GameVariant),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }
@@ -9893,6 +9900,13 @@ public sealed class ReplayFixtureTests
         return ReplayFixtureLoader.Load(File.ReadAllText(path));
     }
 
+    /** Builds the replay ruleset from fixture-owned variant metadata. */
+    private static AuthoritativeCombatRules CreateReplayCombatRules(ReplayFixture fixture)
+    {
+        ArgumentNullException.ThrowIfNull(fixture);
+        return new AuthoritativeCombatRules(10, 1, 100, gameVariant: fixture.GameVariant);
+    }
+
     private static StoreSimulationExecutor CreateSnakeReplayExecutor(
         ReplayFixture fixture)
     {
@@ -9962,6 +9976,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterTypes: monsterPack is null ? null : LoadReplayMonsterTypes(fixture, monsterPack),
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -10005,11 +10021,8 @@ public sealed class ReplayFixtureTests
                     corpse.PositionX,
                     corpse.PositionY))
                 .ToArray(),
-            startingCombatRules: new AuthoritativeCombatRules(
-                10,
-                1,
-                100,
-                gameVariant: fixture.GameVariant),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }
@@ -10044,6 +10057,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterTypes: LoadReplayMonsterTypes(fixture, "zombie-action"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -10079,6 +10094,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterTypes: LoadReplayMonsterTypes(fixture, "fat-movement"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -10112,6 +10129,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterTypes: LoadReplayMonsterTypes(fixture, "goat-melee"),
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
@@ -10146,6 +10165,8 @@ public sealed class ReplayFixtureTests
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
             gameMode: fixture.GameMode);
     }
 
