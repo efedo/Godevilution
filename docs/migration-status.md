@@ -13,6 +13,10 @@ also consume one shared compatibility source across Diablo state/catalog
 validation, replay fixture loading, the protocol contract, and native envelope
 assertions.
 
+Native monster movement counters now use that shared compatibility source
+across Diablo ticking/restoration, snapshot validation, protocol aliases, and
+native envelope assertions.
+
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
 and resistances now consume that same compatibility source across Diablo

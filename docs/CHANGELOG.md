@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native monster movement counters now use one shared compatibility bound
+  across Diablo ticking/restoration, snapshot validation, protocol aliases,
+  and native envelope assertions.
+
 - Native monster scalar compatibility bounds for experience, accuracy,
   intelligence, directions, pack/activity state, Fallen animation/rally state,
   and resistances now have one shared source consumed by Diablo construction,

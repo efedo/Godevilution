@@ -40,6 +40,7 @@ static_assert(MaximumNativeMonsterIntelligence == 255);
 static_assert(MaximumNativeMonsterDirection == 7);
 static_assert(MaximumNativeMonsterPackSize == 255);
 static_assert(MaximumNativeMonsterActiveTicks == 255);
+static_assert(MaximumNativeMonsterMovementTicks == 255);
 static_assert(MaximumNativeMonsterFallenStandAnimationFrame == 127);
 static_assert(MaximumNativeMonsterFallenStandAnimationTick == 127);
 static_assert(MaximumNativeMonsterFallenRallyTicks == 4096);

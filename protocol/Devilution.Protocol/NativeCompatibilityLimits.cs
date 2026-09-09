@@ -48,6 +48,9 @@ public static class NativeCompatibilityLimits
     /** Maximum native monster activation duration retained by authoritative state. */
     public const int MaximumNativeMonsterActiveTicks = byte.MaxValue;
 
+    /** Maximum native monster movement counter retained by authoritative state. */
+    public const int MaximumNativeMonsterMovementTicks = byte.MaxValue;
+
     /** Maximum native Fallen stand animation frame retained by authoritative state. */
     public const int MaximumNativeMonsterFallenStandAnimationFrame = 127;
 

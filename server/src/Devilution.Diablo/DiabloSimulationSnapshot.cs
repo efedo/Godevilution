@@ -1137,13 +1137,13 @@ public sealed partial class DiabloSimulation
                 || monster.BatRetreatDirection is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection
                 || monster.BatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.BatMovementMode is < -1 or > 3
-                || monster.RangedAvoidanceMoveTicks is < -1 or > 255
+                || monster.RangedAvoidanceMoveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
                 || monster.RangedAvoidanceTurn is < 0 or > 1
                 || monster.RangedAvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.RangedAvoidanceMovementMode is < -1 or > 3
-                || monster.RhinoMovementTicks is < -1 or > 255
+                || monster.RhinoMovementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
                 || monster.RhinoMovementTurn is < 0 or > 1
-                || monster.AvoidanceMovementTicks is < -1 or > 255
+                || monster.AvoidanceMovementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
                 || monster.AvoidanceMovementTurn is < 0 or > 1
                 || monster.AvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.AvoidanceMovementMode is < -1 or > 3

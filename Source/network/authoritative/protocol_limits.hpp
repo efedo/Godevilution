@@ -235,6 +235,7 @@ inline constexpr int MaximumNativeMonsterIntelligence = 255;
 inline constexpr int MaximumNativeMonsterDirection = 7;
 inline constexpr int MaximumNativeMonsterPackSize = 255;
 inline constexpr int MaximumNativeMonsterActiveTicks = 255;
+inline constexpr int MaximumNativeMonsterMovementTicks = 255;
 inline constexpr int MaximumNativeMonsterFallenStandAnimationFrame = 127;
 inline constexpr int MaximumNativeMonsterFallenStandAnimationTick = 127;
 inline constexpr int MaximumNativeMonsterFallenRallyTicks = 4096;

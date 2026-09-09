@@ -120,6 +120,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Equal(7, NativeCompatibilityLimits.MaximumNativeMonsterDirection);
         Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterPackSize);
         Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterActiveTicks);
+        Assert.Equal(255, NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks);
         Assert.Equal(127, NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationFrame);
         Assert.Equal(127, NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationTick);
         Assert.Equal(4096, NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks);
