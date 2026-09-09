@@ -756,6 +756,25 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(jestersState.projectiles[0].damage, 3);
 	EXPECT_EQ(jestersState.projectiles[0].damageQ6, 208);
 	EXPECT_EQ(jestersResult.transitions[0].stateSha256, jestersFixture.checkpoints.back().stateSha256);
+
+	std::ifstream devastationFile("test/fixtures/replay/gameplay-ranged-hellfire-devastation.json");
+	ASSERT_TRUE(devastationFile.good());
+	const std::string devastationJson((std::istreambuf_iterator<char>(devastationFile)), std::istreambuf_iterator<char>());
+	ReplayFixture devastationFixture;
+	ASSERT_TRUE(ParseReplayFixture(devastationJson, devastationFixture, error)) << error;
+	ReplayFixtureExecutionState devastationState;
+	devastationState.life = devastationFixture.initialState.life;
+	devastationState.lifeMaximum = devastationFixture.initialState.life;
+	devastationState.mana = devastationFixture.initialState.mana;
+	devastationState.manaMaximum = devastationFixture.initialState.manaMaximum;
+	devastationState.positionX = devastationFixture.initialState.positionX;
+	devastationState.positionY = devastationFixture.initialState.positionY;
+	ReplayFixtureExecutionResult devastationResult;
+	ASSERT_TRUE(ExecuteReplayFixture(devastationFixture, devastationState, devastationResult, error)) << error;
+	ASSERT_EQ(devastationState.projectiles.size(), 1U);
+	EXPECT_EQ(devastationState.projectiles[0].damage, 3);
+	EXPECT_EQ(devastationState.projectiles[0].damageQ6, 192);
+	EXPECT_EQ(devastationResult.transitions[0].stateSha256, devastationFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

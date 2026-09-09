@@ -3570,6 +3570,10 @@ void CreateReplayWeaponArrow(
 		static_cast<void>(GenerateRnd(state, 1));
 	int32_t damageQ6 = 64;
 	if (state.hellfire
+	    && HasReplayHellfireEquipmentFlag(state, HellfireDevastationFlag)
+	    && GenerateRnd(state, 100) < 5)
+		damageQ6 *= 3;
+	if (state.hellfire
 	    && HasReplayHellfireEquipmentFlag(state, HellfireJestersFlag)) {
 		int32_t roll = GenerateRnd(state, 201);
 		if (roll >= 100)

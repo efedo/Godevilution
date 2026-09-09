@@ -320,6 +320,62 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void HellfireRangedAttackAppliesDevastationBeforeProjectileResolution()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-ranged-hellfire-devastation.json")));
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        AssertUsesContentManifest(
+            fixture,
+            new ContentManifest("hellfire", "1", [basePack, hellfirePack]));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                maxHitPoints: initial.CombatTargetMaxHitPoints)],
+            startingCombatRules: new AuthoritativeCombatRules(
+                1,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal(3, arrow.Damage);
+        Assert.Equal(192, arrow.DamageQ6);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void BaseStorePurchaseAndSaleUseTheCheckedInCatalog()
     {
         var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "base-content-purchase.json");

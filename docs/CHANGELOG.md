@@ -72,6 +72,8 @@ All notable changes to this fork are documented below.
   final target-damage multiplier in both runners.
 - Hellfire ranged replay now covers `Jesters` Q6 scaling before elemental
   channel resolution in both runners.
+- Hellfire ranged replay now covers the post-hit `Devastation` multiplier in
+  both runners.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
