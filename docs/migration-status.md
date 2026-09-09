@@ -7,6 +7,10 @@ Hellfire armor piercing: hit admission applies the shifted armor rule while
 projectile damage still applies the original target armor, with matching C# and
 native checkpoints.
 
+Initialized Warrior ranged attacks now also apply the native Critical Strike
+roll and Triple Demon Damage multiplier before projectile capture, with matching
+managed/native checkpoint coverage.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo

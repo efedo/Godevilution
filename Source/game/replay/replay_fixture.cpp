@@ -3686,12 +3686,31 @@ void CreateReplayWeaponArrow(
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
 		    ^ targetEntityId
 		    ^ state.entityId;
-		if ((hitSeed * 1664525U + 1013904223U) % 100U >= static_cast<uint32_t>(hitChance))
+		const bool attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
+		if (!attackHit)
 			damage = 0;
-		else
-			damage = std::max(
-			    1,
-			    damage - targetArmorClass);
+		else {
+			int32_t damageBeforeArmor = damage;
+			if ((state.characterClassId == 0 || state.characterClassId == 5)
+			    && GenerateRnd(state, 100) < std::min(100, static_cast<int32_t>(state.characterLevel)))
+				damageBeforeArmor *= 2;
+			if (state.combatTargetUndead) {
+				if (hasMace)
+					damageBeforeArmor += damageBeforeArmor / 2;
+				else if (hasSword)
+					damageBeforeArmor -= damageBeforeArmor / 2;
+			} else if (state.combatTargetAnimal) {
+				if (hasMace)
+					damageBeforeArmor -= damageBeforeArmor / 2;
+				else if (hasSword)
+					damageBeforeArmor += damageBeforeArmor / 2;
+			}
+			damage = std::max(1, damageBeforeArmor - targetArmorClass);
+		}
+		if (attackHit
+		    && state.combatTargetDemon
+		    && HasReplayEquipmentFlag(state, TripleDemonDamageFlag))
+			damage *= 3;
 	} else if (consumeRandom) {
 		static_cast<void>(GenerateRnd(state, 1));
 	}

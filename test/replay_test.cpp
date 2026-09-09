@@ -950,6 +950,36 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damageQ6, 128);
 	EXPECT_EQ(rangedClassHellfireArmorState.randomState, 22695478U);
 	EXPECT_EQ(rangedClassHellfireArmorResult.transitions[0].stateSha256, rangedClassHellfireArmorFixture.checkpoints.back().stateSha256);
+
+	std::ifstream rangedClassCriticalDemonFile("test/fixtures/replay/gameplay-ranged-class-critical-demon.json");
+	ASSERT_TRUE(rangedClassCriticalDemonFile.good());
+	const std::string rangedClassCriticalDemonJson((std::istreambuf_iterator<char>(rangedClassCriticalDemonFile)), std::istreambuf_iterator<char>());
+	ReplayFixture rangedClassCriticalDemonFixture;
+	ASSERT_TRUE(ParseReplayFixture(rangedClassCriticalDemonJson, rangedClassCriticalDemonFixture, error)) << error;
+	ReplayFixtureExecutionState rangedClassCriticalDemonState;
+	rangedClassCriticalDemonState.characterClassId = static_cast<uint32_t>(rangedClassCriticalDemonFixture.initialState.characterClass);
+	rangedClassCriticalDemonState.attributes[0] = rangedClassCriticalDemonFixture.initialState.strength;
+	rangedClassCriticalDemonState.attributes[1] = rangedClassCriticalDemonFixture.initialState.strength;
+	rangedClassCriticalDemonState.attributes[2] = rangedClassCriticalDemonFixture.initialState.magic;
+	rangedClassCriticalDemonState.attributes[3] = rangedClassCriticalDemonFixture.initialState.magic;
+	rangedClassCriticalDemonState.attributes[4] = rangedClassCriticalDemonFixture.initialState.dexterity;
+	rangedClassCriticalDemonState.attributes[5] = rangedClassCriticalDemonFixture.initialState.dexterity;
+	rangedClassCriticalDemonState.attributes[6] = rangedClassCriticalDemonFixture.initialState.vitality;
+	rangedClassCriticalDemonState.attributes[7] = rangedClassCriticalDemonFixture.initialState.vitality;
+	rangedClassCriticalDemonState.characterLevel = rangedClassCriticalDemonFixture.initialState.characterLevel;
+	rangedClassCriticalDemonState.life = rangedClassCriticalDemonFixture.initialState.life;
+	rangedClassCriticalDemonState.lifeMaximum = rangedClassCriticalDemonFixture.initialState.life;
+	rangedClassCriticalDemonState.mana = rangedClassCriticalDemonFixture.initialState.mana;
+	rangedClassCriticalDemonState.manaMaximum = rangedClassCriticalDemonFixture.initialState.manaMaximum;
+	rangedClassCriticalDemonState.positionX = rangedClassCriticalDemonFixture.initialState.positionX;
+	rangedClassCriticalDemonState.positionY = rangedClassCriticalDemonFixture.initialState.positionY;
+	ReplayFixtureExecutionResult rangedClassCriticalDemonResult;
+	ASSERT_TRUE(ExecuteReplayFixture(rangedClassCriticalDemonFixture, rangedClassCriticalDemonState, rangedClassCriticalDemonResult, error)) << error;
+	ASSERT_EQ(rangedClassCriticalDemonState.projectiles.size(), 1U);
+	EXPECT_EQ(rangedClassCriticalDemonState.projectiles[0].damage, 42);
+	EXPECT_EQ(rangedClassCriticalDemonState.projectiles[0].damageQ6, 2688);
+	EXPECT_EQ(rangedClassCriticalDemonState.randomState, 2071244549U);
+	EXPECT_EQ(rangedClassCriticalDemonResult.transitions[0].stateSha256, rangedClassCriticalDemonFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

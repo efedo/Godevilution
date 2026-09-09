@@ -141,6 +141,8 @@ post-hit target armor reduction for the same initialized Rogue bow profile.
 The `gameplay/ranged-class-hellfire-armor-piercing` companion proves Hellfire's
 shifted armor admission for a ranged class attack while retaining original
 target armor for post-hit damage reduction.
+The `gameplay/ranged-class-critical-demon` companion proves initialized Warrior
+bow Critical Strike and Triple Demon Damage ordering before projectile capture.
 The Hellfire ranged-decay companion additionally proves that eligible hand
 weapons mutate once per emitted arrow before projectile resolution.
 The Hellfire ranged-Devastation companion proves the post-hit 3x multiplier
@@ -464,7 +466,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 223 checked-in JSON fixtures and 238 registered
+the native replay gate contains 224 checked-in JSON fixtures and 239 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

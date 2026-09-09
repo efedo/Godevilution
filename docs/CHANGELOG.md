@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 
 - Added a composed Hellfire ranged-class replay fixture covering shifted armor
   admission and unchanged post-hit target armor reduction in both runners.
+- Added initialized Warrior ranged replay coverage for Critical Strike and
+  Triple Demon Damage ordering across managed and native runners.
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at
