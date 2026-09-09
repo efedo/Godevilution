@@ -4223,6 +4223,18 @@ public sealed class DiabloSimulationTests
         Assert.Throws<InvalidDataException>(() =>
             replacement.RestoreSnapshot(destination, invalidSource));
 
+        var invalidProgress = snapshot with {
+            Player = snapshot.Player with {
+                CurrentAction = snapshot.Player.CurrentAction! with {
+                    EffectTick = 2,
+                    ReadyTick = 2,
+                    EffectApplied = true,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            replacement.RestoreSnapshot(destination, invalidProgress));
+
         var invalidActionCoordinates = snapshot with {
             Player = snapshot.Player with {
                 CurrentAction = snapshot.Player.CurrentAction! with {

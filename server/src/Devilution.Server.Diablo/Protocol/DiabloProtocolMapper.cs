@@ -148,7 +148,13 @@ internal static class DiabloProtocolMapper
         }
         foreach (var participant in projectedParticipants)
             snapshot.Players.Add(
-                ToProtocolPlayer(participant, spells, spellBooks, items, projectedLevels));
+                ToProtocolPlayer(
+                    participant,
+                    source.Tick,
+                    spells,
+                    spellBooks,
+                    items,
+                    projectedLevels));
 
         foreach (var monster in source.Monsters) {
             var projectedMonster = new MonsterSnapshot {
@@ -1337,6 +1343,7 @@ internal static class DiabloProtocolMapper
 
     private static PlayerSnapshot ToProtocolPlayer(
         StorePlayerSnapshot state,
+        ulong snapshotTick,
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks,
         AuthoritativeItemCatalog? items,
@@ -1391,7 +1398,7 @@ internal static class DiabloProtocolMapper
         ValidateProjectedVisitedLevels(state);
         ValidateProjectedPlayerSpells(state);
         ValidateProjectedStatusEffects(state);
-        ValidateProjectedPlayerAction(state, levels);
+        ValidateProjectedPlayerAction(state, snapshotTick, levels);
         if (state.Life < 0
             || state.LifeMaximum < 0
             || state.LifeMaximum > 0 && state.Life > state.LifeMaximum
@@ -1703,12 +1710,16 @@ internal static class DiabloProtocolMapper
 
     private static void ValidateProjectedPlayerAction(
         StorePlayerSnapshot state,
+        ulong snapshotTick,
         IReadOnlyDictionary<uint, AuthoritativeLevel>? levels)
     {
         var action = state.CurrentAction;
         if (action is null)
             return;
         if (!Enum.IsDefined(action.Kind)
+            || action.StartedAtTick > snapshotTick
+            || snapshotTick > action.EndTick
+            || action.EffectApplied != (snapshotTick >= action.EffectTick)
             || action.EffectTick < action.StartedAtTick
             || action.ReadyTick < action.EffectTick
             || action.ReadyTick > action.EndTick
@@ -1878,7 +1889,7 @@ internal static class DiabloProtocolMapper
         }
         ValidateImportedStoreState(source);
         var player = ToPlayerState(source.Players[0]);
-        ValidateImportedPlayerState(player);
+        ValidateImportedPlayerState(player, source.Tick);
         var activeStore = source.ActiveStore is null
             ? null
             : new DiabloStoreState(
@@ -2257,11 +2268,18 @@ internal static class DiabloProtocolMapper
         }
     }
 
-    private static void ValidateImportedPlayerState(StorePlayerSnapshot state)
+    private static void ValidateImportedPlayerState(
+        StorePlayerSnapshot state,
+        ulong snapshotTick)
     {
         // Keep save imports on the same fail-closed player boundary as live
         // projections without duplicating the topology and range rules.
-        _ = ToProtocolPlayer(state, spells: null, spellBooks: null, items: null);
+        _ = ToProtocolPlayer(
+            state,
+            snapshotTick,
+            spells: null,
+            spellBooks: null,
+            items: null);
     }
 
     private static void ValidateImportedSimulationState(

@@ -649,6 +649,7 @@ public sealed class ClientModelTests
     {
         var model = new AuthoritativeClientModel();
         var valid = new Snapshot {
+            Tick = 1,
             LevelGeometry = {
                 new LevelGeometrySnapshot {
                     LevelId = 1,
@@ -668,6 +669,7 @@ public sealed class ClientModelTests
                         EffectTick = 1,
                         ReadyTick = 2,
                         EndTick = 3,
+                        EffectApplied = true,
                         TargetCell = true,
                         TargetX = 4,
                         TargetY = 5,
@@ -689,6 +691,7 @@ public sealed class ClientModelTests
     {
         var model = new AuthoritativeClientModel();
         var valid = new Snapshot {
+            Tick = 1,
             LevelGeometry = {
                 new LevelGeometrySnapshot {
                     LevelId = 1,
@@ -708,6 +711,7 @@ public sealed class ClientModelTests
                         EffectTick = 1,
                         ReadyTick = 2,
                         EndTick = 3,
+                        EffectApplied = true,
                         Cast = new CastRequested {
                             SpellId = 1,
                             TargetX = 4,
@@ -3361,6 +3365,7 @@ public sealed class ClientModelTests
         }));
         model.TrackPredictedMove(12, 1, 0);
         var moving = new Snapshot {
+            Tick = 12,
             Players = {
                 new PlayerSnapshot {
                     EntityId = 7,
@@ -3385,15 +3390,46 @@ public sealed class ClientModelTests
         Assert.Equal(new ClientPosition(3, 3), model.PredictedPlayerPosition);
         Assert.True(model.IsCorrectingPosition);
         var applied = moving.Clone();
+        applied.Tick = 18;
         applied.Players[0].PositionX = 3;
         applied.Players[0].CurrentAction.EffectApplied = true;
         model.Apply(new AuthoritativeClientMessage(Snapshot: applied));
         Assert.Null(model.PredictedPlayerPosition);
         Assert.False(model.IsCorrectingPosition);
         var invalid = moving.Clone();
+        invalid.Tick = 18;
+        invalid.Players[0].CurrentAction.EffectApplied = true;
         invalid.Players[0].CurrentAction.ReadyTick = 19;
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+    }
+
+    [Fact]
+    public void RejectsAnAppliedEffectBeforeItsAuthoritativeEffectTick()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Tick = 12,
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    CombatMode = PlayerCombatMode.WalkSouthwards,
+                    CombatModeEndTick = 18,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 10,
+                        EffectTick = 18,
+                        ReadyTick = 18,
+                        EndTick = 18,
+                        EffectApplied = true,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
     }
 
     [Fact]
@@ -3401,6 +3437,7 @@ public sealed class ClientModelTests
     {
         var model = new AuthoritativeClientModel();
         var snapshot = new Snapshot {
+            Tick = 12,
             LevelGeometry = {
                 new LevelGeometrySnapshot {
                     LevelId = 2,
@@ -3849,6 +3886,7 @@ public sealed class ClientModelTests
     {
         var model = new AuthoritativeClientModel();
         var snapshot = new Snapshot {
+            Tick = 1,
             Players = {
                 new PlayerSnapshot {
                     EntityId = 7,

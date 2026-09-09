@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
 - Timed action snapshots now reject stale action-level target coordinates except
   for explicit cell-targeted attacks, keeping attack and cast target channels
   distinct across managed and native boundaries.
+- Timed action snapshots now bind action progress to the snapshot tick: actions
+  must have started, must not have expired, and `EffectApplied` must agree with
+  whether the effect tick has been reached across managed and native boundaries.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

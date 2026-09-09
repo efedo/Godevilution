@@ -1802,6 +1802,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidTiming).has_value());
 
 	protocol::Snapshot cellAttack;
+	cellAttack.set_tick(1);
 	player = cellAttack.add_players();
 	player->set_level_id(1);
 	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_ATTACK);
@@ -1820,6 +1821,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	cellLevel->set_width(2);
 	cellLevel->set_height(2);
 	EXPECT_TRUE(ValidatePlayerActionSnapshots(cellAttack).has_value());
+	protocol::Snapshot cellAttackAppliedEarly = cellAttack;
+	cellAttackAppliedEarly.mutable_players(0)->mutable_current_action()->set_effect_applied(true);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(cellAttackAppliedEarly).has_value());
 	protocol::Snapshot cellAttackOutside = cellAttack;
 	cellAttackOutside.mutable_players(0)->mutable_current_action()->set_target_x(2);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(cellAttackOutside).has_value());
@@ -1861,6 +1865,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidCast).has_value());
 
 	protocol::Snapshot tileCast;
+	tileCast.set_tick(1);
 	player = tileCast.add_players();
 	player->set_level_id(1);
 	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);

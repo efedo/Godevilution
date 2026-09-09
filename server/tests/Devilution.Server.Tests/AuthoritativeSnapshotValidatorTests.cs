@@ -313,6 +313,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
     public void AcceptsValidPlayerActionProjection()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Tick = 1,
             LevelGeometry = {
                 new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
             },
@@ -330,6 +331,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
                         EffectTick = 1,
                         ReadyTick = 2,
                         EndTick = 3,
+                        EffectApplied = true,
                         DirectionX = 1,
                         DirectionY = 0,
                     },
@@ -342,6 +344,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
     public void AcceptsCellTargetedAttackAndRejectsItsInvalidDestination()
     {
         var valid = new Snapshot {
+            Tick = 1,
             LevelGeometry = {
                 new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
             },
@@ -357,6 +360,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
                         EffectTick = 1,
                         ReadyTick = 2,
                         EndTick = 3,
+                        EffectApplied = true,
                         TargetCell = true,
                         TargetX = 4,
                         TargetY = 5,
@@ -377,6 +381,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
     public void AcceptsTileTargetedCastAndRejectsItsInvalidDestination()
     {
         var valid = new Snapshot {
+            Tick = 1,
             LevelGeometry = {
                 new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
             },
@@ -392,6 +397,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
                         EffectTick = 1,
                         ReadyTick = 2,
                         EndTick = 3,
+                        EffectApplied = true,
                         Cast = new CastRequested {
                             SpellId = 1,
                             TargetX = 4,
@@ -479,6 +485,25 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var invalidProgress = new Snapshot {
+            Tick = 1,
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CombatMode = PlayerCombatMode.WalkNorthwards,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 1,
+                        EffectTick = 2,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        EffectApplied = true,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
         var invalidCastSourceReference = new Snapshot {
             Players = {
                 new PlayerSnapshot {
@@ -525,6 +550,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
         foreach (var snapshot in new[] {
             invalidTiming,
             blockedMovement,
+            invalidProgress,
             invalidCastSource,
             invalidCastSourceReference,
             invalidEntityAttackCoordinates,

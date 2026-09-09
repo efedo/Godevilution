@@ -987,7 +987,7 @@ public sealed partial class DiabloSimulation
             ActiveStore = ResolveStoreState(snapshot.ActiveStore),
         };
         WorldState.RestoreWorldMutations(snapshot.ActiveWorldMutationIds);
-        ValidateSavedPlayer(source, destination);
+        ValidateSavedPlayer(source, destination, snapshot.Tick);
 
         var monsterEntityIds = snapshot.Monsters.Select(monster => monster.EntityId).ToArray();
         var worldItemEntityIds = snapshot.WorldItems.Select(item => item.EntityId).ToArray();
@@ -2634,7 +2634,8 @@ public sealed partial class DiabloSimulation
 
     private void ValidateSavedPlayer(
         StorePlayerSnapshot source,
-        AuthoritativePlayerState destination)
+        AuthoritativePlayerState destination,
+        ulong snapshotTick)
     {
         var baseLifeMaximum = source.BaseLifeMaximum == 0
             ? destination.BaseLifeMaximum
@@ -2701,7 +2702,7 @@ public sealed partial class DiabloSimulation
             || ((source.CombatMode is DiabloPlayerCombatMode.Block
                     or DiabloPlayerCombatMode.GotHit)
                 && source.CombatModeEndTick == 0)
-            || !IsValidPlayerAction(source)
+            || !IsValidPlayerAction(source, snapshotTick)
             || source.LifeMaximum != expectedResources.LifeQ6
             || source.ManaMaximum != expectedResources.ManaQ6
             || (source.StashOpen && source.ActiveStoreId is not null)
@@ -2738,12 +2739,15 @@ public sealed partial class DiabloSimulation
         ValidateInventoryTopology(source);
     }
 
-    private bool IsValidPlayerAction(StorePlayerSnapshot source)
+    private bool IsValidPlayerAction(StorePlayerSnapshot source, ulong snapshotTick)
     {
         var action = source.CurrentAction;
         if (action is null)
             return true;
         if (!Enum.IsDefined(action.Kind)
+            || action.StartedAtTick > snapshotTick
+            || snapshotTick > action.EndTick
+            || action.EffectApplied != (snapshotTick >= action.EffectTick)
             || action.EffectTick < action.StartedAtTick
             || action.ReadyTick < action.EffectTick
             || action.ReadyTick > action.EndTick

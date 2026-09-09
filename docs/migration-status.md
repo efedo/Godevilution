@@ -58,6 +58,11 @@ without an item reference; zero stable IDs remain compatible with legacy state.
 Timed action snapshots also keep the legacy action-level target coordinates clear
 for entity attacks, casts, movement, and terminal transitions; only explicit
 cell-targeted attacks carry coordinates in that channel.
+Action progress now uses the same snapshot tick contract at every boundary:
+active actions must have started but not ended, and `EffectApplied` must be false
+before `EffectTick` and true at or after it. This keeps presentation and save
+restore from accepting a timeline that the authoritative tick loop could not
+have produced.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,

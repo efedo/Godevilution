@@ -453,6 +453,9 @@ public sealed class AuthoritativeClientModel
             return;
         if (!Enum.IsDefined(action.Kind)
             || action.Kind == PlayerActionKind.Unspecified
+            || action.StartedAtTick > snapshot.Tick
+            || snapshot.Tick > action.EndTick
+            || action.EffectApplied != (snapshot.Tick >= action.EffectTick)
             || action.EffectTick < action.StartedAtTick
             || action.ReadyTick < action.EffectTick
             || action.ReadyTick > action.EndTick

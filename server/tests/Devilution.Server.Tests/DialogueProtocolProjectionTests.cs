@@ -830,6 +830,19 @@ public sealed class DialogueProtocolProjectionTests
                 tileCastSource with {
                     Player = tileCast with {
                         CurrentAction = tileCast.CurrentAction! with {
+                            EffectTick = 2,
+                            ReadyTick = 2,
+                            EffectApplied = true,
+                        },
+                    },
+                },
+                levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                tileCastSource with {
+                    Player = tileCast with {
+                        CurrentAction = tileCast.CurrentAction! with {
                             CastIntent = tileCast.CurrentAction.CastIntent! with {
                                 Source = DiabloCastSourceKind.Ability,
                                 SourceItem = new DiabloPlayerItemReference(

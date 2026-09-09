@@ -1350,6 +1350,9 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		const int32_t kind = static_cast<int32_t>(action.kind());
 		const int32_t combatMode = static_cast<int32_t>(player.combat_mode());
 		const bool timingIsValid = kind >= 1 && kind <= 6
+		    && action.started_at_tick() <= snapshot.tick()
+		    && snapshot.tick() <= action.end_tick()
+		    && action.effect_applied() == (snapshot.tick() >= action.effect_tick())
 		    && action.effect_tick() >= action.started_at_tick()
 		    && action.ready_tick() >= action.effect_tick()
 		    && action.ready_tick() <= action.end_tick()

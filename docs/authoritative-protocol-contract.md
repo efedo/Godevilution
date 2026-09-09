@@ -1229,6 +1229,11 @@ attack, ranged attack, cast, death, level transition, or restart-in-town remains
 in progress. It carries the start, effect, ready, and end ticks; whether the
 effect has already resolved; and the action's direction, target, or complete
 cast request.
+The snapshot tick is part of that contract: `started_at_tick` must not be in the
+future, `end_tick` must not be behind the snapshot, and `effect_applied` is false
+before `effect_tick` and true at or after it. This is enforced at managed,
+Godot, and native validation boundaries so presentation and save restore cannot
+admit an impossible action timeline.
 Movement reserves the adjacent destination until its end tick, and presentation
 clients expose that reservation as the future or predicted position. Deferred
 casts preserve their spell, source kind, source item, and target so save
