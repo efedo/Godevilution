@@ -2,6 +2,11 @@
 
 Status date: 2026-09-09
 
+Special SkeletonMelee-family monster attacks now use the same validated
+incoming-equipment GetHit and Thorns boundary as generic monster hits. A shared
+multiplayer checkpoint covers secondary-player damage, monster retaliation, and
+the compatibility RNG stream.
+
 Initialized monster-hit replay now applies usable-equipment Thorns retaliation
 against the attacking monster in both runners. The shared GoatMelee checkpoint
 covers target HP reduction and the additional deterministic retaliation roll.

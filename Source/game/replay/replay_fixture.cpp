@@ -9059,13 +9059,21 @@ void AdvanceReplayMonsterAttack(
 				    ? minimumDamage + static_cast<int>(attackSeed
 				        % static_cast<uint32_t>(maximumDamage - minimumDamage + 1))
 				    : 0;
+				const int adjustedDamage = ApplyReplayGetHitBonus(
+				    state,
+				    damage,
+				    victim.secondary);
+				ApplyReplayThorns(
+				    state,
+				    victim.secondary ? state.secondaryEquipment : state.equipment,
+				    adjustedDamage);
 				if (victim.secondary)
 					state.secondaryPlayerLife = std::max(
 					    0,
-					    state.secondaryPlayerLife - std::max(0, damage));
+					    state.secondaryPlayerLife - std::max(0, adjustedDamage));
 				else
-					state.life = std::max(0, state.life - std::max(0, damage));
-				if (damage > 0
+					state.life = std::max(0, state.life - std::max(0, adjustedDamage));
+				if (adjustedDamage > 0
 				    && (victim.secondary
 				        ? state.secondaryPlayerLife > 0
 				        : state.life > 0)) {

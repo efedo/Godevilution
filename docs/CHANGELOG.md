@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added SkeletonMelee special-attack replay coverage for combined usable
+  equipment GetHit and Thorns effects on a secondary participant.
+- Compact native replay now applies incoming equipment effects in the special
+  SkeletonMelee/Snotspill/Warlord attack branch with matching RNG consumption.
 - Added initialized GoatMelee replay coverage for usable-equipment Thorns
   retaliation, including target HP reduction and post-hit RNG checkpoint parity.
 - Compact native replay now applies validated Thorns retaliation for primary and
