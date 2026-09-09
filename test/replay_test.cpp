@@ -1279,6 +1279,42 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedClassMultipleArrowsResult.transitions[0].stateSha256, rangedClassMultipleArrowsFixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesRangedResourceRestorationAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-ranged-resource-restoration.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[0] = fixture.initialState.strength;
+	state.attributes[1] = fixture.initialState.strength;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.attributes[4] = fixture.initialState.dexterity;
+	state.attributes[5] = fixture.initialState.dexterity;
+	state.attributes[6] = fixture.initialState.vitality;
+	state.attributes[7] = fixture.initialState.vitality;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	EXPECT_EQ(state.life, 519);
+	EXPECT_EQ(state.mana, 24);
+	EXPECT_TRUE(state.projectiles.empty());
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.front().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/stores/base-content-purchase.json");

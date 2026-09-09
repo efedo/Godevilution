@@ -2,6 +2,11 @@
 
 Status date: 2026-09-09
 
+Ranged physical replay now applies validated usable-equipment StealLife and
+StealMana restoration at the impact boundary in both runners. The new fixture
+covers life/mana caps and a shared post-impact checkpoint, including the
+server-owned projectile removal transition.
+
 Initialized ranged class replay now cross-checks Monk, Bard, and Barbarian
 damage profiles in both runners, including the Monk weapon, Bard bow, and
 Barbarian bow branches with their class-specific RNG checkpoints.

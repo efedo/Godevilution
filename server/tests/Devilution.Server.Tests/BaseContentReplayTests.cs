@@ -704,6 +704,29 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void RangedClassAttackRestoresLifeAndManaFromEquipment()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-ranged-resource-restoration.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+
+        var result = ExecuteRangedClassFixture(fixture, contentRoot);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(519, player.Life);
+        Assert.Equal(24, player.Mana);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(2, result.Checkpoints.Count);
+        Assert.Equal(
+            ["eb31441d2a69d6c94af279fe8ad677f795037d2aa515ca608ab45a958f723f72", "5a8787c43d7d5bd5199f76a02316dc99ecf94953e37c1f0ce7fb8d811ba54a0c"],
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void RangedClassDamageAppliesHellArmorBeforeProjectileCapture()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
@@ -3311,7 +3334,7 @@ public sealed class BaseContentReplayTests
             startingManaMaximum: initial.ManaMaximum,
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
-            startingLifeMaximum: initial.Life,
+            startingLifeMaximum: initial.LifeMaximum,
             startingCharacterLevel: initial.CharacterLevel,
             startingCharacterClassId: checked((uint)initial.CharacterClass),
             startingPlayerClasses: classes,

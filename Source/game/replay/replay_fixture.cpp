@@ -41,6 +41,12 @@ constexpr uint32_t FireArrowsFlag = 1U << 3;
 constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
+constexpr uint32_t StealMana3Flag = 1U << 13;
+constexpr uint32_t StealMana5Flag = 1U << 14;
+constexpr uint32_t StealLife3Flag = 1U << 15;
+constexpr uint32_t StealLife5Flag = 1U << 16;
+constexpr uint32_t NoManaFlag = 1U << 27;
+constexpr uint32_t RandomStealLifeFlag = 1U << 1;
 constexpr uint32_t TripleDemonDamageFlag = 1U << 30;
 constexpr int32_t HellfireDevastationFlag = 1 << 0;
 constexpr int32_t HellfireDecayFlag = 1 << 1;
@@ -3502,6 +3508,41 @@ bool HasReplayEquipmentFlag(
 	    });
 }
 
+void ApplyReplayEquipmentAttackEffects(
+    ReplayFixtureExecutionState &state,
+    int32_t damageQ6)
+{
+	if (damageQ6 <= 0)
+		return;
+
+	uint32_t flags = 0;
+	for (const auto &item : state.equipment) {
+		if (IsReplayEquipmentUsable(item.state))
+			flags |= item.state.flags;
+	}
+
+	int32_t lifeGainQ6 = 0;
+	if ((flags & RandomStealLifeFlag) != 0)
+		lifeGainQ6 = GenerateRnd(state, damageQ6 / 8);
+	if ((flags & (StealLife3Flag | StealLife5Flag)) != 0) {
+		if ((flags & StealLife5Flag) != 0)
+			lifeGainQ6 += 5 * damageQ6 / 100;
+		else if ((flags & StealLife3Flag) != 0)
+			lifeGainQ6 += 3 * damageQ6 / 100;
+	}
+
+	int32_t manaGainQ6 = 0;
+	if ((flags & NoManaFlag) == 0) {
+		if ((flags & StealMana5Flag) != 0)
+			manaGainQ6 = 5 * damageQ6 / 100;
+		else if ((flags & StealMana3Flag) != 0)
+			manaGainQ6 = 3 * damageQ6 / 100;
+	}
+
+	state.life = std::min(state.lifeMaximum, state.life + lifeGainQ6);
+	state.mana = std::min(state.manaMaximum, state.mana + manaGainQ6);
+}
+
 bool HasReplayHellfireEquipmentFlag(
     const ReplayFixtureExecutionState &state,
     int32_t flag)
@@ -3858,6 +3899,7 @@ void ApplyReplayWeaponArrowImpact(
 			state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 		}
 	}
+	ApplyReplayEquipmentAttackEffects(state, damageQ6);
 	if (state.combatTargetHitPointsQ6 <= 0)
 		DefeatReplayCombatTarget(state);
 }
@@ -5755,6 +5797,8 @@ bool ApplyReplayAttack(
 		    state.combatTargetHitPointsQ6 - lightningDamage * 64);
 		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	}
+	if (damageQ6 > 0)
+		ApplyReplayEquipmentAttackEffects(state, damageQ6);
 	if (state.combatTargetHitPointsQ6 <= 0)
 		DefeatReplayCombatTarget(state);
 	if (attackHit)

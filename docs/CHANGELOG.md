@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added a ranged-impact replay fixture for native StealLife and StealMana
+  restoration, including life/mana caps and shared post-impact checkpoints.
+- Compact native replay now applies validated usable-equipment resource effects
+  after melee and ranged physical hits, matching the authoritative C# rules.
 - Added initialized Monk, Bard, and Barbarian ranged class-profile fixtures,
   including cross-runner damage and RNG checkpoint coverage.
 - Corrected the managed initialized-class gate to require positive Strength and
