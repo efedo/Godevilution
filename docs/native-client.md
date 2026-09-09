@@ -123,6 +123,10 @@ Its world-query bridge falls back to movement blockers for older snapshots that
 omit the additive field, preserving compatibility while keeping authored native
 vision data available to the presentation path.
 
+The Godot visibility helper also honors that additive vision layer when a pack
+does not publish a transparency layer, so native occlusion is not lost on
+metadata-only geometry snapshots.
+
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,
 and charge counts. The adapter rebuilds native equipment and spell masks from

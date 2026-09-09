@@ -35,7 +35,8 @@ public static class AuthoritativeMonsterPresentationVisibility
     {
         if (!IsVisible(monster, currentLevelId)
             || geometry is null
-            || geometry.NativeTransparency.Count == 0)
+            || geometry.NativeTransparency.Count == 0
+                && geometry.NativeVisionBlockedCells.Count == 0)
             return IsVisible(monster, currentLevelId);
 
         var nativeVisionRadius = viewerLightRadius is >= 2 and <= 15

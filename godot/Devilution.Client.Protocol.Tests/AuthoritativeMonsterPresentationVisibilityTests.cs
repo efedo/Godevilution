@@ -83,6 +83,20 @@ public sealed class AuthoritativeMonsterPresentationVisibilityTests
     }
 
     [Fact]
+    public void GeometryBackedVisibilityUsesVisionBlockersWithoutTransparencyLayer()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 2, Width = 5, Height = 1 };
+        geometry.NativeVisionBlockedCells.Add(1);
+
+        Assert.False(AuthoritativeMonsterPresentationVisibility.IsVisible(
+            new MonsterSnapshot { EntityId = 12, LevelId = 2, Alive = true, PositionX = 4 },
+            2,
+            geometry,
+            0,
+            0));
+    }
+
+    [Fact]
     public void GeometryBackedVisibilityUsesProjectedPlayerLightRadius()
     {
         var geometry = new LevelGeometrySnapshot { LevelId = 2, Width = 12, Height = 1 };

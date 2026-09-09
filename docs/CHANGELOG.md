@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
   projection and world-query bridge, with fallback to movement blockers for
   older snapshots.
 
+- Fixed Godot monster visibility to honor native vision blockers on geometry
+  snapshots that omit transparency data.
+
 - Added `replace_collision_geometry` to `native_dun_fragments.tsv`. Validated
   fragment collision bundles can now replace, rather than merely add to, the
   base movement/missile geometry within their footprint. This advances the
