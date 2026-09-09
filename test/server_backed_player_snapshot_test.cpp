@@ -1801,6 +1801,29 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	action->set_target_entity_id(9);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidTiming).has_value());
 
+	protocol::Snapshot cellAttack;
+	player = cellAttack.add_players();
+	player->set_level_id(1);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_ATTACK);
+	player->set_combat_mode_end_tick(4);
+	action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_ATTACK);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(2);
+	action->set_ready_tick(3);
+	action->set_end_tick(4);
+	action->set_target_cell(true);
+	action->set_target_x(1);
+	action->set_target_y(1);
+	auto *cellLevel = cellAttack.add_level_geometry();
+	cellLevel->set_level_id(1);
+	cellLevel->set_width(2);
+	cellLevel->set_height(2);
+	EXPECT_TRUE(ValidatePlayerActionSnapshots(cellAttack).has_value());
+	protocol::Snapshot cellAttackOutside = cellAttack;
+	cellAttackOutside.mutable_players(0)->mutable_current_action()->set_target_x(2);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(cellAttackOutside).has_value());
+
 	protocol::Snapshot blockedMove;
 	player = blockedMove.add_players();
 	player->set_level_id(1);

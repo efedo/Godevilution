@@ -645,6 +645,46 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void AcceptsCellTargetedAttackAndRejectsItsInvalidDestination()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    CombatMode = PlayerCombatMode.Attack,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Attack,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        TargetCell = true,
+                        TargetX = 4,
+                        TargetY = 5,
+                    },
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        var invalid = valid.Clone();
+        invalid.Players[0].CurrentAction.TargetY = 10;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+    }
+
+    [Fact]
     public void RejectsPortalEndpointsOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at
   mapper, host, Godot, and native snapshot boundaries.
+- Cell-targeted player attacks now preserve their explicit target-cell contract
+  and projected geometry across domain, mapper, host, Godot, and native action
+  validation.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

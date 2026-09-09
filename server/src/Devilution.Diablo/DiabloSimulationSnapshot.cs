@@ -2760,6 +2760,7 @@ public sealed partial class DiabloSimulation
                 && action.DirectionY is >= -1 and <= 1
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
+                && !action.TargetCell
                 && action.CastIntent is null
                 && WorldState.IsWalkable(
                     source.LevelId,
@@ -2770,12 +2771,19 @@ public sealed partial class DiabloSimulation
                     or DiabloPlayerCombatMode.RangedAttack
                 && action.DirectionX == 0
                 && action.DirectionY == 0
-                && action.TargetEntityId != 0
+                && (action.TargetCell
+                    ? action.TargetEntityId == 0
+                        && WorldState.ContainsPosition(
+                            source.LevelId,
+                            action.TargetX,
+                            action.TargetY)
+                    : action.TargetEntityId != 0)
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Cast =>
                 source.CombatMode == DiabloPlayerCombatMode.Spell
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.CastIntent is not null
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
@@ -2790,6 +2798,7 @@ public sealed partial class DiabloSimulation
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.CastIntent is null,
             DiabloPlayerActionKind.LevelTransition =>
                 source.CombatMode == DiabloPlayerCombatMode.NewLevel
@@ -2799,6 +2808,7 @@ public sealed partial class DiabloSimulation
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.TargetEntityId != 0
                 && action.CastIntent is null,
             DiabloPlayerActionKind.RestartTown =>
@@ -2809,6 +2819,7 @@ public sealed partial class DiabloSimulation
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.TargetEntityId == 0
                 && action.CastIntent is null,
             _ => false,

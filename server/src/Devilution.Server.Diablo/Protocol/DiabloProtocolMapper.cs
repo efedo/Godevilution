@@ -147,7 +147,8 @@ internal static class DiabloProtocolMapper
             });
         }
         foreach (var participant in projectedParticipants)
-            snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks, items));
+            snapshot.Players.Add(
+                ToProtocolPlayer(participant, spells, spellBooks, items, projectedLevels));
 
         foreach (var monster in source.Monsters) {
             var projectedMonster = new MonsterSnapshot {
@@ -1338,7 +1339,8 @@ internal static class DiabloProtocolMapper
         StorePlayerSnapshot state,
         AuthoritativeSpellCatalog? spells,
         AuthoritativeSpellBookCatalog? spellBooks,
-        AuthoritativeItemCatalog? items)
+        AuthoritativeItemCatalog? items,
+        IReadOnlyDictionary<uint, AuthoritativeLevel>? levels = null)
     {
         if (state.StashOpen && state.ActiveStoreId is not null) {
             throw new InvalidDataException(
@@ -1389,7 +1391,7 @@ internal static class DiabloProtocolMapper
         ValidateProjectedVisitedLevels(state);
         ValidateProjectedPlayerSpells(state);
         ValidateProjectedStatusEffects(state);
-        ValidateProjectedPlayerAction(state);
+        ValidateProjectedPlayerAction(state, levels);
         if (state.Life < 0
             || state.LifeMaximum < 0
             || state.LifeMaximum > 0 && state.Life > state.LifeMaximum
@@ -1699,7 +1701,9 @@ internal static class DiabloProtocolMapper
         }
     }
 
-    private static void ValidateProjectedPlayerAction(StorePlayerSnapshot state)
+    private static void ValidateProjectedPlayerAction(
+        StorePlayerSnapshot state,
+        IReadOnlyDictionary<uint, AuthoritativeLevel>? levels)
     {
         var action = state.CurrentAction;
         if (action is null)
@@ -1722,18 +1726,23 @@ internal static class DiabloProtocolMapper
                 && action.DirectionY is >= MinimumNativeDirection and <= MaximumNativeDirection
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
+                && !action.TargetCell
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Attack =>
                 state.CombatMode is DiabloPlayerCombatMode.Attack
                     or DiabloPlayerCombatMode.RangedAttack
                 && action.DirectionX == 0
                 && action.DirectionY == 0
-                && action.TargetEntityId != 0
+                && (action.TargetCell
+                    ? action.TargetEntityId == 0
+                        && IsProjectedActionTarget(state.LevelId, action.TargetX, action.TargetY, levels)
+                    : action.TargetEntityId != 0)
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Cast =>
                 state.CombatMode == DiabloPlayerCombatMode.Spell
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.CastIntent is not null
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
@@ -1748,6 +1757,7 @@ internal static class DiabloProtocolMapper
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.CastIntent is null,
             DiabloPlayerActionKind.LevelTransition =>
                 state.CombatMode == DiabloPlayerCombatMode.NewLevel
@@ -1757,6 +1767,7 @@ internal static class DiabloProtocolMapper
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.TargetEntityId != 0
                 && action.CastIntent is null,
             DiabloPlayerActionKind.RestartTown =>
@@ -1767,12 +1778,29 @@ internal static class DiabloProtocolMapper
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && !action.TargetCell
                 && action.TargetEntityId == 0
                 && action.CastIntent is null,
             _ => false,
         };
         if (!valid)
             throw new InvalidDataException("Authoritative player action is invalid.");
+    }
+
+    private static bool IsProjectedActionTarget(
+        uint levelId,
+        int targetX,
+        int targetY,
+        IReadOnlyDictionary<uint, AuthoritativeLevel>? levels)
+    {
+        if (targetX is < 0 or > byte.MaxValue
+            || targetY is < 0 or > byte.MaxValue)
+            return false;
+        return levels is null
+            || !levels.TryGetValue(levelId, out var level)
+            || level.Width == 0
+            || level.Height == 0
+            || targetX < level.Width && targetY < level.Height;
     }
 
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)

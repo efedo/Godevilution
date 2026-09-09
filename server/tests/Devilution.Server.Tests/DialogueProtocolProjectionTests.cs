@@ -762,6 +762,34 @@ public sealed class DialogueProtocolProjectionTests
                         5),
                 },
             }));
+
+        var cellAttack = player with {
+            LevelId = 1,
+            CurrentAction = new AuthoritativePlayerActionState(
+                DiabloPlayerActionKind.Attack,
+                1,
+                2,
+                3,
+                5) {
+                TargetCell = true,
+                TargetX = 4,
+                TargetY = 5,
+            },
+        };
+        var cellSource = source with { Player = cellAttack };
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(
+            cellSource,
+            levelGeometry: [new AuthoritativeLevel(1, 10, 10)]);
+        Assert.True(Assert.Single(projected.Players).CurrentAction.TargetCell);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                cellSource with {
+                    Player = cellAttack with {
+                        CurrentAction = cellAttack.CurrentAction! with { TargetX = 10 },
+                    },
+                },
+                levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
     }
 
     [Fact]

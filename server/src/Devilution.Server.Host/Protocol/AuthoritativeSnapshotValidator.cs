@@ -994,19 +994,24 @@ public static class AuthoritativeSnapshotValidator
                     && action.DirectionY is >= MinimumNativeDirection and <= MaximumNativeDirection
                     && (action.DirectionX != 0 || action.DirectionY != 0)
                     && action.TargetEntityId == 0
+                    && !action.TargetCell
                     && action.Cast is null
                     && IsProjectedMoveWalkable(snapshot, player, action),
                 PlayerActionKind.Attack =>
                     player.CombatMode is PlayerCombatMode.Attack
-                        or PlayerCombatMode.RangedAttack
+                    or PlayerCombatMode.RangedAttack
                     && action.DirectionX == 0
                     && action.DirectionY == 0
-                    && action.TargetEntityId != 0
+                    && (action.TargetCell
+                        ? action.TargetEntityId == 0
+                            && IsProjectedActionTarget(snapshot, player, action)
+                        : action.TargetEntityId != 0)
                     && action.Cast is null,
                 PlayerActionKind.Cast =>
                     player.CombatMode == PlayerCombatMode.Spell
                     && action.DirectionX == 0
                     && action.DirectionY == 0
+                    && !action.TargetCell
                     && action.Cast is not null
                     && action.Cast.SpellId != 0
                     && action.TargetEntityId == action.Cast.TargetEntityId
@@ -1021,6 +1026,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.ReadyTick == action.EndTick
                     && action.DirectionX == 0
                     && action.DirectionY == 0
+                    && !action.TargetCell
                     && action.Cast is null,
                 PlayerActionKind.LevelTransition =>
                     player.CombatMode == PlayerCombatMode.NewLevel
@@ -1030,6 +1036,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.ReadyTick == action.EndTick
                     && action.DirectionX == 0
                     && action.DirectionY == 0
+                    && !action.TargetCell
                     && action.TargetEntityId != 0
                     && action.Cast is null,
                 PlayerActionKind.RestartTown =>
@@ -1040,6 +1047,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.ReadyTick == action.EndTick
                     && action.DirectionX == 0
                     && action.DirectionY == 0
+                    && !action.TargetCell
                     && action.TargetEntityId == 0
                     && action.Cast is null,
                 _ => false,
@@ -1071,6 +1079,22 @@ public static class AuthoritativeSnapshotValidator
         var targetCell = targetY * level.Width + targetX;
         return targetCell <= int.MaxValue
             && !level.BlockedCells.Contains((int)targetCell);
+    }
+
+    private static bool IsProjectedActionTarget(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        PlayerActionSnapshot action)
+    {
+        if (action.TargetX is < 0 or > byte.MaxValue
+            || action.TargetY is < 0 or > byte.MaxValue)
+            return false;
+        var level = snapshot.LevelGeometry
+            .FirstOrDefault(candidate => candidate.LevelId == player.LevelId);
+        return level is null
+            || level.Width == 0
+            || level.Height == 0
+            || action.TargetX < level.Width && action.TargetY < level.Height;
     }
 
     private static void ValidateMonsters(Snapshot snapshot)

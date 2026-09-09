@@ -1305,6 +1305,13 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		return std::find(level->second->blocked_cells().begin(), level->second->blocked_cells().end(), static_cast<int32_t>(targetCell))
 		    == level->second->blocked_cells().end();
 	};
+	const auto isProjectedActionTarget = [&](const protocol::PlayerSnapshot &player, const protocol::PlayerActionSnapshot &action) {
+		if (!IsValidNativeTileCoordinate(action.target_x(), action.target_y()))
+			return false;
+		const auto level = levels.find(player.level_id());
+		return level == levels.end() || level->second->width() == 0 || level->second->height() == 0
+		    || action.target_x() < level->second->width() && action.target_y() < level->second->height();
+	};
 	for (const auto &player : snapshot.players()) {
 		if (!player.has_current_action())
 			continue;
@@ -1324,16 +1331,21 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.direction_y() >= MinimumNativeDirection && action.direction_y() <= MaximumNativeDirection
 		    && (action.direction_x() != 0 || action.direction_y() != 0)
 		    && action.target_entity_id() == 0
+		    && !action.target_cell()
 		    && !action.has_cast()
 		    && isProjectedMoveWalkable(player, action);
 		const bool attackIsValid = kind == 2
 		    && (combatMode == protocol::PLAYER_COMBAT_MODE_ATTACK
 		        || combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK)
 		    && action.direction_x() == 0 && action.direction_y() == 0
-		    && action.target_entity_id() != 0 && !action.has_cast();
+		    && (action.target_cell()
+		        ? action.target_entity_id() == 0 && isProjectedActionTarget(player, action)
+		        : action.target_entity_id() != 0)
+		    && !action.has_cast();
 		const bool castIsValid = kind == 3
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_SPELL
 		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && !action.target_cell()
 		    && action.has_cast() && action.cast().spell_id() != 0
 		    && action.target_entity_id() == action.cast().target_entity_id()
 		    && static_cast<int32_t>(action.cast().source()) >= protocol::CAST_SOURCE_KIND_UNSPECIFIED
@@ -1347,6 +1359,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
 		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && !action.target_cell()
 		    && !action.has_cast();
 		const bool transitionIsValid = kind == 5
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_NEW_LEVEL
@@ -1354,6 +1367,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
 		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && !action.target_cell()
 		    && action.target_entity_id() != 0 && !action.has_cast();
 		const bool restartTownIsValid = kind == 6
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_NEW_LEVEL
@@ -1361,6 +1375,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
 		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && !action.target_cell()
 		    && action.target_entity_id() == 0 && !action.has_cast();
 		if (!timingIsValid || (!moveIsValid && !attackIsValid && !castIsValid && !deathIsValid && !transitionIsValid && !restartTownIsValid))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid player action.");

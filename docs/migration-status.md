@@ -44,6 +44,11 @@ geometry at mapper, host, Godot, and native snapshot boundaries, matching save
 restore validation and rejecting malformed travel endpoints before presentation
 or persistence.
 
+Cell-targeted player attacks now remain distinct from entity-targeted attacks at
+the domain, mapper, host, Godot, and native boundaries. Their explicit target
+coordinates must remain within projected geometry, preserving the native
+animation-time attack path without admitting malformed action state.
+
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
 and resistances now consume that same compatibility source across Diablo
