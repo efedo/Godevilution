@@ -52,6 +52,8 @@ All notable changes to this fork are documented below.
   to-hit weapon modifiers through native and managed checkpoints.
 - Initialized physical replay now applies the native sword penalty and mace
   bonus against authored undead targets in both runners.
+- The same replay boundary now covers the inverse sword/mace adjustments for
+  authored animal targets.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

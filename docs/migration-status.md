@@ -100,7 +100,8 @@ target modifiers now cross the native/managed replay gate. Authored percentage,
 flat, and to-hit weapon modifiers are also covered; remaining weapon and
 hit-resolution edge cases are still follow-up work. Sword/mace target-class
 damage adjustment now also crosses the replay gate for undead targets, with
-both sword and mace branches covered.
+both sword and mace branches covered. Animal target-class adjustment is now
+covered by the matching inverse sword/mace fixtures.
 
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
@@ -161,7 +162,7 @@ bonuses and Hell difficulty target modifiers through both runners. Percentage,
 flat, and to-hit weapon modifiers now cross the same gate; other
 weapon/hit-resolution edge cases remain follow-up native-parity work. The
 initialized undead sword and mace paths now include the native target-class
-modifier.
+modifier, as do the corresponding animal paths.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed

@@ -309,6 +309,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     /** Optional undead capability used by Holy Bolt replay fixtures. */
     public bool CombatTargetUndead { get; init; }
 
+    /** Optional animal capability used by native sword/mace replay fixtures. */
+    public bool CombatTargetAnimal { get; init; }
+
     /** Optional native AI identity used by autonomous monster replay fixtures. */
     public string CombatTargetNativeAi { get; init; } = string.Empty;
 

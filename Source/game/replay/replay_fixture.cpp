@@ -581,6 +581,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-undead-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetAnimal) {
+			hasher.AppendString("godevilution-monster-animal-v1");
+			hasher.AppendBool(true);
+		}
 		if (state.combatTargetPlayerMinion) {
 			hasher.AppendString("godevilution-monster-player-minion-v1");
 			hasher.AppendBool(true);
@@ -5417,6 +5421,11 @@ bool ApplyReplayAttack(
 				damageBeforeArmor += damageBeforeArmor / 2;
 			else if (hasSword)
 				damageBeforeArmor -= damageBeforeArmor / 2;
+		} else if (state.combatTargetAnimal) {
+			if (hasMace)
+				damageBeforeArmor -= damageBeforeArmor / 2;
+			else if (hasSword)
+				damageBeforeArmor += damageBeforeArmor / 2;
 		}
 		damage = attackHit
 		    ? std::max(1, damageBeforeArmor - std::max(0, effectiveArmorClass))
@@ -10620,6 +10629,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetMonsterLevel);
 			if (key == "combat_target_undead")
 				return ParseBool(fixture_.initialState.combatTargetUndead);
+			if (key == "combat_target_animal")
+				return ParseBool(fixture_.initialState.combatTargetAnimal);
 			if (key == "combat_target_moving")
 				return ParseBool(fixture_.initialState.combatTargetMoving);
 			if (key == "combat_target_future_position_x")
@@ -11489,6 +11500,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
 	            || target.combatTargetMonsterLevel != 0
+	            || target.combatTargetUndead
+	            || target.combatTargetAnimal
 	            || target.combatTargetLevelId != 0
 	            || target.combatTargetMoving
 	            || target.combatTargetPetrified))
@@ -12378,6 +12391,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;
 		state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
 		state.combatTargetUndead = fixture.initialState.combatTargetUndead;
+		state.combatTargetAnimal = fixture.initialState.combatTargetAnimal;
 		state.combatTargetMoving = fixture.initialState.combatTargetMoving;
 		state.combatTargetFuturePositionX = fixture.initialState.combatTargetFuturePositionX;
 		state.combatTargetFuturePositionY = fixture.initialState.combatTargetFuturePositionY;

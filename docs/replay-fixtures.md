@@ -84,6 +84,8 @@ weapon bonuses and deterministic hit admission.
 The undead-sword and undead-mace companions cover the native 50% sword
 penalty and 50% mace bonus against an undead target after critical and
 authored weapon modifiers are resolved.
+The matching animal-sword and animal-mace companions cover the inverse native
+target-class adjustments against an authored animal target.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

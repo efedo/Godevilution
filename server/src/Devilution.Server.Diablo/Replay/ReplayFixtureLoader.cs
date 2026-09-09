@@ -185,6 +185,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetMagicResistance != 0
                     || initialTarget.CombatTargetAcidResistance != 0
                     || initialTarget.CombatTargetMonsterLevel != 0
+                    || initialTarget.CombatTargetUndead
+                    || initialTarget.CombatTargetAnimal
                     || initialTarget.CombatTargetLevelId != 0
                     || initialTarget.CombatTargetMoving
                     || initialTarget.CombatTargetPetrified))
@@ -464,6 +466,9 @@ public static class ReplayFixtureLoader
             CombatTargetUndead = GetOptionalBool(
                 value,
                 "combat_target_undead"),
+            CombatTargetAnimal = GetOptionalBool(
+                value,
+                "combat_target_animal"),
             CombatTargetNativeAi = OptionalString(value, "combat_target_native_ai") ?? string.Empty,
             CombatTargetMonsterItemSeed = GetOptionalUInt(value, "combat_target_monster_item_seed"),
             CombatTargetMonsterAiSeed = GetOptionalUInt(value, "combat_target_monster_ai_seed"),
