@@ -322,6 +322,19 @@ std::optional<bool> ServerBackedWorldProjection::IsVisionBlocked(int32_t positio
 	return std::find(blockedCells.begin(), blockedCells.end(), cell) != blockedCells.end();
 }
 
+std::optional<bool> ServerBackedWorldProjection::IsVisionVisibleFrom(
+	int32_t viewerX,
+	int32_t viewerY,
+	int32_t targetX,
+	int32_t targetY,
+	int32_t viewerLightRadius) const noexcept
+{
+	const auto *geometry = CurrentLevelGeometry();
+	if (geometry == nullptr)
+		return std::nullopt;
+	return IsNativeVisionVisible(*geometry, viewerX, viewerY, targetX, targetY, viewerLightRadius);
+}
+
 std::optional<uint32_t> ServerBackedWorldProjection::WorldItemAt(int32_t positionX, int32_t positionY) const noexcept
 {
 	const auto levelId = levelId_;

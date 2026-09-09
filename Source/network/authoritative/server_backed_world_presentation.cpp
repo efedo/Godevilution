@@ -1032,6 +1032,28 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	std::unordered_set<unsigned> claimedMonsterSlots;
 	std::unordered_set<unsigned> claimedItemSlots;
 	std::unordered_set<int> claimedObjectSlots;
+	const ProjectedPlayerSnapshot *localViewer = nullptr;
+	if (!players.empty()) {
+		const auto local = std::find_if(players.begin(), players.end(), [localEntityId](const auto &player) {
+			return localEntityId != 0 && player.entityId == localEntityId;
+		});
+		localViewer = local == players.end() ? &players.front() : &*local;
+	}
+	const bool hasLocalViewer = localViewer != nullptr
+	    && IsCurrentLevel(localViewer->levelId, levelId);
+	const auto isMonsterVisible = [&projection, localViewer, hasLocalViewer, levelId](const ProjectedMonsterSnapshot &snapshot) {
+		if (!IsAuthoritativeMonsterPresentable(snapshot))
+			return false;
+		if (!hasLocalViewer || !IsCurrentLevel(snapshot.levelId, levelId))
+			return true;
+		const auto visible = projection.IsVisionVisibleFrom(
+		    localViewer->positionX,
+		    localViewer->positionY,
+		    snapshot.positionX,
+		    snapshot.positionY,
+		    localViewer->lightRadius);
+		return !visible.has_value() || *visible;
+	};
 
 	for (const auto &snapshot : projection.Monsters()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))
@@ -1044,7 +1066,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		// of retaining a previously mapped compatibility slot with stale animation
 		// state; RemoveUnclaimedMonsterSlots below removes that slot and the mapping
 		// cleanup at the end of this method drops its entity identity.
-		if (!IsAuthoritativeMonsterPresentable(snapshot))
+		if (!isMonsterVisible(snapshot))
 			continue;
 		currentMonsterEntities.insert(snapshot.entityId);
 		unsigned slot = std::numeric_limits<unsigned>::max();
@@ -1076,7 +1098,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	}
 	for (const auto &snapshot : projection.Monsters()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId)
-		    || !IsAuthoritativeMonsterPresentable(snapshot)
+		    || !isMonsterVisible(snapshot)
 		    || snapshot.leaderEntityId == 0)
 			continue;
 		const auto member = monsterSlots_.find(snapshot.entityId);

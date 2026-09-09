@@ -14,6 +14,10 @@ All notable changes to this fork are documented below.
   helper backed by the existing native ray table. Snapshots without vision
   geometry retain the legacy compatibility path.
 
+- Applied the viewer-aware projected vision query to native monster
+  presentation slot claiming, removing blocked monsters from the compatibility
+  pool instead of leaving render/interact ghosts behind.
+
 - Projected the authoritative native DUN monster layer through the shared
   protocol, including server, native, and Godot validation and wire coverage.
 

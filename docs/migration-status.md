@@ -21,6 +21,10 @@ position-based projected-monster interaction lookups. Its shared C++ vision
 helper reuses the native ray table, while snapshots without vision geometry
 retain the legacy compatibility path.
 
+Native compatibility presentation now consumes that same viewer-aware query
+before claiming monster-pool slots, so blocked projected monsters cannot
+survive as native rendering or interaction ghosts.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,

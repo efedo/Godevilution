@@ -8,6 +8,7 @@
 #include "engine/cursor.h"
 #include "game/items/item_pool.hpp"
 #include "game/missiles/missiles.hpp"
+#include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/triggers.h"
@@ -3703,6 +3704,47 @@ TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMonsterWalkAnimation)
 	EXPECT_EQ(presentation.AdvanceAnimations(), 1U);
 
 	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, NativePresentationHonorsProjectedMonsterVision)
+{
+	InitLevelMonsters();
+	LoadMonsterData();
+	ASSERT_TRUE(AddMonsterType(MT_NZOMBIE, PLACE_SCATTER).has_value());
+
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	local.positionX = 0;
+	local.positionY = 0;
+	local.lightRadius = 10;
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 41;
+	monster.monsterId = MT_NZOMBIE;
+	monster.levelId = 1;
+	monster.positionX = 4;
+	monster.positionY = 0;
+	monster.alive = true;
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 5;
+	geometry.height = 1;
+	geometry.nativeTransparency.assign(5, 1);
+	geometry.nativeVisionBlockedCells = { 1 };
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, local.entityId).has_value());
+	EXPECT_EQ(MonsterPoolAdapter::ActiveMonsterCountValue(), 0U);
+
+	geometry.nativeVisionBlockedCells.clear();
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, local.entityId).has_value());
+	EXPECT_EQ(MonsterPoolAdapter::ActiveMonsterCountValue(), 1U);
+
+	presentation.Clear();
+	InitializeMonsterPool();
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesAuthoredMonsterDialogueStateToNativePresentation)
