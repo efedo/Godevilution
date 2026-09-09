@@ -374,6 +374,44 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsTileTargetedCastAndRejectsItsInvalidDestination()
+    {
+        var valid = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    CombatMode = PlayerCombatMode.Spell,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Cast,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        Cast = new CastRequested {
+                            SpellId = 1,
+                            TargetX = 4,
+                            TargetY = 5,
+                            Source = CastSourceKind.Ability,
+                        },
+                    },
+                },
+            },
+        };
+
+        AuthoritativeSnapshotValidator.Validate(valid);
+
+        var invalid = valid.Clone();
+        invalid.Players[0].CurrentAction.Cast.TargetX = 10;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(invalid));
+    }
+
+    [Fact]
     public void RejectsInvalidPlayerActionTimingMovementAndCastSource()
     {
         var invalidTiming = new Snapshot {

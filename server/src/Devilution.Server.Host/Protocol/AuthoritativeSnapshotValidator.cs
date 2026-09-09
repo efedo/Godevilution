@@ -1015,6 +1015,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.Cast is not null
                     && action.Cast.SpellId != 0
                     && action.TargetEntityId == action.Cast.TargetEntityId
+                    && IsProjectedCastTarget(snapshot, player, action.Cast)
                     && Enum.IsDefined(action.Cast.Source)
                     && (action.Cast.SourceItem is null
                         || Enum.IsDefined(action.Cast.SourceItem.Location)),
@@ -1095,6 +1096,24 @@ public static class AuthoritativeSnapshotValidator
             || level.Width == 0
             || level.Height == 0
             || action.TargetX < level.Width && action.TargetY < level.Height;
+    }
+
+    private static bool IsProjectedCastTarget(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        CastRequested cast)
+    {
+        if (cast.TargetX is < 0 or > byte.MaxValue
+            || cast.TargetY is < 0 or > byte.MaxValue)
+            return false;
+        if (cast.TargetEntityId != 0)
+            return true;
+        var level = snapshot.LevelGeometry
+            .FirstOrDefault(candidate => candidate.LevelId == player.LevelId);
+        return level is null
+            || level.Width == 0
+            || level.Height == 0
+            || cast.TargetX < level.Width && cast.TargetY < level.Height;
     }
 
     private static void ValidateMonsters(Snapshot snapshot)

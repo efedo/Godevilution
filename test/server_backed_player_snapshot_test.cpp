@@ -1859,6 +1859,30 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	action->mutable_cast()->set_spell_id(1);
 	action->mutable_cast()->set_target_entity_id(10);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidCast).has_value());
+
+	protocol::Snapshot tileCast;
+	player = tileCast.add_players();
+	player->set_level_id(1);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);
+	player->set_combat_mode_end_tick(4);
+	action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_CAST);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(2);
+	action->set_ready_tick(3);
+	action->set_end_tick(4);
+	action->mutable_cast()->set_spell_id(1);
+	action->mutable_cast()->set_target_x(1);
+	action->mutable_cast()->set_target_y(1);
+	action->mutable_cast()->set_source(protocol::CAST_SOURCE_KIND_ABILITY);
+	level = tileCast.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(2);
+	level->set_height(2);
+	EXPECT_TRUE(ValidatePlayerActionSnapshots(tileCast).has_value());
+	protocol::Snapshot tileCastOutside = tileCast;
+	tileCastOutside.mutable_players(0)->mutable_current_action()->mutable_cast()->set_target_x(2);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(tileCastOutside).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)

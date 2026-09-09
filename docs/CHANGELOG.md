@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Cell-targeted player attacks now preserve their explicit target-cell contract
   and projected geometry across domain, mapper, host, Godot, and native action
   validation.
+- Cast-action target coordinates now remain within native and projected level
+  geometry for tile-targeted casts across domain, mapper, host, Godot, and native
+  snapshot validation.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

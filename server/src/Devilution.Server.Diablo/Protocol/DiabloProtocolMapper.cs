@@ -1746,6 +1746,7 @@ internal static class DiabloProtocolMapper
                 && action.CastIntent is not null
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
+                && IsProjectedCastTarget(state.LevelId, action.CastIntent, levels)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -1801,6 +1802,23 @@ internal static class DiabloProtocolMapper
             || level.Width == 0
             || level.Height == 0
             || targetX < level.Width && targetY < level.Height;
+    }
+
+    private static bool IsProjectedCastTarget(
+        uint levelId,
+        DiabloCastIntent cast,
+        IReadOnlyDictionary<uint, AuthoritativeLevel>? levels)
+    {
+        if (cast.TargetX is < 0 or > byte.MaxValue
+            || cast.TargetY is < 0 or > byte.MaxValue)
+            return false;
+        if (cast.TargetEntityId != 0)
+            return true;
+        return levels is null
+            || !levels.TryGetValue(levelId, out var level)
+            || level.Width == 0
+            || level.Height == 0
+            || cast.TargetX < level.Width && cast.TargetY < level.Height;
     }
 
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)

@@ -2787,6 +2787,7 @@ public sealed partial class DiabloSimulation
                 && action.CastIntent is not null
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
+                && IsValidCastTarget(source.LevelId, action.CastIntent)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -2824,6 +2825,15 @@ public sealed partial class DiabloSimulation
                 && action.CastIntent is null,
             _ => false,
         };
+    }
+
+    private bool IsValidCastTarget(uint levelId, DiabloCastIntent cast)
+    {
+        if (cast.TargetX is < 0 or > byte.MaxValue
+            || cast.TargetY is < 0 or > byte.MaxValue)
+            return false;
+        return cast.TargetEntityId != 0
+            || WorldState.ContainsPosition(levelId, cast.TargetX, cast.TargetY);
     }
 
     private static AuthoritativePlayerActionState? ClonePlayerAction(

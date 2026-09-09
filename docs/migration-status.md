@@ -48,6 +48,10 @@ Cell-targeted player attacks now remain distinct from entity-targeted attacks at
 the domain, mapper, host, Godot, and native boundaries. Their explicit target
 coordinates must remain within projected geometry, preserving the native
 animation-time attack path without admitting malformed action state.
+Cast actions now apply the same coordinate contract to tile-targeted spell
+intents: native tile ranges are always enforced, and targetless casts must stay
+inside projected level geometry while stable entity-targeted casts retain their
+entity identity path.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,

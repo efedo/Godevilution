@@ -4168,6 +4168,49 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRejectsTileTargetedCastOutsideWorldGeometry()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        var options = new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+            World = world,
+        };
+        var simulation = DiabloSimulationFactory.Instance.Create(options);
+        var player = CreatePlayer();
+        player.LevelId = 1;
+        player.CombatMode = DiabloPlayerCombatMode.Spell;
+        player.CombatModeEndTick = 3;
+        player.CurrentAction = new AuthoritativePlayerActionState(
+            DiabloPlayerActionKind.Cast,
+            1,
+            1,
+            2,
+            3) {
+            CastIntent = new DiabloCastIntent(
+                1,
+                0,
+                4,
+                5,
+                DiabloCastSourceKind.Ability),
+        };
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var invalid = snapshot with {
+            Player = snapshot.Player with {
+                CurrentAction = snapshot.Player.CurrentAction! with {
+                    CastIntent = snapshot.Player.CurrentAction.CastIntent! with { TargetX = 10 },
+                },
+            },
+        };
+        var replacement = DiabloSimulationFactory.Instance.Create(options);
+        var destination = CreatePlayer();
+        destination.LevelId = 1;
+
+        Assert.Throws<InvalidDataException>(() =>
+            replacement.RestoreSnapshot(destination, invalid));
+    }
+
+    [Fact]
     public void SnapshotRestoreRetainsDeathAndLevelTransitionActions()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

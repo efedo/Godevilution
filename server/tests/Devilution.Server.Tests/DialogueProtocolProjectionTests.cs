@@ -790,6 +790,40 @@ public sealed class DialogueProtocolProjectionTests
                     },
                 },
                 levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
+
+        var tileCast = player with {
+            LevelId = 1,
+            CombatMode = DiabloPlayerCombatMode.Spell,
+            CurrentAction = new AuthoritativePlayerActionState(
+                DiabloPlayerActionKind.Cast,
+                1,
+                2,
+                3,
+                5) {
+                CastIntent = new DiabloCastIntent(
+                    1,
+                    0,
+                    4,
+                    5,
+                    DiabloCastSourceKind.Ability),
+            },
+        };
+        var tileCastSource = source with { Player = tileCast };
+        var castProjection = DiabloProtocolMapper.ToProtocolSnapshot(
+            tileCastSource,
+            levelGeometry: [new AuthoritativeLevel(1, 10, 10)]);
+        Assert.Equal(4, Assert.Single(castProjection.Players).CurrentAction.Cast.TargetX);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                tileCastSource with {
+                    Player = tileCast with {
+                        CurrentAction = tileCast.CurrentAction! with {
+                            CastIntent = tileCast.CurrentAction.CastIntent! with { TargetY = 10 },
+                        },
+                    },
+                },
+                levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
     }
 
     [Fact]

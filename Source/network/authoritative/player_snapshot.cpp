@@ -1312,6 +1312,15 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		return level == levels.end() || level->second->width() == 0 || level->second->height() == 0
 		    || action.target_x() < level->second->width() && action.target_y() < level->second->height();
 	};
+	const auto isProjectedCastTarget = [&](const protocol::PlayerSnapshot &player, const protocol::CastRequested &cast) {
+		if (!IsValidNativeTileCoordinate(cast.target_x(), cast.target_y()))
+			return false;
+		if (cast.target_entity_id() != 0)
+			return true;
+		const auto level = levels.find(player.level_id());
+		return level == levels.end() || level->second->width() == 0 || level->second->height() == 0
+		    || cast.target_x() < level->second->width() && cast.target_y() < level->second->height();
+	};
 	for (const auto &player : snapshot.players()) {
 		if (!player.has_current_action())
 			continue;
@@ -1348,6 +1357,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && !action.target_cell()
 		    && action.has_cast() && action.cast().spell_id() != 0
 		    && action.target_entity_id() == action.cast().target_entity_id()
+		    && isProjectedCastTarget(player, action.cast())
 		    && static_cast<int32_t>(action.cast().source()) >= protocol::CAST_SOURCE_KIND_UNSPECIFIED
 		    && static_cast<int32_t>(action.cast().source()) <= protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM
 		    && (!action.cast().has_source_item()
