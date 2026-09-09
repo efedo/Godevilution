@@ -1477,7 +1477,13 @@ public sealed class BaseContentReplayTests
         var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "base-content-purchase.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(fixturePath));
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
-        var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", File.ReadAllText(Path.Combine(contentRoot, "items.tsv")));
+        var cursorCatalog = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "item_cursor_graphics.tsv")));
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "items.tsv")),
+            cursorCatalog: cursorCatalog);
         var catalog = StoreCatalog.LoadTsv("stores.tsv", File.ReadAllText(Path.Combine(contentRoot, "stores.tsv")), items);
         var executor = new StoreSimulationExecutor(
             catalog,

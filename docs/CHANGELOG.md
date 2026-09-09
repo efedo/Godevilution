@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
   draw, refreshed the Hellfire fixtures to the composed manifest hash, and
   updated the death and Mana Shield checkpoints to the resulting stream.
 
+- Routed the base store replay through the validated item-cursor catalog and
+  refreshed its purchase/sale checkpoints for complete native item projection.
+
 ## Unreleased
 
 - Refreshed all checked-in base replay fixtures to the canonical content-pack

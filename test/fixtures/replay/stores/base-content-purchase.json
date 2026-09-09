@@ -25,8 +25,8 @@
     { "client_sequence": 3, "target_tick": 14, "server_receipt_sequence": 3, "kind": "SellItem", "payload": { "inventory_index": 0 } }
   ],
   "checkpoints": [
-    { "tick": 10, "state_sha256": "53601f8f7d3744981acd95952241ecacb4372397428649a395e314f00cd5ab20" },
-    { "tick": 12, "state_sha256": "2875df6e2d7334bb8548fb6f0eaa06a7ffc2e95c397e7e2fb65c9b6fc319a98a" },
-    { "tick": 14, "state_sha256": "f984f39d6235be70d99f86ab5074f0638837bd85060dfdf47d4491d0e0c09b3d" }
+    { "tick": 10, "state_sha256": "582a7a530a751a007e9a5ff95e65f59fe6804d906d03e5d21d4fadad3ed6443c" },
+    { "tick": 12, "state_sha256": "9536af39478df7b18c0d2c15ba9fe6dba304d84d6a6b349b5a9ef15fc23dde29" },
+    { "tick": 14, "state_sha256": "80fe4f3651710c84de881feaca80eb739b88dda26aaab3219e9aa82880aca46d" }
   ]
 }
