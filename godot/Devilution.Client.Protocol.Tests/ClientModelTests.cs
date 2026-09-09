@@ -262,6 +262,7 @@ public sealed class ClientModelTests
                     NativeObjectLayer = { 146 },
                     NativeMegaTileLayer = { 255 },
                     NativePieceLayer = { 1378 },
+                    NativeMonsterLayer = { 157 },
                 },
             },
         };
@@ -323,6 +324,11 @@ public sealed class ClientModelTests
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
 
+        invalidNativePresentation.LevelGeometry[0].NativeObjectLayer.Clear();
+        invalidNativePresentation.LevelGeometry[0].NativeMonsterLayer.Add(158);
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidNativePresentation)));
+
         var oversizedFineGeometry = new Snapshot {
             Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
             LevelGeometry = {
@@ -366,6 +372,7 @@ public sealed class ClientModelTests
                         NativeObjectLayer = { 0, 109, 100, 99 },
                         NativeMegaTileLayer = { 115 },
                         NativePieceLayer = { 0, 297, 300, 299 },
+                        NativeMonsterLayer = { 0, 109, 157, 1 },
                     },
                 },
             }));
@@ -379,6 +386,9 @@ public sealed class ClientModelTests
         Assert.Equal(
             [0U, 297U, 300U, 299U],
             Assert.Single(model.Snapshot.LevelGeometry).NativePieceLayer);
+        Assert.Equal(
+            [0U, 109U, 157U, 1U],
+            Assert.Single(model.Snapshot.LevelGeometry).NativeMonsterLayer);
     }
 
     [Fact]

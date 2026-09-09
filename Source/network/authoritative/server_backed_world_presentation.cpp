@@ -891,11 +891,13 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		        ? (!candidate.nativeTransparency.empty()
 		            || !candidate.nativeObjectLayer.empty()
 		            || !candidate.nativeMegaTileLayer.empty()
-		            || !candidate.nativePieceLayer.empty())
+		            || !candidate.nativePieceLayer.empty()
+		            || !candidate.nativeMonsterLayer.empty())
 		        : (( !candidate.nativeTransparency.empty() && candidate.nativeTransparency.size() != cellCount)
 		            || (!candidate.nativeObjectLayer.empty() && candidate.nativeObjectLayer.size() != cellCount)
 		            || (!candidate.nativeMegaTileLayer.empty() && candidate.nativeMegaTileLayer.size() != coarseCellCount)
-		            || (!candidate.nativePieceLayer.empty() && candidate.nativePieceLayer.size() != cellCount));
+		            || (!candidate.nativePieceLayer.empty() && candidate.nativePieceLayer.size() != cellCount)
+		            || (!candidate.nativeMonsterLayer.empty() && candidate.nativeMonsterLayer.size() != cellCount));
 	};
 	if (hasInvalidSize(*geometry))
 		return tl::make_unexpected("Authoritative level geometry layer dimensions do not match the projected level.");
@@ -908,6 +910,9 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		})
 	    || std::any_of(geometry->nativeObjectLayer.begin(), geometry->nativeObjectLayer.end(), [](uint16_t value) {
 			return value > DUN_OBJECT_ID_LAST;
+		})
+	    || std::any_of(geometry->nativeMonsterLayer.begin(), geometry->nativeMonsterLayer.end(), [](uint16_t value) {
+			return value > NativeMaximumDunMonsterLayerId;
 		}))
 		return tl::make_unexpected("Authoritative level geometry contains a value outside the native presentation range.");
 

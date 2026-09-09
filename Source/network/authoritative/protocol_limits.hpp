@@ -227,6 +227,7 @@ inline constexpr int MinimumNativeTileCoordinate = 0;
 inline constexpr int MaximumNativeTileCoordinate = UINT8_MAX;
 inline constexpr std::uint32_t NativeMaximumDunObjectLayerId = 146;
 inline constexpr std::uint32_t NativeMaximumDunPieceId = 1378;
+inline constexpr std::uint32_t NativeMaximumDunMonsterLayerId = 157;
 inline constexpr std::uint32_t NativeMaximumObjectId = 108;
 inline constexpr std::uint32_t NativeMaximumQuestId = 23;
 inline constexpr int MaximumNativeVisitedLevelCount = 256;

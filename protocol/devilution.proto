@@ -504,6 +504,8 @@ message LevelGeometrySnapshot {
 	repeated uint32 native_piece_layer = 10;
 	// Derived native vision blockers, including DUN BlockLight pieces.
 	repeated int32 native_vision_blocked_cells = 11;
+	// Raw DUN monster-layer conversion indices after authoritative composition (0 through 157).
+	repeated uint32 native_monster_layer = 12;
 }
 
 message WarpTriggerSnapshot {

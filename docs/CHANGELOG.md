@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Projected the authoritative native DUN monster layer through the shared
+  protocol, including server, native, and Godot validation and wire coverage.
+
 - Added `replace_collision_geometry` to `native_dun_fragments.tsv`. Validated
   fragment collision bundles can now replace, rather than merely add to, the
   base movement/missile geometry within their footprint. This advances the

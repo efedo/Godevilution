@@ -28,6 +28,7 @@ public sealed class AuthoritativeClientModel
     private const int NativeMaximumWarpTriggerCount = AuthoritativeProtocolLimits.NativeMaximumWarpTriggerCount;
     private const uint NativeMaximumDunObjectLayerId = AuthoritativeProtocolLimits.NativeMaximumDunObjectLayerId;
     private const uint NativeMaximumDunPieceId = AuthoritativeProtocolLimits.NativeMaximumDunPieceId;
+    private const uint NativeMaximumDunMonsterLayerId = AuthoritativeProtocolLimits.NativeMaximumDunMonsterLayerId;
     private const uint NativeMaximumQuestId = AuthoritativeProtocolLimits.NativeMaximumQuestId;
 
     private const int MaxPredictedMoves = 16;
@@ -1343,6 +1344,7 @@ public sealed class AuthoritativeClientModel
                 || level.NativeObjectLayer.Any(value => value > NativeMaximumDunObjectLayerId)
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
                 || level.NativePieceLayer.Any(value => value > NativeMaximumDunPieceId)
+                || level.NativeMonsterLayer.Any(value => value > NativeMaximumDunMonsterLayerId)
                 || level.NativeMegaTileLayer.Count != 0
                     && (coarseWidth > NativeMaximumMegaWidth
                         || coarseHeight > NativeMaximumMegaHeight)) {
@@ -1370,7 +1372,9 @@ public sealed class AuthoritativeClientModel
                         && level.NativeMegaTileLayer.Count
                             != ((level.Width + 1L) / 2) * ((level.Height + 1L) / 2)
                     || level.NativePieceLayer.Count != 0
-                        && level.NativePieceLayer.Count != cellCount) {
+                        && level.NativePieceLayer.Count != cellCount
+                    || level.NativeMonsterLayer.Count != 0
+                        && level.NativeMonsterLayer.Count != cellCount) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains invalid level geometry cells.");
                 }

@@ -703,6 +703,12 @@ Windows toolchain command.
   render the existing Blood Star projectile behavior and resulting directed
   damage events without simulating monster AI or magic rolls.
 
+## Level Geometry Compatibility
+
+`LevelGeometrySnapshot.native_monster_layer` is an additive, cell-aligned raw
+DUN monster conversion layer. Values are bounded to the native conversion
+range (0 through 157), and older peers may ignore the field.
+
 ## Identity Note
 
 Protocol v1 predates a separate ruleset field. The current server therefore

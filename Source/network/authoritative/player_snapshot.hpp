@@ -341,6 +341,7 @@ struct ProjectedLevelGeometrySnapshot {
 	std::vector<uint16_t> nativeObjectLayer;
 	std::vector<uint16_t> nativeMegaTileLayer;
 	std::vector<uint16_t> nativePieceLayer;
+	std::vector<uint16_t> nativeMonsterLayer;
 };
 
 /** Returns whether a content-owned native missile identity has valid wire syntax. */

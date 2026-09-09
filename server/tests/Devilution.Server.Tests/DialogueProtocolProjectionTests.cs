@@ -83,6 +83,31 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsNativeMonsterLayersThroughTheProtocolSnapshot()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                SetLevelObjectOrigins = [],
+            };
+        var level = new AuthoritativeLevel(
+            17,
+            2,
+            2,
+            nativeMonsterLayer: [0, 109, 157, 1]);
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(
+            source,
+            levelGeometry: [level]);
+        var geometry = Assert.Single(projected.LevelGeometry);
+        Assert.Equal([0U, 109U, 157U, 1U], geometry.NativeMonsterLayer);
+
+        var wireRoundTrip = Snapshot.Parser.ParseFrom(projected.ToByteArray());
+        Assert.Equal(
+            [0U, 109U, 157U, 1U],
+            Assert.Single(wireRoundTrip.LevelGeometry).NativeMonsterLayer);
+    }
+
+    [Fact]
     public void RejectsMorePlayersThanTheNativePool()
     {
         var source = CreateOriginSnapshot(

@@ -877,6 +877,10 @@ loader.
 The Godot protocol model now enforces the same `MAXTILES` d-piece bound on
 authoritative `native_piece_layer` snapshots.
 
+Authoritative level geometry now also carries the cell-aligned native DUN
+monster layer through the shared protocol, with the native, server, and Godot
+validators enforcing its 0–157 compatibility range.
+
 Procedural level definitions now enforce the native 112x112 fine-grid ceiling
 at content validation time, preventing rows that would only fail later during
 world materialization.

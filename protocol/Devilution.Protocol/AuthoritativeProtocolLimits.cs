@@ -41,6 +41,7 @@ public static class AuthoritativeProtocolLimits
     public const int NativeMaximumMegaHeight = 40;
     public const uint NativeMaximumDunObjectLayerId = 146;
     public const uint NativeMaximumDunPieceId = 1378;
+    public const uint NativeMaximumDunMonsterLayerId = 157;
     public const uint NativeMaximumObjectId = 108;
     public const uint NativeMaximumQuestId = 23;
     public const int MaximumNativeVisitedLevelCount = 256;
