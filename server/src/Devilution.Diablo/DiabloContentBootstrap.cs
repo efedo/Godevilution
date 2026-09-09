@@ -560,7 +560,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 }
             }
         }
-        var nativeDunGeometry = LoadOptionalNativeDunGeometry(content);
+        var nativeDunGeometry = AuthoritativeNativeDunGeometryCatalog.LoadOptional(content);
         var nativeDunLevels = content.TryGetTable(
             "native_dun_levels.tsv",
             out var nativeDunLevelsTable)
@@ -1379,28 +1379,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeMissileSprites,
             monsterSpawnPolicies,
             townerGreetings);
-    }
-
-    private static AuthoritativeNativeDunGeometryCatalog? LoadOptionalNativeDunGeometry(
-        ComposedContent content)
-    {
-        var hasPieces = content.TryGetTable(
-            "native_dun_piece_definitions.tsv",
-            out var piecesTable);
-        var hasProperties = content.TryGetTable(
-            "native_dun_tile_properties.tsv",
-            out var propertiesTable);
-        if (hasPieces != hasProperties)
-            throw new InvalidDataException(
-                "Native DUN external geometry requires both native_dun_piece_definitions.tsv "
-                + "and native_dun_tile_properties.tsv.");
-        return hasPieces
-            ? AuthoritativeNativeDunGeometryCatalog.LoadTsv(
-                piecesTable.SourcePath,
-                piecesTable.ToCanonicalTsv(),
-                propertiesTable.SourcePath,
-                propertiesTable.ToCanonicalTsv())
-            : null;
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -416,8 +416,9 @@ explicit migration seams, not server-authority claims:
   rectangles when the native map bundle is available. The templates declare the
   native book and center-circle presentation identities, while the native
   bridge now applies supplied authoritative mega-tile, d-piece, and transparency
-  layers. Native DUN object-layer materialization and encounter-progress
-  presentation remain compatibility seams. The Vile center circle now uses an
+  layers. Encounter-progress presentation remains a compatibility seam. Native
+  DUN object-layer values now have an authoritative diagnostic presentation.
+  The Vile center circle now uses an
   authored occupancy trigger gated on
   both linked books; the server applies its deferred replacement, advances the
   native quest marker, and launches the activating-player Phasing transition.

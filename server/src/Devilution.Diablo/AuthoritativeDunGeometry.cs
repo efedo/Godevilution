@@ -214,6 +214,9 @@ public sealed class AuthoritativeDunTilePropertyCatalog
 /** Shared external native geometry definitions supplied by a content pack. */
 public sealed class AuthoritativeNativeDunGeometryCatalog
 {
+    public const string PieceDefinitionsTablePath = "native_dun_piece_definitions.tsv";
+    public const string TilePropertiesTablePath = "native_dun_tile_properties.tsv";
+
     public AuthoritativeNativeDunGeometryCatalog(
         AuthoritativeDunPieceCatalog pieces,
         AuthoritativeDunTilePropertyCatalog tileProperties)
@@ -225,6 +228,26 @@ public sealed class AuthoritativeNativeDunGeometryCatalog
     public AuthoritativeDunPieceCatalog Pieces { get; }
 
     public AuthoritativeDunTilePropertyCatalog TileProperties { get; }
+
+    /** Loads the optional shared geometry pair from the composed content set. */
+    public static AuthoritativeNativeDunGeometryCatalog? LoadOptional(
+        ComposedContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        var hasPieces = content.TryGetTable(PieceDefinitionsTablePath, out var piecesTable);
+        var hasProperties = content.TryGetTable(TilePropertiesTablePath, out var propertiesTable);
+        if (hasPieces != hasProperties)
+            throw new InvalidDataException(
+                "Native DUN external geometry requires both "
+                + $"{PieceDefinitionsTablePath} and {TilePropertiesTablePath}.");
+        return hasPieces
+            ? LoadTsv(
+                piecesTable.SourcePath,
+                piecesTable.ToCanonicalTsv(),
+                propertiesTable.SourcePath,
+                propertiesTable.ToCanonicalTsv())
+            : null;
+    }
 
     public static AuthoritativeNativeDunGeometryCatalog LoadTsv(
         string pieceSourcePath,

@@ -153,6 +153,23 @@ public sealed class AuthoritativeNativeDunLevelCatalogTests
     }
 
     [Fact]
+    public void OptionalGeometryLoaderRequiresBothContentTables()
+    {
+        var pieceTable = TsvTable.Parse(
+            AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
+            "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                + "0\t1\t1\t1\t1\n");
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [pieceTable]),
+        ]));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunGeometryCatalog.LoadOptional(content));
+
+        Assert.Contains("native_dun_tile_properties.tsv", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidatesAllReferencedAssetsBeforeActivation()
     {
         var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
