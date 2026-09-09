@@ -5314,6 +5314,9 @@ bool ApplyReplayAttack(
 		const int32_t vitality = state.attributes[7];
 		int32_t minimumDamage = 0;
 		int32_t maximumDamage = 0;
+		int32_t damagePercent = 0;
+		int32_t damageFlat = 0;
+		int32_t hitBonus = 0;
 		int32_t armorPiercingBonus = 0;
 		bool hasShield = false;
 		bool hasStaff = false;
@@ -5326,6 +5329,9 @@ bool ApplyReplayAttack(
 				continue;
 			minimumDamage += std::max(0, equippedItem.state.minDamage);
 			maximumDamage += std::max(0, equippedItem.state.maxDamage);
+			damagePercent += equippedItem.state.plusDamage;
+			damageFlat += equippedItem.state.plusDamageModifier;
+			hitBonus += equippedItem.state.plusToHit;
 			armorPiercingBonus += equippedItem.state.plusEnemyArmorClass;
 			if (equippedItem.slot != 4 && equippedItem.slot != 5)
 				continue;
@@ -5390,7 +5396,7 @@ bool ApplyReplayAttack(
 		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
 		const int32_t effectiveArmorClass = state.combatTargetArmorClass + difficultyArmorBonus;
 		const int32_t hitChance = std::clamp(
-		    level + dexterity / 2 + baseMeleeToHit + armorPiercingBonus
+		    level + dexterity / 2 + baseMeleeToHit + hitBonus + armorPiercingBonus
 		        - std::max(0, effectiveArmorClass),
 		    5,
 		    95);
@@ -5398,7 +5404,8 @@ bool ApplyReplayAttack(
 		    ^ targetEntityId
 		    ^ state.entityId;
 		const bool attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
-		int32_t damageBeforeArmor = rolledBaseDamage + damageModifier;
+		const int32_t damageBeforeFlat = rolledBaseDamage + rolledBaseDamage * damagePercent / 100;
+		int32_t damageBeforeArmor = damageBeforeFlat + damageFlat + damageModifier;
 		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
 		// after the class damage profile and double damage before armor reduction.
 		if (attackHit
@@ -10903,6 +10910,12 @@ private:
 					    return ParseSigned(item.minDamage);
 				    if (key == "max_damage")
 					    return ParseSigned(item.maxDamage);
+				    if (key == "plus_damage")
+					    return ParseSigned(item.plusDamage);
+				    if (key == "plus_to_hit")
+					    return ParseSigned(item.plusToHit);
+				    if (key == "plus_damage_modifier")
+					    return ParseSigned(item.plusDamageModifier);
 				    if (key == "plus_enemy_armor_class")
 					    return ParseSigned(item.plusEnemyArmorClass);
 				    if (key == "fire_min_damage")
@@ -10926,6 +10939,12 @@ private:
 			    || item.itemClass > 3
 			    || item.minDamage < 0
 			    || item.maxDamage < item.minDamage
+			    || item.plusDamage < std::numeric_limits<int16_t>::min()
+			    || item.plusDamage > std::numeric_limits<int16_t>::max()
+			    || item.plusToHit < std::numeric_limits<int16_t>::min()
+			    || item.plusToHit > std::numeric_limits<int16_t>::max()
+			    || item.plusDamageModifier < std::numeric_limits<int16_t>::min()
+			    || item.plusDamageModifier > std::numeric_limits<int16_t>::max()
 			    || item.plusEnemyArmorClass < std::numeric_limits<int16_t>::min()
 			    || item.plusEnemyArmorClass > std::numeric_limits<int16_t>::max()
 			    || item.fireMinDamage < 0
@@ -12109,6 +12128,9 @@ bool ExecuteReplayFixture(
 			item.magical = source.magical;
 			item.minDamage = source.minDamage;
 			item.maxDamage = source.maxDamage;
+			item.plusDamage = source.plusDamage;
+			item.plusToHit = source.plusToHit;
+			item.plusDamageModifier = source.plusDamageModifier;
 			item.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			item.fireMinDamage = source.fireMinDamage;
 			item.fireMaxDamage = source.fireMaxDamage;
@@ -12206,6 +12228,9 @@ bool ExecuteReplayFixture(
 			itemState.magical = source.magical;
 			itemState.minDamage = source.minDamage;
 			itemState.maxDamage = source.maxDamage;
+			itemState.plusDamage = source.plusDamage;
+			itemState.plusToHit = source.plusToHit;
+			itemState.plusDamageModifier = source.plusDamageModifier;
 			itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			itemState.fireMinDamage = source.fireMinDamage;
 			itemState.fireMaxDamage = source.fireMaxDamage;

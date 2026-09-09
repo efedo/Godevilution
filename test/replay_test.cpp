@@ -619,6 +619,18 @@ TEST(ReplayFixture, ExecutesPhysicalHellDifficultyAgainstCSharpCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-hell.json", 0, 30, 20, 25, 600);
 }
 
+TEST(ReplayFixture, ExecutesPhysicalDamageModifiersAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-modifiers.json", 0, 30, 20, 25, 95);
+}
+
+TEST(ReplayFixture, ExecutesPhysicalToHitBonusAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-to-hit.json", 0, 30, 20, 25, 99);
+}
+
 TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-arrows.json");

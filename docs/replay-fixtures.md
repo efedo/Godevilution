@@ -52,8 +52,10 @@ An optional `equipment` array carries protocol-shaped slot, item seed, native
 item index, type/class, value, identified value, flags, and usability state.
 Elemental replay cases may also carry `identified`, `magical`,
 `min_damage`, `max_damage`, `fire_min_damage`, `fire_max_damage`, `lightning_min_damage`, and
-`lightning_max_damage`; these fields are optional and default to the native
-zero/false values. Melee attacks select `FireDamage`/`LightningDamage`, while
+`lightning_max_damage`; initialized physical cases may additionally carry
+`plus_damage`, `plus_to_hit`, and `plus_damage_modifier`. These fields are
+optional and default to the native zero/false values. Melee attacks select
+`FireDamage`/`LightningDamage`, while
 ranged attacks select `FireArrows`/`LightningArrows`, so arrow-only effects can
 be checked independently. Both runners validate unique native slots and hash
 the resulting equipment. Attack profile, ranged admission, combat mode, and
@@ -77,6 +79,8 @@ authored native armor-piercing bonus crosses the same hit-resolution boundary;
 omitting the field retains its zero-value compatibility behavior.
 `gameplay-class-physical-damage-hell.json` adds the Hell difficulty target
 modifiers, including the native 4x health plus 200 bonus and +80 armor.
+The damage-modifier and to-hit companions cover authored percentage/flat
+weapon bonuses and deterministic hit admission.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

@@ -42,6 +42,8 @@
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-miss.json" Link="Fixtures/gameplay-class-physical-damage-miss.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-armor-piercing.json" Link="Fixtures/gameplay-class-physical-damage-armor-piercing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-hell.json" Link="Fixtures/gameplay-class-physical-damage-hell.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-modifiers.json" Link="Fixtures/gameplay-class-physical-damage-modifiers.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-to-hit.json" Link="Fixtures/gameplay-class-physical-damage-to-hit.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-elemental-arrows.json" Link="Fixtures/gameplay-elemental-arrows.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-player-death-lifecycle.json" Link="Fixtures/gameplay-player-death-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-player-equipped-death-drops.json" Link="Fixtures/gameplay-player-equipped-death-drops.json" CopyToOutputDirectory="PreserveNewest" />

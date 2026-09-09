@@ -96,8 +96,9 @@ standard formula, while Monk, Rogue, Bard, and Barbarian cover their class
 profiles; both critical-strike classes preserve their class RNG draw. Legacy
 compact attack fixtures retain their armor-only fallback until they author the
 full class-attribute contract. Authored armor-piercing and Hell difficulty
-target modifiers now cross the native/managed replay gate; remaining weapon
-and hit-resolution edge cases are still follow-up work.
+target modifiers now cross the native/managed replay gate. Authored percentage,
+flat, and to-hit weapon modifiers are also covered; remaining weapon and
+hit-resolution edge cases are still follow-up work.
 
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
@@ -154,7 +155,8 @@ Native movement-intent direction bounds now use named shared `-1..1` limits at
 managed, Godot, native validation, and native command-construction boundaries.
 
 Initialized physical replay now carries validated authored armor-piercing
-bonuses and Hell difficulty target modifiers through both runners. Remaining
+bonuses and Hell difficulty target modifiers through both runners. Percentage,
+flat, and to-hit weapon modifiers now cross the same gate; other
 weapon/hit-resolution edge cases remain follow-up native-parity work.
 
 All server-owned save envelopes, combined session checkpoints, command

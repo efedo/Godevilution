@@ -48,6 +48,8 @@ All notable changes to this fork are documented below.
   managed initialized attacks agree on armor-piercing admission and checkpoint.
 - Replay fixtures now carry validated Normal/Nightmare/Hell difficulty; native
   and managed Hell target armor and initial-health modifiers share a checkpoint.
+- Initialized physical replay now carries validated percentage, flat, and
+  to-hit weapon modifiers through native and managed checkpoints.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
