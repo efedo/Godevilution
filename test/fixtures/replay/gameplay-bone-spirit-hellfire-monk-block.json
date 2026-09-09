@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/bone-spirit-hellfire-monk-block",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "30dd1dbc7abdee458a96ee18f72a21bb97f5e57476bac0d98bb60dabf7dedf49"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1280,
+    "life_maximum": 1280,
+    "mana": 2000,
+    "mana_maximum": 2000,
+    "magic": 35,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2000,
+      "life_maximum": 2000,
+      "position_x": 1,
+      "position_y": 0,
+      "level_id": 1,
+      "character_class": 3,
+      "character_level": 1,
+      "dexterity": 80,
+      "block_capable": false,
+      "combat_mode": 0
+    },
+    "memorized_spells": [
+      { "spell_id": 38, "level": 2 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 38,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "d2d30320420d27071cb3b2f8510b9e5e3a86cffa38067253a00cf039555f914d" },
+    { "tick": 10, "state_sha256": "3c82e9ce03cd66c7adb14fa0bd4181fd3cd154d724db3ad0ff63e320ef88d5cb" }
+  ]
+}

@@ -8191,6 +8191,11 @@ Hellfire Monk primary fixture covering the previously shield-only native path.
 Its replay setup now also supplies the validated class catalog and fixture
 Dexterity to the managed runner, keeping the class decision data-driven.
 
+The compact native replay now applies the same secondary-player class-aware
+FlexibleBlock/base-chance boundary across Bone Spirit, Charged Bolt, and
+Fireball player impacts; the Hellfire Monk Bone Spirit fixture covers the
+unarmed branch and its variant RNG consumption.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

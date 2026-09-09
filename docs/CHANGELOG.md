@@ -21,6 +21,9 @@ All notable changes to this fork are documented below.
   boundary applies to the primary player without equipment.
 - Hork Spawn replay setup now loads the validated player-class catalog and
   initial Dexterity, so managed class-aware block checks use fixture state.
+- Extended secondary-player FlexibleBlock/base-chance handling to Bone Spirit,
+  Charged Bolt, and Fireball replay impacts, with Hellfire Monk Bone Spirit
+  coverage preserving life and variant RNG parity.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance
   are applied before Mana Shield absorption in both runners.
 - Added persistent Acid puddle impact coverage proving active-tick player

@@ -1179,6 +1179,8 @@ Notable shared fixtures include:
 - `gameplay-hork-spawn-primary-monk-block.json` for Hellfire Monk
   FlexibleBlock admission during Hork Spawn impact without equipment; the
   Hork replay executor loads the shared class catalog and fixture Dexterity;
+- `gameplay-bone-spirit-hellfire-monk-block.json` for secondary-player
+  FlexibleBlock admission during Hellfire Bone Spirit impact without equipment;
 - `gameplay-acid-primary-equipment.json` for primary Acid impact GetHit and
   resistance before Mana Shield absorption, with puddle lifecycle checkpoints;
 - `gameplay-acid-puddle-primary-equipment.json` for active Acid puddle player

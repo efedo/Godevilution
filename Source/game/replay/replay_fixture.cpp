@@ -31,6 +31,9 @@ void AdvanceReplayPlayerApocalypseOneTick(ReplayFixtureExecutionState &state);
 
 namespace {
 
+bool IsReplaySecondaryPlayerBlockCapable(const ReplayFixtureExecutionState &state);
+int32_t GetReplayBaseBlockChance(uint32_t characterClassId);
+
 constexpr uint32_t FastAttackFlag = 1U << 18;
 constexpr uint32_t FasterAttackFlag = 1U << 19;
 constexpr uint32_t FastestAttackFlag = 1U << 20;
@@ -2330,7 +2333,9 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					bool blocked = false;
 					const int32_t damageQ6 = projectile.damage * 32;
 					static_cast<void>(GenerateRnd(state, 1));
-					const bool canBlock = state.secondaryPlayerBlockCapable
+					const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
+					    || IsReplaySecondaryPlayerBlockCapable(state);
+					const bool canBlock = secondaryPlayerBlockCapable
 					    && (state.secondaryPlayerCombatMode == 0
 					        || state.secondaryPlayerCombatMode == 4);
 					const int32_t blockRoll = canBlock
@@ -2338,6 +2343,7 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					    : 100;
 					const int32_t blockChance = std::clamp(
 					    state.secondaryPlayerDexterity
+					        + GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
 					        + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
 					        - static_cast<int32_t>(state.characterLevel) * 2,
 					    0,
@@ -2521,7 +2527,9 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					if (!torchantMonsterProjectile)
 						static_cast<void>(GenerateRnd(state, 1));
 					if (!shifted) {
-						const bool canBlock = state.secondaryPlayerBlockCapable
+						const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
+						    || IsReplaySecondaryPlayerBlockCapable(state);
+						const bool canBlock = secondaryPlayerBlockCapable
 						    && (state.secondaryPlayerCombatMode == 0
 						        || state.secondaryPlayerCombatMode == 4);
 						const int32_t blockRoll = canBlock
@@ -2529,6 +2537,7 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 						    : 100;
 						const int32_t blockChance = std::clamp(
 							state.secondaryPlayerDexterity
+							    + GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
 							    + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
 							    - static_cast<int32_t>(state.characterLevel) * 2,
 							0,
@@ -2719,7 +2728,9 @@ void AdvanceBoneSpiritsOneTick(ReplayFixtureExecutionState &state, uint64_t tick
 				    95);
 				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 				if (hitRoll < hitChance) {
-					const bool canBlock = state.secondaryPlayerBlockCapable
+					const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
+					    || IsReplaySecondaryPlayerBlockCapable(state);
+					const bool canBlock = secondaryPlayerBlockCapable
 					    && (state.secondaryPlayerCombatMode == 0
 					        || state.secondaryPlayerCombatMode == 4);
 					const int32_t blockRoll = canBlock
@@ -2727,6 +2738,7 @@ void AdvanceBoneSpiritsOneTick(ReplayFixtureExecutionState &state, uint64_t tick
 					    : 100;
 					const int32_t blockChance = std::clamp(
 					    state.secondaryPlayerDexterity
+					        + GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
 					        + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
 					        - static_cast<int32_t>(state.characterLevel) * 2,
 					    0,
@@ -3352,7 +3364,9 @@ void AdvanceChargedBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tic
 			    95);
 			const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 			if (hitRoll < hitChance) {
-				const bool canBlock = state.secondaryPlayerBlockCapable
+				const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
+				    || IsReplaySecondaryPlayerBlockCapable(state);
+				const bool canBlock = secondaryPlayerBlockCapable
 				    && (state.secondaryPlayerCombatMode == 0 || state.secondaryPlayerCombatMode == 4);
 				const int32_t blockRoll = canBlock
 				    ? std::max(GenerateRnd(state, 100), 0)
@@ -3361,6 +3375,7 @@ void AdvanceChargedBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tic
 				const int32_t damageQ6 = projectile.damage * 32;
 				const int32_t blockChance = std::clamp(
 				    state.secondaryPlayerDexterity
+				        + GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
 				        + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
 				        - static_cast<int32_t>(state.characterLevel) * 2,
 				    0,
