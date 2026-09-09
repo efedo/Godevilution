@@ -46,6 +46,7 @@ constexpr int32_t HellfireDevastationFlag = 1 << 0;
 constexpr int32_t HellfireDecayFlag = 1 << 1;
 constexpr int32_t HellfirePerilFlag = 1 << 2;
 constexpr int32_t HellfireJestersFlag = 1 << 3;
+constexpr int32_t HellfireDoppelgangerFlag = 1 << 4;
 constexpr int32_t HellfireDecayDamageReduction = 5;
 constexpr int32_t HellfireDecayRemovalThreshold = 100;
 constexpr int32_t HellfirePerilDamageMultiplier = 2;
@@ -3577,6 +3578,11 @@ void CreateReplayWeaponArrow(
 	    && HasReplayHellfireEquipmentFlag(state, HellfireDevastationFlag)
 	    && GenerateRnd(state, 100) < 5)
 		damageQ6 *= 3;
+	bool doppelgangerProc = false;
+	if (state.hellfire
+	    && HasReplayHellfireEquipmentFlag(state, HellfireDoppelgangerFlag)
+	    && GenerateRnd(state, 100) < 10)
+		doppelgangerProc = true;
 	if (state.hellfire
 	    && HasReplayHellfireEquipmentFlag(state, HellfireJestersFlag)) {
 		int32_t roll = GenerateRnd(state, 201);
@@ -3631,6 +3637,7 @@ void CreateReplayWeaponArrow(
 	projectile.damage = damageQ6 / 64;
 	projectile.damageQ6 = damageQ6;
 	projectile.perilSelfDamageQ6 = perilSelfDamageQ6;
+	projectile.doppelgangerProc = doppelgangerProc;
 	projectile.elementalFireDamage = fireDamage;
 	projectile.elementalLightningDamage = lightningDamage;
 	projectile.damageType = 0;

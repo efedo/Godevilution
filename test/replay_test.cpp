@@ -795,6 +795,24 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(perilState.projectiles[0].damageQ6, 128);
 	EXPECT_EQ(perilState.projectiles[0].perilSelfDamageQ6, 64);
 	EXPECT_EQ(perilResult.transitions[0].stateSha256, perilFixture.checkpoints.back().stateSha256);
+
+	std::ifstream doppelgangerFile("test/fixtures/replay/gameplay-ranged-hellfire-doppelganger.json");
+	ASSERT_TRUE(doppelgangerFile.good());
+	const std::string doppelgangerJson((std::istreambuf_iterator<char>(doppelgangerFile)), std::istreambuf_iterator<char>());
+	ReplayFixture doppelgangerFixture;
+	ASSERT_TRUE(ParseReplayFixture(doppelgangerJson, doppelgangerFixture, error)) << error;
+	ReplayFixtureExecutionState doppelgangerState;
+	doppelgangerState.life = doppelgangerFixture.initialState.life;
+	doppelgangerState.lifeMaximum = doppelgangerFixture.initialState.life;
+	doppelgangerState.mana = doppelgangerFixture.initialState.mana;
+	doppelgangerState.manaMaximum = doppelgangerFixture.initialState.manaMaximum;
+	doppelgangerState.positionX = doppelgangerFixture.initialState.positionX;
+	doppelgangerState.positionY = doppelgangerFixture.initialState.positionY;
+	ReplayFixtureExecutionResult doppelgangerResult;
+	ASSERT_TRUE(ExecuteReplayFixture(doppelgangerFixture, doppelgangerState, doppelgangerResult, error)) << error;
+	ASSERT_EQ(doppelgangerState.projectiles.size(), 1U);
+	EXPECT_TRUE(doppelgangerState.projectiles[0].doppelgangerProc);
+	EXPECT_EQ(doppelgangerResult.transitions[0].stateSha256, doppelgangerFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

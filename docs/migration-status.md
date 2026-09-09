@@ -181,9 +181,11 @@ pre-modifier attack and its final target-damage multiplier.
 Ranged Hellfire replay now applies the native `Jesters` Q6 scaling before
 elemental channel resolution.
 Ranged Hellfire replay now also applies the validated post-hit `Devastation`
- multiplier before projectile snapshotting.
+multiplier before projectile snapshotting.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
- and post-armor multiplier into the projectile snapshot.
+and post-armor multiplier into the projectile snapshot.
+Ranged Hellfire replay now carries the validated `Doppelganger` proc flag into
+the projectile snapshot.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
