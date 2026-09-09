@@ -2,14 +2,14 @@
 
 Status date: 2026-09-09
 
-The active content schema is now `1.452.0` (with `1.451.0` retained as
+The active content schema is now `1.453.0` (with `1.452.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
 namespace, and published locations now survive authoritative snapshots,
-saves, and protocol projection. The Warlord room is the first shipped quest
-geometry fragment to use the separate native-DUN path; other licensed native
-assets and authored quest placement rows remain deferred.
+saves, and protocol projection. The Warlord room and the Halls/Gateway
+Catacombs quest rooms now use the separate native-DUN path; remaining licensed
+native assets and authored quest placement rows remain deferred.
 
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and
@@ -26,6 +26,11 @@ template-only steel tome are activated only while the Warlord quest is not
 unavailable, matching the native `IsAvailable` gate without inferring placement
 from legacy object IDs. Native random chamber selection and licensed collision
 replacement remain deferred.
+
+The Halls of the Blind and Gateway of Blood rooms now use availability-gated
+native DUN fragments at explicit validated anchors on runtime Cathedral and
+Catacombs. Their book templates inherit the fragment anchors, while native
+post-activation map mutations and random chamber selection remain deferred.
 
 The shared geometry catalog is retained by the simulation for deferred
 set-piece publication and snapshot restore, so anchored fragments use the same

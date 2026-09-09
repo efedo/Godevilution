@@ -395,10 +395,9 @@ explicit migration seams, not server-authority claims:
   author their native object identities and initial quest-variable transition;
   presentation metadata also keeps each activated book visible and selects its
   native open-book frame;
-  the Warlord room now uses an availability-gated native-DUN fragment with an
-  explicit Hell anchor and steel-tome placement. Halls and Gateway native-DUN
-  placement and map resynchronization remain deferred until their corresponding
-  generated geometry and licensed assets are available. The Halls optic-amulet
+  the Halls, Gateway, and Warlord rooms now use availability-gated native-DUN
+  fragments with explicit anchors and inherited book-template placements;
+  post-activation map resynchronization remains deferred. The Halls optic-amulet
   and Gateway Blood Stone rewards are server-authored object metadata rather
   than native-ID client logic.
   The Godot client now consumes that frame metadata and renders an additive

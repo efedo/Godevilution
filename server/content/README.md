@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.452.0` schema in
+It declares its identity and `devilution.diablo@1.453.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.451.0` schema so existing manifest-based packs remain
+previous additive `1.452.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -37,11 +37,12 @@ The base pack also carries template-only behavior rows for the native Halls of
 the Blind book, Gateway of Blood book, and Warlord steel tome. These rows own
 their stable object and native presentation identities, the initial
 quest-variable transition, and the authored Halls optic-amulet and Gateway
-Blood Stone rewards. The Warlord room is now an availability-gated native-DUN
-fragment with an explicit validated Hell anchor for the native level-13
-encounter, including its steel-tome
-placement; native random-chamber selection and licensed collision replacement
-remain deferred, and no server path infers those values from a native object ID.
+Blood Stone rewards. The Halls of the Blind, Gateway of Blood, and Warlord
+rooms are now availability-gated native-DUN fragments with explicit validated
+Cathedral, Catacombs, and Hell anchors; their book templates inherit those
+fragment anchors. Native random-chamber selection, post-activation map
+replacement, and licensed collision replacement remain deferred, and no server
+path infers those values from a native object ID.
 
 The staged unique-monster dialogue catalog also owns combat admission while a
 matching conversation stage is pending. Older packs without a staged route
@@ -1824,8 +1825,9 @@ When a quest object activates, the server records the authored message on the
 linked quest and emits a dialogue event; this externalizes the native Halls of
 the Blind, Gateway of Blood, and Warlord steel-tome activation speech while
 their native-DUN placement and map mutations were initially deferred. The
-active 1.452 contract now externalizes the Warlord room and steel-tome
-placement; Halls and Gateway map replacement remain deferred.
+active 1.453 contract now externalizes the Warlord, Halls, and Gateway rooms
+and book-template placements; their post-activation map replacement remains
+deferred.
 
 Schema 1.441 allows a quest-transition object to apply an authored
 `quest_sequence_follow_up_kind` or `quest_sequence_follow_up_world_mutation_id`
@@ -3162,7 +3164,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.452.0"
+    "version": "1.453.0"
   },
   "dependencyConstraints": [
     {
@@ -3196,7 +3198,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.452.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.453.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

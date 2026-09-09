@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized the Halls of the Blind and Gateway of Blood rooms as
+  availability-gated native-DUN fragments with explicit Cathedral/Catacombs
+  anchors and server-owned book-template placements. This advances the active
+  content schema to `1.453.0`; their licensed post-activation map mutations
+  remain deferred.
+
 - Externalized the Hellfire Warlord room as a validated native-DUN fragment
   with an explicit Hell anchor for the native level-13 encounter and an
   availability gate. This advances the active content schema to `1.452.0`.

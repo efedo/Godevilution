@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.452.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.453.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -765,7 +765,7 @@ public sealed class ShippedContentTests
         var fragments = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv()).Definitions;
-        Assert.Equal(2, fragments.Count);
+        Assert.Equal(4, fragments.Count);
         var fragment = fragments.Single(definition => definition.FragmentId == 1);
 
         Assert.Equal((1U, 4U, "hell", "levels/l1data/banner1.dun", "Snotspill", -11, -9), (
@@ -791,6 +791,30 @@ public sealed class ShippedContentTests
         Assert.Equal(
             1908,
             pack.Assets.Single(asset => asset.SourcePath == warlord.AssetPath).Contents.Length);
+
+        var halls = fragments.Single(definition => definition.FragmentId == 3);
+        Assert.Equal((1U, "cathedral", 8, 8, 3009U, "halls_of_the_blind"), (
+            halls.LevelId,
+            halls.LevelSymbol,
+            halls.AnchorPositionX,
+            halls.AnchorPositionY,
+            halls.RequiredQuestId,
+            halls.RequiredQuestSymbol));
+        Assert.Equal(
+            4118,
+            pack.Assets.Single(asset => asset.SourcePath == halls.AssetPath).Contents.Length);
+
+        var gateway = fragments.Single(definition => definition.FragmentId == 4);
+        Assert.Equal((2U, "catacombs", 10, 4, 3010U, "valor"), (
+            gateway.LevelId,
+            gateway.LevelSymbol,
+            gateway.AnchorPositionX,
+            gateway.AnchorPositionY,
+            gateway.RequiredQuestId,
+            gateway.RequiredQuestSymbol));
+        Assert.Equal(
+            5444,
+            pack.Assets.Single(asset => asset.SourcePath == gateway.AssetPath).Contents.Length);
     }
 
     [Fact]
@@ -857,6 +881,37 @@ public sealed class ShippedContentTests
         var level = activation.Simulation.WorldState.World!.Levels
             .Single(candidate => candidate.LevelId == 4);
         Assert.DoesNotContain((ushort)98, level.NativeMonsterLayer);
+    }
+
+    [Fact]
+    public void AvailableCatacombsQuestActivationMaterializesTheBlindAndBloodRooms()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("available-catacombs-quests", "1", [pack])),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var hallsBook = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 2020);
+        Assert.Equal((1U, 8, 8, 3009U), (
+            hallsBook.LevelId,
+            hallsBook.PositionX,
+            hallsBook.PositionY,
+            hallsBook.QuestId));
+        var gatewayBook = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 2021);
+        Assert.Equal((2U, 10, 4, 3010U), (
+            gatewayBook.LevelId,
+            gatewayBook.PositionX,
+            gatewayBook.PositionY,
+            gatewayBook.QuestId));
+        var catacombs = activation.Simulation.WorldState.World!.Levels
+            .Single(candidate => candidate.LevelId == 2);
+        Assert.Equal(22, catacombs.NativeMonsterLayer.Count(value => value is 12 or 28));
     }
 
     [Fact]
@@ -988,7 +1043,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.451.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.452.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -3469,7 +3524,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.452.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.453.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -3897,7 +3952,7 @@ public sealed class ShippedContentTests
             cornerstoneQuestType.WorldItemAnchorPositionX,
             cornerstoneQuestType.WorldItemAnchorPositionY));
         var nativeFragments = activation.NativeDunFragments!.Definitions;
-        Assert.Equal(2, nativeFragments.Count);
+        Assert.Equal(4, nativeFragments.Count);
         var nakrulFragment = nativeFragments.Single(definition => definition.FragmentId == 1);
         Assert.Equal((1U, 24U, 2403U, -6, -8), (
             nakrulFragment.FragmentId,
@@ -3937,7 +3992,7 @@ public sealed class ShippedContentTests
                 + 7 + cornerstoneMap.MegaWidth - 1]);
         Assert.Equal(
             [(1U, 1U, 2401U, 2403U, -4, 0), (2U, 1U, 2402U, 2403U, -2, 0),
-             (3U, 1U, 2409U, 2403U, 3, -1)],
+             (3U, 1U, 2409U, 2403U, 3, -1), (4U, 4U, 2021U, 0U, 0, 0)],
             activation.NativeDunFragmentObjects!.Placements.Select(placement => (
                 placement.PlacementId,
                 placement.FragmentId,
@@ -4137,7 +4192,7 @@ public sealed class ShippedContentTests
         Assert.Equal("Zombie", hellfireMonster.NativeAi);
         Assert.Equal(0, hellfireMonster.Intelligence);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
-        Assert.Equal(9, activation.Simulation.WorldState.CombatTargets.Count);
+        Assert.Equal(31, activation.Simulation.WorldState.CombatTargets.Count);
         Assert.Contains(
             activation.Simulation.WorldState.CombatTargets.Values,
             target => target.LevelId == 4 && target.IsUnique && target.MonsterId == 140);
