@@ -92,6 +92,8 @@ The demon-triple companion carries the native `TripleDemonDamage` flag and
 proves its validated 3x post-armor multiplier against an authored demon target.
 The Hellfire-devastation companion carries the authored Hellfire damage-armor
 flag and proves the post-hit 3x `Devastation` proc with native RNG ordering.
+The Hellfire-armor-piercing companion covers Hellfire's shifted armor
+admission semantics while preserving the unshifted post-hit damage armor.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

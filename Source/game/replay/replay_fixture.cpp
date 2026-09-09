@@ -5419,10 +5419,19 @@ bool ApplyReplayAttack(
 		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
 		const int32_t damageArmorClass = state.combatTargetArmorClass + difficultyArmorBonus;
 		int32_t hitArmorClass = damageArmorClass;
+		int32_t hitArmorPiercing = armorPiercingBonus;
+		if (state.hellfire && armorPiercingBonus > 0) {
+			const int32_t armorPiercingShift = armorPiercingBonus - 1;
+			hitArmorClass = armorPiercingShift > 0
+			    ? hitArmorClass >> armorPiercingShift
+			    : hitArmorClass - hitArmorClass / 4;
+			hitArmorPiercing = 0;
+		}
 		if (state.characterClassId == 5 && armorPiercingBonus > 0)
 			hitArmorClass = std::max(0, hitArmorClass - damageArmorClass / 8);
+		hitArmorClass = std::max(0, hitArmorClass);
 		const int32_t hitChance = std::clamp(
-		    level + dexterity / 2 + baseMeleeToHit + hitBonus + armorPiercingBonus
+		    level + dexterity / 2 + baseMeleeToHit + hitBonus + hitArmorPiercing
 		        - hitArmorClass,
 		    5,
 		    95);

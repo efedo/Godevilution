@@ -167,6 +167,8 @@ also includes the validated post-armor `TripleDemonDamage` multiplier. The
 Barbarian path now covers the native melee armor-reduction divisor when
 armor-piercing equipment is present. Hellfire physical replay now carries
 authored damage-armor flags and the deterministic post-hit `Devastation` proc.
+Hellfire armor-piercing replay now also uses the native shifted-armor hit
+formula rather than the Diablo additive-piercing formula.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
