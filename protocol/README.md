@@ -195,7 +195,10 @@ Windows toolchain command.
   exceed the native `112x112` arrays, and a supplied coarse layer cannot exceed
   `40x40`; the native and managed protocol validators reject larger values.
   A `112x112` town projection without a coarse layer remains valid. This is
-  presentation metadata only.
+  presentation metadata only. When a server-owned world mutation replaces a
+  native set-piece presentation, the updated coarse layer is delivered through
+  the next authoritative level-geometry snapshot; clients must replace their
+  cached layer rather than infer a local map transition.
 - `Snapshot.set_level_object_origins` carries the server-owned origins for
   runtime-generated set-piece object groups. Entries are keyed by validated
   set-level ID and include the runtime level plus origin cell; relative

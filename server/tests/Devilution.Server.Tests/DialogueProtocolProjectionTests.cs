@@ -58,6 +58,31 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsNativeMegaTileLayersThroughTheProtocolSnapshot()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                SetLevelObjectOrigins = [],
+            };
+        var level = new AuthoritativeLevel(
+            17,
+            4,
+            4,
+            nativeMegaTileLayer: [7, 8, 9, 10]);
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(
+            source,
+            levelGeometry: [level]);
+        var geometry = Assert.Single(projected.LevelGeometry);
+        Assert.Equal([7U, 8U, 9U, 10U], geometry.NativeMegaTileLayer);
+
+        var wireRoundTrip = Snapshot.Parser.ParseFrom(projected.ToByteArray());
+        Assert.Equal(
+            [7U, 8U, 9U, 10U],
+            Assert.Single(wireRoundTrip.LevelGeometry).NativeMegaTileLayer);
+    }
+
+    [Fact]
     public void RejectsMorePlayersThanTheNativePool()
     {
         var source = CreateOriginSnapshot(

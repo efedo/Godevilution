@@ -52,10 +52,10 @@ The Halls of the Blind and Gateway of Blood rooms now use availability-gated
 native DUN fragments at explicit validated anchors on runtime Cathedral and
 Catacombs. The Gateway fragment deliberately uses the native pre-pedestal
 blood1.dun asset; the server-owned three-stage pedestal consumes Blood Stones,
-applies the validated blood2.dun monster layer, and awards Arkaine's Valor.
-Their book templates inherit the fragment anchors, while native random-chamber
-selection, post-activation tile replacement, and licensed collision replacement
-remain deferred.
+applies the validated blood2.dun monster layer and anchored mega-tile layer,
+and awards Arkaine's Valor. Their book templates inherit the fragment anchors,
+while native random-chamber selection and licensed collision replacement remain
+deferred.
 
 The shared geometry catalog is retained by the simulation for deferred
 set-piece publication and snapshot restore, so anchored fragments use the same
@@ -1441,8 +1441,9 @@ The base content pack now includes template-only authoritative behavior rows
 for the Halls of the Blind book, Gateway of Blood book, and Warlord steel tome.
 Their native identities, initial quest-variable transitions, and Halls
 optic-amulet/Gateway Blood Stone rewards are validated by the module-owned
-shipped-content test; native-DUN placement and map replacement remain deferred
-pending generated geometry and licensed assets.
+shipped-content test. Native-DUN placement and Gateway's post-activation
+mega-tile projection are now active; licensed collision replacement remains
+deferred pending the native geometry bundle.
 
 Native DUN fragments and fragment-object placements now accept validated
 set-level-origin anchors. The server defers those rows until the corresponding

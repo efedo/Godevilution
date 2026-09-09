@@ -43,7 +43,8 @@ Cathedral, Catacombs, and Hell anchors; their book templates inherit those
 fragment anchors. Gateway's initial fragment is the native pre-pedestal
 blood1.dun; its blood2.dun monster layer is applied by the server-owned
 pedestal transition and awards Arkaine's Valor after the third Blood Stone.
-Native random-chamber selection, post-activation map replacement, and licensed
+The same transition now projects the licensed blood2.dun mega-tile layer from
+the anchored world mutation. Native random-chamber selection and licensed
 collision replacement remain deferred, and no server path infers those values
 from a native object ID.
 
@@ -1828,9 +1829,9 @@ When a quest object activates, the server records the authored message on the
 linked quest and emits a dialogue event; this externalizes the native Halls of
 the Blind, Gateway of Blood, and Warlord steel-tome activation speech while
 their native-DUN placement and map mutations were initially deferred. The
-active 1.454 contract now externalizes the Warlord, Halls, and Gateway rooms
-and book-template placements; their post-activation map replacement remains
-deferred.
+active 1.457 contract now externalizes the Warlord, Halls, and Gateway rooms,
+book-template placements, and Gateway's anchored post-activation mega-tile
+replacement; licensed collision replacement remains deferred.
 
 Schema 1.455 adds optional set-level destinations to `warps.tsv`. A warp may
 target the materialized pre-map or active-map variant of a validated native
@@ -1856,7 +1857,8 @@ Schema 1.454 adds server-owned `object_item_gates.tsv` requirements and
 `monster_layer_rects` world-mutation assignments. The Gateway pedestal consumes
 one Blood Stone per stage and applies the licensed blood2.dun monster layer only
 after the third stage, with the final Arkaine's Valor reward emitted by the
-authoritative object path.
+authoritative object path. Schema 1.457 additionally projects blood2.dun's
+anchored mega-tile layer through `mega_tile_asset_path`.
 
 Schema 1.441 allows a quest-transition object to apply an authored
 `quest_sequence_follow_up_kind` or `quest_sequence_follow_up_world_mutation_id`
