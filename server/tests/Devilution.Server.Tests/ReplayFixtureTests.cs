@@ -2482,6 +2482,7 @@ public sealed class ReplayFixtureTests
             startingLifeMaximum: initial.LifeMaximum,
             startingCharacterLevel: initial.CharacterLevel,
             startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingLevelId: initial.LevelId,
             startingPlayerClasses: classes,
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
@@ -2492,6 +2493,11 @@ public sealed class ReplayFixtureTests
             startingAttributes: PlayerAttributesState.Zero with {
                 Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
             },
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: DiabloGameMode.Multiplayer);
 
@@ -9768,7 +9774,7 @@ public sealed class ReplayFixtureTests
             startingPlayerClasses: classes,
             startingAttributes: PlayerAttributesState.Zero with {
                 Dexterity = new PlayerAttributeState(
-                    fixture.InitialState.Dexterity,
+                    0,
                     fixture.InitialState.Dexterity),
             },
             startingEquipment: startingEquipment,
@@ -9780,6 +9786,11 @@ public sealed class ReplayFixtureTests
             startingProjectiles: startingProjectiles,
             startingMonsterMissiles: missiles,
             startingMonsterSpawnPlanner: enableSpawnPlanner ? spawnPlanner : null,
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
     }

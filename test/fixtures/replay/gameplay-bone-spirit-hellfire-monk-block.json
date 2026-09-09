@@ -1,6 +1,7 @@
 {
   "format_version": 1,
   "fixture_id": "gameplay/bone-spirit-hellfire-monk-block",
+  "protocol_schema_version": "0.1.0",
   "content_manifest": {
     "id": "devilution.base",
     "version": "0.1.0",

@@ -38,6 +38,10 @@ All notable changes to this fork are documented below.
 - Extended secondary-player FlexibleBlock/base-chance handling to Bone Spirit,
   Charged Bolt, and Fireball replay impacts, with Hellfire Monk Bone Spirit
   coverage preserving life and variant RNG parity.
+- Completed the class-aware Monk replay lanes by preserving authored level,
+  Hellfire rules, and native base/current attribute semantics in the managed
+  Bone Spirit and Hork Spawn harnesses; added missing schema metadata to the
+  remaining secondary-Monk fixtures.
 - Added Hellfire Monk secondary-participant MonsterMelee coverage, applying the
   same class-aware block admission and preserving the native AI seed stream.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance

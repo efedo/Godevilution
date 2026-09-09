@@ -2,6 +2,12 @@
 
 Status date: 2026-09-09
 
+The class-aware Monk replay lanes now preserve authored level IDs, Hellfire
+combat rules, and native base/current attribute semantics in the managed Bone
+Spirit and Hork Spawn harnesses. The two remaining secondary-Monk fixtures now
+carry the required protocol schema metadata, and the focused six-test managed
+lane matches native checkpoints.
+
 Autonomous MonsterMagic impacts now share the managed primary-player GetHit and
 Mana Shield boundary in compact native replay, while secondary impacts retain
 their Q6 GetHit adjustment. The new Lich fixtures verify projectile impact,
