@@ -4208,6 +4208,20 @@ public sealed class DiabloSimulationTests
 
         Assert.Throws<InvalidDataException>(() =>
             replacement.RestoreSnapshot(destination, invalid));
+
+        var invalidSource = snapshot with {
+            Player = snapshot.Player with {
+                CurrentAction = snapshot.Player.CurrentAction! with {
+                    CastIntent = snapshot.Player.CurrentAction.CastIntent! with {
+                        SourceItem = new DiabloPlayerItemReference(
+                            DiabloPlayerItemLocation.Inventory,
+                            40),
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            replacement.RestoreSnapshot(destination, invalidSource));
     }
 
     [Fact]

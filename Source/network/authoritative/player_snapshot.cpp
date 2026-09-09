@@ -1321,6 +1321,28 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		return level == levels.end() || level->second->width() == 0 || level->second->height() == 0
 		    || cast.target_x() < level->second->width() && cast.target_y() < level->second->height();
 	};
+	const auto isValidCastSource = [](const protocol::CastRequested &cast) {
+		const auto source = static_cast<int32_t>(cast.source());
+		const bool requiresItem = source == static_cast<int32_t>(protocol::CAST_SOURCE_KIND_CHARGED_ITEM)
+		    || source == static_cast<int32_t>(protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM);
+		if (requiresItem != cast.has_source_item())
+			return false;
+		if (!cast.has_source_item())
+			return true;
+		const auto &item = cast.source_item();
+		switch (static_cast<int32_t>(item.location())) {
+		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_INVENTORY):
+			return item.slot() < NativeMaximumInventoryCount;
+		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_BELT):
+			return item.slot() < NativeMaximumBeltCount;
+		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT):
+			return item.slot() < NativeMaximumEquipmentCount;
+		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_STASH):
+			return item.slot() < StashCellCount && item.page() < StashPageCount;
+		default:
+			return false;
+		}
+	};
 	for (const auto &player : snapshot.players()) {
 		if (!player.has_current_action())
 			continue;
@@ -1358,6 +1380,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.has_cast() && action.cast().spell_id() != 0
 		    && action.target_entity_id() == action.cast().target_entity_id()
 		    && isProjectedCastTarget(player, action.cast())
+		    && isValidCastSource(action.cast())
 		    && static_cast<int32_t>(action.cast().source()) >= protocol::CAST_SOURCE_KIND_UNSPECIFIED
 		    && static_cast<int32_t>(action.cast().source()) <= protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM
 		    && (!action.cast().has_source_item()

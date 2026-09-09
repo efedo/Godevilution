@@ -3,6 +3,13 @@ namespace Devilution.Shared;
 /** Native compatibility limits shared by the protocol and game modules. */
 public static class NativeCompatibilityLimits
 {
+    /** Native carried-item slot counts retained by authoritative references. */
+    public const int MaximumInventoryCount = 40;
+    public const int MaximumEquipmentCount = 7;
+    public const int MaximumBeltCount = 8;
+    public const int StashPageCount = 100;
+    public const int StashCellCount = 100;
+
     /** Highest stable spell identity retained by native-compatible snapshots. */
     public const uint MaximumStableSpellId = byte.MaxValue;
 

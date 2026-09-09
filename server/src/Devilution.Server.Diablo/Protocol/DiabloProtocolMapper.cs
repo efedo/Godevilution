@@ -1747,6 +1747,7 @@ internal static class DiabloProtocolMapper
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
                 && IsProjectedCastTarget(state.LevelId, action.CastIntent, levels)
+                && IsValidCastSource(action.CastIntent)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -1819,6 +1820,29 @@ internal static class DiabloProtocolMapper
             || level.Width == 0
             || level.Height == 0
             || cast.TargetX < level.Width && cast.TargetY < level.Height;
+    }
+
+    private static bool IsValidCastSource(DiabloCastIntent cast)
+    {
+        var requiresItem = cast.Source is DiabloCastSourceKind.ChargedItem
+            or DiabloCastSourceKind.ConsumableItem;
+        if (requiresItem != cast.SourceItem.HasValue)
+            return false;
+        if (!cast.SourceItem.HasValue)
+            return true;
+        var item = cast.SourceItem.Value;
+        return item.Location switch {
+            DiabloPlayerItemLocation.Inventory =>
+                item.Slot < NativeMaximumInventoryCount,
+            DiabloPlayerItemLocation.Belt =>
+                item.Slot < NativeMaximumBeltCount,
+            DiabloPlayerItemLocation.Equipment =>
+                item.Slot < NativeMaximumEquipmentCount,
+            DiabloPlayerItemLocation.Stash =>
+                item.Slot < AuthoritativeProtocolLimits.NativeStashCellCount
+                && item.Page < AuthoritativeProtocolLimits.NativeStashPageCount,
+            _ => false,
+        };
     }
 
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)

@@ -52,6 +52,9 @@ Cast actions now apply the same coordinate contract to tile-targeted spell
 intents: native tile ranges are always enforced, and targetless casts must stay
 inside projected level geometry while stable entity-targeted casts retain their
 entity identity path.
+Cast source references now use the same native slot/page bounds as command
+admission, and charged/consumable source kinds cannot cross the action boundary
+without an item reference; zero stable IDs remain compatible with legacy state.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,

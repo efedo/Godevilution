@@ -824,6 +824,22 @@ public sealed class DialogueProtocolProjectionTests
                     },
                 },
                 levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                tileCastSource with {
+                    Player = tileCast with {
+                        CurrentAction = tileCast.CurrentAction! with {
+                            CastIntent = tileCast.CurrentAction.CastIntent! with {
+                                Source = DiabloCastSourceKind.Ability,
+                                SourceItem = new DiabloPlayerItemReference(
+                                    DiabloPlayerItemLocation.Inventory,
+                                    40),
+                            },
+                        },
+                    },
+                },
+                levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
     }
 
     [Fact]

@@ -1883,6 +1883,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	protocol::Snapshot tileCastOutside = tileCast;
 	tileCastOutside.mutable_players(0)->mutable_current_action()->mutable_cast()->set_target_x(2);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(tileCastOutside).has_value());
+	protocol::Snapshot tileCastMissingSourceItem = tileCast;
+	tileCastMissingSourceItem.mutable_players(0)->mutable_current_action()->mutable_cast()->set_source(
+	    protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(tileCastMissingSourceItem).has_value());
+	protocol::Snapshot tileCastInvalidSourceSlot = tileCast;
+	action = tileCastInvalidSourceSlot.mutable_players(0)->mutable_current_action();
+	action->mutable_cast()->set_source(protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
+	action->mutable_cast()->mutable_source_item()->set_location(protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	action->mutable_cast()->mutable_source_item()->set_slot(NativeMaximumInventoryCount);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(tileCastInvalidSourceSlot).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)

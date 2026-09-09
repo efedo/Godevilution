@@ -1016,6 +1016,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.Cast.SpellId != 0
                     && action.TargetEntityId == action.Cast.TargetEntityId
                     && IsProjectedCastTarget(snapshot, player, action.Cast)
+                    && IsValidCastSource(action.Cast)
                     && Enum.IsDefined(action.Cast.Source)
                     && (action.Cast.SourceItem is null
                         || Enum.IsDefined(action.Cast.SourceItem.Location)),
@@ -1114,6 +1115,28 @@ public static class AuthoritativeSnapshotValidator
             || level.Width == 0
             || level.Height == 0
             || cast.TargetX < level.Width && cast.TargetY < level.Height;
+    }
+
+    private static bool IsValidCastSource(CastRequested cast)
+    {
+        var requiresItem = cast.Source is CastSourceKind.ChargedItem
+            or CastSourceKind.ConsumableItem;
+        if (requiresItem != (cast.SourceItem is not null))
+            return false;
+        if (cast.SourceItem is null)
+            return true;
+        return cast.SourceItem.Location switch {
+            PlayerItemLocation.Inventory =>
+                cast.SourceItem.Slot < NativeMaximumInventoryCount,
+            PlayerItemLocation.Belt =>
+                cast.SourceItem.Slot < NativeMaximumBeltCount,
+            PlayerItemLocation.Equipment =>
+                cast.SourceItem.Slot < NativeMaximumEquipmentCount,
+            PlayerItemLocation.Stash =>
+                cast.SourceItem.Slot < NativeStashCellCount
+                && cast.SourceItem.Page < NativeStashPageCount,
+            _ => false,
+        };
     }
 
     private static void ValidateMonsters(Snapshot snapshot)

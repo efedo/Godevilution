@@ -728,6 +728,39 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsCastSourceReferenceWithoutMatchingSourceKind()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    CombatMode = PlayerCombatMode.Spell,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Cast,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        Cast = new CastRequested {
+                            SpellId = 1,
+                            Source = CastSourceKind.Ability,
+                            SourceItem = new PlayerItemReference {
+                                Location = PlayerItemLocation.Inventory,
+                                Slot = 40,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsPortalEndpointsOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

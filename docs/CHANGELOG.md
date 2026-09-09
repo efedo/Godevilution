@@ -14,6 +14,8 @@ All notable changes to this fork are documented below.
 - Cast-action target coordinates now remain within native and projected level
   geometry for tile-targeted casts across domain, mapper, host, Godot, and native
   snapshot validation.
+- Cast source references now enforce native inventory, belt, equipment, and stash
+  slot/page bounds and require item-backed source kinds to carry a reference.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
