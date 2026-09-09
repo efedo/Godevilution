@@ -52,6 +52,19 @@ public static class SnapshotStateHasher
                 hasher.AppendInt32(origin.PositionY);
             }
         }
+        var proceduralQuestPieceOrigins = snapshot.ProceduralQuestPieceOrigins
+            .OrderBy(origin => origin.OriginId)
+            .ToArray();
+        if (proceduralQuestPieceOrigins.Length > 0) {
+            hasher.AppendString("godevilution-procedural-quest-piece-origins-v1");
+            hasher.AppendUInt64((ulong)proceduralQuestPieceOrigins.Length);
+            foreach (var origin in proceduralQuestPieceOrigins) {
+                hasher.AppendUInt32(origin.OriginId);
+                hasher.AppendUInt32(origin.LevelId);
+                hasher.AppendInt32(origin.PositionX);
+                hasher.AppendInt32(origin.PositionY);
+            }
+        }
         var players = snapshot.Players.OrderBy(player => player.EntityId).ToArray();
         hasher.AppendUInt64((ulong)players.Length);
         foreach (var player in players) {

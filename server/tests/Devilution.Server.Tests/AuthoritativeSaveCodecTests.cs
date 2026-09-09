@@ -133,12 +133,16 @@ public sealed class AuthoritativeSaveCodecTests
                 new DiabloSetLevelObjectOriginState(2, 17, 31, 42),
                 new DiabloSetLevelObjectOriginState(5, 23, 12, 19),
             ],
+            ProceduralQuestPieceOrigins = [
+                new DiabloProceduralQuestPieceOriginState(2201, 17, 6, 7),
+            ],
         };
 
         var restored = new AuthoritativeSaveCodec().Deserialize(
             new AuthoritativeSaveCodec().Serialize(source));
 
         Assert.Equal(source.SetLevelObjectOrigins.ToArray(), restored.SetLevelObjectOrigins.ToArray());
+        Assert.Equal(source.ProceduralQuestPieceOrigins.ToArray(), restored.ProceduralQuestPieceOrigins.ToArray());
         Assert.Equal(source.MaterializedProceduralLevelIds.ToArray(), restored.MaterializedProceduralLevelIds.ToArray());
     }
 

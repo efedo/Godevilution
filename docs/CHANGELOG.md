@@ -17,6 +17,10 @@ All notable changes to this fork are documented below.
   assignments from the published origin, preserving the future set-piece map
   replacement contract.
 
+- Added schema `1.450.0`'s optional `procedural_quest_piece_origins.tsv` table.
+  It publishes deterministic ordinary-level quest-piece origins independently
+  of fixed native set-level IDs and persists them through saves and snapshots.
+
 - Kept the new shared native-geometry catalog additive at the end of the
   `DiabloContentActivation` constructor so existing positional callers remain
   source-compatible while activation exposes the validated catalog.

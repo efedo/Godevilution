@@ -887,6 +887,22 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                         throw new InvalidDataException(
                             $"Procedural set-piece origin {definition.SetLevelId} references an unknown set level.");
         }
+        var proceduralQuestPieceOrigins = content.TryGetTable(
+                "procedural_quest_piece_origins.tsv",
+                out var proceduralQuestPieceOriginsTable)
+            ? AuthoritativeProceduralQuestPieceOriginCatalog.LoadTsv(
+                proceduralQuestPieceOriginsTable.SourcePath,
+                proceduralQuestPieceOriginsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (proceduralQuestPieceOrigins is not null && world is null)
+            throw new InvalidDataException(
+                "Procedural quest-piece origins require levels.tsv or procedural_levels.tsv.");
+        if (stableIds is not null && proceduralQuestPieceOrigins is not null)
+            stableIds.ValidateReferences(
+                "procedural_origin",
+                originId => proceduralQuestPieceOrigins.Definitions
+                    .Any(definition => definition.OriginId == originId));
         var setLevelObjects = content.TryGetTable(
             "set_level_objects.tsv",
             out var setLevelObjectsTable)
@@ -1314,6 +1330,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             DialogueMessages = dialogueMessages,
             SetLevelObjects = setLevelObjects,
             ProceduralSetPieceOrigins = proceduralSetPieceOrigins,
+            ProceduralQuestPieceOrigins = proceduralQuestPieceOrigins,
             SetLevelMaps = setLevelMaps,
             NativeDunObjects = nativeDunObjects,
             NativeDunFragments = nativeDunFragments,

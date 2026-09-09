@@ -87,6 +87,9 @@ internal static class DiabloProtocolMapper
         ValidateProjectedSetLevelObjectOrigins(
             source.SetLevelObjectOrigins,
             levelGeometry is null ? null : projectedLevels);
+        ValidateProjectedProceduralQuestPieceOrigins(
+            source.ProceduralQuestPieceOrigins,
+            levelGeometry is null ? null : projectedLevels);
         if (source.ActiveStore is not null) {
             var storeSlots = new HashSet<uint>();
             foreach (var item in source.ActiveStore.Items) {
@@ -141,6 +144,14 @@ internal static class DiabloProtocolMapper
         foreach (var origin in source.SetLevelObjectOrigins.OrderBy(origin => origin.SetLevelId)) {
             snapshot.SetLevelObjectOrigins.Add(new SetLevelObjectOriginSnapshot {
                 SetLevelId = origin.SetLevelId,
+                LevelId = origin.LevelId,
+                PositionX = origin.PositionX,
+                PositionY = origin.PositionY,
+            });
+        }
+        foreach (var origin in source.ProceduralQuestPieceOrigins.OrderBy(origin => origin.OriginId)) {
+            snapshot.ProceduralQuestPieceOrigins.Add(new ProceduralQuestPieceOriginSnapshot {
+                OriginId = origin.OriginId,
                 LevelId = origin.LevelId,
                 PositionX = origin.PositionX,
                 PositionY = origin.PositionY,
@@ -1235,6 +1246,56 @@ internal static class DiabloProtocolMapper
         }
     }
 
+    private static void ValidateProjectedProceduralQuestPieceOrigins(
+        IReadOnlyList<DiabloProceduralQuestPieceOriginState> origins,
+        IReadOnlyDictionary<uint, AuthoritativeLevel>? levels = null)
+    {
+        if (origins.Count > AuthoritativeProtocolLimits.MaximumProceduralQuestPieceOriginCount
+            || origins.Any(origin => origin.OriginId == 0)
+            || origins.Select(origin => origin.OriginId).Distinct().Count() != origins.Count) {
+            throw new InvalidDataException(
+                "Authoritative procedural quest-piece origins contain invalid or duplicate identities.");
+        }
+        if (levels is null)
+            return;
+        foreach (var origin in origins) {
+            if (!levels.TryGetValue(origin.LevelId, out var level)
+                || origin.PositionX < 0
+                || origin.PositionY < 0
+                || origin.PositionX >= level.Width
+                || origin.PositionY >= level.Height) {
+                throw new InvalidDataException(
+                    $"Authoritative procedural quest-piece origin {origin.OriginId} is outside projected level {origin.LevelId}.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedProceduralQuestPieceOrigins(
+        Google.Protobuf.Collections.RepeatedField<ProceduralQuestPieceOriginSnapshot> origins,
+        IReadOnlyDictionary<uint, LevelGeometrySnapshot>? levels = null)
+    {
+        if (origins.Count > AuthoritativeProtocolLimits.MaximumProceduralQuestPieceOriginCount
+            || origins.Any(origin => origin.OriginId == 0)
+            || origins.Select(origin => origin.OriginId).Distinct().Count() != origins.Count) {
+            throw new InvalidDataException(
+                "Authoritative procedural quest-piece origins contain invalid or duplicate identities.");
+        }
+        if (levels is null)
+            return;
+        foreach (var origin in origins) {
+            if (!levels.TryGetValue(origin.LevelId, out var level)
+                || level.Width <= 0
+                || level.Height <= 0
+                || origin.PositionX < 0
+                || origin.PositionY < 0
+                || origin.PositionX >= level.Width
+                || origin.PositionY >= level.Height) {
+                throw new InvalidDataException(
+                    $"Authoritative procedural quest-piece origin {origin.OriginId} is outside projected level {origin.LevelId}.");
+            }
+        }
+    }
+
     private static void ValidateProjectedPlayerMinionOwners(
         IReadOnlyList<DiabloMonsterState> monsters,
         IReadOnlyList<StorePlayerSnapshot> players)
@@ -1885,6 +1946,11 @@ internal static class DiabloProtocolMapper
             source.LevelGeometry.Count == 0
                 ? null
                 : source.LevelGeometry.ToDictionary(level => level.LevelId));
+        ValidateProjectedProceduralQuestPieceOrigins(
+            source.ProceduralQuestPieceOrigins,
+            source.LevelGeometry.Count == 0
+                ? null
+                : source.LevelGeometry.ToDictionary(level => level.LevelId));
         if (source.ActiveStore is not null)
             ValidateProjectedActiveStoreSlots(source.ActiveStore.Items.Select(item => item.StoreSlot));
         if (source.Players.Count != 1) {
@@ -2234,6 +2300,14 @@ internal static class DiabloProtocolMapper
                 .OrderBy(origin => origin.SetLevelId)
                 .Select(origin => new DiabloSetLevelObjectOriginState(
                     origin.SetLevelId,
+                    origin.LevelId,
+                    origin.PositionX,
+                    origin.PositionY))
+                .ToArray(),
+            ProceduralQuestPieceOrigins = source.ProceduralQuestPieceOrigins
+                .OrderBy(origin => origin.OriginId)
+                .Select(origin => new DiabloProceduralQuestPieceOriginState(
+                    origin.OriginId,
                     origin.LevelId,
                     origin.PositionX,
                     origin.PositionY))

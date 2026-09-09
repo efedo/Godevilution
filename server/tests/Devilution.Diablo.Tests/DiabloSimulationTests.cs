@@ -12,13 +12,13 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.449.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.450.0"),
             DiabloContentSchema.Current);
     }
 
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
-    [InlineData("devilution.diablo", "1.448.0", true)]
+    [InlineData("devilution.diablo", "1.449.0", true)]
     [InlineData("devilution.diablo", "1.441.0", false)]
     [InlineData("devilution.diablo", "1.429.0", false)]
     [InlineData("devilution.diablo", "1.415.0", false)]
@@ -116,6 +116,83 @@ public sealed class DiabloSimulationTests
         Assert.Equal((origin.LevelId, origin.PositionX + 1, origin.PositionY + 1),
             (@object.LevelId, @object.PositionX, @object.PositionY));
         Assert.Empty(simulation.PublishAvailableProceduralSetPieceOrigins());
+    }
+
+    [Fact]
+    public void SimulationPlansOrdinaryQuestPieceOriginsWithoutUsingSetLevelIds()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var catalog = new AuthoritativeProceduralQuestPieceOriginCatalog([
+            new AuthoritativeProceduralQuestPieceOriginDefinition(2201, 17, 4, 4, 1234),
+        ]);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                ProceduralQuestPieceOrigins = catalog,
+                RandomSeed = 99,
+            });
+
+        var origin = Assert.Single(simulation.ProceduralQuestPieceOriginLocations);
+        Assert.Equal(2201U, origin.Key);
+        Assert.Equal(17U, origin.Value.LevelId);
+        Assert.InRange(origin.Value.PositionX, 0, 28);
+        Assert.InRange(origin.Value.PositionY, 0, 28);
+        Assert.Empty(simulation.SetLevelObjectOrigins);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripRestoresProceduralQuestPieceOrigins()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 32, 32));
+        world.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var options = new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+            World = world,
+            ProceduralQuestPieceOrigins = new AuthoritativeProceduralQuestPieceOriginCatalog([
+                new AuthoritativeProceduralQuestPieceOriginDefinition(2201, 17, 4, 4, 1234),
+            ]),
+            RandomSeed = 99,
+        };
+        var source = DiabloSimulationFactory.Instance.Create(options);
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+
+        var restoredWorld = new AuthoritativeWorld();
+        restoredWorld.AddLevel(new AuthoritativeLevel(0, 32, 32));
+        restoredWorld.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = restoredWorld,
+                ProceduralQuestPieceOrigins = options.ProceduralQuestPieceOrigins,
+                RandomSeed = 99,
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.Equal(
+            source.ProceduralQuestPieceOriginLocations,
+            replacement.ProceduralQuestPieceOriginLocations);
+    }
+
+    [Fact]
+    public void SimulationPublishesDeferredOrdinaryQuestPieceOriginsWhenGeometryArrives()
+    {
+        var world = new AuthoritativeWorld();
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                ProceduralQuestPieceOrigins = new AuthoritativeProceduralQuestPieceOriginCatalog([
+                    new AuthoritativeProceduralQuestPieceOriginDefinition(2201, 17, 4, 4, 1234),
+                ]),
+                RandomSeed = 99,
+            });
+
+        Assert.Empty(simulation.ProceduralQuestPieceOriginLocations);
+        simulation.WorldState.AddLevel(new AuthoritativeLevel(17, 32, 32));
+        var published = simulation.PublishAvailableProceduralQuestPieceOrigins();
+
+        Assert.Single(published);
+        Assert.Equal(published, simulation.ProceduralQuestPieceOriginLocations);
+        Assert.Empty(simulation.PublishAvailableProceduralQuestPieceOrigins());
     }
 
     [Fact]
@@ -998,7 +1075,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.449.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.450.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

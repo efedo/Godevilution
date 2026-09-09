@@ -2,6 +2,14 @@
 
 Status date: 2026-09-09
 
+The active Diablo content schema is now `1.450.0` (with `1.449.0` retained as
+the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
+rows publish deterministic ordinary-level quest geometry origins. Their
+identities are intentionally separate from the fixed native set-level origin
+namespace, and published locations now survive authoritative snapshots,
+saves, and protocol projection. No shipped quest geometry is enabled by this
+table yet; licensed native assets and authored placement rows remain deferred.
+
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and
 `native_dun_tile_properties.tsv`). Ordinary levels, deferred fragments, and

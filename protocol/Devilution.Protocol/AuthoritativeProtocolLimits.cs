@@ -14,6 +14,7 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumWorldMutationCount = 4096;
     public const int MaximumSnapshotQuestCount = 4096;
     public const int MaximumSetLevelObjectOriginCount = 4096;
+    public const int MaximumProceduralQuestPieceOriginCount = 4096;
     public const int MaximumMaterializedProceduralLevelCount = 4096;
     public const int NativeMaximumPlayerCount = 4;
     public const int NativeMaximumInventoryCount = NativeCompatibilityLimits.MaximumInventoryCount;

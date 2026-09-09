@@ -80,6 +80,9 @@ public sealed class DiabloSimulationOptions
     /** Deterministically planned origins for generated set-piece placements. */
     public AuthoritativeProceduralSetPieceOriginCatalog? ProceduralSetPieceOrigins { get; init; }
 
+    /** Deterministically planned origins for ordinary-level quest geometry. */
+    public AuthoritativeProceduralQuestPieceOriginCatalog? ProceduralQuestPieceOrigins { get; init; }
+
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
 
@@ -339,6 +342,11 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.RandomSeed),
             proceduralSetPieceOriginCatalog: options.ProceduralSetPieceOrigins,
             proceduralSetPieceOriginSeed: options.RandomSeed,
+            proceduralQuestPieceOrigins: options.ProceduralQuestPieceOrigins?.Plan(
+                options.World ?? new AuthoritativeWorld(),
+                options.RandomSeed),
+            proceduralQuestPieceOriginCatalog: options.ProceduralQuestPieceOrigins,
+            proceduralQuestPieceOriginSeed: options.RandomSeed,
             experience: options.Experience,
             nativeMissiles: options.NativeMissiles,
             nativeMissileSprites: options.NativeMissileSprites,
@@ -374,15 +382,19 @@ public sealed partial class DiabloSimulation
     private readonly AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters;
     private readonly AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog;
     private readonly uint proceduralSetPieceOriginSeed;
+    private readonly AuthoritativeProceduralQuestPieceOriginCatalog? proceduralQuestPieceOriginCatalog;
+    private readonly uint proceduralQuestPieceOriginSeed;
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly ComposedContent? content;
     private readonly HashSet<uint> appliedNativeDunFragments = [];
     private readonly HashSet<uint> materializedProceduralLevels = [];
     private readonly Dictionary<int, AuthoritativeSetLevelObjectOrigin> setLevelObjectOrigins = [];
+    private readonly Dictionary<uint, AuthoritativeProceduralQuestPieceOrigin> proceduralQuestPieceOrigins = [];
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
     private sealed record DynamicOriginPublicationState(
         IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin> Origins,
+        IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin> ProceduralQuestPieceOrigins,
         IReadOnlyDictionary<uint, AuthoritativeWorldObject> Objects,
         IReadOnlyDictionary<uint, AuthoritativeLevel> Levels,
         IReadOnlySet<uint> AppliedNativeDunFragments);
@@ -423,6 +435,9 @@ public sealed partial class DiabloSimulation
         IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? proceduralSetPieceOrigins = null,
         AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog = null,
         uint proceduralSetPieceOriginSeed = 0,
+        IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin>? proceduralQuestPieceOrigins = null,
+        AuthoritativeProceduralQuestPieceOriginCatalog? proceduralQuestPieceOriginCatalog = null,
+        uint proceduralQuestPieceOriginSeed = 0,
         AuthoritativeExperienceCatalog? experience = null,
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
         AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
@@ -463,6 +478,10 @@ public sealed partial class DiabloSimulation
             foreach (var (setLevelId, origin) in proceduralSetPieceOrigins)
                 PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
         }
+        if (proceduralQuestPieceOrigins is not null) {
+            foreach (var (originId, origin) in proceduralQuestPieceOrigins)
+                PublishProceduralQuestPieceOrigin(originId, origin);
+        }
         if (setLevelObjectOrigins is not null) {
             foreach (var (setLevelId, origin) in setLevelObjectOrigins)
                 PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
@@ -477,6 +496,8 @@ public sealed partial class DiabloSimulation
         this.content = content;
         this.proceduralSetPieceOriginCatalog = proceduralSetPieceOriginCatalog;
         this.proceduralSetPieceOriginSeed = proceduralSetPieceOriginSeed;
+        this.proceduralQuestPieceOriginCatalog = proceduralQuestPieceOriginCatalog;
+        this.proceduralQuestPieceOriginSeed = proceduralQuestPieceOriginSeed;
         MaterializeRelativeSetLevelObjects();
         ApplyDeferredNativeDunFragments();
         MaterializeNativeDunMonsters();
@@ -527,8 +548,15 @@ public sealed partial class DiabloSimulation
     public IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin> SetLevelObjectOrigins
         => setLevelObjectOrigins;
 
+    /** Runtime-generated origins reserved for ordinary-level quest geometry. */
+    public IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin>
+        ProceduralQuestPieceOriginLocations => proceduralQuestPieceOrigins;
+
     internal AuthoritativeSetLevelObjectOrigin? ResolveSetLevelObjectOrigin(int setLevelId)
         => setLevelObjectOrigins.TryGetValue(setLevelId, out var origin) ? origin : null;
+
+    internal AuthoritativeProceduralQuestPieceOrigin? ResolveProceduralQuestPieceOrigin(uint originId)
+        => proceduralQuestPieceOrigins.TryGetValue(originId, out var origin) ? origin : null;
 
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }
@@ -608,10 +636,69 @@ public sealed partial class DiabloSimulation
         }
     }
 
+    /** Publishes one generated ordinary-level quest-piece origin. */
+    public void PublishProceduralQuestPieceOrigin(
+        uint originId,
+        AuthoritativeProceduralQuestPieceOrigin origin)
+    {
+        ArgumentNullException.ThrowIfNull(origin);
+        if (originId == 0)
+            throw new ArgumentOutOfRangeException(nameof(originId));
+        if (WorldState.World is null)
+            throw new InvalidDataException(
+                "Procedural quest-piece origins require an authoritative world geometry catalog.");
+        if (!WorldState.World.ContainsLevel(origin.LevelId)
+            || !WorldState.World.ContainsPosition(origin.LevelId, origin.PositionX, origin.PositionY))
+            throw new InvalidDataException(
+                $"Procedural quest-piece origin {originId} is outside runtime level {origin.LevelId}.");
+        if (proceduralQuestPieceOrigins.TryGetValue(originId, out var existing)) {
+            if (existing != origin)
+                throw new InvalidDataException(
+                    $"Procedural quest-piece origin {originId} was already published at a different position.");
+            return;
+        }
+        proceduralQuestPieceOrigins.Add(originId, origin);
+    }
+
+    /**
+     * Publishes origins whose generated target levels became available after
+     * initial activation. Existing origins are revalidated but not moved.
+     */
+    public IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin>
+        PublishAvailableProceduralQuestPieceOrigins()
+    {
+        if (proceduralQuestPieceOriginCatalog is null || WorldState.World is null)
+            return new Dictionary<uint, AuthoritativeProceduralQuestPieceOrigin>();
+
+        var previous = CaptureDynamicOriginPublicationState();
+        try {
+            var planned = proceduralQuestPieceOriginCatalog.Plan(
+                WorldState.World,
+                proceduralQuestPieceOriginSeed);
+            var published = new Dictionary<uint, AuthoritativeProceduralQuestPieceOrigin>();
+            foreach (var (originId, origin) in planned) {
+                if (proceduralQuestPieceOrigins.TryGetValue(originId, out var existing)) {
+                    if (existing != origin)
+                        throw new InvalidDataException(
+                            $"Procedural quest-piece origin {originId} conflicts with its published origin.");
+                    continue;
+                }
+
+                PublishProceduralQuestPieceOrigin(originId, origin);
+                published.Add(originId, origin);
+            }
+            return published;
+        } catch {
+            RestoreDynamicOriginPublicationState(previous);
+            throw;
+        }
+    }
+
     private DynamicOriginPublicationState CaptureDynamicOriginPublicationState()
     {
         return new DynamicOriginPublicationState(
             setLevelObjectOrigins.ToDictionary(pair => pair.Key, pair => pair.Value),
+            proceduralQuestPieceOrigins.ToDictionary(pair => pair.Key, pair => pair.Value),
             WorldState.Objects.ToDictionary(pair => pair.Key, pair => pair.Value),
             WorldState.World?.Levels.ToDictionary(level => level.LevelId)
                 ?? new Dictionary<uint, AuthoritativeLevel>(),
@@ -624,6 +711,9 @@ public sealed partial class DiabloSimulation
         setLevelObjectOrigins.Clear();
         foreach (var (setLevelId, origin) in previous.Origins)
             setLevelObjectOrigins.Add(setLevelId, origin);
+        proceduralQuestPieceOrigins.Clear();
+        foreach (var (originId, origin) in previous.ProceduralQuestPieceOrigins)
+            proceduralQuestPieceOrigins.Add(originId, origin);
 
         WorldState.Objects.Clear();
         foreach (var (@object, value) in previous.Objects)
@@ -721,8 +811,10 @@ public sealed partial class DiabloSimulation
             ConfigurePlayer(participant);
         var previousLevelId = player.LevelId;
         var result = worldCommands.Execute(player, intent, appliedTick, participants);
-        if (result.Succeeded && player.LevelId != previousLevelId)
+        if (result.Succeeded && player.LevelId != previousLevelId) {
             PublishAvailableProceduralSetPieceOrigins();
+            PublishAvailableProceduralQuestPieceOrigins();
+        }
         if (result.Succeeded)
             EnsureProceduralMonsterSpawns(player.LevelId, participants);
         if (result.Succeeded)

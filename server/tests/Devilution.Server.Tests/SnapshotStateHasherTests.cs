@@ -26,6 +26,14 @@ public sealed class SnapshotStateHasherTests
                     PositionY = 42,
                 },
             },
+            ProceduralQuestPieceOrigins = {
+                new ProceduralQuestPieceOriginSnapshot {
+                    OriginId = 2201,
+                    LevelId = 17,
+                    PositionX = 5,
+                    PositionY = 6,
+                },
+            },
         };
         var reordered = first.Clone();
         var origins = reordered.SetLevelObjectOrigins.ToArray();
@@ -39,11 +47,14 @@ public sealed class SnapshotStateHasherTests
         var proceduralLevels = reorderedProceduralLevels.MaterializedProceduralLevelIds.ToArray();
         reorderedProceduralLevels.MaterializedProceduralLevelIds.Clear();
         reorderedProceduralLevels.MaterializedProceduralLevelIds.Add(proceduralLevels.Reverse());
+        var changedQuestOrigin = first.Clone();
+        changedQuestOrigin.ProceduralQuestPieceOrigins[0].PositionX++;
 
         Assert.Equal(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(reordered));
         Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(changed));
         Assert.Equal(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(reorderedProceduralLevels));
         Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(changedProceduralLevel));
+        Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(changedQuestOrigin));
     }
 
     [Fact]

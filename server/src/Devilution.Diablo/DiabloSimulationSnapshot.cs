@@ -498,6 +498,13 @@ public sealed record DiabloSetLevelObjectOriginState(
     int PositionX,
     int PositionY);
 
+/** Persisted origin for one runtime-generated ordinary-level quest piece. */
+public sealed record DiabloProceduralQuestPieceOriginState(
+    uint OriginId,
+    uint LevelId,
+    int PositionX,
+    int PositionY);
+
 /**
  * Transport-independent snapshot used by protocol and persistence adapters.
  * Collections are captured in stable identity order.
@@ -537,6 +544,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Runtime-generated set-piece origins persisted with the session. */
     public IReadOnlyList<DiabloSetLevelObjectOriginState> SetLevelObjectOrigins { get; init; } = [];
+
+    /** Runtime-generated ordinary-level quest-piece origins persisted with the session. */
+    public IReadOnlyList<DiabloProceduralQuestPieceOriginState> ProceduralQuestPieceOrigins { get; init; } = [];
 
     /** Procedural encounter levels already materialized by the server. */
     public IReadOnlyList<uint> MaterializedProceduralLevelIds { get; init; } = [];
@@ -911,6 +921,14 @@ public sealed partial class DiabloSimulation
                     pair.Value.PositionX,
                     pair.Value.PositionY))
                 .ToArray(),
+            ProceduralQuestPieceOrigins = proceduralQuestPieceOrigins
+                .OrderBy(pair => pair.Key)
+                .Select(pair => new DiabloProceduralQuestPieceOriginState(
+                    pair.Key,
+                    pair.Value.LevelId,
+                    pair.Value.PositionX,
+                    pair.Value.PositionY))
+                .ToArray(),
             MaterializedProceduralLevelIds = materializedProceduralLevels
                 .OrderBy(levelId => levelId)
                 .ToArray(),
@@ -961,12 +979,15 @@ public sealed partial class DiabloSimulation
             || snapshot.Corpses is null
             || snapshot.ActiveWorldMutationIds is null
             || snapshot.SetLevelObjectOrigins is null
+            || snapshot.ProceduralQuestPieceOrigins is null
             || snapshot.MaterializedProceduralLevelIds is null) {
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
         var restoredSetLevelObjectOrigins = ValidateSavedSetLevelObjectOrigins(
             snapshot.SetLevelObjectOrigins);
+        var restoredProceduralQuestPieceOrigins =
+            ValidateSavedProceduralQuestPieceOrigins(snapshot.ProceduralQuestPieceOrigins);
         var restoredMaterializedProceduralLevelIds =
             ValidateSavedMaterializedProceduralLevelIds(
                 snapshot.MaterializedProceduralLevelIds);
@@ -975,6 +996,14 @@ public sealed partial class DiabloSimulation
             setLevelObjectOrigins.Add(
                 origin.SetLevelId,
                 new AuthoritativeSetLevelObjectOrigin(
+                    origin.LevelId,
+                    origin.PositionX,
+                    origin.PositionY));
+        proceduralQuestPieceOrigins.Clear();
+        foreach (var origin in restoredProceduralQuestPieceOrigins)
+            proceduralQuestPieceOrigins.Add(
+                origin.OriginId,
+                new AuthoritativeProceduralQuestPieceOrigin(
                     origin.LevelId,
                     origin.PositionX,
                     origin.PositionY));
@@ -2027,6 +2056,28 @@ public sealed partial class DiabloSimulation
         }
         return origins
             .OrderBy(origin => origin.SetLevelId)
+            .ToArray();
+    }
+
+    private IReadOnlyList<DiabloProceduralQuestPieceOriginState>
+        ValidateSavedProceduralQuestPieceOrigins(
+            IReadOnlyList<DiabloProceduralQuestPieceOriginState> origins)
+    {
+        if (origins.Count == 0)
+            return [];
+        if (origins.Count > DiabloWorldState.MaximumWorldStateEntries
+            || origins.Any(origin => origin.OriginId == 0)
+            || origins.Select(origin => origin.OriginId).Distinct().Count() != origins.Count
+            || WorldState.World is null
+            || origins.Any(origin => !WorldState.World.ContainsPosition(
+                origin.LevelId,
+                origin.PositionX,
+                origin.PositionY))) {
+            throw new InvalidDataException(
+                "The authoritative save contains invalid procedural quest-piece origins.");
+        }
+        return origins
+            .OrderBy(origin => origin.OriginId)
             .ToArray();
     }
 

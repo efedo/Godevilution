@@ -467,10 +467,19 @@ message Snapshot {
 	string ruleset_identity_hash = 21;
 	// Additive content-owned general towner greeting metadata.
 	repeated TownerGreetingSnapshot towner_greetings = 22;
+	// Runtime-generated ordinary-level quest-piece origins persisted by the server.
+	repeated ProceduralQuestPieceOriginSnapshot procedural_quest_piece_origins = 23;
 }
 
 message SetLevelObjectOriginSnapshot {
 	int32 set_level_id = 1;
+	uint32 level_id = 2;
+	int32 position_x = 3;
+	int32 position_y = 4;
+}
+
+message ProceduralQuestPieceOriginSnapshot {
+	uint32 origin_id = 1;
 	uint32 level_id = 2;
 	int32 position_x = 3;
 	int32 position_y = 4;

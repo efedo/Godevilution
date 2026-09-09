@@ -432,6 +432,45 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsProceduralQuestPieceOriginsIndependentlyOfSetLevelOrigins()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                ProceduralQuestPieceOrigins = [
+                    new DiabloProceduralQuestPieceOriginState(2201, 17, 3, 4),
+                ],
+            };
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            source,
+            levelGeometry: [new AuthoritativeLevel(17, 8, 9)]);
+
+        var origin = Assert.Single(snapshot.ProceduralQuestPieceOrigins);
+        Assert.Equal(2201U, origin.OriginId);
+        Assert.Equal(17U, origin.LevelId);
+        Assert.Equal((3, 4), (origin.PositionX, origin.PositionY));
+
+        var roundTrip = DiabloProtocolMapper.FromProtocolSnapshot(snapshot);
+        var restored = Assert.Single(roundTrip.ProceduralQuestPieceOrigins);
+        Assert.Equal(new DiabloProceduralQuestPieceOriginState(2201, 17, 3, 4), restored);
+    }
+
+    [Fact]
+    public void RejectsProceduralQuestPieceOriginsOutsideSuppliedGeometry()
+    {
+        var source = CreateOriginSnapshot(new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+            ProceduralQuestPieceOrigins = [
+                new DiabloProceduralQuestPieceOriginState(2201, 17, 8, 8),
+            ],
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                source,
+                levelGeometry: [new AuthoritativeLevel(17, 8, 9)]));
+    }
+
+    [Fact]
     public void ItemPresentationUsesContentEarTagBeforeLegacyIdentity()
     {
         var player = new StorePlayerSnapshot(

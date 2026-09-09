@@ -83,6 +83,7 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
     private const int MaximumQuestTownerInteractionCount = AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount;
     private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
+    private const int MaximumProceduralQuestPieceOriginCount = AuthoritativeProtocolLimits.MaximumProceduralQuestPieceOriginCount;
     private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
     private const int MaximumWorldMutationCount = AuthoritativeProtocolLimits.MaximumWorldMutationCount;
     private const int MaximumNativeSetLevelId = AuthoritativeProtocolLimits.MaximumNativeSetLevelId;
@@ -110,6 +111,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateTownerGreetings(snapshot);
         ValidateLevelGeometry(snapshot);
         ValidateSetLevelObjectOrigins(snapshot);
+        ValidateProceduralQuestPieceOrigins(snapshot);
         ValidateMaterializedProceduralLevels(snapshot);
         ValidateEntityPositions(snapshot);
         ValidatePlayerActions(snapshot);
@@ -1098,6 +1100,31 @@ public static class AuthoritativeSnapshotValidator
         var targetCell = targetY * level.Width + targetX;
         return targetCell <= int.MaxValue
             && !level.BlockedCells.Contains((int)targetCell);
+    }
+
+    private static void ValidateProceduralQuestPieceOrigins(Snapshot snapshot)
+    {
+        if (snapshot.ProceduralQuestPieceOrigins.Count > MaximumProceduralQuestPieceOriginCount
+            || snapshot.ProceduralQuestPieceOrigins.Any(origin => origin.OriginId == 0)
+            || snapshot.ProceduralQuestPieceOrigins
+                .Select(origin => origin.OriginId)
+                .Distinct()
+                .Count() != snapshot.ProceduralQuestPieceOrigins.Count)
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid or duplicate procedural quest-piece origins.");
+        if (snapshot.LevelGeometry.Count == 0)
+            return;
+
+        var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        foreach (var origin in snapshot.ProceduralQuestPieceOrigins) {
+            if (!levels.TryGetValue(origin.LevelId, out var level)
+                || origin.PositionX < 0
+                || origin.PositionY < 0
+                || origin.PositionX >= level.Width
+                || origin.PositionY >= level.Height)
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains a procedural quest-piece origin outside level {origin.LevelId}.");
+        }
     }
 
     private static bool IsProjectedActionTarget(

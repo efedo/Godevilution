@@ -36,6 +36,7 @@ public sealed class AuthoritativeClientModel
     private const int MaximumWorldMutationCount = AuthoritativeProtocolLimits.MaximumWorldMutationCount;
     private const int MaximumSnapshotQuestCount = AuthoritativeProtocolLimits.MaximumSnapshotQuestCount;
     private const int MaximumSetLevelObjectOriginCount = AuthoritativeProtocolLimits.MaximumSetLevelObjectOriginCount;
+    private const int MaximumProceduralQuestPieceOriginCount = AuthoritativeProtocolLimits.MaximumProceduralQuestPieceOriginCount;
     private const int MaximumMaterializedProceduralLevelCount = AuthoritativeProtocolLimits.MaximumMaterializedProceduralLevelCount;
     private const int MaximumNativeSetLevelId = AuthoritativeProtocolLimits.MaximumNativeSetLevelId;
     private const int MaximumMonsterLeaderRelation = AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation;
@@ -266,6 +267,7 @@ public sealed class AuthoritativeClientModel
             ValidateScavengerCorpseReferences(message.Snapshot);
             ValidateWarpTriggers(message.Snapshot);
             ValidateSetLevelObjectOrigins(message.Snapshot);
+            ValidateProceduralQuestPieceOrigins(message.Snapshot);
             ValidateMaterializedProceduralLevels(message.Snapshot);
             ValidateEntityPositions(message.Snapshot);
             ValidateQuestTownerInteractions(message.Snapshot);
@@ -1597,6 +1599,35 @@ public sealed class AuthoritativeClientModel
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid monster pack leader.");
+            }
+        }
+    }
+
+    private static void ValidateProceduralQuestPieceOrigins(Snapshot snapshot)
+    {
+        if (snapshot.ProceduralQuestPieceOrigins.Count > MaximumProceduralQuestPieceOriginCount
+            || snapshot.ProceduralQuestPieceOrigins.Any(origin => origin.OriginId == 0)
+            || snapshot.ProceduralQuestPieceOrigins
+                .Select(origin => origin.OriginId)
+                .Distinct()
+                .Count() != snapshot.ProceduralQuestPieceOrigins.Count) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid or duplicate procedural quest-piece origins.");
+        }
+        if (snapshot.LevelGeometry.Count == 0)
+            return;
+
+        var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
+        foreach (var origin in snapshot.ProceduralQuestPieceOrigins) {
+            if (!levels.TryGetValue(origin.LevelId, out var level)
+                || level.Width <= 0
+                || level.Height <= 0
+                || origin.PositionX < 0
+                || origin.PositionY < 0
+                || origin.PositionX >= level.Width
+                || origin.PositionY >= level.Height) {
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains a procedural quest-piece origin outside level {origin.LevelId}.");
             }
         }
     }
