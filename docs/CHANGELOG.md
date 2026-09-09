@@ -50,6 +50,8 @@ All notable changes to this fork are documented below.
   and managed Hell target armor and initial-health modifiers share a checkpoint.
 - Initialized physical replay now carries validated percentage, flat, and
   to-hit weapon modifiers through native and managed checkpoints.
+- Initialized physical replay now applies the native sword penalty and mace
+  bonus against authored undead targets in both runners.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

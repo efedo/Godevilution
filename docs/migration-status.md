@@ -98,7 +98,9 @@ compact attack fixtures retain their armor-only fallback until they author the
 full class-attribute contract. Authored armor-piercing and Hell difficulty
 target modifiers now cross the native/managed replay gate. Authored percentage,
 flat, and to-hit weapon modifiers are also covered; remaining weapon and
-hit-resolution edge cases are still follow-up work.
+hit-resolution edge cases are still follow-up work. Sword/mace target-class
+damage adjustment now also crosses the replay gate for undead targets, with
+both sword and mace branches covered.
 
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
@@ -157,7 +159,9 @@ managed, Godot, native validation, and native command-construction boundaries.
 Initialized physical replay now carries validated authored armor-piercing
 bonuses and Hell difficulty target modifiers through both runners. Percentage,
 flat, and to-hit weapon modifiers now cross the same gate; other
-weapon/hit-resolution edge cases remain follow-up native-parity work.
+weapon/hit-resolution edge cases remain follow-up native-parity work. The
+initialized undead sword and mace paths now include the native target-class
+modifier.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed

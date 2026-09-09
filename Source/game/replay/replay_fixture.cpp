@@ -5412,6 +5412,12 @@ bool ApplyReplayAttack(
 		    && (state.characterClassId == 0 || state.characterClassId == 5)
 		    && GenerateRnd(state, 100) < std::min(100, level))
 			damageBeforeArmor *= 2;
+		if (state.combatTargetUndead) {
+			if (hasMace)
+				damageBeforeArmor += damageBeforeArmor / 2;
+			else if (hasSword)
+				damageBeforeArmor -= damageBeforeArmor / 2;
+		}
 		damage = attackHit
 		    ? std::max(1, damageBeforeArmor - std::max(0, effectiveArmorClass))
 		    : 0;

@@ -81,6 +81,9 @@ omitting the field retains its zero-value compatibility behavior.
 modifiers, including the native 4x health plus 200 bonus and +80 armor.
 The damage-modifier and to-hit companions cover authored percentage/flat
 weapon bonuses and deterministic hit admission.
+The undead-sword and undead-mace companions cover the native 50% sword
+penalty and 50% mace bonus against an undead target after critical and
+authored weapon modifiers are resolved.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and
