@@ -264,7 +264,9 @@ public sealed class AuthoritativeSetLevelMapCatalog
                 activeMap.NativePieceProperties,
                 activeMap.NativePieceCollisionCells,
                 activeMap.NativePieceMissileBlockedCells,
-                activeMap.NativeMonsterLayer) {
+                activeMap.NativeMonsterLayer,
+                activeMap.StartPositionX,
+                activeMap.StartPositionY) {
                 StableSymbol = activeMap.StableSymbol,
             };
         }

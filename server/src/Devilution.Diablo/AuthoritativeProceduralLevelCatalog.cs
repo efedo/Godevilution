@@ -12,7 +12,9 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     int BlockedPercent,
     bool IsDefaultStart = false,
     bool SuppressMultiplayerDeathDrops = false,
-    int? MissileBlockedPercent = null)
+    int? MissileBlockedPercent = null,
+    int StartPositionX = 0,
+    int StartPositionY = 0)
 {
     /** Stable level symbol retained for composed-pack identity diagnostics. */
     public string StableSymbol { get; init; } = string.Empty;
@@ -32,6 +34,11 @@ public sealed record AuthoritativeProceduralLevelDefinition(
         if (MissileBlockedPercent is < 0 or > 80)
             throw new InvalidDataException(
                 $"Procedural level {LevelId} missile-blocked percent must be between 0 and 80.");
+        if (StartPositionX < 0 || StartPositionX >= Width
+            || StartPositionY < 0 || StartPositionY >= Height) {
+            throw new InvalidDataException(
+                $"Procedural level {LevelId} start position ({StartPositionX}, {StartPositionY}) is outside its dimensions.");
+        }
         return this;
     }
 
@@ -45,16 +52,20 @@ public sealed record AuthoritativeProceduralLevelDefinition(
             GenerationSeed ^ worldSeed,
             BlockedPercent,
             MissileBlockedPercent ?? BlockedPercent);
-        return new AuthoritativeLevel(
+        var level = new AuthoritativeLevel(
             LevelId,
             Width,
             Height,
             layout.BlockedCells,
             layout.MissileBlockedCells,
             IsDefaultStart,
-            SuppressMultiplayerDeathDrops) {
+            SuppressMultiplayerDeathDrops,
+            startPositionX: StartPositionX,
+            startPositionY: StartPositionY) {
             StableSymbol = StableSymbol,
         };
+        level.ValidateStartPosition();
+        return level;
     }
 }
 
@@ -106,7 +117,13 @@ public sealed class AuthoritativeProceduralLevelCatalog
                 row.OptionalBoolean("suppress_multiplayer_death_drops"),
                 row.TryGet("missile_blocked_percent", out _)
                     ? row.OptionalInt32("missile_blocked_percent")
-                    : null) {
+                    : null,
+                row.TryGet("start_x", out _)
+                    ? row.RequiredInt32("start_x")
+                    : 0,
+                row.TryGet("start_y", out _)
+                    ? row.RequiredInt32("start_y")
+                    : 0) {
                 StableSymbol = row.TryGet("level_symbol", out var symbol)
                     ? symbol
                     : string.Empty,

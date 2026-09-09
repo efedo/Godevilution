@@ -8,6 +8,37 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeWorldTests
 {
     [Fact]
+    public void LoadsContentDefinedStartPositionAndKeepsLegacyDefault()
+    {
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\tlevel_symbol\twidth\theight\tblocked_cells\tdefault_start\tstart_x\tstart_y\n"
+                + "0\ttown\t4\t4\tnone\t0\t2\t3\n"
+                + "1\tcathedral\t4\t4\tnone\t1\t0\t0\n");
+
+        Assert.Equal((2, 3), world.GetStartPosition(0));
+        Assert.Equal((0, 0), world.GetStartPosition(1));
+        Assert.Equal((2, 3), (world.Levels[0].StartPositionX, world.Levels[0].StartPositionY));
+
+        var legacyWorld = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\n"
+                + "1\t4\t4\n");
+        Assert.Equal((0, 0), legacyWorld.GetStartPosition(1));
+    }
+
+    [Fact]
+    public void RejectsAContentDefinedStartPositionThatIsBlocked()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\tstart_x\tstart_y\n"
+                + "1\t3\t3\t4\t1\t1\n"));
+
+        Assert.Contains("invalid start position", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ResolvesStableLevelSymbolsIncludingNativeTownZero()
     {
         var stableIds = new StableContentIdCatalog([

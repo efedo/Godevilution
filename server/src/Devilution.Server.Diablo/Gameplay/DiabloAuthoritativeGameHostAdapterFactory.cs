@@ -57,6 +57,7 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
             || !world.ContainsLevel(startingLevelId))
             throw new InvalidDataException(
                 $"Starting level {startingLevelId} is not defined by the active content world.");
+        var startingPosition = world.GetStartPosition(startingLevelId);
         return new StoreSimulationExecutor(
             activatedContent,
             (sessionId, requestedClassId) => {
@@ -75,7 +76,9 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
                     playerStart.Life,
                     playerStart.Mana,
                     startingLevelId,
-                    playerStart.StatPoints);
+                    playerStart.StatPoints,
+                    startingPosition.X,
+                    startingPosition.Y);
             });
     }
 }

@@ -7,6 +7,26 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativePlayerLoadoutCatalogTests
 {
     [Fact]
+    public void AppliesContentDefinedStartingPositionToNewPlayer()
+    {
+        var catalog = LoadShippedCatalog();
+
+        var player = catalog.CreateTemplate(
+                "positioned-session",
+                0,
+                null,
+                null,
+                null,
+                1,
+                startingPositionX: 12,
+                startingPositionY: 13)
+            .CreatePlayer();
+
+        Assert.Equal(12, player.PositionX);
+        Assert.Equal(13, player.PositionY);
+    }
+
+    [Fact]
     public void NativeProgressionBoundsUseTheSharedCompatibilityContract()
     {
         Assert.Equal(NativeCompatibilityLimits.MaximumStableSpellId,

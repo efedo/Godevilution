@@ -579,7 +579,9 @@ public sealed class DiabloWorldState
                     nativePieceProperties,
                     nativePieceCollisionCells,
                     nativePieceMissileBlockedCells,
-                    monsterLayer) {
+                    monsterLayer,
+                    baseLevel.StartPositionX,
+                    baseLevel.StartPositionY) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

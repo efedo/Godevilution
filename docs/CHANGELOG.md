@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added optional content-owned `start_x`/`start_y` entry positions to ordinary
+  and procedural levels. The authoritative host now gives new participants the
+  validated position for their selected level, while omitted columns preserve
+  the legacy `(0, 0)` default.
+
 - Corrected compact native replay routing so player-owned Firebolt missiles stay
   in the shared magic-projectile resolver instead of entering the autonomous
   monster-magic lane; Firebolt resolution, PvP, Hellfire block, and Guardian

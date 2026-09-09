@@ -344,7 +344,9 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 nativePieceProperties,
                 nativePieceCollisionCells,
                 nativePieceMissileBlockedCells,
-                monsterLayer) {
+                monsterLayer,
+                level.StartPositionX,
+                level.StartPositionY) {
                 StableSymbol = level.StableSymbol,
             };
         }

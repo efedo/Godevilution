@@ -210,7 +210,9 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         int? lifeOverride,
         int? manaOverride,
         uint startingLevelId,
-        uint? statPointsOverride = null)
+        uint? statPointsOverride = null,
+        int startingPositionX = 0,
+        int startingPositionY = 0)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         var playerClass = playerClasses.GetRequired(classId);
@@ -301,8 +303,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             equipment,
             inventoryGrid,
             belt,
-            0,
-            0,
+            startingPositionX,
+            startingPositionY,
             life,
             1,
             startingLevelId,

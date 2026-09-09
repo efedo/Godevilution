@@ -57,6 +57,14 @@ public sealed class AuthoritativeWorld
 
     public bool ContainsLevel(uint levelId) => levels.ContainsKey(levelId);
 
+    /** Returns the validated content-owned entry point for a newly created participant. */
+    public (int X, int Y) GetStartPosition(uint levelId)
+    {
+        if (!levels.TryGetValue(levelId, out var level))
+            throw new InvalidDataException($"Level {levelId} is not registered.");
+        return (level.StartPositionX, level.StartPositionY);
+    }
+
     public bool SuppressMultiplayerDeathDrops(uint levelId)
     {
         return levels.TryGetValue(levelId, out var level)
@@ -151,9 +159,17 @@ public sealed class AuthoritativeWorld
                 blocked,
                 missileBlocked,
                 row.OptionalBoolean("default_start"),
-                row.OptionalBoolean("suppress_multiplayer_death_drops")) {
+                row.OptionalBoolean("suppress_multiplayer_death_drops"),
+                startPositionX: row.TryGet("start_x", out _)
+                    ? row.RequiredInt32("start_x")
+                    : 0,
+                startPositionY: row.TryGet("start_y", out _)
+                    ? row.RequiredInt32("start_y")
+                    : 0) {
                 StableSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
             };
+            if (row.TryGet("start_x", out _) || row.TryGet("start_y", out _))
+                level.ValidateStartPosition();
             world.AddLevel(level);
         }
         return world;
@@ -237,7 +253,9 @@ public sealed class AuthoritativeLevel
         IReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>? nativePieceProperties = null,
         IEnumerable<int>? nativePieceCollisionCells = null,
         IEnumerable<int>? nativePieceMissileBlockedCells = null,
-        IEnumerable<ushort>? nativeMonsterLayer = null)
+        IEnumerable<ushort>? nativeMonsterLayer = null,
+        int startPositionX = 0,
+        int startPositionY = 0)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -249,6 +267,8 @@ public sealed class AuthoritativeLevel
         Height = height;
         IsDefaultStart = isDefaultStart;
         SuppressMultiplayerDeathDrops = suppressMultiplayerDeathDrops;
+        StartPositionX = startPositionX;
+        StartPositionY = startPositionY;
         this.blockedCells = (blockedCells ?? []).ToHashSet();
         if (this.blockedCells.Any(cell => cell < 0 || cell >= width * height))
             throw new InvalidDataException($"Level {levelId} contains an out-of-range blocked cell.");
@@ -388,6 +408,22 @@ public sealed class AuthoritativeLevel
 
     /** Native level-16/arena rule suppressing death penalties only in multiplayer. */
     public bool SuppressMultiplayerDeathDrops { get; }
+
+    /** Content-defined entry point for a newly created participant on this level. */
+    public int StartPositionX { get; }
+
+    /** Content-defined entry point for a newly created participant on this level. */
+    public int StartPositionY { get; }
+
+    /** Validates the content-owned entry point without affecting legacy in-memory fixtures. */
+    public void ValidateStartPosition()
+    {
+        if (!ContainsPosition(StartPositionX, StartPositionY)
+            || !IsWalkable(StartPositionX, StartPositionY)) {
+            throw new InvalidDataException(
+                $"Level {LevelId} contains an invalid start position ({StartPositionX}, {StartPositionY}).");
+        }
+    }
 
     public bool ContainsPosition(int positionX, int positionY)
     {

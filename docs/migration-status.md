@@ -2,6 +2,13 @@
 
 Status date: 2026-09-09
 
+Ordinary and procedural level definitions now carry optional content-owned
+`start_x`/`start_y` entry positions. Content activation validates that each
+position is in bounds and walkable, and the authoritative host applies the
+selected level's position to newly created participants. Packs that omit the
+columns retain the legacy `(0, 0)` default so existing fixtures remain
+compatible.
+
 Managed and compact native replay parsers now reject checkpoint labels longer
 than the 64-character SHA-256 boundary while continuing to support shorter
 symbolic labels used by compatibility fixtures.

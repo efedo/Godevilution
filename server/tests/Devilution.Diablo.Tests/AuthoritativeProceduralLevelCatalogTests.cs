@@ -24,6 +24,26 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
     }
 
     [Fact]
+    public void PreservesConfiguredStartPositionAcrossDeterministicGeneration()
+    {
+        var catalog = new AuthoritativeProceduralLevelCatalog([
+            new AuthoritativeProceduralLevelDefinition(
+                7,
+                25,
+                21,
+                1234,
+                65,
+                StartPositionX: 2,
+                StartPositionY: 3),
+        ]);
+
+        var level = catalog.GenerateWorld(0xA5A5A5A5).Levels.Single();
+
+        Assert.Equal((2, 3), (level.StartPositionX, level.StartPositionY));
+        Assert.True(level.IsWalkable(level.StartPositionX, level.StartPositionY));
+    }
+
+    [Fact]
     public void OptionalMissileDensityAddsIndependentOcclusion()
     {
         var catalog = new AuthoritativeProceduralLevelCatalog([
@@ -76,6 +96,14 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
                 10).Validate().Width);
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelDefinition(1, 10, 10, 0, 81).Validate());
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeProceduralLevelDefinition(
+                1,
+                10,
+                10,
+                0,
+                10,
+                StartPositionX: 10).Validate());
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelDefinition(
                 1,
