@@ -9063,10 +9063,14 @@ void AdvanceReplayMonsterAttack(
 				    state,
 				    damage,
 				    victim.secondary);
-				ApplyReplayThorns(
-				    state,
-				    victim.secondary ? state.secondaryEquipment : state.equipment,
-				    adjustedDamage);
+				if (state.combatTargetNativeAi == "SkeletonMelee"
+				    || state.combatTargetNativeAi == "Snotspill"
+				    || state.combatTargetNativeAi == "Warlord") {
+					ApplyReplayThorns(
+					    state,
+					    victim.secondary ? state.secondaryEquipment : state.equipment,
+					    adjustedDamage);
+				}
 				if (victim.secondary)
 					state.secondaryPlayerLife = std::max(
 					    0,

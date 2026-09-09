@@ -2,6 +2,10 @@
 
 Status date: 2026-09-09
 
+The Rhino special-charge path now remains distinct from generic Thorns
+retaliation: both runners preserve the authored charge damage and movement but
+do not consume a Thorns roll for a Rhino victim carrying that equipment.
+
 Rhino charge replay now applies the primary player's validated incoming GetHit
 equipment adjustment at the special-charge impact boundary in both runners,
 while preserving the native charge movement and knockback state.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added Rhino charge boundary coverage proving the dedicated impact path does
+  not apply generic Thorns retaliation while preserving damage and movement.
+- Restricted compact native Thorns application to Skeleton-family special melee
+  attacks, matching the managed Rhino charge path.
 - Added Rhino charge replay coverage for primary-player usable-equipment
   `PlusGetHit`, preserving charge movement and the shared damage checkpoint.
 - Compact native replay now applies the validated incoming GetHit adjustment in
