@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added Rhino charge replay coverage for primary-player usable-equipment
+  `PlusGetHit`, preserving charge movement and the shared damage checkpoint.
+- Compact native replay now applies the validated incoming GetHit adjustment in
+  the Rhino special-charge damage branch.
 - Added SkeletonMelee special-attack replay coverage for combined usable
   equipment GetHit and Thorns effects on a secondary participant.
 - Compact native replay now applies incoming equipment effects in the special

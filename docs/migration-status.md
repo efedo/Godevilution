@@ -2,6 +2,10 @@
 
 Status date: 2026-09-09
 
+Rhino charge replay now applies the primary player's validated incoming GetHit
+equipment adjustment at the special-charge impact boundary in both runners,
+while preserving the native charge movement and knockback state.
+
 Special SkeletonMelee-family monster attacks now use the same validated
 incoming-equipment GetHit and Thorns boundary as generic monster hits. A shared
 multiplayer checkpoint covers secondary-player damage, monster retaliation, and

@@ -5345,6 +5345,64 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayRhinoChargeAppliesIncomingGetHitEquipment()
+    {
+        var fixture = LoadReplayFixture("gameplay-rhino-charge-get-hit.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            aggroRange: initial.CombatTargetAggroRange,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            toHit: initial.CombatTargetToHit,
+            toHitSpecial: initial.CombatTargetToHitSpecial,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "rhino-charge"),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(95, player.Life);
+        Assert.Equal((6, 0), (player.PositionX, player.PositionY));
+        Assert.Equal((4, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayRhinoChargeTargetsNearestMultiplayerParticipant()
     {
         var fixture = LoadReplayFixture("gameplay-rhino-multiplayer-target.json");
