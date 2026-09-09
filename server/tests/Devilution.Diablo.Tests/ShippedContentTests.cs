@@ -865,6 +865,78 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void GatewayPedestalConsumesStonesAndMaterializesBlood2Monsters()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var manifest = new ContentManifest("gateway-stage", "1", [pack]);
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(manifest),
+            gameMode: DiabloGameMode.Multiplayer);
+        var simulation = activation.Simulation;
+        var pedestalObjects = simulation.WorldState.Objects.Values
+            .Where(@object => @object.EntityId is 2023 or 2024 or 2025)
+            .OrderBy(@object => @object.EntityId)
+            .ToArray();
+        Assert.Equal([2023U, 2024U, 2025U], pedestalObjects.Select(@object => @object.EntityId));
+
+        var quest = simulation.WorldState.Quests[3010];
+        quest.Active = true;
+        quest.Unavailable = false;
+        quest.Completed = false;
+        quest.Variable2 = 0;
+        var inventory = Enumerable.Range(0, 3)
+            .Select(index => {
+                var seed = checked((uint)(index + 1));
+                return new OwnedStoreItem(
+                    0,
+                    0,
+                    seed,
+                    0,
+                    0,
+                    simulation.Items!.Generate(2143, seed, 0));
+            })
+            .ToArray();
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            50,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [0, 1, 2, .. Enumerable.Repeat(-1, 37)],
+            [],
+            20,
+            19,
+            50,
+            1,
+            2,
+            0,
+            inventory: inventory) {
+            EntityId = 7,
+        };
+
+        for (var index = 0; index < pedestalObjects.Length; index++) {
+            var result = simulation.Execute(
+                player,
+                new DiabloOperateObjectIntent(pedestalObjects[index].EntityId),
+                checked((ulong)(index + 1)),
+                [player]);
+            Assert.True(result.Succeeded, result.Failure.ToString());
+            Assert.Equal(index + 1, quest.Variable2);
+            Assert.Equal(2 - index, player.Inventory.Count);
+        }
+
+        Assert.Equal(22, simulation.WorldState.CombatTargets.Values
+            .Count(target => target.LevelId == 2));
+        Assert.True(simulation.WorldState.Objects[2025].Activated);
+        Assert.Contains(
+            simulation.WorldState.WorldItems.Values,
+            item => item.State.UniqueId == 1009);
+    }
+
+    [Fact]
     public void QuestUnavailableStateSuppressesGatedWarlordRoomAndTome()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

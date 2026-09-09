@@ -941,7 +941,7 @@ public sealed partial class DiabloSimulation
             || WorldState.World is null)
             return;
         var targets = nativeDunMonsters.Materialize(
-            WorldState.World,
+            WorldState.LevelGeometry,
             monsterSpawnPlanner,
             WorldState.CombatTargets.Values,
             WorldState.Objects.Values,

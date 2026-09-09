@@ -35,10 +35,11 @@ replacement remain deferred.
 The Halls of the Blind and Gateway of Blood rooms now use availability-gated
 native DUN fragments at explicit validated anchors on runtime Cathedral and
 Catacombs. The Gateway fragment deliberately uses the native pre-pedestal
-blood1.dun asset; the post-pedestal blood2.dun monster layer is retained as
-validated pack data for the next activation seam. Their book templates inherit
-the fragment anchors, while native post-activation map mutations and random
-chamber selection remain deferred.
+blood1.dun asset; the server-owned three-stage pedestal consumes Blood Stones,
+applies the validated blood2.dun monster layer, and awards Arkaine's Valor.
+Their book templates inherit the fragment anchors, while native random-chamber
+selection, post-activation tile replacement, and licensed collision replacement
+remain deferred.
 
 The shared geometry catalog is retained by the simulation for deferred
 set-piece publication and snapshot restore, so anchored fragments use the same

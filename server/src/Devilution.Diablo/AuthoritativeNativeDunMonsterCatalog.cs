@@ -99,6 +99,28 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
         bool multiplayer = false)
     {
         ArgumentNullException.ThrowIfNull(world);
+        return Materialize(
+            world.Levels,
+            planner,
+            existingTargets,
+            existingObjects,
+            seed,
+            multiplayer);
+    }
+
+    /**
+     * Materializes against the effective projected levels, including active
+     * server-owned native layer mutations.
+     */
+    public IReadOnlyList<AuthoritativeCombatTarget> Materialize(
+        IEnumerable<AuthoritativeLevel> levels,
+        AuthoritativeMonsterSpawnPlanner planner,
+        IEnumerable<AuthoritativeCombatTarget>? existingTargets = null,
+        IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
+        uint seed = 0,
+        bool multiplayer = false)
+    {
+        ArgumentNullException.ThrowIfNull(levels);
         ArgumentNullException.ThrowIfNull(planner);
         var targets = (existingTargets ?? []).ToArray();
         var objects = (existingObjects ?? []).ToArray();
@@ -119,7 +141,7 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
             .ToHashSet();
         var entityIds = new DeterministicEntityIdAllocator(RuntimeMonsterEntityIdBase);
         var materialized = new List<AuthoritativeCombatTarget>();
-        foreach (var level in world.Levels.OrderBy(level => level.LevelId)) {
+        foreach (var level in levels.OrderBy(level => level.LevelId)) {
             if (level.NativeMonsterLayer.Count == 0)
                 continue;
             if (level.NativeMonsterLayer.Count != level.Width * level.Height)

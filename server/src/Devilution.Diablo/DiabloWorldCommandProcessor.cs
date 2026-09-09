@@ -1310,7 +1310,7 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
             && (!world.Quests.TryGetValue(@object.QuestId, out var transitionQuest)
                 || transitionQuest.Unavailable
-                || !IsQuestAtPlayerLevel(transitionQuest, player.LevelId)
+                || !IsQuestAtPlayerLevel(transitionQuest, player.LevelId, @object.LevelId)
                 || (@object.QuestTransitionRequiredVariable1 >= 0
                     && transitionQuest.Variable1 != @object.QuestTransitionRequiredVariable1)
                 || (@object.QuestTransitionRequiredVariable2 >= 0
@@ -1348,7 +1348,8 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
             && @object.QuestTransitionKind == AuthoritativeObjectQuestTransitionKind.None
             && !quest.Unavailable
-            && !quest.Completed && IsQuestAtPlayerLevel(quest, player.LevelId)) {
+            && !quest.Completed
+            && IsQuestAtPlayerLevel(quest, player.LevelId, @object.LevelId)) {
             quest.Active = true;
             quest.Logged = true;
             quest.Progress = Math.Min(
@@ -1616,9 +1617,12 @@ public sealed class DiabloWorldCommandProcessor
     /** Accepts ordinary quest levels and the native set-level route identity. */
     private bool IsQuestAtPlayerLevel(
         AuthoritativeQuestState quest,
-        uint playerLevelId)
+        uint playerLevelId,
+        uint objectLevelId = 0)
     {
-        if (quest.LevelId == 0 || quest.LevelId == playerLevelId)
+        if (quest.LevelId == 0
+            || quest.LevelId == playerLevelId
+            || objectLevelId != 0 && objectLevelId == playerLevelId)
             return true;
         if (questTypes?.TryGet(quest.QuestId, out var definition) != true
             || definition.SetLevel == 0) {

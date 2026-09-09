@@ -2309,6 +2309,7 @@ public sealed class DiabloWorldCommandProcessorTests
             5,
             [player]);
         var firstVariable1 = quest.Variable1;
+        var firstDialogueState = target.DialogueState;
         var second = processor.Execute(
             player,
             new DiabloTalkToQuestIntent(3012, 20),
@@ -2319,9 +2320,7 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(second.Succeeded);
         Assert.Equal(2, firstVariable1);
         Assert.Equal(110, Assert.Single(first.Events).MessageId);
-        Assert.Equal(
-            AuthoritativeMonsterDialogueState.Inquiring,
-            target.DialogueState);
+        Assert.Equal(AuthoritativeMonsterDialogueState.Inquiring, firstDialogueState);
         Assert.Equal(3, quest.Variable1);
         Assert.True(quest.Active);
         Assert.False(quest.Completed);
