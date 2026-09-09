@@ -15,6 +15,8 @@ All notable changes to this fork are documented below.
 - Added Hellfire Monk MonsterMagic block coverage proving FlexibleBlock admits
   unarmed primary-player blocking and applies the class base block chance in
   both runners.
+- Extended Hellfire Monk MonsterMagic FlexibleBlock coverage to an unarmed
+  secondary participant in multiplayer, including class base block chance.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance
   are applied before Mana Shield absorption in both runners.
 - Added persistent Acid puddle impact coverage proving active-tick player

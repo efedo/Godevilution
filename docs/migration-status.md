@@ -8181,6 +8181,10 @@ Hellfire Monk MonsterMagic impacts now use the validated FlexibleBlock and base
 block chance rules for unarmed primary-player targets in compact native replay,
 matching the managed class catalog and preserving the shared replay checkpoints.
 
+The same class-aware block boundary now applies to unarmed Hellfire Monk
+secondary participants, while retaining the explicit legacy block-capable
+secondary path used by existing shield fixtures.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class
