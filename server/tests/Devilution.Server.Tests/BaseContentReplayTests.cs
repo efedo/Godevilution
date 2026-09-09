@@ -10,13 +10,20 @@ namespace Devilution.Server.Tests;
 /** Executes a replay against the checked-in base store catalog. */
 public sealed class BaseContentReplayTests
 {
-    [Fact]
-    public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint()
+    [Theory]
+    [InlineData("gameplay-class-physical-damage.json", 1, 94)]
+    [InlineData("gameplay-class-physical-damage-monk.json", 3, 93)]
+    [InlineData("gameplay-class-physical-damage-bard.json", 4, 93)]
+    [InlineData("gameplay-class-physical-damage-barbarian.json", 5, 89)]
+    public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
+        string fixtureName,
+        int expectedClassId,
+        int expectedHitPoints)
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "Fixtures",
-            "gameplay-class-physical-damage.json")));
+            fixtureName)));
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         AssertUsesBaseContentManifest(fixture, contentRoot);
         var initial = fixture.InitialState;
@@ -59,8 +66,8 @@ public sealed class BaseContentReplayTests
 
         var beforeAttack = Assert.Single(
             executor.CreateSnapshot(initial.Player, 1, 0).Players);
-        Assert.Equal(1U, beforeAttack.CharacterClassId);
-        Assert.Equal(30, beforeAttack.Attributes.Dexterity.Current);
+        Assert.Equal((uint)expectedClassId, beforeAttack.CharacterClassId);
+        Assert.Equal(initial.Dexterity, beforeAttack.Attributes.Dexterity.Current);
         Assert.Equal(4, Assert.Single(beforeAttack.Equipment).State.MinDamage);
         Assert.Equal(4, Assert.Single(beforeAttack.Equipment).State.MaxDamage);
 
@@ -70,7 +77,7 @@ public sealed class BaseContentReplayTests
             new AuthoritativeCommandServer(executor));
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
-        Assert.Equal(94, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(expectedHitPoints, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));

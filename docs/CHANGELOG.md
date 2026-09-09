@@ -37,6 +37,8 @@ All notable changes to this fork are documented below.
   vitality plus authored physical weapon ranges, covering Rogue class weapon
   damage at a shared native/managed checkpoint; native replay no longer relies
   on the armor-only melee fallback when class attributes are authored.
+- Shared class-damage replay now covers Monk staff, Bard sword, and Barbarian
+  axe profiles, including Barbarian's class critical-strike RNG draw.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

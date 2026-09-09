@@ -59,8 +59,10 @@ separate fixture outcomes.
 `gameplay-class-physical-damage.json` extends the initial-state contract with
 optional `strength` and `vitality` fields. Together with `dexterity` and
 `character_class`, these fields exercise native class-specific physical damage
-against an authored weapon range at a shared checkpoint. Omitting the new
-fields keeps legacy compact fixtures on their compatibility fallback;
+against an authored weapon range at a shared checkpoint. The companion Monk,
+Bard, and Barbarian fixtures cover staff, sword, and axe profiles; the
+Barbarian case also preserves the class critical-strike RNG draw. Omitting the
+new fields keeps legacy compact fixtures on their compatibility fallback;
 class-damage fixtures must author all three physical attributes explicitly.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,

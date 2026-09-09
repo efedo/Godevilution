@@ -5381,7 +5381,13 @@ bool ApplyReplayAttack(
 		        : strengthModifier / 100;
 		const int32_t rolledBaseDamage = minimumDamage
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
-		damage = std::max(1, rolledBaseDamage + damageModifier - std::max(0, state.combatTargetArmorClass));
+		int32_t damageBeforeArmor = rolledBaseDamage + damageModifier;
+		// Barbarian Critical Strike consumes a native 0..99 roll after the
+		// class damage profile and doubles damage before armor reduction.
+		if (state.characterClassId == 5
+		    && GenerateRnd(state, 100) < std::min(100, level))
+			damageBeforeArmor *= 2;
+		damage = std::max(1, damageBeforeArmor - std::max(0, state.combatTargetArmorClass));
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
 	}

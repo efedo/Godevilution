@@ -1,0 +1,58 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/class-physical-damage-barbarian",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "30dd1dbc7abdee458a96ee18f72a21bb97f5e57476bac0d98bb60dabf7dedf49"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 10,
+    "mana_maximum": 10,
+    "magic": 0,
+    "strength": 40,
+    "dexterity": 20,
+    "vitality": 25,
+    "character_class": 5,
+    "character_level": 10,
+    "position_x": 0,
+    "position_y": 0,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_armor_class": 0,
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 100,
+        "item_type": 2,
+        "item_class": 1,
+        "flags": 0,
+        "stat_flag": true,
+        "min_damage": 4,
+        "max_damage": 4
+      }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Attack",
+      "payload": { "target_entity_id": 9 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "50833fbb8ad62a1d6bf8f1f08c319a772eb68e43aa93a42d41f5fb03aaec713c" }
+  ]
+}
