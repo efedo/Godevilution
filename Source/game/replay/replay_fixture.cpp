@@ -3569,6 +3569,7 @@ void CreateReplayWeaponArrow(
 	    std::abs(state.combatTargetPositionX - state.positionX),
 	    std::abs(state.combatTargetPositionY - state.positionY));
 	int32_t damage = 1;
+	bool attackHit = true;
 	if (state.attributes[1] > 0 && state.attributes[5] > 0) {
 		int32_t minimumDamage = 0;
 		int32_t maximumDamage = 0;
@@ -3686,7 +3687,7 @@ void CreateReplayWeaponArrow(
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
 		    ^ targetEntityId
 		    ^ state.entityId;
-		const bool attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
+		attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
 		if (!attackHit)
 			damage = 0;
 		else {
@@ -3740,16 +3741,20 @@ void CreateReplayWeaponArrow(
 	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
 		damageQ6 *= HellfirePerilDamageMultiplier;
 
-	const int32_t fireDamage = ResolveReplayElementalDamage(
-	    state,
-	    FireArrowsFlag,
-	    &ReplayFixtureItemState::fireMinDamage,
-	    &ReplayFixtureItemState::fireMaxDamage);
-	const int32_t lightningDamage = ResolveReplayElementalDamage(
-	    state,
-	    LightningArrowsFlag,
-	    &ReplayFixtureItemState::lightningMinDamage,
-	    &ReplayFixtureItemState::lightningMaxDamage);
+	const int32_t fireDamage = attackHit
+	    ? ResolveReplayElementalDamage(
+	          state,
+	          FireArrowsFlag,
+	          &ReplayFixtureItemState::fireMinDamage,
+	          &ReplayFixtureItemState::fireMaxDamage)
+	    : 0;
+	const int32_t lightningDamage = attackHit
+	    ? ResolveReplayElementalDamage(
+	          state,
+	          LightningArrowsFlag,
+	          &ReplayFixtureItemState::lightningMinDamage,
+	          &ReplayFixtureItemState::lightningMaxDamage)
+	    : 0;
 	uint32_t nextEntityId = 0x80000000U;
 	for (const auto &projectile : state.projectiles)
 		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
@@ -3794,7 +3799,7 @@ void CreateReplayWeaponArrow(
 	    (travelTiles * 32 + speed - 1) / speed + 1);
 	projectile.speed = speed == 32 ? 0 : speed;
 	projectile.behavior = WeaponArrowBehavior;
-	projectile.attackHit = true;
+	projectile.attackHit = attackHit;
 	projectile.activationDelayTicks = arrowIndex == 0 ? 0 : 2;
 	state.projectiles.push_back(projectile);
 }

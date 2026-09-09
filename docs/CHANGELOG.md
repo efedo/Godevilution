@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   Triple Demon Damage ordering across managed and native runners.
 - Added ranged elemental-arrow impact coverage, including fire resistance and
   projectile removal at the authoritative collision tick.
+- Corrected native ranged miss snapshots so failed admissions do not carry
+  elemental channels or consume an elemental damage roll.
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at

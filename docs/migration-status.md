@@ -15,6 +15,10 @@ Ranged elemental arrows now also cross the impact boundary in both runners;
 their server-owned fire channel applies target resistance before projectile
 removal and the resulting checkpoint is shared with native replay.
 
+Ranged miss replay now also clears elemental channels before projectile capture,
+keeping failed admissions and their RNG consumption identical across C# and
+native runners.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo

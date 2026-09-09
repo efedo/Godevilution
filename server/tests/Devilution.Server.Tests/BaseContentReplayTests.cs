@@ -313,6 +313,74 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void RangedMissDoesNotCarryElementalChannels()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-ranged-miss-elemental.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var classDefinition = classes.GetRequired(checked((uint)initial.CharacterClass));
+        var attributes = classDefinition.CreateStartingAttributes() with {
+            Strength = new PlayerAttributeState(initial.Strength, initial.Strength),
+            Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            Vitality = new PlayerAttributeState(initial.Vitality, initial.Vitality),
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingAttributes: attributes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPlayerClass: classDefinition,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                armorClass: initial.CombatTargetArmorClass,
+                maxHitPoints: initial.CombatTargetMaxHitPoints)],
+            startingCombatRules: new AuthoritativeCombatRules(1, 1, 100),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var target = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(100, target.HitPoints);
+        var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.False(arrow.AttackHit);
+        Assert.Equal(0, arrow.Damage);
+        Assert.Equal(0, arrow.DamageQ6);
+        Assert.Equal(0, arrow.ElementalFireDamage);
+        Assert.Equal(0, arrow.ElementalLightningDamage);
+        Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void RangedClassDamageUsesAuthoredRogueBowProfile()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
