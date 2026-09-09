@@ -8190,6 +8190,11 @@ The paired two-handed Monk fixture now verifies the negative boundary as well:
 the same classification reaches the managed and native runners, which retain
 the ordinary MonsterMagic hit and GotHit timing instead of admitting a block.
 
+Compact native replay now mirrors the complete validated class base-block
+chance table instead of treating non-Monk classes as zero. A low-Dexterity
+Warrior MonsterMagic fixture exercises the 30-percent base chance and shares
+its block checkpoint with the managed class catalog.
+
 The same class-aware block boundary now applies to unarmed Hellfire Monk
 secondary participants, while retaining the explicit legacy block-capable
 secondary path used by existing shield fixtures.

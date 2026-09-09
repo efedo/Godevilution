@@ -1178,6 +1178,8 @@ Notable shared fixtures include:
   native equip-location classification;
 - `gameplay-monster-magic-primary-monk-two-handed-no-block.json` for the
   corresponding two-handed exclusion and normal MonsterMagic hit boundary;
+- `gameplay-monster-magic-primary-warrior-block-chance.json` for the
+  validated Warrior base block chance at zero Dexterity;
 - `gameplay-monster-magic-secondary-monk-block.json` for multiplayer
   secondary-participant FlexibleBlock admission without equipment and shared
   class-aware impact checkpoints;

@@ -3691,9 +3691,23 @@ bool IsReplaySecondaryPlayerBlockCapable(const ReplayFixtureExecutionState &stat
 
 int32_t GetReplayBaseBlockChance(uint32_t characterClassId)
 {
-	// The Diablo classes retain their existing zero-base compact behavior;
-	// Hellfire Monk is the first class-specific block lane covered here.
-	return characterClassId == 3 ? 25 : 0;
+	// Values mirror the validated `classes.tsv` base_block_chance column.
+	switch (characterClassId) {
+	case 0:
+		return 30; // Warrior
+	case 1:
+		return 20; // Rogue
+	case 2:
+		return 10; // Sorcerer
+	case 3:
+		return 25; // Monk
+	case 4:
+		return 25; // Bard
+	case 5:
+		return 30; // Barbarian
+	default:
+		return 0;
+	}
 }
 
 int32_t ApplyReplayManaShield(

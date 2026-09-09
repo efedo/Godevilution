@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Added the inverse Hellfire Monk MonsterMagic fixture, proving a usable
   two-handed weapon receives the normal hit boundary and does not enter the
   FlexibleBlock animation in either runner.
+- Aligned compact native replay block chances with every validated class
+  profile (Warrior, Rogue, Sorcerer, Monk, Bard, and Barbarian), with a
+  low-Dexterity Warrior fixture proving the non-Monk base chance path.
 - Extended Hellfire Monk MonsterMagic FlexibleBlock coverage to an unarmed
   secondary participant in multiplayer, including class base block chance.
 - Added Hellfire Monk Hork Spawn coverage proving the shared class-aware block
