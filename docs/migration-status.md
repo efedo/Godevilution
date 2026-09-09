@@ -1403,6 +1403,13 @@ input for cells whose collision state is not yet projected. This keeps the
 presentation responsive without allowing the client to speculate through
 server-known blockers.
 
+Godot now consumes complete authoritative native d-piece layers as a
+deterministic diagnostic overlay. The overlay distinguishes ordinary native
+geometry, walk-blocked cells, missile-only blockers, and transparency regions
+without moving any collision or gameplay rule into the client; the existing
+floor presentation remains the fallback until licensed native tile art is
+available.
+
 The native compatibility client now retains the server's content and ruleset
 identity from complete authoritative snapshots and reuses refreshed values on
 reconnect, so live ruleset replacement is visible to both presentation clients

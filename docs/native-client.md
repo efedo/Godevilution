@@ -427,7 +427,12 @@ explicit migration seams, not server-authority claims:
   The three tomes and final lever declare native presentation identities so
   the compatibility client can render and resynchronize them; native room
   reconstruction and collision/tile-definition presentation remain compatibility
-  seams.
+  seams. The Godot client now also consumes complete authoritative native
+  d-piece and transparency layers as a deterministic diagnostic tint,
+  distinguishing ordinary geometry, walk blockers, missile-only blockers,
+  and transparency regions without moving gameplay rules into the client. The
+  existing floor presentation remains the fallback until licensed native tile
+  art is supplied through the Godot asset pipeline.
 - Quest-specific set-piece mutation and resynchronization remains native for
   the Banner opening transition and associated unique-monster state, plus the
   remaining book/lever set pieces. Procedural level/object parity must precede

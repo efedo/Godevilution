@@ -325,6 +325,7 @@ public partial class WorldPresentation : Node2D
                     if (!currentLevel.IsBlocked(x, y))
                         DrawTextureRect(floor, new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize), false);
         }
+        DrawNativeGeometryOverlay();
         for (var x = 0; x <= currentLevel.Width; x++)
             DrawLine(new Vector2(OriginX + x * TileSize, OriginY), new Vector2(OriginX + x * TileSize, OriginY + currentLevel.Height * TileSize), new Color("17172b"));
         for (var y = 0; y <= currentLevel.Height; y++)
@@ -353,6 +354,44 @@ public partial class WorldPresentation : Node2D
         }
         foreach (var trigger in levels.GetWarpTriggers(currentLevel.Id))
             DrawWarpTrigger(trigger);
+    }
+
+    /**
+     * Shows authoritative native d-piece provenance until native tile art is
+     * available to the Godot asset pipeline. Gameplay never depends on this
+     * overlay; blocked and missile-blocked cells are already projected as
+     * authoritative collision sets below.
+     */
+    private void DrawNativeGeometryOverlay()
+    {
+        var cellCount = checked(currentLevel.Width * currentLevel.Height);
+        if (currentLevel.NativePieceLayer.Count != cellCount)
+            return;
+
+        for (var cell = 0; cell < cellCount; cell++) {
+            var pieceId = currentLevel.NativePieceLayer[cell];
+            var transparency = currentLevel.NativeTransparency.Count == cellCount
+                ? currentLevel.NativeTransparency[cell]
+                : 0u;
+            var x = cell % currentLevel.Width;
+            var y = cell / currentLevel.Width;
+            var style = AuthoritativeNativeGeometryStyle.Resolve(
+                pieceId,
+                transparency,
+                currentLevel.Blocked.Contains(cell),
+                currentLevel.MissileBlocked.Contains(cell));
+            if (!style.IsVisible)
+                continue;
+
+            DrawRect(
+                new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize),
+                new Color(
+                    style.Red / 255f,
+                    style.Green / 255f,
+                    style.Blue / 255f,
+                    style.Alpha / 255f),
+                true);
+        }
     }
 
     private void DrawWarpTrigger(WarpTriggerSnapshot trigger)

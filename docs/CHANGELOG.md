@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Godot now renders a deterministic diagnostic overlay for complete
+  authoritative native d-piece and transparency layers, while retaining the
+  server-owned collision projection and floor fallback until licensed native
+  tile art is available.
+
 - Added a viewport transform shared by the Godot world presenter and input
   hit-testing. The authoritative tile world now centers small maps, clamps
   large maps around the local player, and adapts to the actual viewport instead

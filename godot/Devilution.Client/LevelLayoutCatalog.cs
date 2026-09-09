@@ -49,7 +49,9 @@ public sealed class LevelLayoutCatalog
                 definition.Height,
                 cells,
                 missileBlocked,
-                definition.NativeTransparency.ToArray());
+                definition.NativeTransparency.ToArray()) {
+                NativePieceLayer = definition.NativePieceLayer.ToArray(),
+            };
             warpTriggers[definition.LevelId] = definition.WarpTriggers.ToArray();
         }
     }
@@ -112,6 +114,9 @@ public sealed record LevelLayout(
     IReadOnlySet<int> MissileBlocked,
     IReadOnlyList<uint> NativeTransparency)
 {
+    /** Raw server-authored d-piece IDs used by the diagnostic geometry overlay. */
+    public IReadOnlyList<uint> NativePieceLayer { get; init; } = [];
+
     public static LevelLayout Empty { get; } = new(0, "Fallback", 32, 20, new HashSet<int>(), new HashSet<int>(), []);
 
     public bool IsBlocked(int x, int y)
