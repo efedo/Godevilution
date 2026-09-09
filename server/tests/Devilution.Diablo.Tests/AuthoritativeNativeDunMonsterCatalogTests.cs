@@ -1,4 +1,5 @@
 using Devilution.Diablo;
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -21,6 +22,40 @@ public sealed class AuthoritativeNativeDunMonsterCatalogTests
         Assert.True(catalog.TryGetMonsterId(155, out var butcherStableId));
         Assert.Equal(53U, butcherStableId);
         Assert.False(catalog.TryGetNativeMonsterId(2, out _));
+    }
+
+    [Fact]
+    public void TsvLoaderResolvesStableMonsterSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "base_monster", 1),
+        ]);
+        var catalog = AuthoritativeNativeDunMonsterCatalog.LoadTsv(
+            "native_dun_monsters.tsv",
+            "native_dun_monster_id\tnative_monster_id\tmonster_id\tmonster_symbol\n"
+                + "1\t0\t1\tbase_monster\n",
+            stableIds);
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal(1U, definition.MonsterId);
+        Assert.Equal("base_monster", definition.MonsterSymbol);
+    }
+
+    [Fact]
+    public void TsvLoaderRejectsMismatchedStableMonsterSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "base_monster", 1),
+            new StableContentId("monster", "other_monster", 2),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunMonsterCatalog.LoadTsv(
+                "native_dun_monsters.tsv",
+                "native_dun_monster_id\tnative_monster_id\tmonster_id\tmonster_symbol\n"
+                    + "1\t0\t1\tother_monster\n",
+                stableIds));
+        Assert.Contains("maps monster 1 to symbol 'other_monster'", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -78,6 +113,72 @@ public sealed class AuthoritativeNativeDunMonsterCatalogTests
         ]);
 
         catalog.ValidateMonsterTypes(monsterTypes);
+    }
+
+    [Fact]
+    public void ValidatesStableMonsterSymbolAgainstActiveCatalog()
+    {
+        var catalog = new AuthoritativeNativeDunMonsterCatalog([
+            new AuthoritativeNativeDunMonsterDefinition(1, 0, 1) {
+                MonsterSymbol = "zombie",
+            },
+        ]);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                0,
+                "Zombie",
+                1,
+                2,
+                1,
+                1,
+                1,
+                0,
+                1,
+                1,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                StableSymbol = "zombie",
+            },
+        ]);
+
+        catalog.ValidateMonsterTypes(monsterTypes);
+    }
+
+    [Fact]
+    public void RejectsStableMonsterSymbolThatDiffersFromActiveCatalog()
+    {
+        var catalog = new AuthoritativeNativeDunMonsterCatalog([
+            new AuthoritativeNativeDunMonsterDefinition(1, 0, 1) {
+                MonsterSymbol = "wrong_symbol",
+            },
+        ]);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                0,
+                "Zombie",
+                1,
+                2,
+                1,
+                1,
+                1,
+                0,
+                1,
+                1,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                StableSymbol = "zombie",
+            },
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => catalog.ValidateMonsterTypes(monsterTypes));
     }
 
     [Fact]

@@ -9,6 +9,9 @@ public sealed record AuthoritativeNativeDunMonsterDefinition(
     uint NativeMonsterId,
     uint MonsterId)
 {
+    /** Optional stable monster symbol retained for composed-pack diagnostics. */
+    public string MonsterSymbol { get; init; } = string.Empty;
+
     public AuthoritativeNativeDunMonsterDefinition Validate()
     {
         if (NativeDunMonsterId == 0
@@ -178,17 +181,23 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
         ArgumentNullException.ThrowIfNull(monsterTypes);
         foreach (var definition in Definitions) {
             if (!monsterTypes.TryGet(definition.MonsterId, out var monsterType)
-                || monsterType.NativeMonsterId != definition.NativeMonsterId)
+                || monsterType.NativeMonsterId != definition.NativeMonsterId
+                || definition.MonsterSymbol.Length != 0
+                    && !string.Equals(
+                        definition.MonsterSymbol,
+                        monsterType.StableSymbol,
+                        StringComparison.Ordinal))
                 throw new InvalidDataException(
                     $"Native DUN monster mapping {definition.NativeDunMonsterId} references "
                     + $"incompatible monster {definition.MonsterId} for native monster "
-                    + $"{definition.NativeMonsterId}.");
+                    + $"{definition.NativeMonsterId} or stable symbol '{definition.MonsterSymbol}'.");
         }
     }
 
     public static AuthoritativeNativeDunMonsterCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeNativeDunMonsterCatalog(table.Rows.Select(row => {
@@ -199,7 +208,9 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
             return new AuthoritativeNativeDunMonsterDefinition(
                 (ushort)rawId,
                 row.RequiredUInt32("native_monster_id"),
-                row.RequiredUInt32("monster_id"));
+                AuthoritativeMonsterIdentity.Resolve(row, stableIds)) {
+                MonsterSymbol = AuthoritativeMonsterIdentity.ReadSymbol(row),
+            };
         }));
     }
 

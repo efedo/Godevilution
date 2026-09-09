@@ -1,137 +1,137 @@
-native_dun_monster_id	native_monster_id	monster_id
-1	0	1
-14	13	140
-49	50	52
-155	51	53
-2	1	3
-3	2	4
-4	3	5
-5	4	6
-6	5	7
-7	6	8
-8	7	9
-9	8	10
-10	9	11
-11	10	12
-12	11	13
-15	14	16
-16	15	17
-17	16	18
-18	17	19
-19	18	20
-20	19	21
-21	20	22
-22	21	23
-23	22	24
-24	23	25
-25	24	26
-26	25	27
-27	26	28
-28	27	29
-156	28	30
-29	29	31
-30	30	32
-32	32	34
-157	33	35
-33	34	36
-34	35	37
-35	36	38
-36	37	39
-37	38	40
-39	39	41
-38	40	42
-40	41	43
-41	42	44
-42	43	45
-43	44	46
-44	45	47
-45	46	48
-46	47	49
-47	48	50
-48	49	51
-50	52	54
-51	53	55
-52	54	56
-53	55	57
-54	56	58
-55	57	59
-57	58	60
-56	59	61
-58	60	62
-59	61	63
-60	62	64
-61	63	65
-62	64	66
-63	65	67
-64	66	68
-65	67	69
-66	68	70
-67	69	71
-68	70	72
-69	71	73
-74	72	74
-75	73	75
-76	74	76
-77	75	77
-83	76	78
-82	77	79
-84	78	80
-85	79	81
-127	80	82
-86	81	83
-87	82	84
-88	83	85
-89	84	86
-90	85	87
-91	86	88
-92	87	89
-93	88	90
-94	89	91
-95	90	92
-97	91	93
-96	92	94
-98	93	95
-99	94	96
-100	95	97
-101	96	98
-102	97	99
-103	98	100
-104	99	101
-105	100	102
-106	101	103
-107	102	104
-108	103	105
-109	104	106
-110	105	107
-111	106	108
-112	107	109
-113	108	110
-115	110	112
-117	109	111
-128	111	113
-129	112	114
-130	113	115
-131	114	116
-132	115	117
-133	116	118
-134	117	119
-135	118	120
-136	119	121
-137	120	122
-138	121	123
-139	122	124
-140	123	125
-141	124	126
-142	125	127
-143	126	128
-144	127	129
-145	128	130
-146	129	131
-147	130	132
-148	131	133
-149	132	134
-150	129	131
-151	134	136
-152	135	137
-153	136	138
-154	137	139
+native_dun_monster_id	native_monster_id	monster_id	monster_symbol
+1	0	1	base_monster
+14	13	140	snotspill
+49	50	52	skeleton_king_native_50
+155	51	53	the_butcher_native_51
+2	1	3	ghoul_native_1
+3	2	4	rotting_carcass_native_2
+4	3	5	black_death_native_3
+5	4	6	fallen_one_native_4
+6	5	7	carver_native_5
+7	6	8	devil_kin_native_6
+8	7	9	dark_one_native_7
+9	8	10	skeleton_native_8
+10	9	11	corpse_axe_native_9
+11	10	12	burning_dead_native_10
+12	11	13	horror_native_11
+15	14	16	devil_kin_native_14
+16	15	17	dark_one_native_15
+17	16	18	scavenger_native_16
+18	17	19	plague_eater_native_17
+19	18	20	shadow_beast_native_18
+20	19	21	bone_gasher_native_19
+21	20	22	skeleton_native_20
+22	21	23	corpse_bow_native_21
+23	22	24	burning_dead_native_22
+24	23	25	horror_native_23
+25	24	26	skeleton_captain_native_24
+26	25	27	corpse_captain_native_25
+27	26	28	burning_dead_captain_native_26
+28	27	29	horror_captain_native_27
+156	28	30	invisible_lord_native_28
+29	29	31	hidden_native_29
+30	30	32	stalker_native_30
+32	32	34	illusion_weaver_native_32
+157	33	35	satyr_lord_native_33
+33	34	36	flesh_clan_native_34
+34	35	37	stone_clan_native_35
+35	36	38	fire_clan_native_36
+36	37	39	night_clan_native_37
+37	38	40	fiend_native_38
+39	39	41	blink_native_39
+38	40	42	gloom_native_40
+40	41	43	familiar_native_41
+41	42	44	flesh_clan_native_42
+42	43	45	stone_clan_native_43
+43	44	46	fire_clan_native_44
+44	45	47	night_clan_native_45
+45	46	48	acid_beast_native_46
+46	47	49	poison_spitter_native_47
+47	48	50	pit_beast_native_48
+48	49	51	lava_maw_native_49
+50	52	54	overlord_native_52
+51	53	55	mud_man_native_53
+52	54	56	toad_demon_native_54
+53	55	57	flayed_one_native_55
+54	56	58	wyrm_native_56
+55	57	59	cave_slug_native_57
+57	58	60	devil_wyrm_native_58
+56	59	61	devourer_native_59
+58	60	62	magma_demon_native_60
+59	61	63	blood_stone_native_61
+60	62	64	hell_stone_native_62
+61	63	65	lava_lord_native_63
+62	64	66	horned_demon_native_64
+63	65	67	mud_runner_native_65
+64	66	68	frost_charger_native_66
+65	67	69	obsidian_lord_native_67
+66	68	70	oldboned_native_68
+67	69	71	red_death_native_69
+68	70	72	litch_demon_native_70
+69	71	73	undead_balrog_native_71
+74	72	74	incinerator_native_72
+75	73	75	flame_lord_native_73
+76	74	76	doom_fire_native_74
+77	75	77	hell_burner_native_75
+83	76	78	red_storm_native_76
+82	77	79	storm_rider_native_77
+84	78	80	storm_lord_native_78
+85	79	81	maelstrom_native_79
+127	80	82	devil_kin_brute_native_80
+86	81	83	winged_demon_native_81
+87	82	84	gargoyle_native_82
+88	83	85	blood_claw_native_83
+89	84	86	death_wing_native_84
+90	85	87	slayer_native_85
+91	86	88	guardian_native_86
+92	87	89	vortex_lord_native_87
+93	88	90	balrog_native_88
+94	89	91	cave_viper_native_89
+95	90	92	fire_drake_native_90
+97	91	93	gold_viper_native_91
+96	92	94	azure_drake_native_92
+98	93	95	black_knight_native_93
+99	94	96	doom_guard_native_94
+100	95	97	steel_lord_native_95
+101	96	98	blood_knight_native_96
+102	97	99	the_shredded_native_97
+103	98	100	hollow_one_native_98
+104	99	101	pain_master_native_99
+105	100	102	reality_weaver_native_100
+106	101	103	succubus_native_101
+107	102	104	snow_witch_native_102
+108	103	105	hell_spawn_native_103
+109	104	106	soul_burner_native_104
+110	105	107	counselor_native_105
+111	106	108	magistrate_native_106
+112	107	109	cabalist_native_107
+113	108	110	advocate_native_108
+115	110	112	the_dark_lord_native_110
+117	109	111	golem_native_109
+128	111	113	the_arch_litch_malignus_native_111
+129	112	114	hellboar_native_112
+130	113	115	stinger_native_113
+131	114	116	psychorb_native_114
+132	115	117	arachnon_native_115
+133	116	118	felltwin_native_116
+134	117	119	hork_spawn_native_117
+135	118	120	venomtail_native_118
+136	119	121	necromorb_native_119
+137	120	122	spider_lord_native_120
+138	121	123	lashworm_native_121
+139	122	124	torchant_native_122
+140	123	125	hork_demon_native_123
+141	124	126	hell_bug_native_124
+142	125	127	gravedigger_native_125
+143	126	128	tomb_rat_native_126
+144	127	129	firebat_native_127
+145	128	130	skullwing_native_128
+146	129	131	lich_native_129
+147	130	132	crypt_demon_native_130
+148	131	133	hellbat_native_131
+149	132	134	bone_demon_native_132
+150	129	131	lich_native_129
+151	134	136	biclops_native_134
+152	135	137	flesh_thing_native_135
+153	136	138	reaper_native_136
+154	137	139	na_krul_native_137

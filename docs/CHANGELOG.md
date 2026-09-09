@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added optional stable `monster_symbol` cross-checks to
+  `native_dun_monsters.tsv` and populated both shipped packs. Native DUN layer
+  mappings now validate their authoritative monster identity against the active
+  stable namespace while retaining numeric-only compatibility rows.
+
 - Externalized the native Halls of the Blind optic-amulet and Gateway of Blood
   Blood Stone book rewards through validated object templates. Blood Stone is
   now present in the base item catalog; placement and map replacement remain

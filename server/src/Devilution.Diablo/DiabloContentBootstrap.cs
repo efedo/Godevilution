@@ -671,7 +671,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var nativeDunMonstersTable)
             ? AuthoritativeNativeDunMonsterCatalog.LoadTsv(
                 nativeDunMonstersTable.SourcePath,
-                nativeDunMonstersTable.ToCanonicalTsv())
+                nativeDunMonstersTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         if (nativeDunMonsters is not null) {
             if (monsterTypes is null)

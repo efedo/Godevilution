@@ -2,7 +2,7 @@
 
 Status date: 2026-09-09
 
-The active Diablo content schema is now `1.450.0` (with `1.449.0` retained as
+The active Diablo content schema is now `1.451.0` (with `1.450.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -35,6 +35,11 @@ Native DUN fragments and their authored object placements use the same separate
 origin namespace. Their assets remain validated at activation, while geometry
 and template objects defer until the generated ordinary-level origin is
 published.
+
+Native DUN monster mappings now also accept an optional stable `monster_symbol`
+cross-check. Numeric-only rows remain compatible, while shipped base and
+Hellfire mappings validate their authoritative monster identity against the
+active stable namespace before materialization.
 
 The Godot client now uses a shared authoritative viewport transform for world
 rendering and mouse hit-testing. Small levels are centered, large levels clamp
