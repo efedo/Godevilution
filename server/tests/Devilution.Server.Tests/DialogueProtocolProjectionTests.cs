@@ -115,6 +115,43 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsUnknownNativeAiAndScavengerCorpseReferencesBeforeProjection()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0) {
+                    NativeAi = "NotARealAi",
+                }],
+            };
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+
+        source = source with {
+            Monsters = [source.Monsters[0] with {
+                NativeAi = string.Empty,
+                ScavengerCorpseEntityId = 2,
+            }],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void ProjectsAndRestoresMonsterGroupUnityState()
     {
         var source = CreateOriginSnapshot(
@@ -1576,6 +1613,9 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { ToHitSpecial = 256 });
         AssertRejected(value => value with { Intelligence = 256 });
         AssertRejected(value => value with { Direction = 8 });
+        AssertRejected(value => value with { NativeAi = new string('x', AuthoritativeProtocolLimits.MaximumIdentityBytes + 1) });
+        AssertRejected(value => value with { FallenFearDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection + 1 });
+        AssertRejected(value => value with { BatRetreatDirection = -1 });
         AssertRejected(value => value with { FireResistance = 101 });
         AssertRejected(value => value with { LightningResistance = -101 });
         AssertRejected(value => value with { MagicResistance = 101 });

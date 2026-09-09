@@ -1465,6 +1465,32 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsNativeMonsterAiIdentityDirectionsAndScavengerReferencesOutsideSharedBounds()
+    {
+        var valid = new Snapshot {
+            Monsters = { new MonsterSnapshot { EntityId = 1, LevelId = 1 } },
+        };
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.NativeAi = new string('x', AuthoritativeProtocolLimits.MaximumIdentityBytes + 1),
+            monster => monster.NativeAi = "bad\0ai",
+            monster => monster.FallenFearDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection + 1,
+            monster => monster.BatRetreatDirection = -1,
+            monster => monster.ScavengerCorpseEntityId = 2,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(invalid));
+        }
+
+        var wrongLevelReference = valid.Clone();
+        wrongLevelReference.Corpses.Add(new CorpseSnapshot { EntityId = 2, LevelId = 2 });
+        wrongLevelReference.Monsters[0].ScavengerCorpseEntityId = 2;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(wrongLevelReference));
+    }
+
+    [Fact]
     public void AcceptsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

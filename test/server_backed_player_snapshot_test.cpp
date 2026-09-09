@@ -1926,6 +1926,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	expectInvalidAiState([](auto *monster) { monster->set_ranged_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_mega_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_counselor_retreat_ticks(MaximumNativeMonsterRetreatTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_native_ai(std::string(MaximumIdentityBytes + 1, 'x')); });
+	expectInvalidAiState([](auto *monster) { monster->set_native_ai(std::string("bad\0ai", 6)); });
+	expectInvalidAiState([](auto *monster) { monster->set_fallen_fear_direction(MaximumNativeMonsterDirection + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_bat_retreat_direction(-1); });
+	expectInvalidAiState([](auto *monster) { monster->set_scavenger_corpse_entity_id(2); });
+
+	protocol::Snapshot invalidScavengerCorpseLevel = makeMonster();
+	invalidScavengerCorpseLevel.mutable_monsters(0)->set_level_id(1);
+	invalidScavengerCorpseLevel.mutable_monsters(0)->set_scavenger_corpse_entity_id(2);
+	auto *wrongLevelCorpse = invalidScavengerCorpseLevel.add_corpses();
+	wrongLevelCorpse->set_entity_id(2);
+	wrongLevelCorpse->set_level_id(2);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidScavengerCorpseLevel).has_value());
 
 	protocol::Snapshot invalidBatMovementMode = makeMonster();
 	invalidBatMovementMode.mutable_monsters(0)->set_bat_movement_mode(MaximumNativeMonsterMovementMode + 1);

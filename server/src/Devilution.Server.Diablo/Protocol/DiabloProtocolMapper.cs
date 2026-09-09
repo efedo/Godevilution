@@ -3,6 +3,7 @@ using Devilution.Protocol.V1;
 using Devilution.Domain.Protocol;
 using Devilution.Engine;
 using Devilution.Server.Snapshots;
+using AuthoritativeMonsterTypeCatalog = Devilution.Diablo.AuthoritativeMonsterTypeCatalog;
 using AuthoritativeProjectileBehavior = Devilution.Diablo.AuthoritativeProjectileBehavior;
 
 namespace Devilution.Server.Protocol;
@@ -123,6 +124,7 @@ internal static class DiabloProtocolMapper
         ValidateProjectedPlayerPositions(projectedParticipants, projectedLevels);
         ValidateProjectedMonsterPositions(source.Monsters, projectedLevels);
         ValidateProjectedMonsterStates(source.Monsters);
+        ValidateProjectedScavengerCorpseReferences(source.Monsters, source.Corpses);
         ValidateProjectedMonsterPoolCapacity(source.Monsters);
         ValidateProjectedCorpsePositions(source.Corpses, projectedLevels);
         ValidateProjectedPortalPositions(source.Portals, projectedLevels);
@@ -1094,9 +1096,15 @@ internal static class DiabloProtocolMapper
                 || monster.ToHit is < 0 or > byte.MaxValue
                 || monster.ToHitSpecial is < 0 or > byte.MaxValue
                 || monster.Intelligence is < 0 or > byte.MaxValue
+                || !NativeTextLimits.IsIdentityWithinLimit(monster.NativeAi)
+                || monster.NativeAi.Contains('\0')
+                || !string.IsNullOrEmpty(monster.NativeAi)
+                    && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi)
                 || !NativeTextLimits.IsIdentityWithinLimit(monster.UniqueIdentity)
                 || !string.IsNullOrEmpty(monster.UniqueIdentity) && !monster.IsUnique
                 || monster.Direction is < 0 or > MaximumNativeMonsterDirection
+                || monster.FallenFearDirection is < 0 or > MaximumNativeMonsterDirection
+                || monster.BatRetreatDirection is < 0 or > MaximumNativeMonsterDirection
                 || monster.FireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
                 || monster.LightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
                 || monster.MagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
@@ -1185,6 +1193,28 @@ internal static class DiabloProtocolMapper
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "Authoritative monster state contains an invalid pack leader.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedScavengerCorpseReferences(
+        IReadOnlyList<DiabloMonsterState> monsters,
+        IReadOnlyList<DiabloCorpseState> corpses)
+    {
+        var corpsesById = new Dictionary<uint, DiabloCorpseState>();
+        foreach (var corpse in corpses) {
+            if (!corpsesById.TryAdd(corpse.EntityId, corpse))
+                throw new InvalidDataException(
+                    "Authoritative corpse state contains duplicate entity IDs.");
+        }
+
+        foreach (var monster in monsters) {
+            if (monster.ScavengerCorpseEntityId == 0)
+                continue;
+            if (!corpsesById.TryGetValue(monster.ScavengerCorpseEntityId, out var corpse)
+                || corpse.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "Authoritative monster state contains an invalid Scavenger corpse reference.");
             }
         }
     }

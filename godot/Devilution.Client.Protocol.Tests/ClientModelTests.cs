@@ -2865,6 +2865,36 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsNativeMonsterAiIdentityDirectionsAndScavengerReferencesOutsideSharedBounds()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            Monsters = { new MonsterSnapshot { EntityId = 9, LevelId = 1 } },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.NativeAi = new string('x', AuthoritativeProtocolLimits.MaximumIdentityBytes + 1),
+            monster => monster.NativeAi = "bad\0ai",
+            monster => monster.FallenFearDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection + 1,
+            monster => monster.BatRetreatDirection = -1,
+            monster => monster.ScavengerCorpseEntityId = 2,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+
+        var wrongLevelReference = valid.Clone();
+        wrongLevelReference.Corpses.Add(new CorpseSnapshot { EntityId = 2, LevelId = 2 });
+        wrongLevelReference.Monsters[0].ScavengerCorpseEntityId = 2;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: wrongLevelReference)));
+    }
+
+    [Fact]
     public void RejectsMalformedAuthoritativeMonsterCombatState()
     {
         var model = new AuthoritativeClientModel();

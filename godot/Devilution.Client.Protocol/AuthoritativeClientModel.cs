@@ -261,6 +261,7 @@ public sealed class AuthoritativeClientModel
             }
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
+            ValidateScavengerCorpseReferences(message.Snapshot);
             ValidateWarpTriggers(message.Snapshot);
             ValidateSetLevelObjectOrigins(message.Snapshot);
             ValidateMaterializedProceduralLevels(message.Snapshot);
@@ -1430,10 +1431,14 @@ public sealed class AuthoritativeClientModel
             || monster.DeathTicksRemaining > monster.DeathAnimationTicks
             || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
             || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
+            || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(monster.NativeAi)
+            || monster.NativeAi.Contains('\0')
             || monster.ToHit is < 0 or > MaximumNativeMonsterToHit
             || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
             || monster.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
             || monster.Direction is < 0 or > MaximumNativeMonsterDirection
+            || monster.FallenFearDirection is < 0 or > MaximumNativeMonsterDirection
+            || monster.BatRetreatDirection is < 0 or > MaximumNativeMonsterDirection
             || monster.FireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
             || monster.LightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
             || monster.MagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
@@ -1503,6 +1508,26 @@ public sealed class AuthoritativeClientModel
                 || leader.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid monster pack leader.");
+            }
+        }
+    }
+
+    private static void ValidateScavengerCorpseReferences(Snapshot snapshot)
+    {
+        var corpsesById = new Dictionary<uint, CorpseSnapshot>();
+        foreach (var corpse in snapshot.Corpses) {
+            if (!corpsesById.TryAdd(corpse.EntityId, corpse))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate corpse entity IDs.");
+        }
+
+        foreach (var monster in snapshot.Monsters) {
+            if (monster.ScavengerCorpseEntityId == 0)
+                continue;
+            if (!corpsesById.TryGetValue(monster.ScavengerCorpseEntityId, out var corpse)
+                || corpse.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid Scavenger corpse reference.");
             }
         }
     }

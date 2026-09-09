@@ -1392,10 +1392,14 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.death_ticks_remaining() > monster.death_animation_ticks()
 		    || (monster.hit_points_q6() > 0 && monster.death_ticks_remaining() != 0)
 		    || monster.experience_reward() > MaximumNativeMonsterExperienceReward
+		    || monster.native_ai().size() > MaximumIdentityBytes
+		    || monster.native_ai().find('\0') != std::string::npos
 		    || monster.to_hit() < 0 || monster.to_hit() > MaximumNativeMonsterToHit
 		    || monster.to_hit_special() < 0 || monster.to_hit_special() > MaximumNativeMonsterToHit
 		    || monster.intelligence() < 0 || monster.intelligence() > MaximumNativeMonsterIntelligence
 		    || monster.direction() < 0 || monster.direction() > MaximumNativeMonsterDirection
+		    || monster.fallen_fear_direction() < 0 || monster.fallen_fear_direction() > MaximumNativeMonsterDirection
+		    || monster.bat_retreat_direction() < 0 || monster.bat_retreat_direction() > MaximumNativeMonsterDirection
 		    || monster.fire_resistance() < MinimumNativeMonsterResistance || monster.fire_resistance() > MaximumNativeMonsterResistance
 		    || monster.lightning_resistance() < MinimumNativeMonsterResistance || monster.lightning_resistance() > MaximumNativeMonsterResistance
 		    || monster.magic_resistance() < MinimumNativeMonsterResistance || monster.magic_resistance() > MaximumNativeMonsterResistance
@@ -1462,6 +1466,19 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster combat state.");
 		if (monster.entity_id() == 0 || !monstersById.emplace(monster.entity_id(), &monster).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate monster entity IDs.");
+	}
+	std::unordered_map<uint32_t, uint32_t> corpseLevels;
+	corpseLevels.reserve(snapshot.corpses_size());
+	for (const auto &corpse : snapshot.corpses()) {
+		if (corpse.entity_id() == 0 || !corpseLevels.emplace(corpse.entity_id(), corpse.level_id()).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate corpse entity IDs.");
+	}
+	for (const auto &monster : snapshot.monsters()) {
+		if (monster.scavenger_corpse_entity_id() == 0)
+			continue;
+		const auto corpse = corpseLevels.find(monster.scavenger_corpse_entity_id());
+		if (corpse == corpseLevels.end() || corpse->second != monster.level_id())
+			return tl::make_unexpected("Server-backed snapshot contains an invalid Scavenger corpse reference.");
 	}
 	for (const auto &monster : snapshot.monsters()) {
 		if (monster.leader_relation() == 0)

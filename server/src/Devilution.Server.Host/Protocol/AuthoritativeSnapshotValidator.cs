@@ -114,6 +114,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateEntityPositions(snapshot);
         ValidatePlayerActions(snapshot);
         ValidateMonsters(snapshot);
+        ValidateScavengerCorpseReferences(snapshot);
         ValidateMonsterMovementState(snapshot);
         ValidateWorldItems(snapshot);
         ValidateProjectiles(snapshot);
@@ -1109,10 +1110,14 @@ public static class AuthoritativeSnapshotValidator
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
                 || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
+                || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(monster.NativeAi)
+                || monster.NativeAi.Contains('\0')
                 || monster.ToHit is < 0 or > MaximumNativeMonsterToHit
                 || monster.ToHitSpecial is < 0 or > MaximumNativeMonsterToHit
                 || monster.Intelligence is < 0 or > MaximumNativeMonsterIntelligence
                 || monster.Direction is < 0 or > MaximumNativeMonsterDirection
+                || monster.FallenFearDirection is < 0 or > MaximumNativeMonsterDirection
+                || monster.BatRetreatDirection is < 0 or > MaximumNativeMonsterDirection
                 || monster.FireResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
                 || monster.LightningResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
                 || monster.MagicResistance is < MinimumNativeMonsterResistance or > MaximumNativeMonsterResistance
@@ -1269,6 +1274,26 @@ public static class AuthoritativeSnapshotValidator
 
     private static bool IsAsciiLetter(char character)
         => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
+
+    private static void ValidateScavengerCorpseReferences(Snapshot snapshot)
+    {
+        var corpsesById = new Dictionary<uint, CorpseSnapshot>();
+        foreach (var corpse in snapshot.Corpses) {
+            if (!corpsesById.TryAdd(corpse.EntityId, corpse))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate corpse entity IDs.");
+        }
+
+        foreach (var monster in snapshot.Monsters) {
+            if (monster.ScavengerCorpseEntityId == 0)
+                continue;
+            if (!corpsesById.TryGetValue(monster.ScavengerCorpseEntityId, out var corpse)
+                || corpse.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid Scavenger corpse reference.");
+            }
+        }
+    }
 
     private static void ValidateMonsterMovementState(Snapshot snapshot)
     {

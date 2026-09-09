@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native monster AI identity, directional state, and Scavenger corpse
+  references now validate consistently at managed mapper/host/Godot and
+  native snapshot boundaries.
+
 - Native monster AI timers and counters now use the shared compatibility
   bounds at managed mapper/host/Godot and native snapshot boundaries,
   rejecting malformed state before presentation or persistence.
