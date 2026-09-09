@@ -9955,6 +9955,14 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					}
 				}
 			}
+			const bool blockingObject = state.objectEntityId != 0
+			    && state.objectLevelId == projectile.levelId
+			    && state.objectPositionX == projectile.positionX
+			    && state.objectPositionY == projectile.positionY
+			    && !state.objectDestroyed
+			    && !state.objectMissilePassable;
+			if (blockingObject && state.objectBreakable)
+				state.objectDestroyed = true;
 			if (projectile.remainingTicks == 0) {
 				projectile.phase = 1;
 				projectile.remainingTicks = 2;

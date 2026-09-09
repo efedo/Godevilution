@@ -8394,6 +8394,30 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidPuddleBreaksOccupiedBreakableObject()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-puddle-object-break.json");
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var @object = Assert.Single(result.FinalSnapshot.Objects);
+        var puddle = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.True(@object.Destroyed);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.AcidPuddle, puddle.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, puddle.Phase);
+        Assert.Equal(1U, puddle.RemainingTicks);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(
@@ -9482,6 +9506,18 @@ public sealed class ReplayFixtureTests
             startingEquipment: initial.Equipment
                 .Select(item => item.ToEquippedStoreItem())
                 .ToArray(),
+            startingObjects: initial.ObjectEntityId == 0
+                ? Array.Empty<AuthoritativeWorldObject>()
+                : [new AuthoritativeWorldObject(
+                    initial.ObjectEntityId,
+                    initial.ObjectId,
+                    initial.LevelId,
+                    initial.ObjectPositionX,
+                    initial.ObjectPositionY,
+                    questId: initial.ObjectQuestId,
+                    missilePassable: initial.ObjectMissilePassable,
+                    breakable: initial.ObjectBreakable,
+                    destroyed: initial.ObjectDestroyed)],
             startingSpells: spells,
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,

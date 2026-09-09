@@ -8167,6 +8167,9 @@ boundary in compact native replay, including the 40% hit roll, usable
 equipment effects, acid resistance, Mana Shield absorption, and lifecycle
 checkpoints.
 
+Persistent Acid puddles now also destroy an occupied breakable missile blocker
+in compact native replay while preserving the managed impact-phase lifetime.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

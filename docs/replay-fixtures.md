@@ -1172,6 +1172,8 @@ Notable shared fixtures include:
 - `gameplay-acid-puddle-primary-equipment.json` for active Acid puddle player
   collision, equipment/resistance before Mana Shield, and persistent lifecycle
   checkpoints;
+- `gameplay-acid-puddle-object-break.json` for active Acid puddle breakable
+  object destruction and retained impact-phase lifetime;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
   preserves player life, projectile travel, and failed-collision identity;
 - `gameplay-monster-magic-secondary-impact.json` for secondary-participant
