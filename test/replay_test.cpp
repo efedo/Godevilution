@@ -671,6 +671,8 @@ TEST(ReplayFixture, ExecutesPhysicalHellfireDevastationAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
 	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-devastation.json", 0, 30, 20, 25, 58);
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-decay.json", 0, 30, 20, 25, 93);
 }
 
 TEST(ReplayFixture, ExecutesPhysicalHellfireArmorPiercingAgainstCSharpCheckpoint)

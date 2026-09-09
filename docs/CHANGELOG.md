@@ -62,6 +62,8 @@ All notable changes to this fork are documented below.
   the deterministic post-hit `Devastation` multiplier in both runners.
 - Hellfire armor-piercing replay now covers the native shifted-armor hit
   admission rule in both runners.
+- Hellfire physical replay now covers slot-ordered post-attack weapon `Decay`
+  mutation while preserving the attack's pre-decay damage.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

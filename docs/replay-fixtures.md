@@ -94,6 +94,9 @@ The Hellfire-devastation companion carries the authored Hellfire damage-armor
 flag and proves the post-hit 3x `Devastation` proc with native RNG ordering.
 The Hellfire-armor-piercing companion covers Hellfire's shifted armor
 admission semantics while preserving the unshifted post-hit damage armor.
+The Hellfire-decay companion proves slot-ordered post-attack `Decay`
+mutation: the attack uses the authored damage before the weapon's `PlusDamage`
+is reduced.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and
@@ -436,7 +439,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 210 checked-in JSON fixtures and 237 registered
+the native replay gate contains 211 checked-in JSON fixtures and 237 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

@@ -43,6 +43,9 @@ constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr uint32_t TripleDemonDamageFlag = 1U << 30;
 constexpr int32_t HellfireDevastationFlag = 1 << 0;
+constexpr int32_t HellfireDecayFlag = 1 << 1;
+constexpr int32_t HellfireDecayDamageReduction = 5;
+constexpr int32_t HellfireDecayRemovalThreshold = 100;
 constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t FireboltBehavior = 2;
@@ -3506,6 +3509,28 @@ bool HasReplayHellfireEquipmentFlag(
 	    });
 }
 
+void ApplyReplayHellfireWeaponDecay(ReplayFixtureExecutionState &state)
+{
+	if (!state.hellfire)
+		return;
+	for (const uint32_t slot : { 4U, 5U }) {
+		auto item = std::find_if(
+		    state.equipment.begin(),
+		    state.equipment.end(),
+		    [slot](const ReplayFixtureSlottedItem &candidate) {
+			    return candidate.slot == slot
+			        && IsReplayEquipmentUsable(candidate.state)
+			        && candidate.state.itemClass == 1
+			        && (candidate.state.hellfireDamageArmorFlags & HellfireDecayFlag) != 0;
+		    });
+		if (item == state.equipment.end())
+			continue;
+		item->state.plusDamage -= HellfireDecayDamageReduction;
+		if (item->state.plusDamage <= -HellfireDecayRemovalThreshold)
+			state.equipment.erase(item);
+	}
+}
+
 int32_t ResolveReplayWeaponArrowSpeed(ReplayFixtureExecutionState &state)
 {
 	int32_t speed = HasReplayEquipmentFlag(state, RandomArrowVelocityFlag)
@@ -5330,6 +5355,7 @@ bool ApplyReplayAttack(
 	if (consumeRandom)
 		static_cast<void>(GenerateRnd(state, 1));
 	int32_t damage = 1;
+	bool attackHit = false;
 	if (!ranged && state.attributes[1] > 0 && state.attributes[5] > 0) {
 		const int32_t level = static_cast<int32_t>(state.characterLevel);
 		const int32_t strength = state.attributes[1];
@@ -5438,7 +5464,7 @@ bool ApplyReplayAttack(
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
 		    ^ targetEntityId
 		    ^ state.entityId;
-		const bool attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
+		attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
 		const int32_t damageBeforeFlat = rolledBaseDamage + rolledBaseDamage * damagePercent / 100;
 		int32_t damageBeforeArmor = damageBeforeFlat + damageFlat + damageModifier;
 		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
@@ -5507,6 +5533,8 @@ bool ApplyReplayAttack(
 	}
 	if (state.combatTargetHitPointsQ6 <= 0)
 		DefeatReplayCombatTarget(state);
+	if (attackHit)
+		ApplyReplayHellfireWeaponDecay(state);
 	return true;
 }
 
