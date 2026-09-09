@@ -1020,6 +1020,38 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(hellfireClassPerilGetHitState.randomState, 22695478U);
 	EXPECT_EQ(hellfireClassPerilGetHitResult.transitions[0].stateSha256, hellfireClassPerilGetHitFixture.checkpoints.back().stateSha256);
 
+	std::ifstream rangedHellFile("test/fixtures/replay/gameplay-ranged-class-hell.json");
+	ASSERT_TRUE(rangedHellFile.good());
+	const std::string rangedHellJson((std::istreambuf_iterator<char>(rangedHellFile)), std::istreambuf_iterator<char>());
+	ReplayFixture rangedHellFixture;
+	ASSERT_TRUE(ParseReplayFixture(rangedHellJson, rangedHellFixture, error)) << error;
+	ReplayFixtureExecutionState rangedHellState;
+	rangedHellState.characterClassId = static_cast<uint32_t>(rangedHellFixture.initialState.characterClass);
+	rangedHellState.attributes[0] = rangedHellFixture.initialState.strength;
+	rangedHellState.attributes[1] = rangedHellFixture.initialState.strength;
+	rangedHellState.attributes[2] = rangedHellFixture.initialState.magic;
+	rangedHellState.attributes[3] = rangedHellFixture.initialState.magic;
+	rangedHellState.attributes[4] = rangedHellFixture.initialState.dexterity;
+	rangedHellState.attributes[5] = rangedHellFixture.initialState.dexterity;
+	rangedHellState.attributes[6] = rangedHellFixture.initialState.vitality;
+	rangedHellState.attributes[7] = rangedHellFixture.initialState.vitality;
+	rangedHellState.characterLevel = rangedHellFixture.initialState.characterLevel;
+	rangedHellState.life = rangedHellFixture.initialState.life;
+	rangedHellState.lifeMaximum = rangedHellFixture.initialState.life;
+	rangedHellState.mana = rangedHellFixture.initialState.mana;
+	rangedHellState.manaMaximum = rangedHellFixture.initialState.manaMaximum;
+	rangedHellState.positionX = rangedHellFixture.initialState.positionX;
+	rangedHellState.positionY = rangedHellFixture.initialState.positionY;
+	ReplayFixtureExecutionResult rangedHellResult;
+	ASSERT_TRUE(ExecuteReplayFixture(rangedHellFixture, rangedHellState, rangedHellResult, error)) << error;
+	ASSERT_EQ(rangedHellState.projectiles.size(), 1U);
+	EXPECT_TRUE(rangedHellState.projectiles[0].attackHit);
+	EXPECT_EQ(rangedHellState.projectiles[0].damage, 1);
+	EXPECT_EQ(rangedHellState.projectiles[0].damageQ6, 64);
+	EXPECT_EQ(rangedHellState.combatTargetMaxHitPoints, 600);
+	EXPECT_EQ(rangedHellState.randomState, 22695478U);
+	EXPECT_EQ(rangedHellResult.transitions[0].stateSha256, rangedHellFixture.checkpoints.back().stateSha256);
+
 	std::ifstream multipleArrowsFile("test/fixtures/replay/gameplay-ranged-multiple-arrows.json");
 	ASSERT_TRUE(multipleArrowsFile.good());
 	const std::string multipleArrowsJson((std::istreambuf_iterator<char>(multipleArrowsFile)), std::istreambuf_iterator<char>());

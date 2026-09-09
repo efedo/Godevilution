@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
   runners skip ineligible Doppelganger rolls without consuming RNG.
 - Extended Hellfire Peril replay fixtures to carry authored `PlusGetHit`
   self-damage for both melee and ranged class profiles.
+- Added initialized Hell ranged replay coverage for difficulty armor during
+  hit admission and projectile damage resolution.
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at

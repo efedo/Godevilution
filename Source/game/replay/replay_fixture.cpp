@@ -3673,7 +3673,10 @@ void CreateReplayWeaponArrow(
 		    : state.characterClassId == 4
 		        ? 60
 		    : 50;
-		const int32_t targetArmorClass = std::max(0, state.combatTargetArmorClass);
+		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
+		const int32_t targetArmorClass = std::max(
+		    0,
+		    state.combatTargetArmorClass + difficultyArmorBonus);
 		int32_t hitArmorClass = targetArmorClass;
 		int32_t hitArmorPiercing = armorPiercingBonus;
 		if (state.hellfire && armorPiercingBonus > 0) {

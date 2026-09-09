@@ -67,6 +67,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-ranged-multiple-arrows.json" Link="Fixtures/gameplay-ranged-multiple-arrows.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-damage.json" Link="Fixtures/gameplay-ranged-class-damage.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-armor.json" Link="Fixtures/gameplay-ranged-class-armor.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-ranged-class-hell.json" Link="Fixtures/gameplay-ranged-class-hell.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-hellfire-armor-piercing.json" Link="Fixtures/gameplay-ranged-class-hellfire-armor-piercing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-critical-demon.json" Link="Fixtures/gameplay-ranged-class-critical-demon.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-elemental-impact.json" Link="Fixtures/gameplay-ranged-elemental-impact.json" CopyToOutputDirectory="PreserveNewest" />

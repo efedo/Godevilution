@@ -39,6 +39,10 @@ Hellfire Peril replay now carries authored equipment `PlusGetHit` into the
 attacker self-damage payload for both melee and ranged class profiles, with
 matching native and managed checkpoints.
 
+Initialized ranged class replay now applies Nightmare/Hell monster armor to
+both hit admission and projectile damage before capture, matching the managed
+and native checkpoints.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo
