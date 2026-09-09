@@ -136,6 +136,8 @@ The Hellfire ranged-decay companion additionally proves that eligible hand
 weapons mutate once per emitted arrow before projectile resolution.
 The Hellfire ranged-Devastation companion proves the post-hit 3x multiplier
 before the projectile damage snapshot, including the shared native RNG draw.
+The Hellfire ranged-Peril companion proves the post-armor 2x multiplier and
+the carried attacker self-damage payload before projectile impact.
 The Hellfire ranged-Jesters companion proves Q6 damage scaling before the
 arrow's elemental channels and projectile snapshot are hashed.
 
@@ -449,7 +451,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 216 checked-in JSON fixtures and 237 registered
+the native replay gate contains 217 checked-in JSON fixtures and 237 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

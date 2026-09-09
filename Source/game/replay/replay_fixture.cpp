@@ -3569,6 +3569,10 @@ void CreateReplayWeaponArrow(
 	if (consumeRandom)
 		static_cast<void>(GenerateRnd(state, 1));
 	int32_t damageQ6 = 64;
+	int32_t perilSelfDamageQ6 = 0;
+	if (state.hellfire
+	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
+		perilSelfDamageQ6 = damageQ6;
 	if (state.hellfire
 	    && HasReplayHellfireEquipmentFlag(state, HellfireDevastationFlag)
 	    && GenerateRnd(state, 100) < 5)
@@ -3580,6 +3584,10 @@ void CreateReplayWeaponArrow(
 			roll = 100 + (roll - 100) * 5;
 		damageQ6 = damageQ6 * roll / 100;
 	}
+	if (state.hellfire
+	    && damageQ6 > 0
+	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
+		damageQ6 *= HellfirePerilDamageMultiplier;
 
 	const int32_t fireDamage = ResolveReplayElementalDamage(
 	    state,
@@ -3622,6 +3630,7 @@ void CreateReplayWeaponArrow(
 	}
 	projectile.damage = damageQ6 / 64;
 	projectile.damageQ6 = damageQ6;
+	projectile.perilSelfDamageQ6 = perilSelfDamageQ6;
 	projectile.elementalFireDamage = fireDamage;
 	projectile.elementalLightningDamage = lightningDamage;
 	projectile.damageType = 0;

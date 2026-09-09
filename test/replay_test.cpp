@@ -775,6 +775,26 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(devastationState.projectiles[0].damage, 3);
 	EXPECT_EQ(devastationState.projectiles[0].damageQ6, 192);
 	EXPECT_EQ(devastationResult.transitions[0].stateSha256, devastationFixture.checkpoints.back().stateSha256);
+
+	std::ifstream perilFile("test/fixtures/replay/gameplay-ranged-hellfire-peril.json");
+	ASSERT_TRUE(perilFile.good());
+	const std::string perilJson((std::istreambuf_iterator<char>(perilFile)), std::istreambuf_iterator<char>());
+	ReplayFixture perilFixture;
+	ASSERT_TRUE(ParseReplayFixture(perilJson, perilFixture, error)) << error;
+	ReplayFixtureExecutionState perilState;
+	perilState.life = perilFixture.initialState.life;
+	perilState.lifeMaximum = perilFixture.initialState.life;
+	perilState.mana = perilFixture.initialState.mana;
+	perilState.manaMaximum = perilFixture.initialState.manaMaximum;
+	perilState.positionX = perilFixture.initialState.positionX;
+	perilState.positionY = perilFixture.initialState.positionY;
+	ReplayFixtureExecutionResult perilResult;
+	ASSERT_TRUE(ExecuteReplayFixture(perilFixture, perilState, perilResult, error)) << error;
+	ASSERT_EQ(perilState.projectiles.size(), 1U);
+	EXPECT_EQ(perilState.projectiles[0].damage, 2);
+	EXPECT_EQ(perilState.projectiles[0].damageQ6, 128);
+	EXPECT_EQ(perilState.projectiles[0].perilSelfDamageQ6, 64);
+	EXPECT_EQ(perilResult.transitions[0].stateSha256, perilFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
