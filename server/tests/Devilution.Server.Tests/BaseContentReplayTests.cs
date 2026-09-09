@@ -27,6 +27,7 @@ public sealed class BaseContentReplayTests
     [InlineData("gameplay-class-physical-damage-undead-mace.json", 0, 90)]
     [InlineData("gameplay-class-physical-damage-animal-sword.json", 0, 90)]
     [InlineData("gameplay-class-physical-damage-animal-mace.json", 0, 96)]
+    [InlineData("gameplay-class-physical-damage-demon-triple.json", 0, 79)]
     public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
         string fixtureName,
         int expectedClassId,
@@ -73,6 +74,7 @@ public sealed class BaseContentReplayTests
                 armorClass: initial.CombatTargetArmorClass,
                 maxHitPoints: initial.CombatTargetMaxHitPoints,
                 undead: initial.CombatTargetUndead,
+                demon: initial.CombatTargetDemon,
                 animal: initial.CombatTargetAnimal)],
             startingPlayerClasses: classes,
             startingPlayerClass: classDefinition,

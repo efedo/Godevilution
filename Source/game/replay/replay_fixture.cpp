@@ -41,6 +41,7 @@ constexpr uint32_t FireArrowsFlag = 1U << 3;
 constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
+constexpr uint32_t TripleDemonDamageFlag = 1U << 30;
 constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t FireboltBehavior = 2;
@@ -579,6 +580,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		}
 		if (state.combatTargetUndead) {
 			hasher.AppendString("godevilution-monster-undead-v1");
+			hasher.AppendBool(true);
+		}
+		if (state.combatTargetDemon) {
+			hasher.AppendString("godevilution-monster-demon-v1");
 			hasher.AppendBool(true);
 		}
 		if (state.combatTargetAnimal) {
@@ -5430,6 +5435,10 @@ bool ApplyReplayAttack(
 		damage = attackHit
 		    ? std::max(1, damageBeforeArmor - std::max(0, effectiveArmorClass))
 		    : 0;
+		if (attackHit
+		    && state.combatTargetDemon
+		    && HasReplayEquipmentFlag(state, TripleDemonDamageFlag))
+			damage *= 3;
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
 	}
@@ -10629,6 +10638,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetMonsterLevel);
 			if (key == "combat_target_undead")
 				return ParseBool(fixture_.initialState.combatTargetUndead);
+			if (key == "combat_target_demon")
+				return ParseBool(fixture_.initialState.combatTargetDemon);
 			if (key == "combat_target_animal")
 				return ParseBool(fixture_.initialState.combatTargetAnimal);
 			if (key == "combat_target_moving")
@@ -11501,6 +11512,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	            || target.combatTargetMagicResistance != 0
 	            || target.combatTargetMonsterLevel != 0
 	            || target.combatTargetUndead
+	            || target.combatTargetDemon
 	            || target.combatTargetAnimal
 	            || target.combatTargetLevelId != 0
 	            || target.combatTargetMoving
@@ -12391,6 +12403,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;
 		state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
 		state.combatTargetUndead = fixture.initialState.combatTargetUndead;
+		state.combatTargetDemon = fixture.initialState.combatTargetDemon;
 		state.combatTargetAnimal = fixture.initialState.combatTargetAnimal;
 		state.combatTargetMoving = fixture.initialState.combatTargetMoving;
 		state.combatTargetFuturePositionX = fixture.initialState.combatTargetFuturePositionX;

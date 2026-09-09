@@ -186,6 +186,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetAcidResistance != 0
                     || initialTarget.CombatTargetMonsterLevel != 0
                     || initialTarget.CombatTargetUndead
+                    || initialTarget.CombatTargetDemon
                     || initialTarget.CombatTargetAnimal
                     || initialTarget.CombatTargetLevelId != 0
                     || initialTarget.CombatTargetMoving

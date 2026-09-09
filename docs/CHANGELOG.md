@@ -54,6 +54,8 @@ All notable changes to this fork are documented below.
   bonus against authored undead targets in both runners.
 - The same replay boundary now covers the inverse sword/mace adjustments for
   authored animal targets.
+- Initialized physical replay now carries demon targets and the validated
+  post-armor `TripleDemonDamage` multiplier through both runners.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
