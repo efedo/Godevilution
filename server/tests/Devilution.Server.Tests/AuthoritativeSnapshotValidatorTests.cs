@@ -1491,6 +1491,23 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsOneSidedNativeMonsterRuntimeSeeds()
+    {
+        var valid = new Snapshot {
+            Monsters = { new MonsterSnapshot { EntityId = 1 } },
+        };
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.MonsterItemSeed = 1,
+            monster => monster.MonsterAiSeed = 1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(invalid));
+        }
+    }
+
+    [Fact]
     public void AcceptsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

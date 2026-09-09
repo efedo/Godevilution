@@ -1093,6 +1093,7 @@ internal static class DiabloProtocolMapper
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
                 || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
+                || (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0)
                 || monster.ToHit is < 0 or > byte.MaxValue
                 || monster.ToHitSpecial is < 0 or > byte.MaxValue
                 || monster.Intelligence is < 0 or > byte.MaxValue

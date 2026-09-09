@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Monster item and AI runtime seeds now travel as an all-or-nothing pair,
+  preserving deterministic native initialization at mapper, host, Godot, and
+  native snapshot boundaries.
+
 - Native monster AI identity, directional state, and Scavenger corpse
   references now validate consistently at managed mapper/host/Godot and
   native snapshot boundaries.

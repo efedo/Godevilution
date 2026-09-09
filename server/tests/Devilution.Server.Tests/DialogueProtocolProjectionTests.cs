@@ -115,6 +115,43 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsOneSidedNativeMonsterRuntimeSeedsBeforeProjection()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0) {
+                    MonsterItemSeed = 1,
+                }],
+            };
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+
+        source = source with {
+            Monsters = [source.Monsters[0] with {
+                MonsterItemSeed = 0,
+                MonsterAiSeed = 1,
+            }],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void RejectsUnknownNativeAiAndScavengerCorpseReferencesBeforeProjection()
     {
         var source = CreateOriginSnapshot(

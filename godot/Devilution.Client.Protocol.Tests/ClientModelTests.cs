@@ -2895,6 +2895,27 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsOneSidedNativeMonsterRuntimeSeeds()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = { new MonsterSnapshot { EntityId = 9 } },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.MonsterItemSeed = 1,
+            monster => monster.MonsterAiSeed = 1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void RejectsMalformedAuthoritativeMonsterCombatState()
     {
         var model = new AuthoritativeClientModel();

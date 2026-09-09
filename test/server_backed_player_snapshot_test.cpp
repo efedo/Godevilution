@@ -1926,6 +1926,8 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	expectInvalidAiState([](auto *monster) { monster->set_ranged_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_mega_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_counselor_retreat_ticks(MaximumNativeMonsterRetreatTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_monster_item_seed(1); });
+	expectInvalidAiState([](auto *monster) { monster->set_monster_ai_seed(1); });
 	expectInvalidAiState([](auto *monster) { monster->set_native_ai(std::string(MaximumIdentityBytes + 1, 'x')); });
 	expectInvalidAiState([](auto *monster) { monster->set_native_ai(std::string("bad\0ai", 6)); });
 	expectInvalidAiState([](auto *monster) { monster->set_fallen_fear_direction(MaximumNativeMonsterDirection + 1); });
