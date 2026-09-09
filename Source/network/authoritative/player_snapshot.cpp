@@ -1248,7 +1248,8 @@ tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::
 		return !isInBounds(object.level_id(), object.position_x(), object.position_y());
 	});
 	const auto invalidProjectile = std::any_of(snapshot.projectiles().begin(), snapshot.projectiles().end(), [&](const auto &projectile) {
-		return !isInBounds(projectile.level_id(), projectile.position_x(), projectile.position_y());
+		return !isInBounds(projectile.level_id(), projectile.position_x(), projectile.position_y())
+		    || !isInBounds(projectile.level_id(), projectile.target_x(), projectile.target_y());
 	});
 	const auto invalidCorpse = std::any_of(snapshot.corpses().begin(), snapshot.corpses().end(), [&](const auto &corpse) {
 		return !isInBounds(corpse.level_id(), corpse.position_x(), corpse.position_y());

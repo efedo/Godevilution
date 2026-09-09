@@ -1745,6 +1745,10 @@ TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)
 	worldEntitiesOutside.mutable_projectiles(0)->set_level_id(1);
 	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
 	worldEntitiesOutside.clear_projectiles();
+	worldEntitiesOutside.add_projectiles()->set_target_x(4);
+	worldEntitiesOutside.mutable_projectiles(0)->set_level_id(1);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	worldEntitiesOutside.clear_projectiles();
 	worldEntitiesOutside.add_corpses()->set_position_y(4);
 	worldEntitiesOutside.mutable_corpses(0)->set_level_id(1);
 	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());

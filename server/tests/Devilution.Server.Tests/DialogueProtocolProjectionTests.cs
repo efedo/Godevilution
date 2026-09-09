@@ -1532,6 +1532,9 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(
             value => value with { PositionY = 10 },
             [new AuthoritativeLevel(1, 10, 10)]);
+        AssertRejected(
+            value => value with { TargetX = 10 },
+            [new AuthoritativeLevel(1, 10, 10)]);
     }
 
     [Fact]

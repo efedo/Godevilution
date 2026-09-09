@@ -738,6 +738,36 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsProjectileTargetOutsideProjectedLevelGeometry()
+    {
+        var valid = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    SpellId = 1,
+                    LevelId = 1,
+                    PositionX = 2,
+                    PositionY = 3,
+                    TargetX = 9,
+                    TargetY = 9,
+                    RemainingTicks = 1,
+                },
+            },
+        };
+
+        AuthoritativeSnapshotValidator.Validate(valid);
+
+        var invalid = valid.Clone();
+        invalid.Projectiles[0].TargetX = 10;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(invalid));
+    }
+
+    [Fact]
     public void AcceptsValidWorldItemIdentityAndNativeState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

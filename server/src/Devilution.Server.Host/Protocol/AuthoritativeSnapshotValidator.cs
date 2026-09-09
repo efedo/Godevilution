@@ -952,7 +952,8 @@ public static class AuthoritativeSnapshotValidator
             || snapshot.Objects.Any(@object =>
                 !IsInBounds(@object.LevelId, @object.PositionX, @object.PositionY))
             || snapshot.Projectiles.Any(projectile =>
-                !IsInBounds(projectile.LevelId, projectile.PositionX, projectile.PositionY))
+                !IsInBounds(projectile.LevelId, projectile.PositionX, projectile.PositionY)
+                || !IsInBounds(projectile.LevelId, projectile.TargetX, projectile.TargetY))
             || snapshot.Corpses.Any(corpse =>
                 !IsInBounds(corpse.LevelId, corpse.PositionX, corpse.PositionY))
             || snapshot.Portals.Any(portal =>

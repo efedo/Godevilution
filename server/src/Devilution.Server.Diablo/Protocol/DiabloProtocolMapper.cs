@@ -962,6 +962,12 @@ internal static class DiabloProtocolMapper
                 projectile.PositionY,
                 levels,
                 "projectile");
+            ValidateProjectedEntityPosition(
+                projectile.LevelId,
+                projectile.TargetX,
+                projectile.TargetY,
+                levels,
+                "projectile target");
             if (projectile.SourceEntityId == 0
                 || projectile.SpellId == 0
                     && projectile.Behavior is not (AuthoritativeProjectileBehavior.WeaponArrow

@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
+- Projectile destination coordinates now use the projected level geometry at
+  mapper, host, Godot, and native snapshot boundaries.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
