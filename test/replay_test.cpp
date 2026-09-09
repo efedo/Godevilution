@@ -834,6 +834,32 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_TRUE(perilImpactState.projectiles.empty());
 	EXPECT_EQ(perilImpactResult.transitions[0].stateSha256, perilImpactFixture.checkpoints[0].stateSha256);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(perilImpactState), perilImpactFixture.checkpoints[1].stateSha256);
+
+	std::ifstream multipleArrowsFile("test/fixtures/replay/gameplay-ranged-multiple-arrows.json");
+	ASSERT_TRUE(multipleArrowsFile.good());
+	const std::string multipleArrowsJson((std::istreambuf_iterator<char>(multipleArrowsFile)), std::istreambuf_iterator<char>());
+	ReplayFixture multipleArrowsFixture;
+	ASSERT_TRUE(ParseReplayFixture(multipleArrowsJson, multipleArrowsFixture, error)) << error;
+	ReplayFixtureExecutionState multipleArrowsState;
+	multipleArrowsState.life = multipleArrowsFixture.initialState.life;
+	multipleArrowsState.lifeMaximum = multipleArrowsFixture.initialState.life;
+	multipleArrowsState.mana = multipleArrowsFixture.initialState.mana;
+	multipleArrowsState.manaMaximum = multipleArrowsFixture.initialState.manaMaximum;
+	multipleArrowsState.positionX = multipleArrowsFixture.initialState.positionX;
+	multipleArrowsState.positionY = multipleArrowsFixture.initialState.positionY;
+	ReplayFixtureExecutionResult multipleArrowsResult;
+	ASSERT_TRUE(ExecuteReplayFixture(multipleArrowsFixture, multipleArrowsState, multipleArrowsResult, error)) << error;
+	ASSERT_EQ(multipleArrowsState.projectiles.size(), 3U);
+	EXPECT_EQ(multipleArrowsState.projectiles[0].positionX, 0);
+	EXPECT_EQ(multipleArrowsState.projectiles[0].positionY, 0);
+	EXPECT_EQ(multipleArrowsState.projectiles[1].positionX, 0);
+	EXPECT_EQ(multipleArrowsState.projectiles[1].positionY, 0);
+	EXPECT_EQ(multipleArrowsState.projectiles[2].positionX, 0);
+	EXPECT_EQ(multipleArrowsState.projectiles[2].positionY, 1);
+	EXPECT_EQ(multipleArrowsState.projectiles[0].activationDelayTicks, 0U);
+	EXPECT_EQ(multipleArrowsState.projectiles[1].activationDelayTicks, 2U);
+	EXPECT_EQ(multipleArrowsState.projectiles[2].activationDelayTicks, 2U);
+	EXPECT_EQ(multipleArrowsResult.transitions[0].stateSha256, multipleArrowsFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

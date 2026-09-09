@@ -209,6 +209,63 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void MultipleArrowsPreservesVolleySpreadAndActivationDelay()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-ranged-multiple-arrows.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                maxHitPoints: initial.CombatTargetMaxHitPoints)],
+            startingCombatRules: new AuthoritativeCombatRules(1, 1, 100),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var arrows = result.FinalSnapshot.Projectiles.OrderBy(projectile => projectile.EntityId).ToArray();
+        Assert.Equal(3, arrows.Length);
+        Assert.All(arrows, arrow => {
+            Assert.Equal(58, arrow.Behavior);
+            Assert.Equal(1, arrow.Damage);
+            Assert.Equal(64, arrow.DamageQ6);
+            Assert.Equal(9U, arrow.TargetEntityId);
+        });
+        Assert.Equal((0, 0), (arrows[0].PositionX, arrows[0].PositionY));
+        Assert.Equal((0, 0), (arrows[1].PositionX, arrows[1].PositionY));
+        Assert.Equal((0, 1), (arrows[2].PositionX, arrows[2].PositionY));
+        Assert.Equal(0U, arrows[0].ActivationDelayTicks);
+        Assert.Equal(2U, arrows[1].ActivationDelayTicks);
+        Assert.Equal(2U, arrows[2].ActivationDelayTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void HellfireRangedAttackAppliesDecayBeforeProjectileResolution()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(

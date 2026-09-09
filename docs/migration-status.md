@@ -6792,6 +6792,8 @@ atural_resistance_per_level_percent` and
   survive protocol snapshots, save/restore, and canonical hashing. Ordinary
   bow attacks now use the same one-arrow travel and impact lifecycle; remaining
   native arrow-item flags remain incremental.
+- The shared replay gate now checks the three-arrow `MultipleArrows` volley,
+  including spread positions and activation delays in both runners.
 - Native `Snake` now consumes a validated `Rhino` mapping; the server owns its
   clear two-tile charge controller, monster movement, special physical damage,
   blocking, and Q6 event resolution.

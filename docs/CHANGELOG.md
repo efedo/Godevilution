@@ -80,6 +80,8 @@ All notable changes to this fork are documented below.
   impact and checks the shared target/removal checkpoint.
 - Hellfire ranged replay now carries the deterministic `Doppelganger` proc
   flag into projectile snapshots in both runners.
+- The ranged replay gate now covers the three-arrow `MultipleArrows` volley,
+  including native spread positions and activation delays.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

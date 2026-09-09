@@ -3634,6 +3634,8 @@ void CreateReplayWeaponArrow(
 			projectile.positionY = candidateY;
 		}
 	}
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
 	projectile.damage = damageQ6 / 64;
 	projectile.damageQ6 = damageQ6;
 	projectile.perilSelfDamageQ6 = perilSelfDamageQ6;
