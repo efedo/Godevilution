@@ -90,12 +90,13 @@ the native compact impact boundaries. Native and managed malformed companion
 fixtures now report the same validation precedence.
 
 The replay gate now also carries explicit player strength, dexterity, and
-vitality plus authored physical weapon ranges, covering Rogue, Monk, Bard, and
-Barbarian class-specific weapon damage at shared native/managed checkpoints.
-The Barbarian path preserves its class critical-strike RNG draw, while legacy
+vitality plus authored physical weapon ranges, covering all six native classes
+at shared native/managed checkpoints. Warrior and Sorcerer now exercise the
+standard formula, while Monk, Rogue, Bard, and Barbarian cover their class
+profiles; both critical-strike classes preserve their class RNG draw. Legacy
 compact attack fixtures retain their armor-only fallback until they author the
-full class-attribute contract. Remaining class and weapon edge cases are still
-follow-up native-parity work.
+full class-attribute contract. Remaining weapon and hit-resolution edge cases
+are still follow-up native-parity work.
 
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.

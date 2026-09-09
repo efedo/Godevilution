@@ -583,6 +583,18 @@ TEST(ReplayFixture, ExecutesBarbarianPhysicalDamageAgainstCSharpCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-barbarian.json", 5, 40, 20, 25, 89);
 }
 
+TEST(ReplayFixture, ExecutesWarriorPhysicalDamageAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-warrior.json", 0, 30, 20, 25, 93);
+}
+
+TEST(ReplayFixture, ExecutesSorcererPhysicalDamageAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-sorcerer.json", 2, 15, 35, 20, 95);
+}
+
 TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-arrows.json");

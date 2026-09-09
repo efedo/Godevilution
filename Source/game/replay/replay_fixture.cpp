@@ -5303,8 +5303,7 @@ bool ApplyReplayAttack(
 	if (consumeRandom)
 		static_cast<void>(GenerateRnd(state, 1));
 	int32_t damage = 1;
-	if (!ranged && state.characterClassId != 0
-	    && state.attributes[1] > 0 && state.attributes[5] > 0) {
+	if (!ranged && state.attributes[1] > 0 && state.attributes[5] > 0) {
 		const int32_t level = static_cast<int32_t>(state.characterLevel);
 		const int32_t strength = state.attributes[1];
 		const int32_t dexterity = state.attributes[5];
@@ -5382,9 +5381,9 @@ bool ApplyReplayAttack(
 		const int32_t rolledBaseDamage = minimumDamage
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		int32_t damageBeforeArmor = rolledBaseDamage + damageModifier;
-		// Barbarian Critical Strike consumes a native 0..99 roll after the
-		// class damage profile and doubles damage before armor reduction.
-		if (state.characterClassId == 5
+		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
+		// after the class damage profile and double damage before armor reduction.
+		if ((state.characterClassId == 0 || state.characterClassId == 5)
 		    && GenerateRnd(state, 100) < std::min(100, level))
 			damageBeforeArmor *= 2;
 		damage = std::max(1, damageBeforeArmor - std::max(0, state.combatTargetArmorClass));

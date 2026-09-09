@@ -39,6 +39,9 @@ All notable changes to this fork are documented below.
   on the armor-only melee fallback when class attributes are authored.
 - Shared class-damage replay now covers Monk staff, Bard sword, and Barbarian
   axe profiles, including Barbarian's class critical-strike RNG draw.
+- The class-damage replay matrix now also covers explicit Warrior and Sorcerer
+  profiles; class-0 authored attributes use the native formula while omitted
+  attributes retain the legacy compact fallback.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
