@@ -89,6 +89,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native DUN fragments whose unique anchors may materialize on level entry. */
     public AuthoritativeNativeDunFragmentCatalog? NativeDunFragments { get; init; }
 
+    /** Shared external native geometry used by deferred DUN fragments. */
+    public AuthoritativeNativeDunGeometryCatalog? NativeDunGeometry { get; init; }
+
     /** Optional anchor-relative object placements applied with deferred fragments. */
     public AuthoritativeNativeDunFragmentObjectCatalog? NativeDunFragmentObjects { get; init; }
 
@@ -339,7 +342,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             experience: options.Experience,
             nativeMissiles: options.NativeMissiles,
             nativeMissileSprites: options.NativeMissileSprites,
-            townerGreetings: options.TownerGreetings);
+            townerGreetings: options.TownerGreetings,
+            nativeDunGeometry: options.NativeDunGeometry);
         worldState.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         return simulation;
@@ -365,6 +369,7 @@ public sealed partial class DiabloSimulation
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativeNativeDunFragmentCatalog? nativeDunFragments;
+    private readonly AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry;
     private readonly AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects;
     private readonly AuthoritativeNativeDunMonsterCatalog? nativeDunMonsters;
     private readonly AuthoritativeProceduralSetPieceOriginCatalog? proceduralSetPieceOriginCatalog;
@@ -421,7 +426,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeExperienceCatalog? experience = null,
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
         AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
-        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null,
+        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -464,6 +470,7 @@ public sealed partial class DiabloSimulation
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
         this.nativeDunFragments = nativeDunFragments;
+        this.nativeDunGeometry = nativeDunGeometry;
         this.nativeDunFragmentObjects = nativeDunFragmentObjects;
         this.nativeDunMonsters = nativeDunMonsters;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
@@ -906,7 +913,8 @@ public sealed partial class DiabloSimulation
             WorldState.World,
             WorldState.Objects.Values,
             targetPool,
-            setLevelObjectOrigins);
+            setLevelObjectOrigins,
+            nativeDunGeometry);
         WorldState.RefreshProjectedGeometry();
         // The fragment may have introduced mapped native-DUN object cells.
         // Reconcile after geometry publication so deferred set-piece objects

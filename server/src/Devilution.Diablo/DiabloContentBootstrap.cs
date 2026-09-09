@@ -1312,6 +1312,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             SetLevelMaps = setLevelMaps,
             NativeDunObjects = nativeDunObjects,
             NativeDunFragments = nativeDunFragments,
+            NativeDunGeometry = nativeDunGeometry,
             NativeDunFragmentObjects = nativeDunFragmentObjects,
             NativeDunMonsters = nativeDunMonsters,
             Content = content,

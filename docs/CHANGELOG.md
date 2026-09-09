@@ -10,6 +10,10 @@ All notable changes to this fork are documented below.
   geometry without shipping licensed `.til`/`.sol` bytes; binary pairs remain
   authoritative when declared, and incomplete table pairs fail activation.
 
+- Deferred native-DUN fragments now retain the shared external geometry catalog
+  through simulation construction, later set-level-origin publication, and
+  snapshot restore instead of falling back to raw layers after bootstrap.
+
 - Godot now renders a deterministic diagnostic overlay for complete
   authoritative native d-piece and transparency layers, while retaining the
   server-owned collision projection and floor fallback until licensed native

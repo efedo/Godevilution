@@ -362,6 +362,53 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void DeferredFragmentRetainsSharedExternalGeometryAfterOriginPublication()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorSetLevelId: 6),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+        var geometry = AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+            "native_dun_piece_definitions.tsv",
+            "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                + "42\t1\t2\t3\t4\n",
+            "native_dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_light\tblock_missile\n"
+                + "1\ttrue\tfalse\tfalse\n"
+                + "2\tfalse\tfalse\ttrue\n"
+                + "3\ttrue\tfalse\ttrue\n"
+                + "4\tfalse\tfalse\tfalse\n");
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                NativeDunFragments = catalog,
+                NativeDunGeometry = geometry,
+                Content = content,
+            });
+
+        simulation.PublishSetLevelObjectOrigin(6, new AuthoritativeSetLevelObjectOrigin(24, 4, 4));
+
+        var level = Assert.Single(simulation.WorldState.World!.Levels);
+        Assert.Equal([1, 2, 3, 4], level.NativePieceLayer.Skip(2 * level.Width + 2).Take(2).Concat(
+            level.NativePieceLayer.Skip(3 * level.Width + 2).Take(2)));
+        Assert.Equal([18, 26], level.BlockedCells);
+        Assert.Equal([19, 26], level.MissileBlockedCells);
+    }
+
+    [Fact]
     public void SnapshotRestoreRepublishesSetLevelOriginFragmentWithoutPreloadedOrigin()
     {
         var catalog = new AuthoritativeNativeDunFragmentCatalog([
@@ -379,6 +426,7 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
                 new ContentAsset("fragment.dun", CreateDun(42)),
             ]),
         ]));
+        var geometry = CreateExternalGeometry();
         var fragmentObjects = new AuthoritativeNativeDunFragmentObjectCatalog([
             new AuthoritativeNativeDunFragmentObjectPlacement(1, 1, 900, 0, 1, 1) {
                 AnchorSetLevelId = 6,
@@ -393,6 +441,7 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
                 World = sourceWorld,
                 Content = content,
                 NativeDunFragments = catalog,
+                NativeDunGeometry = geometry,
                 NativeDunFragmentObjects = fragmentObjects,
                 NativeObjectTemplates = [template],
             });
@@ -427,6 +476,7 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
                 World = replacementWorld,
                 Content = content,
                 NativeDunFragments = catalog,
+                NativeDunGeometry = geometry,
                 NativeDunFragmentObjects = fragmentObjects,
                 NativeObjectTemplates = [template],
             });
@@ -435,6 +485,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
 
         var restoredLevel = Assert.Single(replacement.WorldState.World!.Levels);
         Assert.Equal((ushort)42, restoredLevel.NativeMegaTileLayer[1 * 4 + 1]);
+        Assert.Equal([18, 26], restoredLevel.BlockedCells);
+        Assert.Equal([19, 26], restoredLevel.MissileBlockedCells);
         Assert.Equal(
             new AuthoritativeSetLevelObjectOrigin(24, 4, 4),
             replacement.SetLevelObjectOrigins[6]);
@@ -969,5 +1021,19 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         bytes[2] = (byte)AuthoritativeDunTileFlags.BlockMissile;
         bytes[3] = (byte)(AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile);
         return bytes;
+    }
+
+    private static AuthoritativeNativeDunGeometryCatalog CreateExternalGeometry()
+    {
+        return AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+            "native_dun_piece_definitions.tsv",
+            "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
+                + "42\t1\t2\t3\t4\n",
+            "native_dun_tile_properties.tsv",
+            "piece_id\tsolid\tblock_light\tblock_missile\n"
+                + "1\ttrue\tfalse\tfalse\n"
+                + "2\tfalse\tfalse\ttrue\n"
+                + "3\ttrue\tfalse\ttrue\n"
+                + "4\tfalse\tfalse\tfalse\n");
     }
 }
