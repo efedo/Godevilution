@@ -76,7 +76,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.NotEmpty(catalog.Definitions);
@@ -94,7 +94,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         catalog.ValidateExternalizedNativePatterns();
@@ -110,7 +110,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var shipped = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
         var incomplete = new AuthoritativeSpellCatalog(shipped.Definitions.Select(
             spell => spell.SpellId == 12
@@ -254,7 +254,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(30, out var chargedBolt));
         Assert.Equal(1, chargedBolt.StaffLevel);
@@ -269,7 +269,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(33, out var telekinesis));
         Assert.Equal(33U, telekinesis.NativeSpellId);
@@ -289,7 +289,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(39, out var townPortal));
         Assert.Equal(7U, townPortal.NativeSpellId);
@@ -336,10 +336,10 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "content_ids.tsv");
         var stableIds = StableContentIdCatalog.LoadTsv(
-            stableIdsPath,
+            "content_ids.tsv",
             File.ReadAllText(stableIdsPath));
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path),
             stableIds);
 
@@ -365,7 +365,7 @@ public sealed class AuthoritativeSpellCatalogTests
         var spellPath = Path.Combine(repositoryRoot, "server", "content", "base", "spells.tsv");
         var stableIdsPath = Path.Combine(repositoryRoot, "server", "content", "base", "content_ids.tsv");
         var stableIds = StableContentIdCatalog.LoadTsv(
-            stableIdsPath,
+            "content_ids.tsv",
             File.ReadAllText(stableIdsPath));
         var contents = File.ReadAllText(spellPath).Replace(
             "firebolt,firebolt,fireball,fire_wall,guardian,chain_lightning,town_portal,teleport,apocalypse,stone_curse",
@@ -373,7 +373,7 @@ public sealed class AuthoritativeSpellCatalogTests
             StringComparison.Ordinal);
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            AuthoritativeSpellCatalog.LoadTsv(spellPath, contents, stableIds));
+            AuthoritativeSpellCatalog.LoadTsv("spells.tsv", contents, stableIds));
         Assert.Contains("mismatched Jester spell IDs and symbols", exception.Message, StringComparison.Ordinal);
     }
 
@@ -406,7 +406,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(18, out var nova));
         Assert.Equal(18U, nova.NativeSpellId);
@@ -430,7 +430,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(52, out var golem));
         Assert.Equal(21U, golem.NativeSpellId);
@@ -502,7 +502,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(53, out var etherealize));
         Assert.Equal(25U, etherealize.NativeSpellId);
@@ -521,7 +521,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGetByNativeId(13, out var guardian));
         Assert.Equal(7U, guardian.SpellId);
@@ -540,7 +540,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         var expected = new Dictionary<int, (uint SpellId, AuthoritativeProjectileBehavior Behavior)> {
             [47] = (12, AuthoritativeProjectileBehavior.Fireball),
@@ -604,7 +604,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(1, out var firebolt));
@@ -680,10 +680,10 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "content_ids.tsv");
         var stableIds = StableContentIdCatalog.LoadTsv(
-            stableIdsPath,
+            "content_ids.tsv",
             File.ReadAllText(stableIdsPath));
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path),
             stableIds);
 
@@ -724,7 +724,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(36, out var bloodStar));
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, bloodStar.ProjectileBehavior);
@@ -762,7 +762,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
         Assert.True(catalog.TryGet(38, out var boneSpirit));
 
         Assert.Equal(AuthoritativeProjectileBehavior.BoneSpirit, boneSpirit.ProjectileBehavior);
@@ -798,7 +798,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
         Assert.True(catalog.TryGet(31, out var elemental));
 
         Assert.Equal(AuthoritativeProjectileBehavior.Elemental, elemental.ProjectileBehavior);
@@ -829,7 +829,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "0,bad",
             StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() =>
-            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
+            AuthoritativeSpellCatalog.LoadTsv("spells.tsv", malformed));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             elemental with { ElementalRetargetLifetime = 254 },
         ]));
@@ -855,7 +855,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
         Assert.True(catalog.TryGet(7, out var guardian));
 
         Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, guardian.ProjectileBehavior);
@@ -899,7 +899,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "0,bad",
             StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() =>
-            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
+            AuthoritativeSpellCatalog.LoadTsv("spells.tsv", malformed));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             guardian with { GuardianFireInterval = 8 },
         ]));
@@ -932,7 +932,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(12, out var fireball));
@@ -966,7 +966,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "0,bad",
             StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() =>
-            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
+            AuthoritativeSpellCatalog.LoadTsv("spells.tsv", malformed));
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([
                 fireball with { ProjectileSpeedMaximumBonus = 1 },
@@ -1008,7 +1008,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(3, out var lightning));
@@ -1041,7 +1041,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(4, out var flash));
@@ -1076,7 +1076,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "0,bad",
             StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() =>
-            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
+            AuthoritativeSpellCatalog.LoadTsv("spells.tsv", malformed));
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([flash with { SpellEffectScaleDivisor = 0 }]));
         Assert.Throws<InvalidDataException>(() =>
@@ -1105,7 +1105,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(2, out var healing));
@@ -1139,7 +1139,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(34, out var healOther));
@@ -1181,7 +1181,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(23, out var teleport));
@@ -1213,7 +1213,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(49, out var warp));
@@ -1233,7 +1233,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(
-            path,
+            "spells.tsv",
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(32, out var resurrection));
@@ -1267,7 +1267,7 @@ public sealed class AuthoritativeSpellCatalogTests
             ]));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeSpellCatalog.LoadTsv(
-                path,
+                "spells.tsv",
                 File.ReadAllText(path).Replace(
                     "0,0;1,0;0,1;1,1;2,0;0,2;1,2;2,1",
                     "0,0;invalid")));
@@ -1288,7 +1288,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(11, out var manaShield));
         Assert.Equal(
@@ -1325,7 +1325,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(41, out var mana));
         Assert.Equal(AuthoritativeProjectileBehavior.Mana, mana.ProjectileBehavior);
@@ -1352,7 +1352,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(22, out var rage));
         Assert.Equal(AuthoritativeProjectileBehavior.RageController, rage.ProjectileBehavior);
@@ -1373,7 +1373,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(43, out var reflect));
         Assert.Equal(AuthoritativeProjectileBehavior.Reflect, reflect.ProjectileBehavior);
@@ -1402,7 +1402,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(48, out var berserk));
         Assert.Equal(AuthoritativeProjectileBehavior.Berserk, berserk.ProjectileBehavior);
@@ -1423,7 +1423,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(30, out var chargedBolt));
         Assert.Equal(AuthoritativeProjectileBehavior.ChargedBolt, chargedBolt.ProjectileBehavior);
@@ -1448,7 +1448,7 @@ public sealed class AuthoritativeSpellCatalogTests
         ]));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeSpellCatalog.LoadTsv(
-                path,
+                "spells.tsv",
                 File.ReadAllText(path).Replace(
                     "-1,0,1,-1,0,1,-1,-1,0,0,1,1,0,1,-1,0",
                     "0,bad")));
@@ -1469,7 +1469,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(8, out var stoneCurse));
         Assert.Equal(
@@ -1508,7 +1508,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(9, out var infravision));
         Assert.Equal(
@@ -1550,7 +1550,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(46, out var search));
         Assert.Equal(AuthoritativeProjectileBehavior.Search, search.ProjectileBehavior);
@@ -1592,7 +1592,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(10, out var phasing));
         Assert.Equal(AuthoritativeProjectileBehavior.Phasing, phasing.ProjectileBehavior);

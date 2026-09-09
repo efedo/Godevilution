@@ -26631,7 +26631,9 @@ public sealed class DiabloCombatCommandProcessorTests
                     "base",
                     "classes.tsv");
                 if (File.Exists(path))
-                    return AuthoritativePlayerClassCatalog.LoadTsv(path, File.ReadAllText(path));
+                    return AuthoritativePlayerClassCatalog.LoadTsv(
+                        "classes.tsv",
+                        File.ReadAllText(path));
             }
         }
         throw new DirectoryNotFoundException(
@@ -26658,7 +26660,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "class_animations.tsv");
                 if (File.Exists(path)) {
                     return AuthoritativePlayerAnimationCatalog.LoadTsv(
-                        path,
+                        "class_animations.tsv",
                         File.ReadAllText(path),
                         playerClasses);
                 }
@@ -26686,7 +26688,9 @@ public sealed class DiabloCombatCommandProcessorTests
                     "base",
                     "items.tsv");
                 if (File.Exists(path))
-                    return AuthoritativeItemCatalog.LoadTsv(path, File.ReadAllText(path));
+                    return AuthoritativeItemCatalog.LoadTsv(
+                        "items.tsv",
+                        File.ReadAllText(path));
             }
         }
         throw new DirectoryNotFoundException(

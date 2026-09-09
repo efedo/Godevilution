@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Updated shipped catalog test fixtures to pass canonical pack-relative table
+  identities while continuing to read their contents from the repository,
+  matching the validated external-content boundary.
+
 - Aligned Godot combat, Telekinesis, and unique-monster dialogue target
   selection with the projected native vision boundary used for monster
   rendering. Hidden, dead, sneak-hidden, and out-of-radius monsters now fail

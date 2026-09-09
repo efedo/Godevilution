@@ -4787,7 +4787,7 @@ public sealed class DiabloStoreCommandProcessorTests
     {
         var root = FindRepositoryRoot();
         var path = Path.Combine(root, "server", "content", "base", "classes.tsv");
-        return AuthoritativePlayerClassCatalog.LoadTsv(path, File.ReadAllText(path))
+        return AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", File.ReadAllText(path))
             .Resolve(symbol);
     }
 
