@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added initialized GoatMelee replay coverage for usable-equipment Thorns
+  retaliation, including target HP reduction and post-hit RNG checkpoint parity.
+- Compact native replay now applies validated Thorns retaliation for primary and
+  secondary monster-hit victims before the player death boundary.
 - Added initialized GoatMelee replay coverage for authored usable-equipment
   `PlusGetHit`, including a shared checkpoint with the secondary player at 95 life.
 - Compact native replay now applies validated usable-equipment `PlusGetHit` to

@@ -2,6 +2,10 @@
 
 Status date: 2026-09-09
 
+Initialized monster-hit replay now applies usable-equipment Thorns retaliation
+against the attacking monster in both runners. The shared GoatMelee checkpoint
+covers target HP reduction and the additional deterministic retaliation roll.
+
 Initialized monster-hit replay now applies the target player's validated usable
 equipment `PlusGetHit` bonus in both runners. Generic primary and secondary
 monster attacks share a checkpoint that includes the adjusted incoming damage,

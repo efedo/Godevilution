@@ -42,6 +42,7 @@ constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr uint32_t KnockbackFlag = 1U << 11;
+constexpr uint32_t ThornsFlag = 1U << 26;
 constexpr uint32_t StealMana3Flag = 1U << 13;
 constexpr uint32_t StealMana5Flag = 1U << 14;
 constexpr uint32_t StealLife3Flag = 1U << 15;
@@ -3497,16 +3498,23 @@ bool IsReplayAttackTargetValid(
 }
 
 bool HasReplayEquipmentFlag(
-    const ReplayFixtureExecutionState &state,
-    uint32_t flag)
+	const std::vector<ReplayFixtureSlottedItem> &equipment,
+	uint32_t flag)
 {
 	return std::any_of(
-	    state.equipment.begin(),
-	    state.equipment.end(),
+	    equipment.begin(),
+	    equipment.end(),
 	    [flag](const ReplayFixtureSlottedItem &item) {
 		    return IsReplayEquipmentUsable(item.state)
 		        && (item.state.flags & flag) != 0;
 	    });
+}
+
+bool HasReplayEquipmentFlag(
+	const ReplayFixtureExecutionState &state,
+	uint32_t flag)
+{
+	return HasReplayEquipmentFlag(state.equipment, flag);
 }
 
 int32_t ApplyReplayGetHitBonus(
@@ -3522,6 +3530,24 @@ int32_t ApplyReplayGetHitBonus(
 			getHitBonus += item.state.plusGetHit;
 	}
 	return std::max(1, damage + getHitBonus);
+}
+
+void ApplyReplayThorns(
+	ReplayFixtureExecutionState &state,
+	const std::vector<ReplayFixtureSlottedItem> &equipment,
+	int32_t damage)
+{
+	if (damage <= 0
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || !HasReplayEquipmentFlag(equipment, ThornsFlag))
+		return;
+	const int32_t thornsDamage = 1 + std::max(GenerateRnd(state, 3), 0);
+	state.combatTargetHitPointsQ6 = std::max(
+	    0,
+	    state.combatTargetHitPointsQ6 - thornsDamage * 64);
+	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	if (state.combatTargetHitPointsQ6 == 0)
+		DefeatReplayCombatTarget(state);
 }
 
 int32_t ApplyReplayGetHitBonus(
@@ -9134,6 +9160,7 @@ void AdvanceReplayMonsterAttack(
 			damage = damageQ6 / 64;
 		}
 		damage = ApplyReplayGetHitBonus(state, damage, true);
+		ApplyReplayThorns(state, state.secondaryEquipment, damage);
 		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damage);
 		if (state.secondaryPlayerLife == 0)
 			StartReplaySecondaryPlayerDeath(state, true);
@@ -9216,6 +9243,7 @@ void AdvanceReplayMonsterAttack(
 			state.manaShieldActive = false;
 		}
 	}
+	ApplyReplayThorns(state, state.equipment, adjustedDamage);
 	state.life -= std::min(state.life, lifeDamage);
 	if (state.life == 0) {
 		StartReplayPlayerDeath(
