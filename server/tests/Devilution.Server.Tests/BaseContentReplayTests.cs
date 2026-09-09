@@ -621,6 +621,29 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void RangedClassDamageUsesLegacyFallbackWhenStrengthIsZero()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-ranged-class-zero-strength.json")));
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+
+        var result = ExecuteRangedClassFixture(fixture, contentRoot);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.True(arrow.AttackHit);
+        Assert.Equal(1, arrow.Damage);
+        Assert.Equal(64, arrow.DamageQ6);
+        Assert.Equal(1U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void RangedClassDamageAppliesHellArmorBeforeProjectileCapture()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(

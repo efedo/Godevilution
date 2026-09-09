@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 
 - Added initialized Monk, Bard, and Barbarian ranged class-profile fixtures,
   including cross-runner damage and RNG checkpoint coverage.
+- Corrected the managed initialized-class gate to require positive Strength and
+  Dexterity, matching native fallback behavior for zero-authored attributes.
 - Added a composed Hellfire ranged-class replay fixture covering shifted armor
   admission and unchanged post-hit target armor reduction in both runners.
 - Added initialized Warrior ranged replay coverage for Critical Strike and

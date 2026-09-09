@@ -1472,7 +1472,8 @@ public sealed class DiabloCombatCommandProcessor
         // Legacy hand-built fixtures may omit class-derived attributes; retain
         // the global damage fallback for those compatibility templates.
         var usesNativeClassProfile = playerClass is not null
-            && player.Attributes.Dexterity.Current != 0;
+            && player.Attributes.Strength.Current > 0
+            && player.Attributes.Dexterity.Current > 0;
         var damageProfile = usesNativeClassProfile
             ? AuthoritativeEquipmentDamageRules.Calculate(
                 player.CharacterLevel,
@@ -1522,7 +1523,8 @@ public sealed class DiabloCombatCommandProcessor
         // Legacy hand-built fixtures may omit class-derived attributes; retain
         // the historical global hit fallback for those compatibility templates.
         var usesNativeClassToHit = playerClass is not null
-            && player.Attributes.Dexterity.Current != 0;
+            && player.Attributes.Strength.Current > 0
+            && player.Attributes.Dexterity.Current > 0;
         var classHitChance = !usesNativeClassToHit
             ? rules.HitChancePercent
             : playerClass!.CalculatePhysicalToHit(

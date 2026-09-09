@@ -1143,6 +1143,7 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-monk.json", 5, 22695478U);
 	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-bard.json", 6, 22695478U);
 	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-barbarian.json", 4, 2156045615U);
+	executeRangedClassProfile("test/fixtures/replay/gameplay-ranged-class-zero-strength.json", 1, 1U);
 
 	std::ifstream rangedClassArmorFile("test/fixtures/replay/gameplay-ranged-class-armor.json");
 	ASSERT_TRUE(rangedClassArmorFile.good());
