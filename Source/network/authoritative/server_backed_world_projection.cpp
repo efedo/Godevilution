@@ -1,5 +1,6 @@
 #include "network/authoritative/server_backed_world_projection.hpp"
 
+#include "engine/vision.hpp"
 #include "network/authoritative/protocol_limits.hpp"
 
 #include <algorithm>
@@ -55,6 +56,49 @@ bool UsesDirectionalPresentation(const ProjectedProjectileSnapshot &projectile)
 	default:
 		return false;
 	}
+}
+
+bool IsInsideGeometry(const ProjectedLevelGeometrySnapshot &geometry, int32_t x, int32_t y)
+{
+	return geometry.width > 0 && geometry.height > 0
+	    && x >= 0 && y >= 0 && x < geometry.width && y < geometry.height;
+}
+
+bool IsNativeVisionVisible(
+	const ProjectedLevelGeometrySnapshot &geometry,
+	int32_t viewerX,
+	int32_t viewerY,
+	int32_t targetX,
+	int32_t targetY,
+	int32_t viewerLightRadius)
+{
+	// Match the Godot presentation boundary: geometry that carries neither
+	// transparency nor an additive vision layer retains legacy visibility.
+	if (geometry.nativeTransparency.empty() && geometry.nativeVisionBlockedCells.empty())
+		return true;
+	if (!IsInsideGeometry(geometry, viewerX, viewerY) || !IsInsideGeometry(geometry, targetX, targetY))
+		return false;
+	const auto &blockedCells = geometry.nativeVisionBlockedCells.empty()
+	    ? geometry.blockedCells
+	    : geometry.nativeVisionBlockedCells;
+	const uint8_t radius = viewerLightRadius >= 2 && viewerLightRadius <= 15
+	    ? static_cast<uint8_t>(viewerLightRadius)
+	    : 10;
+	const auto isBlocked = [&geometry, &blockedCells](Point point) {
+		if (!IsInsideGeometry(geometry, point.x, point.y))
+			return true;
+		const int32_t cell = point.y * geometry.width + point.x;
+		return std::find(blockedCells.begin(), blockedCells.end(), cell) != blockedCells.end();
+	};
+	const auto inBounds = [&geometry](Point point) {
+		return IsInsideGeometry(geometry, point.x, point.y);
+	};
+	return IsPointVisible(
+	    { viewerX, viewerY },
+	    { targetX, targetY },
+	    radius,
+	    [&isBlocked](Point point) { return !isBlocked(point); },
+	    inBounds);
 }
 
 } // namespace
@@ -299,6 +343,29 @@ std::optional<uint32_t> ServerBackedWorldProjection::MonsterAt(int32_t positionX
 	});
 	if (monster == monsters_.end() || monster->entityId == 0 || !monster->alive
 	    || (monster->levelId != 0 && monster->levelId != levelId))
+		return std::nullopt;
+	return monster->entityId;
+}
+
+std::optional<uint32_t> ServerBackedWorldProjection::MonsterAt(
+	int32_t positionX,
+	int32_t positionY,
+	int32_t viewerX,
+	int32_t viewerY,
+	int32_t viewerLightRadius) const noexcept
+{
+	const auto levelId = levelId_;
+	const auto monster = std::find_if(monsters_.begin(), monsters_.end(), [positionX, positionY, levelId](const auto &candidate) {
+		return candidate.entityId != 0 && candidate.alive && !candidate.sneakHidden
+		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)
+		    && ((candidate.positionX == positionX && candidate.positionY == positionY)
+		        || (candidate.moving && candidate.futurePositionX == positionX && candidate.futurePositionY == positionY));
+	});
+	if (monster == monsters_.end())
+		return std::nullopt;
+	const auto *geometry = CurrentLevelGeometry();
+	if (geometry != nullptr
+	    && !IsNativeVisionVisible(*geometry, viewerX, viewerY, positionX, positionY, viewerLightRadius))
 		return std::nullopt;
 	return monster->entityId;
 }

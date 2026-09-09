@@ -126,4 +126,25 @@ void DoVision(Point position, uint8_t radius,
 	}
 }
 
+bool IsPointVisible(
+    Point observer,
+    Point target,
+    uint8_t radius,
+    tl::function_ref<bool(Point)> passesLightFn,
+    tl::function_ref<bool(Point)> inBoundsFn)
+{
+	bool visible = false;
+	DoVision(
+	    observer,
+	    radius,
+	    [&visible, target](Point point) {
+		if (point == target)
+			visible = true;
+	    },
+	    [](Point) {},
+	    passesLightFn,
+	    inBoundsFn);
+	return visible;
+}
+
 } // namespace devilution

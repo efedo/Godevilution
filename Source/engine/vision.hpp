@@ -21,4 +21,12 @@ void DoVision(Point position, uint8_t radius,
     tl::function_ref<bool(Point)> passesLightFn,
     tl::function_ref<bool(Point)> inBoundsFn);
 
+/** Returns whether the target is reached by the native vision ray table. */
+[[nodiscard]] bool IsPointVisible(
+    Point observer,
+    Point target,
+    uint8_t radius,
+    tl::function_ref<bool(Point)> passesLightFn,
+    tl::function_ref<bool(Point)> inBoundsFn);
+
 } // namespace devilution

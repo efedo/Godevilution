@@ -182,5 +182,19 @@ TEST(VisionTest, NoVisibilityThroughAdjacentTiles)
 	}
 }
 
+TEST(VisionTest, IsPointVisibleUsesTheSameNativeRayTable)
+{
+	initEnvironment();
+	const auto passesLight = [](Point point) {
+		return env[point.x][point.y] != '#';
+	};
+	const auto inBounds = [](Point point) {
+		return point.x >= 0 && point.y >= 0 && point.x < ENV_WIDTH && point.y < ENV_HEIGHT;
+	};
+
+	EXPECT_TRUE(IsPointVisible(pos, { 15, 12 }, 15, passesLight, inBounds));
+	EXPECT_FALSE(IsPointVisible(pos, { 9, 15 }, 15, passesLight, inBounds));
+}
+
 } // namespace
 } // namespace devilution

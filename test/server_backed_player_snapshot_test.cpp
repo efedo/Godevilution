@@ -3557,6 +3557,35 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_EQ(projection.WorldItemAt(4, 5), std::optional<uint32_t>(20));
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldProjectionMonsterLookupHonorsNativeVision)
+{
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 40;
+	monster.levelId = 1;
+	monster.positionX = 4;
+	monster.positionY = 0;
+	monster.alive = true;
+
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 5;
+	geometry.height = 1;
+	geometry.nativeTransparency.assign(5, 1);
+	geometry.nativeVisionBlockedCells = { 1 };
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	EXPECT_EQ(projection.MonsterAt(4, 0), std::optional<uint32_t> { 40 });
+	EXPECT_FALSE(projection.MonsterAt(4, 0, 0, 0, 10).has_value());
+
+	geometry.width = 12;
+	geometry.nativeVisionBlockedCells.clear();
+	monster.positionX = 11;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	EXPECT_FALSE(projection.MonsterAt(11, 0, 0, 0, 10).has_value());
+	EXPECT_EQ(projection.MonsterAt(11, 0, 0, 0, 11), std::optional<uint32_t> { 40 });
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionOrdersOverlappingEntitiesByIdentity)
 {
 	ProjectedMonsterSnapshot higherMonster;

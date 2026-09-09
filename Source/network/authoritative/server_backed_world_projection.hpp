@@ -66,6 +66,13 @@ public:
 
 	[[nodiscard]] std::optional<uint32_t> WorldItemAt(int32_t positionX, int32_t positionY) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> MonsterAt(int32_t positionX, int32_t positionY) const noexcept;
+	/** Finds a live projected monster only when it is inside the native viewer's authoritative vision. */
+	[[nodiscard]] std::optional<uint32_t> MonsterAt(
+	    int32_t positionX,
+	    int32_t positionY,
+	    int32_t viewerX,
+	    int32_t viewerY,
+	    int32_t viewerLightRadius) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> ObjectAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds an active content-owned quest object at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> QuestObjectAt(int32_t positionX, int32_t positionY) const noexcept;

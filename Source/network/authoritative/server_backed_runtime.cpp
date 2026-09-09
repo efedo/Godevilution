@@ -853,7 +853,17 @@ std::optional<uint32_t> ServerBackedRuntime::WorldItemEntityIdAt(int32_t positio
 
 std::optional<uint32_t> ServerBackedRuntime::MonsterEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
 {
-	return worldProjection_.MonsterAt(positionX, positionY);
+	if (!session_)
+		return worldProjection_.MonsterAt(positionX, positionY);
+	const auto *local = session_->PlayerState().Snapshot();
+	if (local == nullptr)
+		return worldProjection_.MonsterAt(positionX, positionY);
+	return worldProjection_.MonsterAt(
+	    positionX,
+	    positionY,
+	    local->positionX,
+	    local->positionY,
+	    local->lightRadius);
 }
 
 std::optional<uint32_t> ServerBackedRuntime::PlayerEntityIdAt(int32_t positionX, int32_t positionY) const noexcept

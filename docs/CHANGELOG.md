@@ -9,6 +9,11 @@ All notable changes to this fork are documented below.
   rendering. Hidden, dead, sneak-hidden, and out-of-radius monsters now fail
   closed at the interaction boundary.
 
+- Applied the projected native vision boundary to native position-based
+  monster interaction lookups and exposed a reusable C++ point-visibility
+  helper backed by the existing native ray table. Snapshots without vision
+  geometry retain the legacy compatibility path.
+
 - Projected the authoritative native DUN monster layer through the shared
   protocol, including server, native, and Godot validation and wire coverage.
 

@@ -140,7 +140,7 @@ public:
 	[[nodiscard]] std::optional<uint32_t> MonsterEntityIdAt(std::size_t index) const noexcept;
 	/** Finds the lowest-ID authoritative world item at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> WorldItemEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
-	/** Finds the lowest-ID live authoritative monster at a projected cell. */
+	/** Finds the lowest-ID live authoritative monster at a projected cell, respecting local native vision when connected. */
 	[[nodiscard]] std::optional<uint32_t> MonsterEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the lowest-ID remote authoritative player at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> PlayerEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
