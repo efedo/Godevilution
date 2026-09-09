@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Snapshot restore rollback now captures the live player's action tick when an
+  older incoming snapshot is rejected, preserving the original validation
+  error instead of masking it with a rollback `AggregateException`.
+
 - Added optional stable `monster_symbol` cross-checks to
   `native_dun_monsters.tsv` and populated both shipped packs. Native DUN layer
   mappings now validate their authoritative monster identity against the active

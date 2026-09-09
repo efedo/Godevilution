@@ -942,7 +942,13 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
-        var previous = CaptureSnapshot(destination, snapshot.Tick);
+        // The incoming snapshot may be older than the live destination. Capture
+        // rollback state at a tick that can represent any action already in
+        // progress, otherwise validation of the rollback snapshot can fail and
+        // mask the original rejection with an AggregateException.
+        var previous = CaptureSnapshot(
+            destination,
+            GetRollbackSnapshotTick(destination, snapshot.Tick));
         try {
             RestoreSnapshotCore(destination, snapshot);
         }
@@ -957,6 +963,20 @@ public sealed partial class DiabloSimulation
             }
             throw;
         }
+    }
+
+    private static ulong GetRollbackSnapshotTick(
+        AuthoritativePlayerState player,
+        ulong requestedTick)
+    {
+        var rollbackTick = requestedTick;
+        if (player.CurrentAction is not { } action)
+            return rollbackTick;
+
+        rollbackTick = Math.Max(rollbackTick, action.StartedAtTick);
+        if (action.EffectApplied)
+            rollbackTick = Math.Max(rollbackTick, action.EffectTick);
+        return rollbackTick;
     }
 
     private void RestoreSnapshotCore(

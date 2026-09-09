@@ -4284,6 +4284,42 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRollbackUsesLiveActionTickWhenIncomingSnapshotIsOlder()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+            });
+        var destination = CreatePlayer();
+        destination.LevelId = 1;
+        destination.PositionX = 1;
+        destination.PositionY = 1;
+        destination.CombatMode = DiabloPlayerCombatMode.WalkSouthwards;
+        destination.CombatModeEndTick = 10;
+        destination.CurrentAction = new AuthoritativePlayerActionState(
+            DiabloPlayerActionKind.Move,
+            2,
+            3,
+            4,
+            10) {
+            DirectionY = 1,
+        };
+
+        var valid = simulation.CaptureSnapshot(destination, 2);
+        var invalid = valid with {
+            Tick = 1,
+            Player = valid.Player with { CharacterClassId = 99 },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(destination, invalid));
+        Assert.Equal(0U, destination.CharacterClassId);
+        Assert.Equal(2UL, destination.CurrentAction!.StartedAtTick);
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsTileTargetedCastOutsideWorldGeometry()
     {
         var world = new AuthoritativeWorld();

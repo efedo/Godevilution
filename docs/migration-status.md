@@ -41,6 +41,11 @@ cross-check. Numeric-only rows remain compatible, while shipped base and
 Hellfire mappings validate their authoritative monster identity against the
 active stable namespace before materialization.
 
+Snapshot rejection rollback now remains valid when the live player has an
+in-progress action newer than the incoming snapshot. The server preserves the
+original validation failure and the live action state instead of surfacing a
+rollback `AggregateException`.
+
 The Godot client now uses a shared authoritative viewport transform for world
 rendering and mouse hit-testing. Small levels are centered, large levels clamp
 to their edges while following the local player, and the transform uses the
