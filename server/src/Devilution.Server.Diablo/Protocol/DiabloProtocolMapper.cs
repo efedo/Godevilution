@@ -939,8 +939,9 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels,
         string entityKind)
     {
-        if (positionX is < 0 or > byte.MaxValue
-            || positionY is < 0 or > byte.MaxValue
+        if (!AuthoritativeProtocolLimits.IsNativeTileCoordinate(
+                positionX,
+                positionY)
             || levels.TryGetValue(levelId, out var level)
                 && (positionX >= level.Width || positionY >= level.Height)) {
             throw new InvalidDataException(
@@ -1271,8 +1272,9 @@ internal static class DiabloProtocolMapper
             if (!townerIds.Add(greeting.TownerId)
                 || greeting.TownerId is < 0 or > MaximumNativeQuestByte
                 || greeting.LevelId > ushort.MaxValue
-                || greeting.PositionX is < 0 or > MaximumNativeQuestByte
-                || greeting.PositionY is < 0 or > MaximumNativeQuestByte
+                || !AuthoritativeProtocolLimits.IsNativeTileCoordinate(
+                    greeting.PositionX,
+                    greeting.PositionY)
                 || levels.Count > 0
                     && (!hasLevel
                         || greeting.PositionX >= level!.Width
@@ -1820,8 +1822,7 @@ internal static class DiabloProtocolMapper
         int targetY,
         IReadOnlyDictionary<uint, AuthoritativeLevel>? levels)
     {
-        if (targetX is < 0 or > byte.MaxValue
-            || targetY is < 0 or > byte.MaxValue)
+        if (!AuthoritativeProtocolLimits.IsNativeTileCoordinate(targetX, targetY))
             return false;
         return levels is null
             || !levels.TryGetValue(levelId, out var level)
@@ -1835,8 +1836,9 @@ internal static class DiabloProtocolMapper
         DiabloCastIntent cast,
         IReadOnlyDictionary<uint, AuthoritativeLevel>? levels)
     {
-        if (cast.TargetX is < 0 or > byte.MaxValue
-            || cast.TargetY is < 0 or > byte.MaxValue)
+        if (!AuthoritativeProtocolLimits.IsNativeTileCoordinate(
+                cast.TargetX,
+                cast.TargetY))
             return false;
         if (cast.TargetEntityId != 0)
             return true;

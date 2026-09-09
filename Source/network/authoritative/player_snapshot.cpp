@@ -64,9 +64,8 @@ bool IsValidObjectPresentationKind(protocol::ObjectPresentationKind value)
 
 bool IsValidNativeTileCoordinate(int32_t x, int32_t y)
 {
-	return x >= 0 && y >= 0
-	    && x <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max())
-	    && y <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max());
+	return x >= MinimumNativeTileCoordinate && y >= MinimumNativeTileCoordinate
+	    && x <= MaximumNativeTileCoordinate && y <= MaximumNativeTileCoordinate;
 }
 
 bool IsValidSnapshotHash(std::string_view value)

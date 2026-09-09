@@ -33,6 +33,9 @@ public static class AuthoritativeProtocolLimits
     public const int NativeMaximumPortalCount = 4;
     public const int NativeMaximumWidth = 112;
     public const int NativeMaximumHeight = 112;
+    /** Native tile coordinates are encoded as unsigned byte-compatible values. */
+    public const int MinimumNativeTileCoordinate = byte.MinValue;
+    public const int MaximumNativeTileCoordinate = byte.MaxValue;
     public const int NativeMaximumMegaWidth = 40;
     public const int NativeMaximumMegaHeight = 40;
     public const uint NativeMaximumDunObjectLayerId = 146;
@@ -111,6 +114,10 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumObjectQuestSequenceFollowUpKind = 3;
     public const int MaximumObjectProjectileSourceKind = 1;
     public const int MaximumQuestTownerInteractionKind = 4;
+
+    public static bool IsNativeTileCoordinate(int x, int y)
+        => x is >= MinimumNativeTileCoordinate and <= MaximumNativeTileCoordinate
+            && y is >= MinimumNativeTileCoordinate and <= MaximumNativeTileCoordinate;
 
     public static bool IsDialogueTextValid(string value)
     {

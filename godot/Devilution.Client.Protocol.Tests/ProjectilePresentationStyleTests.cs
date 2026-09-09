@@ -90,6 +90,8 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(100, AuthoritativeProtocolLimits.NativeStashCellCount);
         Assert.Equal(10, AuthoritativeProtocolLimits.NativeStashGridWidth);
         Assert.Equal(10, AuthoritativeProtocolLimits.NativeStashGridHeight);
+        Assert.Equal(0, AuthoritativeProtocolLimits.MinimumNativeTileCoordinate);
+        Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeTileCoordinate);
         Assert.Equal(200, AuthoritativeProtocolLimits.NativeMaximumMonsterCount);
         Assert.Equal(127, AuthoritativeProtocolLimits.NativeMaximumObjectCount);
         Assert.Equal(127, AuthoritativeProtocolLimits.NativeMaximumItemCount);
@@ -128,6 +130,17 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(1024, AuthoritativeProtocolLimits.MaximumQuestTownerInteractionCount);
         Assert.Equal(256, AuthoritativeProtocolLimits.MaximumTownerGreetingCount);
         Assert.Equal(128, AuthoritativeProtocolLimits.MaximumStatusEffectCount);
+    }
+
+    [Fact]
+    public void NativeTileCoordinateContractIncludesWireBoundariesOnly()
+    {
+        Assert.True(AuthoritativeProtocolLimits.IsNativeTileCoordinate(0, 0));
+        Assert.True(AuthoritativeProtocolLimits.IsNativeTileCoordinate(255, 255));
+        Assert.False(AuthoritativeProtocolLimits.IsNativeTileCoordinate(-1, 0));
+        Assert.False(AuthoritativeProtocolLimits.IsNativeTileCoordinate(0, -1));
+        Assert.False(AuthoritativeProtocolLimits.IsNativeTileCoordinate(256, 0));
+        Assert.False(AuthoritativeProtocolLimits.IsNativeTileCoordinate(0, 256));
     }
 
     [Fact]

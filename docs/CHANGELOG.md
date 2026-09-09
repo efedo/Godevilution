@@ -30,6 +30,9 @@ All notable changes to this fork are documented below.
   and native snapshot boundaries, matching the authoritative death lifecycle.
 - Native snapshot validation now enforces standalone player combat-mode lifetime
   rules, matching the managed host and Godot validators.
+- Native tile-coordinate bounds are now named once in the shared protocol
+  contract and consumed by managed mapper/host/Godot validation and native
+  snapshot/world projection, including authored towner greetings.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

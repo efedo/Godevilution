@@ -668,8 +668,9 @@ public static class AuthoritativeSnapshotValidator
             if (greeting.TownerId is < 0 or > MaximumNativeQuestByte
                 || !townerIds.Add(greeting.TownerId)
                 || greeting.LevelId > ushort.MaxValue
-                || greeting.PositionX is < 0 or > MaximumNativeQuestByte
-                || greeting.PositionY is < 0 or > MaximumNativeQuestByte
+                || !AuthoritativeProtocolLimits.IsNativeTileCoordinate(
+                    greeting.PositionX,
+                    greeting.PositionY)
                 || levels.Count > 0
                     && (!levels.TryGetValue(greeting.LevelId, out var level)
                         || level.Width > 0 && greeting.PositionX >= level.Width
@@ -922,8 +923,7 @@ public static class AuthoritativeSnapshotValidator
     {
         var levels = snapshot.LevelGeometry.ToDictionary(level => level.LevelId);
         bool IsNativePosition(int x, int y)
-            => x is >= 0 and <= byte.MaxValue
-                && y is >= 0 and <= byte.MaxValue;
+            => AuthoritativeProtocolLimits.IsNativeTileCoordinate(x, y);
 
         bool IsInBounds(uint levelId, int x, int y)
         {
@@ -1105,8 +1105,9 @@ public static class AuthoritativeSnapshotValidator
         PlayerSnapshot player,
         PlayerActionSnapshot action)
     {
-        if (action.TargetX is < 0 or > byte.MaxValue
-            || action.TargetY is < 0 or > byte.MaxValue)
+        if (!AuthoritativeProtocolLimits.IsNativeTileCoordinate(
+                action.TargetX,
+                action.TargetY))
             return false;
         var level = snapshot.LevelGeometry
             .FirstOrDefault(candidate => candidate.LevelId == player.LevelId);
@@ -1121,8 +1122,9 @@ public static class AuthoritativeSnapshotValidator
         PlayerSnapshot player,
         CastRequested cast)
     {
-        if (cast.TargetX is < 0 or > byte.MaxValue
-            || cast.TargetY is < 0 or > byte.MaxValue)
+        if (!AuthoritativeProtocolLimits.IsNativeTileCoordinate(
+                cast.TargetX,
+                cast.TargetY))
             return false;
         if (cast.TargetEntityId != 0)
             return true;

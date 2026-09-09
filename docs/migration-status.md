@@ -72,6 +72,10 @@ Death actions also require the nonzero source entity recorded by the server;
 managed and native snapshot validators reject an unreferenced death timeline.
 Native compatibility validation now also rejects impossible standalone combat
 mode lifetimes before action projection, matching the managed boundaries.
+Native tile-coordinate bounds are now one shared wire contract across managed
+mapper/host/Godot validation and native snapshot/world projection, including
+authored towner greeting coordinates; boundary tests retain the exact
+0..255-compatible range.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
