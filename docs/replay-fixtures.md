@@ -1160,6 +1160,8 @@ Notable shared fixtures include:
   retreat admission, RandomWalk direction draws, and movement parity;
 - `gameplay-monster-magic-autonomous.json` for validated Lich-family
   MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
+- `gameplay-monster-magic-primary-shield.json` for primary-player MonsterMagic
+  impact GetHit adjustment, Mana Shield absorption, and shared Q6 checkpoints;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
   preserves player life, projectile travel, and failed-collision identity;
 - `gameplay-monster-magic-secondary-impact.json` for secondary-participant

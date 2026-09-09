@@ -2,6 +2,11 @@
 
 Status date: 2026-09-09
 
+Autonomous MonsterMagic impacts now share the managed primary-player GetHit and
+Mana Shield boundary in compact native replay, while secondary impacts retain
+their Q6 GetHit adjustment. The new Lich fixture verifies projectile impact,
+mana absorption, life preservation, and both canonical checkpoints.
+
 Primary SkeletonMelee replay now shares the managed reflection and Mana Shield
 ordering in compact native replay. The cross-runner fixture covers the
 post-GetHit damage, charge consumption, target HP, mana, and multiplayer RNG

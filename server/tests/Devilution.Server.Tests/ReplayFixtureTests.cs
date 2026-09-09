@@ -8062,6 +8062,71 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicPrimaryAppliesGetHitAndManaShield()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-magic-primary-shield.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            aggroRange: initial.CombatTargetAggroRange,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            nativeAi: initial.CombatTargetNativeAi);
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "spells.tsv")));
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingManaMaximum: initial.ManaMaximum,
+            startingManaShieldActive: initial.ManaShieldActive,
+            startingSpells: spells,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: LoadReplayMonsterMissiles(fixture, "monster-magic"),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(5634, player.Mana);
+        Assert.True(player.ManaShieldActive);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMissPreservesProjectileAndPlayerState()
     {
         var path = Path.Combine(
