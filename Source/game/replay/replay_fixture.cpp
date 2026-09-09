@@ -5310,6 +5310,7 @@ bool ApplyReplayAttack(
 		const int32_t vitality = state.attributes[7];
 		int32_t minimumDamage = 0;
 		int32_t maximumDamage = 0;
+		int32_t armorPiercingBonus = 0;
 		bool hasShield = false;
 		bool hasStaff = false;
 		bool hasBow = false;
@@ -5321,6 +5322,7 @@ bool ApplyReplayAttack(
 				continue;
 			minimumDamage += std::max(0, equippedItem.state.minDamage);
 			maximumDamage += std::max(0, equippedItem.state.maxDamage);
+			armorPiercingBonus += equippedItem.state.plusEnemyArmorClass;
 			if (equippedItem.slot != 4 && equippedItem.slot != 5)
 				continue;
 			switch (equippedItem.state.itemType) {
@@ -5382,7 +5384,8 @@ bool ApplyReplayAttack(
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		const int32_t baseMeleeToHit = state.characterClassId == 0 ? 70 : 50;
 		const int32_t hitChance = std::clamp(
-		    level + dexterity / 2 + baseMeleeToHit - std::max(0, state.combatTargetArmorClass),
+		    level + dexterity / 2 + baseMeleeToHit + armorPiercingBonus
+		        - std::max(0, state.combatTargetArmorClass),
 		    5,
 		    95);
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
@@ -10892,6 +10895,8 @@ private:
 					    return ParseSigned(item.minDamage);
 				    if (key == "max_damage")
 					    return ParseSigned(item.maxDamage);
+				    if (key == "plus_enemy_armor_class")
+					    return ParseSigned(item.plusEnemyArmorClass);
 				    if (key == "fire_min_damage")
 					    return ParseSigned(item.fireMinDamage);
 				    if (key == "fire_max_damage")
@@ -10913,6 +10918,8 @@ private:
 			    || item.itemClass > 3
 			    || item.minDamage < 0
 			    || item.maxDamage < item.minDamage
+			    || item.plusEnemyArmorClass < std::numeric_limits<int16_t>::min()
+			    || item.plusEnemyArmorClass > std::numeric_limits<int16_t>::max()
 			    || item.fireMinDamage < 0
 			    || item.fireMaxDamage < item.fireMinDamage
 			    || item.lightningMinDamage < 0
@@ -12087,6 +12094,7 @@ bool ExecuteReplayFixture(
 			item.magical = source.magical;
 			item.minDamage = source.minDamage;
 			item.maxDamage = source.maxDamage;
+			item.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			item.fireMinDamage = source.fireMinDamage;
 			item.fireMaxDamage = source.fireMaxDamage;
 			item.lightningMinDamage = source.lightningMinDamage;
@@ -12183,6 +12191,7 @@ bool ExecuteReplayFixture(
 			itemState.magical = source.magical;
 			itemState.minDamage = source.minDamage;
 			itemState.maxDamage = source.maxDamage;
+			itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			itemState.fireMinDamage = source.fireMinDamage;
 			itemState.fireMaxDamage = source.fireMaxDamage;
 			itemState.lightningMinDamage = source.lightningMinDamage;

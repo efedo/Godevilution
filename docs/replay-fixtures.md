@@ -67,7 +67,10 @@ legacy compact fixtures on their compatibility fallback; class-damage fixtures
 must author all three physical attributes explicitly.
 The armor and miss companions exercise the initialized class to-hit formula,
 native 5..95 chance clamp, deterministic hit seed, and minimum post-armor
-damage without changing the compact fallback.
+damage without changing the compact fallback. The armor-piercing companion
+adds the optional `plus_enemy_armor_class` equipment field and proves that an
+authored native armor-piercing bonus crosses the same hit-resolution boundary;
+omitting the field retains its zero-value compatibility behavior.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

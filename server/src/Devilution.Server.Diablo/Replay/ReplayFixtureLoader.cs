@@ -878,6 +878,7 @@ public static class ReplayFixtureLoader
                 Magical = GetOptionalInt(item, "magical"),
                 MinDamage = GetOptionalInt(item, "min_damage"),
                 MaxDamage = GetOptionalInt(item, "max_damage"),
+                PlusEnemyArmorClass = GetOptionalInt(item, "plus_enemy_armor_class"),
                 FireMinDamage = GetOptionalInt(item, "fire_min_damage"),
                 FireMaxDamage = GetOptionalInt(item, "fire_max_damage"),
                 LightningMinDamage = GetOptionalInt(item, "lightning_min_damage"),
@@ -891,6 +892,7 @@ public static class ReplayFixtureLoader
                 || item.ItemClass is < 0 or > 3
                 || item.MinDamage < 0
                 || item.MaxDamage < item.MinDamage
+                || item.PlusEnemyArmorClass is < short.MinValue or > short.MaxValue
                 || item.FireMinDamage < 0
                 || item.FireMaxDamage < item.FireMinDamage
                 || item.LightningMinDamage < 0

@@ -153,6 +153,10 @@ the cross-language replay gate aligned with snapshot validation.
 Native movement-intent direction bounds now use named shared `-1..1` limits at
 managed, Godot, native validation, and native command-construction boundaries.
 
+Initialized physical replay now carries validated authored armor-piercing
+bonuses through both runners. Difficulty-specific target modifiers and the
+remaining weapon/hit-resolution edge cases remain follow-up native-parity work.
+
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed
 bytes and invalid UTF-16 are rejected before a recovery path can treat the

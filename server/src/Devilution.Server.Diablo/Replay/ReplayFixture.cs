@@ -35,6 +35,8 @@ public sealed record ReplayEquippedItem(
 
     public int MaxDamage { get; init; }
 
+    public int PlusEnemyArmorClass { get; init; }
+
     public int FireMinDamage { get; init; }
 
     public int FireMaxDamage { get; init; }
@@ -58,6 +60,7 @@ public sealed record ReplayEquippedItem(
                 Magical = Magical,
                 MinDamage = MinDamage,
                 MaxDamage = MaxDamage,
+                PlusEnemyArmorClass = PlusEnemyArmorClass,
                 Flags = Flags,
                 FireMinDamage = FireMinDamage,
                 FireMaxDamage = FireMaxDamage,
