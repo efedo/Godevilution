@@ -1165,6 +1165,9 @@ Notable shared fixtures include:
 - `gameplay-monster-magic-primary-resistance.json` for primary-player
   MonsterMagic equipment resistance before Mana Shield absorption and shared
   Q6 checkpoints;
+- `gameplay-monster-magic-primary-natural-resistance.json` for validated
+  Barbarian natural resistance before Mana Shield absorption and shared
+  MonsterMagic checkpoints;
 - `gameplay-monster-magic-primary-block.json` for primary-player MonsterMagic
   shield-block admission, preserved resources, and shared impact checkpoints;
 - `gameplay-acid-primary-equipment.json` for primary Acid impact GetHit and

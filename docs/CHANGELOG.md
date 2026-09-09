@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   Mana Shield absorption across the managed and compact native runners.
 - Added primary MonsterMagic resistance coverage proving usable magic
   resistance is applied before Mana Shield absorption in both runners.
+- Added primary MonsterMagic natural-resistance coverage proving the validated
+  Barbarian class contribution is applied before Mana Shield in both runners.
 - Added primary MonsterMagic block coverage proving usable shields consume the
   block boundary before damage in both runners.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance

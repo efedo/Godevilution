@@ -3591,6 +3591,26 @@ int32_t ResolveReplayEquipmentResistance(
 	return zeroResistance ? 0 : std::clamp(resistance, 0, 75);
 }
 
+int32_t ResolveReplayEquipmentResistance(
+	const ReplayFixtureExecutionState &state,
+	bool secondary,
+	int32_t damageType)
+{
+	const auto &equipment = secondary ? state.secondaryEquipment : state.equipment;
+	int32_t resistance = ResolveReplayEquipmentResistance(equipment, damageType);
+	const uint32_t characterClass = secondary
+	    ? state.secondaryPlayerCharacterClassId
+	    : state.characterClassId;
+	const uint32_t characterLevel = secondary
+	    ? state.secondaryPlayerCharacterLevel
+	    : state.characterLevel;
+	// Hellfire Barbarian's validated NaturalResistance flag contributes one
+	// percentage point per character level to every elemental resistance.
+	if (state.hellfire && characterClass == 5)
+		resistance += static_cast<int32_t>(characterLevel);
+	return std::clamp(resistance, 0, 75);
+}
+
 int32_t ApplyReplayManaShield(
 	ReplayFixtureExecutionState &state,
 	int32_t damageQ6)
@@ -9535,11 +9555,9 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
 				return false;
 
-			const auto &targetEquipment = primaryPlayerAtTile
-			    ? state.equipment
-			    : state.secondaryEquipment;
 			const int32_t resistance = ResolveReplayEquipmentResistance(
-			    targetEquipment,
+			    state,
+			    secondaryPlayerAtTile,
 			    projectile.damageType);
 			const bool primaryPlayerBlockCapable = primaryPlayerAtTile
 			    && (state.combatMode == 0 || state.combatMode == 4)
@@ -9794,7 +9812,8 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				    std::max(1, projectile.damage))
 				    * 64;
 				const int32_t resistance = ResolveReplayEquipmentResistance(
-				    targetEquipment,
+				    state,
+				    secondaryPlayerAtTile,
 				    projectile.damageType);
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
@@ -9930,7 +9949,8 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					    std::max(1, projectile.damage))
 					    * 64;
 					const int32_t resistance = ResolveReplayEquipmentResistance(
-					    targetEquipment,
+					    state,
+					    secondaryPlayerAtTile,
 					    projectile.damageType);
 					if (resistance > 0)
 						damageQ6 -= damageQ6 * resistance / 100;

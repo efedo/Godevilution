@@ -8173,6 +8173,10 @@ in compact native replay while preserving the managed impact-phase lifetime.
 The shared Acid puddle boundary now covers multiplayer secondary participants,
 including usable GetHit and Acid resistance before Q6 damage on active ticks.
 
+MonsterMagic player impacts now include the validated Barbarian natural-
+resistance class contribution before Mana Shield in the compact native replay,
+matching the external class catalog used by the managed server.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

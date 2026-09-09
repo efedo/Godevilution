@@ -8192,6 +8192,30 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicPrimaryAppliesNaturalResistanceBeforeManaShield()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-magic-primary-natural-resistance.json");
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(5780, player.Mana);
+        Assert.True(player.ManaShieldActive);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicBlocksOnPrimaryParticipant()
     {
         var fixture = LoadReplayFixture("gameplay-monster-magic-primary-block.json");
@@ -9202,6 +9226,9 @@ public sealed class ReplayFixtureTests
             skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
             skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
         var missiles = LoadReplayMonsterMissiles(fixture, "monster-magic");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -9222,6 +9249,7 @@ public sealed class ReplayFixtureTests
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
             startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
             startingEquipment: initial.Equipment
                 .Select(item => item.ToEquippedStoreItem())
                 .ToArray(),
