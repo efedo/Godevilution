@@ -583,6 +583,12 @@ TEST(ReplayFixture, ExecutesBarbarianPhysicalDamageAgainstCSharpCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-barbarian.json", 5, 40, 20, 25, 89);
 }
 
+TEST(ReplayFixture, ExecutesBarbarianArmorPiercingAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-barbarian-armor-piercing.json", 5, 40, 20, 25, 99);
+}
+
 TEST(ReplayFixture, ExecutesWarriorPhysicalDamageAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(

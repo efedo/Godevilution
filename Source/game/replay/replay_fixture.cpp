@@ -5403,10 +5403,13 @@ bool ApplyReplayAttack(
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		const int32_t baseMeleeToHit = state.characterClassId == 0 ? 70 : 50;
 		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
-		const int32_t effectiveArmorClass = state.combatTargetArmorClass + difficultyArmorBonus;
+		const int32_t damageArmorClass = state.combatTargetArmorClass + difficultyArmorBonus;
+		int32_t hitArmorClass = damageArmorClass;
+		if (state.characterClassId == 5 && armorPiercingBonus > 0)
+			hitArmorClass = std::max(0, hitArmorClass - damageArmorClass / 8);
 		const int32_t hitChance = std::clamp(
 		    level + dexterity / 2 + baseMeleeToHit + hitBonus + armorPiercingBonus
-		        - std::max(0, effectiveArmorClass),
+		        - hitArmorClass,
 		    5,
 		    95);
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
@@ -5433,7 +5436,7 @@ bool ApplyReplayAttack(
 				damageBeforeArmor += damageBeforeArmor / 2;
 		}
 		damage = attackHit
-		    ? std::max(1, damageBeforeArmor - std::max(0, effectiveArmorClass))
+		    ? std::max(1, damageBeforeArmor - std::max(0, damageArmorClass))
 		    : 0;
 		if (attackHit
 		    && state.combatTargetDemon

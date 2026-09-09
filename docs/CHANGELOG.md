@@ -56,6 +56,8 @@ All notable changes to this fork are documented below.
   authored animal targets.
 - Initialized physical replay now carries demon targets and the validated
   post-armor `TripleDemonDamage` multiplier through both runners.
+- Barbarian physical replay now covers native melee armor reduction for
+  armor-piercing hit admission while preserving post-hit damage armor.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
