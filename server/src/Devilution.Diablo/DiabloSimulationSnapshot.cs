@@ -1136,24 +1136,24 @@ public sealed partial class DiabloSimulation
                 || monster.BatRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks
                 || monster.BatRetreatDirection is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDirection
                 || monster.BatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.BatMovementMode is < -1 or > 3
+                || monster.BatMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode
                 || monster.RangedAvoidanceMoveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
-                || monster.RangedAvoidanceTurn is < 0 or > 1
+                || monster.RangedAvoidanceTurn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn
                 || monster.RangedAvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.RangedAvoidanceMovementMode is < -1 or > 3
+                || monster.RangedAvoidanceMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode
                 || monster.RhinoMovementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
-                || monster.RhinoMovementTurn is < 0 or > 1
+                || monster.RhinoMovementTurn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn
                 || monster.AvoidanceMovementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
-                || monster.AvoidanceMovementTurn is < 0 or > 1
+                || monster.AvoidanceMovementTurn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn
                 || monster.AvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.AvoidanceMovementMode is < -1 or > 3
+                || monster.AvoidanceMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode
                 || monster.SkeletonMeleeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.SkeletonRangedMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.SkeletonRangedMovementMode is < -1 or > 3
+                || monster.SkeletonRangedMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode
                 || monster.FatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.FatMovementMode is < -1 or > 3
+                || monster.FatMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode
                 || monster.RhinoMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
-                || monster.RhinoMovementMode is < -1 or > 3
+                || monster.RhinoMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode
                 || monster.RhinoDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.SkeletonKingDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.HorkDemonDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks

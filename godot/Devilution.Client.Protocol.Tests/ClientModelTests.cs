@@ -2794,6 +2794,34 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsNativeMonsterMovementModesAndTurnsOutsideSharedBounds()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = { new MonsterSnapshot { EntityId = 9 } },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.BatMovementMode = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementMode + 1,
+            monster => monster.RangedAvoidanceTurn = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTurn + 1,
+            monster => monster.RangedAvoidanceMovementMode = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementMode - 1,
+            monster => monster.RhinoMovementTurn = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementTurn - 1,
+            monster => monster.AvoidanceMovementTurn = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTurn + 1,
+            monster => monster.AvoidanceMovementMode = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementMode + 1,
+            monster => monster.SkeletonRangedMovementMode = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementMode - 1,
+            monster => monster.FatMovementMode = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementMode + 1,
+            monster => monster.RhinoMovementMode = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementMode - 1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void RejectsMalformedAuthoritativeMonsterCombatState()
     {
         var model = new AuthoritativeClientModel();

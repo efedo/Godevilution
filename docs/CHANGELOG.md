@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native monster movement modes and turn-state fields now use shared `-1..3`
+  and `0..1` compatibility bounds across managed/native snapshot validation,
+  Diablo state restoration, replay loading, and protocol aliases.
+
 - Native monster movement counters now use one shared compatibility bound
   across Diablo ticking/restoration, snapshot validation, protocol aliases,
   and native envelope assertions.

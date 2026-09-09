@@ -165,41 +165,41 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
         if (batMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(batMovementIdleTicks));
-        if (batMovementMode is < -1 or > 3)
+        if (batMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(batMovementMode));
         if (rangedAvoidanceMoveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMoveTicks));
-        if (rangedAvoidanceTurn is < 0 or > 1)
+        if (rangedAvoidanceTurn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceTurn));
         if (rangedAvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMovementIdleTicks));
-        if (rangedAvoidanceMovementMode is < -1 or > 3)
+        if (rangedAvoidanceMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMovementMode));
         if (rhinoMovementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementTicks));
-        if (rhinoMovementTurn is < 0 or > 1)
+        if (rhinoMovementTurn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementTurn));
         if (avoidanceMovementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTicks));
-        if (avoidanceMovementTurn is < 0 or > 1)
+        if (avoidanceMovementTurn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTurn));
         if (avoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementIdleTicks));
-        if (avoidanceMovementMode is < -1 or > 3)
+        if (avoidanceMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementMode));
         if (skeletonMeleeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(skeletonMeleeDelayTicks));
         if (skeletonRangedMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(skeletonRangedMovementIdleTicks));
-        if (skeletonRangedMovementMode is < -1 or > 3)
+        if (skeletonRangedMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(skeletonRangedMovementMode));
         if (fatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(fatMovementIdleTicks));
-        if (fatMovementMode is < -1 or > 3)
+        if (fatMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(fatMovementMode));
         if (rhinoMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementIdleTicks));
-        if (rhinoMovementMode is < -1 or > 3)
+        if (rhinoMovementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementMode));
         if (rhinoDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rhinoDelayTicks));
@@ -885,7 +885,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
-        if (movementMode is < -1 or > 3)
+        if (movementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         BatMovementIdleTicks = idleTicks;
         BatMovementMode = movementMode;
@@ -893,7 +893,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartRangedAvoidanceMovement(int turn)
     {
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RangedAvoidanceMoveTicks = 0;
         RangedAvoidanceTurn = turn;
@@ -921,7 +921,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (moveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
             throw new ArgumentOutOfRangeException(nameof(moveTicks));
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RangedAvoidanceMoveTicks = moveTicks;
         RangedAvoidanceTurn = turn;
@@ -935,7 +935,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void UpdateRangedAvoidanceTurn(int turn)
     {
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RangedAvoidanceTurn = turn;
     }
@@ -961,7 +961,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
-        if (movementMode is < -1 or > 3)
+        if (movementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         RangedAvoidanceMovementIdleTicks = idleTicks;
         RangedAvoidanceMovementMode = movementMode;
@@ -969,7 +969,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartRhinoMovement(int turn)
     {
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RhinoMovementTicks = 0;
         RhinoMovementTurn = turn;
@@ -997,7 +997,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (movementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
             throw new ArgumentOutOfRangeException(nameof(movementTicks));
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RhinoMovementTicks = movementTicks;
         RhinoMovementTurn = turn;
@@ -1011,14 +1011,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void UpdateRhinoMovementTurn(int turn)
     {
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RhinoMovementTurn = turn;
     }
 
     internal void StartAvoidanceMovement(int turn)
     {
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         AvoidanceMovementTicks = 0;
         AvoidanceMovementTurn = turn;
@@ -1050,7 +1050,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (movementTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
             throw new ArgumentOutOfRangeException(nameof(movementTicks));
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         AvoidanceMovementTicks = movementTicks;
         AvoidanceMovementTurn = turn;
@@ -1064,7 +1064,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void UpdateAvoidanceMovementTurn(int turn)
     {
-        if (turn is < 0 or > 1)
+        if (turn is < NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn)
             throw new ArgumentOutOfRangeException(nameof(turn));
         AvoidanceMovementTurn = turn;
     }
@@ -1090,7 +1090,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
-        if (movementMode is < -1 or > 3)
+        if (movementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         AvoidanceMovementIdleTicks = idleTicks;
         AvoidanceMovementMode = movementMode;
@@ -1139,7 +1139,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
-        if (movementMode is < -1 or > 3)
+        if (movementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         SkeletonRangedMovementIdleTicks = idleTicks;
         SkeletonRangedMovementMode = movementMode;
@@ -1166,7 +1166,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
-        if (movementMode is < -1 or > 3)
+        if (movementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         FatMovementIdleTicks = idleTicks;
         FatMovementMode = movementMode;
@@ -1193,7 +1193,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
-        if (movementMode is < -1 or > 3)
+        if (movementMode is < NativeCompatibilityLimits.MinimumNativeMonsterMovementMode or > NativeCompatibilityLimits.MaximumNativeMonsterMovementMode)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         RhinoMovementIdleTicks = idleTicks;
         RhinoMovementMode = movementMode;

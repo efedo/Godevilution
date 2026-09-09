@@ -32,6 +32,10 @@ public static class AuthoritativeSnapshotValidator
     private const int MaximumNativeMonsterDirection = AuthoritativeProtocolLimits.MaximumNativeMonsterDirection;
     private const int MaximumNativeMonsterPackSize = AuthoritativeProtocolLimits.MaximumNativeMonsterPackSize;
     private const int MaximumNativeMonsterActiveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterActiveTicks;
+    private const int MinimumNativeMonsterMovementMode = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementMode;
+    private const int MaximumNativeMonsterMovementMode = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementMode;
+    private const int MinimumNativeMonsterMovementTurn = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementTurn;
+    private const int MaximumNativeMonsterMovementTurn = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTurn;
     private const int MaximumNativeMonsterFallenStandAnimationFrame = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
     private const int MaximumNativeMonsterFallenStandAnimationTick = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
     private const int MaximumNativeMonsterFallenRallyTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
@@ -1117,6 +1121,15 @@ public static class AuthoritativeSnapshotValidator
                 || monster.LeaderRelation != 0 && monster.IsUnique
                 || monster.PackSize is < 0 or > MaximumNativeMonsterPackSize
                 || monster.ActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
+                || monster.BatMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
+                || monster.RangedAvoidanceTurn is < MinimumNativeMonsterMovementTurn or > MaximumNativeMonsterMovementTurn
+                || monster.RangedAvoidanceMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
+                || monster.RhinoMovementTurn is < MinimumNativeMonsterMovementTurn or > MaximumNativeMonsterMovementTurn
+                || monster.AvoidanceMovementTurn is < MinimumNativeMonsterMovementTurn or > MaximumNativeMonsterMovementTurn
+                || monster.AvoidanceMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
+                || monster.SkeletonRangedMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
+                || monster.FatMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
+                || monster.RhinoMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
                 || monster.FallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
                 || monster.FallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
                 || monster.FallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks

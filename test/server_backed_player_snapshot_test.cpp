@@ -1897,6 +1897,34 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	invalidGroupActiveTicks.mutable_monsters(0)->set_active_for_ticks(-1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupActiveTicks).has_value());
 
+	protocol::Snapshot invalidBatMovementMode = makeMonster();
+	invalidBatMovementMode.mutable_monsters(0)->set_bat_movement_mode(MaximumNativeMonsterMovementMode + 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidBatMovementMode).has_value());
+	protocol::Snapshot invalidRangedAvoidanceTurn = makeMonster();
+	invalidRangedAvoidanceTurn.mutable_monsters(0)->set_ranged_avoidance_turn(MaximumNativeMonsterMovementTurn + 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidRangedAvoidanceTurn).has_value());
+	protocol::Snapshot invalidRangedAvoidanceMode = makeMonster();
+	invalidRangedAvoidanceMode.mutable_monsters(0)->set_ranged_avoidance_movement_mode(MinimumNativeMonsterMovementMode - 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidRangedAvoidanceMode).has_value());
+	protocol::Snapshot invalidRhinoTurn = makeMonster();
+	invalidRhinoTurn.mutable_monsters(0)->set_rhino_movement_turn(MinimumNativeMonsterMovementTurn - 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidRhinoTurn).has_value());
+	protocol::Snapshot invalidAvoidanceTurn = makeMonster();
+	invalidAvoidanceTurn.mutable_monsters(0)->set_avoidance_movement_turn(MaximumNativeMonsterMovementTurn + 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidAvoidanceTurn).has_value());
+	protocol::Snapshot invalidAvoidanceMode = makeMonster();
+	invalidAvoidanceMode.mutable_monsters(0)->set_avoidance_movement_mode(MaximumNativeMonsterMovementMode + 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidAvoidanceMode).has_value());
+	protocol::Snapshot invalidSkeletonRangedMode = makeMonster();
+	invalidSkeletonRangedMode.mutable_monsters(0)->set_skeleton_ranged_movement_mode(MinimumNativeMonsterMovementMode - 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidSkeletonRangedMode).has_value());
+	protocol::Snapshot invalidFatMode = makeMonster();
+	invalidFatMode.mutable_monsters(0)->set_fat_movement_mode(MaximumNativeMonsterMovementMode + 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidFatMode).has_value());
+	protocol::Snapshot invalidRhinoMode = makeMonster();
+	invalidRhinoMode.mutable_monsters(0)->set_rhino_movement_mode(MinimumNativeMonsterMovementMode - 1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidRhinoMode).has_value());
+
 	protocol::Snapshot invalidMovementTiming = makeMonster();
 	invalidMovementTiming.mutable_monsters(0)->set_movement_started_tick(12);
 	invalidMovementTiming.mutable_monsters(0)->set_movement_effect_tick(11);

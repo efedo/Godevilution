@@ -1413,6 +1413,24 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.leader_relation() != 0 && monster.is_unique()
 		    || monster.pack_size() < 0 || monster.pack_size() > MaximumNativeMonsterPackSize
 		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > MaximumNativeMonsterActiveTicks
+		    || monster.bat_movement_mode() < MinimumNativeMonsterMovementMode
+		        || monster.bat_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.ranged_avoidance_turn() < MinimumNativeMonsterMovementTurn
+		        || monster.ranged_avoidance_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.ranged_avoidance_movement_mode() < MinimumNativeMonsterMovementMode
+		        || monster.ranged_avoidance_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.rhino_movement_turn() < MinimumNativeMonsterMovementTurn
+		        || monster.rhino_movement_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.avoidance_movement_turn() < MinimumNativeMonsterMovementTurn
+		        || monster.avoidance_movement_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.avoidance_movement_mode() < MinimumNativeMonsterMovementMode
+		        || monster.avoidance_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.skeleton_ranged_movement_mode() < MinimumNativeMonsterMovementMode
+		        || monster.skeleton_ranged_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.fat_movement_mode() < MinimumNativeMonsterMovementMode
+		        || monster.fat_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.rhino_movement_mode() < MinimumNativeMonsterMovementMode
+		        || monster.rhino_movement_mode() > MaximumNativeMonsterMovementMode
 		    || (!monster.moving()
 		        && (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0))
 		    || (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0)

@@ -47,6 +47,10 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumNativeMonsterPackSize = NativeCompatibilityLimits.MaximumNativeMonsterPackSize;
     public const int MaximumNativeMonsterActiveTicks = NativeCompatibilityLimits.MaximumNativeMonsterActiveTicks;
     public const int MaximumNativeMonsterMovementTicks = NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks;
+    public const int MinimumNativeMonsterMovementMode = NativeCompatibilityLimits.MinimumNativeMonsterMovementMode;
+    public const int MaximumNativeMonsterMovementMode = NativeCompatibilityLimits.MaximumNativeMonsterMovementMode;
+    public const int MinimumNativeMonsterMovementTurn = NativeCompatibilityLimits.MinimumNativeMonsterMovementTurn;
+    public const int MaximumNativeMonsterMovementTurn = NativeCompatibilityLimits.MaximumNativeMonsterMovementTurn;
     public const int MaximumNativeMonsterFallenStandAnimationFrame = NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationFrame;
     public const int MaximumNativeMonsterFallenStandAnimationTick = NativeCompatibilityLimits.MaximumNativeMonsterFallenStandAnimationTick;
     public const int MaximumNativeMonsterFallenRallyTicks = NativeCompatibilityLimits.MaximumNativeMonsterFallenRallyTicks;

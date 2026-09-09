@@ -17,6 +17,10 @@ Native monster movement counters now use that shared compatibility source
 across Diablo ticking/restoration, snapshot validation, protocol aliases, and
 native envelope assertions.
 
+Native monster movement modes and turn-state fields now use shared `-1..3`
+and `0..1` compatibility bounds across managed/native snapshot validation,
+Diablo state restoration, replay loading, and protocol aliases.
+
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
 and resistances now consume that same compatibility source across Diablo
