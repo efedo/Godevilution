@@ -1695,8 +1695,8 @@ TEST(ReplayFixture, ExecutesPlayerDeathLifecycleAgainstCSharpCheckpoints)
 	EXPECT_EQ(probeState.worldItemState.itemIndex, 0);
 	EXPECT_EQ(probeState.worldItemState.value, 50);
 	EXPECT_TRUE(probeState.worldItemState.statFlag);
-	EXPECT_EQ(probeState.worldItemSeed, 0x015A4E36U);
-	EXPECT_EQ(probeState.randomState, probeState.worldItemSeed);
+	EXPECT_EQ(probeState.worldItemSeed, 2138921681U);
+	EXPECT_EQ(probeState.randomState, 2156045615U);
 
 	auto state = CreateState();
 	ReplayFixtureExecutionResult result;

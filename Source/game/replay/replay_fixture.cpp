@@ -9250,9 +9250,18 @@ void AdvanceReplayMonsterAttack(
 				        && state.combatTargetMaxDamage == 0
 				    ? state.combatTargetAttackDamage
 				    : state.combatTargetMaxDamage;
+				const bool usesNativeCombatStream = !state.multiplayer
+				    || state.combatTargetMonsterAiSeed != 0;
 				const int damage = maximumDamage >= minimumDamage
-				    ? minimumDamage + static_cast<int>(attackSeed
-				        % static_cast<uint32_t>(maximumDamage - minimumDamage + 1))
+				    ? minimumDamage
+				        + (usesNativeCombatStream
+				            ? std::max(
+				                  GenerateRnd(
+				                      state,
+				                      maximumDamage - minimumDamage + 1),
+				                  0)
+				            : static_cast<int>(attackSeed
+				                % static_cast<uint32_t>(maximumDamage - minimumDamage + 1)))
 				    : 0;
 				const int adjustedDamage = ApplyReplayGetHitBonus(
 				    state,
@@ -9457,9 +9466,26 @@ void AdvanceReplayMonsterAttack(
 		[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
 	if (protectedByEtherealize)
 		return;
-	const int32_t damage = state.combatTargetAttackDamage == 0
-	    ? 0
-	    : std::max(1, state.combatTargetAttackDamage);
+	const int32_t minimumDamage = state.combatTargetMinDamage == 0
+	        && state.combatTargetMaxDamage == 0
+	    ? state.combatTargetAttackDamage
+	    : state.combatTargetMinDamage;
+	const int32_t maximumDamage = state.combatTargetMinDamage == 0
+	        && state.combatTargetMaxDamage == 0
+	    ? state.combatTargetAttackDamage
+	    : state.combatTargetMaxDamage;
+	const bool usesNativeCombatStream = !state.multiplayer
+	    || state.combatTargetMonsterAiSeed != 0;
+	const int32_t damage = maximumDamage >= minimumDamage
+	    ? minimumDamage
+	        + (usesNativeCombatStream
+	            ? std::max(
+	                  GenerateRnd(
+	                      state,
+	                      maximumDamage - minimumDamage + 1),
+	                  0)
+	            : 0)
+	    : 0;
 	const int32_t adjustedDamage = ApplyReplayGetHitBonus(state, damage, false);
 	int32_t lifeDamage = adjustedDamage;
 	int32_t reflectedDamage = 0;

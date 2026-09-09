@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Aligned the compact native replay harness with the managed native melee RNG
+  draw, refreshed the Hellfire fixtures to the composed manifest hash, and
+  updated the death and Mana Shield checkpoints to the resulting stream.
+
 ## Unreleased
 
 - Refreshed all checked-in base replay fixtures to the canonical content-pack

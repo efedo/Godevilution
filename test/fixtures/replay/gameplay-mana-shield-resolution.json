@@ -61,10 +61,10 @@
   ],
   "checkpoints": [
     { "tick": 0, "state_sha256": "851bdaefb59b5510cb2272423678cc9fe4cb194a5cc6fd99b1beb1e23b3bc9c4" },
-    { "tick": 1, "state_sha256": "ad94ab6c62b24b57e761c3b007317ee7993941901f9df7b9d5c965d9200341fc" },
-    { "tick": 2, "state_sha256": "801069e2d14e276638aa20c452b664acf6343601e7d566b78e273109dccd92ce" },
-    { "tick": 3, "state_sha256": "5901c9852ba0e7cd4eb7c330c2955e16f3e2d1218dddf6b80831a4031bb3266a" },
-    { "tick": 4, "state_sha256": "605a6fcc69d0867a8454bc15b3d8a73042b77eb28ee4823bb5afd00ad23e06d9" },
-    { "tick": 5, "state_sha256": "e46d7fac077c988683809bdd857b24e2b30c76bbd2476e1c078bfed060b3b606" }
+    { "tick": 1, "state_sha256": "fc90bc6c897586669fb474791bad2e159261eb930b59bfe05336d3d1c1cfc2fc" },
+    { "tick": 2, "state_sha256": "b4e4f48decd9dec2730942b2080c879377103a7ff030b058940897a35185006e" },
+    { "tick": 3, "state_sha256": "be72510d728d0cb62ca3fb7b907e16f7aff15305ac1866b0179c105bfa2b87c0" },
+    { "tick": 4, "state_sha256": "36b886edbedd5270831bd1ba50c04555654cea96cb1244b6da7bf462212aa508" },
+    { "tick": 5, "state_sha256": "e0062250fd71d10678110affafe2cadc17030f7f85446af07b2abd4d88a43674" }
   ]
 }

@@ -1854,7 +1854,10 @@ public sealed class BaseContentReplayTests
         Assert.Equal(0, probeGold.State.ItemIndex);
         Assert.Equal(50, probeGold.State.Value);
         Assert.True(probeGold.State.StatFlag);
-        Assert.Equal(probeGold.ItemSeed, deathSnapshot.RandomState);
+        // The lethal monster attack consumes its native draw before the gold
+        // stack seed is allocated; preserve both deterministic values.
+        Assert.Equal(2138921681U, probeGold.ItemSeed);
+        Assert.Equal(2156045615U, deathSnapshot.RandomState);
 
         var executor = CreateExecutor();
         var result = ReplayFixtureExecutor.Execute(
