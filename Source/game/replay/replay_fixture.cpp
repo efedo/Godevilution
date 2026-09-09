@@ -5346,8 +5346,10 @@ bool ApplyReplayAttack(
 		return false;
 	if (ranged) {
 		const uint32_t arrowCount = HasReplayEquipmentFlag(state, MultipleArrowsFlag) ? 3U : 1U;
-		for (uint32_t arrowIndex = 0; arrowIndex < arrowCount; ++arrowIndex)
+		for (uint32_t arrowIndex = 0; arrowIndex < arrowCount; ++arrowIndex) {
 			CreateReplayWeaponArrow(state, targetEntityId, arrowIndex, arrowCount, consumeRandom);
+			ApplyReplayHellfireWeaponDecay(state);
+		}
 		return true;
 	}
 	// Native attacks consume the deterministic damage-range draw even for the

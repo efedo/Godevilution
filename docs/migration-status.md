@@ -171,6 +171,9 @@ Hellfire armor-piercing replay now also uses the native shifted-armor hit
 formula rather than the Diablo additive-piercing formula.
 Hellfire replay now also applies slot-ordered post-attack `Decay` mutation to
 authored weapons.
+Ranged Hellfire replay now applies the same mutation once per emitted arrow,
+before projectile resolution, with the refreshed Hellfire manifest identity
+checked by both runners.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed

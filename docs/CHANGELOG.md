@@ -64,6 +64,8 @@ All notable changes to this fork are documented below.
   admission rule in both runners.
 - Hellfire physical replay now covers slot-ordered post-attack weapon `Decay`
   mutation while preserving the attack's pre-decay damage.
+- Hellfire ranged replay now applies `Decay` once per emitted arrow before
+  projectile resolution and refreshes the ranged fixture's content identity.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

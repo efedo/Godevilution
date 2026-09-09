@@ -714,6 +714,25 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(state.projectiles[0].elementalFireDamage, 4);
 	EXPECT_TRUE(state.projectiles[0].attackHit);
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
+
+	std::ifstream decayFile("test/fixtures/replay/gameplay-ranged-hellfire-decay.json");
+	ASSERT_TRUE(decayFile.good());
+	const std::string decayJson((std::istreambuf_iterator<char>(decayFile)), std::istreambuf_iterator<char>());
+	ReplayFixture decayFixture;
+	ASSERT_TRUE(ParseReplayFixture(decayJson, decayFixture, error)) << error;
+	ReplayFixtureExecutionState decayState;
+	decayState.life = decayFixture.initialState.life;
+	decayState.lifeMaximum = decayFixture.initialState.life;
+	decayState.mana = decayFixture.initialState.mana;
+	decayState.manaMaximum = decayFixture.initialState.manaMaximum;
+	decayState.positionX = decayFixture.initialState.positionX;
+	decayState.positionY = decayFixture.initialState.positionY;
+	ReplayFixtureExecutionResult decayResult;
+	ASSERT_TRUE(ExecuteReplayFixture(decayFixture, decayState, decayResult, error)) << error;
+	ASSERT_EQ(decayState.equipment.size(), 1U);
+	EXPECT_EQ(decayState.equipment[0].state.plusDamage, -5);
+	ASSERT_EQ(decayState.projectiles.size(), 1U);
+	EXPECT_EQ(decayResult.transitions[0].stateSha256, decayFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

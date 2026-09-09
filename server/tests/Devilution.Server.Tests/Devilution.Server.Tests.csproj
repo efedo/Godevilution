@@ -53,6 +53,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-hellfire-devastation.json" Link="Fixtures/gameplay-class-physical-damage-hellfire-devastation.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-hellfire-armor-piercing.json" Link="Fixtures/gameplay-class-physical-damage-hellfire-armor-piercing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-hellfire-decay.json" Link="Fixtures/gameplay-class-physical-damage-hellfire-decay.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-ranged-hellfire-decay.json" Link="Fixtures/gameplay-ranged-hellfire-decay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-elemental-arrows.json" Link="Fixtures/gameplay-elemental-arrows.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-player-death-lifecycle.json" Link="Fixtures/gameplay-player-death-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-player-equipped-death-drops.json" Link="Fixtures/gameplay-player-equipped-death-drops.json" CopyToOutputDirectory="PreserveNewest" />
