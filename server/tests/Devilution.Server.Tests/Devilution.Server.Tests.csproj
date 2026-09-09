@@ -217,6 +217,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-primary-block.json" Link="Fixtures/gameplay-monster-magic-primary-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-primary-monk-block.json" Link="Fixtures/gameplay-monster-magic-primary-monk-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-primary-monk-one-handed-block.json" Link="Fixtures/gameplay-monster-magic-primary-monk-one-handed-block.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-magic-primary-monk-two-handed-no-block.json" Link="Fixtures/gameplay-monster-magic-primary-monk-two-handed-no-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-primary-equipment.json" Link="Fixtures/gameplay-acid-primary-equipment.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-puddle-primary-equipment.json" Link="Fixtures/gameplay-acid-puddle-primary-equipment.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-puddle-object-break.json" Link="Fixtures/gameplay-acid-puddle-object-break.json" CopyToOutputDirectory="PreserveNewest" />

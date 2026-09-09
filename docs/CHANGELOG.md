@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
   extending the replay envelope with native equip-location classification so
   both runners admit one-handed FlexibleBlock without admitting two-handed
   weapons.
+- Added the inverse Hellfire Monk MonsterMagic fixture, proving a usable
+  two-handed weapon receives the normal hit boundary and does not enter the
+  FlexibleBlock animation in either runner.
 - Extended Hellfire Monk MonsterMagic FlexibleBlock coverage to an unarmed
   secondary participant in multiplayer, including class base block chance.
 - Added Hellfire Monk Hork Spawn coverage proving the shared class-aware block

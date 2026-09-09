@@ -1176,6 +1176,8 @@ Notable shared fixtures include:
 - `gameplay-monster-magic-primary-monk-one-handed-block.json` for Hellfire
   Monk FlexibleBlock admission with a usable one-handed weapon and explicit
   native equip-location classification;
+- `gameplay-monster-magic-primary-monk-two-handed-no-block.json` for the
+  corresponding two-handed exclusion and normal MonsterMagic hit boundary;
 - `gameplay-monster-magic-secondary-monk-block.json` for multiplayer
   secondary-participant FlexibleBlock admission without equipment and shared
   class-aware impact checkpoints;

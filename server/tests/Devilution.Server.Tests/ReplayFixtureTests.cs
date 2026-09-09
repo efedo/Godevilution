@@ -8430,6 +8430,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicMonkDoesNotBlockWithTwoHandedWeapon()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-magic-primary-monk-two-handed-no-block.json");
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6144, player.Life);
+        Assert.Equal(6000, player.Mana);
+        Assert.Equal(PlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(0UL, player.CombatModeEndTick);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMissPreservesProjectileAndPlayerState()
     {
         var path = Path.Combine(

@@ -8186,6 +8186,10 @@ weapon. Replay equipment carries the native equip-location classification, so
 managed and native runners agree that one-handed weapons may block while
 two-handed weapons remain excluded.
 
+The paired two-handed Monk fixture now verifies the negative boundary as well:
+the same classification reaches the managed and native runners, which retain
+the ordinary MonsterMagic hit and GotHit timing instead of admitting a block.
+
 The same class-aware block boundary now applies to unarmed Hellfire Monk
 secondary participants, while retaining the explicit legacy block-capable
 secondary path used by existing shield fixtures.
