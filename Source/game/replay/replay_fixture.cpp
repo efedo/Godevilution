@@ -3509,6 +3509,31 @@ bool HasReplayEquipmentFlag(
 	    });
 }
 
+int32_t ApplyReplayGetHitBonus(
+	const std::vector<ReplayFixtureSlottedItem> &equipment,
+	int32_t damage)
+{
+	if (damage <= 0)
+		return 0;
+
+	int32_t getHitBonus = 0;
+	for (const auto &item : equipment) {
+		if (IsReplayEquipmentUsable(item.state))
+			getHitBonus += item.state.plusGetHit;
+	}
+	return std::max(1, damage + getHitBonus);
+}
+
+int32_t ApplyReplayGetHitBonus(
+	const ReplayFixtureExecutionState &state,
+	int32_t damage,
+	bool secondary)
+{
+	return ApplyReplayGetHitBonus(
+	    secondary ? state.secondaryEquipment : state.equipment,
+	    damage);
+}
+
 void ApplyReplayEquipmentAttackEffects(
     ReplayFixtureExecutionState &state,
     int32_t damageQ6)
@@ -9108,6 +9133,7 @@ void AdvanceReplayMonsterAttack(
 			    0);
 			damage = damageQ6 / 64;
 		}
+		damage = ApplyReplayGetHitBonus(state, damage, true);
 		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damage);
 		if (state.secondaryPlayerLife == 0)
 			StartReplaySecondaryPlayerDeath(state, true);
@@ -9133,11 +9159,12 @@ void AdvanceReplayMonsterAttack(
 	const int32_t damage = state.combatTargetAttackDamage == 0
 	    ? 0
 	    : std::max(1, state.combatTargetAttackDamage);
-	int32_t lifeDamage = damage;
+	const int32_t adjustedDamage = ApplyReplayGetHitBonus(state, damage, false);
+	int32_t lifeDamage = adjustedDamage;
 	int32_t reflectedDamage = 0;
-	if (damage > 0 && state.reflectCharges > 0) {
+	if (adjustedDamage > 0 && state.reflectCharges > 0) {
 		--state.reflectCharges;
-		reflectedDamage = damage * (GenerateRnd(state, 11) + 20) / 100;
+		reflectedDamage = adjustedDamage * (GenerateRnd(state, 11) + 20) / 100;
 		if (reflectedDamage > 0) {
 			state.combatTargetHitPointsQ6 = std::max(
 			    0,
@@ -9149,7 +9176,7 @@ void AdvanceReplayMonsterAttack(
 		// Keep the replay stream aligned with the authoritative monster-hit
 		// boundary, which advances once after resolving the Reflect percentage.
 		AdvanceRandom(state);
-		lifeDamage = std::max(0, damage - reflectedDamage);
+		lifeDamage = std::max(0, adjustedDamage - reflectedDamage);
 	}
 	const bool hasNoManaItem = std::any_of(
 	    state.equipment.begin(),
@@ -9160,7 +9187,7 @@ void AdvanceReplayMonsterAttack(
 		        && (item.state.magical == 0 || item.state.identified)
 		        && (item.state.flags & NoManaItemFlag) != 0;
 	    });
-	if (damage > 0 && state.manaShieldActive && !hasNoManaItem) {
+	if (adjustedDamage > 0 && state.manaShieldActive && !hasNoManaItem) {
 		const auto spell = std::find_if(
 		    state.memorizedSpells.begin(),
 		    state.memorizedSpells.end(),
@@ -9171,7 +9198,7 @@ void AdvanceReplayMonsterAttack(
 		    ? 0
 		    : static_cast<int32_t>(spell->level);
 		int32_t divisor = 24;
-		int32_t manaDamage = damage;
+		int32_t manaDamage = adjustedDamage;
 		if (level > 0) {
 			divisor -= std::min(level, 7) * 3;
 			manaDamage += manaDamage / -divisor;

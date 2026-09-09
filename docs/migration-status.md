@@ -2,6 +2,11 @@
 
 Status date: 2026-09-09
 
+Initialized monster-hit replay now applies the target player's validated usable
+equipment `PlusGetHit` bonus in both runners. Generic primary and secondary
+monster attacks share a checkpoint that includes the adjusted incoming damage,
+with native reflection and mana-shield ordering preserved for primary targets.
+
 Initialized physical replay now applies usable equipment Knockback in both
 runners. A surviving, non-petrified target moves one valid unoccupied cell
 away from the attacker, with bounds, secondary-player, and object occupancy

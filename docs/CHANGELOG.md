@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added initialized GoatMelee replay coverage for authored usable-equipment
+  `PlusGetHit`, including a shared checkpoint with the secondary player at 95 life.
+- Compact native replay now applies validated usable-equipment `PlusGetHit` to
+  generic primary and secondary monster-hit damage before reflection and mana shield.
 - Added initialized physical replay coverage for usable equipment Knockback,
   including non-lethal target relocation and shared canonical checkpoints.
 - Compact native replay now applies validated equipment Knockback after melee
