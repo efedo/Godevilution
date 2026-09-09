@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native monster AI timers and counters now use the shared compatibility
+  bounds at managed mapper/host/Godot and native snapshot boundaries,
+  rejecting malformed state before presentation or persistence.
+
 - Native monster movement modes and turn-state fields now use shared `-1..3`
   and `0..1` compatibility bounds across managed/native snapshot validation,
   Diablo state restoration, replay loading, and protocol aliases.

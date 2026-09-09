@@ -1897,6 +1897,36 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	invalidGroupActiveTicks.mutable_monsters(0)->set_active_for_ticks(-1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidGroupActiveTicks).has_value());
 
+	const auto expectInvalidAiState = [&](const auto &setValue) {
+		protocol::Snapshot invalid = makeMonster();
+		setValue(invalid.mutable_monsters(0));
+		EXPECT_FALSE(ValidateMonsterSnapshots(invalid).has_value());
+	};
+	expectInvalidAiState([](auto *monster) { monster->set_fallen_fear_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_sneak_retreat_ticks(MaximumNativeMonsterShortTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_scavenger_healing_ticks(MaximumNativeMonsterShortTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_bat_retreat_ticks(MaximumNativeMonsterRetreatTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_bat_movement_idle_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_ranged_avoidance_move_ticks(MaximumNativeMonsterMovementTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_ranged_avoidance_movement_idle_ticks(-2); });
+	expectInvalidAiState([](auto *monster) { monster->set_rhino_movement_ticks(MaximumNativeMonsterMovementTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_avoidance_movement_ticks(-2); });
+	expectInvalidAiState([](auto *monster) { monster->set_avoidance_movement_idle_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_skeleton_melee_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_skeleton_ranged_movement_idle_ticks(-2); });
+	expectInvalidAiState([](auto *monster) { monster->set_fat_movement_idle_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_rhino_movement_idle_ticks(-2); });
+	expectInvalidAiState([](auto *monster) { monster->set_rhino_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_skeleton_king_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_hork_demon_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_ranged_avoidance_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_snake_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_counselor_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_avoidance_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_ranged_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_mega_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_counselor_retreat_ticks(MaximumNativeMonsterRetreatTicks + 1); });
+
 	protocol::Snapshot invalidBatMovementMode = makeMonster();
 	invalidBatMovementMode.mutable_monsters(0)->set_bat_movement_mode(MaximumNativeMonsterMovementMode + 1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidBatMovementMode).has_value());

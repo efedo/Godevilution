@@ -21,6 +21,11 @@ Native monster movement modes and turn-state fields now use shared `-1..3`
 and `0..1` compatibility bounds across managed/native snapshot validation,
 Diablo state restoration, replay loading, and protocol aliases.
 
+Native monster AI timers and counters now consume the existing shared timer,
+short-counter, retreat, and movement bounds at managed mapper/host/Godot and
+native snapshot boundaries, rejecting malformed state before presentation or
+persistence.
+
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
 and resistances now consume that same compatibility source across Diablo

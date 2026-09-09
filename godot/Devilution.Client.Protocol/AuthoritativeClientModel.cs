@@ -67,6 +67,10 @@ public sealed class AuthoritativeClientModel
     private const int MaximumNativeMonsterMovementMode = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementMode;
     private const int MinimumNativeMonsterMovementTurn = AuthoritativeProtocolLimits.MinimumNativeMonsterMovementTurn;
     private const int MaximumNativeMonsterMovementTurn = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTurn;
+    private const int MaximumNativeMonsterAiTimerTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks;
+    private const int MaximumNativeMonsterShortTimerTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterShortTimerTicks;
+    private const int MaximumNativeMonsterRetreatTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterRetreatTicks;
+    private const int MaximumNativeMonsterMovementTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks;
     private const int MaximumNativeMonsterFallenStandAnimationFrame = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
     private const int MaximumNativeMonsterFallenStandAnimationTick = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
     private const int MaximumNativeMonsterFallenRallyTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
@@ -1450,6 +1454,30 @@ public sealed class AuthoritativeClientModel
             || monster.SkeletonRangedMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
             || monster.FatMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
             || monster.RhinoMovementMode is < MinimumNativeMonsterMovementMode or > MaximumNativeMonsterMovementMode
+            || monster.FallenFearTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.SneakRetreatTicks is < 0 or > MaximumNativeMonsterShortTimerTicks
+            || monster.ScavengerHealingTicks is < 0 or > MaximumNativeMonsterShortTimerTicks
+            || monster.BatRetreatTicks is < 0 or > MaximumNativeMonsterRetreatTicks
+            || monster.BatMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || monster.RangedAvoidanceMoveTicks is < -1 or > MaximumNativeMonsterMovementTicks
+            || monster.RangedAvoidanceMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || monster.RhinoMovementTicks is < -1 or > MaximumNativeMonsterMovementTicks
+            || monster.AvoidanceMovementTicks is < -1 or > MaximumNativeMonsterMovementTicks
+            || monster.AvoidanceMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || monster.SkeletonMeleeDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.SkeletonRangedMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || monster.FatMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || monster.RhinoMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || monster.RhinoDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.SkeletonKingDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.HorkDemonDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.RangedAvoidanceDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.SnakeDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.CounselorDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.AvoidanceDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.RangedDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.MegaDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.CounselorRetreatTicks is < 0 or > MaximumNativeMonsterRetreatTicks
             || monster.FallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
             || monster.FallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
             || monster.FallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks

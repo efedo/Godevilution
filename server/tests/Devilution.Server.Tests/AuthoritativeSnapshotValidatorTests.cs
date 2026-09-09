@@ -1426,6 +1426,45 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsNativeMonsterAiTimersAndCountersOutsideSharedBounds()
+    {
+        var valid = new Snapshot {
+            Monsters = { new MonsterSnapshot { EntityId = 1 } },
+        };
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.FallenFearTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.SneakRetreatTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterShortTimerTicks + 1,
+            monster => monster.ScavengerHealingTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterShortTimerTicks + 1,
+            monster => monster.BatRetreatTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterRetreatTicks + 1,
+            monster => monster.BatMovementIdleTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.RangedAvoidanceMoveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks + 1,
+            monster => monster.RangedAvoidanceMovementIdleTicks = -2,
+            monster => monster.RhinoMovementTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks + 1,
+            monster => monster.AvoidanceMovementTicks = -2,
+            monster => monster.AvoidanceMovementIdleTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.SkeletonMeleeDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.SkeletonRangedMovementIdleTicks = -2,
+            monster => monster.FatMovementIdleTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.RhinoMovementIdleTicks = -2,
+            monster => monster.RhinoDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.SkeletonKingDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.HorkDemonDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.RangedAvoidanceDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.SnakeDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.CounselorDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.AvoidanceDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.RangedDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.MegaDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.CounselorRetreatTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterRetreatTicks + 1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(invalid));
+        }
+    }
+
+    [Fact]
     public void AcceptsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

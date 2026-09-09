@@ -1431,6 +1431,30 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		        || monster.fat_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.rhino_movement_mode() < MinimumNativeMonsterMovementMode
 		        || monster.rhino_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.fallen_fear_ticks() < 0 || monster.fallen_fear_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.sneak_retreat_ticks() < 0 || monster.sneak_retreat_ticks() > MaximumNativeMonsterShortTimerTicks
+		    || monster.scavenger_healing_ticks() < 0 || monster.scavenger_healing_ticks() > MaximumNativeMonsterShortTimerTicks
+		    || monster.bat_retreat_ticks() < 0 || monster.bat_retreat_ticks() > MaximumNativeMonsterRetreatTicks
+		    || monster.bat_movement_idle_ticks() < -1 || monster.bat_movement_idle_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.ranged_avoidance_move_ticks() < -1 || monster.ranged_avoidance_move_ticks() > MaximumNativeMonsterMovementTicks
+		    || monster.ranged_avoidance_movement_idle_ticks() < -1 || monster.ranged_avoidance_movement_idle_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.rhino_movement_ticks() < -1 || monster.rhino_movement_ticks() > MaximumNativeMonsterMovementTicks
+		    || monster.avoidance_movement_ticks() < -1 || monster.avoidance_movement_ticks() > MaximumNativeMonsterMovementTicks
+		    || monster.avoidance_movement_idle_ticks() < -1 || monster.avoidance_movement_idle_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.skeleton_melee_delay_ticks() < 0 || monster.skeleton_melee_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.skeleton_ranged_movement_idle_ticks() < -1 || monster.skeleton_ranged_movement_idle_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.fat_movement_idle_ticks() < -1 || monster.fat_movement_idle_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.rhino_movement_idle_ticks() < -1 || monster.rhino_movement_idle_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.rhino_delay_ticks() < 0 || monster.rhino_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.skeleton_king_delay_ticks() < 0 || monster.skeleton_king_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.hork_demon_delay_ticks() < 0 || monster.hork_demon_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.ranged_avoidance_delay_ticks() < 0 || monster.ranged_avoidance_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.snake_delay_ticks() < 0 || monster.snake_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.counselor_delay_ticks() < 0 || monster.counselor_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.avoidance_delay_ticks() < 0 || monster.avoidance_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.ranged_delay_ticks() < 0 || monster.ranged_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.mega_delay_ticks() < 0 || monster.mega_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || monster.counselor_retreat_ticks() < 0 || monster.counselor_retreat_ticks() > MaximumNativeMonsterRetreatTicks
 		    || (!monster.moving()
 		        && (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0))
 		    || (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0)
