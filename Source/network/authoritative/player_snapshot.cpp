@@ -1369,12 +1369,22 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 
 tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapshot &snapshot)
 {
+	std::unordered_map<uint32_t, const protocol::PlayerSnapshot *> playersById;
+	playersById.reserve(snapshot.players_size());
+	for (const auto &player : snapshot.players()) {
+		if (!playersById.emplace(player.entity_id(), &player).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate player entity IDs.");
+	}
 	std::unordered_map<uint32_t, const protocol::MonsterSnapshot *> monstersById;
 	monstersById.reserve(snapshot.monsters_size());
 	for (const auto &monster : snapshot.monsters()) {
 		const int64_t hitPointsQ6 = monster.hit_points_q6() == 0 && monster.hit_points() != 0
 		    ? static_cast<int64_t>(monster.hit_points()) * 64
 		    : monster.hit_points_q6();
+		const auto owner = playersById.find(monster.owner_player_id());
+		const bool playerMinionOwnerValid = !monster.is_player_minion()
+		    || monster.owner_player_id() == 0
+		    || owner != playersById.end() && owner->second->level_id() == monster.level_id();
 		if (monster.unique_identity().size() > MaximumIdentityBytes
 		    || (!monster.is_unique() && !monster.unique_identity().empty())
 		    || hitPointsQ6 < 0
@@ -1406,6 +1416,7 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.magic_resistance() < MinimumNativeMonsterResistance || monster.magic_resistance() > MaximumNativeMonsterResistance
 		    || monster.acid_resistance() < MinimumNativeMonsterResistance || monster.acid_resistance() > MaximumNativeMonsterResistance
 		    || (!monster.is_player_minion() && monster.owner_player_id() != 0)
+		    || !playerMinionOwnerValid
 		    || monster.dialogue_message_id() < 0
 		    || monster.dialogue_message_id() > std::numeric_limits<int16_t>::max()
 		    || (monster.dialogue_message_id() != 0 && !monster.is_unique())

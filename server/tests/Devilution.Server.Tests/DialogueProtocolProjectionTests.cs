@@ -152,6 +152,47 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RejectsPlayerMinionOwnersMissingFromTheProjectionOrOnAnotherLevel()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Monsters = [new DiabloMonsterState(
+                    9,
+                    2,
+                    17,
+                    1,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    6,
+                    0,
+                    0,
+                    0,
+                    0) {
+                    IsPlayerMinion = true,
+                    OwnerPlayerId = 1,
+                }],
+            };
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        Assert.True(Assert.Single(projected.Monsters).IsPlayerMinion);
+
+        source = source with {
+            Monsters = [source.Monsters[0] with { OwnerPlayerId = 2 }],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+
+        source = source with {
+            Monsters = [source.Monsters[0] with { OwnerPlayerId = 1 }],
+            Player = source.Player with { LevelId = 18 },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(source));
+    }
+
+    [Fact]
     public void RejectsUnknownNativeAiAndScavengerCorpseReferencesBeforeProjection()
     {
         var source = CreateOriginSnapshot(

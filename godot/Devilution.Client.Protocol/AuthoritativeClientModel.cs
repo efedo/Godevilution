@@ -231,6 +231,7 @@ public sealed class AuthoritativeClientModel
                 ValidateMonsterMovementState(monster);
             }
             ValidateMonsterGroupState(message.Snapshot.Monsters);
+            ValidatePlayerMinionOwners(message.Snapshot);
             foreach (var item in message.Snapshot.WorldItems) {
                 ValidateEntityId(entityIds, item.EntityId);
                 if (item.Price > int.MaxValue) {
@@ -1529,6 +1530,26 @@ public sealed class AuthoritativeClientModel
                 || corpse.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid Scavenger corpse reference.");
+            }
+        }
+    }
+
+    private static void ValidatePlayerMinionOwners(Snapshot snapshot)
+    {
+        var playersById = new Dictionary<uint, PlayerSnapshot>();
+        foreach (var player in snapshot.Players) {
+            if (!playersById.TryAdd(player.EntityId, player))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate player entity IDs.");
+        }
+
+        foreach (var monster in snapshot.Monsters) {
+            if (!monster.IsPlayerMinion || monster.OwnerPlayerId == 0)
+                continue;
+            if (!playersById.TryGetValue(monster.OwnerPlayerId, out var owner)
+                || owner.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid player-minion owner reference.");
             }
         }
     }

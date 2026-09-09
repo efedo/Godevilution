@@ -121,6 +121,7 @@ internal static class DiabloProtocolMapper
             throw new InvalidDataException(
                 $"Authoritative player state contains more than {NativeMaximumPlayerCount} "
                 + "players, exceeding the native player pool capacity.");
+        ValidateProjectedPlayerMinionOwners(source.Monsters, projectedParticipants);
         ValidateProjectedPlayerPositions(projectedParticipants, projectedLevels);
         ValidateProjectedMonsterPositions(source.Monsters, projectedLevels);
         ValidateProjectedMonsterStates(source.Monsters);
@@ -1216,6 +1217,28 @@ internal static class DiabloProtocolMapper
                 || corpse.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "Authoritative monster state contains an invalid Scavenger corpse reference.");
+            }
+        }
+    }
+
+    private static void ValidateProjectedPlayerMinionOwners(
+        IReadOnlyList<DiabloMonsterState> monsters,
+        IReadOnlyList<StorePlayerSnapshot> players)
+    {
+        var playersById = new Dictionary<uint, StorePlayerSnapshot>();
+        foreach (var player in players) {
+            if (!playersById.TryAdd(player.EntityId, player))
+                throw new InvalidDataException(
+                    "Authoritative player state contains duplicate entity IDs.");
+        }
+
+        foreach (var monster in monsters) {
+            if (!monster.IsPlayerMinion || monster.OwnerPlayerId == 0)
+                continue;
+            if (!playersById.TryGetValue(monster.OwnerPlayerId, out var owner)
+                || owner.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "Authoritative monster state contains an invalid player-minion owner reference.");
             }
         }
     }

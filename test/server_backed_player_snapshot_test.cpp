@@ -1873,6 +1873,20 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	invalidOwner.mutable_monsters(0)->set_owner_player_id(4);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidOwner).has_value());
 
+	protocol::Snapshot validMinionOwner = makeMonster();
+	validMinionOwner.mutable_monsters(0)->set_level_id(1);
+	validMinionOwner.mutable_monsters(0)->set_is_player_minion(true);
+	validMinionOwner.mutable_monsters(0)->set_owner_player_id(7);
+	validMinionOwner.add_players()->set_entity_id(7);
+	validMinionOwner.mutable_players(0)->set_level_id(1);
+	EXPECT_TRUE(ValidateMonsterSnapshots(validMinionOwner).has_value());
+	protocol::Snapshot missingMinionOwner = validMinionOwner;
+	missingMinionOwner.mutable_monsters(0)->set_owner_player_id(8);
+	EXPECT_FALSE(ValidateMonsterSnapshots(missingMinionOwner).has_value());
+	protocol::Snapshot wrongLevelMinionOwner = validMinionOwner;
+	wrongLevelMinionOwner.mutable_players(0)->set_level_id(2);
+	EXPECT_FALSE(ValidateMonsterSnapshots(wrongLevelMinionOwner).has_value());
+
 	protocol::Snapshot invalidDialogue = makeMonster();
 	invalidDialogue.mutable_monsters(0)->set_dialogue_message_id(1);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidDialogue).has_value());

@@ -35,6 +35,10 @@ Monster item and AI runtime seeds now validate as an all-or-nothing pair at the
 mapper, host, Godot, and native snapshot boundaries, preserving deterministic
 native initialization during the migration.
 
+Player-minion owner references now resolve to a present player on the same
+level at mapper, host, Godot, and native snapshot boundaries, rejecting stale
+or cross-level server-owned ownership before presentation or persistence.
+
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,
 and resistances now consume that same compatibility source across Diablo

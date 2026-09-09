@@ -2916,6 +2916,34 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsPlayerMinionOwnersMissingFromTheSnapshotOrOnAnotherLevel()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    LevelId = 1,
+                    IsPlayerMinion = true,
+                    OwnerPlayerId = 7,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        var missingOwner = valid.Clone();
+        missingOwner.Monsters[0].OwnerPlayerId = 8;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: missingOwner)));
+
+        var wrongLevel = valid.Clone();
+        wrongLevel.Players[0].LevelId = 2;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: wrongLevel)));
+    }
+
+    [Fact]
     public void RejectsMalformedAuthoritativeMonsterCombatState()
     {
         var model = new AuthoritativeClientModel();

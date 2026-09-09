@@ -114,6 +114,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateEntityPositions(snapshot);
         ValidatePlayerActions(snapshot);
         ValidateMonsters(snapshot);
+        ValidatePlayerMinionOwners(snapshot);
         ValidateScavengerCorpseReferences(snapshot);
         ValidateMonsterMovementState(snapshot);
         ValidateWorldItems(snapshot);
@@ -1292,6 +1293,26 @@ public static class AuthoritativeSnapshotValidator
                 || corpse.LevelId != monster.LevelId) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid Scavenger corpse reference.");
+            }
+        }
+    }
+
+    private static void ValidatePlayerMinionOwners(Snapshot snapshot)
+    {
+        var playersById = new Dictionary<uint, PlayerSnapshot>();
+        foreach (var player in snapshot.Players) {
+            if (!playersById.TryAdd(player.EntityId, player))
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains duplicate player entity IDs.");
+        }
+
+        foreach (var monster in snapshot.Monsters) {
+            if (!monster.IsPlayerMinion || monster.OwnerPlayerId == 0)
+                continue;
+            if (!playersById.TryGetValue(monster.OwnerPlayerId, out var owner)
+                || owner.LevelId != monster.LevelId) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid player-minion owner reference.");
             }
         }
     }

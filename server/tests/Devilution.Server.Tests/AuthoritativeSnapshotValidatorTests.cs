@@ -1508,6 +1508,33 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RejectsPlayerMinionOwnersMissingFromTheSnapshotOrOnAnotherLevel()
+    {
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    IsPlayerMinion = true,
+                    OwnerPlayerId = 7,
+                },
+            },
+        };
+        AuthoritativeSnapshotValidator.Validate(valid);
+
+        var missingOwner = valid.Clone();
+        missingOwner.Monsters[0].OwnerPlayerId = 8;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(missingOwner));
+
+        var wrongLevel = valid.Clone();
+        wrongLevel.Players[0].LevelId = 2;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(wrongLevel));
+    }
+
+    [Fact]
     public void AcceptsMaterializedSetLevelPlayerIdentityWithoutRegularVisitedFlag()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {
