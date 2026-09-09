@@ -595,6 +595,18 @@ TEST(ReplayFixture, ExecutesSorcererPhysicalDamageAgainstCSharpCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-sorcerer.json", 2, 15, 35, 20, 95);
 }
 
+TEST(ReplayFixture, ExecutesPhysicalDamageAgainstArmorCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-armor.json", 0, 30, 20, 25, 99);
+}
+
+TEST(ReplayFixture, ExecutesPhysicalMissAgainstArmorCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-miss.json", 2, 15, 35, 20, 100);
+}
+
 TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-arrows.json");

@@ -65,6 +65,9 @@ matrix with standard, staff, sword, and axe profiles; the critical-strike
 classes also preserve their class RNG draw. Omitting the new fields keeps
 legacy compact fixtures on their compatibility fallback; class-damage fixtures
 must author all three physical attributes explicitly.
+The armor and miss companions exercise the initialized class to-hit formula,
+native 5..95 chance clamp, deterministic hit seed, and minimum post-armor
+damage without changing the compact fallback.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

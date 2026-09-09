@@ -42,6 +42,8 @@ All notable changes to this fork are documented below.
 - The class-damage replay matrix now also covers explicit Warrior and Sorcerer
   profiles; class-0 authored attributes use the native formula while omitted
   attributes retain the legacy compact fallback.
+- Initialized physical replay now cross-checks class to-hit, deterministic hit
+  seeds, armor reduction, minimum damage, and an authored miss against C#.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

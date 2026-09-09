@@ -5286,7 +5286,7 @@ void AdvanceReplaySnakeChargesOneTick(
 bool ApplyReplayAttack(
     ReplayFixtureExecutionState &state,
     uint32_t targetEntityId,
-    uint64_t,
+    uint64_t tick,
     bool ranged = false,
     bool consumeRandom = false)
 {
@@ -5380,13 +5380,25 @@ bool ApplyReplayAttack(
 		        : strengthModifier / 100;
 		const int32_t rolledBaseDamage = minimumDamage
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
+		const int32_t baseMeleeToHit = state.characterClassId == 0 ? 70 : 50;
+		const int32_t hitChance = std::clamp(
+		    level + dexterity / 2 + baseMeleeToHit - std::max(0, state.combatTargetArmorClass),
+		    5,
+		    95);
+		const uint32_t hitSeed = static_cast<uint32_t>(tick)
+		    ^ targetEntityId
+		    ^ state.entityId;
+		const bool attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
 		int32_t damageBeforeArmor = rolledBaseDamage + damageModifier;
 		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
 		// after the class damage profile and double damage before armor reduction.
-		if ((state.characterClassId == 0 || state.characterClassId == 5)
+		if (attackHit
+		    && (state.characterClassId == 0 || state.characterClassId == 5)
 		    && GenerateRnd(state, 100) < std::min(100, level))
 			damageBeforeArmor *= 2;
-		damage = std::max(1, damageBeforeArmor - std::max(0, state.combatTargetArmorClass));
+		damage = attackHit
+		    ? std::max(1, damageBeforeArmor - std::max(0, state.combatTargetArmorClass))
+		    : 0;
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
 	}

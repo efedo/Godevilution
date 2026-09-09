@@ -96,7 +96,8 @@ standard formula, while Monk, Rogue, Bard, and Barbarian cover their class
 profiles; both critical-strike classes preserve their class RNG draw. Legacy
 compact attack fixtures retain their armor-only fallback until they author the
 full class-attribute contract. Remaining weapon and hit-resolution edge cases
-are still follow-up native-parity work.
+such as armor piercing and difficulty-specific target modifiers are still
+follow-up native-parity work.
 
 The 1 MiB authoritative envelope cap is now a named shared protocol limit
 consumed by the managed server, Godot client, and native compatibility codec.
