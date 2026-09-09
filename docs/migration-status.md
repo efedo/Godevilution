@@ -55,6 +55,9 @@ entity identity path.
 Cast source references now use the same native slot/page bounds as command
 admission, and charged/consumable source kinds cannot cross the action boundary
 without an item reference; zero stable IDs remain compatible with legacy state.
+Timed action snapshots also keep the legacy action-level target coordinates clear
+for entity attacks, casts, movement, and terminal transitions; only explicit
+cell-targeted attacks carry coordinates in that channel.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,

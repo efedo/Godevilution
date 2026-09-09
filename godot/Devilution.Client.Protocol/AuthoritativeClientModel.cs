@@ -470,6 +470,8 @@ public sealed class AuthoritativeClientModel
                 && action.DirectionY is >= MinimumNativeDirection and <= MaximumNativeDirection
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.Cast is null
                 && IsProjectedMoveWalkable(snapshot, player, action),
@@ -481,12 +483,16 @@ public sealed class AuthoritativeClientModel
                 && (action.TargetCell
                     ? action.TargetEntityId == 0
                         && IsProjectedActionTarget(snapshot, player, action)
-                    : action.TargetEntityId != 0)
+                    : action.TargetEntityId != 0
+                        && action.TargetX == 0
+                        && action.TargetY == 0)
                 && action.Cast is null,
             PlayerActionKind.Cast =>
                 player.CombatMode == PlayerCombatMode.Spell
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.Cast is not null
                 && action.Cast.SpellId != 0
@@ -504,6 +510,8 @@ public sealed class AuthoritativeClientModel
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.Cast is null,
             PlayerActionKind.LevelTransition =>
@@ -514,6 +522,8 @@ public sealed class AuthoritativeClientModel
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.TargetEntityId != 0
                 && action.Cast is null,
@@ -525,6 +535,8 @@ public sealed class AuthoritativeClientModel
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.TargetEntityId == 0
                 && action.Cast is null,

@@ -840,6 +840,22 @@ public sealed class DialogueProtocolProjectionTests
                     },
                 },
                 levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                source with {
+                    Player = player with {
+                        CurrentAction = new AuthoritativePlayerActionState(
+                            DiabloPlayerActionKind.Attack,
+                            1,
+                            2,
+                            3,
+                            5) {
+                            TargetEntityId = 2,
+                            TargetX = 1,
+                        },
+                    },
+                }));
     }
 
     [Fact]

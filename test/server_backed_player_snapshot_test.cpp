@@ -1893,6 +1893,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	action->mutable_cast()->mutable_source_item()->set_location(protocol::PLAYER_ITEM_LOCATION_INVENTORY);
 	action->mutable_cast()->mutable_source_item()->set_slot(NativeMaximumInventoryCount);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(tileCastInvalidSourceSlot).has_value());
+	protocol::Snapshot invalidEntityAttackCoordinates;
+	player = invalidEntityAttackCoordinates.add_players();
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_ATTACK);
+	player->set_combat_mode_end_tick(4);
+	action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_ATTACK);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(2);
+	action->set_ready_tick(3);
+	action->set_end_tick(4);
+	action->set_target_entity_id(9);
+	action->set_target_x(1);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidEntityAttackCoordinates).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)

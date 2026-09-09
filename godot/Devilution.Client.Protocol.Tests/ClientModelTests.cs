@@ -761,6 +761,33 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsEntityAttackWithActionLevelTargetCoordinates()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    CombatMode = PlayerCombatMode.Attack,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Attack,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        TargetEntityId = 9,
+                        TargetX = 1,
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsPortalEndpointsOutsideProjectedLevelGeometry()
     {
         var model = new AuthoritativeClientModel();

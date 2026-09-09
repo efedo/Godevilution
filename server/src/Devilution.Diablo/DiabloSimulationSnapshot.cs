@@ -2760,6 +2760,8 @@ public sealed partial class DiabloSimulation
                 && action.DirectionY is >= -1 and <= 1
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is null
                 && WorldState.IsWalkable(
@@ -2777,12 +2779,16 @@ public sealed partial class DiabloSimulation
                             source.LevelId,
                             action.TargetX,
                             action.TargetY)
-                    : action.TargetEntityId != 0)
+                    : action.TargetEntityId != 0
+                        && action.TargetX == 0
+                        && action.TargetY == 0)
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Cast =>
                 source.CombatMode == DiabloPlayerCombatMode.Spell
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is not null
                 && action.CastIntent.SpellId != 0
@@ -2800,6 +2806,8 @@ public sealed partial class DiabloSimulation
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is null,
             DiabloPlayerActionKind.LevelTransition =>
@@ -2810,6 +2818,8 @@ public sealed partial class DiabloSimulation
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.TargetEntityId != 0
                 && action.CastIntent is null,
@@ -2821,6 +2831,8 @@ public sealed partial class DiabloSimulation
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.TargetEntityId == 0
                 && action.CastIntent is null,

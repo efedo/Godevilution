@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
   snapshot validation.
 - Cast source references now enforce native inventory, belt, equipment, and stash
   slot/page bounds and require item-backed source kinds to carry a reference.
+- Timed action snapshots now reject stale action-level target coordinates except
+  for explicit cell-targeted attacks, keeping attack and cast target channels
+  distinct across managed and native boundaries.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

@@ -4222,6 +4222,16 @@ public sealed class DiabloSimulationTests
         };
         Assert.Throws<InvalidDataException>(() =>
             replacement.RestoreSnapshot(destination, invalidSource));
+
+        var invalidActionCoordinates = snapshot with {
+            Player = snapshot.Player with {
+                CurrentAction = snapshot.Player.CurrentAction! with {
+                    TargetX = 1,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            replacement.RestoreSnapshot(destination, invalidActionCoordinates));
     }
 
     [Fact]

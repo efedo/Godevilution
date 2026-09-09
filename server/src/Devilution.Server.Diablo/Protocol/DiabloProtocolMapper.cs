@@ -1726,6 +1726,8 @@ internal static class DiabloProtocolMapper
                 && action.DirectionY is >= MinimumNativeDirection and <= MaximumNativeDirection
                 && (action.DirectionX != 0 || action.DirectionY != 0)
                 && action.TargetEntityId == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Attack =>
@@ -1736,12 +1738,16 @@ internal static class DiabloProtocolMapper
                 && (action.TargetCell
                     ? action.TargetEntityId == 0
                         && IsProjectedActionTarget(state.LevelId, action.TargetX, action.TargetY, levels)
-                    : action.TargetEntityId != 0)
+                    : action.TargetEntityId != 0
+                        && action.TargetX == 0
+                        && action.TargetY == 0)
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Cast =>
                 state.CombatMode == DiabloPlayerCombatMode.Spell
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is not null
                 && action.CastIntent.SpellId != 0
@@ -1759,6 +1765,8 @@ internal static class DiabloProtocolMapper
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is null,
             DiabloPlayerActionKind.LevelTransition =>
@@ -1769,6 +1777,8 @@ internal static class DiabloProtocolMapper
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.TargetEntityId != 0
                 && action.CastIntent is null,
@@ -1780,6 +1790,8 @@ internal static class DiabloProtocolMapper
                 && action.ReadyTick == action.EndTick
                 && action.DirectionX == 0
                 && action.DirectionY == 0
+                && action.TargetX == 0
+                && action.TargetY == 0
                 && !action.TargetCell
                 && action.TargetEntityId == 0
                 && action.CastIntent is null,

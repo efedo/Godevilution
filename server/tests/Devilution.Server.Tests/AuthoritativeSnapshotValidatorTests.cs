@@ -503,12 +503,31 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var invalidEntityAttackCoordinates = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CombatMode = PlayerCombatMode.Attack,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Attack,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        TargetEntityId = 2,
+                        TargetX = 1,
+                    },
+                },
+            },
+        };
 
         foreach (var snapshot in new[] {
             invalidTiming,
             blockedMovement,
             invalidCastSource,
             invalidCastSourceReference,
+            invalidEntityAttackCoordinates,
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
