@@ -49,7 +49,10 @@ Gameplay initial state may declare `ability_spell_id` and a unique
 runners use that ownership state when admitting casts, and include nonempty
 spell knowledge in the same tagged canonical-hash extension used by snapshots.
 An optional `equipment` array carries protocol-shaped slot, item seed, native
-item index, type/class, value, identified value, flags, and usability state.
+item index, type/class, optional native `equip_location` (where `2` denotes a
+two-handed item), value, identified value, flags, and usability state. Both
+loaders preserve this classification so FlexibleBlock decisions remain
+identical across one-handed and two-handed equipment.
 Elemental replay cases may also carry `identified`, `magical`,
 `min_damage`, `max_damage`, `fire_min_damage`, `fire_max_damage`, `lightning_min_damage`, and
 `lightning_max_damage`; initialized physical cases may additionally carry

@@ -924,12 +924,14 @@ public static class ReplayFixtureLoader
                 LightningMaxDamage = GetOptionalInt(item, "lightning_max_damage"),
                 HellfireDamageArmorFlags = GetOptionalInt(item, "hellfire_damage_armor_flags"),
                 StableItemId = GetOptionalUInt(item, "stable_item_id"),
+                EquipLocation = GetOptionalInt(item, "equip_location"),
             })
             .ToArray();
         if (result.Any(item => item.Slot >= (uint)NativeMaximumEquipmentCount
                 || item.ItemSeed == 0
                 || item.ItemType is < 0 or > byte.MaxValue
                 || item.ItemClass is < 0 or > 3
+                || item.EquipLocation is < 0 or > 7
                 || item.MinDamage < 0
                 || item.MaxDamage < item.MinDamage
                 || item.PlusDamage is < short.MinValue or > short.MaxValue

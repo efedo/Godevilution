@@ -8195,6 +8195,12 @@ chance table instead of treating non-Monk classes as zero. A low-Dexterity
 Warrior MonsterMagic fixture exercises the 30-percent base chance and shares
 its block checkpoint with the managed class catalog.
 
+Managed MonsterMagic replay setup now retains the authored mana maximum, Mana
+Shield state, memorized spells, spell catalog, and equipment equip-location.
+The in-process xUnit runner executes the complete MonsterMagic fixture family
+against the same native checkpoints; the legacy VSTest testhost path remains
+an optional wrapper rather than the only managed verification route.
+
 The same class-aware block boundary now applies to unarmed Hellfire Monk
 secondary participants, while retaining the explicit legacy block-capable
 secondary path used by existing shield fixtures.

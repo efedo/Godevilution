@@ -53,7 +53,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "8a22c95a39fa0a65905e228a6c6e56c0d1f8ba4fe6250f6a890cf60c40516fc7" },
-    { "tick": 27, "state_sha256": "8660a316bfe8735990450e27d41e201abbae7631a27dcb2cbfddb0e371484f96" }
+    { "tick": 1, "state_sha256": "869ce95230c5121fa423d7fecaf2f8710bd54c62e5a4653bd7a9cf337c6b55ec" },
+    { "tick": 27, "state_sha256": "b10f7994a0fe41bb3d70fddcc6f367afd662a0ea4405eef8c1821de1aca603e6" }
   ]
 }

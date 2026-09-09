@@ -25,6 +25,10 @@ All notable changes to this fork are documented below.
 - Aligned compact native replay block chances with every validated class
   profile (Warrior, Rogue, Sorcerer, Monk, Bard, and Barbarian), with a
   low-Dexterity Warrior fixture proving the non-Monk base chance path.
+- Corrected managed MonsterMagic replay setup to retain authored mana maxima,
+  Mana Shield state, memorized spells, spell content, and equipment
+  `equip_location`; the in-process xUnit runner now verifies the full
+  MonsterMagic fixture family against native checkpoints.
 - Extended Hellfire Monk MonsterMagic FlexibleBlock coverage to an unarmed
   secondary participant in multiplayer, including class base block chance.
 - Added Hellfire Monk Hork Spawn coverage proving the shared class-aware block

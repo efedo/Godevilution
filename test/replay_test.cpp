@@ -10118,6 +10118,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicPrimaryShieldAgainstCSharpCheckpoint
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.mana = fixture.initialState.mana;
 	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
 	state.positionX = fixture.initialState.positionX;
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
@@ -10316,6 +10317,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicPrimaryBlockAgainstCSharpCheckpoints
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.mana = fixture.initialState.mana;
 	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
 	state.positionX = fixture.initialState.positionX;
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
@@ -10366,6 +10368,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicPrimaryMonkBlockAgainstCSharpCheckpo
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.mana = fixture.initialState.mana;
 	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
 	state.positionX = fixture.initialState.positionX;
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
@@ -10417,6 +10420,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicPrimaryMonkOneHandedBlockAgainstCSha
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.mana = fixture.initialState.mana;
 	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
 	state.positionX = fixture.initialState.positionX;
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;
@@ -10468,6 +10472,7 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicPrimaryMonkTwoHandedNoBlockAgainstCS
 	state.lifeMaximum = fixture.initialState.lifeMaximum;
 	state.mana = fixture.initialState.mana;
 	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
 	state.positionX = fixture.initialState.positionX;
 	state.positionY = fixture.initialState.positionY;
 	state.levelId = fixture.initialState.levelId;

@@ -8469,8 +8469,8 @@ public sealed class ReplayFixtureTests
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(6144, player.Life);
         Assert.Equal(6000, player.Mana);
-        Assert.Equal(PlayerCombatMode.Stand, player.CombatMode);
-        Assert.Equal(0UL, player.CombatModeEndTick);
+        Assert.Equal(PlayerCombatMode.GotHit, player.CombatMode);
+        Assert.Equal(33UL, player.CombatModeEndTick);
         Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
         Assert.Equal(27UL, result.FinalSnapshot.Tick);
         Assert.Equal(
@@ -9497,6 +9497,9 @@ public sealed class ReplayFixtureTests
         var classes = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
             File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "spells.tsv")));
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -9516,6 +9519,12 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
+            startingManaMaximum: initial.ManaMaximum > 0 ? initial.ManaMaximum : initial.Mana,
+            startingManaShieldActive: initial.ManaShieldActive,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingSpells: spells,
             startingCharacterClassId: checked((uint)initial.CharacterClass),
             startingPlayerClasses: classes,
             startingEquipment: initial.Equipment

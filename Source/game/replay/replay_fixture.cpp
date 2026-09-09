@@ -11793,6 +11793,8 @@ private:
 			    || item.itemType > std::numeric_limits<uint8_t>::max()
 			    || item.itemClass < 0
 			    || item.itemClass > 3
+			    || item.equipLocation < 0
+			    || item.equipLocation > 7
 			    || item.minDamage < 0
 			    || item.maxDamage < item.minDamage
 			    || item.plusDamage < std::numeric_limits<int16_t>::min()
