@@ -76,6 +76,8 @@ All notable changes to this fork are documented below.
   both runners.
 - Hellfire ranged replay now carries `Peril` self-damage and its post-armor
   multiplier into projectile snapshots in both runners.
+- Ranged Hellfire replay now applies deferred `Peril` self-damage at arrow
+  impact and checks the shared target/removal checkpoint.
 - Hellfire ranged replay now carries the deterministic `Doppelganger` proc
   flag into projectile snapshots in both runners.
 

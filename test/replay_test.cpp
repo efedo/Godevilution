@@ -813,6 +813,27 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ASSERT_EQ(doppelgangerState.projectiles.size(), 1U);
 	EXPECT_TRUE(doppelgangerState.projectiles[0].doppelgangerProc);
 	EXPECT_EQ(doppelgangerResult.transitions[0].stateSha256, doppelgangerFixture.checkpoints.back().stateSha256);
+
+	std::ifstream perilImpactFile("test/fixtures/replay/gameplay-ranged-hellfire-peril-impact.json");
+	ASSERT_TRUE(perilImpactFile.good());
+	const std::string perilImpactJson((std::istreambuf_iterator<char>(perilImpactFile)), std::istreambuf_iterator<char>());
+	ReplayFixture perilImpactFixture;
+	ASSERT_TRUE(ParseReplayFixture(perilImpactJson, perilImpactFixture, error)) << error;
+	ReplayFixtureExecutionState perilImpactState;
+	perilImpactState.life = perilImpactFixture.initialState.life;
+	perilImpactState.lifeMaximum = perilImpactFixture.initialState.life;
+	perilImpactState.mana = perilImpactFixture.initialState.mana;
+	perilImpactState.manaMaximum = perilImpactFixture.initialState.manaMaximum;
+	perilImpactState.positionX = perilImpactFixture.initialState.positionX;
+	perilImpactState.positionY = perilImpactFixture.initialState.positionY;
+	ReplayFixtureExecutionResult perilImpactResult;
+	ASSERT_TRUE(ExecuteReplayFixture(perilImpactFixture, perilImpactState, perilImpactResult, error)) << error;
+	ASSERT_EQ(perilImpactResult.transitions.size(), 1U);
+	EXPECT_EQ(perilImpactState.life, 936);
+	EXPECT_EQ(perilImpactState.combatTargetHitPoints, 98);
+	EXPECT_TRUE(perilImpactState.projectiles.empty());
+	EXPECT_EQ(perilImpactResult.transitions[0].stateSha256, perilImpactFixture.checkpoints[0].stateSha256);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(perilImpactState), perilImpactFixture.checkpoints[1].stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

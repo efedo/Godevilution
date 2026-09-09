@@ -3662,6 +3662,8 @@ void ApplyReplayWeaponArrowImpact(
 	        && state.combatTargetLevelId != 0))
 		return;
 
+	if (projectile.perilSelfDamageQ6 > 0)
+		state.life = std::max(0, state.life - projectile.perilSelfDamageQ6);
 	const int32_t damageQ6 = projectile.damageQ6 != 0
 	    ? projectile.damageQ6
 	    : projectile.damage * 64;

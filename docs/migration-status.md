@@ -184,6 +184,8 @@ Ranged Hellfire replay now also applies the validated post-hit `Devastation`
 multiplier before projectile snapshotting.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
 and post-armor multiplier into the projectile snapshot.
+The ranged `Peril` impact replay now applies that deferred self-damage at the
+native arrow collision tick and preserves the shared target/removal checkpoint.
 Ranged Hellfire replay now carries the validated `Doppelganger` proc flag into
 the projectile snapshot.
 
