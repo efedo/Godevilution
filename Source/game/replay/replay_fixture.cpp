@@ -9368,12 +9368,17 @@ void AdvanceReplayMonsterAttack(
 		    100);
 		if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
 			return;
+		const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
+		    || IsReplaySecondaryPlayerBlockCapable(state);
 		const bool canBlock = victim.secondary
-		    && state.secondaryPlayerBlockCapable
+		    && secondaryPlayerBlockCapable
 		    && (state.secondaryPlayerCombatMode == 0
 		        || state.secondaryPlayerCombatMode == 4);
 		const int32_t blockChance = std::clamp(
 		    (victim.secondary ? state.secondaryPlayerDexterity : 0)
+		        + (victim.secondary
+		            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+		            : 0)
 		        + 2 * targetLevel
 		        - 2 * state.combatTargetMonsterLevel,
 		    0,

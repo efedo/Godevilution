@@ -4780,6 +4780,66 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySecondaryMonsterMonkBlocksWithoutEquipment()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-monster-monk-block.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            aggroRange: initial.CombatTargetAggroRange,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            toHit: initial.CombatTargetToHit,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingPlayerClasses: classes,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(100, secondary.Life);
+        Assert.Equal(PlayerCombatMode.Block, secondary.CombatMode);
+        Assert.Equal(5UL, secondary.CombatModeEndTick);
+        Assert.Equal(1788971303U, monster.MonsterAiSeed);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayGargoyleMultiplayerTargetSelectionMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-gargoyle-multiplayer-target.json");

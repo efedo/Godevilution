@@ -1,0 +1,64 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/multiplayer-secondary-monster-monk-block",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "multiplayer-secondary-monster-native-ai-seed-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "mana": 0,
+    "mana_maximum": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 2,
+      "position_y": 2,
+      "level_id": 1,
+      "character_level": 1,
+      "character_class": 3,
+      "dexterity": 80,
+      "block_capable": false
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 1,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1,
+    "combat_target_aggro_range": 3,
+    "combat_target_attack_damage": 3,
+    "combat_target_to_hit": 255,
+    "combat_target_min_damage": 3,
+    "combat_target_max_damage": 3,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 305419896
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "61683378f2bd1ac3099991c1c326b37dbeb053b99d95b22bfdc89992b7934578" }
+  ]
+}

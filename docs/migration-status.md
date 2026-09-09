@@ -8196,6 +8196,10 @@ FlexibleBlock/base-chance boundary across Bone Spirit, Charged Bolt, and
 Fireball player impacts; the Hellfire Monk Bone Spirit fixture covers the
 unarmed branch and its variant RNG consumption.
 
+Seeded native MonsterMelee impacts now use the same secondary-player
+FlexibleBlock/base-chance boundary, with an unarmed Hellfire Monk fixture
+covering class admission while preserving the monster AI seed transition.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

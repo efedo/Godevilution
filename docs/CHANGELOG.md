@@ -24,6 +24,8 @@ All notable changes to this fork are documented below.
 - Extended secondary-player FlexibleBlock/base-chance handling to Bone Spirit,
   Charged Bolt, and Fireball replay impacts, with Hellfire Monk Bone Spirit
   coverage preserving life and variant RNG parity.
+- Added Hellfire Monk secondary-participant MonsterMelee coverage, applying the
+  same class-aware block admission and preserving the native AI seed stream.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance
   are applied before Mana Shield absorption in both runners.
 - Added persistent Acid puddle impact coverage proving active-tick player
