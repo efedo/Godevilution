@@ -1,0 +1,67 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-magic-primary-resistance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-magic",
+    "version": "0.1.0",
+    "sha256": "b6787fdcf7701f3e4fe77f79a87e1b84024f86da2330d1559f6b7335a104ba4b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "mana": 6000,
+    "mana_maximum": 6000,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "mana_shield_active": true,
+    "memorized_spells": [
+      { "spell_id": 11, "level": 1 }
+    ],
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 2002,
+        "item_type": 1,
+        "item_class": 1,
+        "flags": 0,
+        "stat_flag": true,
+        "plus_get_hit": 2,
+        "plus_magic_resistance": 50
+      }
+    ],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Lich",
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "b2dbc62ae76e3bf4269cea00c4c895bc0b6a9ea3cd35ced631265ff4357b852b" },
+    { "tick": 27, "state_sha256": "ab3fa8a28ebe86b5e5e02d30d0b622944367e9d6baf12197e23bbbbbea5cd178" }
+  ]
+}

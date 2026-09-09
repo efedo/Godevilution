@@ -914,6 +914,9 @@ public static class ReplayFixtureLoader
                 PlusToHit = GetOptionalInt(item, "plus_to_hit"),
                 PlusDamageModifier = GetOptionalInt(item, "plus_damage_modifier"),
                 PlusGetHit = GetOptionalInt(item, "plus_get_hit"),
+                PlusFireResistance = GetOptionalInt(item, "plus_fire_resistance"),
+                PlusLightningResistance = GetOptionalInt(item, "plus_lightning_resistance"),
+                PlusMagicResistance = GetOptionalInt(item, "plus_magic_resistance"),
                 PlusEnemyArmorClass = GetOptionalInt(item, "plus_enemy_armor_class"),
                 FireMinDamage = GetOptionalInt(item, "fire_min_damage"),
                 FireMaxDamage = GetOptionalInt(item, "fire_max_damage"),
@@ -933,6 +936,9 @@ public static class ReplayFixtureLoader
                 || item.PlusToHit is < short.MinValue or > short.MaxValue
                 || item.PlusDamageModifier is < short.MinValue or > short.MaxValue
                 || item.PlusGetHit is < short.MinValue or > short.MaxValue
+                || item.PlusFireResistance is < short.MinValue or > short.MaxValue
+                || item.PlusLightningResistance is < short.MinValue or > short.MaxValue
+                || item.PlusMagicResistance is < short.MinValue or > short.MaxValue
                 || item.PlusEnemyArmorClass is < short.MinValue or > short.MaxValue
                 || item.FireMinDamage < 0
                 || item.FireMaxDamage < item.FireMinDamage

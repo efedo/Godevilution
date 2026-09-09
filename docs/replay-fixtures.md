@@ -1162,6 +1162,9 @@ Notable shared fixtures include:
   MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
 - `gameplay-monster-magic-primary-shield.json` for primary-player MonsterMagic
   impact GetHit adjustment, Mana Shield absorption, and shared Q6 checkpoints;
+- `gameplay-monster-magic-primary-resistance.json` for primary-player
+  MonsterMagic equipment resistance before Mana Shield absorption and shared
+  Q6 checkpoints;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
   preserves player life, projectile travel, and failed-collision identity;
 - `gameplay-monster-magic-secondary-impact.json` for secondary-participant

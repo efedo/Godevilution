@@ -97,6 +97,9 @@ constexpr int32_t SnakeChargeBehavior = 54;
 constexpr int32_t AcidBehavior = 51;
 constexpr int32_t AcidSplatBehavior = 52;
 constexpr int32_t AcidPuddleBehavior = 53;
+constexpr int32_t FireDamageType = 1;
+constexpr int32_t LightningDamageType = 2;
+constexpr int32_t MagicDamageType = 3;
 constexpr int32_t AcidDamageType = 4;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
 	{ 6, 0 }, { 5, 0 }, { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 },
@@ -3558,6 +3561,34 @@ int32_t ApplyReplayGetHitBonus(
 	return ApplyReplayGetHitBonus(
 	    secondary ? state.secondaryEquipment : state.equipment,
 	    damage);
+}
+
+int32_t ResolveReplayEquipmentResistance(
+	const std::vector<ReplayFixtureSlottedItem> &equipment,
+	int32_t damageType)
+{
+	int32_t resistance = 0;
+	bool zeroResistance = false;
+	for (const auto &item : equipment) {
+		if (!IsReplayEquipmentUsable(item.state))
+			continue;
+		switch (damageType) {
+		case FireDamageType:
+			resistance += item.state.plusFireResistance;
+			break;
+		case LightningDamageType:
+			resistance += item.state.plusLightningResistance;
+			break;
+		case MagicDamageType:
+		case AcidDamageType:
+			resistance += item.state.plusMagicResistance;
+			break;
+		default:
+			break;
+		}
+		zeroResistance |= (item.state.flags & (1U << 31)) != 0;
+	}
+	return zeroResistance ? 0 : std::clamp(resistance, 0, 75);
 }
 
 void ApplyReplayEquipmentAttackEffects(
@@ -9474,11 +9505,16 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				state.secondaryPlayerCombatMode = 6;
 				state.secondaryPlayerCombatModeEndTick = tick + 4;
 			} else if (primaryPlayerAtTile) {
-				const int32_t damageQ6 = ApplyReplayGetHitBonus(
+				int32_t damageQ6 = ApplyReplayGetHitBonus(
 				    state,
 				    std::max(1, projectile.damage),
 				    false)
 				    * 64;
+				const int32_t resistance = ResolveReplayEquipmentResistance(
+				    state.equipment,
+				    projectile.damageType);
+				if (resistance > 0)
+					damageQ6 -= damageQ6 * resistance / 100;
 				int32_t lifeDamageQ6 = damageQ6;
 				const bool hasNoManaItem = std::any_of(
 				    state.equipment.begin(),
@@ -9518,20 +9554,27 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				}
 				state.life = std::max(0, state.life - lifeDamageQ6);
 				if (state.life > 0
+				    && resistance == 0
 				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
 					state.combatMode = 7;
 					state.combatModeEndTick = tick + 6;
 				}
 			} else {
-				const int32_t damageQ6 = ApplyReplayGetHitBonus(
+				int32_t damageQ6 = ApplyReplayGetHitBonus(
 				    state,
 				    std::max(1, projectile.damage),
 				    true)
 				    * 64;
+				const int32_t resistance = ResolveReplayEquipmentResistance(
+				    state.secondaryEquipment,
+				    projectile.damageType);
+				if (resistance > 0)
+					damageQ6 -= damageQ6 * resistance / 100;
 				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
 				if (state.secondaryPlayerLife == 0)
 					StartReplaySecondaryPlayerDeath(state, true);
 				else if (state.secondaryPlayerLife > 0
+				    && resistance == 0
 				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
 					state.secondaryPlayerCombatMode = 7;
 					state.secondaryPlayerCombatModeEndTick = tick + 6;
@@ -11499,6 +11542,12 @@ private:
 					    return ParseSigned(item.plusDamageModifier);
 				    if (key == "plus_get_hit")
 					    return ParseSigned(item.plusGetHit);
+				    if (key == "plus_fire_resistance")
+					    return ParseSigned(item.plusFireResistance);
+				    if (key == "plus_lightning_resistance")
+					    return ParseSigned(item.plusLightningResistance);
+				    if (key == "plus_magic_resistance")
+					    return ParseSigned(item.plusMagicResistance);
 				    if (key == "plus_enemy_armor_class")
 					    return ParseSigned(item.plusEnemyArmorClass);
 				    if (key == "fire_min_damage")
@@ -11532,6 +11581,12 @@ private:
 			    || item.plusDamageModifier > std::numeric_limits<int16_t>::max()
 			    || item.plusGetHit < std::numeric_limits<int16_t>::min()
 			    || item.plusGetHit > std::numeric_limits<int16_t>::max()
+			    || item.plusFireResistance < std::numeric_limits<int16_t>::min()
+			    || item.plusFireResistance > std::numeric_limits<int16_t>::max()
+			    || item.plusLightningResistance < std::numeric_limits<int16_t>::min()
+			    || item.plusLightningResistance > std::numeric_limits<int16_t>::max()
+			    || item.plusMagicResistance < std::numeric_limits<int16_t>::min()
+			    || item.plusMagicResistance > std::numeric_limits<int16_t>::max()
 			    || item.plusEnemyArmorClass < std::numeric_limits<int16_t>::min()
 			    || item.plusEnemyArmorClass > std::numeric_limits<int16_t>::max()
 			    || item.fireMinDamage < 0
@@ -12726,6 +12781,9 @@ bool ExecuteReplayFixture(
 			item.plusToHit = source.plusToHit;
 			item.plusDamageModifier = source.plusDamageModifier;
 			item.plusGetHit = source.plusGetHit;
+			item.plusFireResistance = source.plusFireResistance;
+			item.plusLightningResistance = source.plusLightningResistance;
+			item.plusMagicResistance = source.plusMagicResistance;
 			item.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			item.fireMinDamage = source.fireMinDamage;
 			item.fireMaxDamage = source.fireMaxDamage;
@@ -12828,6 +12886,9 @@ bool ExecuteReplayFixture(
 			itemState.plusToHit = source.plusToHit;
 			itemState.plusDamageModifier = source.plusDamageModifier;
 			itemState.plusGetHit = source.plusGetHit;
+			itemState.plusFireResistance = source.plusFireResistance;
+			itemState.plusLightningResistance = source.plusLightningResistance;
+			itemState.plusMagicResistance = source.plusMagicResistance;
 			itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
 			itemState.fireMinDamage = source.fireMinDamage;
 			itemState.fireMaxDamage = source.fireMaxDamage;

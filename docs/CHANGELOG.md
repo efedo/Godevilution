@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 
 - Added primary MonsterMagic impact coverage for usable equipment GetHit and
   Mana Shield absorption across the managed and compact native runners.
+- Added primary MonsterMagic resistance coverage proving usable magic
+  resistance is applied before Mana Shield absorption in both runners.
 - Compact native MonsterMagic impacts now apply the validated primary-player
   GetHit/Mana Shield boundary and secondary-player GetHit adjustment.
 - Added primary SkeletonMelee replay coverage for reflection and Mana Shield

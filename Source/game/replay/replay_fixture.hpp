@@ -92,6 +92,9 @@ struct ReplayFixtureEquippedItem {
 	int32_t plusToHit = 0;
 	int32_t plusDamageModifier = 0;
 	int32_t plusGetHit = 0;
+	int32_t plusFireResistance = 0;
+	int32_t plusLightningResistance = 0;
+	int32_t plusMagicResistance = 0;
 	int32_t plusEnemyArmorClass = 0;
 	int32_t fireMinDamage = 0;
 	int32_t fireMaxDamage = 0;
