@@ -8192,6 +8192,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicBlocksOnPrimaryParticipant()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-magic-primary-block.json");
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(6000, player.Mana);
+        Assert.Equal(PlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(31UL, player.CombatModeEndTick);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMissPreservesProjectileAndPlayerState()
     {
         var path = Path.Combine(
@@ -9089,10 +9114,20 @@ public sealed class ReplayFixtureTests
             initial.Life,
             initial.Mana,
             startingLifeMaximum: initial.LifeMaximum,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Strength = new PlayerAttributeState(initial.Strength, initial.Strength),
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+                Vitality = new PlayerAttributeState(initial.Vitality, initial.Vitality),
+            },
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),

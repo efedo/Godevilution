@@ -9490,29 +9490,48 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
 				return false;
 
-			const bool canBlock = secondaryPlayerAtTile
-			    && state.secondaryPlayerBlockCapable
-			    && (state.secondaryPlayerCombatMode == 0
-			        || state.secondaryPlayerCombatMode == 4);
+			const auto &targetEquipment = primaryPlayerAtTile
+			    ? state.equipment
+			    : state.secondaryEquipment;
+			const int32_t resistance = ResolveReplayEquipmentResistance(
+			    targetEquipment,
+			    projectile.damageType);
+			const bool primaryPlayerBlockCapable = primaryPlayerAtTile
+			    && (state.combatMode == 0 || state.combatMode == 4)
+			    && std::any_of(
+			        state.equipment.begin(),
+			        state.equipment.end(),
+			        [](const ReplayFixtureSlottedItem &item) {
+				        return IsReplayEquipmentUsable(item.state)
+				            && item.state.itemType == 5;
+			        });
+			const bool canBlock = (secondaryPlayerAtTile
+			        && state.secondaryPlayerBlockCapable
+			        && (state.secondaryPlayerCombatMode == 0
+			            || state.secondaryPlayerCombatMode == 4)
+			        || primaryPlayerBlockCapable)
+			    && (resistance == 0 || state.hellfire);
 			const int32_t blockChance = std::clamp(
-				(secondaryPlayerAtTile ? state.secondaryPlayerDexterity : 0)
+				(secondaryPlayerAtTile ? state.secondaryPlayerDexterity : state.attributes[5])
 				    + 2 * targetLevel
 				    - 2 * state.combatTargetMonsterLevel,
 				0,
 				100);
 			const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 			if (canBlock && blockRoll < blockChance) {
-				state.secondaryPlayerCombatMode = 6;
-				state.secondaryPlayerCombatModeEndTick = tick + 4;
+				if (primaryPlayerAtTile) {
+					state.combatMode = 6;
+					state.combatModeEndTick = tick + 4;
+				} else {
+					state.secondaryPlayerCombatMode = 6;
+					state.secondaryPlayerCombatModeEndTick = tick + 4;
+				}
 			} else if (primaryPlayerAtTile) {
 				int32_t damageQ6 = ApplyReplayGetHitBonus(
 				    state,
 				    std::max(1, projectile.damage),
 				    false)
 				    * 64;
-				const int32_t resistance = ResolveReplayEquipmentResistance(
-				    state.equipment,
-				    projectile.damageType);
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
 				int32_t lifeDamageQ6 = damageQ6;
@@ -9565,9 +9584,6 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				    std::max(1, projectile.damage),
 				    true)
 				    * 64;
-				const int32_t resistance = ResolveReplayEquipmentResistance(
-				    state.secondaryEquipment,
-				    projectile.damageType);
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
 				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
