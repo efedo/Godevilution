@@ -164,7 +164,13 @@ public partial class WorldPresentation : Node2D
         }
         foreach (var portal in snapshot.Portals) {
             if (localPlayer is not null
-                && AuthoritativePortalPresentation.Resolve(portal, localPlayer.LevelId) is { } endpoint) {
+                && AuthoritativePortalPresentation.Resolve(
+                    portal,
+                    localPlayer.LevelId,
+                    localGeometry,
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    localLightRadius) is { } endpoint) {
                 activeEntityIds.Add(portal.PortalId);
                 UpdatePosition(portal.PortalId, ToScreen(endpoint.X, endpoint.Y), delta, localPlayer.LevelId);
             }
@@ -263,11 +269,19 @@ public partial class WorldPresentation : Node2D
     /** Returns an authoritative portal occupying a visible clicked tile. */
     public uint? PortalEntityIdAt(Vector2I target)
     {
-        var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
-        if (snapshot is null || currentLevelId is not { } levelId)
+        var localPlayer = snapshot?.Players.FirstOrDefault();
+        if (snapshot is null || localPlayer is null)
             return null;
+        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
+        var lightRadius = localPlayer.LightRadius is >= 2 and <= 15 ? localPlayer.LightRadius : 10;
         foreach (var portal in snapshot.Portals.OrderBy(portal => portal.PortalId)) {
-            if (AuthoritativePortalPresentation.Resolve(portal, levelId) is { } endpoint
+            if (AuthoritativePortalPresentation.Resolve(
+                    portal,
+                    localPlayer.LevelId,
+                    geometry,
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    lightRadius) is { } endpoint
                 && endpoint.X == target.X
                 && endpoint.Y == target.Y)
                 return portal.PortalId;
@@ -357,7 +371,13 @@ public partial class WorldPresentation : Node2D
                          localLightRadius)))
             DrawCorpse(corpse);
         foreach (var portal in snapshot.Portals)
-            DrawPortal(portal, currentLevel);
+            DrawPortal(
+                portal,
+                currentLevel,
+                localGeometry,
+                localPlayer.PositionX,
+                localPlayer.PositionY,
+                localLightRadius);
         foreach (var projectile in snapshot.Projectiles.Where(projectile =>
                      AuthoritativeLevelVisibility.IsVisible(projectile.LevelId, currentLevel)))
             DrawProjectile(projectile);
@@ -704,9 +724,21 @@ public partial class WorldPresentation : Node2D
         DrawLine(center + new Vector2(6, -4), center + new Vector2(-6, 4), color, 2);
     }
 
-    private void DrawPortal(PortalSnapshot portal, uint currentLevel)
+    private void DrawPortal(
+        PortalSnapshot portal,
+        uint currentLevel,
+        LevelGeometrySnapshot? geometry,
+        int viewerX,
+        int viewerY,
+        int viewerLightRadius)
     {
-        if (AuthoritativePortalPresentation.Resolve(portal, currentLevel) is not { } endpoint)
+        if (AuthoritativePortalPresentation.Resolve(
+                portal,
+                currentLevel,
+                geometry,
+                viewerX,
+                viewerY,
+                viewerLightRadius) is not { } endpoint)
             return;
         var center = PositionFor(portal.PortalId, endpoint.X, endpoint.Y);
         DrawArc(center, 13, 0, Mathf.Tau, 24, new Color("bd7cff"), 3);

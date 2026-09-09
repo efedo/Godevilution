@@ -36,9 +36,10 @@ they do not contribute movement collision or a transparency layer.
 The query also applies the player's equipment-derived light radius, preserving
 the native distinction between target range and what the player can see.
 
-Godot world-item, authored-object, and corpse presentation and selection now
-reuse that same projected vision predicate. Hidden world entities no longer
-appear as client-side interaction candidates that the server would reject.
+Godot world-item, authored-object, corpse, and portal presentation and
+selection now reuse that same projected vision predicate. Hidden world
+entities no longer appear as client-side interaction candidates that the
+server would reject.
 
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per

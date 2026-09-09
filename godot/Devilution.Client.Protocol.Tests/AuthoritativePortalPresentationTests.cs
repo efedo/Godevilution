@@ -87,4 +87,24 @@ public sealed class AuthoritativePortalPresentationTests
 
         Assert.Equal(new PortalEndpoint(1, 2), endpoint);
     }
+
+    [Fact]
+    public void HidesPortalBehindProjectedVisionBlockers()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 3, Width = 5, Height = 1 };
+        geometry.NativeVisionBlockedCells.Add(1);
+
+        Assert.Null(AuthoritativePortalPresentation.Resolve(
+            new PortalSnapshot {
+                PortalId = 4,
+                SourceLevelId = 3,
+                SourcePositionX = 4,
+                SourcePositionY = 0,
+            },
+            3,
+            geometry,
+            0,
+            0,
+            10));
+    }
 }
