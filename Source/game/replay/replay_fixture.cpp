@@ -3568,6 +3568,14 @@ void CreateReplayWeaponArrow(
 	    std::abs(state.combatTargetPositionY - state.positionY));
 	if (consumeRandom)
 		static_cast<void>(GenerateRnd(state, 1));
+	int32_t damageQ6 = 64;
+	if (state.hellfire
+	    && HasReplayHellfireEquipmentFlag(state, HellfireJestersFlag)) {
+		int32_t roll = GenerateRnd(state, 201);
+		if (roll >= 100)
+			roll = 100 + (roll - 100) * 5;
+		damageQ6 = damageQ6 * roll / 100;
+	}
 
 	const int32_t fireDamage = ResolveReplayElementalDamage(
 	    state,
@@ -3608,8 +3616,8 @@ void CreateReplayWeaponArrow(
 			projectile.positionY = candidateY;
 		}
 	}
-	projectile.damage = 1;
-	projectile.damageQ6 = 64;
+	projectile.damage = damageQ6 / 64;
+	projectile.damageQ6 = damageQ6;
 	projectile.elementalFireDamage = fireDamage;
 	projectile.elementalLightningDamage = lightningDamage;
 	projectile.damageType = 0;

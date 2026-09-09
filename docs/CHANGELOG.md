@@ -70,6 +70,8 @@ All notable changes to this fork are documented below.
   upper-half expansion in both runners.
 - Hellfire physical replay now covers `Peril` pre-modifier self-damage and its
   final target-damage multiplier in both runners.
+- Hellfire ranged replay now covers `Jesters` Q6 scaling before elemental
+  channel resolution in both runners.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
