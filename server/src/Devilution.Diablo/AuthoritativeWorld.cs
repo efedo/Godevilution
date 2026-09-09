@@ -255,7 +255,8 @@ public sealed class AuthoritativeLevel
         IEnumerable<int>? nativePieceMissileBlockedCells = null,
         IEnumerable<ushort>? nativeMonsterLayer = null,
         int startPositionX = 0,
-        int startPositionY = 0)
+        int startPositionY = 0,
+        IEnumerable<int>? nativeVisionBlockedCells = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -269,6 +270,7 @@ public sealed class AuthoritativeLevel
         SuppressMultiplayerDeathDrops = suppressMultiplayerDeathDrops;
         StartPositionX = startPositionX;
         StartPositionY = startPositionY;
+        HasExplicitNativeVisionBlockedCells = nativeVisionBlockedCells is not null;
         this.blockedCells = (blockedCells ?? []).ToHashSet();
         if (this.blockedCells.Any(cell => cell < 0 || cell >= width * height))
             throw new InvalidDataException($"Level {levelId} contains an out-of-range blocked cell.");
@@ -335,15 +337,20 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains native d-piece properties outside the MAXTILES range.");
         NativePieceProperties = new ReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>(pieceProperties);
-        var nativeVisionBlockedCells = this.blockedCells.ToHashSet();
+        var resolvedNativeVisionBlockedCells = nativeVisionBlockedCells is null
+            ? this.blockedCells.ToHashSet()
+            : nativeVisionBlockedCells.ToHashSet();
+        if (resolvedNativeVisionBlockedCells.Any(cell => cell < 0 || cell >= width * height))
+            throw new InvalidDataException(
+                $"Level {levelId} contains an out-of-range native vision-blocked cell.");
         for (var cell = 0; cell < pieces.Length; cell++) {
             if (pieces[cell] != 0
                 && pieceProperties.TryGetValue(pieces[cell], out var flags)
                 && flags.HasFlag(AuthoritativeDunTileFlags.BlockLight))
-                nativeVisionBlockedCells.Add(cell);
+                resolvedNativeVisionBlockedCells.Add(cell);
         }
         nativeVisionBlockedCellList = Array.AsReadOnly(
-            nativeVisionBlockedCells.OrderBy(cell => cell).ToArray());
+            resolvedNativeVisionBlockedCells.OrderBy(cell => cell).ToArray());
         var pieceCollisionCells = (nativePieceCollisionCells ?? [])
             .Distinct()
             .OrderBy(cell => cell)
@@ -398,8 +405,11 @@ public sealed class AuthoritativeLevel
     /** Cells whose blocked state was materialized from native d-piece flags. */
     public IReadOnlyList<int> NativePieceCollisionCells { get; }
 
-    /** Derived native vision blockers, including movement-blocked cells. */
+    /** Native vision blockers; movement-blocked cells are the legacy fallback. */
     public IReadOnlyList<int> NativeVisionBlockedCells => nativeVisionBlockedCellList;
+
+    /** Whether native vision blockers were supplied independently of movement collision. */
+    public bool HasExplicitNativeVisionBlockedCells { get; }
 
     /** Cells whose missile state was materialized from native d-piece flags. */
     public IReadOnlyList<int> NativePieceMissileBlockedCells { get; }
@@ -492,6 +502,8 @@ public sealed class AuthoritativeLevel
         if (!ContainsPosition(positionX, positionY))
             return false;
         var cell = positionY * Width + positionX;
+        if (nativeVisionBlockedCellList.Contains(cell))
+            return false;
         if (NativePieceLayer.Count != 0
             && NativePieceProperties.TryGetValue(
                 NativePieceLayer[cell],

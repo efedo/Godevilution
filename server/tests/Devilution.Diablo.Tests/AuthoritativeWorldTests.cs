@@ -8,6 +8,30 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeWorldTests
 {
     [Fact]
+    public void ExplicitNativeVisionGeometryCanExcludeMovementBlockers()
+    {
+        var level = new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            blockedCells: [6],
+            nativeVisionBlockedCells: []);
+
+        Assert.Equal([6], level.BlockedCells);
+        Assert.Empty(level.NativeVisionBlockedCells);
+    }
+
+    [Fact]
+    public void RejectsOutOfRangeExplicitNativeVisionGeometry()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            nativeVisionBlockedCells: [16]));
+    }
+
+    [Fact]
     public void LoadsContentDefinedStartPositionAndKeepsLegacyDefault()
     {
         var world = AuthoritativeWorld.LoadTsv(

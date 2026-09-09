@@ -4,6 +4,20 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added an explicit native-vision blocker override so synthetic and imported
+  geometry can keep movement collision separate from line-of-sight data while
+  preserving the legacy movement-blocker fallback when omitted.
+
+- Corrected the multiplayer Mega Inferno RNG expectation so the adjacent
+  controller test only accounts for rolls consumed on its actual tick.
+
+- Corrected the charged-bolt save/restore expectation to retain the monster's
+  post-impact Q6 hit points instead of resetting to full health.
+
+- Corrected the critical-strike combat regression test to reflect native RNG
+  consumption: Warrior/Barbarian critical paths roll, while Rogue attacks do
+  not consume a critical-strike draw.
+
 - Scoped the compact Snake-charge replay exception to an explicit validated
   missile-pack flag. Ordinary Snake charges now damage players regardless of
   their entity ID, while the replay fixture retains its native checkpoint

@@ -658,7 +658,10 @@ public sealed class DiabloWorldState
                     nativePieceMissileBlockedCells,
                     monsterLayer,
                     baseLevel.StartPositionX,
-                    baseLevel.StartPositionY) {
+                    baseLevel.StartPositionY,
+                    baseLevel.HasExplicitNativeVisionBlockedCells
+                        ? baseLevel.NativeVisionBlockedCells
+                        : null) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

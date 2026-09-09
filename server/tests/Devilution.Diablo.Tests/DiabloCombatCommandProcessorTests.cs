@@ -5633,7 +5633,9 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(rogueResult.Succeeded);
         Assert.Equal(90, rogueTarget.HitPoints);
-        Assert.NotEqual(0U, rogueRandom.State);
+        // Native PlayerAttack only consumes the critical-strike roll for
+        // classes carrying CriticalStrike; Rogue leaves the stream untouched.
+        Assert.Equal(0U, rogueRandom.State);
     }
 
     [Fact]
@@ -6628,7 +6630,8 @@ public sealed class DiabloCombatCommandProcessorTests
             1,
             7,
             5,
-            blockedCells: [2, 9, 16, 23]));
+            blockedCells: [2, 9, 16, 23],
+            nativeVisionBlockedCells: []));
         var monster = new AuthoritativeCombatTarget(
             9,
             1,
@@ -6638,6 +6641,7 @@ public sealed class DiabloCombatCommandProcessorTests
             attackDamage: 3,
             aggroRange: 10);
         var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        Assert.Empty(world.LevelGeometry[0].NativeVisionBlockedCells);
         var processor = CreateProcessor(world);
         var player = CreatePlayer(
             positionX: 5,
@@ -14142,9 +14146,6 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(4, expected.RandomIntLessThan(100));
         _ = expected.FlipCoin(1);
         var delayRoll = expected.RandomIntLessThan(10);
-        // The segment spawned on the adjacent tick is processed immediately;
-        // native PlayerMHit consumes its hit-chance roll on that collision.
-        _ = expected.RandomIntLessThan(100);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 2,

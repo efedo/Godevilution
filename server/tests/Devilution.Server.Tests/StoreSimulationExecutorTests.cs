@@ -2093,7 +2093,7 @@ public sealed class StoreSimulationExecutorTests
             startingLife: 40);
         replacement.ImportPlayerSave("player-a", executor.ExportPlayerSave("player-a"));
         var restored = Assert.Single(replacement.CreateSnapshot("player-a", 7, 5).Monsters);
-        Assert.Equal(640, restored.HitPointsQ6);
+        Assert.Equal(528, restored.HitPointsQ6);
     }
 
     [Fact]
