@@ -27,6 +27,10 @@ Hellfire ranged miss replay now skips the post-hit Devastation, Doppelganger,
 and Jesters rolls when no damage was admitted, preserving the native RNG state
 at the shared projectile checkpoint.
 
+Initialized class Peril replay now carries the pre-armor attack payload for
+self-damage while preserving post-armor projectile damage and the Hellfire
+multiplier in both runners.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo

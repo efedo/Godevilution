@@ -3570,6 +3570,7 @@ void CreateReplayWeaponArrow(
 	    std::abs(state.combatTargetPositionY - state.positionY));
 	int32_t damage = 1;
 	bool attackHit = true;
+	int32_t perilSelfDamageQ6 = 0;
 	if (state.attributes[1] > 0 && state.attributes[5] > 0) {
 		int32_t minimumDamage = 0;
 		int32_t maximumDamage = 0;
@@ -3657,6 +3658,9 @@ void CreateReplayWeaponArrow(
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		const int32_t damageBeforeFlat = rolledBaseDamage
 		    + rolledBaseDamage * damagePercent / 100;
+		if (state.hellfire
+		    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
+			perilSelfDamageQ6 = damageBeforeFlat * 64;
 		damage = damageBeforeFlat + damageFlat + damageModifier;
 		const int32_t baseRangedToHit = state.characterClassId == 0
 		        ? 60
@@ -3717,8 +3721,8 @@ void CreateReplayWeaponArrow(
 		static_cast<void>(GenerateRnd(state, 1));
 	}
 	int32_t damageQ6 = damage * 64;
-	int32_t perilSelfDamageQ6 = 0;
-	if (state.hellfire
+	if (perilSelfDamageQ6 == 0
+	    && state.hellfire
 	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
 		perilSelfDamageQ6 = damageQ6;
 	if (state.hellfire
