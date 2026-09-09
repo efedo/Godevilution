@@ -31,6 +31,11 @@ and mega-tile assignments to a published ordinary-level quest-piece origin via
 set-level anchors separate while allowing the same server-owned overlay path to
 drive future quest geometry transitions.
 
+Native DUN fragments and their authored object placements use the same separate
+origin namespace. Their assets remain validated at activation, while geometry
+and template objects defer until the generated ordinary-level origin is
+published.
+
 The Godot client now uses a shared authoritative viewport transform for world
 rendering and mouse hit-testing. Small levels are centered, large levels clamp
 to their edges while following the local player, and the transform uses the

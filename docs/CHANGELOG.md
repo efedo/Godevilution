@@ -25,6 +25,10 @@ All notable changes to this fork are documented below.
   anchors, allowing ordinary-level geometry overlays to consume published
   quest-piece origins without reusing fixed native set-level identities.
 
+- Extended native DUN fragments and fragment-object placements with the same
+  procedural quest-origin anchors, including deferred publication and template
+  materialization after generated level geometry becomes available.
+
 - Kept the new shared native-geometry catalog additive at the end of the
   `DiabloContentActivation` constructor so existing positional callers remain
   source-compatible while activation exposes the validated catalog.

@@ -644,6 +644,20 @@ public sealed partial class DiabloSimulation
         AuthoritativeProceduralQuestPieceOrigin origin)
     {
         ArgumentNullException.ThrowIfNull(origin);
+        var previous = CaptureDynamicOriginPublicationState();
+        try {
+            PublishProceduralQuestPieceOriginCore(originId, origin);
+            ApplyDeferredNativeDunFragments();
+        } catch {
+            RestoreDynamicOriginPublicationState(previous);
+            throw;
+        }
+    }
+
+    private void PublishProceduralQuestPieceOriginCore(
+        uint originId,
+        AuthoritativeProceduralQuestPieceOrigin origin)
+    {
         if (originId == 0)
             throw new ArgumentOutOfRangeException(nameof(originId));
         if (WorldState.World is null)
@@ -686,9 +700,11 @@ public sealed partial class DiabloSimulation
                     continue;
                 }
 
-                PublishProceduralQuestPieceOrigin(originId, origin);
+                PublishProceduralQuestPieceOriginCore(originId, origin);
                 published.Add(originId, origin);
             }
+            if (published.Count != 0)
+                ApplyDeferredNativeDunFragments();
             return published;
         } catch {
             RestoreDynamicOriginPublicationState(previous);
@@ -960,6 +976,8 @@ public sealed partial class DiabloSimulation
             .Where(definition => {
                 if (definition.AnchorSetLevelId is { } setLevelId)
                     return setLevelObjectOrigins.ContainsKey(setLevelId);
+                if (definition.AnchorProceduralQuestPieceOriginId is { } originId)
+                    return proceduralQuestPieceOrigins.ContainsKey(originId);
                 var matches = targetPool.Where(target => target.IsUnique
                     && target.LevelId == definition.LevelId
                     && string.Equals(
@@ -988,7 +1006,8 @@ public sealed partial class DiabloSimulation
                     nativeObjectTemplates,
                     catalog,
                     targetPool,
-                    setLevelObjectOrigins);
+                    setLevelObjectOrigins,
+                    proceduralQuestPieceOrigins);
             foreach (var generatedObject in generatedObjects) {
                 if (WorldState.Objects.TryGetValue(generatedObject.EntityId, out var existing)) {
                     if (!existing.HasSameAuthoritativeState(generatedObject))
@@ -1008,7 +1027,8 @@ public sealed partial class DiabloSimulation
             WorldState.Objects.Values,
             targetPool,
             setLevelObjectOrigins,
-            nativeDunGeometry);
+            nativeDunGeometry,
+            proceduralQuestPieceOrigins);
         WorldState.RefreshProjectedGeometry();
         // The fragment may have introduced mapped native-DUN object cells.
         // Reconcile after geometry publication so deferred set-piece objects

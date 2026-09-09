@@ -94,6 +94,50 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void LoadsAndAppliesAProceduralQuestOriginFragment()
+    {
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tlevel_symbol\tasset_path\tanchor_entity_id\tanchor_offset_x\tanchor_offset_y\tanchor_procedural_origin_id\n"
+                + "1\t24\thellfire_level_24\tfragment.dun\t\t-2\t-2\t2201\n");
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+
+        catalog.Apply(
+            content,
+            world,
+            [],
+            proceduralQuestPieceOrigins: new Dictionary<uint, AuthoritativeProceduralQuestPieceOrigin> {
+                [2201] = new(24, 4, 4),
+            });
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal((ushort)42, level.NativeMegaTileLayer[1 * 4 + 1]);
+    }
+
+    [Fact]
+    public void ResolvesProceduralQuestOriginFragmentSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("procedural_origin", "halls_book", 2201),
+        ]);
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tasset_path\tanchor_entity_id\tanchor_offset_x\tanchor_offset_y\tanchor_procedural_origin_symbol\n"
+                + "1\t24\tfragment.dun\t\t-2\t-2\thalls_book\n",
+            stableIds);
+
+        Assert.Equal(
+            2201U,
+            Assert.Single(catalog.Definitions).AnchorProceduralQuestPieceOriginId);
+    }
+
+    [Fact]
     public void ComposesValidatedNativeCollisionWhenTileDefinitionsAreSupplied()
     {
         var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
@@ -490,6 +534,93 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
         Assert.Equal(
             new AuthoritativeSetLevelObjectOrigin(24, 4, 4),
             replacement.SetLevelObjectOrigins[6]);
+        var restoredObject = Assert.Single(replacement.WorldState.Objects.Values);
+        Assert.Equal(900U, restoredObject.EntityId);
+        Assert.Equal((5, 5), (restoredObject.PositionX, restoredObject.PositionY));
+    }
+
+    [Fact]
+    public void SnapshotRestoreRepublishesProceduralQuestOriginFragmentWithoutPreloadedOrigin()
+    {
+        var catalog = new AuthoritativeNativeDunFragmentCatalog([
+            new AuthoritativeNativeDunFragmentDefinition(
+                1,
+                24,
+                "fragment.dun",
+                0,
+                -2,
+                -2,
+                AnchorProceduralQuestPieceOriginId: 2201),
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+            ]),
+        ]));
+        var geometry = CreateExternalGeometry();
+        var fragmentObjects = new AuthoritativeNativeDunFragmentObjectCatalog([
+            new AuthoritativeNativeDunFragmentObjectPlacement(1, 1, 900, 0, 1, 1) {
+                AnchorProceduralQuestPieceOriginId = 2201,
+                TemplateEntityId = 100,
+            },
+        ]);
+        var template = new AuthoritativeWorldObject(100, 97, 24, 0, 0);
+        var sourceWorld = new AuthoritativeWorld();
+        sourceWorld.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = sourceWorld,
+                Content = content,
+                NativeDunFragments = catalog,
+                NativeDunGeometry = geometry,
+                NativeDunFragmentObjects = fragmentObjects,
+                NativeObjectTemplates = [template],
+            });
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            10,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            4,
+            4,
+            10,
+            1,
+            24,
+            0);
+
+        source.PublishProceduralQuestPieceOrigin(
+            2201,
+            new AuthoritativeProceduralQuestPieceOrigin(24, 4, 4));
+        var sourceObject = Assert.Single(source.WorldState.Objects.Values);
+        Assert.Equal((5, 5), (sourceObject.PositionX, sourceObject.PositionY));
+        var snapshot = source.CaptureSnapshot(player, 3);
+
+        var replacementWorld = new AuthoritativeWorld();
+        replacementWorld.AddLevel(new AuthoritativeLevel(24, 8, 8));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = replacementWorld,
+                Content = content,
+                NativeDunFragments = catalog,
+                NativeDunGeometry = geometry,
+                NativeDunFragmentObjects = fragmentObjects,
+                NativeObjectTemplates = [template],
+            });
+
+        replacement.RestoreSnapshot(player, snapshot);
+
+        var restoredLevel = Assert.Single(replacement.WorldState.World!.Levels);
+        Assert.Equal((ushort)42, restoredLevel.NativeMegaTileLayer[1 * 4 + 1]);
+        Assert.Equal([18, 26], restoredLevel.BlockedCells);
+        Assert.Equal([19, 26], restoredLevel.MissileBlockedCells);
+        Assert.Equal(
+            new AuthoritativeProceduralQuestPieceOrigin(24, 4, 4),
+            replacement.ProceduralQuestPieceOriginLocations[2201]);
         var restoredObject = Assert.Single(replacement.WorldState.Objects.Values);
         Assert.Equal(900U, restoredObject.EntityId);
         Assert.Equal((5, 5), (restoredObject.PositionX, restoredObject.PositionY));

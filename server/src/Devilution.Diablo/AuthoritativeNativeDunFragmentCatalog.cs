@@ -16,7 +16,8 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     string AnchorUniqueIdentity = "",
     int? AnchorPositionX = null,
     int? AnchorPositionY = null,
-    int? AnchorSetLevelId = null)
+    int? AnchorSetLevelId = null,
+    uint? AnchorProceduralQuestPieceOriginId = null)
 {
     /** Stable level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
@@ -24,26 +25,34 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     /** Optional native set-level identity whose generated origin anchors this fragment. */
     public string AnchorSetLevelSymbol { get; init; } = string.Empty;
 
+    /** Optional ordinary-level quest-piece identity whose generated origin anchors this fragment. */
+    public string AnchorProceduralQuestPieceOriginSymbol { get; init; } = string.Empty;
+
     public AuthoritativeNativeDunFragmentDefinition Validate()
     {
         var uniqueIdentity = AnchorUniqueIdentity.Trim();
         var setLevelSymbol = AnchorSetLevelSymbol.Trim();
+        var proceduralOriginSymbol = AnchorProceduralQuestPieceOriginSymbol.Trim();
         var hasUniqueAnchor = uniqueIdentity.Length != 0;
         var hasCoordinateX = AnchorPositionX is not null;
         var hasCoordinateY = AnchorPositionY is not null;
         var hasCoordinateAnchor = hasCoordinateX && hasCoordinateY;
         var hasSetLevelAnchor = AnchorSetLevelId is not null;
+        var hasProceduralOriginAnchor = AnchorProceduralQuestPieceOriginId is not null;
         if (FragmentId == 0
             || hasCoordinateX != hasCoordinateY
             || (AnchorEntityId != 0 ? 1 : 0)
                     + (hasUniqueAnchor ? 1 : 0)
                     + (hasCoordinateAnchor ? 1 : 0)
-                    + (hasSetLevelAnchor ? 1 : 0) != 1
+                    + (hasSetLevelAnchor ? 1 : 0)
+                    + (hasProceduralOriginAnchor ? 1 : 0) != 1
             || AnchorSetLevelId is < 0 or > 8
+            || AnchorProceduralQuestPieceOriginId is 0
             || AnchorPositionX is < 0 or > 512
             || AnchorPositionY is < 0 or > 512
             || !NativeTextLimits.IsIdentityWithinLimit(uniqueIdentity)
             || !NativeTextLimits.IsIdentityWithinLimit(setLevelSymbol)
+            || !NativeTextLimits.IsIdentityWithinLimit(proceduralOriginSymbol)
             || !IsRelativeDunAssetPath(AssetPath)) {
             throw new InvalidDataException(
                 $"Native DUN fragment {FragmentId} contains invalid identity or asset metadata.");
@@ -58,8 +67,13 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
         }
         return uniqueIdentity == AnchorUniqueIdentity
             && setLevelSymbol == AnchorSetLevelSymbol
+            && proceduralOriginSymbol == AnchorProceduralQuestPieceOriginSymbol
             ? this
-            : this with { AnchorUniqueIdentity = uniqueIdentity, AnchorSetLevelSymbol = setLevelSymbol };
+            : this with {
+                AnchorUniqueIdentity = uniqueIdentity,
+                AnchorSetLevelSymbol = setLevelSymbol,
+                AnchorProceduralQuestPieceOriginSymbol = proceduralOriginSymbol,
+            };
     }
 
     private static bool IsRelativeDunAssetPath(string path)
@@ -127,6 +141,23 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         }
     }
 
+    /** Validates optional ordinary-level quest-origin anchors against active content rules. */
+    public void ValidateProceduralQuestPieceOrigins(
+        AuthoritativeProceduralQuestPieceOriginCatalog origins)
+    {
+        ArgumentNullException.ThrowIfNull(origins);
+        var knownOrigins = origins.Definitions
+            .Select(definition => definition.OriginId)
+            .ToHashSet();
+        foreach (var definition in definitions.Where(
+                     definition => definition.AnchorProceduralQuestPieceOriginId is not null)) {
+            if (!knownOrigins.Contains(definition.AnchorProceduralQuestPieceOriginId!.Value))
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} references unknown procedural quest-piece origin "
+                    + $"{definition.AnchorProceduralQuestPieceOriginId}.");
+        }
+    }
+
     /** Returns a validated view containing only definitions accepted by a lifecycle phase. */
     public AuthoritativeNativeDunFragmentCatalog Filter(
         Func<AuthoritativeNativeDunFragmentDefinition, bool> predicate)
@@ -182,7 +213,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         IEnumerable<AuthoritativeWorldObject> objects,
         IEnumerable<AuthoritativeCombatTarget>? combatTargets = null,
         IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins = null,
-        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null)
+        AuthoritativeNativeDunGeometryCatalog? externalGeometry = null,
+        IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin>? proceduralQuestPieceOrigins = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(world);
@@ -199,7 +231,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 definition,
                 objectsById,
                 targets,
-                setLevelOrigins);
+                setLevelOrigins,
+                proceduralQuestPieceOrigins);
             if (anchorLevelId != definition.LevelId)
                 throw new InvalidDataException(
                     $"Native DUN fragment {definition.FragmentId} anchor is on level {anchorLevelId}, expected {definition.LevelId}.");
@@ -389,10 +422,16 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                     : string.Empty,
                 OptionalCoordinate(row, "anchor_position_x"),
                 OptionalCoordinate(row, "anchor_position_y"),
-                OptionalSetLevelId(row, stableIds)) {
+                OptionalSetLevelId(row, stableIds),
+                OptionalProceduralQuestPieceOriginId(row, stableIds)) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
                 AnchorSetLevelSymbol = row.TryGet("anchor_set_level_symbol", out var symbol)
                     ? symbol
+                    : string.Empty,
+                AnchorProceduralQuestPieceOriginSymbol = row.TryGet(
+                        "anchor_procedural_origin_symbol",
+                        out var originSymbol)
+                    ? originSymbol
                     : string.Empty,
             }));
     }
@@ -401,8 +440,17 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         AuthoritativeNativeDunFragmentDefinition definition,
         IReadOnlyDictionary<uint, AuthoritativeWorldObject> objects,
         IReadOnlyList<AuthoritativeCombatTarget> combatTargets,
-        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins)
+        IReadOnlyDictionary<int, AuthoritativeSetLevelObjectOrigin>? setLevelOrigins,
+        IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin>? proceduralQuestPieceOrigins)
     {
+        if (definition.AnchorProceduralQuestPieceOriginId is { } proceduralOriginId) {
+            if (proceduralQuestPieceOrigins is null
+                || !proceduralQuestPieceOrigins.TryGetValue(proceduralOriginId, out var origin)) {
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} references unpublished procedural quest-piece origin {proceduralOriginId}.");
+            }
+            return (origin.PositionX, origin.PositionY, origin.LevelId);
+        }
         if (definition.AnchorSetLevelId is { } anchorSetLevelId) {
             if (setLevelOrigins is null
                 || !setLevelOrigins.TryGetValue(anchorSetLevelId, out var origin)) {
@@ -473,6 +521,43 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
             stableIds,
             "anchor_set_level_id",
             "anchor_set_level_symbol");
+    }
+
+    private static uint? OptionalProceduralQuestPieceOriginId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericPresent = row.TryGet("anchor_procedural_origin_id", out var numericText)
+            && !string.IsNullOrWhiteSpace(numericText);
+        var numericId = row.OptionalUInt32("anchor_procedural_origin_id");
+        var symbolPresent = row.TryGet("anchor_procedural_origin_symbol", out var symbol)
+            && !string.IsNullOrWhiteSpace(symbol)
+            && !string.Equals(symbol, "none", StringComparison.OrdinalIgnoreCase);
+        if (!numericPresent && !symbolPresent)
+            return null;
+        if (stableIds is null && !numericPresent)
+            throw new InvalidDataException(
+                $"Native DUN fragment row {row.LineNumber} requires stable IDs to resolve procedural origin '{symbol}'.");
+        if (!symbolPresent) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Native DUN fragment row {row.LineNumber} contains a zero procedural origin ID.");
+            return numericId;
+        }
+        uint resolvedId;
+        try {
+            resolvedId = stableIds is null
+                ? numericId
+                : stableIds.Resolve("procedural_origin", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Native DUN fragment row {row.LineNumber} references unknown procedural origin '{symbol}'.",
+                exception);
+        }
+        if (resolvedId == 0 || numericPresent && numericId != resolvedId)
+            throw new InvalidDataException(
+                $"Native DUN fragment row {row.LineNumber} contains an invalid procedural origin identity.");
+        return resolvedId;
     }
 
     private static void RequireAsset(

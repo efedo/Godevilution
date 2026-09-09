@@ -1284,9 +1284,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             var generatedObjects = nativeDunFragmentObjects
                 .Filter(placement => placement.AnchorEntityId == 0
                     && placement.AnchorSetLevelId is null
+                    && placement.AnchorProceduralQuestPieceOriginId is null
                     && (nativeDunFragments.Definitions
                         .FirstOrDefault(fragment => fragment.FragmentId == placement.FragmentId)
-                        ?.AnchorSetLevelId is null))
+                        ?.AnchorSetLevelId is null)
+                    && (nativeDunFragments.Definitions
+                        .FirstOrDefault(fragment => fragment.FragmentId == placement.FragmentId)
+                        ?.AnchorProceduralQuestPieceOriginId is null))
                 .Materialize(
                     world,
                     objects ?? [],
@@ -1307,6 +1311,25 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeDunFragments.ValidateSetLevels(setLevelNames);
             if (setLevelNames is not null)
                 nativeDunFragmentObjects?.ValidateSetLevels(setLevelNames);
+            if (nativeDunFragments.Definitions.Any(
+                    definition => definition.AnchorProceduralQuestPieceOriginId is not null)) {
+                if (proceduralQuestPieceOrigins is null)
+                    throw new InvalidDataException(
+                        "Native DUN fragments with procedural quest-piece anchors require procedural_quest_piece_origins.tsv.");
+                nativeDunFragments.ValidateProceduralQuestPieceOrigins(
+                    proceduralQuestPieceOrigins);
+            }
+            if (nativeDunFragmentObjects?.Placements.Any(placement =>
+                    placement.AnchorProceduralQuestPieceOriginId is not null
+                    || nativeDunFragments.Definitions
+                        .FirstOrDefault(fragment => fragment.FragmentId == placement.FragmentId)
+                        ?.AnchorProceduralQuestPieceOriginId is not null) == true) {
+                if (proceduralQuestPieceOrigins is null)
+                    throw new InvalidDataException(
+                        "Native DUN fragment objects with procedural quest-piece anchors require procedural_quest_piece_origins.tsv.");
+                nativeDunFragmentObjects.ValidateProceduralQuestPieceOrigins(
+                    proceduralQuestPieceOrigins);
+            }
             nativeDunFragments.ValidateAssets(content, nativeDunGeometry);
             nativeDunFragments
                 .Filter(definition => definition.AnchorEntityId != 0
