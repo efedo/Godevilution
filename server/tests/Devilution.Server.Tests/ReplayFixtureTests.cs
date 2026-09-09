@@ -8369,6 +8369,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidPuddlePrimaryImpactAppliesEquipmentBeforeManaShield()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-puddle-primary-equipment.json");
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var puddle = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(5724, player.Mana);
+        Assert.True(player.ManaShieldActive);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.AcidPuddle, puddle.Behavior);
+        Assert.Equal(1U, puddle.RemainingTicks);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(

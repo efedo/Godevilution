@@ -9908,6 +9908,53 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			}
 			if (projectile.remainingTicks > 0)
 				--projectile.remainingTicks;
+			const bool primaryPlayerAtTile = state.life > 0
+			    && state.levelId == projectile.levelId
+			    && state.positionX == projectile.positionX
+			    && state.positionY == projectile.positionY;
+			const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == projectile.positionX
+			    && state.secondaryPlayerPositionY == projectile.positionY;
+			if (primaryPlayerAtTile || secondaryPlayerAtTile) {
+				if (std::max(GenerateRnd(state, 100), 0) < 40) {
+					// Native PlayerMHit consumes the fixed-width damage roll even
+					// when Acid damage has no random range.
+					static_cast<void>(GenerateRnd(state, 1));
+					const auto &targetEquipment = primaryPlayerAtTile
+					    ? state.equipment
+					    : state.secondaryEquipment;
+					int32_t damageQ6 = ApplyReplayGetHitBonus(
+					    targetEquipment,
+					    std::max(1, projectile.damage))
+					    * 64;
+					const int32_t resistance = ResolveReplayEquipmentResistance(
+					    targetEquipment,
+					    projectile.damageType);
+					if (resistance > 0)
+						damageQ6 -= damageQ6 * resistance / 100;
+					if (primaryPlayerAtTile) {
+						const int32_t lifeDamageQ6 = ApplyReplayManaShield(state, damageQ6);
+						state.life = std::max(0, state.life - lifeDamageQ6);
+						if (state.life > 0
+						    && resistance == 0
+						    && (lifeDamageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+							state.combatMode = 7;
+							state.combatModeEndTick = tick + 6;
+						}
+					} else {
+						state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
+						if (state.secondaryPlayerLife == 0)
+							StartReplaySecondaryPlayerDeath(state, true);
+						else if (resistance == 0
+						    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+							state.secondaryPlayerCombatMode = 7;
+							state.secondaryPlayerCombatModeEndTick = tick + 6;
+						}
+					}
+				}
+			}
 			if (projectile.remainingTicks == 0) {
 				projectile.phase = 1;
 				projectile.remainingTicks = 2;

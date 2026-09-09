@@ -8162,6 +8162,11 @@ owns the one-tick radial controller, native nine-point quarter-radius order,
 four mirrored emissions, 36 continuing Lightning balls, damage scaling,
 resistance, lifetime, collision, and deterministic projectile state.
 
+Persistent Acid puddles now share the managed active-tick player collision
+boundary in compact native replay, including the 40% hit roll, usable
+equipment effects, acid resistance, Mana Shield absorption, and lifecycle
+checkpoints.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class
