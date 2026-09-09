@@ -8346,6 +8346,31 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidPuddleSecondaryImpactAppliesEquipmentBeforeDamage()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-puddle-secondary-equipment.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var puddle = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0, result.FinalSnapshot.Players[0].Life);
+        Assert.Equal(6112, secondaryState.Life);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.AcidPuddle, puddle.Behavior);
+        Assert.Equal(1U, puddle.RemainingTicks);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayAcidPrimaryImpactAppliesEquipmentBeforeManaShield()
     {
         var fixture = LoadReplayFixture("gameplay-acid-primary-equipment.json");

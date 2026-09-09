@@ -1174,6 +1174,8 @@ Notable shared fixtures include:
   checkpoints;
 - `gameplay-acid-puddle-object-break.json` for active Acid puddle breakable
   object destruction and retained impact-phase lifetime;
+- `gameplay-acid-puddle-secondary-equipment.json` for multiplayer secondary
+  player equipment/resistance damage ordering across persistent puddle ticks;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
   preserves player life, projectile travel, and failed-collision identity;
 - `gameplay-monster-magic-secondary-impact.json` for secondary-participant

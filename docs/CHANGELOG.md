@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
   both runners.
 - Added persistent Acid puddle object-collision coverage proving breakable
   missile blockers are destroyed without shortening the puddle impact phase.
+- Added multiplayer Acid puddle coverage proving secondary-player usable
+  GetHit and Acid resistance are applied on persistent active ticks.
 - Compact native MonsterMagic impacts now apply the validated primary-player
   GetHit/Mana Shield boundary and secondary-player GetHit adjustment.
 - Added primary SkeletonMelee replay coverage for reflection and Mana Shield

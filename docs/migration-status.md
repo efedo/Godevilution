@@ -8170,6 +8170,9 @@ checkpoints.
 Persistent Acid puddles now also destroy an occupied breakable missile blocker
 in compact native replay while preserving the managed impact-phase lifetime.
 
+The shared Acid puddle boundary now covers multiplayer secondary participants,
+including usable GetHit and Acid resistance before Q6 damage on active ticks.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

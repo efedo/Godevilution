@@ -1,0 +1,94 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/acid-puddle-secondary-equipment",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.acid",
+    "version": "0.1.0",
+    "sha256": "19d4f3470227495c136a4ce3c0d0c2099b564f5aa201e8df41efcdae1a75fbbc"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 0,
+    "life_maximum": 6400,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 5,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 0,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Acid",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1,
+      "equipment": [
+        {
+          "slot": 4,
+          "item_seed": 3003,
+          "item_type": 1,
+          "item_class": 1,
+          "flags": 0,
+          "stat_flag": true,
+          "plus_get_hit": 2,
+          "plus_magic_resistance": 50
+        }
+      ]
+    }
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "spell_id": 51,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 1,
+      "damage_type": 4,
+      "remaining_ticks": 3,
+      "behavior": 53,
+      "phase": 0,
+      "speed": 0,
+      "impact_lifetime": 2
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "2c9a75063791a23ec346b2a7fc5d4381336e834f16b691fe9d76a0d083f8d532" },
+    { "tick": 2, "state_sha256": "7fd655fd3e1bbb8737d8a1688a8a720dea9cbb938e5064fa995c7302a1e10070" },
+    { "tick": 3, "state_sha256": "dba013aa668a994a2ca4d3a9024bb380068825a53b45cc2c7244a546ae5c0d0b" },
+    { "tick": 4, "state_sha256": "802a1750f5fe0cb4befea793aecbbedd7e1211f41b17cc9ecfc6c602a3d5ab75" }
+  ]
+}

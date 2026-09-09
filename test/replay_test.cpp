@@ -8143,7 +8143,9 @@ TEST(ReplayFixture, ExecutesAcidUniqueLifecycleAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
-void ExecuteAcidMultiplayerSecondaryImpactFixture(const char *path)
+void ExecuteAcidMultiplayerSecondaryImpactFixture(
+	const char *path,
+	int32_t expectedSecondaryLife = 6336)
 {
 	std::ifstream file(path);
 	ASSERT_TRUE(file.good());
@@ -8191,6 +8193,34 @@ void ExecuteAcidMultiplayerSecondaryImpactFixture(const char *path)
 	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
 	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
 	state.secondaryPlayerCombatModeEndTick = fixture.initialState.secondaryPlayer.combatModeEndTick;
+	for (const auto &source : fixture.initialState.secondaryPlayer.equipment) {
+		ReplayFixtureItemState itemState;
+		itemState.stableItemId = source.stableItemId;
+		itemState.itemType = source.itemType;
+		itemState.itemClass = source.itemClass;
+		itemState.itemIndex = source.itemIndex;
+		itemState.value = source.value;
+		itemState.identifiedValue = source.identifiedValue;
+		itemState.identified = source.identified;
+		itemState.magical = source.magical;
+		itemState.minDamage = source.minDamage;
+		itemState.maxDamage = source.maxDamage;
+		itemState.plusDamage = source.plusDamage;
+		itemState.plusToHit = source.plusToHit;
+		itemState.plusDamageModifier = source.plusDamageModifier;
+		itemState.plusGetHit = source.plusGetHit;
+		itemState.plusFireResistance = source.plusFireResistance;
+		itemState.plusLightningResistance = source.plusLightningResistance;
+		itemState.plusMagicResistance = source.plusMagicResistance;
+		itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
+		itemState.fireMinDamage = source.fireMinDamage;
+		itemState.fireMaxDamage = source.fireMaxDamage;
+		itemState.lightningMinDamage = source.lightningMinDamage;
+		itemState.lightningMaxDamage = source.lightningMaxDamage;
+		itemState.flags = source.flags;
+		itemState.statFlag = source.statFlag;
+		state.secondaryEquipment.push_back({ source.slot, source.itemSeed, itemState });
+	}
 	state.secondaryInventoryGrid.assign(40, -1);
 
 	ReplayFixtureExecutionResult result;
@@ -8199,7 +8229,7 @@ void ExecuteAcidMultiplayerSecondaryImpactFixture(const char *path)
 	EXPECT_TRUE(result.transitions[0].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 4U);
 	EXPECT_EQ(state.life, 0);
-	EXPECT_EQ(state.secondaryPlayerLife, 6336);
+	EXPECT_EQ(state.secondaryPlayerLife, expectedSecondaryLife);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
@@ -8211,6 +8241,13 @@ TEST(ReplayFixture, ExecutesAcidMultiplayerSecondaryImpactAgainstCSharpCheckpoin
 TEST(ReplayFixture, ExecutesAcidUniqueMultiplayerSecondaryImpactAgainstCSharpCheckpoints)
 {
 	ExecuteAcidMultiplayerSecondaryImpactFixture("test/fixtures/replay/gameplay-acid-unique-multiplayer-secondary-impact.json");
+}
+
+TEST(ReplayFixture, ExecutesAcidPuddleSecondaryEquipmentAgainstCSharpCheckpoints)
+{
+	ExecuteAcidMultiplayerSecondaryImpactFixture(
+	    "test/fixtures/replay/gameplay-acid-puddle-secondary-equipment.json",
+	    6112);
 }
 
 TEST(ReplayFixture, ExecutesHorkDemonMultiplayerTargetSelectionAgainstCSharpCheckpoints)
