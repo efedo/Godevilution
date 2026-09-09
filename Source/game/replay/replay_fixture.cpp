@@ -3591,6 +3591,51 @@ int32_t ResolveReplayEquipmentResistance(
 	return zeroResistance ? 0 : std::clamp(resistance, 0, 75);
 }
 
+int32_t ApplyReplayManaShield(
+	ReplayFixtureExecutionState &state,
+	int32_t damageQ6)
+{
+	int32_t lifeDamageQ6 = damageQ6;
+	const bool hasNoManaItem = std::any_of(
+		state.equipment.begin(),
+		state.equipment.end(),
+		[](const ReplayFixtureSlottedItem &item) {
+			return IsReplayEquipmentUsable(item.state)
+			    && (item.state.flags & NoManaFlag) != 0;
+		});
+	if (!state.manaShieldActive || hasNoManaItem)
+		return lifeDamageQ6;
+
+	const auto spell = std::find_if(
+		state.memorizedSpells.begin(),
+		state.memorizedSpells.end(),
+		[](const ReplayFixtureMemorizedSpell &candidate) {
+			return candidate.spellId == 11;
+		});
+	const int32_t level = spell == state.memorizedSpells.end()
+		? 0
+		: static_cast<int32_t>(spell->level);
+	int32_t divisor = 24;
+	int32_t manaDamageQ6 = lifeDamageQ6;
+	if (level > 0) {
+		divisor -= std::min(level, 7) * 3;
+		manaDamageQ6 += manaDamageQ6 / -divisor;
+	}
+	if (state.mana >= manaDamageQ6) {
+		state.mana -= manaDamageQ6;
+		lifeDamageQ6 = 0;
+		if (state.mana == 0)
+			state.manaShieldActive = false;
+	} else {
+		lifeDamageQ6 = manaDamageQ6 - state.mana;
+		if (level > 0)
+			lifeDamageQ6 += lifeDamageQ6 / (divisor - 1);
+		state.mana = 0;
+		state.manaShieldActive = false;
+	}
+	return lifeDamageQ6;
+}
+
 void ApplyReplayEquipmentAttackEffects(
     ReplayFixtureExecutionState &state,
     int32_t damageQ6)
@@ -9534,43 +9579,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				    * 64;
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
-				int32_t lifeDamageQ6 = damageQ6;
-				const bool hasNoManaItem = std::any_of(
-				    state.equipment.begin(),
-				    state.equipment.end(),
-				    [](const ReplayFixtureSlottedItem &item) {
-					    return IsReplayEquipmentUsable(item.state)
-					        && (item.state.flags & NoManaFlag) != 0;
-				    });
-				if (state.manaShieldActive && !hasNoManaItem) {
-					const auto spell = std::find_if(
-					    state.memorizedSpells.begin(),
-					    state.memorizedSpells.end(),
-					    [](const ReplayFixtureMemorizedSpell &candidate) {
-						    return candidate.spellId == 11;
-					    });
-					const int32_t level = spell == state.memorizedSpells.end()
-					    ? 0
-					    : static_cast<int32_t>(spell->level);
-					int32_t divisor = 24;
-					int32_t manaDamageQ6 = lifeDamageQ6;
-					if (level > 0) {
-						divisor -= std::min(level, 7) * 3;
-						manaDamageQ6 += manaDamageQ6 / -divisor;
-					}
-					if (state.mana >= manaDamageQ6) {
-						state.mana -= manaDamageQ6;
-						lifeDamageQ6 = 0;
-						if (state.mana == 0)
-							state.manaShieldActive = false;
-					} else {
-						lifeDamageQ6 = manaDamageQ6 - state.mana;
-						if (level > 0)
-							lifeDamageQ6 += lifeDamageQ6 / (divisor - 1);
-						state.mana = 0;
-						state.manaShieldActive = false;
-					}
-				}
+				const int32_t lifeDamageQ6 = ApplyReplayManaShield(state, damageQ6);
 				state.life = std::max(0, state.life - lifeDamageQ6);
 				if (state.life > 0
 				    && resistance == 0
@@ -9777,10 +9786,23 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 
 				// Native shifted Acid damage still consumes its zero-width damage roll.
 				static_cast<void>(GenerateRnd(state, 1));
-				const int32_t damageQ6 = std::max(1, projectile.damage) * 64;
+				const auto &targetEquipment = primaryPlayerAtTile
+				    ? state.equipment
+				    : state.secondaryEquipment;
+				int32_t damageQ6 = ApplyReplayGetHitBonus(
+				    targetEquipment,
+				    std::max(1, projectile.damage))
+				    * 64;
+				const int32_t resistance = ResolveReplayEquipmentResistance(
+				    targetEquipment,
+				    projectile.damageType);
+				if (resistance > 0)
+					damageQ6 -= damageQ6 * resistance / 100;
 				if (primaryPlayerAtTile) {
-					state.life = std::max(0, state.life - damageQ6);
+					const int32_t lifeDamageQ6 = ApplyReplayManaShield(state, damageQ6);
+					state.life = std::max(0, state.life - lifeDamageQ6);
 					if (state.life > 0
+					    && resistance == 0
 					    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
 						state.combatMode = 7;
 						state.combatModeEndTick = tick + 6;
@@ -9789,7 +9811,8 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
 					if (state.secondaryPlayerLife == 0)
 						StartReplaySecondaryPlayerDeath(state, true);
-					else if ((damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+					else if (resistance == 0
+					    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
 						state.secondaryPlayerCombatMode = 7;
 						state.secondaryPlayerCombatModeEndTick = tick + 6;
 					}

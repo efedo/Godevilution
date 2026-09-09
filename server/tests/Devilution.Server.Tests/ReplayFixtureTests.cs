@@ -8346,6 +8346,29 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidPrimaryImpactAppliesEquipmentBeforeManaShield()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-primary-equipment.json");
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(5908, player.Mana);
+        Assert.True(player.ManaShieldActive);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(
@@ -9390,6 +9413,9 @@ public sealed class ReplayFixtureTests
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence);
         var missiles = LoadReplayMonsterMissiles(fixture, "acid");
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "spells.tsv")));
         var projectiles = fixture.InitialProjectiles
             .Select(source => new AuthoritativeProjectile(
                 source.EntityId,
@@ -9423,6 +9449,15 @@ public sealed class ReplayFixtureTests
             initial.Life,
             initial.Mana,
             startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingManaShieldActive: initial.ManaShieldActive,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingSpells: spells,
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,

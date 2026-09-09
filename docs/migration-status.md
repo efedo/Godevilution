@@ -8,6 +8,10 @@ their Q6 GetHit adjustment. The new Lich fixtures verify projectile impact,
 equipment resistance, primary block admission, mana absorption, life
 preservation, and both canonical checkpoints.
 
+Acid projectile impacts now share the managed equipment GetHit, acid resistance,
+and Mana Shield boundary in compact native replay. The primary Acid fixture
+also verifies the resulting puddle lifecycle and canonical checkpoints.
+
 Primary SkeletonMelee replay now shares the managed reflection and Mana Shield
 ordering in compact native replay. The cross-runner fixture covers the
 post-GetHit damage, charge consumption, target HP, mana, and multiplayer RNG

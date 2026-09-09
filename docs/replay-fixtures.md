@@ -1167,6 +1167,8 @@ Notable shared fixtures include:
   Q6 checkpoints;
 - `gameplay-monster-magic-primary-block.json` for primary-player MonsterMagic
   shield-block admission, preserved resources, and shared impact checkpoints;
+- `gameplay-acid-primary-equipment.json` for primary Acid impact GetHit and
+  resistance before Mana Shield absorption, with puddle lifecycle checkpoints;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
   preserves player life, projectile travel, and failed-collision identity;
 - `gameplay-monster-magic-secondary-impact.json` for secondary-participant

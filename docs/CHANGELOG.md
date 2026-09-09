@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   resistance is applied before Mana Shield absorption in both runners.
 - Added primary MonsterMagic block coverage proving usable shields consume the
   block boundary before damage in both runners.
+- Added primary Acid impact coverage proving usable GetHit and acid resistance
+  are applied before Mana Shield absorption in both runners.
 - Compact native MonsterMagic impacts now apply the validated primary-player
   GetHit/Mana Shield boundary and secondary-player GetHit adjustment.
 - Added primary SkeletonMelee replay coverage for reflection and Mana Shield
