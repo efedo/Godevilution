@@ -11,6 +11,10 @@ Initialized Warrior ranged attacks now also apply the native Critical Strike
 roll and Triple Demon Damage multiplier before projectile capture, with matching
 managed/native checkpoint coverage.
 
+Ranged elemental arrows now also cross the impact boundary in both runners;
+their server-owned fire channel applies target resistance before projectile
+removal and the resulting checkpoint is shared with native replay.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo

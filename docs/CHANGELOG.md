@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   admission and unchanged post-hit target armor reduction in both runners.
 - Added initialized Warrior ranged replay coverage for Critical Strike and
   Triple Demon Damage ordering across managed and native runners.
+- Added ranged elemental-arrow impact coverage, including fire resistance and
+  projectile removal at the authoritative collision tick.
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at

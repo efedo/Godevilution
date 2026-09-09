@@ -835,6 +835,26 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(perilImpactResult.transitions[0].stateSha256, perilImpactFixture.checkpoints[0].stateSha256);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(perilImpactState), perilImpactFixture.checkpoints[1].stateSha256);
 
+	std::ifstream elementalImpactFile("test/fixtures/replay/gameplay-ranged-elemental-impact.json");
+	ASSERT_TRUE(elementalImpactFile.good());
+	const std::string elementalImpactJson((std::istreambuf_iterator<char>(elementalImpactFile)), std::istreambuf_iterator<char>());
+	ReplayFixture elementalImpactFixture;
+	ASSERT_TRUE(ParseReplayFixture(elementalImpactJson, elementalImpactFixture, error)) << error;
+	ReplayFixtureExecutionState elementalImpactState;
+	elementalImpactState.life = elementalImpactFixture.initialState.life;
+	elementalImpactState.lifeMaximum = elementalImpactFixture.initialState.life;
+	elementalImpactState.mana = elementalImpactFixture.initialState.mana;
+	elementalImpactState.manaMaximum = elementalImpactFixture.initialState.manaMaximum;
+	elementalImpactState.positionX = elementalImpactFixture.initialState.positionX;
+	elementalImpactState.positionY = elementalImpactFixture.initialState.positionY;
+	ReplayFixtureExecutionResult elementalImpactResult;
+	ASSERT_TRUE(ExecuteReplayFixture(elementalImpactFixture, elementalImpactState, elementalImpactResult, error)) << error;
+	ASSERT_EQ(elementalImpactResult.transitions.size(), 1U);
+	EXPECT_EQ(elementalImpactState.combatTargetHitPoints, 97);
+	EXPECT_TRUE(elementalImpactState.projectiles.empty());
+	EXPECT_EQ(elementalImpactResult.transitions[0].stateSha256, elementalImpactFixture.checkpoints[0].stateSha256);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(elementalImpactState), elementalImpactFixture.checkpoints[1].stateSha256);
+
 	std::ifstream multipleArrowsFile("test/fixtures/replay/gameplay-ranged-multiple-arrows.json");
 	ASSERT_TRUE(multipleArrowsFile.good());
 	const std::string multipleArrowsJson((std::istreambuf_iterator<char>(multipleArrowsFile)), std::istreambuf_iterator<char>());

@@ -1,0 +1,63 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/ranged-elemental-impact",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "30dd1dbc7abdee458a96ee18f72a21bb97f5e57476bac0d98bb60dabf7dedf49"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 0,
+    "mana_maximum": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_fire_resistance": 50,
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 100,
+        "item_type": 3,
+        "item_class": 1,
+        "flags": 8,
+        "stat_flag": true,
+        "fire_min_damage": 4,
+        "fire_max_damage": 4
+      },
+      {
+        "slot": 5,
+        "item_seed": 101,
+        "item_type": 1,
+        "item_class": 0,
+        "flags": 16,
+        "stat_flag": true,
+        "fire_min_damage": 100,
+        "fire_max_damage": 100
+      }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Attack",
+      "payload": { "target_entity_id": 9 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "7112c1d4e1e71b03c3d7f51d565e7d4c397075f6ede07cebbfb29712321e492b" },
+    { "tick": 2, "state_sha256": "108b624002d05a17e89a9711be82f30f27256ecdb8aac227eebd9e23225df0f2" }
+  ]
+}
