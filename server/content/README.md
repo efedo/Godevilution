@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.455.0` schema in
+It declares its identity and `devilution.diablo@1.456.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.454.0` schema so existing manifest-based packs remain
+previous additive `1.455.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1838,6 +1838,11 @@ set-level, and activation publishes set-level geometry before loading warps so
 the destination is validated against authoritative walkability. Ordinary warp
 rows remain unchanged.
 
+Schema 1.456 adds the same optional set-level destination fields to
+`portals.tsv`. Static portals may target a materialized native set-level
+pre-map or active-map variant, and the destination is validated before the
+portal enters the authoritative world state.
+
 Schema 1.454 adds server-owned `object_item_gates.tsv` requirements and
 `monster_layer_rects` world-mutation assignments. The Gateway pedestal consumes
 one Blood Stone per stage and applies the licensed blood2.dun monster layer only
@@ -3112,7 +3117,7 @@ clients.
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
 | `experience.tsv` | `level` | Cumulative native character-level experience thresholds used by server-owned progression. |
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional stable `warp_symbol`, `required_quest_id`/`required_quest_symbol`, and `required_quest_completed` gates; destinations may target either an ordinary level or a materialized native set-level variant through `target_set_level_id`/`target_set_level_symbol` and `target_set_level_active_map`; endpoints must be in bounds and walkable. |
-| `portals.tsv` | `portal_id` | Static source and destination level endpoints with optional stable `portal_symbol`, validated against the composed world geometry and walkability during activation. |
+| `portals.tsv` | `portal_id` | Static source and destination level endpoints with optional stable `portal_symbol`; destinations may target either an ordinary level or a materialized native set-level variant through `destination_set_level_id`/`destination_set_level_symbol` and `destination_set_level_active_map`, validated against composed world geometry and walkability during activation. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`; optional `drop_item_symbol` and `drop_unique_item_symbol` cross-check catalog-backed drops, and authored levels and positions are validated against active world bounds. |
 | `unique_monsters.tsv` | `entity_id`, `monster_id`, `native_ai` | Native unique-monster identity bound to exactly one matching unique encounter; static entity IDs or validated monster/native-AI selectors are accepted and preserved by server snapshots. Explicit `monster_id` selectors are cross-checked against the active `monster_types.tsv` catalog during activation, while native-AI-only selectors remain deferred for generated or set-piece encounters. Optional spawn health percentage, armor delta, and resistance overrides author deterministic encounter-initialization transitions. |
 | `unique_monster_placements.tsv` | `placement_id` | Optional generated unique encounters with validated identity, monster, level, position, entity, seed, and direction fields. Optional `required_quest_id`/`required_quest_symbol` gates a placement on the active quest's availability after single-player pool selection; unavailable gated quests suppress materialization. |
@@ -3184,7 +3189,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.455.0"
+    "version": "1.456.0"
   },
   "dependencyConstraints": [
     {
@@ -3218,7 +3223,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.455.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.456.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

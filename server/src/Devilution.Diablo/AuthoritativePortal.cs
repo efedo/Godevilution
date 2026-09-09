@@ -12,6 +12,22 @@ public sealed partial record AuthoritativePortal(
     int DestinationPositionX,
     int DestinationPositionY)
 {
+    public AuthoritativePortal ValidateDestinationIdentity()
+    {
+        if (DestinationSetLevelId is < -1 or > 8)
+            throw new ArgumentOutOfRangeException(nameof(DestinationSetLevelId));
+        return this;
+    }
+
+    /** Optional native set-level identity represented by DestinationLevelId. */
+    public int DestinationSetLevelId { get; init; } = -1;
+
+    /** Selects the active or pre-map variant for a set-level destination. */
+    public bool DestinationSetLevelActiveMap { get; init; } = true;
+
+    /** Stable set-level symbol retained alongside the numeric destination. */
+    public string DestinationSetLevelSymbol { get; init; } = string.Empty;
+
     /** Stable content symbol retained alongside the numeric portal identity. */
     public string StableSymbol { get; init; } = string.Empty;
 }
@@ -94,6 +110,7 @@ public static class AuthoritativePortalCatalog
                 $"Portal catalog contains more than {AuthoritativePortalRules.NativeMaximumPortalCount} routes, exceeding the native portal capacity.");
         var portalIds = new HashSet<uint>();
         foreach (var portal in values) {
+            portal.ValidateDestinationIdentity();
             if (portal.PortalId == 0 || !portalIds.Add(portal.PortalId))
                 throw new InvalidDataException(
                     $"Portal catalog contains duplicate or zero ID {portal.PortalId}.");
@@ -130,27 +147,81 @@ public static class AuthoritativePortalCatalog
     public static IReadOnlyList<AuthoritativePortal> LoadTsv(
         string sourcePath,
         string contents,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeSetLevelMapCatalog? setLevelMaps = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        var portals = table.Rows.Select(row => new AuthoritativePortal(
-            AuthoritativePortalIdentity.Resolve(row, stableIds),
-            AuthoritativeLevelIdentity.ResolveOptional(
-                row,
-                stableIds,
-                "source_level_id",
-                "source_level_symbol"),
-            row.RequiredInt32("source_position_x"),
-            row.RequiredInt32("source_position_y"),
-            AuthoritativeLevelIdentity.ResolveOptional(
-                row,
-                stableIds,
-                "destination_level_id",
-                "destination_level_symbol"),
-            row.RequiredInt32("destination_position_x"),
-            row.RequiredInt32("destination_position_y")) {
+        var portals = table.Rows.Select(row => {
+            var hasDestinationSetLevel = row.TryGet(
+                    "destination_set_level_id",
+                    out var destinationSetLevelText)
+                && !string.IsNullOrWhiteSpace(destinationSetLevelText)
+                && !string.Equals(
+                    destinationSetLevelText.Trim(),
+                    "none",
+                    StringComparison.OrdinalIgnoreCase)
+                || row.TryGet(
+                    "destination_set_level_symbol",
+                    out var destinationSetLevelSymbolText)
+                && !string.IsNullOrWhiteSpace(destinationSetLevelSymbolText);
+            var destinationSetLevelId = hasDestinationSetLevel
+                ? AuthoritativeSetLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "destination_set_level_id",
+                    "destination_set_level_symbol")
+                : -1;
+            var destinationSetLevelActiveMap = row.OptionalBoolean(
+                "destination_set_level_active_map",
+                defaultValue: true);
+            var hasOrdinaryDestination = row.TryGet(
+                    "destination_level_id",
+                    out var destinationLevelText)
+                && !string.IsNullOrWhiteSpace(destinationLevelText)
+                || row.TryGet(
+                    "destination_level_symbol",
+                    out var destinationLevelSymbolText)
+                && !string.IsNullOrWhiteSpace(destinationLevelSymbolText);
+            if (hasDestinationSetLevel == hasOrdinaryDestination)
+                throw new InvalidDataException(
+                    $"Portal row {row.LineNumber} must target exactly one ordinary level or set-level variant.");
+            if (hasDestinationSetLevel
+                && (setLevelMaps is null
+                    || !setLevelMaps.TryGet(destinationSetLevelId, out _))) {
+                throw new InvalidDataException(
+                    $"Portal row {row.LineNumber} references unavailable set level {destinationSetLevelId}.");
+            }
+            var destinationLevelId = hasDestinationSetLevel
+                ? AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                    destinationSetLevelId,
+                    destinationSetLevelActiveMap)
+                : AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "destination_level_id",
+                    "destination_level_symbol");
+            return new AuthoritativePortal(
+                AuthoritativePortalIdentity.Resolve(row, stableIds),
+                AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "source_level_id",
+                    "source_level_symbol"),
+                row.RequiredInt32("source_position_x"),
+                row.RequiredInt32("source_position_y"),
+                destinationLevelId,
+                row.RequiredInt32("destination_position_x"),
+                row.RequiredInt32("destination_position_y")) {
                 StableSymbol = AuthoritativePortalIdentity.ReadSymbol(row),
-            }).ToArray();
+                DestinationSetLevelId = destinationSetLevelId,
+                DestinationSetLevelActiveMap = destinationSetLevelActiveMap,
+                DestinationSetLevelSymbol = row.TryGet(
+                        "destination_set_level_symbol",
+                        out var symbol)
+                    ? symbol.Trim()
+                    : string.Empty,
+            }.ValidateDestinationIdentity();
+        }).ToArray();
         if (portals.Any(portal => portal.PortalId == 0)
             || portals.Length > AuthoritativePortalRules.NativeMaximumPortalCount
             || portals.Select(portal => portal.PortalId).Distinct().Count() != portals.Length)

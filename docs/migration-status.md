@@ -2,7 +2,7 @@
 
 Status date: 2026-09-09
 
-The active content schema is now `1.455.0` (with `1.454.0` retained as
+The active content schema is now `1.456.0` (with `1.455.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -20,6 +20,11 @@ Schema 1.455 adds validated `warps.tsv` destinations for materialized native
 set-level pre-map and active-map variants. Set-level geometry is published
 before warp loading, so the same server-owned level-transition path now accepts
 authored set-piece destinations while ordinary warp rows remain compatible.
+
+Schema 1.456 extends the same validated destination model to static
+`portals.tsv` routes. Set-level portal endpoints use the materialized pre-map or
+active-map runtime identity and share the ordinary portal occupancy and
+transition path.
 
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and

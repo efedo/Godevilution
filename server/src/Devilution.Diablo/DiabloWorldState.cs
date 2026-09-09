@@ -893,6 +893,7 @@ public sealed class DiabloWorldState
         uint? expectedPortalId = null)
     {
         ArgumentNullException.ThrowIfNull(portal);
+        portal.ValidateDestinationIdentity();
         if (portal.PortalId == 0)
             throw new InvalidDataException("Portal identity cannot be zero.");
         if (expectedPortalId is uint dictionaryKey && dictionaryKey != portal.PortalId)

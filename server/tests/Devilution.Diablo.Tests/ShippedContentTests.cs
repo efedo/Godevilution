@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.455.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.456.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1186,7 +1186,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.454.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.455.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1972,10 +1972,14 @@ public sealed class ShippedContentTests
             "warps.tsv",
             "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\ttarget_set_level_id\ttarget_set_level_symbol\ttarget_set_level_active_map\n"
                 + "9901\t\t0\t\t1\t1\t\t\t4\t5\t0\t\t0\t\tSL_SKELKING\ttrue\n");
+        var portalTable = TsvTable.Parse(
+            "portals.tsv",
+            "portal_id\tportal_symbol\tsource_level_id\tsource_level_symbol\tsource_position_x\tsource_position_y\tdestination_level_id\tdestination_level_symbol\tdestination_position_x\tdestination_position_y\tdestination_set_level_id\tdestination_set_level_symbol\tdestination_set_level_active_map\n"
+                + "9902\t\t0\t\t1\t1\t\t\t4\t5\t\tSL_SKELKING\ttrue\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
-            [mapTable, objectTable, placementTable, mutationTable, warpTable],
+            [mapTable, objectTable, placementTable, mutationTable, warpTable, portalTable],
             dependencies: [basePack.Id],
             overlays: [
                 new ContentTableOverlay("set_level_maps.tsv", ["set_level_id"]),
@@ -1983,6 +1987,7 @@ public sealed class ShippedContentTests
                 new ContentTableOverlay("set_level_objects.tsv", ["placement_id"]),
                 new ContentTableOverlay("world_mutations.tsv", ["mutation_id"]),
                 new ContentTableOverlay("warps.tsv", ["warp_id"]),
+                new ContentTableOverlay("portals.tsv", ["portal_id"]),
             ],
             assets: [
                 new ContentAsset("fixture/pre.dun", CreateSyntheticDun()),
@@ -2017,6 +2022,13 @@ public sealed class ShippedContentTests
         Assert.Equal(1, setLevelWarp.TargetSetLevelId);
         Assert.Equal("SL_SKELKING", setLevelWarp.TargetSetLevelSymbol);
         Assert.True(setLevelWarp.TargetSetLevelActiveMap);
+        var setLevelPortal = Assert.Single(
+            activation.Simulation.WorldState.Portals.Values,
+            portal => portal.PortalId == 9902);
+        Assert.Equal(active.LevelId, setLevelPortal.DestinationLevelId);
+        Assert.Equal(1, setLevelPortal.DestinationSetLevelId);
+        Assert.Equal("SL_SKELKING", setLevelPortal.DestinationSetLevelSymbol);
+        Assert.True(setLevelPortal.DestinationSetLevelActiveMap);
         var gate = Assert.Single(
             activation.Simulation.WorldState.Objects.Values,
             @object => @object.EntityId
@@ -3679,7 +3691,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.455.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.456.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

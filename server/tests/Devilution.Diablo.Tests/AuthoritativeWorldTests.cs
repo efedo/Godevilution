@@ -168,6 +168,43 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LoadsSetLevelPortalDestinationsAfterTheirGeometryIsPublished()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var setLevelMaps = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(
+                2,
+                "pre.dun",
+                "active.dun",
+                "Catacombs",
+                1,
+                1) {
+                SetLevelSymbol = "SL_TEST",
+            },
+        ]);
+        var activeLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true);
+        world.AddLevel(new AuthoritativeLevel(activeLevelId, 4, 4));
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("set_level", "SL_TEST", 2),
+        ]);
+
+        var portals = AuthoritativePortalCatalog.LoadTsv(
+            "portals.tsv",
+            "portal_id\tsource_level_id\tsource_position_x\tsource_position_y\tdestination_set_level_symbol\tdestination_set_level_active_map\tdestination_position_x\tdestination_position_y\n"
+                + "7\t1\t1\t1\tSL_TEST\ttrue\t2\t2\n",
+            stableIds,
+            setLevelMaps);
+
+        var portal = Assert.Single(portals);
+        Assert.Equal(activeLevelId, portal.DestinationLevelId);
+        Assert.Equal(2, portal.DestinationSetLevelId);
+        Assert.Equal("SL_TEST", portal.DestinationSetLevelSymbol);
+        Assert.True(portal.DestinationSetLevelActiveMap);
+        AuthoritativePortalCatalog.ValidateWorld(portals, world);
+    }
+
+    [Fact]
     public void AuthoredMonsterObjectAndQuestLevelLinksResolveStableSymbols()
     {
         var stableIds = new StableContentIdCatalog([

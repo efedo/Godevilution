@@ -1,2 +1,2 @@
-portal_id	portal_symbol	source_level_id	source_level_symbol	source_position_x	source_position_y	destination_level_id	destination_level_symbol	destination_position_x	destination_position_y
-1	cathedral_entrance	1	cathedral	2	2	2	catacombs	3	4
+portal_id	portal_symbol	source_level_id	source_level_symbol	source_position_x	source_position_y	destination_level_id	destination_level_symbol	destination_position_x	destination_position_y	destination_set_level_id	destination_set_level_symbol	destination_set_level_active_map
+1	cathedral_entrance	1	cathedral	2	2	2	catacombs	3	4	none		false

@@ -14,6 +14,11 @@ All notable changes to this fork are documented below.
   transition path once their geometry is materialized; ordinary warp rows remain
   compatible. This advances the active content schema to `1.455.0`.
 
+- Extended validated set-level destinations to static `portals.tsv` routes.
+  Materialized pre-map and active-map variants now use the same authoritative
+  portal occupancy and level-transition path. This advances the active content
+  schema to `1.456.0`.
+
 - Corrected the Gateway fragment to use the native pre-pedestal blood1.dun
   layer while retaining the validated blood2.dun post-pedestal asset for the
   server-owned final-stage monster-layer activation.

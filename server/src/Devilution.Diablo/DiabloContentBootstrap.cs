@@ -739,20 +739,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     "Unique monster packs require unique placements and monster types.");
             uniqueMonsterPacks.Validate(uniqueMonsterPlacements, monsterTypes);
         }
-        var portals = content.TryGetTable("portals.tsv", out var portalsTable)
-            ? AuthoritativePortalCatalog.LoadTsv(
-                portalsTable.SourcePath,
-                portalsTable.ToCanonicalTsv(),
-                stableIds)
-            : null;
         if (stableIds is not null && world is not null)
             stableIds.ValidateReferences("level", world.ContainsLevel);
-        if (stableIds is not null && portals is not null)
-            stableIds.ValidateReferences(
-                "portal",
-                portalId => portals.Any(portal => portal.PortalId == portalId));
-        if (world is not null && portals is not null)
-            AuthoritativePortalCatalog.ValidateWorld(portals, world);
         var objects = content.TryGetTable("objects.tsv", out var objectsTable)
             ? AuthoritativeWorldObjectCatalog.LoadTsv(
                 objectsTable.SourcePath,
@@ -980,6 +968,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds.ValidateReferences(
                 "warp",
                 warpId => world.WarpTargets.Any(warp => warp.WarpId == warpId));
+        var portals = content.TryGetTable("portals.tsv", out var portalsTable)
+            ? AuthoritativePortalCatalog.LoadTsv(
+                portalsTable.SourcePath,
+                portalsTable.ToCanonicalTsv(),
+                stableIds,
+                setLevelMaps)
+            : null;
+        if (stableIds is not null && portals is not null)
+            stableIds.ValidateReferences(
+                "portal",
+                portalId => portals.Any(portal => portal.PortalId == portalId));
+        if (world is not null && portals is not null)
+            AuthoritativePortalCatalog.ValidateWorld(portals, world);
         if (world is not null && (setLevelObjects is not null || nativeDunObjects is not null)) {
             var generatedObjects = new List<AuthoritativeWorldObject>();
             if (setLevelObjects is not null) {
