@@ -152,6 +152,8 @@ elemental damage roll.
 The `gameplay/ranged-class-multiple-arrows-hit-seeds` companion proves each
 initialized volley arrow uses its own deterministic hit seed while retaining
 shared damage-range RNG ordering.
+The `gameplay/ranged-hellfire-miss-effects` companion proves failed Hellfire
+admissions skip post-hit Devastation, Doppelganger, and Jesters rolls.
 The Hellfire ranged-decay companion additionally proves that eligible hand
 weapons mutate once per emitted arrow before projectile resolution.
 The Hellfire ranged-Devastation companion proves the post-hit 3x multiplier
@@ -475,7 +477,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 227 checked-in JSON fixtures and 242 registered
+the native replay gate contains 228 checked-in JSON fixtures and 243 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

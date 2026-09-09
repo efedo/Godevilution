@@ -3722,15 +3722,18 @@ void CreateReplayWeaponArrow(
 	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
 		perilSelfDamageQ6 = damageQ6;
 	if (state.hellfire
+	    && damageQ6 > 0
 	    && HasReplayHellfireEquipmentFlag(state, HellfireDevastationFlag)
 	    && GenerateRnd(state, 100) < 5)
 		damageQ6 *= 3;
 	bool doppelgangerProc = false;
 	if (state.hellfire
+	    && damageQ6 > 0
 	    && HasReplayHellfireEquipmentFlag(state, HellfireDoppelgangerFlag)
 	    && GenerateRnd(state, 100) < 10)
 		doppelgangerProc = true;
 	if (state.hellfire
+	    && damageQ6 > 0
 	    && HasReplayHellfireEquipmentFlag(state, HellfireJestersFlag)) {
 		int32_t roll = GenerateRnd(state, 201);
 		if (roll >= 100)

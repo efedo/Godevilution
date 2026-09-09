@@ -14,6 +14,8 @@ All notable changes to this fork are documented below.
   elemental channels or consume an elemental damage roll.
 - Added initialized Multiple Arrows coverage for per-arrow hit seeds and
   deterministic damage-range RNG ordering.
+- Corrected Hellfire ranged misses so post-hit effect rolls are skipped when
+  no damage is admitted, preserving native RNG state.
 - Player-minion owner references now resolve to a present player on the same
   level across mapper, host, Godot, and native snapshot boundaries.
 - Projectile destination coordinates now use the projected level geometry at

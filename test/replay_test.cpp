@@ -888,6 +888,37 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedMissElementalState.randomState, 22695478U);
 	EXPECT_EQ(rangedMissElementalResult.transitions[0].stateSha256, rangedMissElementalFixture.checkpoints.back().stateSha256);
 
+	std::ifstream hellfireMissEffectsFile("test/fixtures/replay/gameplay-ranged-hellfire-miss-effects.json");
+	ASSERT_TRUE(hellfireMissEffectsFile.good());
+	const std::string hellfireMissEffectsJson((std::istreambuf_iterator<char>(hellfireMissEffectsFile)), std::istreambuf_iterator<char>());
+	ReplayFixture hellfireMissEffectsFixture;
+	ASSERT_TRUE(ParseReplayFixture(hellfireMissEffectsJson, hellfireMissEffectsFixture, error)) << error;
+	ReplayFixtureExecutionState hellfireMissEffectsState;
+	hellfireMissEffectsState.characterClassId = static_cast<uint32_t>(hellfireMissEffectsFixture.initialState.characterClass);
+	hellfireMissEffectsState.attributes[0] = hellfireMissEffectsFixture.initialState.strength;
+	hellfireMissEffectsState.attributes[1] = hellfireMissEffectsFixture.initialState.strength;
+	hellfireMissEffectsState.attributes[2] = hellfireMissEffectsFixture.initialState.magic;
+	hellfireMissEffectsState.attributes[3] = hellfireMissEffectsFixture.initialState.magic;
+	hellfireMissEffectsState.attributes[4] = hellfireMissEffectsFixture.initialState.dexterity;
+	hellfireMissEffectsState.attributes[5] = hellfireMissEffectsFixture.initialState.dexterity;
+	hellfireMissEffectsState.attributes[6] = hellfireMissEffectsFixture.initialState.vitality;
+	hellfireMissEffectsState.attributes[7] = hellfireMissEffectsFixture.initialState.vitality;
+	hellfireMissEffectsState.characterLevel = hellfireMissEffectsFixture.initialState.characterLevel;
+	hellfireMissEffectsState.life = hellfireMissEffectsFixture.initialState.life;
+	hellfireMissEffectsState.lifeMaximum = hellfireMissEffectsFixture.initialState.life;
+	hellfireMissEffectsState.mana = hellfireMissEffectsFixture.initialState.mana;
+	hellfireMissEffectsState.manaMaximum = hellfireMissEffectsFixture.initialState.manaMaximum;
+	hellfireMissEffectsState.positionX = hellfireMissEffectsFixture.initialState.positionX;
+	hellfireMissEffectsState.positionY = hellfireMissEffectsFixture.initialState.positionY;
+	ReplayFixtureExecutionResult hellfireMissEffectsResult;
+	ASSERT_TRUE(ExecuteReplayFixture(hellfireMissEffectsFixture, hellfireMissEffectsState, hellfireMissEffectsResult, error)) << error;
+	ASSERT_EQ(hellfireMissEffectsState.projectiles.size(), 1U);
+	EXPECT_FALSE(hellfireMissEffectsState.projectiles[0].attackHit);
+	EXPECT_EQ(hellfireMissEffectsState.projectiles[0].damageQ6, 0);
+	EXPECT_FALSE(hellfireMissEffectsState.projectiles[0].doppelgangerProc);
+	EXPECT_EQ(hellfireMissEffectsState.randomState, 22695478U);
+	EXPECT_EQ(hellfireMissEffectsResult.transitions[0].stateSha256, hellfireMissEffectsFixture.checkpoints.back().stateSha256);
+
 	std::ifstream multipleArrowsFile("test/fixtures/replay/gameplay-ranged-multiple-arrows.json");
 	ASSERT_TRUE(multipleArrowsFile.good());
 	const std::string multipleArrowsJson((std::istreambuf_iterator<char>(multipleArrowsFile)), std::istreambuf_iterator<char>());

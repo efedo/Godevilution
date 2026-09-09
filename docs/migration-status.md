@@ -23,6 +23,10 @@ Initialized Multiple Arrows replay now salts each arrow's hit admission with its
 volley index, preserving per-arrow outcomes and shared damage RNG ordering in
 both runners.
 
+Hellfire ranged miss replay now skips the post-hit Devastation, Doppelganger,
+and Jesters rolls when no damage was admitted, preserving the native RNG state
+at the shared projectile checkpoint.
+
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character
 levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo
