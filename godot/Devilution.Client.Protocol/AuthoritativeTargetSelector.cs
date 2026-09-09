@@ -27,7 +27,15 @@ public static class AuthoritativeTargetSelector
         var remotePlayer = snapshot.Players.FirstOrDefault(candidate =>
             candidate.EntityId != localPlayer.EntityId
             && candidate.Life > 0
-            && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+            && AuthoritativeNativeVisionVisibility.IsVisible(
+                candidate.LevelId,
+                candidate.PositionX,
+                candidate.PositionY,
+                localPlayer.LevelId,
+                ResolveLocalGeometry(snapshot, localPlayer),
+                localPlayer.PositionX,
+                localPlayer.PositionY,
+                ResolveLightRadius(localPlayer))
             && IsAtPresentationPosition(candidate, targetX, targetY));
         if (remotePlayer is not null)
             return remotePlayer.EntityId;
@@ -136,7 +144,15 @@ public static class AuthoritativeTargetSelector
         return snapshot.Players
             .Where(candidate => candidate.EntityId != localPlayer.EntityId
                 && (includeDead || candidate.Life > 0)
-                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeNativeVisionVisibility.IsVisible(
+                    candidate.LevelId,
+                    candidate.PositionX,
+                    candidate.PositionY,
+                    localPlayer.LevelId,
+                    ResolveLocalGeometry(snapshot, localPlayer),
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    ResolveLightRadius(localPlayer))
                 && IsAtPresentationPosition(candidate, targetX, targetY))
             .OrderBy(candidate => candidate.EntityId)
             .Select(candidate => (uint?)candidate.EntityId)

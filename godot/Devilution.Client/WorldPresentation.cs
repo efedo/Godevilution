@@ -84,6 +84,18 @@ public partial class WorldPresentation : Node2D
             : 10;
 
         foreach (var player in snapshot.Players) {
+            if (player.EntityId != localPlayer?.EntityId
+                && (localPlayer is null
+                    || !AuthoritativeNativeVisionVisibility.IsVisible(
+                        player.LevelId,
+                        player.PositionX,
+                        player.PositionY,
+                        localPlayer.LevelId,
+                        localGeometry,
+                        localPlayer.PositionX,
+                        localPlayer.PositionY,
+                        localLightRadius)))
+                continue;
             activeEntityIds.Add(player.EntityId);
             var projected = AuthoritativePlayerPositionProjection.ResolvePresentation(
                 player,
@@ -322,7 +334,17 @@ public partial class WorldPresentation : Node2D
         var localStatusPresentation = StatusPresentationStyle.ResolvePlayer(localPlayer);
         var searchActive = localStatusPresentation.Contains(StatusPresentationKind.Search);
         DrawTargetPreview();
-        foreach (var player in snapshot.Players.Where(player => AuthoritativeLevelVisibility.IsVisible(player.LevelId, currentLevel))) {
+        foreach (var player in snapshot.Players.Where(player =>
+                     player.EntityId == localPlayer.EntityId
+                     || AuthoritativeNativeVisionVisibility.IsVisible(
+                         player.LevelId,
+                         player.PositionX,
+                         player.PositionY,
+                         currentLevel,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius))) {
             var isLocal = player.EntityId == localPlayer.EntityId;
             DrawPlayer(
                 player,
@@ -617,7 +639,18 @@ public partial class WorldPresentation : Node2D
                 localLightRadius));
         var targetPlayer = targetMonster is null
             ? snapshot.Players.FirstOrDefault(candidate =>
-                candidate.EntityId == action.TargetEntityId && candidate.Life > 0)
+                candidate.EntityId == action.TargetEntityId
+                && candidate.Life > 0
+                && (candidate.EntityId == snapshot.Players[0].EntityId
+                    || AuthoritativeNativeVisionVisibility.IsVisible(
+                        candidate.LevelId,
+                        candidate.PositionX,
+                        candidate.PositionY,
+                        currentLevel,
+                        localGeometry,
+                        localViewerX,
+                        localViewerY,
+                        localLightRadius)))
             : null;
         var targetLevel = targetMonster?.LevelId ?? targetPlayer?.LevelId;
         var targetX = targetMonster?.PositionX ?? targetPlayer?.PositionX;

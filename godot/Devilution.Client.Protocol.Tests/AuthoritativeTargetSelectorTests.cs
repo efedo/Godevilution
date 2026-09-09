@@ -45,6 +45,24 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void DoesNotSelectRemotePlayersOutsideProjectedNativeVision()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2, PositionX = 0, PositionY = 0 },
+                new PlayerSnapshot { EntityId = 8, LevelId = 2, PositionX = 4, PositionY = 0, Life = 10 },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 2, Width = 5, Height = 1 },
+            },
+        };
+        snapshot.LevelGeometry[0].NativeVisionBlockedCells.Add(1);
+
+        Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 4, 0));
+        Assert.Null(AuthoritativeTargetSelector.SelectRemotePlayerTarget(snapshot, 7, 4, 0, false));
+    }
+
+    [Fact]
     public void SelectsAStableMonsterIdentityForSpellTargeting()
     {
         var snapshot = new Snapshot {

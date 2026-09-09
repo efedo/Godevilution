@@ -41,6 +41,10 @@ selection now reuse that same projected vision predicate. Hidden world
 entities no longer appear as client-side interaction candidates that the
 server would reject.
 
+Remote-player world rendering, player-target selection, and action indicators
+now use the same projected native vision boundary while retaining party-panel
+and other out-of-world authoritative information.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,
